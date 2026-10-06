@@ -137,10 +137,30 @@ export function useRemoveFromSelection() {
     return useSelectionChange(workshopApi.removeFromSelection);
 }
 
+/** Shared by adding and removing, to count the selection changes in flight. */
+const SELECTION_CHANGE = ["workshop", "selection-change"] as const;
+
 /**
- * A change to the selection. The response is the selection after the change, so
- * it replaces the cached one. Never retried: a retry after a lost response
- * would add or remove a second copy.
+ * Whether two selection changes have been in flight at once since the last time
+ * none were.
+ */
+let selectionChangesOverlapped = false;
+
+/** How many selection changes are in flight, counting the one calling this. */
+function selectionChangesInFlight(): number {
+    // A mutation counts as in flight from before its `onMutate` until after its
+    // `onSettled`.
+    return queryClient.isMutating({ mutationKey: SELECTION_CHANGE });
+}
+
+/**
+ * A change to the selection. Never retried: a retry after a lost response would
+ * add or remove a second copy.
+ *
+ * The response is the selection after the change, so it replaces the cached
+ * selection. Changes made in quick succession can be handled and answered in
+ * any order, though, so their answers are not trusted: the selection is re-read
+ * once the last of them is done.
  */
 function useSelectionChange(
     change: (
@@ -148,10 +168,30 @@ function useSelectionChange(
     ) => Promise<ApiSchema<"WorkshopSelectionOut">>,
 ) {
     return useMutation({
+        mutationKey: SELECTION_CHANGE,
         mutationFn: change,
         retry: false,
+        onMutate: () => {
+            if (selectionChangesInFlight() > 1) {
+                selectionChangesOverlapped = true;
+            }
+        },
         onSuccess: (selection) => {
-            queryClient.setQueryData(queryKeys.workshop.selection, selection);
+            if (!selectionChangesOverlapped) {
+                queryClient.setQueryData(
+                    queryKeys.workshop.selection,
+                    selection,
+                );
+            }
+        },
+        onSettled: () => {
+            if (selectionChangesInFlight() > 1 || !selectionChangesOverlapped) {
+                return;
+            }
+            selectionChangesOverlapped = false;
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.selection,
+            });
         },
         onError: (error) => {
             toast.error(resolveErrorMessage(error));

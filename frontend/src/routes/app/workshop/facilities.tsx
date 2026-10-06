@@ -91,21 +91,26 @@ function PlayerFacilities() {
                     </SegmentedPickerOption>
                 </SegmentedPicker>
             </div>
-            {facilities.isError || fleet.isError || selection.isError ? (
+            {facilities.isError ||
+            fleet.isError ||
+            // Only the catalog shows the selection.
+            (tab === "catalog" && selection.isError) ? (
                 <InfoBanner variant="error">
                     Could not load the facilities. They are retried every few
                     seconds.
                 </InfoBanner>
-            ) : !facilities.data || !fleet.data || !selection.data ? (
+            ) : !facilities.data || !fleet.data ? (
                 <Loading />
-            ) : tab === "catalog" ? (
+            ) : tab === "fleet" ? (
+                <Fleet facilities={facilities.data} fleet={fleet.data} />
+            ) : !selection.data ? (
+                <Loading />
+            ) : (
                 <Catalog
                     facilities={facilities.data}
                     fleet={fleet.data}
                     selection={selection.data}
                 />
-            ) : (
-                <Fleet facilities={facilities.data} fleet={fleet.data} />
             )}
         </div>
     );
