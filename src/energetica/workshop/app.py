@@ -118,5 +118,11 @@ async def _buy_selections_when_due(app: FastAPI) -> None:
         except Exception:
             logger.exception("Could not buy the Workshop selections. Retrying.")
             continue
-        if bought:
+        if not bought:
+            continue
+        try:
             await invalidate_session(app)
+        except Exception:
+            # The purchase stands. Open pages show it on their next read, and this loop must keep
+            # running for the next Investment phase.
+            logger.exception("Bought the Workshop selections but could not tell the open pages.")

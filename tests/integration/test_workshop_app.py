@@ -521,12 +521,45 @@ def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(
     # Entering the client runs the app's startup, which starts the purchase task.
     with client:
         clock.tick(minutes=8)
-        deadline = time.monotonic() + 5
-        while not client.get(FLEET_URL).json() and time.monotonic() < deadline:
-            time.sleep(0.01)
+        _wait_for_fleet(client, size=1)
 
         assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
         assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("investment", 1)
+
+
+def test_a_failed_notification_does_not_stop_later_purchases(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PURCHASE_CHECK_INTERVAL_SECONDS", 0.01)
+
+    async def failing_invalidate(app: FastAPI) -> None:
+        raise ConnectionError("the Socket.IO server is down")
+
+    monkeypatch.setattr(workshop_app, "invalidate_session", failing_invalidate)
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    with client:
+        clock.tick(minutes=8)
+        _wait_for_fleet(client, size=1)
+        # On to Round 2's Investment phase: four Trading periods, the Recap, then Investment.
+        authenticate(client, facilitator)
+        for _ in range(6):
+            client.post(ADVANCE_URL)
+        authenticate(client, alice)
+        client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+        clock.tick(minutes=8)
+        _wait_for_fleet(client, size=2)
+
+        assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner", "small_water_dam"]
+
+
+def _wait_for_fleet(client: TestClient, *, size: int) -> None:
+    """Wait up to five seconds for the signed-in player's fleet to reach ``size`` facilities."""
+    deadline = time.monotonic() + 5
+    while len(client.get(FLEET_URL).json()) < size and time.monotonic() < deadline:
+        time.sleep(0.01)
 
 
 # --- pushing changes to open pages ---------------------------------------------------------
