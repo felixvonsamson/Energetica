@@ -91,12 +91,19 @@ def test_a_capacity_factor_needs_at_least_one_sample() -> None:
         capacity_factor(reactor, [])
 
 
-@pytest.mark.parametrize("sample", [168e6, -1.0])
+@pytest.mark.parametrize("sample", [168e6, -1e6])
 def test_a_capacity_factor_rejects_output_outside_zero_and_the_maximum(sample: float) -> None:
     reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
 
     with pytest.raises(ValueError):
         capacity_factor(reactor, [167e6, sample])
+
+
+def test_a_capacity_factor_accepts_output_a_hair_outside_the_range_and_keeps_within_it() -> None:
+    reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
+
+    assert capacity_factor(reactor, [167e6 * 1.00005]) == 1.0
+    assert capacity_factor(reactor, [-1.0]) == 0.0
 
 
 def test_a_facility_under_construction_owes_no_om() -> None:

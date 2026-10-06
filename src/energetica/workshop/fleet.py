@@ -59,19 +59,26 @@ def is_operating(owned: OwnedFacility, *, current_round: int) -> bool:
     return not left.under_construction and left.rounds > 0
 
 
+# How far, as a share of its maximum output, a facility's output may stray outside 0 to that maximum
+# before :func:`capacity_factor` rejects it. It allows for rounding in the simulation.
+PRODUCTION_TOLERANCE = 1e-4
+
+
 def capacity_factor(owned: OwnedFacility, production: Sequence[float]) -> float:
     """How much of its maximum output ``owned`` produced on average, from 0 to 1.
 
     ``production`` is its output in W, sampled at evenly spaced time steps. For storage, that is the
-    power it discharges. Raises :class:`ValueError` if it is empty, or if a sample is below zero or
-    above the facility's maximum output, which would mean the caller simulated it wrongly.
+    power it discharges. Raises :class:`ValueError` if it is empty, or if a sample is further below
+    zero or above the facility's maximum output than :data:`PRODUCTION_TOLERANCE` allows, which would
+    mean the caller simulated it wrongly. Output within the tolerance counts as 0 or the maximum.
     """
     if not production:
         raise ValueError("a capacity factor needs at least one production sample")
     maximum = CATALOG[owned.facility].base_power_generation
-    if not all(0 <= sample <= maximum for sample in production):
+    slack = maximum * PRODUCTION_TOLERANCE
+    if not all(-slack <= sample <= maximum + slack for sample in production):
         raise ValueError(f"{owned.facility} produced outside 0 to its maximum of {maximum} W")
-    return sum(production) / len(production) / maximum
+    return min(max(sum(production) / len(production) / maximum, 0.0), 1.0)
 
 
 def om_owed(owned: OwnedFacility, *, current_round: int, production: Sequence[float]) -> float:
