@@ -27,7 +27,7 @@ def open_workshop_run(config: InstanceConfig) -> WorkshopNetwork:
 
     This is the gate for Workshop behaviour: it checks the Run mode tag and raises
     :class:`NotAWorkshopRunError` for any other mode. Call it once per Run and keep the result.
-    Holding it is the job of the Run's state, which the state-machine ticket (#994) introduces.
+    :meth:`energetica.workshop.session.WorkshopSession.open` does this and holds the result.
     """
     if not isinstance(config.run, WorkshopRun):
         raise NotAWorkshopRunError(f"instance {config.name!r} is a {config.run.mode} Run, not a Workshop Run")
