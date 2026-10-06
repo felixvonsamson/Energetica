@@ -1,13 +1,13 @@
 """Turning a market clearing into money: the rules every mode of play settles the same way.
 
-Pure and player-agnostic, like :mod:`~energetica.sim.market`. Given a :class:`MarketClearing` and the
-length of a tick, :func:`settle_clearing` says what each offer sold, what each demand bought, and what
-must-run power was dumped, along with the money involved. *Applying* that to a player's balance, to the
-facility generation records, or to chart data is the caller's job, because those live in each mode's own
-state.
+Pure and player-agnostic, like :mod:`~energetica.sim.market`. Given a :class:`MarketClearing`, the
+length of a tick and the cost of dumping power, :func:`settle_clearing` says what each offer sold and
+produced, what each demand bought, and what must-run power was dumped, along with the money involved.
+*Applying* that to a player's balance, to the facility generation records, or to chart data is the
+caller's job, because those live in each mode's own state.
 
-The caller chooses the length of a tick. Scaling a representative day up to a season is also the caller's
-job; nothing here knows about it.
+The caller chooses the length of a tick and the dump cost, since each mode of play has its own. Scaling
+a representative day up to a season is also the caller's job; nothing here knows about it.
 """
 
 from __future__ import annotations
@@ -38,9 +38,8 @@ class SaleSettlement:
     quantity: float  # W sold at the market price; 0 when nothing traded
     revenue: float  # money earned for ``quantity``; negative when the market price is negative
     produced: float  # W the facility generated for this offer: what sold, plus what was dumped
-    dumped: float | None = (
-        None  # W of must-run power thrown away; None unless the offer was must-run and not fully sold
-    )
+    # W of must-run power thrown away. None unless the offer was must-run and did not sell in full.
+    dumped: float | None = None
     dump_cost: float = 0.0  # money owed for ``dumped``
 
 

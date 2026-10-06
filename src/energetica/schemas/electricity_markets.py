@@ -17,7 +17,7 @@ from energetica.enums import (
 if TYPE_CHECKING:
     from energetica.freeplay.database.network import Network
 
-from energetica.config.constants import NETWORK_MEMBER_LIMIT
+from energetica.freeplay.constants import NETWORK_MEMBER_LIMIT
 
 
 class ElectricityMarketBase(BaseModel):

@@ -1,6 +1,6 @@
 """Utility functions relating to electricity market networks."""
 
-from energetica.config.constants import NETWORK_MEMBER_LIMIT
+from energetica.freeplay.constants import NETWORK_MEMBER_LIMIT
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine

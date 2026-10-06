@@ -13,9 +13,13 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.identity.accounts import Account
-from energetica.production_update import MIN_PRICE, market_logic
+from energetica.production_update import market_logic
 from energetica.sim.market import init_market, place_ask, place_bid, place_must_run_ask
 from energetica.utils.map_helpers import confirm_location
+
+# The persistent world's price floor, written out rather than imported so these tests also pin it. Its dump
+# cost (5 per MWh) is pinned by the dumping revenue in EXPECTED_DUMPING.
+MIN_PRICE = -5
 
 
 @pytest.fixture
@@ -106,7 +110,8 @@ def test_unsold_must_run_power_is_dumped_and_paid_for(players: tuple[Player, Pla
 
 
 # Player ids are 1 and 2 because each test builds a fresh engine. The clearing is at 30 with 120 MW cleared:
-# player 1's must-run 60 MW and 60 of its 100 MW coal offer sell (and count as its generation), player 2 buys all 120 MW, and player 1's
+# player 1's must-run 60 MW and 60 of its 100 MW coal offer sell (and count as its generation),
+# player 2 buys all 120 MW, and player 1's
 # 40 MW construction bid (priced below the market) is curtailed to zero, which is why it is absent below.
 EXPECTED_CURTAILED: dict = {
     "price": 30,

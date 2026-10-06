@@ -23,17 +23,15 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.identity.accounts import Account
 from energetica.init_test_players import add_asset
-from energetica.production_update import (
-    MIN_PRICE,
-    calculate_generation_with_market,
-    calculate_generation_without_market,
-)
+from energetica.production_update import calculate_generation_with_market, calculate_generation_without_market
 from energetica.sim.market import init_market
 from energetica.utils.map_helpers import confirm_location
 
 STEAM = ControllableFacilityType.STEAM_ENGINE
 COAL = ControllableFacilityType.COAL_BURNER
 BATTERY = StorageFacilityType.LITHIUM_ION_BATTERIES
+# The persistent world's price floor, written out rather than imported so these tests also pin it.
+MIN_PRICE = -5
 
 
 @pytest.fixture

@@ -118,28 +118,31 @@ def test_must_run_power_priced_above_the_market_is_dumped_in_full() -> None:
 def test_must_run_offers_at_player_prices_settle_wherever_they_sit_in_the_merit_order() -> None:
     """Workshop's case: renewables are must-run at prices players chose, beside ordinary offers.
 
-    80 MW is bid. The 50 MW at 10 clears, and wind (must-run at 20) is the marginal offer: it sells 30 MW
-    and dumps 20. Nothing after it sells: the ordinary offer at 30 sells and dumps nothing, and solar
-    (must-run at 40) dumps all 30 MW. Dumping costs 25 per MWh, as in Workshop.
+    100 MW is bid. Hydro (must-run at Workshop's floor of -25) and the 50 MW of gas at 10 clear. Wind
+    (must-run at 20) is the marginal offer: it sells 30 MW and dumps 20. Nothing after it sells: the
+    ordinary offer at 30 sells and dumps nothing, and solar (must-run at 40) dumps all 30 MW. Dumping
+    costs 25 per MWh, as in Workshop.
     """
     clearing = clear_market(
         [
+            _offer(20, -25, player_id=5, facility="hydro", must_run=True),
             _offer(50, 10, facility="gas"),
             _offer(50, 20, player_id=3, facility="wind", must_run=True),
             _offer(50, 30, facility="coal"),
             _offer(30, 40, player_id=4, facility="solar", must_run=True),
         ],
-        [_demand(80, 25), _demand(10, -25, facility="opportunistic")],
+        [_demand(100, 25)],
     )
 
     sales = settle_clearing(clearing, SECONDS_PER_TICK, dump_cost_per_mwh=25).sales
 
-    assert [(s.facility, s.quantity, s.dumped) for s in sales] == [
-        ("gas", 50, None),
-        ("wind", 30, 20),
-        ("solar", 0, 30),
+    assert [(s.facility, s.quantity, s.dumped, s.produced) for s in sales] == [
+        ("hydro", 20, None, 20),
+        ("gas", 50, None, 50),
+        ("wind", 30, 20, 50),
+        ("solar", 0, 30, 30),
     ]
-    _, wind, solar = sales
+    _, _, wind, solar = sales
     assert wind.dump_cost == pytest.approx(20 * 25 / 1_000_000)
     assert solar.dump_cost == pytest.approx(30 * 25 / 1_000_000)
 

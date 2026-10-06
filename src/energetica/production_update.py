@@ -22,6 +22,7 @@ from energetica.enums import (
     WorkerType,
     power_facility_types,
 )
+from energetica.freeplay.constants import DUMP_COST, MIN_PRICE
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
 from energetica.freeplay.database.network import Network
@@ -54,13 +55,6 @@ from energetica.sim.renewables import (
 )
 from energetica.sim.settlement import settle_clearing
 from energetica.utils import network_helpers
-
-#: The lowest price an offer can carry in the persistent world. Generation that must run regardless of price
-#: (renewables, the minimum output a controllable facility cannot ramp below) is offered here so it always
-#: sits first in the merit order. Players' own prices must stay above it.
-MIN_PRICE = -5
-#: What dumping unsold must-run power costs its owner, per MWh. Selling at :data:`MIN_PRICE` costs the same.
-DUMP_COST = 5
 
 
 def update_electricity() -> None:
@@ -412,6 +406,23 @@ def reset_resource_reservations() -> dict[Fuel, float]:
     return {fuel: 0.0 for fuel in Fuel}
 
 
+def offer_must_run_output(new_values: dict, market: dict, player: Player) -> dict[str, float]:
+    """Offer at :data:`MIN_PRICE` the output each facility must produce this tick, and return those amounts.
+
+    Must-run output is what renewables get from the weather, and the least a controllable or storage
+    facility can produce given how fast it can ramp down. It becomes generation only once the market has
+    cleared, in :func:`market_logic`, whether it sells or is dumped.
+    """
+    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
+    renewables_generation(player, must_run_output)
+    # TODO (Felix): Renewables_generation() should be included in minimal_generation()
+    minimal_generation(player, must_run_output, reset_resource_reservations())
+    for facility in (*StorageFacilityType, *power_facility_types):
+        if facility in player.capacities:
+            place_must_run_ask(market, player.id, must_run_output[facility], MIN_PRICE, facility)
+    return must_run_output
+
+
 def calculate_generation_without_market(new_values: dict, player: Player) -> float:
     """
     Calculate the generation of a player that is not part of a network.
@@ -421,21 +432,8 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     """
     # --- Initialization ---
     internal_market = init_market()
-    # What each facility must produce this tick. It becomes generation only once the market has settled.
-    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
     demand = new_values[player.id]["demand"]
-    resource_reservations = reset_resource_reservations()
-
-    # generation of non controllable facilities is calculated from weather data.
-    renewables_generation(player, must_run_output)
-    # TODO (Felix): Renewables_generation() should be included in minimal_generation()
-    minimal_generation(player, must_run_output, resource_reservations)
-    # Obligatory generation is put on the internal market at the minimum price
-    for facility in (*StorageFacilityType, *power_facility_types):
-        if facility in player.capacities:
-            internal_market = place_must_run_ask(
-                internal_market, player.id, must_run_output[facility], MIN_PRICE, facility
-            )
+    must_run_output = offer_must_run_output(new_values, internal_market, player)
 
     # demands are demanded on the internal market
     for bid_type in player.network_prices.bid_prices.keys():
@@ -469,18 +467,12 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
 
 
 def calculate_generation_with_market(new_values: dict, market: dict, player: Player) -> dict:
-    """Calculate the generation of a player that is part of a network (before market logic)."""
-    # What each facility must produce this tick. It becomes generation only once the market has settled.
-    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
-    demand = new_values[player.id]["demand"]
-    resource_reservations = reset_resource_reservations()
+    """Place a networked player's offers and bids on the network's market.
 
-    renewables_generation(player, must_run_output)
-    minimal_generation(player, must_run_output, resource_reservations)
-    # offer minimal generation capacities of facilities on the market at a negative price
-    for facility in (*StorageFacilityType, *power_facility_types):
-        if player.capacities.get(facility) is not None:
-            market = place_must_run_ask(market, player.id, must_run_output[facility], MIN_PRICE, facility)
+    Generation is not recorded here. :func:`market_logic` records it once the market has cleared.
+    """
+    demand = new_values[player.id]["demand"]
+    must_run_output = offer_must_run_output(new_values, market, player)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
