@@ -1,12 +1,14 @@
 /**
  * The prices a Workshop player offers their facilities' power at (#1002): which
- * facility types get a price in the panel, and reading a price typed into it.
+ * facility types get a price in the panel, how much of each the player has
+ * installed, and reading a price typed into it.
  */
 
 import type { ApiSchema } from "@/types/api-helpers";
 
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
 type FacilityId = ApiSchema<"FacilityId">;
+type WorkshopFacility = ApiSchema<"WorkshopFacility">;
 
 /**
  * The facility types the player has operating, each once, in the order first
@@ -14,10 +16,46 @@ type FacilityId = ApiSchema<"FacilityId">;
  * price.
  */
 export function pricedFacilities(fleet: OwnedFacility[]): FacilityId[] {
-    const operating = fleet
-        .filter((owned) => !owned.under_construction && owned.rounds_left > 0)
-        .map((owned) => owned.facility);
-    return [...new Set(operating)];
+    return [
+        ...new Set(fleet.filter(isOperating).map((owned) => owned.facility)),
+    ];
+}
+
+/** Whether `owned` works this Round: built, and not yet retired. */
+function isOperating(owned: OwnedFacility): boolean {
+    return !owned.under_construction && owned.rounds_left > 0;
+}
+
+/** How much of one facility type a player has operating. */
+export interface InstalledCapacity {
+    /** In W. */
+    power: number;
+    /** In Wh, or null if the type is not storage. */
+    energy: number | null;
+}
+
+/**
+ * The power, and for storage the energy, of every operating copy of `id` in
+ * `fleet`. `facility` is that type's catalog entry.
+ */
+export function installedCapacity(
+    facility: Pick<
+        WorkshopFacility,
+        "base_power_generation" | "base_storage_capacity"
+    >,
+    fleet: OwnedFacility[],
+    id: FacilityId,
+): InstalledCapacity {
+    const copies = fleet.filter(
+        (owned) => owned.facility === id && isOperating(owned),
+    ).length;
+    return {
+        power: copies * facility.base_power_generation,
+        energy:
+            facility.base_storage_capacity === null
+                ? null
+                : copies * facility.base_storage_capacity,
+    };
 }
 
 export type ParsedPrice =

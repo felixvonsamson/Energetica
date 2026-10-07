@@ -3,12 +3,12 @@
  * is in it, and the countdown on the running phase (#996). The facilitator also
  * gets the buttons that advance the session and extend the phase. A player gets
  * a link to the facility page (#998) and the button that opens the
- * price-setting panel (#1002), which shows a dot while the price-setting window
- * is open.
+ * price-setting panel (#1002), which shows a clock badge while the
+ * price-setting window is open.
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Factory, Tags } from "lucide-react";
+import { ChevronRight, Clock, Factory, Tags } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
@@ -127,8 +127,10 @@ function PricesButton({
             {windowOpen && (
                 <span
                     aria-label="Price-setting window open"
-                    className="absolute top-1 right-1 size-2 animate-pulse rounded-full bg-brand"
-                />
+                    className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-brand text-fg-on-brand shadow-sm"
+                >
+                    <Clock className="size-2.5" strokeWidth={2.75} />
+                </span>
             )}
         </Button>
     );

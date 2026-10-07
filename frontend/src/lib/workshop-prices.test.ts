@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePrice, pricedFacilities } from "./workshop-prices";
+import {
+    installedCapacity,
+    parsePrice,
+    pricedFacilities,
+} from "./workshop-prices";
 
 const owned = (
     facility: "gas_burner" | "nuclear_reactor" | "lithium_ion_batteries",
@@ -61,5 +65,51 @@ describe("parsePrice", () => {
             ok: false,
             reason: "invalid",
         });
+    });
+});
+
+describe("installedCapacity", () => {
+    const batteries = {
+        base_power_generation: 86e6,
+        base_storage_capacity: 3.2e9,
+    };
+    const gas = { base_power_generation: 11e6, base_storage_capacity: null };
+
+    it("adds up the power of every operating copy", () => {
+        expect(
+            installedCapacity(
+                gas,
+                [
+                    owned("gas_burner"),
+                    owned("gas_burner"),
+                    owned("gas_burner", { rounds_left: 0 }),
+                    owned("nuclear_reactor"),
+                ],
+                "gas_burner",
+            ),
+        ).toEqual({ power: 22e6, energy: null });
+    });
+
+    it("adds up the energy storage holds", () => {
+        expect(
+            installedCapacity(
+                batteries,
+                [
+                    owned("lithium_ion_batteries"),
+                    owned("lithium_ion_batteries"),
+                ],
+                "lithium_ion_batteries",
+            ),
+        ).toEqual({ power: 172e6, energy: 6.4e9 });
+    });
+
+    it("leaves out a copy still under construction", () => {
+        expect(
+            installedCapacity(
+                gas,
+                [owned("gas_burner", { under_construction: true })],
+                "gas_burner",
+            ),
+        ).toEqual({ power: 0, energy: null });
     });
 });
