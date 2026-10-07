@@ -1178,3 +1178,22 @@ def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Pat
     om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
     assert plant.om == pytest.approx(om)
     assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om)
+
+
+def test_a_failed_simulation_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+
+    def unreadable_curve() -> None:
+        raise OSError("the demand curve cannot be read")
+
+    monkeypatch.setattr(session_module, "national_demand_curve", unreadable_curve)
+    with pytest.raises(OSError):
+        session.close_price_setting()
+    monkeypatch.undo()
+
+    alice = session.network.members[1]
+    assert (alice.trading_results, alice.locked_prices) == ([], [])
+    assert session.demand_amplitude is None
+    assert session.close_price_setting()
+    assert len(alice.locked_prices) == 1

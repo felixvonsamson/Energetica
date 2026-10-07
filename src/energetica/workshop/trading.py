@@ -22,7 +22,8 @@ per Run. Only the day's settlement is scaled. O&M is already one Trading period'
 energy is what the storage really holds at the end of the day.
 
 A clearing where the must-serve demand tier goes unserved is a blackout. Its clearing price would be the
-must-serve bid, ``math.inf``, so it settles at :data:`BLACKOUT_PRICE` instead. The exact price matters
+must-serve bid, ``math.inf``, so it settles at :data:`BLACKOUT_PRICE` instead. So does a clearing where
+supply exactly meets must-serve demand, which also clears at that bid without being a blackout. The exact price matters
 little, since a blackout resets every player's money anyway (#992 §8). What a blackout does to the
 session is #1005's job; here it is only reported.
 """
@@ -81,7 +82,7 @@ RENEWABLE_CATEGORIES = frozenset(
     {FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.CSP, FacilityCategory.HYDRO}
 )
 
-#: The price per MWh a blackout clearing settles at, in place of the unbounded must-serve bid.
+#: The price per MWh a clearing settles at when it would clear at the unbounded must-serve bid.
 BLACKOUT_PRICE = 1000.0
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
@@ -326,8 +327,8 @@ def simulate_trading_period(
             pool.place(market, day * SECONDS_PER_DAY + clearing * seconds_per_tick, weather, seconds_per_tick)
         demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
         result = clear_market(market["capacities"], market["demands"] + demand_block)
-        if _is_blackout(result):
-            blackout = True
+        blackout = blackout or _is_blackout(result)
+        if not math.isfinite(result.price):
             result = dataclasses.replace(result, price=BLACKOUT_PRICE)
         settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
         sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}

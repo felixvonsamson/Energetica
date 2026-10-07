@@ -574,13 +574,26 @@ class WorkshopSession:
         if self.settled_period == period:
             return False
         players = self.network.players()
+        demand_amplitude = self.demand_amplitude
+        if demand_amplitude is None:
+            demand_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+        # Simulated before anything changes, so a failure here leaves the session as it was.
+        # A blackout is not acted on yet: what it does to the session is #1005.
+        outcome = simulate_trading_period(
+            [player.bidder() for player in players],
+            round_number=period.round,
+            season=period.season,
+            clearings_per_day=self.levers.clearings_per_day,
+            amplitude=demand_amplitude,
+            curve=national_demand_curve(),
+            weather=representative_weather(self.weather_seed),
+        )
         before = [
             (player.money, list(player.locked_prices), dict(player.stored_energy), list(player.trading_results))
             for player in players
         ]
-        demand_amplitude, settled_period = self.demand_amplitude, self.settled_period
-        if self.demand_amplitude is None:
-            self.demand_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+        previous_amplitude, settled_period = self.demand_amplitude, self.settled_period
+        self.demand_amplitude = demand_amplitude
         for player in players:
             operating = {
                 owned.facility for owned in player.owned_facilities if is_operating(owned, current_round=period.round)
@@ -589,16 +602,6 @@ class WorkshopSession:
                 player.locked_prices.append(
                     LockedPrices(round=period.round, season=period.season, prices=player.prices.only(operating))
                 )
-        # A blackout is not acted on yet: what it does to the session is #1005.
-        outcome = simulate_trading_period(
-            [player.bidder() for player in players],
-            round_number=period.round,
-            season=period.season,
-            clearings_per_day=self.levers.clearings_per_day,
-            amplitude=self.demand_amplitude,
-            curve=national_demand_curve(),
-            weather=representative_weather(self.weather_seed),
-        )
         for player in players:
             player.stored_energy = outcome.stored_energy[player.account_id]
             result = outcome.results.get(player.account_id)
@@ -613,7 +616,7 @@ class WorkshopSession:
             for player, (money, locked_prices, stored_energy, trading_results) in zip(players, before, strict=True):
                 player.money, player.locked_prices = money, locked_prices
                 player.stored_energy, player.trading_results = stored_energy, trading_results
-            self.demand_amplitude, self.settled_period = demand_amplitude, settled_period
+            self.demand_amplitude, self.settled_period = previous_amplitude, settled_period
             raise
         return True
 

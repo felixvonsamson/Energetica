@@ -255,6 +255,16 @@ def test_unserved_must_serve_demand_is_a_blackout_and_settles_at_the_blackout_pr
     assert (wind.sold, wind.dumped) == (pytest.approx(3.3e6 * _HOURS * SEASON_DAYS), 0)
 
 
+def test_supply_exactly_meeting_must_serve_demand_settles_at_the_blackout_price() -> None:
+    # Wind at 8/11 of its 11 MW gives exactly the 8 MW of must-serve demand, so the market clears at the
+    # unbounded must-serve bid without leaving any of it unserved.
+    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=8 / 11)
+
+    assert not outcome.blackout
+    wind = outcome.results[1].facilities[WIND]
+    assert wind.revenue == pytest.approx(_mwh_value(8, BLACKOUT_PRICE))
+
+
 def test_a_player_with_nothing_operating_gets_no_result() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}), _bidder(player_id=2))
 
