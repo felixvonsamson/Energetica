@@ -172,9 +172,9 @@ def test_roster_rejects_a_non_admin(instance_json: Path) -> None:
     assert client.delete(f"{ROSTER_URL}/alice").status_code == 403
 
 
-def test_roster_splits_joined_and_invited(instance_json: Path) -> None:
-    """ "alice" has settled (joined, settled_at set); "bob" is on the roster via the add endpoint
-    but has never settled (invited, settled_at null).
+def test_roster_lists_members_whether_or_not_they_have_settled(instance_json: Path) -> None:
+    """ "alice" has settled; "bob" is on the roster via the add endpoint but has never settled.
+    The roster is one allowlist, so both are listed the same way.
     """
     from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
@@ -191,7 +191,7 @@ def test_roster_splits_joined_and_invited(instance_json: Path) -> None:
     response = client.get(ROSTER_URL)
 
     assert response.status_code == 200
-    assert response.json() == {"joined": ["alice"], "invited": ["bob"]}
+    assert response.json() == {"members": ["bob", "alice"]}
 
 
 def test_roster_get_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
@@ -237,7 +237,7 @@ def test_roster_candidates_does_not_require_a_private_instance(instance_json: Pa
     assert response.json() == {"usernames": ["carol"]}
 
 
-def test_roster_post_adds_an_existing_account_and_it_appears_as_invited(instance_json: Path) -> None:
+def test_roster_post_adds_an_existing_account_to_the_roster(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
     alice_id = make_account("alice", "pw")
     _join(alice_id)  # already on the roster, unsettled
@@ -247,7 +247,7 @@ def test_roster_post_adds_an_existing_account_and_it_appears_as_invited(instance
 
     assert response.status_code == 204
     assert accounts.has_joined(account_id=carol_id, slug=SLUG) is True
-    assert client.get(ROSTER_URL).json()["invited"] == ["carol", "alice"]
+    assert client.get(ROSTER_URL).json()["members"] == ["carol", "alice"]
 
 
 def test_roster_post_rejects_a_username_with_no_matching_account(instance_json: Path) -> None:
@@ -309,30 +309,6 @@ def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(insta
 
     authenticate(client, carol_id)
     assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
-
-
-def test_roster_readding_a_previously_settled_banned_account_keeps_it_joined(instance_json: Path) -> None:
-    """Ban-then-re-add of a settled account must not strand it labelled "invited" (#1031 follow-up,
-    per review): the account's Player (tile, resources, facilities) never went anywhere, so the
-    roster must show it settled again once re-added, not reset.
-    """
-    from energetica.freeplay.database.map.hex_tile import HexTile
-    from energetica.identity.accounts import Account
-    from energetica.utils.map_helpers import confirm_location
-
-    client = _facilitator_client(instance_json)
-    carol_id = make_account("carol", "pw")
-    confirm_location(
-        Account(account_id=carol_id, username="carol", pwhash="unused", email=None, created_at=""), HexTile.getitem(1)
-    )
-    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
-
-    assert client.delete(f"{ROSTER_URL}/carol").status_code == 204  # ban
-    assert accounts.has_joined(account_id=carol_id, slug=SLUG) is False
-
-    assert client.post(ROSTER_URL, json={"username": "carol"}).status_code == 204  # re-add
-
-    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
 
 
 def test_roster_delete_is_a_noop_for_an_unlisted_username(instance_json: Path) -> None:
