@@ -54,13 +54,14 @@ from energetica.sim.renewables import (
     solar_power_fraction,
     wind_power_fraction,
 )
-from energetica.sim.settlement import MIN_SETTLED_QUANTITY, settle_clearing
+from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, settle_clearing
 from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.prices import DUMP_COST, PriceSheet, is_storage
 from energetica.workshop.seasons import SEASONS, Season
 
+SECONDS_PER_HOUR = 3_600
 SECONDS_PER_DAY = 86_400
 
 #: How many days one simulated day stands for: an average season, 365/4 (#992 §2).
@@ -92,20 +93,18 @@ def representative_weather(seed: int) -> Weather:
     river_year = len(RIVER_FLOW_SPEED_SEASONAL)
 
     def weather(facility: FacilityId, seconds: float) -> float:
-        # ``sim.renewables`` computes with numpy, so its results are numpy floats. Saved results need plain ones.
-        return float(share(facility, seconds))
-
-    def share(facility: FacilityId, seconds: float) -> float:
         match CATALOG[facility].category:
             case FacilityCategory.WIND:
-                return wind_power_fraction(calculate_wind_speed(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR))
+                share = wind_power_fraction(calculate_wind_speed(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR))
             case FacilityCategory.PV | FacilityCategory.CSP:
                 irradiance = calculate_solar_irradiance(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR)[0]
-                return solar_power_fraction(irradiance)
+                share = solar_power_fraction(irradiance)
             case FacilityCategory.HYDRO:
-                return hydro_power_fraction(calculate_river_speed(seconds * river_year / DAYS_PER_YEAR, river_year))
+                share = hydro_power_fraction(calculate_river_speed(seconds * river_year / DAYS_PER_YEAR, river_year))
             case _:
                 raise ValueError(f"{facility} does not follow the weather")
+        # ``sim.renewables`` computes with numpy, so its results are numpy floats. Saved results need plain ones.
+        return float(share)
 
     return weather
 
@@ -226,14 +225,16 @@ class _Pool:
             fuel = fuel_power_limit(self.power, ())
             place_headroom_ask(market, self.player_id, 0.0, _unramped(fuel, self.power), self.sell_price, name)
 
-    def record(self, produced: float, dumped: float, revenue: float, dump_cost: float, seconds_per_tick: float) -> None:
-        """Record what this clearing sold of the pool's offer."""
-        hours = seconds_per_tick / 3600
+    def record(self, sale: SaleSettlement | None, seconds_per_tick: float) -> None:
+        """Record what this clearing sold of the pool's offer, or that it produced nothing if ``sale`` is None."""
+        hours = seconds_per_tick / SECONDS_PER_HOUR
+        produced = sale.power_produced if sale is not None else 0.0
         self.production.append(produced)
-        self.sold += (produced - dumped) * hours
-        self.dumped += dumped * hours
-        self.revenue += revenue
-        self.dump_cost += dump_cost
+        if sale is not None:
+            self.sold += sale.power_sold * hours
+            self.dumped += sale.power_dumped * hours
+            self.revenue += sale.revenue
+            self.dump_cost += sale.dump_cost
         if self.buy_price is not None:
             self.stored_energy = max(0.0, self.stored_energy - produced * hours / self.efficiency**0.5)
         else:
@@ -242,7 +243,7 @@ class _Pool:
 
     def record_purchase(self, bought: float, cost: float, seconds_per_tick: float) -> None:
         """Record what this clearing bought of the pool's bid to charge."""
-        hours = seconds_per_tick / 3600
+        hours = seconds_per_tick / SECONDS_PER_HOUR
         self.bought += bought * hours
         self.purchase_cost += cost
         self.stored_energy = min(self.capacity, self.stored_energy + bought * hours * self.efficiency**0.5)
@@ -251,7 +252,7 @@ class _Pool:
         """The pool's performance over the Trading period: the day scaled to the season, plus its O&M."""
         per_facility = [output / len(self.owned) for output in self.production]
         return FacilityPerformance(
-            generation=sum(self.production) * seconds_per_tick / 3600 * SEASON_DAYS,
+            generation=sum(self.production) * seconds_per_tick / SECONDS_PER_HOUR * SEASON_DAYS,
             sold=self.sold * SEASON_DAYS,
             dumped=self.dumped * SEASON_DAYS,
             bought=self.bought * SEASON_DAYS,
@@ -323,17 +324,13 @@ def simulate_trading_period(
         if _is_blackout(result):
             blackout = True
             for pool in pools.values():
-                pool.record(0.0, 0.0, 0.0, 0.0, seconds_per_tick)
+                pool.record(None, seconds_per_tick)
             continue
 
         settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
         sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
         for key, pool in pools.items():
-            sale = sales.get(key)
-            if sale is None:
-                pool.record(0.0, 0.0, 0.0, 0.0, seconds_per_tick)
-            else:
-                pool.record(sale.power_produced, sale.power_dumped, sale.revenue, sale.dump_cost, seconds_per_tick)
+            pool.record(sales.get(key), seconds_per_tick)
         for purchase in settlement.purchases:
             pool = pools.get((purchase.player_id, purchase.facility))
             if pool is not None:
@@ -347,13 +344,11 @@ def simulate_trading_period(
         for player_id, facilities in performances.items()
     }
 
+    # A storage type with nothing operating keeps the energy it had. Pools that are not storage hold none.
     stored_energy = {}
     for bidder in bidders:
-        energy = dict(bidder.stored_energy)
-        energy.update(
-            {pool.facility: pool.stored_energy for pool in pools.values() if pool.player_id == bidder.player_id}
-        )
-        energy = {facility: amount for facility, amount in energy.items() if is_storage(facility)}
+        ended = {pool.facility: pool.stored_energy for pool in pools.values() if pool.player_id == bidder.player_id}
+        energy = {**bidder.stored_energy, **ended}
         stored_energy[bidder.player_id] = {facility: amount for facility, amount in energy.items() if amount > 0}
 
     return TradingOutcome(results=results, stored_energy=stored_energy, blackout=blackout)

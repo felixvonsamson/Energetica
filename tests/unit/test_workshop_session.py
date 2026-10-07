@@ -38,9 +38,21 @@ from energetica.workshop.session import (
 from energetica.workshop import session as session_module
 from energetica.workshop.setup import NotAWorkshopRunError
 from energetica.sim.national_demand import national_demand_curve
-from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
+from energetica.workshop.demand_block import (
+    PER_PLAYER_BASE_AMPLITUDE,
+    SettlementPeriod,
+    nominal_demand,
+    round_one_amplitude,
+)
+from energetica.workshop.fleet import om_owed
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
-from energetica.workshop.trading import Bidder, TradingOutcome, representative_weather, simulate_trading_period
+from energetica.workshop.trading import (
+    REPRESENTATIVE_DAYS,
+    Bidder,
+    TradingOutcome,
+    representative_weather,
+    simulate_trading_period,
+)
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -1137,3 +1149,32 @@ def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: p
     assert (alice.trading_results, alice.locked_prices) == ([], [])
     assert session.demand_amplitude is None
     assert session.close_price_setting()
+
+
+def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Path, clock: _Clock) -> None:
+    # Two combined cycles (108 MW) asking 100 meet every tier of demand willing to pay at least 100: 125% of
+    # nominal demand, which never exceeds 96 MW for one player. Above them the next tier pays only 24, so
+    # every hourly clearing sells 1.25 x nominal demand at 100.
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+    session.join(_account(1, "alice")).owned_facilities.extend(plants)
+    session.advance()
+    session.advance()
+    session.set_price(1, FacilityId.COMBINED_CYCLE, "sell", 100.0)
+    clock.tick(minutes=5)
+
+    session.close_price_setting()
+
+    amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=1)
+    day = REPRESENTATIVE_DAYS["spring"]
+    hourly = [
+        1.25 * nominal_demand(amplitude, national_demand_curve(), SettlementPeriod(day, hour, 24)) for hour in range(24)
+    ]
+    alice = session.network.members[1]
+    [result] = alice.trading_results
+    plant = result.facilities[FacilityId.COMBINED_CYCLE]
+    assert plant.sold == pytest.approx(sum(hourly) * 365 / 4)
+    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 365 / 4)
+    om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
+    assert plant.om == pytest.approx(om)
+    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om)

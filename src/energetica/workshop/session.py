@@ -47,7 +47,7 @@ from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
-from energetica.workshop.trading import Bidder, TradingResult, representative_weather, simulate_trading_period
+from energetica.workshop.trading import TradingResult, representative_weather, simulate_trading_period
 from energetica.workshop.unlocks import available_facilities
 
 if TYPE_CHECKING:
@@ -377,9 +377,9 @@ class WorkshopSession:
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
         any selection still waiting, so none is lost if the moderator advances before the timer has
         run out or before the purchase at its end has happened. Leaving a Trading period settles it, if
-        its window has not already closed and settled it. Starting a new Round's Investment phase retires every facility whose lifetime
-        has ended. Raises
-        :class:`SessionFinishedError` once the session is :class:`Finished`.
+        its window has not already closed and settled it. Starting a new Round's Investment phase
+        retires every facility whose lifetime has ended. Raises :class:`SessionFinishedError` once the
+        session is :class:`Finished`.
         """
         with self._lock:
             checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
@@ -568,7 +568,8 @@ class WorkshopSession:
         player with nothing operating gets neither a price record nor a result. The first Trading period
         settled also fixes the demand block's amplitude from the headcount.
 
-        It is saved with the session at ``checkpoint`` with ``phase_timer``. The caller holds the lock.
+        It is saved with the session at ``checkpoint`` with ``phase_timer``, even if no player had anything
+        operating, since the session must remember that the period is settled. The caller holds the lock.
         """
         if self.settled_period == period:
             return False
@@ -577,7 +578,7 @@ class WorkshopSession:
             (player.money, list(player.locked_prices), dict(player.stored_energy), list(player.trading_results))
             for player in players
         ]
-        demand_amplitude = self.demand_amplitude
+        demand_amplitude, settled_period = self.demand_amplitude, self.settled_period
         if self.demand_amplitude is None:
             self.demand_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
         for player in players:
@@ -590,10 +591,7 @@ class WorkshopSession:
                 )
         # A blackout is not acted on yet: what it does to the session is #1005.
         outcome = simulate_trading_period(
-            [
-                Bidder(player.account_id, player.owned_facilities, player.prices, player.stored_energy)
-                for player in players
-            ],
+            [player.bidder() for player in players],
             round_number=period.round,
             season=period.season,
             clearings_per_day=self.levers.clearings_per_day,
@@ -615,8 +613,7 @@ class WorkshopSession:
             for player, (money, locked_prices, stored_energy, trading_results) in zip(players, before, strict=True):
                 player.money, player.locked_prices = money, locked_prices
                 player.stored_energy, player.trading_results = stored_energy, trading_results
-            self.demand_amplitude = demand_amplitude
-            self.settled_period = None
+            self.demand_amplitude, self.settled_period = demand_amplitude, settled_period
             raise
         return True
 

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
-from energetica.workshop.trading import TradingResult
+from energetica.workshop.trading import Bidder, TradingResult
 
 if TYPE_CHECKING:
     from energetica.workshop.network import WorkshopNetwork
@@ -70,6 +70,10 @@ class WorkshopPlayer:
     def selection_cost(self) -> float:
         """What the selection costs to buy, in full."""
         return sum(CATALOG[facility].base_price for facility in self.selection)
+
+    def bidder(self) -> Bidder:
+        """What the Trading-period engine needs to know about this player (#1003)."""
+        return Bidder(self.account_id, self.owned_facilities, self.prices, self.stored_energy)
 
     def __repr__(self) -> str:
         """A short repr. The default one would recurse through ``network``, which holds this player."""
