@@ -50,6 +50,8 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     // --- Workshop ---
     WORKSHOP_SESSION_FINISHED:
         "The session is over, so there is nothing left to advance to.",
+    WORKSHOP_NO_PHASE_RUNNING:
+        "No phase is running, so there is no time to extend.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

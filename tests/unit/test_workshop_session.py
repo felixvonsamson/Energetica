@@ -4,17 +4,20 @@ Round → Investment → four Trading periods → Recap, and the saved copy that
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
+from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
     Finished,
     Investment,
+    NoPhaseRunningError,
     NotStarted,
     Recap,
     SessionFinishedError,
@@ -226,3 +229,146 @@ def test_a_failed_save_undoes_the_join(path: Path, monkeypatch: pytest.MonkeyPat
 
 def _failing_write(path: Path, text: str) -> None:
     raise OSError("disk full")
+
+
+# --- phase timers (#996) --------------------------------------------------------------------
+
+
+class _Clock:
+    """A clock the test moves by hand."""
+
+    def __init__(self) -> None:
+        self.now = datetime(2026, 10, 4, 9, 0, tzinfo=timezone.utc)
+
+    def __call__(self) -> datetime:
+        return self.now
+
+    def tick(self, **elapsed: float) -> None:
+        self.now += timedelta(**elapsed)
+
+
+@pytest.fixture
+def clock() -> _Clock:
+    return _Clock()
+
+
+def test_no_phase_is_timed_before_the_session_starts(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    assert session.phase_timer is None
+
+
+def test_the_investment_phase_opens_with_eight_minutes(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    session.advance()
+
+    assert session.phase_timer == PhaseTimer(started_at=clock.now, duration=timedelta(minutes=8))
+
+
+def test_each_trading_period_opens_its_own_five_minute_price_setting_window(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+
+    for _ in SEASONS:
+        clock.tick(minutes=20)
+        session.advance()
+        assert session.phase_timer == PhaseTimer(started_at=clock.now, duration=timedelta(minutes=5))
+
+
+def test_recap_and_the_end_of_the_session_are_not_timed(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=1, clock=clock)
+    for _ in range(6):
+        session.advance()
+    assert session.checkpoint == Recap(round=1)
+    assert session.phase_timer is None
+
+    session.advance()
+
+    assert session.checkpoint == Finished()
+    assert session.phase_timer is None
+
+
+def test_running_out_of_time_does_not_advance_the_session(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+
+    clock.tick(hours=5)
+
+    assert session.checkpoint == Investment(round=1)
+    assert session.phase_timer is not None
+    assert not session.phase_timer.is_active(clock.now)
+
+
+def test_the_moderator_extends_the_running_phase(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+    clock.tick(minutes=7)
+
+    timer = session.extend_phase(timedelta(minutes=2))
+
+    assert session.phase_timer == timer
+    assert timer.remaining(clock.now) == timedelta(minutes=3)
+
+
+def test_a_phase_cannot_be_extended_when_none_is_running(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    with pytest.raises(NoPhaseRunningError):
+        session.extend_phase(timedelta(minutes=1))
+
+
+def test_a_phase_that_has_closed_cannot_be_extended(path: Path, clock: _Clock) -> None:
+    """Once a window closes its results may be computed, so reopening it is not allowed."""
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+    clock.tick(minutes=8)
+
+    with pytest.raises(NoPhaseRunningError):
+        session.extend_phase(timedelta(minutes=1))
+    assert session.phase_timer == PhaseTimer(started_at=clock.now - timedelta(minutes=8), duration=timedelta(minutes=8))
+
+
+def test_advancing_drops_the_previous_phases_extensions(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+    session.extend_phase(timedelta(minutes=4))
+
+    session.advance()
+
+    assert session.phase_timer is not None
+    assert session.phase_timer.extensions == ()
+
+
+def test_a_phase_timer_and_its_extensions_survive_a_restart(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+    session.extend_phase(timedelta(minutes=2))
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    assert reopened.phase_timer == session.phase_timer
+
+
+def test_a_session_saved_before_phase_timers_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, "players": []}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.checkpoint == Recap(round=1)
+    assert reopened.phase_timer is None
+
+
+def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.advance()
+    before = session.phase_timer
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.extend_phase(timedelta(minutes=1))
+
+    assert session.phase_timer == before

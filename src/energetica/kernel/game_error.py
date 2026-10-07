@@ -45,6 +45,7 @@ class GameExceptionType(StrEnum):
     RUN_NOT_FOUND = "RUN_NOT_FOUND"
     # Workshop
     WORKSHOP_SESSION_FINISHED = "WORKSHOP_SESSION_FINISHED"
+    WORKSHOP_NO_PHASE_RUNNING = "WORKSHOP_NO_PHASE_RUNNING"
     # Lifecycle
     INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
     # Technology effects
