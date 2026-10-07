@@ -4,14 +4,14 @@
  * Shown only in a Workshop Run, in place of the persistent world's
  * `GameLayout`, which reads persistent-world data a Workshop Run's backend does
  * not serve. The root route has already entered the Run by the time this
- * renders.
+ * renders, so the socket it opens is admitted.
  */
 
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import { WorkshopTopBar } from "@/components/workshop/workshop-top-bar";
-import { useWorkshopSession } from "@/hooks/use-workshop";
+import { useWorkshopSession, useWorkshopSocket } from "@/hooks/use-workshop";
 
 export const Route = createFileRoute("/app/workshop")({
     component: WorkshopLayout,
@@ -19,6 +19,7 @@ export const Route = createFileRoute("/app/workshop")({
 });
 
 function WorkshopLayout() {
+    useWorkshopSocket();
     const { data: session } = useWorkshopSession();
 
     return (

@@ -2,7 +2,7 @@
 
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
-accounts. Advancing the session is the facilitator's alone.
+accounts. Advancing the session is the facilitator's alone, and tells every open page (#1140).
 """
 
 from __future__ import annotations
@@ -10,10 +10,12 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import WorkshopEntryOut, WorkshopMemberOut, WorkshopPlayerOut, WorkshopSessionOut
 from energetica.workshop.session import SessionFinishedError, WorkshopSession
 
@@ -60,11 +62,18 @@ def get_session_state(_: Annotated[Account, Depends(resolve_entry_account)], ses
     return _session_out(session)
 
 
+# Async so it can send through Socket.IO directly. The advance itself waits on a lock and writes the
+# session file, so it runs on a worker thread to keep the event loop free.
 @router.post("/session/advance")
-def advance_session(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> WorkshopSessionOut:
-    """Move the session to its next checkpoint. Nothing else changes the session's phase."""
+async def advance_session(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request
+) -> WorkshopSessionOut:
+    """Move the session to its next checkpoint, and tell every open page. Nothing else changes the
+    session's phase.
+    """
     try:
-        session.advance()
+        await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_SESSION_FINISHED) from exc
+    await invalidate_session(request)
     return _session_out(session)

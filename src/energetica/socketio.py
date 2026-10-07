@@ -1,11 +1,10 @@
 """
 Socket.IO setup for Energetica.
 
-Mounts a Socket.IO server to the FastAPI app and authenticates connections via a session cookie.
+Mounts a Socket.IO server to the FastAPI app and admits connections through the instance's entry gate.
 """
 
-from http.cookies import SimpleCookie
-from typing import Any, cast
+from typing import Any
 
 import socketio
 from fastapi import FastAPI
@@ -13,8 +12,7 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
-from energetica.kernel.session import SESSION_COOKIE_NAME
-from energetica.identity.web import get_account_from_token, get_role
+from energetica.identity.web import admit_socket_connection, get_role
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -27,18 +25,8 @@ def setup_socketio(app: FastAPI) -> None:
 
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
-        """Authenticate a connecting client via session cookie."""
-        cookie_header = environ.get("HTTP_COOKIE")
-        if cookie_header is None:
-            raise ConnectionRefusedError("authentication failed: no cookies")
-        cookie = SimpleCookie()
-        cookie.load(cast(str, cookie_header))
-        session_token = cookie.get(SESSION_COOKIE_NAME)
-        if session_token is None:
-            raise ConnectionRefusedError("authentication failed: no session token")
-        account = get_account_from_token(cast(str, session_token.value))
-        if account is None:
-            raise ConnectionRefusedError("authentication failed: invalid token")
+        """Admit a connecting player through the same entry gate as the HTTP routes."""
+        account = admit_socket_connection(environ)
         if get_role(account.account_id) != "player":
             raise ConnectionRefusedError("authentication failed: not a player")
 

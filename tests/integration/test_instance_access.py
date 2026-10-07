@@ -23,6 +23,7 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
 from energetica.identity import accounts
 
+from . import _socketio_helpers as socket
 from ._session_helpers import authenticate, make_account
 
 PORT = 8000
@@ -185,3 +186,37 @@ def test_publishes_fragment_on_allowed_entry(configured: Path) -> None:
     manifest = json.loads((configured.parent / "landing" / "instances.json").read_text())
     assert [entry["slug"] for entry in manifest["instances"]] == [SLUG]
     assert "access" not in manifest["instances"][0]
+
+
+# --- the Socket.IO server admits by the same policy (#1142) ----------------------------------
+
+
+def test_socket_refused_for_unjoined_account_on_private_instance(configured: Path) -> None:
+    _write_policy(configured, {"policy": "private"})
+    client = _client()
+    _enter(client, "mallory")
+
+    _, answer = socket.connect(client)
+
+    assert answer == {"message": "INSTANCE_ACCESS_DENIED"}
+
+
+def test_socket_admitted_for_joined_account_on_private_instance(configured: Path) -> None:
+    _write_policy(configured, {"policy": "private"})
+    client = _client()
+    _join(_enter(client, "alice"))
+
+    _, answer = socket.connect(client)
+
+    assert socket.is_admitted(answer)
+
+
+def test_socket_still_refuses_a_facilitator(configured: Path) -> None:
+    """The gate lets a facilitator in, but the persistent world's socket only serves players."""
+    _write_policy(configured, {"policy": "private"})
+    client = _client()
+    accounts.grant_facilitator(account_id=_enter(client, "prof"), slug=SLUG)
+
+    _, answer = socket.connect(client)
+
+    assert answer == {"message": "authentication failed: not a player"}
