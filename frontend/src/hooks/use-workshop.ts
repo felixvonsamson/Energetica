@@ -16,9 +16,12 @@ import { isErrorType } from "@/lib/error-utils";
 import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
 import { phaseDeadline } from "@/lib/workshop-countdown";
+import { withSettlementProgress } from "@/lib/workshop-settlement";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
+type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
+type SettlementProgress = ApiSchema<"WorkshopSettlementOut">;
 
 /** The server's `invalidate` message: the query keys a page should re-read. */
 interface InvalidateMessage {
@@ -281,7 +284,8 @@ function withPrice(
 /**
  * Connect to the Workshop Run's Socket.IO server while mounted (#1140), and
  * re-read the queries its `invalidate` messages name. The server sends one to
- * every open page when the facilitator advances the session.
+ * every open page when the facilitator advances the session. Its
+ * `settlement_progress` messages update the session's simulation progress.
  *
  * Nothing is sent for changes made before the socket connected, or while it was
  * down, so the session is re-read every time it connects.
@@ -293,6 +297,21 @@ export function useWorkshopSocket() {
             for (const queryKey of message.queries) {
                 void queryClient.invalidateQueries({ queryKey });
             }
+        });
+        // Sent after each day while a Trading period is being simulated
+        // (#1155). It carries the progress itself, so only the session's
+        // `settlement` changes. Keeping the session's read time keeps the
+        // phase countdown, which counts from it, where it was.
+        socket.on("settlement_progress", (progress: SettlementProgress) => {
+            const readAt = queryClient.getQueryState(
+                queryKeys.workshop.session,
+            )?.dataUpdatedAt;
+            queryClient.setQueryData(
+                queryKeys.workshop.session,
+                (session: WorkshopSession | undefined) =>
+                    withSettlementProgress(session, progress),
+                { updatedAt: readAt },
+            );
         });
         socket.on("connect", () => {
             void queryClient.invalidateQueries({
