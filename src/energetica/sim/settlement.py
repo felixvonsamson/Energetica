@@ -37,10 +37,14 @@ class SaleSettlement:
     facility: str
     quantity: float  # W sold at the market price; 0 when nothing traded
     revenue: float  # money earned for ``quantity``; negative when the market price is negative
-    produced: float  # W the facility generated for this offer: what sold, plus what was dumped
     # W of must-run power thrown away. None unless the offer was must-run and did not sell in full.
     dumped: float | None = None
     dump_cost: float = 0.0  # money owed for ``dumped``
+
+    @property
+    def produced(self) -> float:
+        """W the facility generated for this offer: what sold, plus what was dumped."""
+        return self.quantity + (self.dumped or 0.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,7 +89,6 @@ def settle_clearing(clearing: MarketClearing, seconds_per_tick: float, dump_cost
                     entry.facility,
                     entry.capacity,
                     energy_value(entry.capacity, price, seconds_per_tick),
-                    entry.capacity,
                 )
             )
             continue
@@ -95,11 +98,9 @@ def settle_clearing(clearing: MarketClearing, seconds_per_tick: float, dump_cost
         if entry.must_run:
             dumped = entry.capacity - traded
             dump_cost = energy_value(dumped, dump_cost_per_mwh, seconds_per_tick)
-            sales.append(
-                SaleSettlement(entry.player_id, entry.facility, traded, revenue, entry.capacity, dumped, dump_cost)
-            )
+            sales.append(SaleSettlement(entry.player_id, entry.facility, traded, revenue, dumped, dump_cost))
         elif not past_marginal_offer:
-            sales.append(SaleSettlement(entry.player_id, entry.facility, traded, revenue, traded))
+            sales.append(SaleSettlement(entry.player_id, entry.facility, traded, revenue))
         past_marginal_offer = True
 
     purchases: list[PurchaseSettlement] = []
