@@ -6,11 +6,7 @@ from pydantic import AwareDatetime, BaseModel, Field
 
 
 class MyRun(BaseModel):
-    """One run the authenticated account has joined, joined with its on-disk fragment.
-
-    ``settled_at`` is ``null`` for a run joined (#1030) but not yet settled in — the account has
-    picked no tile there yet.
-    """
+    """One run the authenticated account has joined, joined with its on-disk fragment."""
 
     slug: str = Field(description="Subdomain slug of the run")
     name: str = Field(description="Human-readable run name, from the instance fragment")
@@ -22,9 +18,6 @@ class MyRun(BaseModel):
         default=None, description="When the process is reaped (freeze → ended), or null for an open-ended run"
     )
     joined_at: AwareDatetime = Field(description="When this account joined the run")
-    settled_at: AwareDatetime | None = Field(
-        default=None, description="When this account settled in the run, or null if not yet"
-    )
 
 
 class FacilitatedRun(BaseModel):
