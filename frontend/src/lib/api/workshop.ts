@@ -1,12 +1,13 @@
 /**
- * Workshop Run API calls (#994, #995, #996, #998, #999). Served only by a
- * Workshop Run's backend.
+ * Workshop Run API calls (#994, #995, #996, #998, #999, #1002). Served only by
+ * a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
+type PriceSide = "sell" | "buy";
 
 export const workshopApi = {
     /**
@@ -85,4 +86,40 @@ export const workshopApi = {
         apiClient.delete<
             ApiResponse<"/api/v1/workshop/selection/{facility}", "delete">
         >(`/workshop/selection/${facility}`),
+
+    /**
+     * The prices the visitor offers their facilities' power at, per MWh, and
+     * the lowest price they can set. Players only.
+     */
+    getPrices: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/prices", "get">>(
+            "/workshop/prices",
+        ),
+
+    /**
+     * Set one of the visitor's prices: what a facility type sells at, or for
+     * storage, what it buys at to charge. Only while a Trading period's
+     * price-setting window is open. Returns all the visitor's prices.
+     */
+    setPrice: ({
+        facility,
+        side,
+        price,
+    }: {
+        facility: FacilityId;
+        side: PriceSide;
+        price: number;
+    }) =>
+        apiClient.put<
+            ApiResponse<"/api/v1/workshop/prices/{facility}/{side}", "put">
+        >(`/workshop/prices/${facility}/${side}`, { price }),
+
+    /**
+     * The prices each completed Trading period ran at for the visitor, oldest
+     * first.
+     */
+    getLockedPrices: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/prices/locked", "get">>(
+            "/workshop/prices/locked",
+        ),
 };

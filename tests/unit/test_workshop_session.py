@@ -14,6 +14,7 @@ from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.phase_timer import PhaseTimer
+from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
@@ -25,6 +26,9 @@ from energetica.workshop.session import (
     NotEnoughMoneyError,
     NotSelectedError,
     NotStarted,
+    NotStorageError,
+    PriceBelowFloorError,
+    PriceSettingClosedError,
     Recap,
     SessionFinishedError,
     TradingPeriod,
@@ -784,3 +788,182 @@ def test_a_failed_save_keeps_the_energy_that_would_be_lost(
         session.advance()
 
     assert session.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
+
+
+# --- price setting (#1002) ------------------------------------------------------------------
+
+GAS = FacilityId.GAS_BURNER
+
+
+def _trading(path: Path, clock: _Clock) -> WorkshopSession:
+    """A session in Round 1's spring Trading period, its price-setting window open. Alice (account 1) owns
+    a gas burner and batteries.
+    """
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice")).owned_facilities.extend(
+        [OwnedFacility(facility=GAS, built_round=1), OwnedFacility(facility=BATTERIES, built_round=1)]
+    )
+    session.advance()
+    session.advance()
+    return session
+
+
+def test_a_player_starts_with_the_default_prices(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert session.join(_account(1, "alice")).prices == DEFAULT_PRICES
+
+
+def test_a_player_changes_prices_while_the_price_setting_window_is_open(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+
+    session.set_price(1, GAS, "sell", 80.0)
+    session.set_price(1, GAS, "sell", 90.0)
+    session.set_price(1, BATTERIES, "buy", 30.0)
+
+    prices = session.network.members[1].prices
+    assert (prices.sell[GAS], prices.buy[BATTERIES]) == (90.0, 30.0)
+
+
+def test_a_price_can_go_down_to_the_floor_but_not_below(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+
+    session.set_price(1, GAS, "sell", PRICE_FLOOR)
+    with pytest.raises(PriceBelowFloorError):
+        session.set_price(1, GAS, "sell", PRICE_FLOOR - 0.01)
+
+    assert session.network.members[1].prices.sell[GAS] == PRICE_FLOOR
+
+
+def test_a_price_has_no_ceiling(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+
+    session.set_price(1, GAS, "sell", 1e12)
+
+    assert session.network.members[1].prices.sell[GAS] == 1e12
+
+
+def test_a_facility_that_is_not_storage_has_no_buy_price(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+
+    with pytest.raises(NotStorageError):
+        session.set_price(1, GAS, "buy", 10.0)
+
+
+@pytest.mark.parametrize("price", [float("nan"), float("inf")])
+def test_a_price_must_be_a_finite_number(path: Path, clock: _Clock, price: float) -> None:
+    session = _trading(path, clock)
+
+    with pytest.raises(PriceBelowFloorError):
+        session.set_price(1, GAS, "sell", price)
+
+
+def test_prices_are_locked_once_the_window_runs_out(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    clock.tick(minutes=5)
+
+    with pytest.raises(PriceSettingClosedError):
+        session.set_price(1, GAS, "sell", 80.0)
+
+    assert session.network.members[1].prices == DEFAULT_PRICES
+
+
+def test_prices_cannot_be_set_outside_a_trading_period(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice"))
+
+    with pytest.raises(PriceSettingClosedError):
+        session.set_price(1, GAS, "sell", 80.0)
+    session.advance()
+    with pytest.raises(PriceSettingClosedError):
+        session.set_price(1, GAS, "sell", 80.0)
+
+
+def test_the_prices_of_a_completed_period_are_kept_for_the_types_the_player_had_operating(
+    path: Path, clock: _Clock
+) -> None:
+    session = _trading(path, clock)
+    session.set_price(1, GAS, "sell", 80.0)
+
+    session.advance()
+
+    assert session.network.members[1].locked_prices == [
+        LockedPrices(
+            round=1,
+            season="spring",
+            prices=PriceSheet(sell={GAS: 80.0, BATTERIES: 940.0}, buy={BATTERIES: 425.0}),
+        )
+    ]
+
+
+def test_the_next_window_starts_from_the_last_periods_prices(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.set_price(1, GAS, "sell", 80.0)
+    session.advance()
+
+    session.set_price(1, BATTERIES, "sell", 700.0)
+    session.advance()
+
+    [spring, summer] = session.network.members[1].locked_prices
+    assert (spring.season, spring.prices.sell) == ("spring", {GAS: 80.0, BATTERIES: 940.0})
+    assert (summer.season, summer.prices.sell) == ("summer", {GAS: 80.0, BATTERIES: 700.0})
+
+
+def test_a_player_with_nothing_operating_keeps_no_prices_for_the_period(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice")).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1)
+    )
+    for _ in range(3):
+        session.advance()
+
+    assert session.network.members[1].locked_prices == []
+
+
+def test_prices_survive_a_restart(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.set_price(1, GAS, "sell", 80.0)
+    session.advance()
+    session.set_price(1, GAS, "sell", 70.0)
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    alice = reopened.network.members[1]
+    assert alice.prices.sell[GAS] == 70.0
+    assert [locked.prices.sell[GAS] for locked in alice.locked_prices] == [80.0]
+
+
+def test_a_session_saved_before_prices_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
+        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    alice = reopened.network.members[1]
+    assert (alice.prices, alice.locked_prices) == (DEFAULT_PRICES, [])
+
+
+def test_a_failed_save_undoes_the_price_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _trading(path, clock)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.set_price(1, GAS, "sell", 80.0)
+
+    assert session.network.members[1].prices == DEFAULT_PRICES
+
+
+def test_an_advance_that_fails_to_save_keeps_no_prices(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = _trading(path, clock)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.advance()
+
+    assert session.checkpoint == TradingPeriod(round=1, season="spring")
+    assert session.network.members[1].locked_prices == []

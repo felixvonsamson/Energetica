@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 
 if TYPE_CHECKING:
     from energetica.workshop.network import WorkshopNetwork
@@ -53,6 +54,13 @@ class WorkshopPlayer:
     # The energy each storage type holds, in Wh, shared by every facility of that type (#1001). A type
     # holding nothing is left out.
     stored_energy: dict[FacilityId, float] = field(default_factory=dict)
+
+    # The prices the player offers at (#1002). They change only while a price-setting window is open,
+    # and carry over from one Trading period to the next.
+    prices: PriceSheet = DEFAULT_PRICES
+
+    # The prices each completed Trading period ran at, oldest first (#1002).
+    locked_prices: list[LockedPrices] = field(default_factory=list)
 
     def selection_cost(self) -> float:
         """What the selection costs to buy, in full."""

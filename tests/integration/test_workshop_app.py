@@ -49,6 +49,8 @@ EXTEND_URL = "/api/v1/workshop/session/phase/extend"
 FACILITIES_URL = "/api/v1/workshop/facilities"
 FLEET_URL = "/api/v1/workshop/fleet"
 SELECTION_URL = "/api/v1/workshop/selection"
+PRICES_URL = "/api/v1/workshop/prices"
+LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -617,6 +619,111 @@ def _wait_for_fleet(client: TestClient, *, size: int) -> None:
     deadline = time.monotonic() + 5
     while len(client.get(FLEET_URL).json()) < size and time.monotonic() < deadline:
         time.sleep(0.01)
+
+
+# --- price setting (#1002) ------------------------------------------------------------------
+
+
+def _trading(session_path: Path, clock: _Clock) -> tuple[TestClient, int, int]:
+    """An app in Round 1's spring Trading period, its price-setting window open. Alice owns a gas burner.
+
+    Returns a client left signed in as Alice, and the facilitator's and Alice's account ids.
+    """
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
+    )
+    client.post(ADVANCE_URL)
+    authenticate(client, alice)
+    return client, facilitator, alice
+
+
+def test_a_player_reads_their_prices_and_the_price_floor(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    response = client.get(PRICES_URL)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["price_floor"] == -25.0
+    assert body["sell"]["gas_burner"] == 500.0
+    assert body["buy"] == {
+        "lithium_ion_batteries": 425.0,
+        "solid_state_batteries": 420.0,
+        "hydrogen_storage": 230.0,
+        "pumped_hydro": 205.0,
+    }
+
+
+def test_a_player_sets_a_price_while_the_window_is_open(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+    response = client.put(f"{PRICES_URL}/lithium_ion_batteries/buy", json={"price": -25.0})
+
+    assert response.status_code == 200
+    assert response.json()["sell"]["gas_burner"] == 80.0
+    assert response.json()["buy"]["lithium_ion_batteries"] == -25.0
+    assert client.get(PRICES_URL).json() == response.json()
+
+
+@pytest.mark.parametrize(
+    ("url", "price", "error"),
+    [
+        (f"{PRICES_URL}/gas_burner/sell", -25.01, "WORKSHOP_PRICE_BELOW_FLOOR"),
+        (f"{PRICES_URL}/gas_burner/buy", 10.0, "WORKSHOP_NOT_STORAGE"),
+    ],
+    ids=["below the floor", "buy price for a facility that is not storage"],
+)
+def test_a_price_the_rules_forbid_is_an_error(
+    session_path: Path, clock: _Clock, url: str, price: float, error: str
+) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    response = client.put(url, json={"price": price})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == error
+
+
+def test_a_price_must_be_given(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": None}).status_code == 422
+    assert client.put(f"{PRICES_URL}/gas_burner/sell", json={}).status_code == 422
+
+
+def test_setting_a_price_once_the_window_runs_out_is_an_error(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+    clock.tick(minutes=5)
+
+    response = client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_PRICE_SETTING_CLOSED"
+
+
+def test_a_completed_periods_prices_can_be_read_back(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+    assert client.get(LOCKED_PRICES_URL).json() == []
+
+    authenticate(client, facilitator)
+    client.post(ADVANCE_URL)
+
+    authenticate(client, alice)
+    assert client.get(LOCKED_PRICES_URL).json() == [
+        {"round": 1, "season": "spring", "prices": {"sell": {"gas_burner": 80.0}, "buy": {}}}
+    ]
+
+
+def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, _ = _trading(session_path, clock)
+    authenticate(client, facilitator)
+
+    assert client.get(PRICES_URL).status_code == 403
+    assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 403
+    assert client.get(LOCKED_PRICES_URL).status_code == 403
 
 
 # --- pushing changes to open pages ---------------------------------------------------------

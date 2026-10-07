@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
+from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.session import Checkpoint
 
 
@@ -107,3 +108,17 @@ class WorkshopOwnedFacilityOut(BaseModel):
             rounds_left=left.rounds,
             under_construction=left.under_construction,
         )
+
+
+class WorkshopPriceIn(BaseModel):
+    """A new price for one facility type, per MWh."""
+
+    price: float = Field(
+        allow_inf_nan=False, description=f"The price per MWh. It has no ceiling, but cannot go below {PRICE_FLOOR}"
+    )
+
+
+class WorkshopPricesOut(PriceSheet):
+    """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
+
+    price_floor: float = Field(description="The lowest price a player can set, per MWh")

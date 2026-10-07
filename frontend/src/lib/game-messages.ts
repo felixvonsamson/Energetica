@@ -57,6 +57,10 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     WORKSHOP_NOT_ENOUGH_MONEY:
         "You don't have enough money to add this to your selection.",
     WORKSHOP_NOT_SELECTED: "This facility isn't in your selection.",
+    WORKSHOP_PRICE_SETTING_CLOSED:
+        "Prices are locked. Wait for the next Trading period.",
+    WORKSHOP_PRICE_BELOW_FLOOR: "This price is below the price floor.",
+    WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
