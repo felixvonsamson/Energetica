@@ -3,8 +3,8 @@
 A phase opens with the duration the moderator configured, and the moderator can give the room more
 time with "+N minutes" while it runs. The only way to end one early is to advance past a Trading
 period whose price-setting window is still open: the window closes so the period can be simulated
-(#1004). When the time runs out
-the session stays where it is: only the moderator's advance moves it on (#994).
+(#1004). When the time runs out the session stays where it is: only the moderator's advance moves it
+on (#994).
 
 :class:`PhaseTimer` is plain data with no clock of its own. Callers pass the current time in, so the
 arithmetic needs no I/O and is the same before and after a restart.

@@ -62,7 +62,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     WORKSHOP_PRICE_BELOW_FLOOR: "This price is below the price floor.",
     WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
     WORKSHOP_SETTLEMENT_RUNNING:
-        "The trading period is still being simulated. Advance once it has finished.",
+        "The Trading period is still being simulated. Advance once it has finished.",
     WORKSHOP_INVALID_LEVERS:
         "These settings can't be combined. Every storage type needs the full-season format.",
 

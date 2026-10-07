@@ -95,7 +95,8 @@ class WorkshopLeversIn(BaseModel):
         default=None, description="How many times a day the market clears from the next Round"
     )
     storage: StorageAvailability | None = Field(
-        default=None, description="Which storage players can buy from the next Round. Every type needs full-season"
+        default=None,
+        description="Which storage players can buy from the next Round. Every type needs the full-season format",
     )
 
 

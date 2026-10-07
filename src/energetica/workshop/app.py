@@ -29,7 +29,14 @@ from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from energetica.workshop.realtime import invalidate_session, setup_socketio
 from energetica.workshop.routes import router as workshop_router
-from energetica.workshop.session import Clock, SettlementJob, SettlementProgress, WorkshopSession, utc_now
+from energetica.workshop.session import (
+    Clock,
+    SettlementCancelledError,
+    SettlementJob,
+    SettlementProgress,
+    WorkshopSession,
+    utc_now,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +131,9 @@ async def _close_phases_when_due(app: FastAPI) -> None:
     """
     session: WorkshopSession = app.state.workshop_session
     phase_check: asyncio.Event = app.state.phase_check
-    # The running simulation, kept so it is not garbage-collected while it runs.
+    # The running simulation. asyncio keeps only a weak reference to a task, so this one keeps it alive.
     simulation: asyncio.Task[None] | None = None
+    job: SettlementJob | None = None
     reported: SettlementProgress | None = None
     try:
         while True:
@@ -135,11 +143,12 @@ async def _close_phases_when_due(app: FastAPI) -> None:
             try:
                 # Each waits on the session's lock and writes the session file, so it runs on a worker thread.
                 changed = await run_in_threadpool(session.buy_selections)
-                job = await run_in_threadpool(session.start_settlement)
+                new_job = await run_in_threadpool(session.start_settlement)
             except Exception:
                 logger.exception("Could not close the Workshop phase. Retrying.")
                 continue
-            if job is not None:
+            if new_job is not None:
+                job = new_job
                 simulation = asyncio.create_task(_settle(app, session, job))
             # Each day the simulation gets through, or its end, is news for the open pages.
             if session.settlement != reported:
@@ -154,6 +163,9 @@ async def _close_phases_when_due(app: FastAPI) -> None:
                 # running for the next phase.
                 logger.exception("Closed the Workshop phase but could not tell the open pages.")
     finally:
+        # Stop the worker thread after the day it is on, so that the app does not wait for the whole run.
+        if job is not None:
+            job.cancelled.set()
         if simulation is not None:
             simulation.cancel()
 
@@ -161,18 +173,23 @@ async def _close_phases_when_due(app: FastAPI) -> None:
 async def _settle(app: FastAPI, session: WorkshopSession, job: SettlementJob) -> None:
     """Simulate ``job``'s Trading period on a worker thread, then settle it.
 
-    If either step fails, the period is left waiting, so the next check starts it again.
+    If the simulation fails, the period is left waiting, so the next check starts it again. If settling
+    fails, such as when the session cannot be saved, it is tried again with the same result until it works.
     """
     try:
         outcome = await run_in_threadpool(session.run_settlement, job)
+    except SettlementCancelledError:
+        return
     except Exception:
         logger.exception("Could not simulate the Workshop Trading period. Retrying.")
         await run_in_threadpool(session.abandon_settlement, job)
         return
-    try:
-        await run_in_threadpool(session.finish_settlement, job, outcome)
-    except Exception:
-        logger.exception("Could not settle the Workshop Trading period. Retrying.")
-    finally:
-        # Tell the open pages now rather than at the next check.
-        app.state.phase_check.set()
+    while True:
+        try:
+            await run_in_threadpool(session.finish_settlement, job, outcome)
+            break
+        except Exception:
+            logger.exception("Could not settle the Workshop Trading period. Retrying.")
+            await asyncio.sleep(PHASE_CHECK_INTERVAL_SECONDS)
+    # Tell the open pages now rather than at the next check.
+    app.state.phase_check.set()

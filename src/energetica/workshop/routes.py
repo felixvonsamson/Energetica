@@ -3,8 +3,8 @@
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session, extending its running phase and changing the levers are the
-facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999) and prices (#1002) are
-theirs alone.
+facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
+and prices (#1002) are theirs alone.
 """
 
 from __future__ import annotations

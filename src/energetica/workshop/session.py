@@ -37,7 +37,7 @@ import random
 import tempfile
 import threading
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal
@@ -167,6 +167,10 @@ class SettlementRunningError(Exception):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
 
+class SettlementCancelledError(Exception):
+    """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
+
+
 class InvalidLeversError(Exception):
     """Raised when changing the levers to values that are not allowed together, or not allowed at all."""
 
@@ -254,6 +258,8 @@ class SettlementJob:
     round_format: RoundFormat
     demand_amplitude: float
     weather_seed: int
+    # Set to stop the simulation after the day it is on.
+    cancelled: threading.Event = field(default_factory=threading.Event)
 
 
 class _SavedPlayer(BaseModel):
@@ -701,11 +707,15 @@ class WorkshopSession:
 
         Holds no lock and changes nothing else, so it can run on another thread while the session serves
         requests. A failure here changes nothing: call :meth:`abandon_settlement` to try again later.
+        Raises :class:`SettlementCancelledError` once ``job.cancelled`` is set, after the day it is on.
         """
 
         def on_day_done(days_done: int) -> None:
-            if self.settlement is not None and self.settlement.period == job.period:
-                self.settlement = replace(self.settlement, days_done=days_done)
+            if job.cancelled.is_set():
+                raise SettlementCancelledError(f"the simulation of {job.period} was cancelled")
+            settlement = self.settlement
+            if settlement is not None and settlement.period == job.period:
+                self.settlement = replace(settlement, days_done=days_done)
 
         # A blackout is not acted on yet: what it does to the session is #1005.
         return simulate_trading_period(
@@ -734,14 +744,12 @@ class WorkshopSession:
         price record nor a result, and nor does one who joined while the period was being simulated.
 
         It is saved even if no player had anything operating, since the session must remember that the
-        period is settled. Whether it succeeds or fails, the period is no longer being simulated: after a
-        failure, :meth:`start_settlement` starts it again.
+        period is settled. If the save fails, nothing changes and the period still counts as being
+        simulated, so the caller can try again with the same ``outcome`` rather than simulate it again.
         """
         with self._lock:
-            try:
-                self._settle(job, outcome)
-            finally:
-                self.settlement = None
+            self._settle(job, outcome)
+            self.settlement = None
 
     def _settle(self, job: SettlementJob, outcome: TradingOutcome) -> None:
         """Apply ``outcome`` to the session and save it. The caller holds the lock."""

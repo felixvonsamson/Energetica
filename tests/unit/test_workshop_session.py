@@ -35,6 +35,7 @@ from energetica.workshop.session import (
     Recap,
     RoundLevers,
     SessionFinishedError,
+    SettlementCancelledError,
     SettlementProgress,
     SettlementRunningError,
     TradingPeriod,
@@ -1233,16 +1234,36 @@ def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: p
     clock.tick(minutes=5)
     alice = session.network.members[1]
     before = (alice.money, dict(alice.stored_energy))
+    job = session.start_settlement()
+    assert job is not None
+    outcome = session.run_settlement(job)
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        _settle(session)
+        session.finish_settlement(job, outcome)
     monkeypatch.undo()
 
     assert (alice.money, alice.stored_energy) == before
     assert (alice.trading_results, alice.locked_prices) == ([], [])
     assert session.demand_amplitude is None
-    assert _settle(session)
+    # The period still counts as being simulated, so the same result is settled again rather than a new run.
+    assert session.start_settlement() is None
+    session.finish_settlement(job, outcome)
+    assert len(alice.trading_results) == 1
+    assert session.settlement is None
+
+
+def test_a_cancelled_simulation_stops_and_changes_nothing(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+
+    job.cancelled.set()
+
+    with pytest.raises(SettlementCancelledError):
+        session.run_settlement(job)
+    assert session.network.members[1].trading_results == []
 
 
 def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Path, clock: _Clock) -> None:
