@@ -7,6 +7,8 @@ and the roster itself, which lives in ``accounts.db``'s ``instance_membership`` 
 ADR-0007) rather than ``instance.json``. Every route here is instance-wide, not tied to *which*
 facilitator is calling, so the auth gate is a router-level dependency rather than a per-route
 parameter each handler would otherwise ignore.
+
+Both the persistent world and Workshop serve these routes (#1138).
 """
 
 from datetime import datetime, timezone
@@ -16,7 +18,7 @@ from fastapi import APIRouter, Depends, Query
 
 from energetica.identity import accounts, instance_config
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.schemas.facilitator import (
+from energetica.identity.schemas.facilitator import (
     FacilitatorAccessOut,
     FacilitatorAccessPatch,
     FacilitatorRosterOut,
@@ -24,7 +26,6 @@ from energetica.schemas.facilitator import (
     RosterCandidatesOut,
 )
 from energetica.identity.web import get_facilitator
-from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
 
@@ -88,14 +89,9 @@ def _require_private_slug() -> str:
 
 @router.get("/roster")
 def get_roster() -> FacilitatorRosterOut:
-    """This instance's roster, split into joined (settled — has a ``Player``) vs invited (joined,
-    no ``Player`` yet).
-    """
+    """This instance's roster: every account allowed to enter it, whether or not it has yet."""
     slug = _require_private_slug()
-    roster = accounts.get_run_roster(slug=slug)
-    joined = [entry.username for entry in roster if entry.settled_at is not None]
-    invited = [entry.username for entry in roster if entry.settled_at is None]
-    return FacilitatorRosterOut(joined=joined, invited=invited)
+    return FacilitatorRosterOut(members=[entry.username for entry in accounts.get_run_roster(slug=slug)])
 
 
 @router.get("/roster/candidates")
@@ -117,19 +113,14 @@ def add_to_roster(body: RosterAddIn) -> None:
     No freeform username strings: an account must already exist server-wide (a facilitator can
     only invite someone with an account, not conjure a name into the roster), which reuses the
     same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
-    already-joined account is a no-op. Re-adding a previously-settled, then-banned account
-    (:func:`accounts.remove_membership`) reconciles ``settled_at`` from its still-intact
-    ``Player`` rather than coming back "invited" — see
-    :func:`energetica.utils.misc.record_join_reconciling_settlement`.
+    already-joined account is a no-op.
     """
     account = accounts.get_account_by_username(body.username)
     if account is None:
         raise GameError(GameExceptionType.USER_NOT_FOUND)
     slug = _require_private_slug()
     try:
-        record_join_reconciling_settlement(
-            account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat()
-        )
+        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
     except accounts.MembershipRoleConflictError:
         # body.username is this run's facilitator (or server-wide) — a facilitator administers a
         # run, it doesn't also join one as a player (ADR-0004).

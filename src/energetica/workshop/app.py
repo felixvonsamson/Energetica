@@ -1,10 +1,10 @@
 """Workshop's application factory: the app a Workshop Run's backend serves (#994).
 
 It has no game engine, no tick loop and none of the persistent world's routes. It serves the shared
-``/run`` route, Workshop's own routes, its own Socket.IO server and a ``/healthz`` probe, and it
-holds the Run's :class:`~energetica.workshop.session.WorkshopSession` on ``app.state`` for the life
-of the process.
-``energetica.entry.create_instance_app`` chooses between this and the persistent world's app.
+``/run``, join-link and facilitator routes, Workshop's own routes, its own Socket.IO server and a 
+``/healthz`` probe, and it holds the Run's :class:`~energetica.workshop.session.WorkshopSession` 
+on ``app.state`` for the life of the process. ``energetica.entry.create_instance_app`` chooses 
+between this and the persistent world's app.
 """
 
 from __future__ import annotations
@@ -18,6 +18,8 @@ from fastapi import FastAPI
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.instance_config import InstanceConfig
+from energetica.identity.facilitator import router as facilitator_router
+from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
@@ -50,6 +52,9 @@ def create_workshop_app(
     app = FastAPI(title="Energetica Workshop", lifespan=_lifespan)
     install_error_handlers(app)
     app.include_router(run_router("workshop"), prefix="/api/v1")
+    # A private Run admits accounts through the join link and the facilitator's roster.
+    app.include_router(join_router, prefix="/api/v1")
+    app.include_router(facilitator_router, prefix="/api/v1")
     app.include_router(workshop_router, prefix="/api/v1")
     if schema_only:
         return app

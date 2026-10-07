@@ -1,10 +1,10 @@
 /**
  * The picker's run cards — the lobby's signature element. Tiers sharing one
  * frame (the landing's `RunCard` idiom, so returning players recognise it):
- * "your runs" carry a pine icon tile and a "Continue"/"Settle" affordance;
- * "open runs" stay quieter with a "Join" affordance; "runs you facilitate"
- * (#1032) carry a distinct shield tile and a "Manage" affordance, so a
- * facilitator card never reads as a played run out of context.
+ * "your runs" carry a pine icon tile and a "Play" affordance; "open runs" stay
+ * quieter with a "Join" affordance; "runs you facilitate" (#1032) carry a
+ * distinct shield tile and a "Manage" affordance, so a facilitator card never
+ * reads as a played run out of context.
  *
  * "Your runs" cards render as plain `<a href>`: run links are cross-origin
  * (`{slug}.{apex}/app`), which a full page load handles fine. A logged-in "open
@@ -20,8 +20,8 @@
  * row — a same-origin, in-lobby route, so it uses TanStack Router's `Link`
  * rather than the frame's cross-origin `<a>`. It sits alongside, not instead
  * of, the primary action: freeze keeps the live instance up and readable (G2),
- * so "Continue"/"Join" into the live run is still meaningful even after the
- * recap exists.
+ * so "Play"/"Join" into the live run is still meaningful even after the recap
+ * exists.
  *
  * At `ended` it replaces that primary action instead of sitting beside it: the
  * reap has stopped the instance (T7), so the cross-origin link would point at a
@@ -81,7 +81,7 @@ function RunCardFrame({
     children: React.ReactNode;
 }) {
     // Once the run is `ended` its process has been reaped (T7) and `{slug}.{apex}` no longer
-    // answers, so "Continue"/"Join" would be a link into nothing. The recap is all that outlived
+    // answers, so "Play"/"Join" would be a link into nothing. The recap is all that outlived
     // the reap, so it becomes the card's primary — and only — action. During `freeze` the
     // instance is still up and readable (G2), which is why the recap is merely an extra row there.
     const reaped = phase === "ended";
@@ -119,11 +119,10 @@ function RunCardFrame({
 /** An emphasized card for a run the account has joined. */
 export function MyRunCard({ run }: { run: MyRun }) {
     const joined = formatMonthYear(run.joined_at);
-    const settled = run.settled_at !== null;
     return (
         <RunCardFrame
             href={runAppHref(run.slug)}
-            cta={settled ? "Continue" : "Settle"}
+            cta="Play"
             slug={run.slug}
             phase={derivePhase(run)}
         >
@@ -134,11 +133,7 @@ export function MyRunCard({ run }: { run: MyRun }) {
                 <div className="flex flex-col min-w-0">
                     <p className="text-lg font-semibold truncate">{run.name}</p>
                     {joined && (
-                        <TypographyMuted>
-                            {settled
-                                ? `Joined ${joined}`
-                                : `Joined ${joined} · pick your tile to settle`}
-                        </TypographyMuted>
+                        <TypographyMuted>Joined {joined}</TypographyMuted>
                     )}
                 </div>
             </div>
@@ -198,7 +193,7 @@ function OpenRunCardContent({ instance }: { instance: InstanceFragment }) {
  * A logged-in visitor's "open run" card: click to select (reveals a "Join run"
  * button), click that to record the join (#1030). Never navigates itself — once
  * joined, the run moves to "Your runs" on the next `my-runs` refetch, which is
- * where "Continue"/"Settle" lives.
+ * where "Play" lives.
  */
 function JoinableOpenRunCard({ instance }: { instance: InstanceFragment }) {
     const [selected, setSelected] = useState(false);

@@ -9,6 +9,8 @@ in), and lets an already-signed-in visitor confirm joining (``POST``), which rec
 Entry into the game itself still goes through the existing, unmodified entry gate (``/auth/me`` →
 ``resolve_entry_account`` / ``_enforce_instance_access`` in ``identity.web``), which now reads
 that same table.
+
+Both the persistent world and Workshop serve these routes (#1138).
 """
 
 import secrets
@@ -20,9 +22,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.schemas.join import JoinLinkOut, Viewer
+from energetica.identity.schemas.join import JoinLinkOut, Viewer
 from energetica.identity.web import get_current_account
-from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/join", tags=["Join"])
 
@@ -88,9 +89,7 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:
-        record_join_reconciling_settlement(
-            account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat()
-        )
+        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
     except accounts.MembershipRoleConflictError:
         # account is this run's facilitator (or server-wide) — a facilitator administers a run,
         # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
