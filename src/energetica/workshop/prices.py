@@ -71,11 +71,12 @@ class LockedPrices(BaseModel):
     prices: PriceSheet = Field(description="The prices of the facility types the player had operating")
 
 
-# The persistent world's default prices, restated because Workshop does not import it. It offers
-# renewables at its own floor of -5, so they start there. Facilities with no persistent-world
-# counterpart get invented prices: the modern coal plant a little below the coal burner, and pumped
-# hydro halfway between the persistent world's small and large pumped hydro. All are placeholders
-# until the game-balance pass (#1145).
+# Controllable and storage facilities start at the persistent world's default prices, restated
+# because Workshop does not import it. Facilities with no persistent-world counterpart get invented
+# prices: the modern coal plant a little below the coal burner, and pumped hydro halfway between the
+# persistent world's small and large pumped hydro. Renewables have no default there, since the
+# persistent world always offers them at its floor of -5, so Workshop sets its own. All are
+# placeholders until the game-balance pass (#1145).
 _DEFAULT_SELL = {
     FacilityId.ONSHORE_WIND_TURBINE: 135.0,
     FacilityId.OFFSHORE_WIND_TURBINE: 120.0,
