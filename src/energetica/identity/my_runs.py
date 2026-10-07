@@ -71,10 +71,6 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
                 membership.slug,
             )
             continue
-        # A present-but-unparseable settled_at reads as still-joined-only rather than dropping the
-        # whole run — a bad value here shouldn't hide an otherwise-valid membership the way a bad
-        # joined_at does.
-        settled_at = _parse_aware(membership.settled_at)
         runs.append(
             MyRun(
                 slug=fragment.slug,
@@ -83,7 +79,6 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
                 freeze_at=fragment.freeze_at,
                 ended_at=fragment.ended_at,
                 joined_at=joined_at,
-                settled_at=settled_at,
             )
         )
 

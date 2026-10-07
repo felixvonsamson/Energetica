@@ -24,7 +24,7 @@ export const lobbyQueryKeys = {
 };
 
 /**
- * The authenticated account's settled runs.
+ * The authenticated account's joined runs.
  *
  * Also the lobby's _auth probe_ — the lobby backend has no `/auth/me`, so
  * logged-in state is read off this endpoint: `data` is `null` when the session
@@ -93,7 +93,7 @@ export function useRecap(slug: string) {
 /**
  * Mutation hook for the picker's explicit two-click join (#1030). Refetches
  * `my-runs` on success so the joined run moves from "Open runs" into "Your
- * runs" (unsettled — the card shows a "Settle" CTA there, not "Continue").
+ * runs".
  */
 export function useJoinRun() {
     const queryClient = useQueryClient();
