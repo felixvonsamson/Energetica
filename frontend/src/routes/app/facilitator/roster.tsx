@@ -1,7 +1,6 @@
 /**
- * Facilitator roster page (#1022): the private instance's allowlist, split into
- * joined vs invited-not-yet-joined, plus a search-and-add control and a
- * ban/remove action per row.
+ * Facilitator roster page (#1022): the private instance's allowlist, plus a
+ * search-and-add control and a ban/remove action per row.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -32,9 +31,8 @@ function RosterHelp() {
     return (
         <div className="space-y-3">
             <p>
-                <strong>Joined</strong> accounts have already entered this
-                instance. <strong>Invited</strong> accounts are allowlisted but
-                haven't shown up yet.
+                The roster lists every account allowed to enter this instance,
+                whether it has entered yet or not.
             </p>
             <p>
                 Banning removes an account from the allowlist — its next entry
@@ -170,22 +168,13 @@ function RosterCard() {
     }
 
     return (
-        <div className="space-y-6">
-            <RosterSection
-                title="Joined"
-                usernames={data.joined}
-                emptyLabel="No one has joined yet."
-                onBan={removeFromRoster}
-                pendingUsername={isPending ? pendingUsername : null}
-            />
-            <RosterSection
-                title="Invited"
-                usernames={data.invited}
-                emptyLabel="No pending invites."
-                onBan={removeFromRoster}
-                pendingUsername={isPending ? pendingUsername : null}
-            />
-        </div>
+        <RosterSection
+            title="Members"
+            usernames={data.members}
+            emptyLabel="No one is on the roster yet."
+            onBan={removeFromRoster}
+            pendingUsername={isPending ? pendingUsername : null}
+        />
     );
 }
 

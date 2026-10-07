@@ -54,23 +54,24 @@ where = ["src"]
 # subpackages — energetica.freeplay.database.engine_data, energetica.freeplay.database.map — have no
 # __init__.py and would otherwise be dropped from the wheel.
 namespaces = true
-# ...which also means every directory under src/energetica counts, including freeplay/data/.
-# Exclude it: it holds no Python, and what ships from it is named explicitly as package data below.
-# The patterns are globs, so name the package and its children exactly: a bare
+# ...which also means every directory under src/energetica counts, including freeplay/data/ and
+# sim/data/. Exclude them: they hold no Python, and what ships from them is named explicitly as
+# package data below. The patterns are globs, so name the package and its children exactly: a bare
 # "energetica.freeplay.data*" would also match energetica.freeplay.database.
-exclude = ["energetica.freeplay.data", "energetica.freeplay.data.*"]
+exclude = ["energetica.freeplay.data", "energetica.freeplay.data.*", "energetica.sim.data", "energetica.sim.data.*"]
 
 [tool.setuptools.dynamic]
 # Read from the module's AST at build time, so building never imports the package.
 version = { attr = "energetica.__version__" }
 
 [tool.setuptools.package-data]
-# The persistent world's data tables are the only non-Python files in the wheel. They sit next to
-# the game engine that reads them (#1055). No web assets ship here: since #1064 the app bundle and
+# The data tables are the only non-Python files in the wheel. The persistent world's own tables sit
+# next to the game engine that reads them (#1055). The national demand curve sits in sim/data/,
+# because Workshop shapes its demand with it too and may not reach into freeplay (#997). No web assets ship here: since #1064 the app bundle and
 # its service worker are built to frontend/dist-app/ and served by Apache straight off the rsynced
 # tree (docs/architecture/static-serving-and-deployment.md), never read through the installed
 # package.
-energetica = ["freeplay/data/*"]
+energetica = ["freeplay/data/*", "sim/data/*"]
 
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
