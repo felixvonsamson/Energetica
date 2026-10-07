@@ -1,9 +1,9 @@
 """Workshop's application factory: the app a Workshop Run's backend serves (#994).
 
 It has no game engine, no tick loop and none of the persistent world's routes. It serves the shared
-``/run``, join-link and facilitator routes, Workshop's own routes, its own Socket.IO server and a 
-``/healthz`` probe, and it holds the Run's :class:`~energetica.workshop.session.WorkshopSession` 
-on ``app.state`` for the life of the process. ``energetica.entry.create_instance_app`` chooses 
+``/run``, join-link and facilitator routes, Workshop's own routes, its own Socket.IO server and a
+``/healthz`` probe, and it holds the Run's :class:`~energetica.workshop.session.WorkshopSession`
+on ``app.state`` for the life of the process. ``energetica.entry.create_instance_app`` chooses
 between this and the persistent world's app.
 """
 
