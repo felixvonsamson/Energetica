@@ -120,16 +120,19 @@ function PricesButton({
             size="sm"
             aria-pressed={panelOpen}
             onClick={onClick}
-            className="relative"
+            className="relative pr-5"
         >
             <Tags className="size-4" />
             Prices
             {windowOpen && (
                 <span
                     aria-label="Price-setting window open"
-                    className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-brand text-fg-on-brand shadow-sm"
+                    className="absolute -top-1 -right-2.5 flex size-6 items-center justify-center rounded-full bg-brand text-fg-on-brand shadow-sm"
                 >
-                    <Clock className="size-2.5" strokeWidth={2.75} />
+                    <Clock
+                        className="block size-[15px] shrink-0"
+                        strokeWidth={2.75}
+                    />
                 </span>
             )}
         </Button>

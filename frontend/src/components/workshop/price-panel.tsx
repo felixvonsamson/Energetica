@@ -56,7 +56,7 @@ export function PricePanel({ onClose }: { onClose: () => void }) {
     return (
         <aside
             aria-label="Your Bids"
-            className="flex w-[428px] max-w-[85vw] shrink-0 flex-col border-l border-border bg-surface-sunken"
+            className="flex w-[398px] max-w-[85vw] shrink-0 flex-col border-l border-border bg-surface-sunken"
         >
             <div className="flex items-center justify-between border-b border-border px-5 pt-4 pb-3.5">
                 <h2 className="font-titles text-2xl leading-tight text-fg-base">
@@ -73,7 +73,7 @@ export function PricePanel({ onClose }: { onClose: () => void }) {
             </div>
             {/*
              * The scrollbar gets its own gutter, so it never narrows the rows. The
-             * panel is 10px wider than the design's 418px to make room for it.
+             * panel is the image width plus 268px, as in the design, plus 10px for it.
              */}
             <div className="min-h-0 flex-1 overflow-auto px-5 pt-4 pb-6 [scrollbar-gutter:stable]">
                 {prices.isError || fleet.isError ? (
@@ -155,7 +155,7 @@ function PriceRow({
     if (sell === undefined) return null;
 
     return (
-        <li className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-3.5 rounded-xl border border-border-subtle bg-surface-raised p-2 shadow-[0_1px_2px_rgba(54,48,20,0.12)]">
+        <li className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3.5 rounded-xl border border-border-subtle bg-surface-raised p-2 shadow-[0_1px_2px_rgba(54,48,20,0.12)]">
             <img
                 src={workshopFacilityImages[facility]}
                 alt=""
