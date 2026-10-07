@@ -2,7 +2,8 @@
 
 Uniform-price market clearing (:mod:`~energetica.sim.market`), the arithmetic that settles a clearing
 into money (:mod:`~energetica.sim.settlement`), the demand-shape function
-(:mod:`~energetica.sim.demand_shape`), and the facility-status vocabulary
+(:mod:`~energetica.sim.demand_shape`) with the national demand curve it is fed
+(:mod:`~energetica.sim.national_demand`), and the facility-status vocabulary
 (:mod:`~energetica.sim.facility_statuses`) live here. Together they are the rules the
 Workshop Mode spec (#992) names as shared with the persistent world (see #1054).
 

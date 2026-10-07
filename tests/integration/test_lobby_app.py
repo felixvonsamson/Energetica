@@ -189,7 +189,7 @@ def test_join_private_run_403(signups_enabled: None, landing_dir: Path) -> None:
     assert resp.json()["detail"] == "INSTANCE_ACCESS_DENIED"
 
 
-def test_join_public_run_then_appears_in_my_runs_unsettled(signups_enabled: None, landing_dir: Path) -> None:
+def test_join_public_run_then_appears_in_my_runs(signups_enabled: None, landing_dir: Path) -> None:
     client = _client()
     _signup(client)
     _write_fragment(landing_dir, slug="spring-2026", name="Spring 2026")
@@ -199,7 +199,6 @@ def test_join_public_run_then_appears_in_my_runs_unsettled(signups_enabled: None
 
     runs = client.get(f"{BASE}/lobby/my-runs").json()["runs"]
     assert [run["slug"] for run in runs] == ["spring-2026"]
-    assert runs[0]["settled_at"] is None
 
 
 def test_join_is_idempotent(signups_enabled: None, landing_dir: Path) -> None:

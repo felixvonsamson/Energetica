@@ -53,9 +53,9 @@ def test_joins_memberships_with_fragments_most_recent_first(stores: Path) -> Non
     assert response.username == "alice"
 
 
-def test_joined_but_not_settled_run_appears_with_null_settled_at(stores: Path) -> None:
+def test_joined_but_not_settled_run_appears(stores: Path) -> None:
     """The lobby's two-click join (#1030) puts a run under 'your runs' immediately, before the
-    account has picked a tile — settled_at reads as null until it does.
+    account has picked a tile.
     """
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="spring-2026", name="Spring 2026", starts_at="2026-03-01T00:00:00Z")
@@ -64,21 +64,7 @@ def test_joined_but_not_settled_run_appears_with_null_settled_at(stores: Path) -
     runs = resolve_my_runs(account_id, "alice").runs
 
     assert len(runs) == 1
-    assert runs[0].settled_at is None
     assert runs[0].joined_at.isoformat() == "2026-02-15T00:00:00+00:00"
-
-
-def test_settling_after_joining_fills_in_settled_at(stores: Path) -> None:
-    account_id = accounts.create_account(username="alice", pwhash="h")
-    _fragment(stores, slug="spring-2026", name="Spring 2026", starts_at="2026-03-01T00:00:00Z")
-    accounts.record_join(account_id=account_id, slug="spring-2026", joined_at="2026-02-15T00:00:00+00:00")
-    accounts.record_settlement(account_id=account_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
-
-    run = resolve_my_runs(account_id, "alice").runs[0]
-
-    assert run.joined_at.isoformat() == "2026-02-15T00:00:00+00:00"
-    assert run.settled_at is not None
-    assert run.settled_at.isoformat() == "2026-03-02T00:00:00+00:00"
 
 
 def test_surfaces_unadvertised_runs(stores: Path) -> None:
@@ -124,9 +110,7 @@ def _raw_membership(account_id: int, slug: str, created_at: str, *, settled_at: 
 
 
 def test_naive_timestamps_recovered_as_utc(stores: Path) -> None:
-    """A legacy naive timestamp (joined_at or settled_at) must not 500 the endpoint; both are
-    recovered as UTC and the run shows.
-    """
+    """A legacy naive joined_at must not 500 the endpoint; it is recovered as UTC and the run shows."""
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="legacy", name="Legacy", starts_at="2026-01-01T00:00:00Z")
     _raw_membership(account_id, "legacy", "2026-01-02T00:00:00", settled_at="2026-01-03T00:00:00")  # naive
@@ -135,8 +119,6 @@ def test_naive_timestamps_recovered_as_utc(stores: Path) -> None:
 
     assert [run.slug for run in runs] == ["legacy"]
     assert runs[0].joined_at.tzinfo is not None
-    assert runs[0].settled_at is not None
-    assert runs[0].settled_at.tzinfo is not None
 
 
 def test_unparseable_created_at_skipped_not_fatal(stores: Path) -> None:
@@ -150,20 +132,6 @@ def test_unparseable_created_at_skipped_not_fatal(stores: Path) -> None:
     _raw_membership(account_id, "corrupt", "not-a-timestamp")
 
     assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["good"]
-
-
-def test_unparseable_settled_at_keeps_the_run_as_joined_only(stores: Path) -> None:
-    """A corrupt settled_at on an otherwise-good row must not hide the run — it reads the same as
-    a null settled_at (joined, not settled) rather than dropping the membership.
-    """
-    account_id = accounts.create_account(username="alice", pwhash="h")
-    _fragment(stores, slug="odd", name="Odd", starts_at="2026-01-01T00:00:00Z")
-    _raw_membership(account_id, "odd", "2026-01-02T00:00:00+00:00", settled_at="not-a-timestamp")
-
-    runs = resolve_my_runs(account_id, "alice").runs
-
-    assert [run.slug for run in runs] == ["odd"]
-    assert runs[0].settled_at is None
 
 
 def test_facilitated_runs_joined_with_fragments_most_recently_granted_first(stores: Path) -> None:

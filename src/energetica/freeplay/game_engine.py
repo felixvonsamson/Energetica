@@ -24,6 +24,7 @@ from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
 from energetica.freeplay import legacy_pickle
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
+from energetica.sim.national_demand import national_demand_curve
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.messages import Chat
@@ -87,12 +88,9 @@ class GameEngine(object):
 
         self.days_per_year = 72  # length of one seasonal cycle, in game days
 
-        with open(_DATA_DIR / "national_demand_intraday.pck", "rb") as file:
-            # RTE (French grid operator) national consumption, length 1440: one sample per minute of the day
-            self.national_demand_intraday = pickle.load(file)
-        with open(_DATA_DIR / "national_demand_seasonal.pck", "rb") as file:
-            # RTE national consumption, length 365: one sample per real calendar day of the year
-            self.national_demand_seasonal = pickle.load(file)
+        national_demand = national_demand_curve()
+        self.national_demand_intraday = national_demand.intraday
+        self.national_demand_seasonal = national_demand.seasonal
 
         self.log("engine created")
 

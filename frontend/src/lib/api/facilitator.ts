@@ -18,7 +18,7 @@ export const facilitatorApi = {
         data: ApiRequestBody<"/api/v1/facilitator/access", "patch">,
     ) => apiClient.patch<void>("/facilitator/access", data),
 
-    /** This instance's roster, split into joined vs invited-not-yet-joined. */
+    /** This instance's roster: every account allowed to enter it. */
     getRoster: () =>
         apiClient.get<ApiResponse<"/api/v1/facilitator/roster", "get">>(
             "/facilitator/roster",
