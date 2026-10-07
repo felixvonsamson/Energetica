@@ -33,8 +33,8 @@ from energetica.sim.demand_shape import demand_shape_factor
 from energetica.sim.market import MarketEntry
 from energetica.sim.national_demand import DemandCurve
 
-#: Workshop's seasonal cycle is a real calendar year, so a season is 365/4 days (#992 §2).
-DAYS_PER_YEAR = 365
+#: Workshop's seasonal cycle is a year of 364 days, so each season is exactly 13 weeks (#1004).
+DAYS_PER_YEAR = 364
 
 #: The nominal demand each player brings to the session's Round-1 amplitude, in W. A placeholder until the
 #: game-balance pass (#1145).

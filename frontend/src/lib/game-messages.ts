@@ -61,6 +61,10 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
         "Prices are locked. Wait for the next Trading period.",
     WORKSHOP_PRICE_BELOW_FLOOR: "This price is below the price floor.",
     WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
+    WORKSHOP_SETTLEMENT_RUNNING:
+        "The trading period is still being simulated. Advance once it has finished.",
+    WORKSHOP_INVALID_LEVERS:
+        "These settings can't be combined. Every storage type needs the full-season format.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

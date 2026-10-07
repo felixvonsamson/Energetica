@@ -2012,6 +2012,10 @@ export interface paths {
          * Advance Session
          * @description Move the session to its next checkpoint, and tell every open page. Nothing else changes the
          *     session's phase.
+         *
+         *     A Trading period that is not settled yet is not left: advancing closes its price-setting window if it
+         *     is still open, and the period is then simulated in the background. Advancing again once that has
+         *     finished moves on. While it runs, advancing is refused.
          */
         post: operations["advance_session_api_v1_workshop_session_advance_post"];
         delete?: never;
@@ -2041,6 +2045,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/levers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Levers
+         * @description The round-configuration levers. The format levers apply from the next Round.
+         */
+        get: operations["get_levers_api_v1_workshop_levers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change Levers
+         * @description Change the levers given, and tell every open page. The timing levers apply to the next phase that
+         *     opens, and the format levers to the next Round. Every storage type needs the full-season format.
+         */
+        patch: operations["change_levers_api_v1_workshop_levers_patch"];
+        trace?: never;
+    };
     "/api/v1/workshop/facilities": {
         parameters: {
             query?: never;
@@ -2050,8 +2079,8 @@ export interface paths {
         };
         /**
          * Get Facilities
-         * @description The facilities players can see and buy now. One that is not yet unlocked is left out, not
-         *     shown as locked.
+         * @description The facilities players can see and buy in the current Round. One that is not yet unlocked, or that
+         *     the Round's storage lever leaves out, is left out, not shown as locked.
          */
         get: operations["get_facilities_api_v1_workshop_facilities_get"];
         put?: never;
@@ -4884,6 +4913,72 @@ export interface components {
             round: number;
         };
         /**
+         * RoundFormat
+         * @description The format of one Round.
+         */
+        RoundFormat: {
+            /**
+             * Trading Format
+             * @description How each Trading period is simulated: one representative day scaled to the season, or every day of the season
+             * @default representative_day
+             * @enum {string}
+             */
+            trading_format: "representative_day" | "full_season";
+            /**
+             * Clearings Per Day
+             * @description How many times a day the market clears in a Trading period
+             * @default 24
+             * @enum {integer}
+             */
+            clearings_per_day: 24 | 96 | 288;
+            /**
+             * Storage
+             * @description Which storage players can buy: none, batteries only, or every type. Every type needs the full-season format
+             * @default batteries
+             * @enum {string}
+             */
+            storage: "off" | "batteries" | "all";
+        };
+        /**
+         * RoundLevers
+         * @description The round-configuration levers the moderator changes during a session.
+         *
+         *     Each lever is added by the ticket that builds it (#996, #1012, #1018). They belong to the
+         *     session, saved with it, and not to ``WorkshopRun`` in ``instance.json``, which the sysadmin
+         *     writes when the Run is provisioned. Every lever has a default, so a session saved before a lever
+         *     existed still loads.
+         */
+        RoundLevers: {
+            /**
+             * Investment Minutes
+             * @default 8
+             */
+            investment_minutes: number;
+            /**
+             * Price Setting Minutes
+             * @default 5
+             */
+            price_setting_minutes: number;
+            /**
+             * Trading Format
+             * @default representative_day
+             * @enum {string}
+             */
+            trading_format: "representative_day" | "full_season";
+            /**
+             * Clearings Per Day
+             * @default 24
+             * @enum {integer}
+             */
+            clearings_per_day: 24 | 96 | 288;
+            /**
+             * Storage
+             * @default batteries
+             * @enum {string}
+             */
+            storage: "off" | "batteries" | "all";
+        };
+        /**
          * TradingPeriod
          * @description One of a Round's four Trading periods, one per season.
          */
@@ -4980,6 +5075,37 @@ export interface components {
             ramping_time: number;
             /** @description The fuel it burns, or null if it burns none */
             fuel_type: components["schemas"]["Fuel"] | null;
+        };
+        /**
+         * WorkshopLeversIn
+         * @description The levers the facilitator changes. A lever left out keeps its value.
+         */
+        WorkshopLeversIn: {
+            /**
+             * Investment Minutes
+             * @description How long each Investment phase runs
+             */
+            investment_minutes?: number | null;
+            /**
+             * Price Setting Minutes
+             * @description How long each Trading period's price-setting window runs
+             */
+            price_setting_minutes?: number | null;
+            /**
+             * Trading Format
+             * @description The next Round's trading-round format
+             */
+            trading_format?: ("representative_day" | "full_season") | null;
+            /**
+             * Clearings Per Day
+             * @description How many times a day the market clears from the next Round
+             */
+            clearings_per_day?: (24 | 96 | 288) | null;
+            /**
+             * Storage
+             * @description Which storage players can buy from the next Round. Every type needs full-season
+             */
+            storage?: ("off" | "batteries" | "all") | null;
         };
         /**
          * WorkshopMemberOut
@@ -5142,12 +5268,32 @@ export interface components {
              * @description Everyone placed into the Run, in the order they entered
              */
             players: components["schemas"]["WorkshopMemberOut"][];
+            /** @description The current Round's format. Before Round 1 starts, the format it will start with */
+            round_format: components["schemas"]["RoundFormat"];
+            /** @description How far the simulation of the Trading period has got while it runs, or null when none is running. The session cannot advance while one is */
+            settlement: components["schemas"]["WorkshopSettlementOut"] | null;
+        };
+        /**
+         * WorkshopSettlementOut
+         * @description How far the simulation of the current Trading period has got (#1004).
+         */
+        WorkshopSettlementOut: {
+            /**
+             * Days Done
+             * @description Days of the season simulated so far
+             */
+            days_done: number;
+            /**
+             * Days Total
+             * @description Days the simulation covers: 1 for a representative day, 91 for a full season
+             */
+            days_total: number;
         };
         /**
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_INVALID_LEVERS" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -8053,6 +8199,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_levers_api_v1_workshop_levers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundLevers"];
+                };
+            };
+        };
+    };
+    change_levers_api_v1_workshop_levers_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopLeversIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundLevers"];
                 };
             };
             /** @description Validation Error */

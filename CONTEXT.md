@@ -151,14 +151,30 @@ Whatever no longer fits is lost when that Round's Investment phase closes, unles
 more of the same type in it. Example: three batteries of capacity 100 hold 150 (SOC 50%). Replaced by
 two, they hold 150 (SOC 75%). Replaced by one, it holds 100 (SOC 100%) and 50 is lost.
 
+**Workshop year** (#1004):
+364 days, so each of the four seasons is exactly 13 weeks (91 days). Spring starts on 1 March, and
+winter runs over the end of the year. The demand curve and the weather use this year length.
+
+**Round format** (#1004):
+The three levers that say how a Round's Trading periods are simulated: the **trading-round format**
+(representative day or full season), the clearings per day (24, 96 or 288), and the storage
+availability (none, batteries only, or every type). The moderator can change the levers at any time,
+but a Round keeps the format it started with. Every storage type needs the full-season format. If the
+moderator switches back, storage already built keeps running, but no more of it can be bought.
+
 **Representative day** (#1003):
-The one simulated day that stands for a whole Trading period: the middle day of its season, cleared
-at the Round's clearings per day. Its trading money and energy are scaled ×365/4 (an average season)
-to give the period's total. O&M is not scaled, since it is already one period's share, and **stored
-energy** is what the pool really holds at the end of the day.
+In representative-day mode, the one simulated day that stands for a whole Trading period: the middle
+day of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled
+×91 (the days in a season) to give the period's total. O&M is not scaled, since it is already one
+period's share, and **stored energy** is what the pool really holds at the end of the day.
 _Avoid_: sample day, typical day.
 
-**Settling a Trading period** (#1003):
-What happens once a Trading period's price-setting window closes, or when the moderator advances
-past it first: each player's prices are locked, the **representative day** is simulated, and each
-player is paid its result. A period is settled once.
+**Full season** (#1004):
+In full-season mode, all 91 days of a Trading period's season are simulated one after another and
+added up, with no scaling. **Stored energy** carries from one day to the next.
+
+**Settling a Trading period** (#1003, #1004):
+What happens once a Trading period's price-setting window closes: each player's prices are locked,
+the days the **round format** calls for are simulated in the background, and each player is paid its
+result. The moderator can close the window early by advancing, but the session only leaves the period
+once it is settled, and cannot advance while the simulation runs. A period is settled once.

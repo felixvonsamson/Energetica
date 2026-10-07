@@ -4,6 +4,7 @@ Round → Investment → four Trading periods → Recap, and the saved copy that
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,11 +16,13 @@ from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
+from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
     FacilityNotOfferedError,
     Finished,
+    InvalidLeversError,
     Investment,
     InvestmentClosedError,
     NoPhaseRunningError,
@@ -30,7 +33,10 @@ from energetica.workshop.session import (
     PriceBelowFloorError,
     PriceSettingClosedError,
     Recap,
+    RoundLevers,
     SessionFinishedError,
+    SettlementProgress,
+    SettlementRunningError,
     TradingPeriod,
     WorkshopSession,
     next_checkpoint,
@@ -72,6 +78,32 @@ FREEPLAY_CONFIG = InstanceConfig.model_validate(
         "run": {"mode": "freeplay"},
     }
 )
+
+
+def _settle(session: WorkshopSession) -> bool:
+    """Settle the Trading period if its window has closed, as the app does in the background, and return
+    whether it did.
+    """
+    job = session.start_settlement()
+    if job is None:
+        return False
+    try:
+        outcome = session.run_settlement(job)
+    except BaseException:
+        session.abandon_settlement(job)
+        raise
+    session.finish_settlement(job, outcome)
+    return True
+
+
+def _advance(session: WorkshopSession) -> Checkpoint:
+    """Advance as the moderator does: past a Trading period not yet settled, by advancing once to close its
+    window, waiting for its settlement, and advancing again.
+    """
+    if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
+        session.advance()
+        _settle(session)
+    return session.advance()
 
 
 def _account(account_id: int, username: str) -> Account:
@@ -134,7 +166,7 @@ def test_opening_rejects_a_freeplay_run(path: Path) -> None:
 
 def test_the_session_sits_at_its_checkpoint_until_advanced(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    session.advance()
+    _advance(session)
 
     session.join(_account(1, "alice"))
 
@@ -144,7 +176,7 @@ def test_the_session_sits_at_its_checkpoint_until_advanced(path: Path) -> None:
 def test_an_empty_round_advances_through_to_recap_and_into_round_two(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=2)
 
-    visited = [session.advance() for _ in range(7)]
+    visited = [_advance(session) for _ in range(7)]
 
     assert visited == [*_one_round(1), Investment(round=2)]
     assert session.checkpoint == Investment(round=2)
@@ -153,11 +185,11 @@ def test_an_empty_round_advances_through_to_recap_and_into_round_two(path: Path)
 def test_advancing_past_the_end_raises_and_leaves_the_session_finished(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=1)
     for _ in range(7):
-        session.advance()
+        _advance(session)
     assert session.checkpoint == Finished()
 
     with pytest.raises(SessionFinishedError):
-        session.advance()
+        _advance(session)
     assert session.checkpoint == Finished()
 
 
@@ -182,7 +214,7 @@ def test_round_count_must_be_positive(path: Path) -> None:
 def test_the_checkpoint_survives_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=2)
     for _ in range(3):
-        session.advance()
+        _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
@@ -195,7 +227,7 @@ def test_players_survive_a_restart(path: Path) -> None:
     alice = session.join(_account(1, "alice"))
     alice.money = 123.0
     session.join(_account(2, "bob"))
-    session.advance()
+    _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
@@ -213,7 +245,7 @@ def test_owned_facilities_survive_a_restart(path: Path) -> None:
     ]
     alice.owned_facilities.extend(owned)
     session.join(_account(2, "bob"))
-    session.advance()
+    _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
@@ -254,7 +286,7 @@ def test_a_failed_save_leaves_the_checkpoint_where_it_was(path: Path, monkeypatc
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.advance()
+        _advance(session)
 
     assert session.checkpoint == NotStarted()
 
@@ -303,29 +335,29 @@ def test_no_phase_is_timed_before_the_session_starts(path: Path, clock: _Clock) 
 def test_the_investment_phase_opens_with_eight_minutes(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
 
-    session.advance()
+    _advance(session)
 
     assert session.phase_timer == PhaseTimer(started_at=clock.now, duration=timedelta(minutes=8))
 
 
 def test_each_trading_period_opens_its_own_five_minute_price_setting_window(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
 
     for _ in SEASONS:
         clock.tick(minutes=20)
-        session.advance()
+        _advance(session)
         assert session.phase_timer == PhaseTimer(started_at=clock.now, duration=timedelta(minutes=5))
 
 
 def test_recap_and_the_end_of_the_session_are_not_timed(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=1, clock=clock)
     for _ in range(6):
-        session.advance()
+        _advance(session)
     assert session.checkpoint == Recap(round=1)
     assert session.phase_timer is None
 
-    session.advance()
+    _advance(session)
 
     assert session.checkpoint == Finished()
     assert session.phase_timer is None
@@ -333,7 +365,7 @@ def test_recap_and_the_end_of_the_session_are_not_timed(path: Path, clock: _Cloc
 
 def test_running_out_of_time_does_not_advance_the_session(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
 
     clock.tick(hours=5)
 
@@ -344,7 +376,7 @@ def test_running_out_of_time_does_not_advance_the_session(path: Path, clock: _Cl
 
 def test_the_moderator_extends_the_running_phase(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
     clock.tick(minutes=7)
 
     timer = session.extend_phase(timedelta(minutes=2))
@@ -363,7 +395,7 @@ def test_a_phase_cannot_be_extended_when_none_is_running(path: Path, clock: _Clo
 def test_a_phase_that_has_closed_cannot_be_extended(path: Path, clock: _Clock) -> None:
     """Once a window closes its results may be computed, so reopening it is not allowed."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
     clock.tick(minutes=8)
 
     with pytest.raises(NoPhaseRunningError):
@@ -373,10 +405,10 @@ def test_a_phase_that_has_closed_cannot_be_extended(path: Path, clock: _Clock) -
 
 def test_advancing_drops_the_previous_phases_extensions(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
     session.extend_phase(timedelta(minutes=4))
 
-    session.advance()
+    _advance(session)
 
     assert session.phase_timer is not None
     assert session.phase_timer.extensions == ()
@@ -384,7 +416,7 @@ def test_advancing_drops_the_previous_phases_extensions(path: Path, clock: _Cloc
 
 def test_a_phase_timer_and_its_extensions_survive_a_restart(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
     session.extend_phase(timedelta(minutes=2))
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
@@ -406,7 +438,7 @@ def test_a_session_saved_before_phase_timers_existed_still_opens(path: Path) -> 
 
 def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.advance()
+    _advance(session)
     before = session.phase_timer
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
@@ -423,7 +455,7 @@ def _investing(path: Path, clock: _Clock, *, money: float = 1_000_000.0) -> Work
     """A session in Round 1's Investment phase, with Alice (account 1) holding ``money``."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice")).money = money
-    session.advance()
+    _advance(session)
     return session
 
 
@@ -566,7 +598,7 @@ def test_advancing_out_of_the_investment_phase_buys_any_selection_left(
     session.select(1, FacilityId.GAS_BURNER)
     clock.tick(minutes=minutes_spent)
 
-    session.advance()
+    _advance(session)
 
     alice = session.network.members[1]
     assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]
@@ -655,7 +687,7 @@ def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
     monkeypatch.setattr(session_module, "_write_atomically", fail_to_leave_the_investment_phase)
 
     with pytest.raises(OSError):
-        session.advance()
+        _advance(session)
     monkeypatch.undo()
 
     for kept in (session, WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)):
@@ -677,7 +709,7 @@ def _owning_wind_and_reactor(path: Path) -> WorkshopSession:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
     session.join(_account(1, "alice")).owned_facilities.extend([WIND, REACTOR])
     while session.checkpoint != Recap(round=2):
-        session.advance()
+        _advance(session)
     return session
 
 
@@ -690,7 +722,7 @@ def test_a_facility_stays_on_the_roster_through_its_last_round(path: Path) -> No
 def test_a_facility_retires_by_itself_the_round_after_its_lifetime_ends(path: Path) -> None:
     session = _owning_wind_and_reactor(path)
 
-    session.advance()
+    _advance(session)
 
     assert session.checkpoint == Investment(round=3)
     assert session.network.members[1].owned_facilities == [REACTOR]
@@ -698,7 +730,7 @@ def test_a_facility_retires_by_itself_the_round_after_its_lifetime_ends(path: Pa
 
 def test_a_retirement_survives_a_restart(path: Path) -> None:
     session = _owning_wind_and_reactor(path)
-    session.advance()
+    _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
@@ -710,7 +742,7 @@ def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: 
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.advance()
+        _advance(session)
 
     assert session.checkpoint == Recap(round=2)
     assert session.network.members[1].owned_facilities == [WIND, REACTOR]
@@ -732,10 +764,10 @@ def _batteries_retiring(path: Path, clock: _Clock) -> WorkshopSession:
     alice.money = 10_000_000.0
     alice.owned_facilities.extend([OwnedFacility(facility=BATTERIES, built_round=1)] * 3)
     while session.checkpoint != Recap(round=1):
-        session.advance()
+        _advance(session)
     # Set after Round 1's Trading periods, which charge and discharge the batteries.
     alice.stored_energy[BATTERIES] = 1.5 * BATTERY_CAPACITY
-    session.advance()
+    _advance(session)
     return session
 
 
@@ -771,7 +803,7 @@ def test_energy_the_replacement_cannot_hold_is_lost(path: Path, clock: _Clock) -
 def test_energy_is_lost_when_the_investment_phase_closes_without_a_replacement(path: Path, clock: _Clock) -> None:
     session = _batteries_retiring(path, clock)
 
-    session.advance()
+    _advance(session)
 
     assert session.network.members[1].stored_energy == {}
 
@@ -803,7 +835,7 @@ def test_a_failed_save_keeps_the_energy_that_would_be_lost(
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.advance()
+        _advance(session)
 
     assert session.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
 
@@ -821,8 +853,8 @@ def _trading(path: Path, clock: _Clock) -> WorkshopSession:
     session.join(_account(1, "alice")).owned_facilities.extend(
         [OwnedFacility(facility=GAS, built_round=1), OwnedFacility(facility=BATTERIES, built_round=1)]
     )
-    session.advance()
-    session.advance()
+    _advance(session)
+    _advance(session)
     return session
 
 
@@ -892,7 +924,7 @@ def test_prices_cannot_be_set_outside_a_trading_period(path: Path, clock: _Clock
 
     with pytest.raises(PriceSettingClosedError):
         session.set_price(1, GAS, "sell", 80.0)
-    session.advance()
+    _advance(session)
     with pytest.raises(PriceSettingClosedError):
         session.set_price(1, GAS, "sell", 80.0)
 
@@ -903,7 +935,7 @@ def test_the_prices_of_a_completed_period_are_kept_for_the_types_the_player_had_
     session = _trading(path, clock)
     session.set_price(1, GAS, "sell", 80.0)
 
-    session.advance()
+    _advance(session)
 
     assert session.network.members[1].locked_prices == [
         LockedPrices(
@@ -917,10 +949,10 @@ def test_the_prices_of_a_completed_period_are_kept_for_the_types_the_player_had_
 def test_the_next_window_starts_from_the_last_periods_prices(path: Path, clock: _Clock) -> None:
     session = _trading(path, clock)
     session.set_price(1, GAS, "sell", 80.0)
-    session.advance()
+    _advance(session)
 
     session.set_price(1, BATTERIES, "sell", 700.0)
-    session.advance()
+    _advance(session)
 
     [spring, summer] = session.network.members[1].locked_prices
     assert (spring.season, spring.prices.sell) == ("spring", {GAS: 80.0, BATTERIES: 940.0})
@@ -933,7 +965,7 @@ def test_a_player_with_nothing_operating_keeps_no_prices_for_the_period(path: Pa
         OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1)
     )
     for _ in range(3):
-        session.advance()
+        _advance(session)
 
     assert session.network.members[1].locked_prices == []
 
@@ -941,7 +973,7 @@ def test_a_player_with_nothing_operating_keeps_no_prices_for_the_period(path: Pa
 def test_prices_survive_a_restart(path: Path, clock: _Clock) -> None:
     session = _trading(path, clock)
     session.set_price(1, GAS, "sell", 80.0)
-    session.advance()
+    _advance(session)
     session.set_price(1, GAS, "sell", 70.0)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
@@ -981,7 +1013,7 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.advance()
+        _advance(session)
 
     assert session.checkpoint == TradingPeriod(round=1, season="spring")
     assert session.network.members[1].locked_prices == []
@@ -1005,8 +1037,8 @@ def _pricing(path: Path, clock: _Clock) -> WorkshopSession:
     alice = session.join(_account(1, "alice"))
     alice.owned_facilities.extend(FLEET)
     alice.stored_energy = {BATTERIES: BATTERY_CAPACITY / 4}
-    session.advance()
-    session.advance()
+    _advance(session)
+    _advance(session)
     return session
 
 
@@ -1017,7 +1049,7 @@ def _expected_outcome(session: WorkshopSession, alice: WorkshopPlayer) -> Tradin
         [Bidder(1, FLEET, alice.prices, {BATTERIES: BATTERY_CAPACITY / 4})],
         round_number=1,
         season="spring",
-        clearings_per_day=session.levers.clearings_per_day,
+        round_format=session.current_format(),
         amplitude=session.demand_amplitude,
         curve=national_demand_curve(),
         weather=representative_weather(session.weather_seed),
@@ -1029,7 +1061,7 @@ def test_a_trading_period_settles_once_its_price_setting_window_runs_out(path: P
     session.set_price(1, FacilityId.COMBINED_CYCLE, "sell", 90.0)
     clock.tick(minutes=5)
 
-    assert session.close_price_setting()
+    assert _settle(session)
 
     alice = session.network.members[1]
     expected = _expected_outcome(session, alice)
@@ -1046,14 +1078,14 @@ def test_the_demand_scales_with_the_players_in_the_first_trading_period(path: Pa
     session = _pricing(path, clock)
     session.join(_account(2, "bob"))
     clock.tick(minutes=5)
-    session.close_price_setting()
+    _settle(session)
 
     assert session.demand_amplitude == pytest.approx(round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=2))
 
     session.join(_account(3, "carol"))
-    session.advance()
+    _advance(session)
     clock.tick(minutes=5)
-    session.close_price_setting()
+    _settle(session)
 
     assert session.demand_amplitude == pytest.approx(round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=2))
 
@@ -1061,7 +1093,7 @@ def test_the_demand_scales_with_the_players_in_the_first_trading_period(path: Pa
 def test_nothing_settles_while_the_price_setting_window_is_open(path: Path, clock: _Clock) -> None:
     session = _pricing(path, clock)
 
-    assert not session.close_price_setting()
+    assert not _settle(session)
 
     alice = session.network.members[1]
     assert (alice.trading_results, alice.locked_prices) == ([], [])
@@ -1070,31 +1102,93 @@ def test_nothing_settles_while_the_price_setting_window_is_open(path: Path, cloc
 def test_a_trading_period_settles_only_once(path: Path, clock: _Clock) -> None:
     session = _pricing(path, clock)
     clock.tick(minutes=5)
-    session.close_price_setting()
+    _settle(session)
     money = session.network.members[1].money
 
-    assert not session.close_price_setting()
-    session.advance()
+    assert not _settle(session)
+    _advance(session)
 
     alice = session.network.members[1]
     assert alice.money == money
     assert len(alice.trading_results) == len(alice.locked_prices) == 1
 
 
-def test_advancing_before_the_window_runs_out_settles_the_period(path: Path, clock: _Clock) -> None:
+def test_advancing_before_the_window_runs_out_closes_it_and_waits_for_the_settlement(path: Path, clock: _Clock) -> None:
     session = _pricing(path, clock)
 
-    session.advance()
+    assert session.advance() == TradingPeriod(round=1, season="spring")
 
+    assert not session.price_setting_open()
+    assert _settle(session)
+    assert session.advance() == TradingPeriod(round=1, season="summer")
     alice = session.network.members[1]
     assert [(result.round, result.season) for result in alice.trading_results] == [(1, "spring")]
-    assert len(alice.locked_prices) == 1
+
+
+def test_the_session_cannot_advance_while_the_period_is_being_simulated(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+
+    with pytest.raises(SettlementRunningError):
+        session.advance()
+
+    session.finish_settlement(job, session.run_settlement(job))
+    assert session.advance() == TradingPeriod(round=1, season="summer")
+
+
+def test_a_period_being_simulated_is_not_started_twice(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+
+    assert session.start_settlement() is not None
+    assert session.start_settlement() is None
+
+
+def test_the_simulation_reports_its_progress(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    assert session.settlement is None
+    job = session.start_settlement()
+    assert job is not None
+
+    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 0, 1)
+    outcome = session.run_settlement(job)
+    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 1, 1)
+    session.finish_settlement(job, outcome)
+    assert session.settlement is None
+
+
+def test_an_abandoned_simulation_starts_again(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+
+    session.abandon_settlement(job)
+
+    assert session.settlement is None
+    assert session.start_settlement() is not None
+
+
+def test_a_player_who_joins_during_the_simulation_gets_nothing_from_it(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+
+    bob = session.join(_account(2, "bob"))
+    session.finish_settlement(job, session.run_settlement(job))
+
+    assert (bob.money, bob.trading_results) == (WORKSHOP_STARTING_BUDGET, [])
+    assert len(session.network.members[1].trading_results) == 1
 
 
 def test_every_trading_period_of_a_round_settles(path: Path, clock: _Clock) -> None:
     session = _pricing(path, clock)
     for _ in SEASONS:
-        session.advance()
+        _advance(session)
 
     assert session.checkpoint == Recap(round=1)
     seasons = [result.season for result in session.network.members[1].trading_results]
@@ -1104,7 +1198,7 @@ def test_every_trading_period_of_a_round_settles(path: Path, clock: _Clock) -> N
 def test_a_settlement_survives_a_restart(path: Path, clock: _Clock) -> None:
     session = _pricing(path, clock)
     clock.tick(minutes=5)
-    session.close_price_setting()
+    _settle(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
 
@@ -1112,7 +1206,7 @@ def test_a_settlement_survives_a_restart(path: Path, clock: _Clock) -> None:
     assert after.trading_results == before.trading_results
     assert (after.money, after.stored_energy) == (before.money, before.stored_energy)
     assert (reopened.weather_seed, reopened.demand_amplitude) == (session.weather_seed, session.demand_amplitude)
-    assert not reopened.close_price_setting()
+    assert not _settle(reopened)
 
 
 def test_a_session_keeps_its_weather_seed(path: Path) -> None:
@@ -1142,13 +1236,13 @@ def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: p
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.close_price_setting()
+        _settle(session)
     monkeypatch.undo()
 
     assert (alice.money, alice.stored_energy) == before
     assert (alice.trading_results, alice.locked_prices) == ([], [])
     assert session.demand_amplitude is None
-    assert session.close_price_setting()
+    assert _settle(session)
 
 
 def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Path, clock: _Clock) -> None:
@@ -1158,12 +1252,12 @@ def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Pat
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
     session.join(_account(1, "alice")).owned_facilities.extend(plants)
-    session.advance()
-    session.advance()
+    _advance(session)
+    _advance(session)
     session.set_price(1, FacilityId.COMBINED_CYCLE, "sell", 100.0)
     clock.tick(minutes=5)
 
-    session.close_price_setting()
+    _settle(session)
 
     amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=1)
     day = REPRESENTATIVE_DAYS["spring"]
@@ -1173,8 +1267,8 @@ def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Pat
     alice = session.network.members[1]
     [result] = alice.trading_results
     plant = result.facilities[FacilityId.COMBINED_CYCLE]
-    assert plant.sold == pytest.approx(sum(hourly) * 365 / 4)
-    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 365 / 4)
+    assert plant.sold == pytest.approx(sum(hourly) * 91)
+    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 91)
     om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
     assert plant.om == pytest.approx(om)
     assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om)
@@ -1189,11 +1283,181 @@ def test_a_failed_simulation_settles_nothing(path: Path, clock: _Clock, monkeypa
 
     monkeypatch.setattr(session_module, "national_demand_curve", unreadable_curve)
     with pytest.raises(OSError):
-        session.close_price_setting()
+        _settle(session)
     monkeypatch.undo()
 
     alice = session.network.members[1]
     assert (alice.trading_results, alice.locked_prices) == ([], [])
     assert session.demand_amplitude is None
-    assert session.close_price_setting()
+    assert _settle(session)
     assert len(alice.locked_prices) == 1
+
+
+# --- round format: full-season mode, clearings per day and storage (#1004) ------------------
+
+HYDROGEN = FacilityId.HYDROGEN_STORAGE
+FULL_SEASON = {"trading_format": "full_season", "storage": "all"}
+
+
+def test_a_session_starts_with_representative_days_hourly_clearings_and_batteries_only(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert session.current_format() == RoundFormat()
+
+
+def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    levers = session.set_levers(clearings_per_day=96, **FULL_SEASON)
+
+    assert (levers.trading_format, levers.clearings_per_day, levers.storage) == ("full_season", 96, "all")
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path).levers == levers
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [{"storage": "all"}, {"clearings_per_day": 48}, {"trading_format": "monthly"}, {"no_such_lever": 1}],
+)
+def test_levers_that_are_not_allowed_are_rejected_and_change_nothing(path: Path, changes: dict) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    with pytest.raises(InvalidLeversError):
+        session.set_levers(**changes)
+
+    assert session.levers == RoundLevers()
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path).levers == RoundLevers()
+
+
+def test_switching_back_to_representative_days_needs_storage_limited_too(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    session.set_levers(**FULL_SEASON)
+
+    with pytest.raises(InvalidLeversError):
+        session.set_levers(trading_format="representative_day")
+
+    assert session.set_levers(trading_format="representative_day", storage="batteries").storage == "batteries"
+
+
+def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.set_levers(clearings_per_day=288)
+
+    assert session.levers == RoundLevers()
+
+
+def test_before_round_one_the_format_follows_the_levers(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    session.set_levers(**FULL_SEASON)
+
+    assert session.current_format().trading_format == "full_season"
+
+
+def test_a_round_keeps_the_format_it_started_with_and_a_change_takes_effect_at_the_next_round(
+    path: Path,
+) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    _advance(session)
+
+    session.set_levers(clearings_per_day=288, **FULL_SEASON)
+
+    assert session.current_format() == RoundFormat()
+    while session.checkpoint != Investment(round=2):
+        _advance(session)
+    assert session.current_format() == RoundFormat(trading_format="full_season", clearings_per_day=288, storage="all")
+
+
+def test_a_rounds_format_survives_a_restart(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    session.set_levers(**FULL_SEASON)
+    _advance(session)
+    session.set_levers(trading_format="representative_day", storage="off")
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.current_format() == RoundFormat(trading_format="full_season", storage="all")
+    assert reopened.levers.storage == "off"
+
+
+def test_a_session_saved_before_round_formats_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "investment", "round": 2}, "round_count": 3, '
+        '"levers": {"clearings_per_day": 96}, "players": []}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.current_format() == RoundFormat(clearings_per_day=96)
+
+
+def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_type(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    with pytest.raises(FacilityNotOfferedError):
+        session.select(1, HYDROGEN)
+
+    session.set_levers(**FULL_SEASON)
+    while session.checkpoint != Investment(round=2):
+        _advance(session)
+    session.select(1, HYDROGEN)
+
+    assert session.network.members[1].selection == [HYDROGEN]
+
+
+def test_without_storage_no_battery_can_be_bought(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice"))
+    session.set_levers(storage="off")
+    _advance(session)
+
+    with pytest.raises(FacilityNotOfferedError):
+        session.select(1, BATTERIES)
+
+
+def test_storage_built_in_a_full_season_keeps_running_after_switching_back(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=HYDROGEN, built_round=1))
+    session.set_levers(**FULL_SEASON)
+    while session.checkpoint != Investment(round=2):
+        _advance(session)
+    session.set_levers(trading_format="representative_day", storage="batteries")
+    while session.checkpoint != TradingPeriod(round=3, season="spring"):
+        _advance(session)
+
+    assert HYDROGEN not in {facility.id for facility in session.offered_facilities()}
+    clock.tick(minutes=5)
+    _settle(session)
+    [*_, result] = session.network.members[1].trading_results
+    assert (result.round, list(result.facilities)) == (3, [HYDROGEN])
+
+
+def test_a_full_season_trading_period_simulates_every_day_of_its_season(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=GAS, built_round=1))
+    session.set_levers(trading_format="full_season")
+    _advance(session)
+    _advance(session)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+    reported: list[int] = []
+    real_simulate = session_module.simulate_trading_period
+
+    def recording(*args: object, on_day_done: Callable[[int], None], **kwargs: object) -> TradingOutcome:
+        def report(days_done: int) -> None:
+            on_day_done(days_done)
+            assert session.settlement is not None
+            reported.append(session.settlement.days_done)
+
+        return real_simulate(*args, on_day_done=report, **kwargs)  # type: ignore[arg-type]
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(session_module, "simulate_trading_period", recording)
+        session.finish_settlement(job, session.run_settlement(job))
+
+    assert reported == list(range(1, 92))
+    [result] = session.network.members[1].trading_results
+    assert result.facilities[GAS].generation > 0
