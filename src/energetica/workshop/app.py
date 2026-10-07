@@ -40,9 +40,10 @@ DEFAULT_SESSION_PATH = Path("instance/workshop_session.json")
 # route, which Workshop may not import.
 APP_BUNDLE_SUBPATH = "dist-app"
 
-# How often the app checks whether an Investment phase's time has run out, so its selections can be
-# bought (#999). Players see the purchase within this long of the countdown reaching zero.
-PURCHASE_CHECK_INTERVAL_SECONDS = 1.0
+# How often the app checks whether a phase's time has run out: an Investment phase's, so its selections
+# can be bought (#999), or a price-setting window's, so its Trading period can be settled (#1003).
+# Players see the result within this long of the countdown reaching zero.
+PHASE_CHECK_INTERVAL_SECONDS = 1.0
 
 
 def create_workshop_app(
@@ -96,38 +97,40 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     accounts.init_db()
     # Publish this Run's public fragment so the lobby can list it, as the persistent world does.
     instance_config.publish_on_startup()
-    # An app built only for its OpenAPI schema has no session, so nothing to buy.
+    # An app built only for its OpenAPI schema has no session, so nothing to buy or settle.
     if not hasattr(app.state, "workshop_session"):
         yield
         return
-    purchases = asyncio.create_task(_buy_selections_when_due(app))
+    phase_closer = asyncio.create_task(_close_phases_when_due(app))
     try:
         yield
     finally:
-        purchases.cancel()
+        phase_closer.cancel()
 
 
-async def _buy_selections_when_due(app: FastAPI) -> None:
-    """Buy every player's selection once the Investment phase's time runs out, and tell every open page.
+async def _close_phases_when_due(app: FastAPI) -> None:
+    """Act on a phase whose time has run out, and tell every open page.
 
-    The session does not act on its own when a timer runs out, so this checks for it. The
-    facilitator's advance also buys any selection still waiting, which covers a restart or a failed
-    save in between.
+    Once an Investment phase's time runs out, every player's selection is bought. Once a price-setting
+    window's time runs out, its Trading period is settled. The session does not act on its own when a
+    timer runs out, so this checks for it. The facilitator's advance does the same for anything still
+    waiting, which covers a restart or a failed save in between.
     """
     session: WorkshopSession = app.state.workshop_session
     while True:
-        await asyncio.sleep(PURCHASE_CHECK_INTERVAL_SECONDS)
+        await asyncio.sleep(PHASE_CHECK_INTERVAL_SECONDS)
         try:
-            # Waits on the session's lock and writes the session file, so it runs on a worker thread.
-            bought = await run_in_threadpool(session.buy_selections)
+            # Each waits on the session's lock and writes the session file, so it runs on a worker thread.
+            changed = await run_in_threadpool(session.buy_selections)
+            changed = await run_in_threadpool(session.close_price_setting) or changed
         except Exception:
-            logger.exception("Could not buy the Workshop selections. Retrying.")
+            logger.exception("Could not close the Workshop phase. Retrying.")
             continue
-        if not bought:
+        if not changed:
             continue
         try:
             await invalidate_session(app)
         except Exception:
-            # The purchase stands. Open pages show it on their next read, and this loop must keep
-            # running for the next Investment phase.
-            logger.exception("Bought the Workshop selections but could not tell the open pages.")
+            # The change stands. Open pages show it on their next read, and this loop must keep
+            # running for the next phase.
+            logger.exception("Closed the Workshop phase but could not tell the open pages.")

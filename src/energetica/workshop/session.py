@@ -11,8 +11,9 @@ arrive, and one after the last Recap, when the session is over.
 The Investment phase and each Trading period's price-setting window also get a countdown, a
 :class:`~energetica.workshop.phase_timer.PhaseTimer` (#996). It tells players how long they have, and
 the moderator can extend it. Running out of time closes the window but does not advance the session.
-Players change their prices only while a price-setting window is open (#1002). Leaving a Trading
-period records the prices it ran at.
+Players change their prices only while a price-setting window is open (#1002). Once it closes, the
+Trading period is settled (#1003): its prices are recorded, and the engine in
+:mod:`~energetica.workshop.trading` clears the period's representative day and pays each player.
 
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
 round-configuration levers, the running phase's countdown, and the Run's single shared
@@ -26,6 +27,7 @@ from __future__ import annotations
 
 import math
 import os
+import random
 import tempfile
 import threading
 from collections.abc import Callable
@@ -35,6 +37,8 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from energetica.sim.national_demand import national_demand_curve
+from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
@@ -43,6 +47,7 @@ from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
+from energetica.workshop.trading import Bidder, TradingResult, representative_weather, simulate_trading_period
 from energetica.workshop.unlocks import available_facilities
 
 if TYPE_CHECKING:
@@ -53,6 +58,9 @@ if TYPE_CHECKING:
 # How many Rounds a session runs unless the moderator chooses otherwise (#992). A placeholder, like
 # every other Workshop magnitude.
 DEFAULT_ROUND_COUNT = 3
+
+# How many different weather seeds there are. The noise behind ``sim.renewables`` repeats after 256.
+WEATHER_SEEDS = 256
 
 Clock = Callable[[], datetime]
 
@@ -174,6 +182,9 @@ class RoundLevers(BaseModel):
     # editable (#1018).
     investment_minutes: int = Field(default=8, ge=1)
     price_setting_minutes: int = Field(default=5, ge=1)
+    # How many times a day the market clears in a Trading period (#992 §2). The moderator console will
+    # make it editable (#1004).
+    clearings_per_day: Literal[24, 96, 288] = 24
 
 
 def phase_duration(checkpoint: Checkpoint, levers: RoundLevers) -> timedelta | None:
@@ -202,6 +213,8 @@ class _SavedPlayer(BaseModel):
     # Default to the starting prices and no history for a file saved before prices existed.
     prices: PriceSheet = DEFAULT_PRICES
     locked_prices: list[LockedPrices] = []
+    # Defaults to none for a file saved before Trading periods were settled.
+    trading_results: list[TradingResult] = []
 
 
 class _SavedSession(BaseModel):
@@ -215,6 +228,11 @@ class _SavedSession(BaseModel):
     # Defaults to none for a file saved before phase timers existed.
     phase_timer: PhaseTimer | None = None
     players: list[_SavedPlayer]
+    # Default to a new seed, no demand yet and nothing settled for a file saved before Trading periods
+    # were settled.
+    weather_seed: int = Field(default_factory=lambda: random.randrange(WEATHER_SEEDS))
+    demand_amplitude: float | None = None
+    settled_period: TradingPeriod | None = None
 
 
 class WorkshopSession:
@@ -233,6 +251,9 @@ class WorkshopSession:
         round_count: int,
         levers: RoundLevers,
         phase_timer: PhaseTimer | None = None,
+        weather_seed: int | None = None,
+        demand_amplitude: float | None = None,
+        settled_period: TradingPeriod | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -243,6 +264,13 @@ class WorkshopSession:
         self.round_count = round_count
         self.levers = levers
         self.phase_timer = phase_timer
+        # The random seed of the Run's weather, which the renewables' output follows (#1003).
+        self.weather_seed = random.randrange(WEATHER_SEEDS) if weather_seed is None else weather_seed
+        # The demand block's amplitude, in W. Set from the headcount when the first Trading period
+        # settles, and kept for the rest of the session, since no formula moves it yet (#992).
+        self.demand_amplitude = demand_amplitude
+        # The last Trading period settled, so that none is settled twice.
+        self.settled_period = settled_period
         self.clock = clock
         # Makes each change and the save that follows it one step, so two requests can neither
         # advance from the same checkpoint nor save over each other's change.
@@ -288,6 +316,7 @@ class WorkshopSession:
                 stored_energy=player.stored_energy,
                 prices=player.prices,
                 locked_prices=player.locked_prices,
+                trading_results=player.trading_results,
             )
         return cls(
             network=network,
@@ -296,6 +325,9 @@ class WorkshopSession:
             round_count=saved.round_count,
             levers=saved.levers,
             phase_timer=saved.phase_timer,
+            weather_seed=saved.weather_seed,
+            demand_amplitude=saved.demand_amplitude,
+            settled_period=saved.settled_period,
             clock=clock,
         )
 
@@ -344,8 +376,8 @@ class WorkshopSession:
 
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
         any selection still waiting, so none is lost if the moderator advances before the timer has
-        run out or before the purchase at its end has happened. Leaving a Trading period records the
-        prices it ran at. Starting a new Round's Investment phase retires every facility whose lifetime
+        run out or before the purchase at its end has happened. Leaving a Trading period settles it, if
+        its window has not already closed and settled it. Starting a new Round's Investment phase retires every facility whose lifetime
         has ended. Raises
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -358,7 +390,7 @@ class WorkshopSession:
             if isinstance(self.checkpoint, Investment):
                 saved = self._buy_selections(self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
             elif isinstance(self.checkpoint, TradingPeriod):
-                saved = self._lock_prices(self.checkpoint, checkpoint=checkpoint, phase_timer=phase_timer)
+                saved = self._settle(self.checkpoint, checkpoint=checkpoint, phase_timer=phase_timer)
             elif isinstance(checkpoint, Investment):
                 saved = self._retire_expired(checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
             else:
@@ -517,15 +549,38 @@ class WorkshopSession:
                 player.prices = before
                 raise
 
-    def _lock_prices(self, period: TradingPeriod, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
-        """Record the prices every player ran ``period`` at, and return whether any player had any.
+    def close_price_setting(self) -> bool:
+        """Settle the Trading period if its price-setting window has run out, and return whether it did.
 
-        Each player's record holds the prices of the facility types they had operating, and a player with
-        none gets no record. It is saved with the session at ``checkpoint`` with ``phase_timer``, and
-        nothing is saved if nothing is recorded. The caller holds the lock.
+        Nothing happens while the window is open, outside a Trading period, or once the period is settled.
         """
-        before = {player: list(player.locked_prices) for player in self.network.players()}
-        for player in before:
+        with self._lock:
+            if not isinstance(self.checkpoint, TradingPeriod) or self.price_setting_open():
+                return False
+            return self._settle(self.checkpoint, checkpoint=self.checkpoint, phase_timer=self.phase_timer)
+
+    def _settle(self, period: TradingPeriod, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
+        """Settle ``period``, unless it already is, and return whether it was settled now.
+
+        Each player's prices are recorded, holding the prices of the facility types they had operating
+        (#1002). The engine then simulates the period (#1003): each player is paid what it made, their
+        storage keeps the energy it ends with, and a player with anything operating gets a result. A
+        player with nothing operating gets neither a price record nor a result. The first Trading period
+        settled also fixes the demand block's amplitude from the headcount.
+
+        It is saved with the session at ``checkpoint`` with ``phase_timer``. The caller holds the lock.
+        """
+        if self.settled_period == period:
+            return False
+        players = self.network.players()
+        before = [
+            (player.money, list(player.locked_prices), dict(player.stored_energy), list(player.trading_results))
+            for player in players
+        ]
+        demand_amplitude = self.demand_amplitude
+        if self.demand_amplitude is None:
+            self.demand_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+        for player in players:
             operating = {
                 owned.facility for owned in player.owned_facilities if is_operating(owned, current_round=period.round)
             }
@@ -533,14 +588,35 @@ class WorkshopSession:
                 player.locked_prices.append(
                     LockedPrices(round=period.round, season=period.season, prices=player.prices.only(operating))
                 )
-        if all(player.locked_prices == locked for player, locked in before.items()):
-            return False
+        # A blackout is not acted on yet: what it does to the session is #1005.
+        outcome = simulate_trading_period(
+            [
+                Bidder(player.account_id, player.owned_facilities, player.prices, player.stored_energy)
+                for player in players
+            ],
+            round_number=period.round,
+            season=period.season,
+            clearings_per_day=self.levers.clearings_per_day,
+            amplitude=self.demand_amplitude,
+            curve=national_demand_curve(),
+            weather=representative_weather(self.weather_seed),
+        )
+        for player in players:
+            player.stored_energy = outcome.stored_energy[player.account_id]
+            result = outcome.results.get(player.account_id)
+            if result is not None:
+                player.money += result.net
+                player.trading_results.append(result)
+        self.settled_period = period
         try:
             self._save(checkpoint, phase_timer)
         except BaseException:
-            # Undo the record, so the session matches the file and the next attempt retries it.
-            for player, locked in before.items():
-                player.locked_prices = locked
+            # Undo the settlement, so the session matches the file and the next attempt retries it.
+            for player, (money, locked_prices, stored_energy, trading_results) in zip(players, before, strict=True):
+                player.money, player.locked_prices = money, locked_prices
+                player.stored_energy, player.trading_results = stored_energy, trading_results
+            self.demand_amplitude = demand_amplitude
+            self.settled_period = None
             raise
         return True
 
@@ -575,9 +651,13 @@ class WorkshopSession:
                     stored_energy=player.stored_energy,
                     prices=player.prices,
                     locked_prices=player.locked_prices,
+                    trading_results=player.trading_results,
                 )
                 for player in self.network.players()
             ],
+            weather_seed=self.weather_seed,
+            demand_amplitude=self.demand_amplitude,
+            settled_period=self.settled_period,
         )
         _write_atomically(self.path, saved.model_dump_json(indent=2))
 
