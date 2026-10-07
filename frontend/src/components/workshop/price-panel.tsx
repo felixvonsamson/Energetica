@@ -12,7 +12,7 @@
  */
 
 import { AlertTriangle, X, Zap } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { CoinIcon } from "@/components/ui/coin-icon";
 import { Input } from "@/components/ui/input";
@@ -261,6 +261,10 @@ function PriceField({
     // What the player is typing, or null while the field shows `saved`.
     const [draft, setDraft] = useState<string | null>(null);
     const sendTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+    // A field unmounts when the window opens or closes, which discards what was
+    // half-typed. Its pending send goes with it, or it would send the discarded
+    // price after the window closed.
+    useEffect(() => () => clearTimeout(sendTimer.current), []);
     const text = disabled || draft === null ? String(saved) : draft;
     const parsed = parsePrice(text, floor);
 
