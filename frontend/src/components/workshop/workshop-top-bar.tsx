@@ -127,10 +127,10 @@ function PricesButton({
             {windowOpen && (
                 <span
                     aria-label="Price-setting window open"
-                    className="absolute -top-1 -right-2.5 flex size-6 items-center justify-center rounded-full bg-brand text-fg-on-brand shadow-sm"
+                    className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-brand text-fg-on-brand shadow-sm"
                 >
                     <Clock
-                        className="block size-[15px] shrink-0"
+                        className="block size-[13px] shrink-0"
                         strokeWidth={2.75}
                     />
                 </span>
