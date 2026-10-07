@@ -24,12 +24,14 @@ from energetica.freeplay.database.player import Player
 from energetica.identity.accounts import Account
 from energetica.init_test_players import add_asset
 from energetica.production_update import calculate_generation_with_market, calculate_generation_without_market
-from energetica.sim.market import MIN_PRICE, init_market
+from energetica.sim.market import init_market
 from energetica.utils.map_helpers import confirm_location
 
 STEAM = ControllableFacilityType.STEAM_ENGINE
 COAL = ControllableFacilityType.COAL_BURNER
 BATTERY = StorageFacilityType.LITHIUM_ION_BATTERIES
+# The persistent world's price floor, written out rather than imported so these tests also pin it.
+MIN_PRICE = -5
 
 
 @pytest.fixture
@@ -58,22 +60,35 @@ def _new_values(p: Player) -> dict:
     return {p.id: p.rolling_history.init_new_data()}
 
 
-def _summary(entries: list) -> list[tuple[str, float]]:
-    return [(str(e.facility), e.price) for e in entries]
+def _summary(entries: list) -> list[tuple[str, float, bool]]:
+    return [(str(e.facility), e.price, e.must_run) for e in entries]
 
 
 def test_networked_player_offers_must_run_output_first_then_headroom_at_the_asked_price(player: Player) -> None:
     market = calculate_generation_with_market(_new_values(player), init_market(), player)
 
     assert _summary(market["capacities"]) == [
-        (STEAM, MIN_PRICE),
-        (COAL, MIN_PRICE),
-        (STEAM, 40.0),
-        (COAL, 60.0),
-        (BATTERY, 90.0),
+        (STEAM, MIN_PRICE, True),
+        (COAL, MIN_PRICE, True),
+        (STEAM, 40.0, False),
+        (COAL, 60.0, False),
+        (BATTERY, 90.0, False),
     ]
     assert all(entry.capacity > 0 for entry in market["capacities"])
     assert {entry.player_id for entry in market["capacities"]} == {player.id}
+
+
+def test_building_offers_records_no_generation_before_the_market_clears(player: Player) -> None:
+    """Generation is recorded from the settlement (what sold plus what was dumped), not while offering."""
+    new_values = _new_values(player)
+
+    calculate_generation_with_market(new_values, init_market(), player)
+
+    assert {f: new_values[player.id]["generation"][f] for f in (STEAM, COAL, BATTERY)} == {
+        STEAM: 0,
+        COAL: 0,
+        BATTERY: 0,
+    }
 
 
 def test_networked_player_bids_its_demand_at_the_set_prices(player: Player) -> None:

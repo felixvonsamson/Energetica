@@ -14,10 +14,12 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.identity.accounts import Account
 from energetica.production_update import market_logic
-from energetica.sim.market import init_market, place_ask, place_bid
+from energetica.sim.market import init_market, place_ask, place_bid, place_must_run_ask
 from energetica.utils.map_helpers import confirm_location
 
-MUST_RUN_PRICE = -5
+# The persistent world's price floor, written out rather than imported so these tests also pin it. Its dump
+# cost (5 per MWh) is pinned by the dumping revenue in EXPECTED_DUMPING.
+MIN_PRICE = -5
 
 
 @pytest.fixture
@@ -80,7 +82,7 @@ def test_curtailed_demand_and_marginal_offer(players: tuple[Player, Player]) -> 
     new_values[b.id]["revenues"]["industry"] = 10.0
 
     market = init_market()
-    place_ask(market, a.id, 60, MUST_RUN_PRICE, "steam_engine")
+    place_must_run_ask(market, a.id, 60, MIN_PRICE, "steam_engine")
     place_ask(market, a.id, 100, 30, "coal_burner")
     place_ask(market, b.id, 80, 50, "gas_burner")
     place_bid(market, b.id, 120, 100, "industry")
@@ -99,7 +101,7 @@ def test_unsold_must_run_power_is_dumped_and_paid_for(players: tuple[Player, Pla
     new_values[b.id]["revenues"]["industry"] = 10.0
 
     market = init_market()
-    place_ask(market, a.id, 60, MUST_RUN_PRICE, "steam_engine")
+    place_must_run_ask(market, a.id, 60, MIN_PRICE, "steam_engine")
     place_bid(market, b.id, 30, 100, "industry")
 
     result = _settle(players, market, new_values)
@@ -108,7 +110,8 @@ def test_unsold_must_run_power_is_dumped_and_paid_for(players: tuple[Player, Pla
 
 
 # Player ids are 1 and 2 because each test builds a fresh engine. The clearing is at 30 with 120 MW cleared:
-# player 1's must-run 60 MW and 60 of its 100 MW coal offer sell, player 2 buys all 120 MW, and player 1's
+# player 1's must-run 60 MW and 60 of its 100 MW coal offer sell (and count as its generation),
+# player 2 buys all 120 MW, and player 1's
 # 40 MW construction bid (priced below the market) is curtailed to zero, which is why it is absent below.
 EXPECTED_CURTAILED: dict = {
     "price": 30,
@@ -122,7 +125,7 @@ EXPECTED_CURTAILED: dict = {
     1: {
         "money": 0.00024,
         "revenues": {"exports": 0.00024},
-        "generation": {"coal_burner": 60.0},
+        "generation": {"steam_engine": 60, "coal_burner": 60.0},
         "demand": {"exports": 120.0},
     },
     2: {
@@ -134,7 +137,8 @@ EXPECTED_CURTAILED: dict = {
 }
 
 # Only 30 MW is bid, so the clearing is at the price floor with 30 MW cleared. The other 30 MW of player 1's
-# must-run power is dumped and billed at the floor price on top of the (negative) sale revenue.
+# must-run power is dumped and billed at the floor price on top of the (negative) sale revenue. Player 1's
+# steam engine generated all 60 MW: what sold plus what was dumped.
 EXPECTED_DUMPING: dict = {
     "price": -5,
     "quantity": 30.0,
@@ -147,7 +151,7 @@ EXPECTED_DUMPING: dict = {
     1: {
         "money": -2e-05,
         "revenues": {"exports": -1e-05, "dumping": -1e-05},
-        "generation": {},
+        "generation": {"steam_engine": 60.0},
         "demand": {"exports": 30.0, "dumping": 30.0},
     },
     2: {

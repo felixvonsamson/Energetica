@@ -18,7 +18,7 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.setup import NotAWorkshopRunError, open_workshop_run
 
-# The persistent world's per-network cap (`energetica.config.constants`). Restated rather than
+# The persistent world's per-network cap (`energetica.freeplay.constants`). Restated rather than
 # imported: this module tests Workshop, which may not import from the persistent world.
 PERSISTENT_NETWORK_MEMBER_LIMIT = 15
 

@@ -22,6 +22,7 @@ from energetica.enums import (
     WorkerType,
     power_facility_types,
 )
+from energetica.freeplay.constants import DUMP_COST, MIN_PRICE
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
 from energetica.freeplay.database.network import Network
@@ -52,7 +53,7 @@ from energetica.sim.renewables import (
     solar_power_fraction,
     wind_power_fraction,
 )
-from energetica.sim.settlement import settle_clearing
+from energetica.sim.settlement import PurchaseSettlement, settle_clearing
 from energetica.utils import network_helpers
 
 
@@ -405,6 +406,23 @@ def reset_resource_reservations() -> dict[Fuel, float]:
     return {fuel: 0.0 for fuel in Fuel}
 
 
+def offer_must_run_output(new_values: dict, market: dict, player: Player) -> dict[str, float]:
+    """Offer at :data:`MIN_PRICE` the output each facility must produce this tick, and return those amounts.
+
+    Must-run output is what renewables get from the weather, and the least a controllable or storage
+    facility can produce given how fast it can ramp down. It becomes generation only once the market has
+    cleared, in :func:`market_logic`, whether it sells or is dumped.
+    """
+    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
+    renewables_generation(player, must_run_output)
+    # TODO (Felix): Renewables_generation() should be included in minimal_generation()
+    minimal_generation(player, must_run_output, reset_resource_reservations())
+    for facility in (*StorageFacilityType, *power_facility_types):
+        if facility in player.capacities:
+            place_must_run_ask(market, player.id, must_run_output[facility], MIN_PRICE, facility)
+    return must_run_output
+
+
 def calculate_generation_without_market(new_values: dict, player: Player) -> float:
     """
     Calculate the generation of a player that is not part of a network.
@@ -414,18 +432,8 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     """
     # --- Initialization ---
     internal_market = init_market()
-    generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
-    resource_reservations = reset_resource_reservations()
-
-    # generation of non controllable facilities is calculated from weather data.
-    renewables_generation(player, generation)
-    # TODO (Felix): Renewables_generation() should be included in minimal_generation()
-    minimal_generation(player, generation, resource_reservations)
-    # Obligatory generation is put on the internal market at the minimum price
-    for facility in (*StorageFacilityType, *power_facility_types):
-        if facility in player.capacities:
-            internal_market = place_must_run_ask(internal_market, player.id, generation[facility], facility)
+    must_run_output = offer_must_run_output(new_values, internal_market, player)
 
     # demands are demanded on the internal market
     for bid_type in player.network_prices.bid_prices.keys():
@@ -451,7 +459,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
             )
             price = player.network_prices.ask_prices[facility]
             internal_market = place_headroom_ask(
-                internal_market, player.id, generation[facility], max_prod, price, facility
+                internal_market, player.id, must_run_output[facility], max_prod, price, facility
             )
 
     market_logic(new_values, internal_market)
@@ -459,17 +467,12 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
 
 
 def calculate_generation_with_market(new_values: dict, market: dict, player: Player) -> dict:
-    """Calculate the generation of a player that is part of a network (before market logic)."""
-    generation = new_values[player.id]["generation"]
-    demand = new_values[player.id]["demand"]
-    resource_reservations = reset_resource_reservations()
+    """Place a networked player's offers and bids on the network's market.
 
-    renewables_generation(player, generation)
-    minimal_generation(player, generation, resource_reservations)
-    # offer minimal generation capacities of facilities on the market at a negative price
-    for facility in (*StorageFacilityType, *power_facility_types):
-        if player.capacities.get(facility) is not None:
-            market = place_must_run_ask(market, player.id, generation[facility], facility)
+    Generation is not recorded here. :func:`market_logic` records it once the market has cleared.
+    """
+    demand = new_values[player.id]["demand"]
+    must_run_output = offer_must_run_output(new_values, market, player)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -494,7 +497,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
                 resource_reservations,
             )
             price = player.network_prices.ask_prices[facility]  # type: ignore
-            market = place_headroom_ask(market, player.id, generation[facility], max_prod, price, facility)
+            market = place_headroom_ask(market, player.id, must_run_output[facility], max_prod, price, facility)
 
     return market
 
@@ -543,35 +546,33 @@ def market_logic(new_values: dict, market: dict) -> None:
 
     # The pure half decides what each entry sold, bought and dumped, and what that is worth. Applying it
     # to the players (money, generation, curtailment, chart data) is Player-coupled, so it stays here.
-    settlement = settle_clearing(clearing, engine.in_game_seconds_per_tick)
+    settlement = settle_clearing(clearing, engine.in_game_seconds_per_tick, DUMP_COST)
     for sale in settlement.sales:
         player = Player.get(sale.player_id)
         assert player is not None
-        if sale.quantity > 0:
-            if sale.counts_as_generation:
-                new_values[player.id]["generation"][sale.facility] += sale.quantity
-            new_values[player.id]["demand"]["exports"] += sale.quantity
+        new_values[player.id]["generation"][sale.facility] += sale.power_produced
+        if sale.power_sold > 0:
+            new_values[player.id]["demand"]["exports"] += sale.power_sold
             player.money += sale.revenue
             new_values[player.id]["revenues"]["exports"] += sale.revenue
-            add_to_market_data(player.id, sale.quantity, sale.facility, export=True)
-        # dumping electricity that is offered at the minimal price and not sold
-        if sale.dumped is not None:
-            new_values[player.id]["demand"]["dumping"] += sale.dumped
+            add_to_market_data(player.id, sale.power_sold, sale.facility, export=True)
+        # dumping must-run electricity that was not sold
+        if sale.power_dumped > 0:
+            new_values[player.id]["demand"]["dumping"] += sale.power_dumped
             player.money -= sale.dump_cost
             new_values[player.id]["revenues"]["dumping"] -= sale.dump_cost
-            add_to_market_data(player.id, sale.dumped, "dumping", export=False)
-            add_to_market_data(player.id, sale.dumped, sale.facility, export=True)
+            add_to_market_data(player.id, sale.power_dumped, "dumping", export=False)
+            add_to_market_data(player.id, sale.power_dumped, sale.facility, export=True)
     for purchase in settlement.purchases:
         player = Player.get(purchase.player_id)
         assert player is not None
-        if purchase.quantity > 0:
-            new_values[player.id]["generation"]["imports"] += purchase.quantity
+        if purchase.power_bought > 0:
+            new_values[player.id]["generation"]["imports"] += purchase.power_bought
             player.money -= purchase.cost
             new_values[player.id]["revenues"]["imports"] -= purchase.cost
-            add_to_market_data(player.id, purchase.quantity, purchase.facility, export=False)
-        # measures a taken to reduce demand
-        if purchase.served is not None:
-            reduce_demand(new_values, purchase.facility, purchase.player_id, purchase.served)
+            add_to_market_data(player.id, purchase.power_bought, purchase.facility, export=False)
+        if purchase.curtailed:
+            reduce_demand(new_values, purchase)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 
@@ -818,22 +819,21 @@ def construction_emissions(new_values: dict, player: Player) -> None:
     add_emissions(new_values, player, "construction", emissions_of_constructions)
 
 
-def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfaction: float) -> None:
+def reduce_demand(new_values: dict, purchase: PurchaseSettlement) -> None:
     """
-    Take measures to reduce power demand.
+    Cut a player's demand down to what its bid bought, and take the measures that follow from it.
 
-    Arguments:
-    @param demand_type: type of the power demand (eg. industry, construction, research, transport)
-    @param satisfaction: the amount of power that can be provided (in W)
-
+    ``purchase.facility`` is the type of demand (for example industry, construction, research or transport).
     """
     # TODO(mglst): Add argument description for new_values
-    player = Player.get(player_id)
+    player = Player.get(purchase.player_id)
     assert player is not None
     demand = new_values[player.id]["demand"]
+    demand_type = purchase.facility
+    satisfaction = purchase.power_bought
 
     # Calculate consumption status before modifying demand
-    original_demand = demand.get(demand_type, 0.0)
+    original_demand = purchase.power_bid
     epsilon = 0.1  # W tolerance
     if original_demand > epsilon:
         # Only track status for facilities in the player's bid prices (market participants)
