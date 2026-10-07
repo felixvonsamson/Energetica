@@ -642,3 +642,55 @@ def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
         alice = kept.network.members[1]
         assert kept.checkpoint == Investment(round=1)
         assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
+
+
+# --- automatic retirement (#1000) -----------------------------------------------------------
+
+# An onshore wind turbine built in Round 1 works in Rounds 1 and 2. A nuclear reactor built in Round 1
+# works from Round 2 to Round 9.
+WIND = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1)
+REACTOR = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1)
+
+
+def _owning_wind_and_reactor(path: Path) -> WorkshopSession:
+    """A session at Round 2's Recap, with Alice (account 1) owning ``WIND`` and ``REACTOR``."""
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    session.join(_account(1, "alice")).owned_facilities.extend([WIND, REACTOR])
+    while session.checkpoint != Recap(round=2):
+        session.advance()
+    return session
+
+
+def test_a_facility_stays_on_the_roster_through_its_last_round(path: Path) -> None:
+    session = _owning_wind_and_reactor(path)
+
+    assert session.network.members[1].owned_facilities == [WIND, REACTOR]
+
+
+def test_a_facility_retires_by_itself_the_round_after_its_lifetime_ends(path: Path) -> None:
+    session = _owning_wind_and_reactor(path)
+
+    session.advance()
+
+    assert session.checkpoint == Investment(round=3)
+    assert session.network.members[1].owned_facilities == [REACTOR]
+
+
+def test_a_retirement_survives_a_restart(path: Path) -> None:
+    session = _owning_wind_and_reactor(path)
+    session.advance()
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.network.members[1].owned_facilities == [REACTOR]
+
+
+def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _owning_wind_and_reactor(path)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.advance()
+
+    assert session.checkpoint == Recap(round=2)
+    assert session.network.members[1].owned_facilities == [WIND, REACTOR]
