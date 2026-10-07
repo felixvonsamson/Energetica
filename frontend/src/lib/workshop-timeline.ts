@@ -177,3 +177,38 @@ export function checkpointLabel(checkpoint: Checkpoint): string {
             throw checkpoint satisfies never;
     }
 }
+
+/** What the facilitator's advance button does, as it says it. */
+export type AdvanceAction =
+    | { kind: "start"; label: string }
+    | { kind: "close_window"; label: string }
+    | { kind: "simulating"; label: string }
+    | { kind: "next"; label: string };
+
+/**
+ * What advancing does now (#1004). While the Investment phase or a
+ * price-setting window is open (`windowOpen`), advancing closes it and the
+ * session stays where it is. While a Trading period is being simulated,
+ * advancing is refused. Null once the session is over.
+ */
+export function advanceAction(
+    session: ApiSchema<"WorkshopSessionOut">,
+    windowOpen: boolean,
+): AdvanceAction | null {
+    const next = session.next_checkpoint;
+    if (!next) return null;
+    if (session.settlement)
+        return { kind: "simulating", label: "Simulating the Trading period" };
+    if (windowOpen) {
+        return {
+            kind: "close_window",
+            label:
+                session.checkpoint.kind === "investment"
+                    ? "Close the investment window"
+                    : "Close the price-setting window",
+        };
+    }
+    if (session.checkpoint.kind === "not_started")
+        return { kind: "start", label: "Start the session" };
+    return { kind: "next", label: `Next: ${checkpointLabel(next)}` };
+}

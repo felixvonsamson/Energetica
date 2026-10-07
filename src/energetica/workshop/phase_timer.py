@@ -1,8 +1,9 @@
 """The countdown on a Workshop phase (#996): how long players have left to invest or to set prices.
 
 A phase opens with the duration the moderator configured, and the moderator can give the room more
-time with "+N minutes" while it runs. There is no way to end a phase early. When the time runs out
-the session stays where it is: only the moderator's advance moves it on (#994).
+time with "+N minutes" while it runs, or end it early by advancing: the phase then closes as if its
+time had run out (#1004). Either way the session stays where it is: only the moderator's next advance
+moves it on (#994).
 
 :class:`PhaseTimer` is plain data with no clock of its own. Callers pass the current time in, so the
 arithmetic needs no I/O and is the same before and after a restart.
@@ -42,3 +43,9 @@ class PhaseTimer(BaseModel):
         if by <= timedelta(0):
             raise ValueError(f"an extension must add time, not {by}")
         return self.model_copy(update={"extensions": (*self.extensions, by)})
+
+    def closed_at(self, now: datetime) -> PhaseTimer:
+        """This timer, ending at ``now`` instead, if it would end later."""
+        if now >= self.ends_at:
+            return self
+        return PhaseTimer(started_at=self.started_at, duration=max(now - self.started_at, timedelta(0)))

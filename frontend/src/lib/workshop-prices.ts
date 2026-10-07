@@ -8,7 +8,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
 type FacilityId = ApiSchema<"FacilityId">;
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
 /**
  * The facility types the player has operating, each once, in the order first

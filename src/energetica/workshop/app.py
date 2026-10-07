@@ -10,6 +10,7 @@ between this and the persistent world's app.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from collections.abc import AsyncGenerator
@@ -28,7 +29,14 @@ from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from energetica.workshop.realtime import invalidate_session, setup_socketio
 from energetica.workshop.routes import router as workshop_router
-from energetica.workshop.session import Clock, WorkshopSession, utc_now
+from energetica.workshop.session import (
+    Clock,
+    SettlementCancelledError,
+    SettlementJob,
+    SettlementProgress,
+    WorkshopSession,
+    utc_now,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +50,8 @@ APP_BUNDLE_SUBPATH = "dist-app"
 
 # How often the app checks whether a phase's time has run out: an Investment phase's, so its selections
 # can be bought (#999), or a price-setting window's, so its Trading period can be settled (#1003).
-# Players see the result within this long of the countdown reaching zero.
+# Players see the result within this long of the countdown reaching zero. While a Trading period is
+# being simulated, open pages are told how far it has got this often too (#1004).
 PHASE_CHECK_INTERVAL_SECONDS = 1.0
 
 
@@ -75,6 +84,9 @@ def create_workshop_app(
     if rm_instance:
         session_path.unlink(missing_ok=True)
     app.state.workshop_session = WorkshopSession.open(config, session_path, clock=clock)
+    # Set to check the phases now rather than at the next interval, such as when the facilitator
+    # closes a price-setting window by advancing.
+    app.state.phase_check = asyncio.Event()
     setup_socketio(app)
     started_at = time.monotonic()
 
@@ -112,25 +124,72 @@ async def _close_phases_when_due(app: FastAPI) -> None:
     """Act on a phase whose time has run out, and tell every open page.
 
     Once an Investment phase's time runs out, every player's selection is bought. Once a price-setting
-    window's time runs out, its Trading period is settled. The session does not act on its own when a
-    timer runs out, so this checks for it. The facilitator's advance does the same for anything still
-    waiting, which covers a restart or a failed save in between.
+    window's time runs out, its Trading period is simulated in the background and then settled (#1004).
+    While it runs, every open page is told each time it has got further. The session does not act on its
+    own when a timer runs out, so this checks for it. After a restart or a failure, the next check starts
+    again whatever is still waiting.
     """
     session: WorkshopSession = app.state.workshop_session
+    phase_check: asyncio.Event = app.state.phase_check
+    # The running simulation. asyncio keeps only a weak reference to a task, so this one keeps it alive.
+    simulation: asyncio.Task[None] | None = None
+    job: SettlementJob | None = None
+    reported: SettlementProgress | None = None
+    try:
+        while True:
+            with contextlib.suppress(TimeoutError):
+                await asyncio.wait_for(phase_check.wait(), PHASE_CHECK_INTERVAL_SECONDS)
+            phase_check.clear()
+            try:
+                # Each waits on the session's lock and writes the session file, so it runs on a worker thread.
+                changed = await run_in_threadpool(session.buy_selections)
+                new_job = await run_in_threadpool(session.start_settlement)
+            except Exception:
+                logger.exception("Could not close the Workshop phase. Retrying.")
+                continue
+            if new_job is not None:
+                job = new_job
+                simulation = asyncio.create_task(_settle(app, session, job))
+            # Each day the simulation gets through, or its end, is news for the open pages.
+            if session.settlement != reported:
+                reported = session.settlement
+                changed = True
+            if not changed:
+                continue
+            try:
+                await invalidate_session(app)
+            except Exception:
+                # The change stands. Open pages show it on their next read, and this loop must keep
+                # running for the next phase.
+                logger.exception("Closed the Workshop phase but could not tell the open pages.")
+    finally:
+        # Stop the worker thread after the day it is on, so that the app does not wait for the whole run.
+        if job is not None:
+            job.cancelled.set()
+        if simulation is not None:
+            simulation.cancel()
+
+
+async def _settle(app: FastAPI, session: WorkshopSession, job: SettlementJob) -> None:
+    """Simulate ``job``'s Trading period on a worker thread, then settle it.
+
+    If the simulation fails, the period is left waiting, so the next check starts it again. If settling
+    fails, such as when the session cannot be saved, it is tried again with the same result until it works.
+    """
+    try:
+        outcome = await run_in_threadpool(session.run_settlement, job)
+    except SettlementCancelledError:
+        return
+    except Exception:
+        logger.exception("Could not simulate the Workshop Trading period. Retrying.")
+        await run_in_threadpool(session.abandon_settlement, job)
+        return
     while True:
-        await asyncio.sleep(PHASE_CHECK_INTERVAL_SECONDS)
         try:
-            # Each waits on the session's lock and writes the session file, so it runs on a worker thread.
-            changed = await run_in_threadpool(session.buy_selections)
-            changed = await run_in_threadpool(session.close_price_setting) or changed
+            await run_in_threadpool(session.finish_settlement, job, outcome)
+            break
         except Exception:
-            logger.exception("Could not close the Workshop phase. Retrying.")
-            continue
-        if not changed:
-            continue
-        try:
-            await invalidate_session(app)
-        except Exception:
-            # The change stands. Open pages show it on their next read, and this loop must keep
-            # running for the next phase.
-            logger.exception("Closed the Workshop phase but could not tell the open pages.")
+            logger.exception("Could not settle the Workshop Trading period. Retrying.")
+            await asyncio.sleep(PHASE_CHECK_INTERVAL_SECONDS)
+    # Tell the open pages now rather than at the next check.
+    app.state.phase_check.set()

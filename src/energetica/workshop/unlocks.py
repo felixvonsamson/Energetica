@@ -2,14 +2,18 @@
 
 A player only ever sees a facility once it is available, so each unlock comes as a surprise. Every
 session starts with the base tier of each category (#975). Upgrades unlock once the session's
-cumulative investment in their base tier crosses a threshold (#1011), Concentrated solar power at a
-set Round (#975), and hydrogen storage and pumped hydro when the full-season format is switched on
-(#1004). Those tickets add that state here. Until then a session offers only its starting facilities.
+cumulative investment in their base tier crosses a threshold (#1011), and Concentrated solar power at a
+set Round (#975). Those tickets add that state here.
+
+Storage follows the Round's storage lever (#1004): none, batteries only, or every type. Hydrogen storage
+and pumped hydro are offered only with every type, which needs the full-season format. If the moderator
+switches back, players keep the ones they built, but cannot buy more.
 """
 
 from __future__ import annotations
 
-from energetica.workshop.facilities import CATALOG, FacilityId, WorkshopFacility
+from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, WorkshopFacility
+from energetica.workshop.round_format import StorageAvailability
 
 STARTING_FACILITIES: frozenset[FacilityId] = frozenset(
     {
@@ -23,7 +27,23 @@ STARTING_FACILITIES: frozenset[FacilityId] = frozenset(
     }
 )
 
+#: The storage offered only when the storage lever allows every type.
+FULL_SEASON_STORAGE: frozenset[FacilityId] = frozenset({FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO})
 
-def available_facilities() -> list[WorkshopFacility]:
-    """The facilities players can see and buy now, in catalog order."""
-    return [facility for facility in CATALOG.values() if facility.id in STARTING_FACILITIES]
+
+def _allowed(facility: WorkshopFacility, storage: StorageAvailability) -> bool:
+    """Whether the storage lever ``storage`` lets players buy ``facility``. Generation is always allowed."""
+    if facility.base_storage_capacity is None:
+        return True
+    if storage == "batteries":
+        return facility.category == FacilityCategory.BATTERIES
+    return storage == "all"
+
+
+def available_facilities(storage: StorageAvailability) -> list[WorkshopFacility]:
+    """The facilities players can see and buy now, with the storage lever at ``storage``, in catalog order."""
+    return [
+        facility
+        for facility in CATALOG.values()
+        if (facility.id in STARTING_FACILITIES or facility.id in FULL_SEASON_STORAGE) and _allowed(facility, storage)
+    ]

@@ -2,13 +2,14 @@
 
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
-accounts. Advancing the session and extending its running phase are the facilitator's alone, and
-each tells every open page (#1140). A player's investment selection (#999) and prices (#1002) are
-theirs alone.
+accounts. Advancing the session, extending its running phase and changing the levers are the
+facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
+and prices (#1002) are theirs alone.
 """
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 from typing import Annotated
 
@@ -18,12 +19,13 @@ from fastapi.concurrency import run_in_threadpool
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.workshop.facilities import FacilityId, WorkshopFacility
+from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
+    WorkshopFacilityOut,
     WorkshopMemberOut,
     WorkshopOwnedFacilityOut,
     WorkshopPhaseExtendIn,
@@ -34,6 +36,7 @@ from energetica.workshop.schemas import (
     WorkshopSelectionIn,
     WorkshopSelectionOut,
     WorkshopSessionOut,
+    WorkshopSettlementOut,
 )
 from energetica.workshop.session import (
     FacilityNotOfferedError,
@@ -44,11 +47,12 @@ from energetica.workshop.session import (
     NotStorageError,
     PriceBelowFloorError,
     PriceSettingClosedError,
+    RoundLevers,
     SessionFinishedError,
+    SettlementRunningError,
     WorkshopSession,
 )
 from energetica.workshop.storage import energy_at_risk
-from energetica.workshop.unlocks import available_facilities
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -72,8 +76,17 @@ def get_player(account: Annotated[Account, Depends(resolve_entry_account)], sess
 Player = Annotated[WorkshopPlayer, Depends(get_player)]
 
 
+def check_phases_now(request: Request) -> None:
+    """Have the app check the phases now rather than at its next interval (see
+    :mod:`~energetica.workshop.app`).
+    """
+    phase_check: asyncio.Event | None = getattr(request.app.state, "phase_check", None)
+    if phase_check is not None:
+        phase_check.set()
+
+
 def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
-    phase_timer = session.phase_timer
+    phase_timer, settlement = session.phase_timer, session.settlement
     return WorkshopSessionOut(
         checkpoint=session.checkpoint,
         next_checkpoint=session.upcoming_checkpoint(),
@@ -85,6 +98,10 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
             WorkshopMemberOut(account_id=player.account_id, username=player.username)
             for player in session.network.players()
         ],
+        round_format=session.current_format(),
+        settlement=None
+        if settlement is None
+        else WorkshopSettlementOut(days_done=settlement.days_done, days_total=settlement.days_total),
     )
 
 
@@ -116,11 +133,20 @@ async def advance_session(
 ) -> WorkshopSessionOut:
     """Move the session to its next checkpoint, and tell every open page. Nothing else changes the
     session's phase.
+
+    While the Investment phase or a price-setting window is open, advancing closes it and the session
+    stays where it is: the selections are bought, or the Trading period is simulated in the background.
+    Advancing again moves on, once a Trading period is settled. While it is being simulated, advancing is
+    refused.
     """
     try:
         await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_SESSION_FINISHED) from exc
+    except SettlementRunningError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_SETTLEMENT_RUNNING) from exc
+    # A window the advance closed is simulated now rather than at the next check.
+    check_phases_now(request)
     await invalidate_session(request.app)
     return _session_out(session)
 
@@ -143,12 +169,40 @@ async def extend_phase(
     return _session_out(session)
 
 
-@router.get("/facilities")
-def get_facilities(_: Annotated[Account, Depends(resolve_entry_account)]) -> list[WorkshopFacility]:
-    """The facilities players can see and buy now. One that is not yet unlocked is left out, not
-    shown as locked.
+@router.get("/levers")
+def get_levers(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> RoundLevers:
+    """The round-configuration levers. The format levers apply from the next Round."""
+    return session.levers
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/levers")
+async def set_levers(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, levers: RoundLevers
+) -> RoundLevers:
+    """Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
+    and the Round format to the next Round. Every storage type needs the full-season format.
     """
-    return available_facilities()
+    await run_in_threadpool(session.set_levers, levers)
+    await invalidate_session(request.app)
+    return session.levers
+
+
+@router.get("/facilities")
+def get_facilities(
+    account: Annotated[Account, Depends(resolve_entry_account)], session: Session
+) -> list[WorkshopFacilityOut]:
+    """The facilities players can buy in the current Round, and any others the calling player owns, in
+    catalog order. One that is not yet unlocked is left out, not shown as locked.
+    """
+    for_sale = {facility.id for facility in session.offered_facilities()}
+    player = session.player(account.account_id)
+    owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
+    return [
+        WorkshopFacilityOut(**facility.model_dump(), for_sale=facility.id in for_sale)
+        for facility in CATALOG.values()
+        if facility.id in for_sale or facility.id in owned
+    ]
 
 
 @router.get("/fleet")

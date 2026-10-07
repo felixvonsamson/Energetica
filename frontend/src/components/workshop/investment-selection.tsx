@@ -18,7 +18,7 @@ import { FacilityCard } from "@/components/workshop/facility-card";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 type WorkshopSelection = ApiSchema<"WorkshopSelectionOut">;
 
 /**

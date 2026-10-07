@@ -1,7 +1,8 @@
-"""The Trading-period engine in representative-day mode (#1003).
+"""The Trading-period engine (#1003, #1004).
 
-One simulated day is cleared through ``sim``'s market and settled by ``sim``'s rules, then scaled ×365/4
-into the Trading period's total. These tests use a flat demand curve and steady weather, so every
+In representative-day mode, one simulated day is cleared through ``sim``'s market and settled by ``sim``'s
+rules, then scaled ×91 into the Trading period's total. In full-season mode, all 91 days of the season are
+cleared and added up. These tests use a flat demand curve and steady weather, so every
 clearing of the day is the same and each figure can be worked out by hand.
 
 With a flat curve and an amplitude of 10 MW, the demand block bids 8 MW at any price (must-serve), then
@@ -18,11 +19,14 @@ from energetica.sim.national_demand import DemandCurve
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, om_owed
 from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PriceSheet
+from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.trading import (
     BLACKOUT_PRICE,
+    DAYS_PER_YEAR,
     REPRESENTATIVE_DAYS,
     SEASON_DAYS,
     Bidder,
+    season_days,
     TradingOutcome,
     representative_weather,
     simulate_trading_period,
@@ -68,12 +72,17 @@ def _bidder(
     )
 
 
-def _simulate(*bidders: Bidder, share: float = 1.0, clearings_per_day: int = 24) -> TradingOutcome:
+def _simulate(
+    *bidders: Bidder,
+    share: float = 1.0,
+    clearings_per_day: ClearingsPerDay = 24,
+    trading_format: TradingFormat = "representative_day",
+) -> TradingOutcome:
     return simulate_trading_period(
         list(bidders),
         round_number=1,
         season="spring",
-        clearings_per_day=clearings_per_day,
+        round_format=RoundFormat(trading_format=trading_format, clearings_per_day=clearings_per_day),
         amplitude=_AMPLITUDE,
         curve=_FLAT,
         weather=_steady(share),
@@ -85,8 +94,9 @@ def _mwh_value(megawatts: float, price: float) -> float:
     return megawatts * _HOURS * price * SEASON_DAYS
 
 
-def test_a_season_is_a_quarter_of_a_year() -> None:
-    assert SEASON_DAYS == 365 / 4
+def test_a_season_is_thirteen_weeks_and_a_year_four_seasons() -> None:
+    assert SEASON_DAYS == 13 * 7
+    assert DAYS_PER_YEAR == 4 * SEASON_DAYS
 
 
 def test_a_controllable_facility_sells_at_the_clearing_price_and_the_day_is_scaled_to_the_season() -> None:
@@ -297,10 +307,100 @@ def test_the_same_seed_gives_the_same_weather_and_another_seed_other_weather() -
     assert winds[0] != winds[2]
 
 
-def test_each_season_is_represented_by_a_day_inside_it() -> None:
+def test_each_season_is_represented_by_its_middle_day() -> None:
     assert list(REPRESENTATIVE_DAYS) == ["spring", "summer", "autumn", "winter"]
-    # Day 0 is the first of January, so spring starts on day 59 (1 March) and winter on day 334.
-    assert 59 <= REPRESENTATIVE_DAYS["spring"] < 151
-    assert 151 <= REPRESENTATIVE_DAYS["summer"] < 243
-    assert 243 <= REPRESENTATIVE_DAYS["autumn"] < 334
-    assert REPRESENTATIVE_DAYS["winter"] >= 334 or REPRESENTATIVE_DAYS["winter"] < 59
+    for season, day in REPRESENTATIVE_DAYS.items():
+        assert season_days(season)[45] == day
+
+
+def test_the_seasons_cover_the_year_once_spring_first_from_the_first_of_march() -> None:
+    days = [day for season in ("spring", "summer", "autumn", "winter") for day in season_days(season)]
+
+    assert days[0] == 59
+    assert sorted(days) == list(range(DAYS_PER_YEAR))
+    assert all(len(season_days(season)) == SEASON_DAYS for season in REPRESENTATIVE_DAYS)
+
+
+def test_winter_runs_over_the_end_of_the_year() -> None:
+    winter = season_days("winter")
+
+    assert winter[0] == 332
+    assert winter[31:33] == [363, 0]
+    assert winter[-1] == 58
+
+
+# Full-season mode (#1004). With a flat curve and steady weather every day is the same, so 91 literal days
+# add up to what one representative day scaled ×91 gives.
+
+
+@pytest.mark.parametrize("clearings_per_day", [24, 96])
+def test_a_full_season_of_steady_days_adds_up_to_the_scaled_representative_day(
+    clearings_per_day: ClearingsPerDay,
+) -> None:
+    bidder = _bidder(GAS, WIND, sell={GAS: 100.0, WIND: 500.0})
+
+    representative = _simulate(bidder, clearings_per_day=clearings_per_day)
+    full_season = _simulate(bidder, clearings_per_day=clearings_per_day, trading_format="full_season")
+
+    for facility, performance in representative.results[1].facilities.items():
+        simulated = full_season.results[1].facilities[facility]
+        for name, value in performance.model_dump().items():
+            assert getattr(simulated, name) == pytest.approx(value), (facility, name)
+
+
+def test_a_full_season_clears_every_day_of_the_season() -> None:
+    times: set[float] = set()
+
+    def recorded(_facility: FacilityId, seconds: float) -> float:
+        times.add(seconds)
+        return 1.0
+
+    simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="winter",
+        round_format=RoundFormat(trading_format="full_season"),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=recorded,
+    )
+
+    assert sorted({int(seconds // 86_400) for seconds in times}) == sorted(season_days("winter"))
+    assert len(times) == SEASON_DAYS * 24
+
+
+def test_storage_keeps_its_charge_from_one_day_to_the_next_in_a_full_season() -> None:
+    # The empty batteries charge at full power from the cheap wind and never discharge, since they ask 500.
+    # 86 MW fills them in under two days, so over the season they buy their capacity and no more.
+    bidder = _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0, BATTERIES: 500.0}, buy={BATTERIES: 100.0})
+
+    outcome = _simulate(bidder, trading_format="full_season")
+
+    batteries = outcome.results[1].facilities[BATTERIES]
+    assert batteries.bought == pytest.approx(_BATTERY_CAPACITY / math.sqrt(_BATTERY_EFFICIENCY))
+    assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(_BATTERY_CAPACITY)}
+
+
+def test_om_is_the_same_in_a_full_season() -> None:
+    representative = _simulate(_bidder(GAS, sell={GAS: 200.0}))
+    full_season = _simulate(_bidder(GAS, sell={GAS: 200.0}), trading_format="full_season")
+
+    assert full_season.results[1].facilities[GAS].om == pytest.approx(representative.results[1].facilities[GAS].om)
+
+
+@pytest.mark.parametrize(("trading_format", "days"), [("representative_day", 1), ("full_season", 91)])
+def test_the_engine_reports_each_day_it_has_simulated(trading_format: TradingFormat, days: int) -> None:
+    reported: list[int] = []
+
+    simulate_trading_period(
+        [_bidder(GAS, sell={GAS: 100.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(trading_format=trading_format),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=_steady(1.0),
+        on_day_done=reported.append,
+    )
+
+    assert reported == list(range(1, days + 1))

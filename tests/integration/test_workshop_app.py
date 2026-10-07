@@ -12,10 +12,12 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi import FastAPI
@@ -28,6 +30,9 @@ from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop import session as session_module
+from energetica.workshop.session import TradingPeriod, WorkshopSession
+from energetica.workshop.trading import TradingOutcome
 
 from . import _socketio_helpers as socket
 from ._session_helpers import authenticate, make_account
@@ -86,6 +91,27 @@ def _facilitator(client: TestClient) -> int:
     accounts.grant_facilitator(account_id=account_id, slug=SLUG)
     authenticate(client, account_id)
     return account_id
+
+
+def _advance(client: TestClient) -> Response:
+    """Move on to the next checkpoint as the facilitator does: advance once to close a window that is still
+    open, wait for a Trading period to be settled, and advance again.
+
+    The app settles the period in the background while the client is entered. Otherwise the test settles
+    it here, the same way.
+    """
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    if session.phase_timer is not None and session.phase_timer.is_active(session.clock()):
+        client.post(ADVANCE_URL)
+    period = session.checkpoint
+    if isinstance(period, TradingPeriod):
+        job = session.start_settlement()
+        if job is not None:
+            session.finish_settlement(job, session.run_settlement(job))
+        deadline = time.monotonic() + 5
+        while session.settled_period != period and time.monotonic() < deadline:
+            time.sleep(0.01)
+    return client.post(ADVANCE_URL)
 
 
 def _checkpoint(kind: str, round_number: int | None = None, season: str | None = None) -> dict:
@@ -247,7 +273,7 @@ def test_the_moderator_advances_an_empty_round_to_recap_and_into_round_two(sessi
     client = _client(session_path)
     _facilitator(client)
 
-    visited = [client.post(ADVANCE_URL).json()["checkpoint"] for _ in range(8)]
+    visited = [_advance(client).json()["checkpoint"] for _ in range(8)]
 
     assert visited == [
         _checkpoint("investment", 1),
@@ -266,7 +292,7 @@ def test_advancing_a_finished_session_is_an_error(session_path: Path) -> None:
     _facilitator(client)
     # Three Rounds of six checkpoints each, plus the step into the first Round and the step out of the last.
     for _ in range(3 * 6 + 1):
-        assert client.post(ADVANCE_URL).status_code == 200
+        assert _advance(client).status_code == 200
     finished = client.get(SESSION_URL).json()
     assert finished["checkpoint"] == _checkpoint("finished")
     assert finished["next_checkpoint"] is None
@@ -283,7 +309,7 @@ def test_the_session_survives_a_restart(session_path: Path) -> None:
     client.post(ENTER_URL)
     _facilitator(client)
     for _ in range(3):
-        client.post(ADVANCE_URL)
+        _advance(client)
 
     restarted = _client(session_path)
     authenticate(restarted, account_id)
@@ -605,7 +631,7 @@ def test_a_failed_notification_does_not_stop_later_purchases(
         # On to Round 2's Investment phase: four Trading periods, the Recap, then Investment.
         authenticate(client, facilitator)
         for _ in range(6):
-            client.post(ADVANCE_URL)
+            _advance(client)
         authenticate(client, alice)
         client.post(SELECTION_URL, json={"facility": "small_water_dam"})
         clock.tick(minutes=8)
@@ -622,7 +648,7 @@ def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
     authenticate(client, alice)
     client.post(SELECTION_URL, json={"facility": "gas_burner"})
     authenticate(client, facilitator)
-    client.post(ADVANCE_URL)
+    _advance(client)
     authenticate(client, alice)
 
     with client:
@@ -656,7 +682,7 @@ def _trading(session_path: Path, clock: _Clock) -> tuple[TestClient, int, int]:
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
     )
-    client.post(ADVANCE_URL)
+    _advance(client)
     authenticate(client, alice)
     return client, facilitator, alice
 
@@ -732,7 +758,7 @@ def test_a_completed_periods_prices_can_be_read_back(session_path: Path, clock: 
     assert client.get(LOCKED_PRICES_URL).json() == []
 
     authenticate(client, facilitator)
-    client.post(ADVANCE_URL)
+    _advance(client)
 
     authenticate(client, alice)
     assert client.get(LOCKED_PRICES_URL).json() == [
@@ -747,6 +773,168 @@ def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
     assert client.get(PRICES_URL).status_code == 403
     assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 403
     assert client.get(LOCKED_PRICES_URL).status_code == 403
+
+
+# --- round format: full-season mode, clearings per day and storage (#1004) ------------------
+
+LEVERS_URL = "/api/v1/workshop/levers"
+
+
+def _levers(**round_format: object) -> dict:
+    """The default levers, with the Round format given."""
+    return {"investment_minutes": 8, "price_setting_minutes": 5, "round_format": round_format}
+
+
+def test_the_facilitator_reads_and_changes_the_levers(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
+
+    assert client.get(LEVERS_URL).json()["round_format"]["trading_format"] == "representative_day"
+    response = client.put(LEVERS_URL, json=_levers(**round_format))
+
+    assert response.status_code == 200
+    assert response.json() == _levers(**round_format)
+    assert client.get(LEVERS_URL).json() == response.json()
+    # Before Round 1 starts, the session shows the format it will start with.
+    assert client.get(SESSION_URL).json()["round_format"] == round_format
+
+
+@pytest.mark.parametrize(
+    "round_format",
+    [{"storage": "all"}, {"clearings_per_day": 48}, {"storage": "everything"}, {"no_such_lever": 1}],
+    ids=["every storage type without the full-season format", "48 clearings", "unknown storage", "unknown lever"],
+)
+def test_levers_that_are_not_allowed_are_rejected(session_path: Path, round_format: dict) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.put(LEVERS_URL, json=_levers(**round_format)).status_code == 422
+    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "batteries"
+
+
+def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    assert client.get(LEVERS_URL).status_code == 403
+    assert client.put(LEVERS_URL, json=_levers(clearings_per_day=96)).status_code == 403
+
+
+def test_the_facilities_on_offer_follow_the_rounds_storage_lever(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.put(LEVERS_URL, json=_levers(storage="off"))
+    client.post(ADVANCE_URL)
+
+    offered = {facility["id"] for facility in client.get(FACILITIES_URL).json()}
+    assert "lithium_ion_batteries" not in offered
+
+    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
+    assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
+        _advance(client)
+
+    offered = {facility["id"] for facility in client.get(FACILITIES_URL).json()}
+    assert {"lithium_ion_batteries", "hydrogen_storage", "pumped_hydro"} <= offered
+
+
+def test_storage_a_player_owns_is_still_listed_once_it_is_no_longer_for_sale(session_path: Path, clock: _Clock) -> None:
+    # Hydrogen storage lasts three Rounds, so Alice's still works in Round 2, when no storage is for sale.
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.HYDROGEN_STORAGE, built_round=1)
+    )
+    client.put(LEVERS_URL, json=_levers(storage="off"))
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
+        _advance(client)
+
+    authenticate(client, alice)
+    facilities = {facility["id"]: facility["for_sale"] for facility in client.get(FACILITIES_URL).json()}
+    assert facilities["hydrogen_storage"] is False
+    assert facilities["gas_burner"] is True
+    assert "lithium_ion_batteries" not in facilities
+    authenticate(client, facilitator)
+    assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
+
+
+def test_advancing_while_the_investment_phase_is_open_closes_it_and_buys_the_selections(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    with client:
+        authenticate(client, facilitator)
+        body = client.post(ADVANCE_URL).json()
+        assert body["checkpoint"] == _checkpoint("investment", 1)
+        assert body["phase_timer"]["remaining_seconds"] == 0
+
+        authenticate(client, alice)
+        _wait_for_fleet(client, size=1)
+        assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
+
+
+def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    release = threading.Event()
+    real_simulate = session_module.simulate_trading_period
+
+    def held_after_the_first_day(*args: Any, on_day_done: Callable[[int], None], **kwargs: Any) -> TradingOutcome:
+        on_day_done(1)
+        release.wait(timeout=5)
+        return real_simulate(*args, on_day_done=on_day_done, **kwargs)
+
+    monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
+    )
+    _advance(client)
+
+    with client:
+        clock.tick(minutes=5)
+        deadline = time.monotonic() + 5
+        while client.get(SESSION_URL).json()["settlement"] is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+
+        assert client.get(SESSION_URL).json()["settlement"] == {"days_done": 1, "days_total": 1}
+        response = client.post(ADVANCE_URL)
+        assert response.status_code == 400
+        assert response.json()["game_exception_type"] == "WORKSHOP_SETTLEMENT_RUNNING"
+
+        release.set()
+        deadline = time.monotonic() + 5
+        while client.get(SESSION_URL).json()["settlement"] is not None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert len(app.state.workshop_session.player(alice).trading_results) == 1
+        assert client.post(ADVANCE_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "summer")
+
+
+def test_advancing_before_the_window_runs_out_closes_it_and_the_period_settles_in_the_background(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
+    )
+    _advance(client)
+
+    with client:
+        body = client.post(ADVANCE_URL).json()
+        assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
+        assert body["phase_timer"]["remaining_seconds"] == 0
+        # The advance has the app check now, so this does not wait for the interval.
+        deadline = time.monotonic() + 5
+        while not app.state.workshop_session.player(alice).trading_results and time.monotonic() < deadline:
+            time.sleep(0.01)
+
+        assert len(app.state.workshop_session.player(alice).trading_results) == 1
+        assert client.post(ADVANCE_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "summer")
 
 
 # --- pushing changes to open pages ---------------------------------------------------------
