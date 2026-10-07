@@ -182,18 +182,21 @@ jobs:
           import energetica, lobby
           from energetica.freeplay.database.map.hex_tile import HexTile
           from energetica.freeplay.database.engine_data.emission_data import EmissionData
-          from energetica.freeplay.game_engine import _DATA_DIR
+          from energetica.freeplay.game_engine import _DATA_DIR as FREEPLAY_DATA_DIR
+          from energetica.sim.national_demand import _DATA_DIR as SIM_DATA_DIR
 
           expected = {
-              "daily_quiz_questions.csv",
-              "map.csv",
-              "national_demand_intraday.pck",
-              "national_demand_seasonal.pck",
+              FREEPLAY_DATA_DIR: {"daily_quiz_questions.csv", "map.csv"},
+              SIM_DATA_DIR: {"national_demand_intraday.pck", "national_demand_seasonal.pck"},
           }
-          missing = expected - {p.name for p in _DATA_DIR.iterdir()}
-          assert not missing, f"package data missing from the wheel: {sorted(missing)}"
+          missing = sorted(
+              str(data_dir / name)
+              for data_dir, names in expected.items()
+              for name in names - {p.name for p in data_dir.iterdir()}
+          )
+          assert not missing, f"package data missing from the wheel: {missing}"
           print(f"energetica {energetica.__version__} from {energetica.__file__}")
-          print(f"data files present: {sorted(expected)}")
+          print(f"data files present: {sorted(name for names in expected.values() for name in names)}")
           PY
 
   api-types-freshness:

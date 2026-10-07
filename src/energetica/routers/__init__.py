@@ -8,6 +8,8 @@ from fastapi import FastAPI, Request, Response, status
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
+from energetica.identity.facilitator import router as facilitator_router
+from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
 from energetica.identity.web import get_current_account
 from energetica.kernel.error_envelope import install_error_handlers
@@ -19,11 +21,9 @@ from .charts import router as charts_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .electricity_markets import router as electricity_markets_router
-from .facilitator import router as facilitator_router
 from .facilities import router as facilities_router
 from .game import router as game_router
 from .health import router as health_router
-from .join import router as join_router
 from .leaderboards import router as leaderboards_router
 from .lobby import router as lobby_router
 from .map import router as map_router
