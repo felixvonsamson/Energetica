@@ -20,6 +20,7 @@ import { Route as AppWorkshopIndexRouteImport } from './routes/app/workshop/inde
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
+import { Route as AppWorkshopFacilitiesRouteImport } from './routes/app/workshop/facilities'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
 import { Route as AppOverviewsStorageRouteImport } from './routes/app/overviews/storage'
 import { Route as AppOverviewsResourcesRouteImport } from './routes/app/overviews/resources'
@@ -104,6 +105,11 @@ const AppFacilitatorIndexRoute = AppFacilitatorIndexRouteImport.update({
   id: '/app/facilitator/',
   path: '/app/facilitator/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppWorkshopFacilitiesRoute = AppWorkshopFacilitiesRouteImport.update({
+  id: '/facilities',
+  path: '/facilities',
+  getParentRoute: () => AppWorkshopRouteRoute,
 } as any)
 const AppWikiSlugRoute = AppWikiSlugRouteImport.update({
   id: '/app/wiki/$slug',
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/workshop/facilities'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/workshop/facilities'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/workshop/facilities'
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
@@ -628,6 +640,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/facilitator'
       preLoaderRoute: typeof AppFacilitatorIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/workshop/facilities': {
+      id: '/app/workshop/facilities'
+      path: '/facilities'
+      fullPath: '/app/workshop/facilities'
+      preLoaderRoute: typeof AppWorkshopFacilitiesRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
     }
     '/app/wiki/$slug': {
       id: '/app/wiki/$slug'
@@ -836,6 +855,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppWorkshopRouteRouteChildren {
+  AppWorkshopFacilitiesRoute: typeof AppWorkshopFacilitiesRoute
   AppWorkshopIndexRoute: typeof AppWorkshopIndexRoute
   AppWorkshopRecapRoundRoute: typeof AppWorkshopRecapRoundRoute
   AppWorkshopRoundRoundSeasonRoute: typeof AppWorkshopRoundRoundSeasonRoute
@@ -843,6 +863,7 @@ interface AppWorkshopRouteRouteChildren {
 }
 
 const AppWorkshopRouteRouteChildren: AppWorkshopRouteRouteChildren = {
+  AppWorkshopFacilitiesRoute: AppWorkshopFacilitiesRoute,
   AppWorkshopIndexRoute: AppWorkshopIndexRoute,
   AppWorkshopRecapRoundRoute: AppWorkshopRecapRoundRoute,
   AppWorkshopRoundRoundSeasonRoute: AppWorkshopRoundRoundSeasonRoute,

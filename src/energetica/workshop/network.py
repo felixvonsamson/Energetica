@@ -15,6 +15,7 @@ from energetica.workshop.player import WorkshopPlayer
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
+    from energetica.workshop.fleet import OwnedFacility
 
 
 @dataclass(eq=False)
@@ -52,12 +53,20 @@ class WorkshopNetwork:
             self.members[account.account_id] = player
             return player
 
-    def restore(self, *, account_id: int, username: str, money: float) -> WorkshopPlayer:
+    def restore(
+        self, *, account_id: int, username: str, money: float, owned_facilities: list[OwnedFacility]
+    ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
         Not a join: the player was already admitted to the Run, so this only rebuilds its object.
         """
         with self._join_lock:
-            player = WorkshopPlayer(account_id=account_id, username=username, network=self, money=money)
+            player = WorkshopPlayer(
+                account_id=account_id,
+                username=username,
+                network=self,
+                money=money,
+                owned_facilities=owned_facilities,
+            )
             self.members[account_id] = player
             return player

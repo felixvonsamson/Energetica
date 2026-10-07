@@ -1,12 +1,13 @@
 /**
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
  * is in it, and the countdown on the running phase (#996). The facilitator also
- * gets the buttons that advance the session and extend the phase. The
- * price-setting panel (#1002) will sit here too.
+ * gets the buttons that advance the session and extend the phase. A player gets
+ * a link to the facility page (#998). The price-setting panel (#1002) will sit
+ * here too.
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Factory } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,14 @@ export function WorkshopTopBar({
             )}
             <PhaseCountdown isFacilitator={isFacilitator} />
             <div className="ml-auto flex items-center gap-3">
+                {entry?.role === "player" && (
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link to="/app/workshop/facilities">
+                            <Factory className="size-4" />
+                            Facilities
+                        </Link>
+                    </Button>
+                )}
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />
                 )}

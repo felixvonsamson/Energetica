@@ -21,6 +21,8 @@ from fastapi.testclient import TestClient
 from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop.app import create_workshop_app
+from energetica.workshop.facilities import FacilityId
+from energetica.workshop.fleet import OwnedFacility
 
 from . import _socketio_helpers as socket
 from ._session_helpers import authenticate, make_account
@@ -39,6 +41,8 @@ ENTER_URL = "/api/v1/workshop/enter"
 SESSION_URL = "/api/v1/workshop/session"
 ADVANCE_URL = "/api/v1/workshop/session/advance"
 EXTEND_URL = "/api/v1/workshop/session/phase/extend"
+FACILITIES_URL = "/api/v1/workshop/facilities"
+FLEET_URL = "/api/v1/workshop/fleet"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -338,6 +342,73 @@ def test_an_extension_must_be_between_one_minute_and_an_hour(session_path: Path,
     client.post(ADVANCE_URL)
 
     assert client.post(EXTEND_URL, json={"minutes": minutes}).status_code == 422
+
+
+# --- the facility catalog and fleet (#998) ---------------------------------------------------
+
+
+def test_the_catalog_offers_every_base_tier_and_nothing_unlockable(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    response = client.get(FACILITIES_URL)
+
+    assert response.status_code == 200
+    assert [facility["id"] for facility in response.json()] == [
+        "onshore_wind_turbine",
+        "coal_burner",
+        "gas_burner",
+        "small_water_dam",
+        "nuclear_reactor",
+        "pv_solar",
+        "lithium_ion_batteries",
+    ]
+
+
+def test_a_new_players_fleet_is_empty(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+
+    response = client.get(FLEET_URL)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_the_fleet_shows_how_long_each_owned_facility_has_left(session_path: Path) -> None:
+    app = create_workshop_app(load_instance_config(), session_path=session_path)
+    client = TestClient(app)
+    account_id = _player(client, "alice")
+    client.post(ENTER_URL)
+    # Buying lands in #999, so the facilities are handed to the player directly.
+    alice = app.state.workshop_session.network.members[account_id]
+    alice.owned_facilities.extend(
+        [
+            OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1),
+            OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
+        ]
+    )
+
+    assert client.get(FLEET_URL).json() == [
+        {"facility": "onshore_wind_turbine", "built_round": 1, "rounds_left": 2, "under_construction": False},
+        {"facility": "nuclear_reactor", "built_round": 1, "rounds_left": 8, "under_construction": True},
+    ]
+
+
+def test_a_facilitator_owns_no_fleet(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.get(FLEET_URL).json() == []
+
+
+@pytest.mark.parametrize("url", [FACILITIES_URL, FLEET_URL])
+def test_the_catalog_and_fleet_need_entry(session_path: Path, url: str) -> None:
+    client = _client(session_path)
+    authenticate(client, make_account("stranger"))
+
+    assert client.get(url).status_code == 403
 
 
 # --- pushing changes to open pages ---------------------------------------------------------

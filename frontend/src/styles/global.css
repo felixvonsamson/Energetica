@@ -237,6 +237,8 @@
         /* Asset colours - Power facilities (fossil) */
         --asset-color-steam-engine: rgb(151, 157, 172);
         --asset-color-coal-burner: rgb(0, 0, 0);
+        /* Workshop only (#998) */
+        --asset-color-modern-coal-plant: rgb(52, 58, 64);
         --asset-color-gas-burner: rgb(171, 196, 255);
         --asset-color-combined-cycle: rgb(92, 77, 125);
 
@@ -248,10 +250,14 @@
         /* Asset colours - Power facilities (solar) */
         --asset-color-csp-solar: rgb(255, 170, 0);
         --asset-color-pv-solar: rgb(255, 234, 0);
+        /* Workshop only (#998) */
+        --asset-color-multi-layer-pv: rgb(230, 200, 30);
 
         /* Asset colours - Storage facilities */
         --asset-color-small-pumped-hydro: rgb(0, 150, 199);
         --asset-color-large-pumped-hydro: rgb(2, 62, 138);
+        /* Workshop only (#998): one pumped hydro, between the small and large ones */
+        --asset-color-pumped-hydro: rgb(1, 106, 168);
         --asset-color-lithium-ion-batteries: rgb(108, 88, 76);
         --asset-color-solid-state-batteries: rgb(169, 132, 103);
         --asset-color-molten-salt: rgb(119, 47, 26);
@@ -293,6 +299,7 @@
         --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
         --asset-color-steam-engine-fg:            var(--asset-fg-on-dark);
         --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
+        --asset-color-modern-coal-plant-fg:       var(--asset-fg-on-dark);
         --asset-color-gas-burner-fg:              var(--asset-fg-on-light);
         --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
         --asset-color-windmill-fg:                var(--asset-fg-on-light);
@@ -300,8 +307,10 @@
         --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
         --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
         --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
+        --asset-color-multi-layer-pv-fg:          var(--asset-fg-on-light);
         --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-dark);
         --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-pumped-hydro-fg:            var(--asset-fg-on-dark);
         --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
         --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-dark);
         --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);
@@ -441,6 +450,7 @@
         /* Asset colours - Power facilities (fossil) */
         --asset-color-steam-engine: rgb(171, 177, 192);
         --asset-color-coal-burner: rgb(120, 120, 120);
+        --asset-color-modern-coal-plant: rgb(150, 156, 164);
         --asset-color-gas-burner: rgb(141, 176, 255);
         --asset-color-combined-cycle: rgb(142, 127, 175);
 
@@ -452,10 +462,12 @@
         /* Asset colours - Power facilities (solar) */
         --asset-color-csp-solar: rgb(255, 190, 60);
         --asset-color-pv-solar: rgb(255, 244, 80);
+        --asset-color-multi-layer-pv: rgb(240, 220, 100);
 
         /* Asset colours - Storage facilities */
         --asset-color-small-pumped-hydro: rgb(80, 190, 229);
         --asset-color-large-pumped-hydro: rgb(82, 132, 208);
+        --asset-color-pumped-hydro: rgb(80, 160, 220);
         --asset-color-lithium-ion-batteries: rgb(158, 138, 126);
         --asset-color-solid-state-batteries: rgb(199, 162, 133);
         --asset-color-molten-salt: rgb(189, 107, 76);
@@ -491,6 +503,7 @@
         --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
         --asset-color-steam-engine-fg:            var(--asset-fg-on-dark);
         --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
+        --asset-color-modern-coal-plant-fg:       var(--asset-fg-on-dark);
         --asset-color-gas-burner-fg:              var(--asset-fg-on-dark);
         --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
         --asset-color-windmill-fg:                var(--asset-fg-on-light);
@@ -498,8 +511,10 @@
         --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
         --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
         --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
+        --asset-color-multi-layer-pv-fg:          var(--asset-fg-on-light);
         --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-dark);
         --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-pumped-hydro-fg:            var(--asset-fg-on-dark);
         --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
         --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-dark);
         --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);

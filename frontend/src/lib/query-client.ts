@@ -100,6 +100,11 @@ export const queryKeys = {
     workshop: {
         entry: ["workshop", "entry"] as const,
         session: ["workshop", "session"] as const,
+        // These two sit under the session's key, so every session change the server announces
+        // re-reads them. Advancing to a new Round can unlock a facility, and it shortens each owned
+        // facility's lifetime left.
+        facilities: ["workshop", "session", "facilities"] as const,
+        fleet: ["workshop", "session", "fleet"] as const,
     },
     players: {
         all: ["players"] as const,

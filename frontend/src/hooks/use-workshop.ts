@@ -1,6 +1,6 @@
 /**
- * Hooks for a Workshop Run (#995): entering it, and following the session as
- * the moderator advances it.
+ * Hooks for a Workshop Run (#995): entering it, following the session as the
+ * moderator advances it, and reading the facility catalog and fleet (#998).
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -60,6 +60,27 @@ export function useWorkshopSession() {
     return useQuery({
         queryKey: queryKeys.workshop.session,
         queryFn: workshopApi.getSession,
+    });
+}
+
+/**
+ * The facilities players can see and buy now. They only change when the session
+ * unlocks one, so the list is not re-read on its own. It is re-read whenever
+ * the session changes, since its query key sits under the session's.
+ */
+export function useWorkshopFacilities() {
+    return useQuery({
+        queryKey: queryKeys.workshop.facilities,
+        queryFn: workshopApi.getFacilities,
+        staleTime: Infinity,
+    });
+}
+
+/** The facilities the visitor owns, with how long each has left. */
+export function useWorkshopFleet() {
+    return useQuery({
+        queryKey: queryKeys.workshop.fleet,
+        queryFn: workshopApi.getFleet,
     });
 }
 

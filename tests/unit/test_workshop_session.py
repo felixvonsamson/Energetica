@@ -11,6 +11,8 @@ import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
+from energetica.workshop.facilities import FacilityId
+from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.session import (
     SEASONS,
@@ -176,6 +178,22 @@ def test_players_survive_a_restart(path: Path) -> None:
     players = reopened.network.players()
     assert [(p.account_id, p.username, p.money) for p in players] == [(1, "alice", 123.0), (2, "bob", 25_000.0)]
     assert all(player.network is reopened.network for player in players)
+
+
+def test_owned_facilities_survive_a_restart(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    alice = session.join(_account(1, "alice"))
+    owned = [
+        OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1),
+        OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
+    ]
+    alice.owned_facilities.extend(owned)
+    session.join(_account(2, "bob"))
+    session.advance()
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert [player.owned_facilities for player in reopened.network.players()] == [owned, []]
 
 
 def test_a_rejoin_after_a_restart_returns_the_saved_player(path: Path) -> None:

@@ -283,7 +283,7 @@ interface GameEngineConfig {
  * @param seconds - Duration in game-time seconds
  * @returns Formatted duration string
  */
-function formatGameTimeDuration(totalSeconds: number): string {
+export function formatGameTimeDuration(totalSeconds: number): string {
     if (totalSeconds < 1) {
         return "0s";
     }

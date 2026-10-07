@@ -14,7 +14,9 @@ tile, map and general-chat coupling.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+from energetica.workshop.fleet import OwnedFacility
 
 if TYPE_CHECKING:
     from energetica.workshop.network import WorkshopNetwork
@@ -41,9 +43,7 @@ class WorkshopPlayer:
 
     money: float = WORKSHOP_STARTING_BUDGET
 
-    # Filled once Workshop's own facility catalog exists (#998). This ticket only adds the field. It
-    # is not yet in the saved session (`energetica.workshop.session`); #998 adds it there too.
-    owned_facilities: list[Any] = field(default_factory=list)
+    owned_facilities: list[OwnedFacility] = field(default_factory=list)
 
     def __repr__(self) -> str:
         """A short repr. The default one would recurse through ``network``, which holds this player."""
