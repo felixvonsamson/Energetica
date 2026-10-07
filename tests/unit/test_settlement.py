@@ -38,12 +38,12 @@ def test_offers_that_cleared_in_full_sell_their_whole_capacity() -> None:
     settlement = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST)
 
     cheap, marginal = settlement.sales
-    assert (cheap.facility, cheap.quantity) == ("plant", 100)
+    assert (cheap.facility, cheap.power_sold) == ("plant", 100)
     assert cheap.revenue == pytest.approx(energy_value(100, clearing.price, SECONDS_PER_TICK))
-    assert cheap.produced == 100
-    assert cheap.dumped is None
+    assert cheap.power_produced == 100
+    assert cheap.power_dumped == 0
     # The marginal offer sells the part that cleared, and nothing else is settled after it.
-    assert (marginal.facility, marginal.quantity, marginal.produced) == ("peaker", 50, 50)
+    assert (marginal.facility, marginal.power_sold, marginal.power_produced) == ("peaker", 50, 50)
 
 
 def test_nothing_sells_after_the_marginal_offer() -> None:
@@ -59,7 +59,7 @@ def test_a_partial_sale_below_the_cutoff_trades_nothing() -> None:
 
     _, marginal = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).sales
 
-    assert marginal.quantity == 0
+    assert marginal.power_sold == 0
     assert marginal.revenue == 0
 
 
@@ -68,9 +68,9 @@ def test_unsold_must_run_power_is_dumped_and_billed_at_the_dump_cost() -> None:
 
     (sale,) = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).sales
 
-    assert sale.quantity == 30
-    assert sale.produced == 60  # sold plus dumped: must-run power is produced whether it sells or not
-    assert sale.dumped == 30
+    assert sale.power_sold == 30
+    assert sale.power_produced == 60  # sold plus dumped: must-run power is produced whether it sells or not
+    assert sale.power_dumped == 30
     assert sale.dump_cost == pytest.approx(energy_value(30, DUMP_COST, SECONDS_PER_TICK))
     assert sale.dump_cost > 0
 
@@ -83,7 +83,7 @@ def test_must_run_power_sold_below_the_cutoff_counts_as_dumped() -> None:
 
     (sale,) = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).sales
 
-    assert (sale.quantity, sale.dumped, sale.produced) == (0, 60, 60)
+    assert (sale.power_sold, sale.power_dumped, sale.power_produced) == (0, 60, 60)
 
 
 def test_settlement_continues_past_a_must_run_offer_that_did_not_clear() -> None:
@@ -98,8 +98,8 @@ def test_settlement_continues_past_a_must_run_offer_that_did_not_clear() -> None
 
     wind, solar = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).sales
 
-    assert (wind.quantity, wind.dumped) == (60, None)
-    assert (solar.quantity, solar.dumped) == (10, 30)
+    assert (wind.power_sold, wind.power_dumped) == (60, 0)
+    assert (solar.power_sold, solar.power_dumped) == (10, 30)
 
 
 def test_must_run_power_priced_above_the_market_is_dumped_in_full() -> None:
@@ -110,8 +110,8 @@ def test_must_run_power_priced_above_the_market_is_dumped_in_full() -> None:
 
     _, wind = settle_clearing(clearing, SECONDS_PER_TICK, dump_cost_per_mwh=25).sales
 
-    assert (wind.facility, wind.quantity, wind.revenue) == ("wind", 0, 0)
-    assert wind.dumped == 50
+    assert (wind.facility, wind.power_sold, wind.revenue) == ("wind", 0, 0)
+    assert wind.power_dumped == 50
     assert wind.dump_cost == pytest.approx(50 * 25 / 1_000_000)
 
 
@@ -136,9 +136,9 @@ def test_must_run_offers_at_player_prices_settle_wherever_they_sit_in_the_merit_
 
     sales = settle_clearing(clearing, SECONDS_PER_TICK, dump_cost_per_mwh=25).sales
 
-    assert [(s.facility, s.quantity, s.dumped, s.produced) for s in sales] == [
-        ("hydro", 20, None, 20),
-        ("gas", 50, None, 50),
+    assert [(s.facility, s.power_sold, s.power_dumped, s.power_produced) for s in sales] == [
+        ("hydro", 20, 0, 20),
+        ("gas", 50, 0, 50),
         ("wind", 30, 20, 50),
         ("solar", 0, 30, 30),
     ]
@@ -152,8 +152,8 @@ def test_fully_served_demand_reports_no_shortfall() -> None:
 
     (purchase,) = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).purchases
 
-    assert purchase.quantity == 80
-    assert purchase.served is None
+    assert (purchase.power_bought, purchase.power_unserved, purchase.power_bid) == (80, 0, 80)
+    assert not purchase.curtailed
     assert purchase.cost == pytest.approx(energy_value(80, clearing.price, SECONDS_PER_TICK))
 
 
@@ -162,10 +162,10 @@ def test_unserved_demand_reports_how_much_it_received() -> None:
 
     served, unserved = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).purchases
 
-    assert served.served is None
+    assert not served.curtailed
     assert unserved.player_id == 4
-    assert unserved.quantity == 20
-    assert unserved.served == 20
+    assert (unserved.power_bought, unserved.power_unserved, unserved.power_bid) == (20, 40, 60)
+    assert unserved.curtailed
 
 
 def test_demand_priced_below_the_market_is_curtailed_to_zero() -> None:
@@ -173,9 +173,22 @@ def test_demand_priced_below_the_market_is_curtailed_to_zero() -> None:
 
     (purchase,) = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).purchases
 
-    assert purchase.quantity == 0
+    assert (purchase.power_bought, purchase.power_unserved) == (0, 40)
     assert purchase.cost == 0
-    assert purchase.served == 0
+    assert purchase.curtailed
+
+
+def test_a_partial_purchase_below_the_cutoff_buys_nothing_and_is_curtailed_to_zero() -> None:
+    """Under the cutoff a purchase counts as no trade, and the demand is cut to what was bought: nothing."""
+    clearing = clear_market(
+        [_offer(100, 10)], [_demand(100 - MIN_SETTLED_QUANTITY / 2, 90), _demand(60, 50, player_id=4)]
+    )
+
+    _, purchase = settle_clearing(clearing, SECONDS_PER_TICK, DUMP_COST).purchases
+
+    assert (purchase.power_bought, purchase.power_unserved, purchase.power_bid) == (0, 60, 60)
+    assert purchase.cost == 0
+    assert purchase.curtailed
 
 
 def test_an_empty_market_settles_to_nothing() -> None:

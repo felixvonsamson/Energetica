@@ -53,7 +53,7 @@ from energetica.sim.renewables import (
     solar_power_fraction,
     wind_power_fraction,
 )
-from energetica.sim.settlement import settle_clearing
+from energetica.sim.settlement import PurchaseSettlement, settle_clearing
 from energetica.utils import network_helpers
 
 
@@ -550,30 +550,29 @@ def market_logic(new_values: dict, market: dict) -> None:
     for sale in settlement.sales:
         player = Player.get(sale.player_id)
         assert player is not None
-        new_values[player.id]["generation"][sale.facility] += sale.produced
-        if sale.quantity > 0:
-            new_values[player.id]["demand"]["exports"] += sale.quantity
+        new_values[player.id]["generation"][sale.facility] += sale.power_produced
+        if sale.power_sold > 0:
+            new_values[player.id]["demand"]["exports"] += sale.power_sold
             player.money += sale.revenue
             new_values[player.id]["revenues"]["exports"] += sale.revenue
-            add_to_market_data(player.id, sale.quantity, sale.facility, export=True)
-        # dumping electricity that is offered at the minimal price and not sold
-        if sale.dumped is not None:
-            new_values[player.id]["demand"]["dumping"] += sale.dumped
+            add_to_market_data(player.id, sale.power_sold, sale.facility, export=True)
+        # dumping must-run electricity that was not sold
+        if sale.power_dumped > 0:
+            new_values[player.id]["demand"]["dumping"] += sale.power_dumped
             player.money -= sale.dump_cost
             new_values[player.id]["revenues"]["dumping"] -= sale.dump_cost
-            add_to_market_data(player.id, sale.dumped, "dumping", export=False)
-            add_to_market_data(player.id, sale.dumped, sale.facility, export=True)
+            add_to_market_data(player.id, sale.power_dumped, "dumping", export=False)
+            add_to_market_data(player.id, sale.power_dumped, sale.facility, export=True)
     for purchase in settlement.purchases:
         player = Player.get(purchase.player_id)
         assert player is not None
-        if purchase.quantity > 0:
-            new_values[player.id]["generation"]["imports"] += purchase.quantity
+        if purchase.power_bought > 0:
+            new_values[player.id]["generation"]["imports"] += purchase.power_bought
             player.money -= purchase.cost
             new_values[player.id]["revenues"]["imports"] -= purchase.cost
-            add_to_market_data(player.id, purchase.quantity, purchase.facility, export=False)
-        # measures a taken to reduce demand
-        if purchase.served is not None:
-            reduce_demand(new_values, purchase.facility, purchase.player_id, purchase.served)
+            add_to_market_data(player.id, purchase.power_bought, purchase.facility, export=False)
+        if purchase.curtailed:
+            reduce_demand(new_values, purchase)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 
@@ -820,22 +819,21 @@ def construction_emissions(new_values: dict, player: Player) -> None:
     add_emissions(new_values, player, "construction", emissions_of_constructions)
 
 
-def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfaction: float) -> None:
+def reduce_demand(new_values: dict, purchase: PurchaseSettlement) -> None:
     """
-    Take measures to reduce power demand.
+    Cut a player's demand down to what its bid bought, and take the measures that follow from it.
 
-    Arguments:
-    @param demand_type: type of the power demand (eg. industry, construction, research, transport)
-    @param satisfaction: the amount of power that can be provided (in W)
-
+    ``purchase.facility`` is the type of demand (for example industry, construction, research or transport).
     """
     # TODO(mglst): Add argument description for new_values
-    player = Player.get(player_id)
+    player = Player.get(purchase.player_id)
     assert player is not None
     demand = new_values[player.id]["demand"]
+    demand_type = purchase.facility
+    satisfaction = purchase.power_bought
 
     # Calculate consumption status before modifying demand
-    original_demand = demand.get(demand_type, 0.0)
+    original_demand = purchase.power_bid
     epsilon = 0.1  # W tolerance
     if original_demand > epsilon:
         # Only track status for facilities in the player's bid prices (market participants)

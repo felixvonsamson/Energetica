@@ -31,20 +31,19 @@ def energy_value(quantity: float, price: float, seconds_per_tick: float) -> floa
 
 @dataclass(frozen=True, slots=True)
 class SaleSettlement:
-    """What one supply offer sold, and what was dumped if it was must-run power that did not clear."""
+    """What one supply offer sold, and what it dumped if it was must-run power that did not sell in full."""
 
     player_id: int
     facility: str
-    quantity: float  # W sold at the market price; 0 when nothing traded
-    revenue: float  # money earned for ``quantity``; negative when the market price is negative
-    # W of must-run power thrown away. None unless the offer was must-run and did not sell in full.
-    dumped: float | None = None
-    dump_cost: float = 0.0  # money owed for ``dumped``
+    power_sold: float  # W sold at the market price; 0 when nothing traded
+    revenue: float  # money earned for ``power_sold``; negative when the market price is negative
+    power_dumped: float = 0.0  # W of must-run power thrown away because it did not sell
+    dump_cost: float = 0.0  # money owed for ``power_dumped``
 
     @property
-    def produced(self) -> float:
+    def power_produced(self) -> float:
         """W the facility generated for this offer: what sold, plus what was dumped."""
-        return self.quantity + (self.dumped or 0.0)
+        return self.power_sold + self.power_dumped
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,9 +52,19 @@ class PurchaseSettlement:
 
     player_id: int
     facility: str
-    quantity: float  # W bought at the market price; 0 when nothing traded
-    cost: float  # money owed for ``quantity``; negative when the market price is negative
-    served: float | None  # W the bid received when it was not fully served; None when it was fully served
+    power_bought: float  # W bought at the market price; 0 when nothing traded
+    cost: float  # money owed for ``power_bought``; negative when the market price is negative
+    power_unserved: float = 0.0  # W of the bid that was not bought
+
+    @property
+    def power_bid(self) -> float:
+        """W the bid asked for: what was bought, plus what was left unserved."""
+        return self.power_bought + self.power_unserved
+
+    @property
+    def curtailed(self) -> bool:
+        """Whether the bid was not served in full, so the demand behind it must be cut to ``power_bought``."""
+        return self.power_unserved > 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,7 +82,9 @@ def settle_clearing(clearing: MarketClearing, seconds_per_tick: float, dump_cost
     that did not clear in full (the marginal offer) sells what it can, and nothing after it sells. Must-run
     offers (:attr:`MarketEntry.must_run`) can sit anywhere in the merit order: the power they do not sell
     is dumped, at ``dump_cost_per_mwh``, wherever they sit.
-    Every demand that did not clear in full reports how much of it was served, so the caller can curtail it.
+    Every demand that did not clear in full reports how much of it went unserved, so the caller can curtail it.
+    Sales and purchases under :data:`MIN_SETTLED_QUANTITY` count as no trade, which only absorbs rounding
+    errors in the clearing.
     """
     price = clearing.price
     quantity = clearing.quantity
@@ -110,9 +121,10 @@ def settle_clearing(clearing: MarketClearing, seconds_per_tick: float, dump_cost
             bought = fill.cleared
             traded = bought if bought > MIN_SETTLED_QUANTITY else 0.0
             cost = energy_value(traded, price, seconds_per_tick)
-            purchases.append(PurchaseSettlement(entry.player_id, entry.facility, traded, cost, max(0.0, bought)))
+            unserved = entry.capacity - traded
+            purchases.append(PurchaseSettlement(entry.player_id, entry.facility, traded, cost, unserved))
         else:
             cost = energy_value(entry.capacity, price, seconds_per_tick)
-            purchases.append(PurchaseSettlement(entry.player_id, entry.facility, entry.capacity, cost, None))
+            purchases.append(PurchaseSettlement(entry.player_id, entry.facility, entry.capacity, cost))
 
     return Settlement(sales, purchases)
