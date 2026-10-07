@@ -2013,9 +2013,10 @@ export interface paths {
          * @description Move the session to its next checkpoint, and tell every open page. Nothing else changes the
          *     session's phase.
          *
-         *     A Trading period that is not settled yet is not left: advancing closes its price-setting window if it
-         *     is still open, and the period is then simulated in the background. Advancing again once that has
-         *     finished moves on. While it runs, advancing is refused.
+         *     While the Investment phase or a price-setting window is open, advancing closes it and the session
+         *     stays where it is: the selections are bought, or the Trading period is simulated in the background.
+         *     Advancing again moves on, once a Trading period is settled. While it is being simulated, advancing is
+         *     refused.
          */
         post: operations["advance_session_api_v1_workshop_session_advance_post"];
         delete?: never;
@@ -2079,8 +2080,8 @@ export interface paths {
         };
         /**
          * Get Facilities
-         * @description The facilities players can see and buy in the current Round. One that is not yet unlocked, or that
-         *     the Round's storage lever leaves out, is left out, not shown as locked.
+         * @description The facilities players can buy in the current Round, and any others the calling player owns, in
+         *     catalog order. One that is not yet unlocked is left out, not shown as locked.
          */
         get: operations["get_facilities_api_v1_workshop_facilities_get"];
         put?: never;
@@ -4993,10 +4994,10 @@ export interface components {
             player: components["schemas"]["WorkshopPlayerOut"] | null;
         };
         /**
-         * WorkshopFacility
-         * @description One facility's fixed values.
+         * WorkshopFacilityOut
+         * @description A facility the calling player can buy, or already owns.
          */
-        WorkshopFacility: {
+        WorkshopFacilityOut: {
             id: components["schemas"]["FacilityId"];
             /** Name */
             name: string;
@@ -5058,6 +5059,11 @@ export interface components {
             ramping_time: number;
             /** @description The fuel it burns, or null if it burns none */
             fuel_type: components["schemas"]["Fuel"] | null;
+            /**
+             * For Sale
+             * @description Whether players can buy it in the current Round. A facility the player owns but can no longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown
+             */
+            for_sale: boolean;
         };
         /**
          * WorkshopMemberOut
@@ -8232,7 +8238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopFacility"][];
+                    "application/json": components["schemas"]["WorkshopFacilityOut"][];
                 };
             };
         };

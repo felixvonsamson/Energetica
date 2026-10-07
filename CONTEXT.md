@@ -176,5 +176,6 @@ added up, with no scaling. **Stored energy** carries from one day to the next.
 **Settling a Trading period** (#1003, #1004):
 What happens once a Trading period's price-setting window closes: each player's prices are locked,
 the days the **round format** calls for are simulated in the background, and each player is paid its
-result. The moderator can close the window early by advancing, but the session only leaves the period
-once it is settled, and cannot advance while the simulation runs. A period is settled once.
+result. The moderator can close the window early by advancing, as with the Investment phase, but the
+session only leaves the period once it is settled, and cannot advance while the simulation runs. A
+period is settled once.

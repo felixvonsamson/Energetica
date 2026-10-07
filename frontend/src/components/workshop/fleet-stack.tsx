@@ -32,7 +32,7 @@ import {
 } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
 
 /**

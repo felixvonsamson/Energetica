@@ -94,16 +94,17 @@ def _facilitator(client: TestClient) -> int:
 
 
 def _advance(client: TestClient) -> Response:
-    """Advance as the facilitator does past a Trading period that is not settled yet: advance once to close
-    its window, wait for it to be settled, and advance again.
+    """Move on to the next checkpoint as the facilitator does: advance once to close a window that is still
+    open, wait for a Trading period to be settled, and advance again.
 
     The app settles the period in the background while the client is entered. Otherwise the test settles
     it here, the same way.
     """
     session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
-    period = session.checkpoint
-    if isinstance(period, TradingPeriod) and session.settled_period != period:
+    if session.phase_timer is not None and session.phase_timer.is_active(session.clock()):
         client.post(ADVANCE_URL)
+    period = session.checkpoint
+    if isinstance(period, TradingPeriod):
         job = session.start_settlement()
         if job is not None:
             session.finish_settlement(job, session.run_settlement(job))
@@ -647,7 +648,7 @@ def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
     authenticate(client, alice)
     client.post(SELECTION_URL, json={"facility": "gas_burner"})
     authenticate(client, facilitator)
-    client.post(ADVANCE_URL)
+    _advance(client)
     authenticate(client, alice)
 
     with client:
@@ -681,7 +682,7 @@ def _trading(session_path: Path, clock: _Clock) -> tuple[TestClient, int, int]:
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
     )
-    client.post(ADVANCE_URL)
+    _advance(client)
     authenticate(client, alice)
     return client, facilitator, alice
 
@@ -838,6 +839,44 @@ def test_the_facilities_on_offer_follow_the_rounds_storage_lever(session_path: P
     assert {"lithium_ion_batteries", "hydrogen_storage", "pumped_hydro"} <= offered
 
 
+def test_storage_a_player_owns_is_still_listed_once_it_is_no_longer_for_sale(session_path: Path, clock: _Clock) -> None:
+    # Hydrogen storage lasts three Rounds, so Alice's still works in Round 2, when no storage is for sale.
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.HYDROGEN_STORAGE, built_round=1)
+    )
+    client.put(LEVERS_URL, json=_levers(storage="off"))
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
+        _advance(client)
+
+    authenticate(client, alice)
+    facilities = {facility["id"]: facility["for_sale"] for facility in client.get(FACILITIES_URL).json()}
+    assert facilities["hydrogen_storage"] is False
+    assert facilities["gas_burner"] is True
+    assert "lithium_ion_batteries" not in facilities
+    authenticate(client, facilitator)
+    assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
+
+
+def test_advancing_while_the_investment_phase_is_open_closes_it_and_buys_the_selections(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    with client:
+        authenticate(client, facilitator)
+        body = client.post(ADVANCE_URL).json()
+        assert body["checkpoint"] == _checkpoint("investment", 1)
+        assert body["phase_timer"]["remaining_seconds"] == 0
+
+        authenticate(client, alice)
+        _wait_for_fleet(client, size=1)
+        assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
+
+
 def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -855,7 +894,7 @@ def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
     )
-    client.post(ADVANCE_URL)
+    _advance(client)
 
     with client:
         clock.tick(minutes=5)
@@ -883,7 +922,7 @@ def test_advancing_before_the_window_runs_out_closes_it_and_the_period_settles_i
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
     )
-    client.post(ADVANCE_URL)
+    _advance(client)
 
     with client:
         body = client.post(ADVANCE_URL).json()

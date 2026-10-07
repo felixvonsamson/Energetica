@@ -437,24 +437,27 @@ class WorkshopSession:
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
 
-        A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
-        any selection still waiting, so none is lost if the moderator advances before the timer has
-        run out or before the purchase at its end has happened. Starting a new Round's Investment phase
-        fixes the Round's format from the levers and retires every facility whose lifetime has ended.
+        While the Investment phase or a price-setting window is open, advancing closes it instead, and
+        the session stays where it is. The app then buys the selections or simulates the Trading period,
+        as when the time runs out (#1004). A Trading period can only be left once it is settled: until
+        then, advancing does nothing more.
 
-        A Trading period can only be left once it is settled. Until then, advancing closes its
-        price-setting window if it is still open, so that the app starts simulating it, and the session
-        stays where it is. Raises :class:`SettlementRunningError` while the period is being simulated,
-        and :class:`SessionFinishedError` once the session is :class:`Finished`.
+        A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys any
+        selection still waiting, so none is lost if the moderator advances before the purchase at the
+        phase's end has happened. Starting a new Round's Investment phase fixes the Round's format from
+        the levers and retires every facility whose lifetime has ended. Raises
+        :class:`SettlementRunningError` while the Trading period is being simulated, and
+        :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
         with self._lock:
+            if self.settlement is not None:
+                raise SettlementRunningError("the Trading period is being simulated")
+            if self.phase_timer is not None and self.phase_timer.is_active(self.clock()):
+                phase_timer = self.phase_timer.closed_at(self.clock())
+                self._save(self.checkpoint, phase_timer)
+                self.phase_timer = phase_timer
+                return self.checkpoint
             if isinstance(self.checkpoint, TradingPeriod) and self.settled_period != self.checkpoint:
-                if self.settlement is not None:
-                    raise SettlementRunningError("the Trading period is being simulated")
-                if self.phase_timer is not None and self.price_setting_open():
-                    phase_timer = self.phase_timer.closed_at(self.clock())
-                    self._save(self.checkpoint, phase_timer)
-                    self.phase_timer = phase_timer
                 return self.checkpoint
             checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
             duration = phase_duration(checkpoint, self.levers)

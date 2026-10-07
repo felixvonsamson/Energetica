@@ -97,11 +97,12 @@ def _settle(session: WorkshopSession) -> bool:
 
 
 def _advance(session: WorkshopSession) -> Checkpoint:
-    """Advance as the moderator does: past a Trading period not yet settled, by advancing once to close its
-    window, waiting for its settlement, and advancing again.
+    """Move on to the next checkpoint as the moderator does: advance once to close a window that is still
+    open, wait for a Trading period to be settled, and advance again.
     """
-    if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
+    if session.phase_timer is not None and session.phase_timer.is_active(session.clock()):
         session.advance()
+    if isinstance(session.checkpoint, TradingPeriod):
         _settle(session)
     return session.advance()
 
@@ -590,15 +591,26 @@ def test_buying_twice_charges_once(path: Path, clock: _Clock) -> None:
     assert len(session.network.members[1].owned_facilities) == 1
 
 
-@pytest.mark.parametrize("minutes_spent", [8, 3], ids=["after the timer ran out", "while the timer still runs"])
-def test_advancing_out_of_the_investment_phase_buys_any_selection_left(
-    path: Path, clock: _Clock, minutes_spent: int
-) -> None:
+def test_advancing_while_the_investment_phase_is_open_closes_it_and_stays(path: Path, clock: _Clock) -> None:
     session = _investing(path, clock)
     session.select(1, FacilityId.GAS_BURNER)
-    clock.tick(minutes=minutes_spent)
+    clock.tick(minutes=3)
 
-    _advance(session)
+    assert session.advance() == Investment(round=1)
+
+    assert not session.investment_open()
+    with pytest.raises(InvestmentClosedError):
+        session.select(1, FacilityId.GAS_BURNER)
+    assert session.buy_selections()
+    assert session.advance() == TradingPeriod(round=1, season="spring")
+
+
+def test_advancing_out_of_the_investment_phase_buys_any_selection_left(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+
+    session.advance()
 
     alice = session.network.members[1]
     assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]

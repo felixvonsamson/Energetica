@@ -8,7 +8,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Factory, Tags } from "lucide-react";
+import { ChevronRight, Clock, Factory, Tags, TimerOff } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,11 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import {
     useAdvanceSession,
+    useInvestmentOpen,
     usePriceSettingOpen,
     useWorkshopEntry,
 } from "@/hooks/use-workshop";
-import { checkpointLabel } from "@/lib/workshop-timeline";
+import { advanceAction, checkpointLabel } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
@@ -86,20 +87,31 @@ export function WorkshopTopBar({
 }
 
 /**
- * Moves the whole room to the next checkpoint. An advance cannot be undone, so
- * the button names where it goes rather than just saying "Next".
+ * Moves the whole room on. An advance cannot be undone, so the button says what
+ * it does rather than just "Next": while a window is open it closes it (#1004),
+ * and otherwise it names where the session goes. It waits while a Trading
+ * period is being simulated.
  */
 function AdvanceButton({ session }: { session: WorkshopSession }) {
     const { mutate: advance, isPending } = useAdvanceSession();
-    const next = session.next_checkpoint;
-    if (!next) return null;
+    const investmentOpen = useInvestmentOpen();
+    const priceSettingOpen = usePriceSettingOpen();
+    const action = advanceAction(session, investmentOpen || priceSettingOpen);
+    if (!action) return null;
 
     return (
-        <Button size="sm" disabled={isPending} onClick={() => advance()}>
-            {session.checkpoint.kind === "not_started"
-                ? "Start the session"
-                : `Next: ${checkpointLabel(next)}`}
-            <ChevronRight className="size-4" />
+        <Button
+            size="sm"
+            variant={action.kind === "close_window" ? "outline" : "default"}
+            disabled={isPending || action.kind === "simulating"}
+            onClick={() => advance()}
+        >
+            {action.label}
+            {action.kind === "close_window" ? (
+                <TimerOff className="size-4" />
+            ) : (
+                <ChevronRight className="size-4" />
+            )}
         </Button>
     );
 }

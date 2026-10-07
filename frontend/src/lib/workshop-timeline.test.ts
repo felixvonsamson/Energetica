@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import type { ApiSchema } from "@/types/api-helpers";
+
 import {
+    advanceAction,
     checkpointLabel,
     checkpointPage,
     isSeason,
@@ -163,3 +166,78 @@ function allStatuses(timeline: TimelineRound[]): Set<NodeStatus> {
         ]),
     );
 }
+
+describe("advanceAction", () => {
+    const spring = {
+        kind: "trading_period",
+        round: 1,
+        season: "spring",
+    } as const;
+    const session = (
+        overrides: Partial<ApiSchema<"WorkshopSessionOut">>,
+    ): ApiSchema<"WorkshopSessionOut"> => ({
+        checkpoint: spring,
+        next_checkpoint: { kind: "trading_period", round: 1, season: "summer" },
+        round_count: 3,
+        phase_timer: null,
+        players: [],
+        round_format: {
+            trading_format: "representative_day",
+            clearings_per_day: 24,
+            storage: "batteries",
+        },
+        settlement: null,
+        ...overrides,
+    });
+
+    it("closes an open price-setting window rather than moving on", () => {
+        expect(advanceAction(session({}), true)).toEqual({
+            kind: "close_window",
+            label: "Close the price-setting window",
+        });
+    });
+
+    it("closes an open investment window rather than moving on", () => {
+        const investing = session({
+            checkpoint: { kind: "investment", round: 1 },
+            next_checkpoint: spring,
+        });
+
+        expect(advanceAction(investing, true)?.label).toBe(
+            "Close the investment window",
+        );
+    });
+
+    it("waits while the Trading period is being simulated", () => {
+        const simulating = session({
+            settlement: { days_done: 3, days_total: 91 },
+        });
+
+        expect(advanceAction(simulating, false)?.kind).toBe("simulating");
+    });
+
+    it("names the next checkpoint once the window is closed", () => {
+        expect(advanceAction(session({}), false)).toEqual({
+            kind: "next",
+            label: "Next: Round 1 · Summer trading",
+        });
+    });
+
+    it("starts the session from before Round 1", () => {
+        const waiting = session({
+            checkpoint: { kind: "not_started" },
+            next_checkpoint: { kind: "investment", round: 1 },
+        });
+
+        expect(advanceAction(waiting, false)?.label).toBe("Start the session");
+    });
+
+    it("offers nothing once the session is over", () => {
+        const over = session({
+            checkpoint: { kind: "finished" },
+            next_checkpoint: null,
+        });
+
+        expect(advanceAction(over, false)).toBeNull();
+    });
+});

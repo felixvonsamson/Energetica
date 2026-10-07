@@ -19,12 +19,13 @@ from fastapi.concurrency import run_in_threadpool
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.workshop.facilities import FacilityId, WorkshopFacility
+from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
+    WorkshopFacilityOut,
     WorkshopMemberOut,
     WorkshopOwnedFacilityOut,
     WorkshopPhaseExtendIn,
@@ -133,9 +134,10 @@ async def advance_session(
     """Move the session to its next checkpoint, and tell every open page. Nothing else changes the
     session's phase.
 
-    A Trading period that is not settled yet is not left: advancing closes its price-setting window if it
-    is still open, and the period is then simulated in the background. Advancing again once that has
-    finished moves on. While it runs, advancing is refused.
+    While the Investment phase or a price-setting window is open, advancing closes it and the session
+    stays where it is: the selections are bought, or the Trading period is simulated in the background.
+    Advancing again moves on, once a Trading period is settled. While it is being simulated, advancing is
+    refused.
     """
     try:
         await run_in_threadpool(session.advance)
@@ -187,11 +189,20 @@ async def set_levers(
 
 
 @router.get("/facilities")
-def get_facilities(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> list[WorkshopFacility]:
-    """The facilities players can see and buy in the current Round. One that is not yet unlocked, or that
-    the Round's storage lever leaves out, is left out, not shown as locked.
+def get_facilities(
+    account: Annotated[Account, Depends(resolve_entry_account)], session: Session
+) -> list[WorkshopFacilityOut]:
+    """The facilities players can buy in the current Round, and any others the calling player owns, in
+    catalog order. One that is not yet unlocked is left out, not shown as locked.
     """
-    return session.offered_facilities()
+    for_sale = {facility.id for facility in session.offered_facilities()}
+    player = session.player(account.account_id)
+    owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
+    return [
+        WorkshopFacilityOut(**facility.model_dump(), for_sale=facility.id in for_sale)
+        for facility in CATALOG.values()
+        if facility.id in for_sale or facility.id in owned
+    ]
 
 
 @router.get("/fleet")

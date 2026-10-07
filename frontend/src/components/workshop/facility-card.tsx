@@ -35,7 +35,7 @@ import {
 import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
 /** Height of a card's bottom row, which an opened fleet stack lines up with. */
 export const CARD_ROW_HEIGHT = 30;

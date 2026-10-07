@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from energetica.workshop.facilities import FacilityId
+from energetica.workshop.facilities import FacilityId, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
@@ -78,6 +78,15 @@ class WorkshopSessionOut(BaseModel):
     settlement: WorkshopSettlementOut | None = Field(
         description="How far the simulation of the Trading period has got while it runs, or null when none is "
         "running. The session cannot advance while one is"
+    )
+
+
+class WorkshopFacilityOut(WorkshopFacility):
+    """A facility the calling player can buy, or already owns."""
+
+    for_sale: bool = Field(
+        description="Whether players can buy it in the current Round. A facility the player owns but can no "
+        "longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown"
     )
 
 

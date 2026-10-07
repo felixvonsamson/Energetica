@@ -38,7 +38,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 type WorkshopPrices = ApiSchema<"WorkshopPricesOut">;
 
 /** How long after the last keystroke a typed price is sent, in milliseconds. */

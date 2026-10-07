@@ -27,7 +27,7 @@ import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
 export const workshopFacilityImages: Record<FacilityId, string> = {
     onshore_wind_turbine: onshoreWindTurbine,

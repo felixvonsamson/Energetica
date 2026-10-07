@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 
-type WorkshopFacility = ApiSchema<"WorkshopFacility">;
+type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
 /** A quick left-right shake, as a disabled control gives, in pixels. */
 const SHAKE = [0, -6, 6, -5, 5, -3, 3, 0];
