@@ -28,7 +28,8 @@ export function useJoinLink(token: string) {
  * Confirm joining: appends the visitor's username to the instance's allowlist.
  * Invalidates `auth.me` on success — the entry gate (`GET /auth/me`) now admits
  * this account, so the SPA's global auth state must re-resolve before the
- * caller navigates into the app.
+ * caller navigates into the app. In a Workshop Run the entry gate is `POST
+ * /workshop/enter` instead, so its entry is invalidated too.
  */
 export function useConfirmJoin(token: string) {
     return useMutation({
@@ -37,9 +38,14 @@ export function useConfirmJoin(token: string) {
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.join.link(token),
             });
-            await queryClient.invalidateQueries({
-                queryKey: queryKeys.auth.me,
-            });
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.auth.me,
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.workshop.entry,
+                }),
+            ]);
         },
     });
 }

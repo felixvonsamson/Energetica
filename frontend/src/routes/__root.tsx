@@ -7,13 +7,20 @@ import {
 import { useEffect } from "react";
 
 import { AnnouncedScreen } from "@/components/lifecycle/announced-screen";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
+import { useRunMode } from "@/hooks/use-run-mode";
+import { useWorkshopEntry } from "@/hooks/use-workshop";
 import { lobbyLoginHref } from "@/lib/instances";
-import { computeRedirect, isAnnouncedTakeover } from "@/lib/route-guard";
+import {
+    computeRedirect,
+    isAnnouncedTakeover,
+    workshopRedirect,
+} from "@/lib/route-guard";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },
@@ -27,7 +34,69 @@ export const Route = createRootRoute({
     }),
 });
 
+/**
+ * Each Run mode has its own gate. `main.tsx` resolves the mode before the
+ * router renders, so it is known here, and in a Workshop Run the persistent
+ * world's auth and game hooks are never called (#995).
+ */
 function RootComponent() {
+    const { data: mode } = useRunMode();
+    return mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />;
+}
+
+function FullPageSpinner() {
+    return (
+        <div className="flex min-h-screen items-center justify-center">
+            <Spinner />
+        </div>
+    );
+}
+
+/**
+ * The gate in a Workshop Run (#995). The visitor enters through `POST
+ * /workshop/enter` rather than `/auth/me`, and sees only the Workshop pages and
+ * the pages shared by both Run modes, such as the join page. A shared page is
+ * public, so it does not enter at all: a visitor on the join page has not been
+ * admitted yet.
+ */
+function WorkshopRoot() {
+    const matches = useMatches();
+    const navigate = useNavigate();
+    const staticData = matches[matches.length - 1]?.staticData;
+    const isSharedPage = staticData?.runMode === "any";
+    const {
+        data: entry,
+        isLoading,
+        isError,
+        refetch,
+    } = useWorkshopEntry({ enabled: !isSharedPage });
+    const redirect =
+        isLoading || isError || staticData === undefined
+            ? null
+            : workshopRedirect(staticData.runMode, !!entry);
+
+    useEffect(() => {
+        if (redirect === "log-in") window.location.assign(lobbyLoginHref());
+        else if (redirect) void navigate({ to: redirect });
+    }, [redirect, navigate]);
+
+    if (isLoading) return <FullPageSpinner />;
+    if (isError) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+                <p>Could not enter the Workshop.</p>
+                <Button variant="outline" onClick={() => void refetch()}>
+                    Try again
+                </Button>
+            </div>
+        );
+    }
+    if (staticData === undefined) return "Unknown page";
+    if (redirect) return null;
+    return <Outlet />;
+}
+
+function FreeplayRoot() {
     const matches = useMatches();
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading } = useAuth();
@@ -63,10 +132,13 @@ function RootComponent() {
         isAuthenticated &&
         !!user &&
         isAnnouncedTakeover(routeConfig, phase);
+    // A Workshop page has nothing to show in the persistent world.
     const redirectTo =
-        !announced && authResolved && isAuthenticated && user
-            ? computeRedirect(routeConfig, user, capabilities)
-            : null;
+        staticData?.runMode === "workshop"
+            ? "/app"
+            : !announced && authResolved && isAuthenticated && user
+              ? computeRedirect(routeConfig, user, capabilities)
+              : null;
 
     useEffect(() => {
         if (mustLogIn) {
@@ -78,13 +150,7 @@ function RootComponent() {
 
     // While auth or capabilities are still resolving, show a centred spinner rather than
     // leaking debug placeholders to users (these returns previously rendered raw strings).
-    if (isLoading || capabilities === undefined) {
-        return (
-            <div className="flex min-h-screen items-center justify-center">
-                <Spinner />
-            </div>
-        );
-    }
+    if (isLoading || capabilities === undefined) return <FullPageSpinner />;
     if (staticData === undefined) return "Unknown page";
     // Before the run starts, an authenticated visitor waits here instead of entering the game or
     // being routed to settle (#862, T4). Placed before the redirect gate so it preempts the

@@ -15,6 +15,8 @@ import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppLogoutRouteImport } from './routes/app/logout'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
+import { Route as AppWorkshopRouteRouteImport } from './routes/app/workshop/route'
+import { Route as AppWorkshopIndexRouteImport } from './routes/app/workshop/index'
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
@@ -44,6 +46,9 @@ import { Route as AppCommunityMessagesRouteImport } from './routes/app/community
 import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
 import { Route as AppCommunityLeaderboardsRouteImport } from './routes/app/community/leaderboards'
 import { Route as AppCommunityElectricityMarketsRouteImport } from './routes/app/community/electricity-markets'
+import { Route as AppWorkshopRecapRoundRouteImport } from './routes/app/workshop/recap/$round'
+import { Route as AppWorkshopRoundRoundIndexRouteImport } from './routes/app/workshop/round/$round/index'
+import { Route as AppWorkshopRoundRoundSeasonRouteImport } from './routes/app/workshop/round/$round/$season'
 
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
@@ -74,6 +79,16 @@ const AppChangelogRoute = AppChangelogRouteImport.update({
   id: '/app/changelog',
   path: '/app/changelog',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppWorkshopRouteRoute = AppWorkshopRouteRouteImport.update({
+  id: '/app/workshop',
+  path: '/app/workshop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWorkshopIndexRoute = AppWorkshopIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWorkshopRouteRoute,
 } as any)
 const AppWikiIndexRoute = AppWikiIndexRouteImport.update({
   id: '/app/wiki/',
@@ -225,8 +240,26 @@ const AppCommunityElectricityMarketsRoute =
     path: '/app/community/electricity-markets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppWorkshopRecapRoundRoute = AppWorkshopRecapRoundRouteImport.update({
+  id: '/recap/$round',
+  path: '/recap/$round',
+  getParentRoute: () => AppWorkshopRouteRoute,
+} as any)
+const AppWorkshopRoundRoundIndexRoute =
+  AppWorkshopRoundRoundIndexRouteImport.update({
+    id: '/round/$round/',
+    path: '/round/$round/',
+    getParentRoute: () => AppWorkshopRouteRoute,
+  } as any)
+const AppWorkshopRoundRoundSeasonRoute =
+  AppWorkshopRoundRoundSeasonRouteImport.update({
+    id: '/round/$round/$season',
+    path: '/round/$round/$season',
+    getParentRoute: () => AppWorkshopRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
+  '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/logout': typeof AppLogoutRoute
@@ -262,6 +295,10 @@ export interface FileRoutesByFullPath {
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
+  '/app/workshop/': typeof AppWorkshopIndexRoute
+  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
+  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
+  '/app/workshop/round/$round': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRoutesByTo {
   '/app/changelog': typeof AppChangelogRoute
@@ -299,9 +336,14 @@ export interface FileRoutesByTo {
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
+  '/app/workshop': typeof AppWorkshopIndexRoute
+  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
+  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
+  '/app/workshop/round/$round': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/logout': typeof AppLogoutRoute
@@ -337,10 +379,15 @@ export interface FileRoutesById {
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
+  '/app/workshop/': typeof AppWorkshopIndexRoute
+  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
+  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
+  '/app/workshop/round/$round/': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/logout'
@@ -376,6 +423,10 @@ export interface FileRouteTypes {
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
+    | '/app/workshop/'
+    | '/app/workshop/recap/$round'
+    | '/app/workshop/round/$round/$season'
+    | '/app/workshop/round/$round'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/app/changelog'
@@ -413,8 +464,13 @@ export interface FileRouteTypes {
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
+    | '/app/workshop'
+    | '/app/workshop/recap/$round'
+    | '/app/workshop/round/$round/$season'
+    | '/app/workshop/round/$round'
   id:
     | '__root__'
+    | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/logout'
@@ -450,9 +506,14 @@ export interface FileRouteTypes {
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
+    | '/app/workshop/'
+    | '/app/workshop/recap/$round'
+    | '/app/workshop/round/$round/$season'
+    | '/app/workshop/round/$round/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AppWorkshopRouteRoute: typeof AppWorkshopRouteRouteWithChildren
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppLogoutRoute: typeof AppLogoutRoute
@@ -532,6 +593,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/changelog'
       preLoaderRoute: typeof AppChangelogRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/workshop': {
+      id: '/app/workshop'
+      path: '/app/workshop'
+      fullPath: '/app/workshop'
+      preLoaderRoute: typeof AppWorkshopRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/workshop/': {
+      id: '/app/workshop/'
+      path: '/'
+      fullPath: '/app/workshop/'
+      preLoaderRoute: typeof AppWorkshopIndexRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
     }
     '/app/wiki/': {
       id: '/app/wiki/'
@@ -736,8 +811,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunityElectricityMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/workshop/recap/$round': {
+      id: '/app/workshop/recap/$round'
+      path: '/recap/$round'
+      fullPath: '/app/workshop/recap/$round'
+      preLoaderRoute: typeof AppWorkshopRecapRoundRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
+    }
+    '/app/workshop/round/$round/': {
+      id: '/app/workshop/round/$round/'
+      path: '/round/$round'
+      fullPath: '/app/workshop/round/$round'
+      preLoaderRoute: typeof AppWorkshopRoundRoundIndexRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
+    }
+    '/app/workshop/round/$round/$season': {
+      id: '/app/workshop/round/$round/$season'
+      path: '/round/$round/$season'
+      fullPath: '/app/workshop/round/$round/$season'
+      preLoaderRoute: typeof AppWorkshopRoundRoundSeasonRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
+    }
   }
 }
+
+interface AppWorkshopRouteRouteChildren {
+  AppWorkshopIndexRoute: typeof AppWorkshopIndexRoute
+  AppWorkshopRecapRoundRoute: typeof AppWorkshopRecapRoundRoute
+  AppWorkshopRoundRoundSeasonRoute: typeof AppWorkshopRoundRoundSeasonRoute
+  AppWorkshopRoundRoundIndexRoute: typeof AppWorkshopRoundRoundIndexRoute
+}
+
+const AppWorkshopRouteRouteChildren: AppWorkshopRouteRouteChildren = {
+  AppWorkshopIndexRoute: AppWorkshopIndexRoute,
+  AppWorkshopRecapRoundRoute: AppWorkshopRecapRoundRoute,
+  AppWorkshopRoundRoundSeasonRoute: AppWorkshopRoundRoundSeasonRoute,
+  AppWorkshopRoundRoundIndexRoute: AppWorkshopRoundRoundIndexRoute,
+}
+
+const AppWorkshopRouteRouteWithChildren =
+  AppWorkshopRouteRoute._addFileChildren(AppWorkshopRouteRouteChildren)
 
 interface AppDashboardRouteChildren {
   AppDashboardQuizRoute: typeof AppDashboardQuizRoute
@@ -752,6 +865,7 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AppWorkshopRouteRoute: AppWorkshopRouteRouteWithChildren,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppLogoutRoute: AppLogoutRoute,

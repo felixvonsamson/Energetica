@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { fetchCurrentUser } from "@/contexts/auth-context";
+import { runQueryOptions } from "@/hooks/use-run-mode";
 import { takePendingJoinToken } from "@/lib/join";
 import { queryClient, queryKeys } from "@/lib/query-client";
 
@@ -21,6 +22,11 @@ export const Route = createFileRoute("/app/")({
                 params: { token: pendingJoinToken },
             });
         }
+
+        // A Workshop Run has its own pages and no `/auth/me` (#995). Its root route enters the
+        // Run and sends a visitor who may not enter to the lobby.
+        const run = await queryClient.ensureQueryData(runQueryOptions);
+        if (run.mode === "workshop") throw redirect({ to: "/app/workshop" });
 
         // Role-aware so a facilitator account lands on its own home (#1020) instead of bouncing
         // through the player-only `/app/dashboard`, which `__root.tsx`'s route guard would then

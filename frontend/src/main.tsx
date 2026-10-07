@@ -1,13 +1,16 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { AuthProvider } from "@/contexts/auth-context";
 import { GameTickProvider } from "@/contexts/game-tick-context";
 import { ResolutionProvider } from "@/contexts/resolution-context";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { useRunMode } from "@/hooks/use-run-mode";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
 
@@ -62,18 +65,50 @@ declare module "@tanstack/react-router" {
     }
 }
 
+/**
+ * The providers for this instance's Run mode (#995). The persistent world's
+ * auth, socket and tick providers all call persistent-world endpoints on mount,
+ * which a Workshop Run's backend does not serve, so a Workshop Run gets none of
+ * them. Its root route enters through `/workshop/enter` instead.
+ */
+function RunModeProviders({ children }: { children: ReactNode }) {
+    const { data: mode, isError, refetch } = useRunMode();
+
+    if (isError) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+                <p>Could not reach the server.</p>
+                <Button variant="outline" onClick={() => void refetch()}>
+                    Try again
+                </Button>
+            </div>
+        );
+    }
+    if (mode === undefined) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Spinner />
+            </div>
+        );
+    }
+    if (mode === "workshop") return children;
+    return (
+        <AuthProvider>
+            <SocketProvider>
+                <GameTickProvider>{children}</GameTickProvider>
+            </SocketProvider>
+        </AuthProvider>
+    );
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <ResolutionProvider>
-                    <AuthProvider>
-                        <SocketProvider>
-                            <GameTickProvider>
-                                <RouterProvider router={router} />
-                            </GameTickProvider>
-                        </SocketProvider>
-                    </AuthProvider>
+                    <RunModeProviders>
+                        <RouterProvider router={router} />
+                    </RunModeProviders>
                 </ResolutionProvider>
             </ThemeProvider>
         </QueryClientProvider>

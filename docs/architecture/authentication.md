@@ -80,6 +80,15 @@ get_settled_player()    - Requires a player who has chosen a location  (utils/au
 -   Fetches `/auth/me` on app startup
 -   Handles 401 errors gracefully (user not authenticated)
 
+**In a Workshop Run** the app enters through `POST /api/v1/workshop/enter` instead of `/auth/me`,
+which the Workshop backend does not serve. `frontend/src/main.tsx` reads the Run mode from
+`GET /api/v1/run` before anything else renders. In a Workshop Run it leaves out `AuthProvider` and
+the other persistent-world providers, and the root route (`frontend/src/routes/__root.tsx`) uses the
+Workshop gate (`workshopRedirect` in `frontend/src/lib/route-guard.ts`). As with `/auth/me`, a 401
+or a denied account sends the visitor to the lobby. Routes declare which Run mode shows them with
+`staticData.runMode`: unset for the persistent world only, `"workshop"` for the Workshop pages under
+`/app/workshop`, and `"any"` for pages both use, such as the join page.
+
 **Auth hook:** `frontend/src/hooks/useAuth.ts`
 
 -   Provides `user`, `isAuthenticated`, `isLoading`, `refetch()`, `logout()`

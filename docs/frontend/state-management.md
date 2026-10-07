@@ -2,11 +2,12 @@
 
 ```
 Application Root (QueryClientProvider)
-  └─ AuthProvider (user state & cookies)
-      └─ SocketProvider (WebSocket connection)
-          └─ GameTickProvider (tick synchronization)
-              └─ RouterProvider (TanStack Router)
-                  └─ Your Components
+  └─ RunModeProviders (reads the Run mode; a Workshop Run skips the three below)
+      └─ AuthProvider (user state & cookies)
+          └─ SocketProvider (WebSocket connection)
+              └─ GameTickProvider (tick synchronization)
+                  └─ RouterProvider (TanStack Router)
+                      └─ Your Components
 ```
 
 and more that have been added since and are missing

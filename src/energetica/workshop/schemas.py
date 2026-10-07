@@ -37,5 +37,8 @@ class WorkshopSessionOut(BaseModel):
     """Where the session is."""
 
     checkpoint: Checkpoint
+    next_checkpoint: Checkpoint | None = Field(
+        description="Where the facilitator's next advance moves the session, or null once it is finished"
+    )
     round_count: int = Field(description="How many Rounds the session runs")
     players: list[WorkshopMemberOut] = Field(description="Everyone placed into the Run, in the order they entered")

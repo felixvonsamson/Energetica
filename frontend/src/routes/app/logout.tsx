@@ -23,5 +23,5 @@ function LogoutComponent() {
 
 export const Route = createFileRoute("/app/logout")({
     component: LogoutComponent,
-    staticData: { title: "Logging out..." },
+    staticData: { title: "Logging out...", runMode: "any" },
 });
