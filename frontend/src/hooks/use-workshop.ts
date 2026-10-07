@@ -21,7 +21,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
-type SettlementProgress = ApiSchema<"WorkshopSettlementOut">;
+type WorkshopSettlement = ApiSchema<"WorkshopSettlementOut">;
 
 /** The server's `invalidate` message: the query keys a page should re-read. */
 interface InvalidateMessage {
@@ -298,11 +298,11 @@ export function useWorkshopSocket() {
                 void queryClient.invalidateQueries({ queryKey });
             }
         });
-        // Sent after each day while a Trading period is being simulated
+        // Sent as the days go by while a Trading period is being simulated
         // (#1155). It carries the progress itself, so only the session's
         // `settlement` changes. Keeping the session's read time keeps the
         // phase countdown, which counts from it, where it was.
-        socket.on("settlement_progress", (progress: SettlementProgress) => {
+        socket.on("settlement_progress", (progress: WorkshopSettlement) => {
             const readAt = queryClient.getQueryState(
                 queryKeys.workshop.session,
             )?.dataUpdatedAt;

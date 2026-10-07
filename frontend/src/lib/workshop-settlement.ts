@@ -10,29 +10,24 @@ type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
 type SettlementProgress = ApiSchema<"WorkshopSettlementOut">;
 
 /**
- * `session` with `progress` as its running simulation. A progress older than
- * the one the session already has, such as one a slower read brought back, is
- * left out, so the bar never moves back.
+ * `session` with `progress` as its running simulation. A run that failed starts
+ * again from day 0, so the progress can go down as well as up.
  */
 export function withSettlementProgress(
     session: WorkshopSession | undefined,
     progress: SettlementProgress,
 ): WorkshopSession | undefined {
-    if (!session) return session;
-    const current = session.settlement;
-    if (
-        current &&
-        current.days_total === progress.days_total &&
-        current.days_done >= progress.days_done
-    ) {
-        return session;
-    }
-    return { ...session, settlement: progress };
+    return session && { ...session, settlement: progress };
+}
+
+/** Whether `progress` is a representative-day run, which has no days to count. */
+export function isRepresentativeDay(progress: SettlementProgress): boolean {
+    return progress.days_total === 1;
 }
 
 /** What the bar says while the simulation runs. */
 export function settlementLabel(progress: SettlementProgress): string {
-    // A representative day is over too quickly for a day count to help.
-    if (progress.days_total === 1) return "Simulating the representative day";
+    if (isRepresentativeDay(progress))
+        return "Simulating the representative day";
     return `Simulating the season: day ${progress.days_done} of ${progress.days_total}`;
 }

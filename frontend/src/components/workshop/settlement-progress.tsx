@@ -9,12 +9,15 @@ import { useEffect, useState } from "react";
 
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useWorkshopSession } from "@/hooks/use-workshop";
-import { settlementLabel } from "@/lib/workshop-settlement";
+import {
+    isRepresentativeDay,
+    settlementLabel,
+} from "@/lib/workshop-settlement";
 import type { ApiSchema } from "@/types/api-helpers";
 
 /**
- * How long a run must have been going before the bar shows. A representative
- * day is usually over sooner, so it does not flash a bar.
+ * How long a run must have been going on this page before the bar shows. A
+ * representative day is usually over sooner, so it does not flash a bar.
  */
 const SHOW_AFTER_MS = 500;
 
@@ -39,7 +42,7 @@ function RunningSettlement({
 
     if (!shown) return null;
     // A representative day has no days to count, so its bar pulses instead.
-    const isRepresentativeDay = settlement.days_total === 1;
+    const pulses = isRepresentativeDay(settlement);
 
     return (
         <div
@@ -47,12 +50,12 @@ function RunningSettlement({
             className="shrink-0 border-b border-border bg-card px-4 py-2"
         >
             <ProgressBar
-                value={isRepresentativeDay ? 1 : settlement.days_done}
-                max={isRepresentativeDay ? 1 : settlement.days_total}
+                value={pulses ? 1 : settlement.days_done}
+                max={pulses ? 1 : settlement.days_total}
                 label={settlementLabel(settlement)}
-                showPercentage={!isRepresentativeDay}
+                showPercentage={!pulses}
                 className={
-                    isRepresentativeDay
+                    pulses
                         ? "mx-auto max-w-[1400px] animate-pulse"
                         : "mx-auto max-w-[1400px]"
                 }

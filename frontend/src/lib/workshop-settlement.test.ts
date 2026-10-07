@@ -42,10 +42,13 @@ describe("withSettlementProgress", () => {
         expect(updated?.settlement).toEqual({ days_done: 1, days_total: 91 });
     });
 
-    it("never moves the bar back within the same run", () => {
-        expect(
-            withSettlementProgress(SESSION, { days_done: 2, days_total: 91 }),
-        ).toBe(SESSION);
+    it("starts again from day 0 when a failed run is retried", () => {
+        const updated = withSettlementProgress(SESSION, {
+            days_done: 0,
+            days_total: 91,
+        });
+
+        expect(updated?.settlement).toEqual({ days_done: 0, days_total: 91 });
     });
 
     it("leaves a session that has not loaded yet alone", () => {
