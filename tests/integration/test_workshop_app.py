@@ -979,6 +979,50 @@ def test_advancing_tells_every_open_page_to_reread_the_session(session_path: Pat
         assert socket.poll(client, facilitator_sid) == [invalidate]
 
 
+def _poll_until(client: TestClient, sid: str, event: str) -> list:
+    """Every packet queued for ``sid`` up to and including the first ``event``."""
+    packets: list = []
+    deadline = time.monotonic() + 5
+    while not any(packet[0] == event for packet in packets) and time.monotonic() < deadline:
+        packets += socket.poll(client, sid)
+    return packets
+
+
+def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    release = threading.Event()
+    real_simulate = session_module.simulate_trading_period
+
+    def held_after_the_first_day(*args: Any, on_day_done: Callable[[int], None], **kwargs: Any) -> TradingOutcome:
+        on_day_done(1)
+        release.wait(timeout=5)
+        return real_simulate(*args, on_day_done=on_day_done, **kwargs)
+
+    monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    app.state.workshop_session.player(alice).owned_facilities.append(
+        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
+    )
+    client.post(ADVANCE_URL)
+    invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
+
+    with client:
+        facilitator_sid, _ = socket.connect(client)
+        # Closes the price-setting window, so the period is simulated.
+        client.post(ADVANCE_URL)
+
+        # Starting the run re-reads the session. Each day after that only sends the progress.
+        packets = _poll_until(client, facilitator_sid, "settlement_progress")
+        assert packets[-1] == ["settlement_progress", {"days_done": 1, "days_total": 1}]
+        assert packets[:-1] and all(packet == invalidate for packet in packets[:-1])
+
+        release.set()
+        # Finishing the run re-reads the session, which then has the period's results.
+        assert _poll_until(client, facilitator_sid, "invalidate") == [invalidate]
+
+
 def test_extending_tells_every_open_page_to_reread_the_session(session_path: Path) -> None:
     with TestClient(create_workshop_app(load_instance_config(), session_path=session_path)) as client:
         _player(client, "alice")

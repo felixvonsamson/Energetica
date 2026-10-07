@@ -99,9 +99,7 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
             for player in session.network.players()
         ],
         round_format=session.current_format(),
-        settlement=None
-        if settlement is None
-        else WorkshopSettlementOut(days_done=settlement.days_done, days_total=settlement.days_total),
+        settlement=None if settlement is None else WorkshopSettlementOut.from_progress(settlement),
     )
 
 

@@ -27,7 +27,7 @@ from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
-from energetica.workshop.realtime import invalidate_session, setup_socketio
+from energetica.workshop.realtime import invalidate_session, send_settlement_progress, setup_socketio
 from energetica.workshop.routes import router as workshop_router
 from energetica.workshop.session import (
     Clock,
@@ -150,14 +150,23 @@ async def _close_phases_when_due(app: FastAPI) -> None:
             if new_job is not None:
                 job = new_job
                 simulation = asyncio.create_task(_settle(app, session, job))
-            # Each day the simulation gets through, or its end, is news for the open pages.
-            if session.settlement != reported:
-                reported = session.settlement
-                changed = True
-            if not changed:
+            # A simulation starting or ending changes the session. A day it gets through changes only
+            # its progress, which is sent on its own so that pages do not re-read the whole session.
+            progress = session.settlement
+            new_day = False
+            if progress != reported:
+                if progress is not None and reported is not None and progress.period == reported.period:
+                    new_day = True
+                else:
+                    changed = True
+                reported = progress
+            if not changed and not new_day:
                 continue
             try:
-                await invalidate_session(app)
+                if changed:
+                    await invalidate_session(app)
+                elif progress is not None:
+                    await send_settlement_progress(app, progress)
             except Exception:
                 # The change stands. Open pages show it on their next read, and this loop must keep
                 # running for the next phase.

@@ -10,7 +10,7 @@ from energetica.workshop.facilities import FacilityId, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.session import Checkpoint
+from energetica.workshop.session import Checkpoint, SettlementProgress
 
 
 class WorkshopPlayerOut(BaseModel):
@@ -57,6 +57,10 @@ class WorkshopSettlementOut(BaseModel):
 
     days_done: int = Field(description="Days of the season simulated so far")
     days_total: int = Field(description="Days the simulation covers: 1 for a representative day, 91 for a full season")
+
+    @classmethod
+    def from_progress(cls, progress: SettlementProgress) -> WorkshopSettlementOut:
+        return cls(days_done=progress.days_done, days_total=progress.days_total)
 
 
 class WorkshopSessionOut(BaseModel):
