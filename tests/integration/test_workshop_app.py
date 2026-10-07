@@ -779,42 +779,37 @@ def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
 LEVERS_URL = "/api/v1/workshop/levers"
 
 
+def _levers(**round_format: object) -> dict:
+    """The default levers, with the Round format given."""
+    return {"investment_minutes": 8, "price_setting_minutes": 5, "round_format": round_format}
+
+
 def test_the_facilitator_reads_and_changes_the_levers(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
+    round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
 
-    assert client.get(LEVERS_URL).json()["trading_format"] == "representative_day"
-    response = client.patch(LEVERS_URL, json={"trading_format": "full_season", "storage": "all"})
+    assert client.get(LEVERS_URL).json()["round_format"]["trading_format"] == "representative_day"
+    response = client.put(LEVERS_URL, json=_levers(**round_format))
 
     assert response.status_code == 200
-    body = response.json()
-    assert (body["trading_format"], body["clearings_per_day"], body["storage"]) == ("full_season", 24, "all")
-    assert client.get(LEVERS_URL).json() == body
+    assert response.json() == _levers(**round_format)
+    assert client.get(LEVERS_URL).json() == response.json()
     # Before Round 1 starts, the session shows the format it will start with.
-    assert client.get(SESSION_URL).json()["round_format"] == {
-        "trading_format": "full_season",
-        "clearings_per_day": 24,
-        "storage": "all",
-    }
+    assert client.get(SESSION_URL).json()["round_format"] == round_format
 
 
-def test_levers_that_cannot_be_combined_are_an_error(session_path: Path) -> None:
+@pytest.mark.parametrize(
+    "round_format",
+    [{"storage": "all"}, {"clearings_per_day": 48}, {"storage": "everything"}, {"no_such_lever": 1}],
+    ids=["every storage type without the full-season format", "48 clearings", "unknown storage", "unknown lever"],
+)
+def test_levers_that_are_not_allowed_are_rejected(session_path: Path, round_format: dict) -> None:
     client = _client(session_path)
     _facilitator(client)
 
-    response = client.patch(LEVERS_URL, json={"storage": "all"})
-
-    assert response.status_code == 400
-    assert response.json()["game_exception_type"] == "WORKSHOP_INVALID_LEVERS"
-    assert client.get(LEVERS_URL).json()["storage"] == "batteries"
-
-
-@pytest.mark.parametrize("body", [{"clearings_per_day": 48}, {"storage": "everything"}, {"no_such_lever": 1}])
-def test_a_lever_value_that_does_not_exist_is_rejected(session_path: Path, body: dict) -> None:
-    client = _client(session_path)
-    _facilitator(client)
-
-    assert client.patch(LEVERS_URL, json=body).status_code == 422
+    assert client.put(LEVERS_URL, json=_levers(**round_format)).status_code == 422
+    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "batteries"
 
 
 def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) -> None:
@@ -822,19 +817,19 @@ def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) ->
     _player(client, "alice")
 
     assert client.get(LEVERS_URL).status_code == 403
-    assert client.patch(LEVERS_URL, json={"clearings_per_day": 96}).status_code == 403
+    assert client.put(LEVERS_URL, json=_levers(clearings_per_day=96)).status_code == 403
 
 
 def test_the_facilities_on_offer_follow_the_rounds_storage_lever(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
-    client.patch(LEVERS_URL, json={"storage": "off"})
+    client.put(LEVERS_URL, json=_levers(storage="off"))
     client.post(ADVANCE_URL)
 
     offered = {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     assert "lithium_ion_batteries" not in offered
 
-    client.patch(LEVERS_URL, json={"trading_format": "full_season", "storage": "all"})
+    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
     assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
         _advance(client)

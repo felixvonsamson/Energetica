@@ -22,7 +22,6 @@ from energetica.workshop.session import (
     Checkpoint,
     FacilityNotOfferedError,
     Finished,
-    InvalidLeversError,
     Investment,
     InvestmentClosedError,
     NoPhaseRunningError,
@@ -1226,7 +1225,7 @@ def test_a_session_saved_before_trading_results_existed_still_opens(path: Path) 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert reopened.network.members[1].trading_results == []
-    assert reopened.levers.clearings_per_day == 24
+    assert reopened.levers.round_format.clearings_per_day == 24
 
 
 def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1320,6 +1319,11 @@ HYDROGEN = FacilityId.HYDROGEN_STORAGE
 FULL_SEASON = {"trading_format": "full_season", "storage": "all"}
 
 
+def _set_format(session: WorkshopSession, **round_format: object) -> None:
+    """Set the levers' Round format to ``round_format``, keeping the other levers."""
+    session.set_levers(session.levers.model_copy(update={"round_format": RoundFormat.model_validate(round_format)}))
+
+
 def test_a_session_starts_with_representative_days_hourly_clearings_and_batteries_only(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
@@ -1328,35 +1332,14 @@ def test_a_session_starts_with_representative_days_hourly_clearings_and_batterie
 
 def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    levers = RoundLevers(
+        investment_minutes=10, round_format=RoundFormat(trading_format="full_season", clearings_per_day=96)
+    )
 
-    levers = session.set_levers(clearings_per_day=96, **FULL_SEASON)
+    session.set_levers(levers)
 
-    assert (levers.trading_format, levers.clearings_per_day, levers.storage) == ("full_season", 96, "all")
+    assert session.levers == levers
     assert WorkshopSession.open(WORKSHOP_CONFIG, path).levers == levers
-
-
-@pytest.mark.parametrize(
-    "changes",
-    [{"storage": "all"}, {"clearings_per_day": 48}, {"trading_format": "monthly"}, {"no_such_lever": 1}],
-)
-def test_levers_that_are_not_allowed_are_rejected_and_change_nothing(path: Path, changes: dict) -> None:
-    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    with pytest.raises(InvalidLeversError):
-        session.set_levers(**changes)
-
-    assert session.levers == RoundLevers()
-    assert WorkshopSession.open(WORKSHOP_CONFIG, path).levers == RoundLevers()
-
-
-def test_switching_back_to_representative_days_needs_storage_limited_too(path: Path) -> None:
-    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    session.set_levers(**FULL_SEASON)
-
-    with pytest.raises(InvalidLeversError):
-        session.set_levers(trading_format="representative_day")
-
-    assert session.set_levers(trading_format="representative_day", storage="batteries").storage == "batteries"
 
 
 def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1364,7 +1347,7 @@ def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.M
     monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        session.set_levers(clearings_per_day=288)
+        _set_format(session, clearings_per_day=288)
 
     assert session.levers == RoundLevers()
 
@@ -1372,7 +1355,7 @@ def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.M
 def test_before_round_one_the_format_follows_the_levers(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
-    session.set_levers(**FULL_SEASON)
+    _set_format(session, **FULL_SEASON)
 
     assert session.current_format().trading_format == "full_season"
 
@@ -1383,7 +1366,7 @@ def test_a_round_keeps_the_format_it_started_with_and_a_change_takes_effect_at_t
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
     _advance(session)
 
-    session.set_levers(clearings_per_day=288, **FULL_SEASON)
+    _set_format(session, clearings_per_day=288, **FULL_SEASON)
 
     assert session.current_format() == RoundFormat()
     while session.checkpoint != Investment(round=2):
@@ -1393,26 +1376,14 @@ def test_a_round_keeps_the_format_it_started_with_and_a_change_takes_effect_at_t
 
 def test_a_rounds_format_survives_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    session.set_levers(**FULL_SEASON)
+    _set_format(session, **FULL_SEASON)
     _advance(session)
-    session.set_levers(trading_format="representative_day", storage="off")
+    _set_format(session, storage="off")
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert reopened.current_format() == RoundFormat(trading_format="full_season", storage="all")
-    assert reopened.levers.storage == "off"
-
-
-def test_a_session_saved_before_round_formats_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "investment", "round": 2}, "round_count": 3, '
-        '"levers": {"clearings_per_day": 96}, "players": []}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    assert reopened.current_format() == RoundFormat(clearings_per_day=96)
+    assert reopened.levers.round_format.storage == "off"
 
 
 def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_type(path: Path, clock: _Clock) -> None:
@@ -1420,7 +1391,7 @@ def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_t
     with pytest.raises(FacilityNotOfferedError):
         session.select(1, HYDROGEN)
 
-    session.set_levers(**FULL_SEASON)
+    _set_format(session, **FULL_SEASON)
     while session.checkpoint != Investment(round=2):
         _advance(session)
     session.select(1, HYDROGEN)
@@ -1431,7 +1402,7 @@ def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_t
 def test_without_storage_no_battery_can_be_bought(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice"))
-    session.set_levers(storage="off")
+    _set_format(session, storage="off")
     _advance(session)
 
     with pytest.raises(FacilityNotOfferedError):
@@ -1441,10 +1412,10 @@ def test_without_storage_no_battery_can_be_bought(path: Path, clock: _Clock) -> 
 def test_storage_built_in_a_full_season_keeps_running_after_switching_back(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=HYDROGEN, built_round=1))
-    session.set_levers(**FULL_SEASON)
+    _set_format(session, **FULL_SEASON)
     while session.checkpoint != Investment(round=2):
         _advance(session)
-    session.set_levers(trading_format="representative_day", storage="batteries")
+    _set_format(session)
     while session.checkpoint != TradingPeriod(round=3, season="spring"):
         _advance(session)
 
@@ -1458,7 +1429,7 @@ def test_storage_built_in_a_full_season_keeps_running_after_switching_back(path:
 def test_a_full_season_trading_period_simulates_every_day_of_its_season(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=GAS, built_round=1))
-    session.set_levers(trading_format="full_season")
+    _set_format(session, trading_format="full_season")
     _advance(session)
     _advance(session)
     clock.tick(minutes=5)

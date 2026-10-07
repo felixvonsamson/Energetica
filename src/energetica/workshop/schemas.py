@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
-from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
+from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.session import Checkpoint
 
 
@@ -78,25 +78,6 @@ class WorkshopSessionOut(BaseModel):
     settlement: WorkshopSettlementOut | None = Field(
         description="How far the simulation of the Trading period has got while it runs, or null when none is "
         "running. The session cannot advance while one is"
-    )
-
-
-class WorkshopLeversIn(BaseModel):
-    """The levers the facilitator changes. A lever left out keeps its value."""
-
-    model_config = {"extra": "forbid"}
-
-    investment_minutes: int | None = Field(default=None, ge=1, description="How long each Investment phase runs")
-    price_setting_minutes: int | None = Field(
-        default=None, ge=1, description="How long each Trading period's price-setting window runs"
-    )
-    trading_format: TradingFormat | None = Field(default=None, description="The next Round's trading-round format")
-    clearings_per_day: ClearingsPerDay | None = Field(
-        default=None, description="How many times a day the market clears from the next Round"
-    )
-    storage: StorageAvailability | None = Field(
-        default=None,
-        description="Which storage players can buy from the next Round. Every type needs the full-season format",
     )
 
 

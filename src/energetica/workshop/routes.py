@@ -25,7 +25,6 @@ from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
-    WorkshopLeversIn,
     WorkshopMemberOut,
     WorkshopOwnedFacilityOut,
     WorkshopPhaseExtendIn,
@@ -40,7 +39,6 @@ from energetica.workshop.schemas import (
 )
 from energetica.workshop.session import (
     FacilityNotOfferedError,
-    InvalidLeversError,
     InvestmentClosedError,
     NoPhaseRunningError,
     NotEnoughMoneyError,
@@ -176,19 +174,16 @@ def get_levers(_: Annotated[Account, Depends(get_facilitator)], session: Session
 
 
 # Waits on the session's lock and writes the session file, so it runs on a worker thread.
-@router.patch("/levers")
-async def change_levers(
-    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, changes: WorkshopLeversIn
+@router.put("/levers")
+async def set_levers(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, levers: RoundLevers
 ) -> RoundLevers:
-    """Change the levers given, and tell every open page. The timing levers apply to the next phase that
-    opens, and the format levers to the next Round. Every storage type needs the full-season format.
+    """Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
+    and the Round format to the next Round. Every storage type needs the full-season format.
     """
-    try:
-        levers = await run_in_threadpool(lambda: session.set_levers(**changes.model_dump(exclude_none=True)))
-    except InvalidLeversError as exc:
-        raise GameError(GameExceptionType.WORKSHOP_INVALID_LEVERS) from exc
+    await run_in_threadpool(session.set_levers, levers)
     await invalidate_session(request.app)
-    return levers
+    return session.levers
 
 
 @router.get("/facilities")

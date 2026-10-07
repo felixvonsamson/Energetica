@@ -63,8 +63,6 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
     WORKSHOP_SETTLEMENT_RUNNING:
         "The Trading period is still being simulated. Advance once it has finished.",
-    WORKSHOP_INVALID_LEVERS:
-        "These settings can't be combined. Every storage type needs the full-season format.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

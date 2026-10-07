@@ -42,7 +42,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field
 
 from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
@@ -51,7 +51,7 @@ from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
-from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
+from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
@@ -171,10 +171,6 @@ class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
 
-class InvalidLeversError(Exception):
-    """Raised when changing the levers to values that are not allowed together, or not allowed at all."""
-
-
 def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
     """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds."""
     match checkpoint:
@@ -209,21 +205,8 @@ class RoundLevers(BaseModel):
     # editable (#1018).
     investment_minutes: int = Field(default=8, ge=1)
     price_setting_minutes: int = Field(default=5, ge=1)
-    # The next Round's format (#1004): see :class:`~energetica.workshop.round_format.RoundFormat`.
-    trading_format: TradingFormat = "representative_day"
-    clearings_per_day: ClearingsPerDay = 24
-    storage: StorageAvailability = "batteries"
-
-    @model_validator(mode="after")
-    def _a_valid_round_format(self) -> RoundLevers:
-        self.round_format()
-        return self
-
-    def round_format(self) -> RoundFormat:
-        """The format the next Round starts with."""
-        return RoundFormat(
-            trading_format=self.trading_format, clearings_per_day=self.clearings_per_day, storage=self.storage
-        )
+    # The format the next Round starts with (#1004).
+    round_format: RoundFormat = Field(default_factory=RoundFormat)
 
 
 def phase_duration(checkpoint: Checkpoint, levers: RoundLevers) -> timedelta | None:
@@ -294,7 +277,7 @@ class _SavedSession(BaseModel):
     weather_seed: int = Field(default_factory=lambda: random.randrange(WEATHER_SEEDS))
     demand_amplitude: float | None = None
     settled_period: TradingPeriod | None = None
-    # Defaults to none for a file saved before Round formats existed. The levers stand in for it.
+    # None before Round 1 starts.
     round_format: RoundFormat | None = None
 
 
@@ -418,7 +401,7 @@ class WorkshopSession:
     def current_format(self) -> RoundFormat:
         """The current Round's format. Before Round 1 starts, the format it will start with."""
         if self.round_format is None or isinstance(self.checkpoint, NotStarted):
-            return self.levers.round_format()
+            return self.levers.round_format
         return self.round_format
 
     def offered_facilities(self) -> list[WorkshopFacility]:
@@ -480,7 +463,7 @@ class WorkshopSession:
             # purchase or retirement is saved in the same write, so it happens only if the advance does.
             round_format = self.round_format
             if isinstance(checkpoint, Investment):
-                self.round_format = self.levers.round_format()
+                self.round_format = self.levers.round_format
             try:
                 if isinstance(self.checkpoint, Investment):
                     saved = self._buy_selections(self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
@@ -645,17 +628,11 @@ class WorkshopSession:
                 player.prices = before
                 raise
 
-    def set_levers(self, **changes: object) -> RoundLevers:
-        """Change the levers named in ``changes``, and return them all.
-
-        The timing levers apply to the next phase that opens, and the format levers to the next Round.
-        Raises :class:`InvalidLeversError` if the levers would not be valid together.
+    def set_levers(self, levers: RoundLevers) -> None:
+        """Replace the levers with ``levers``. The timing levers apply to the next phase that opens, and the
+        Round format to the next Round.
         """
         with self._lock:
-            try:
-                levers = RoundLevers.model_validate({**self.levers.model_dump(), **changes})
-            except ValidationError as exc:
-                raise InvalidLeversError(str(exc)) from exc
             before, self.levers = self.levers, levers
             try:
                 self._save(self.checkpoint, self.phase_timer)
@@ -663,7 +640,6 @@ class WorkshopSession:
                 # Undo the change, so the session matches the file.
                 self.levers = before
                 raise
-            return levers
 
     def start_settlement(self) -> SettlementJob | None:
         """Start settling the Trading period if its price-setting window has run out, and return what the
