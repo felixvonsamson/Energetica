@@ -14,6 +14,7 @@ that all sound like "saving") unambiguous.
 - **Accounts & users** — players, server-wide accounts, auth, the lobby. _Documented below._
 - **Real-time sync** — socket.io state propagation to the frontend. _Not yet documented._
 - **Frontend** — TSX/Tailwind app and the generated API type bridge. _Not yet documented._
+- **Workshop Mode** — the moderated, Round-based Run type (#992). _Partly documented below._
 
 When a new context's terms get pinned, add a `## <Context>` section below (or split
 into a `CONTEXT-MAP.md` + per-context files if this grows unwieldy).
@@ -126,3 +127,26 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
   two for player-count purposes. A silently auto-provisioned account on a run it never
   explicitly joined still does **not** count as membership — the entry gate's auto-provision
   step itself writes nothing here.
+
+---
+
+## Workshop Mode
+
+### Language
+
+**Facility type pool**:
+All of a player's facilities of one type, simulated as a single facility whose power (and, for
+storage, capacity) is scaled by how many there are. Individual facilities have no output or charge
+of their own; only their lifetimes are tracked one by one.
+_Avoid_: unit SOC, per-facility charge.
+
+**Stored energy**:
+The energy one storage **facility type pool** holds, in Wh. Its state of charge (SOC) is that energy
+over the pool's combined capacity. It belongs to the type, never to the category: lithium-ion energy
+cannot become solid-state energy, even though the two are tiers of the same category.
+
+**Reinvest-or-lose** (#1001):
+When storage retires, its **stored energy** stays with the type while the pool's capacity shrinks.
+Whatever no longer fits is lost when that Round's Investment phase closes, unless the player builds
+more of the same type in it. Example: three batteries of capacity 100 hold 150 (SOC 50%). Replaced by
+two, they hold 150 (SOC 75%). Replaced by one, it holds 100 (SOC 100%) and 50 is lost.

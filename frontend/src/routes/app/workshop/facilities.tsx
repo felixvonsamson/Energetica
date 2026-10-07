@@ -3,8 +3,10 @@
  * now, and the player's own fleet, both as playing cards. Open at every point
  * in the session. During the Investment phase, the player picks facilities from
  * the catalog into a selection shown above it, which is bought when the phase
- * closes (#999). Players only: a facilitator moderates rather than plays, so is
- * sent back to the Workshop home.
+ * closes (#999). A storage type whose retired facilities leave stored energy
+ * that nothing holds gets a warning under its price tag, until the selection
+ * holds it (#1001). Players only: a facilitator moderates rather than plays, so
+ * is sent back to the Workshop home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
  * stats. Each grid cell is a two-row subgrid: the card is centred in the first
@@ -26,6 +28,7 @@ import { FacilityCard } from "@/components/workshop/facility-card";
 import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
 import { FleetStack } from "@/components/workshop/fleet-stack";
 import { InvestmentSelection } from "@/components/workshop/investment-selection";
+import { StoredEnergyWarning } from "@/components/workshop/stored-energy-warning";
 import {
     useAddToSelection,
     useInvestmentOpen,
@@ -150,40 +153,56 @@ function Catalog({
                 />
             )}
             <div className={GRID}>
-                {facilities.map((facility) => (
-                    <div
-                        key={facility.id}
-                        className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
-                    >
-                        <div className="relative flex items-center">
-                            {/*
-                             * The top of the price tag's string. It runs from
-                             * behind the card's middle to the bottom of the row,
-                             * so it meets the card's bottom edge however much
-                             * shorter than the row the card is.
-                             */}
-                            <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
-                            <FacilityCard facility={facility} />
+                {facilities.map((facility) => {
+                    const energyAtRisk =
+                        selection.stored_energy_at_risk[facility.id];
+                    return (
+                        <div
+                            key={facility.id}
+                            className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
+                        >
+                            <div className="relative flex items-center">
+                                {/*
+                                 * The top of the price tag's string. It runs from
+                                 * behind the card's middle to the bottom of the row,
+                                 * so it meets the card's bottom edge however much
+                                 * shorter than the row the card is.
+                                 */}
+                                <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
+                                <FacilityCard facility={facility} />
+                            </div>
+                            {/* The cell's second row, under the card. */}
+                            <div className="flex flex-col items-center">
+                                <FacilityPriceTag
+                                    facility={facility}
+                                    owned={
+                                        fleet.filter(
+                                            (owned) =>
+                                                owned.facility === facility.id,
+                                        ).length
+                                    }
+                                    selected={
+                                        selection.facilities.filter(
+                                            (id) => id === facility.id,
+                                        ).length
+                                    }
+                                    investmentOpen={investmentOpen}
+                                    affordable={
+                                        facility.base_price <= moneyLeft
+                                    }
+                                    onAdd={() => add.mutate(facility.id)}
+                                    adding={add.isPending}
+                                />
+                                {investmentOpen &&
+                                    energyAtRisk !== undefined && (
+                                        <StoredEnergyWarning
+                                            energyAtRisk={energyAtRisk}
+                                        />
+                                    )}
+                            </div>
                         </div>
-                        <FacilityPriceTag
-                            facility={facility}
-                            owned={
-                                fleet.filter(
-                                    (owned) => owned.facility === facility.id,
-                                ).length
-                            }
-                            selected={
-                                selection.facilities.filter(
-                                    (id) => id === facility.id,
-                                ).length
-                            }
-                            investmentOpen={investmentOpen}
-                            affordable={facility.base_price <= moneyLeft}
-                            onAdd={() => add.mutate(facility.id)}
-                            adding={add.isPending}
-                        />
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

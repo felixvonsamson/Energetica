@@ -80,6 +80,11 @@ class WorkshopSelectionOut(BaseModel):
     )
     total_cost: float = Field(description="What buying the whole selection costs")
     money: float = Field(description="The player's cash. The selection can never cost more")
+    stored_energy_at_risk: dict[FacilityId, float] = Field(
+        description="For each storage type, the stored energy in Wh that neither the player's facilities of that "
+        "type nor the selection can hold. It is lost when the Investment phase closes, unless more of that "
+        "type is selected. A type with nothing at risk is left out"
+    )
 
 
 class WorkshopOwnedFacilityOut(BaseModel):

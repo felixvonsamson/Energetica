@@ -62,6 +62,7 @@ class WorkshopNetwork:
         money: float,
         owned_facilities: list[OwnedFacility],
         selection: list[FacilityId],
+        stored_energy: dict[FacilityId, float],
     ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
@@ -75,6 +76,7 @@ class WorkshopNetwork:
                 money=money,
                 owned_facilities=owned_facilities,
                 selection=selection,
+                stored_energy=stored_energy,
             )
             self.members[account_id] = player
             return player

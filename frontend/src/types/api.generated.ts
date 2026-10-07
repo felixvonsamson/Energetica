@@ -4977,6 +4977,13 @@ export interface components {
              * @description The player's cash. The selection can never cost more
              */
             money: number;
+            /**
+             * Stored Energy At Risk
+             * @description For each storage type, the stored energy in Wh that neither the player's facilities of that type nor the selection can hold. It is lost when the Investment phase closes, unless more of that type is selected. A type with nothing at risk is left out
+             */
+            stored_energy_at_risk: {
+                [key: string]: number;
+            };
         };
         /**
          * WorkshopSessionOut

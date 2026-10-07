@@ -40,6 +40,7 @@ from energetica.workshop.session import (
     SessionFinishedError,
     WorkshopSession,
 )
+from energetica.workshop.storage import energy_at_risk
 from energetica.workshop.unlocks import available_facilities
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
@@ -159,16 +160,24 @@ def get_fleet(
     ]
 
 
-def _selection_out(player: WorkshopPlayer) -> WorkshopSelectionOut:
+def _selection_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopSelectionOut:
     return WorkshopSelectionOut(
-        facilities=list(player.selection), total_cost=player.selection_cost(), money=player.money
+        facilities=list(player.selection),
+        total_cost=player.selection_cost(),
+        money=player.money,
+        stored_energy_at_risk=energy_at_risk(
+            player.stored_energy,
+            player.owned_facilities,
+            player.selection,
+            current_round=session.current_round(),
+        ),
     )
 
 
 @router.get("/selection")
-def get_selection(player: Player) -> WorkshopSelectionOut:
+def get_selection(player: Player, session: Session) -> WorkshopSelectionOut:
     """The facilities the calling player has picked to buy when the Investment phase closes."""
-    return _selection_out(player)
+    return _selection_out(player, session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
@@ -185,7 +194,7 @@ async def add_to_selection(player: Player, session: Session, pick: WorkshopSelec
         raise GameError(GameExceptionType.WORKSHOP_FACILITY_NOT_OFFERED) from exc
     except NotEnoughMoneyError as exc:
         raise GameError(GameExceptionType.WORKSHOP_NOT_ENOUGH_MONEY) from exc
-    return _selection_out(player)
+    return _selection_out(player, session)
 
 
 @router.delete("/selection/{facility}")
@@ -199,4 +208,4 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
         raise GameError(GameExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
     except NotSelectedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_NOT_SELECTED) from exc
-    return _selection_out(player)
+    return _selection_out(player, session)
