@@ -848,8 +848,7 @@ export interface paths {
         };
         /**
          * Get Roster
-         * @description This instance's roster, split into joined (settled — has a ``Player``) vs invited (joined,
-         *     no ``Player`` yet).
+         * @description This instance's roster: every account allowed to enter it, whether or not it has yet.
          */
         get: operations["get_roster_api_v1_facilitator_roster_get"];
         put?: never;
@@ -860,10 +859,7 @@ export interface paths {
          *     No freeform username strings: an account must already exist server-wide (a facilitator can
          *     only invite someone with an account, not conjure a name into the roster), which reuses the
          *     same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
-         *     already-joined account is a no-op. Re-adding a previously-settled, then-banned account
-         *     (:func:`accounts.remove_membership`) reconciles ``settled_at`` from its still-intact
-         *     ``Player`` rather than coming back "invited" — see
-         *     :func:`energetica.utils.misc.record_join_reconciling_settlement`.
+         *     already-joined account is a no-op.
          */
         post: operations["add_to_roster_api_v1_facilitator_roster_post"];
         delete?: never;
@@ -2862,19 +2858,14 @@ export interface components {
         };
         /**
          * FacilitatorRosterOut
-         * @description The private instance's roster (#1022), split by whether the account has settled yet.
+         * @description The private instance's roster (#1022): the accounts allowed to enter it.
          */
         FacilitatorRosterOut: {
             /**
-             * Joined
-             * @description Roster usernames that have settled (have a Player) on this instance.
+             * Members
+             * @description Usernames of the accounts allowed to enter this instance.
              */
-            joined: string[];
-            /**
-             * Invited
-             * @description Roster usernames that have not settled here yet.
-             */
-            invited: string[];
+            members: string[];
         };
         /** FacilitiesListOut */
         FacilitiesListOut: {
@@ -3407,9 +3398,6 @@ export interface components {
         /**
          * MyRun
          * @description One run the authenticated account has joined, joined with its on-disk fragment.
-         *
-         *     ``settled_at`` is ``null`` for a run joined (#1030) but not yet settled in — the account has
-         *     picked no tile there yet.
          */
         MyRun: {
             /**
@@ -3444,11 +3432,6 @@ export interface components {
              * @description When this account joined the run
              */
             joined_at: string;
-            /**
-             * Settled At
-             * @description When this account settled in the run, or null if not yet
-             */
-            settled_at?: string | null;
         };
         /**
          * MyRunsResponse

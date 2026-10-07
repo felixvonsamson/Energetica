@@ -176,6 +176,10 @@ def market_optimum(offers: list[MarketEntry], demands: list[MarketEntry]) -> tup
             price_o = next_price
         else:
             price_d = next_price
-        if price_d < price_o:
+        # Once the last offer is used up, supply cannot extend, so the market clears here whatever the
+        # demand still bids. Comparing prices alone would miss this when that bid is itself unbounded
+        # (Workshop's must-serve tier bids math.inf), since math.inf < math.inf is false.
+        supply_exhausted = is_offer and next_price == math.inf
+        if price_d < price_o or supply_exhausted:
             return (price_d if is_offer else price_o), cumul
     raise ValueError("No market optimum found.")
