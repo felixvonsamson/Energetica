@@ -15,7 +15,7 @@ Players change their prices only while a price-setting window is open (#1002). O
 Trading period is settled (#1003): its prices are recorded, and the engine in
 :mod:`~energetica.workshop.trading` clears the days the Round's format simulates and pays each player.
 
-If the grid goes down in a Trading period, a blackout, the Round ends there (#1005). The session waits
+If the grid goes down in a Trading period (a blackout), the Round ends there (#1005). The session waits
 on that period like any other, and advancing from it skips the Round's remaining Trading periods and goes
 straight to its Recap. Each blackout is recorded with its Trading period.
 
@@ -286,7 +286,7 @@ class _SavedSession(BaseModel):
     settled_period: TradingPeriod | None = None
     # None before Round 1 starts.
     round_format: RoundFormat | None = None
-    # Defaults to none for a file saved before blackouts were recorded.
+    # Empty for a file saved before blackouts were recorded.
     blackouts: list[TradingPeriod] = []
 
 

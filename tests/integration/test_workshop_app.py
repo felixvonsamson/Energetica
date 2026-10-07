@@ -878,7 +878,7 @@ def test_advancing_while_the_investment_phase_is_open_closes_it_and_buys_the_sel
 
 
 #: Two combined cycles: enough to meet one player's must-serve demand, so the grid stays up (#1005).
-PLANTS = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+GRID_KEEPING_FLEET = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
 
 
 def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
@@ -895,7 +895,7 @@ def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
     _advance(client)
 
     with client:
@@ -921,7 +921,7 @@ def test_advancing_before_the_window_runs_out_closes_it_and_the_period_settles_i
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
     _advance(client)
 
     with client:
@@ -1002,7 +1002,7 @@ def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
     client.post(ADVANCE_URL)
     invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
 

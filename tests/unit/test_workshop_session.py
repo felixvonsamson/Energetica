@@ -1514,10 +1514,8 @@ def test_the_round_after_a_blackout_runs_all_its_trading_periods(path: Path, clo
     session = _blacked_out(path, clock)
     _advance(session)
     _advance(session)
+    # Alice builds enough to keep the grid up for the rest of the session.
     session.network.members[1].owned_facilities.extend(FLEET)
-    session.network.members[1].owned_facilities.append(
-        OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1)
-    )
 
     visited = [_advance(session) for _ in range(5)]
 
