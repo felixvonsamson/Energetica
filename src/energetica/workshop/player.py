@@ -16,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 
 if TYPE_CHECKING:
@@ -44,6 +45,14 @@ class WorkshopPlayer:
     money: float = WORKSHOP_STARTING_BUDGET
 
     owned_facilities: list[OwnedFacility] = field(default_factory=list)
+
+    # The facilities picked in the open Investment phase, bought together when it closes (#999). One
+    # entry per copy, in the order they were picked.
+    selection: list[FacilityId] = field(default_factory=list)
+
+    def selection_cost(self) -> float:
+        """What the selection costs to buy, in full."""
+        return sum(CATALOG[facility].base_price for facility in self.selection)
 
     def __repr__(self) -> str:
         """A short repr. The default one would recurse through ``network``, which holds this player."""

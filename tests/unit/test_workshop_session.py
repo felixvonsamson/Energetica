@@ -17,9 +17,13 @@ from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
+    FacilityNotOfferedError,
     Finished,
     Investment,
+    InvestmentClosedError,
     NoPhaseRunningError,
+    NotEnoughMoneyError,
+    NotSelectedError,
     NotStarted,
     Recap,
     SessionFinishedError,
@@ -390,3 +394,251 @@ def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, mo
         session.extend_phase(timedelta(minutes=1))
 
     assert session.phase_timer == before
+
+
+# --- the investment selection (#999) --------------------------------------------------------
+
+
+def _investing(path: Path, clock: _Clock, *, money: float = 1_000_000.0) -> WorkshopSession:
+    """A session in Round 1's Investment phase, with Alice (account 1) holding ``money``."""
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice")).money = money
+    session.advance()
+    return session
+
+
+def test_a_player_selects_facilities_during_the_investment_window_without_paying_yet(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.SMALL_WATER_DAM)
+
+    alice = session.network.members[1]
+    assert alice.selection == [FacilityId.GAS_BURNER, FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM]
+    assert alice.money == 1_000_000.0
+    assert alice.owned_facilities == []
+
+
+def test_selecting_after_the_investment_timer_runs_out_is_rejected(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    clock.tick(minutes=8)
+
+    with pytest.raises(InvestmentClosedError):
+        session.select(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == []
+
+
+def test_selecting_before_the_session_starts_is_rejected(path: Path, clock: _Clock) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice"))
+
+    with pytest.raises(InvestmentClosedError):
+        session.select(1, FacilityId.GAS_BURNER)
+
+
+def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: _Clock) -> None:
+    # A gas burner costs 90,000 and a small water dam 65,000.
+    session = _investing(path, clock, money=180_000.0)
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.SMALL_WATER_DAM)
+
+    with pytest.raises(NotEnoughMoneyError):
+        session.select(1, FacilityId.SMALL_WATER_DAM)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM]
+
+
+def test_a_selection_can_spend_every_last_coin(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock, money=180_000.0)
+
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.GAS_BURNER]
+
+
+def test_a_facility_the_session_does_not_offer_cannot_be_selected(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+
+    with pytest.raises(FacilityNotOfferedError):
+        session.select(1, FacilityId.CSP_SOLAR)
+
+
+def test_a_player_removes_one_copy_from_their_selection(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    for facility in (FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM, FacilityId.GAS_BURNER):
+        session.select(1, facility)
+
+    session.deselect(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM]
+
+
+def test_removing_a_facility_that_is_not_selected_is_rejected(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+
+    with pytest.raises(NotSelectedError):
+        session.deselect(1, FacilityId.GAS_BURNER)
+
+
+def test_removing_after_the_investment_timer_runs_out_is_rejected(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+
+    with pytest.raises(InvestmentClosedError):
+        session.deselect(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER]
+
+
+def test_every_players_selection_is_bought_once_the_investment_timer_runs_out(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.join(_account(2, "bob")).money = 100_000.0
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
+    session.select(2, FacilityId.SMALL_WATER_DAM)
+    clock.tick(minutes=8)
+
+    assert session.buy_selections() is True
+
+    alice, bob = session.network.members[1], session.network.members[2]
+    assert alice.owned_facilities == [
+        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1),
+        OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
+    ]
+    assert alice.money == 1_000_000.0 - 90_000 - 840_000
+    assert bob.owned_facilities == [OwnedFacility(facility=FacilityId.SMALL_WATER_DAM, built_round=1)]
+    assert bob.money == 100_000.0 - 65_000
+    assert alice.selection == bob.selection == []
+
+
+def test_nothing_is_bought_while_the_investment_timer_runs(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=7)
+
+    assert session.buy_selections() is False
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER]
+    assert session.network.members[1].owned_facilities == []
+
+
+def test_buying_twice_charges_once(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    session.buy_selections()
+
+    assert session.buy_selections() is False
+
+    assert session.network.members[1].money == 1_000_000.0 - 90_000
+    assert len(session.network.members[1].owned_facilities) == 1
+
+
+@pytest.mark.parametrize("minutes_spent", [8, 3], ids=["after the timer ran out", "while the timer still runs"])
+def test_advancing_out_of_the_investment_phase_buys_any_selection_left(
+    path: Path, clock: _Clock, minutes_spent: int
+) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=minutes_spent)
+
+    session.advance()
+
+    alice = session.network.members[1]
+    assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]
+    assert alice.money == 1_000_000.0 - 90_000
+    assert alice.selection == []
+
+
+def test_a_selection_survives_a_restart(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.SMALL_WATER_DAM)
+    session.deselect(1, FacilityId.SMALL_WATER_DAM)
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    assert reopened.network.members[1].selection == [FacilityId.GAS_BURNER]
+
+
+def test_a_purchase_survives_a_restart(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    session.buy_selections()
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    alice = reopened.network.members[1]
+    assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]
+    assert alice.money == 1_000_000.0 - 90_000
+    assert alice.selection == []
+
+
+def test_a_session_saved_before_selections_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
+        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.network.members[1].selection == []
+
+
+def test_a_failed_save_undoes_the_selection_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.select(1, FacilityId.SMALL_WATER_DAM)
+    with pytest.raises(OSError):
+        session.deselect(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER]
+
+
+def test_a_failed_save_undoes_the_purchase(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.buy_selections()
+
+    alice = session.network.members[1]
+    assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
+
+
+def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    real_write = session_module._write_atomically
+
+    def fail_to_leave_the_investment_phase(target: Path, text: str) -> None:
+        # Only the write that moves the session on fails. A purchase saved on its own beforehand
+        # would get through.
+        if '"trading_period"' in text:
+            raise OSError("disk full")
+        real_write(target, text)
+
+    monkeypatch.setattr(session_module, "_write_atomically", fail_to_leave_the_investment_phase)
+
+    with pytest.raises(OSError):
+        session.advance()
+    monkeypatch.undo()
+
+    for kept in (session, WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)):
+        alice = kept.network.members[1]
+        assert kept.checkpoint == Investment(round=1)
+        assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])

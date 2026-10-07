@@ -9,6 +9,7 @@
 
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
+import { Toaster } from "@/components/ui/sonner";
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import { WorkshopTopBar } from "@/components/workshop/workshop-top-bar";
 import { useWorkshopSession, useWorkshopSocket } from "@/hooks/use-workshop";
@@ -36,6 +37,11 @@ function WorkshopLayout() {
                     <Outlet />
                 </div>
             </main>
+            <Toaster
+                position="top-center"
+                richColors
+                offset="calc(var(--topbar-height) + 0.5rem)"
+            />
         </div>
     );
 }

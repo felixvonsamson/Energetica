@@ -1,10 +1,12 @@
 /**
- * Workshop Run API calls (#994, #995, #996, #998). Served only by a Workshop
- * Run's backend.
+ * Workshop Run API calls (#994, #995, #996, #998, #999). Served only by a
+ * Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
-import type { ApiResponse } from "@/types/api-helpers";
+import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
+
+type FacilityId = ApiSchema<"FacilityId">;
 
 export const workshopApi = {
     /**
@@ -58,4 +60,29 @@ export const workshopApi = {
         apiClient.get<ApiResponse<"/api/v1/workshop/fleet", "get">>(
             "/workshop/fleet",
         ),
+
+    /**
+     * The facilities the visitor has picked in the open Investment phase, what
+     * they cost together, and the visitor's money. Players only.
+     */
+    getSelection: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/selection", "get">>(
+            "/workshop/selection",
+        ),
+
+    /**
+     * Add one facility to the visitor's selection. Only while the Investment
+     * phase is open, and only if the visitor can pay for the whole selection.
+     */
+    addToSelection: (facility: FacilityId) =>
+        apiClient.post<ApiResponse<"/api/v1/workshop/selection", "post">>(
+            "/workshop/selection",
+            { facility },
+        ),
+
+    /** Take one copy of a facility out of the visitor's selection. */
+    removeFromSelection: (facility: FacilityId) =>
+        apiClient.delete<
+            ApiResponse<"/api/v1/workshop/selection/{facility}", "delete">
+        >(`/workshop/selection/${facility}`),
 };

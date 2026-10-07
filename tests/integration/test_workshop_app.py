@@ -12,14 +12,19 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+import time
+from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import Response
 
 from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
+from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility
@@ -43,6 +48,7 @@ ADVANCE_URL = "/api/v1/workshop/session/advance"
 EXTEND_URL = "/api/v1/workshop/session/phase/extend"
 FACILITIES_URL = "/api/v1/workshop/facilities"
 FLEET_URL = "/api/v1/workshop/fleet"
+SELECTION_URL = "/api/v1/workshop/selection"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -381,7 +387,7 @@ def test_the_fleet_shows_how_long_each_owned_facility_has_left(session_path: Pat
     client = TestClient(app)
     account_id = _player(client, "alice")
     client.post(ENTER_URL)
-    # Buying lands in #999, so the facilities are handed to the player directly.
+    # Handed to the player directly, so the test is about the fleet alone and not about buying.
     alice = app.state.workshop_session.network.members[account_id]
     alice.owned_facilities.extend(
         [
@@ -409,6 +415,186 @@ def test_the_catalog_and_fleet_need_entry(session_path: Path, url: str) -> None:
     authenticate(client, make_account("stranger"))
 
     assert client.get(url).status_code == 403
+
+
+# --- the investment selection (#999) --------------------------------------------------------
+
+
+class _Clock:
+    """A clock the test moves by hand."""
+
+    def __init__(self) -> None:
+        self.now = datetime(2026, 10, 4, 9, 0, tzinfo=timezone.utc)
+
+    def __call__(self) -> datetime:
+        return self.now
+
+    def tick(self, **elapsed: float) -> None:
+        self.now += timedelta(**elapsed)
+
+
+def _investing(session_path: Path, clock: _Clock, *usernames: str) -> tuple[FastAPI, TestClient, int, list[int]]:
+    """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 1,000,000.
+
+    Returns the app, a client left signed in as the facilitator, and the facilitator's and players'
+    account ids.
+    """
+    app = create_workshop_app(load_instance_config(), session_path=session_path, clock=clock)
+    client = TestClient(app)
+    account_ids = []
+    for username in usernames:
+        account_ids.append(_player(client, username))
+        client.post(ENTER_URL)
+        app.state.workshop_session.player(account_ids[-1]).money = 1_000_000.0
+    facilitator = _facilitator(client)
+    client.post(ADVANCE_URL)
+    return app, client, facilitator, account_ids
+
+
+@pytest.fixture
+def clock() -> _Clock:
+    return _Clock()
+
+
+def test_a_player_selects_facilities_to_buy_when_the_investment_phase_closes(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    response = client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "facilities": ["gas_burner", "small_water_dam"],
+        "total_cost": 155_000.0,
+        "money": 1_000_000.0,
+    }
+    assert client.get(SELECTION_URL).json() == response.json()
+    assert client.get(FLEET_URL).json() == []
+
+
+def test_a_player_removes_a_facility_from_their_selection(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    response = client.delete(f"{SELECTION_URL}/gas_burner")
+
+    assert response.status_code == 200
+    assert response.json()["facilities"] == []
+
+
+@pytest.mark.parametrize(
+    ("request_selection", "error"),
+    [
+        (lambda client: client.post(SELECTION_URL, json={"facility": "nuclear_reactor"}), "WORKSHOP_NOT_ENOUGH_MONEY"),
+        (lambda client: client.post(SELECTION_URL, json={"facility": "csp_solar"}), "WORKSHOP_FACILITY_NOT_OFFERED"),
+        (lambda client: client.delete(f"{SELECTION_URL}/coal_burner"), "WORKSHOP_NOT_SELECTED"),
+    ],
+    ids=["too expensive", "not offered", "not selected"],
+)
+def test_a_selection_change_the_rules_forbid_is_an_error(
+    session_path: Path, clock: _Clock, request_selection: Callable[[TestClient], Response], error: str
+) -> None:
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
+    app.state.workshop_session.player(alice).money = 900_000.0
+
+    response = request_selection(client)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == error
+
+
+def test_selecting_once_the_investment_timer_runs_out_is_an_error(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    clock.tick(minutes=8)
+
+    response = client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_INVESTMENT_CLOSED"
+
+
+def test_a_facilitator_has_no_selection(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock)
+
+    assert client.get(SELECTION_URL).status_code == 403
+    assert client.post(SELECTION_URL, json={"facility": "gas_burner"}).status_code == 403
+
+
+def test_players_buy_their_own_selections_when_the_facilitator_advances(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, [alice, bob] = _investing(session_path, clock, "alice", "bob")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    authenticate(client, bob)
+    client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+    client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+    clock.tick(minutes=8)
+
+    authenticate(client, facilitator)
+    client.post(ADVANCE_URL)
+
+    authenticate(client, alice)
+    assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
+    assert client.get(SELECTION_URL).json() == {"facilities": [], "total_cost": 0.0, "money": 910_000.0}
+    authenticate(client, bob)
+    assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam", "small_water_dam"]
+    assert client.get(SELECTION_URL).json()["money"] == 870_000.0
+
+
+def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PURCHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    # Entering the client runs the app's startup, which starts the purchase task.
+    with client:
+        clock.tick(minutes=8)
+        _wait_for_fleet(client, size=1)
+
+        assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
+        assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("investment", 1)
+
+
+def test_a_failed_notification_does_not_stop_later_purchases(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PURCHASE_CHECK_INTERVAL_SECONDS", 0.01)
+
+    async def failing_invalidate(app: FastAPI) -> None:
+        raise ConnectionError("the Socket.IO server is down")
+
+    monkeypatch.setattr(workshop_app, "invalidate_session", failing_invalidate)
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+
+    with client:
+        clock.tick(minutes=8)
+        _wait_for_fleet(client, size=1)
+        # On to Round 2's Investment phase: four Trading periods, the Recap, then Investment.
+        authenticate(client, facilitator)
+        for _ in range(6):
+            client.post(ADVANCE_URL)
+        authenticate(client, alice)
+        client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+        clock.tick(minutes=8)
+        _wait_for_fleet(client, size=2)
+
+        assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner", "small_water_dam"]
+
+
+def _wait_for_fleet(client: TestClient, *, size: int) -> None:
+    """Wait up to five seconds for the signed-in player's fleet to reach ``size`` facilities."""
+    deadline = time.monotonic() + 5
+    while len(client.get(FLEET_URL).json()) < size and time.monotonic() < deadline:
+        time.sleep(0.01)
 
 
 # --- pushing changes to open pages ---------------------------------------------------------

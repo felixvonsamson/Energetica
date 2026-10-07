@@ -105,6 +105,8 @@ export const queryKeys = {
         // facility's lifetime left.
         facilities: ["workshop", "session", "facilities"] as const,
         fleet: ["workshop", "session", "fleet"] as const,
+        // Also under the session's key: the purchase when the Investment phase closes empties it.
+        selection: ["workshop", "session", "selection"] as const,
     },
     players: {
         all: ["players"] as const,

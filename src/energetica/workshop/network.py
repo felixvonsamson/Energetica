@@ -15,6 +15,7 @@ from energetica.workshop.player import WorkshopPlayer
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
+    from energetica.workshop.facilities import FacilityId
     from energetica.workshop.fleet import OwnedFacility
 
 
@@ -54,7 +55,13 @@ class WorkshopNetwork:
             return player
 
     def restore(
-        self, *, account_id: int, username: str, money: float, owned_facilities: list[OwnedFacility]
+        self,
+        *,
+        account_id: int,
+        username: str,
+        money: float,
+        owned_facilities: list[OwnedFacility],
+        selection: list[FacilityId],
     ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
@@ -67,6 +74,7 @@ class WorkshopNetwork:
                 network=self,
                 money=money,
                 owned_facilities=owned_facilities,
+                selection=selection,
             )
             self.members[account_id] = player
             return player
