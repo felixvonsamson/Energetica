@@ -572,7 +572,7 @@ def test_players_buy_their_own_selections_when_the_facilitator_advances(session_
 def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(workshop_app, "PURCHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
     authenticate(client, alice)
     client.post(SELECTION_URL, json={"facility": "gas_burner"})
@@ -589,7 +589,7 @@ def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(
 def test_a_failed_notification_does_not_stop_later_purchases(
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(workshop_app, "PURCHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
 
     async def failing_invalidate(app: FastAPI) -> None:
         raise ConnectionError("the Socket.IO server is down")
@@ -612,6 +612,29 @@ def test_a_failed_notification_does_not_stop_later_purchases(
         _wait_for_fleet(client, size=2)
 
         assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner", "small_water_dam"]
+
+
+def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
+    session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(workshop_app, "PHASE_CHECK_INTERVAL_SECONDS", 0.01)
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    authenticate(client, facilitator)
+    client.post(ADVANCE_URL)
+    authenticate(client, alice)
+
+    with client:
+        clock.tick(minutes=5)
+        deadline = time.monotonic() + 5
+        while not client.get(LOCKED_PRICES_URL).json() and time.monotonic() < deadline:
+            time.sleep(0.01)
+
+        [result] = app.state.workshop_session.player(alice).trading_results
+        assert (result.round, result.season) == (1, "spring")
+        assert client.get(SELECTION_URL).json()["money"] == pytest.approx(910_000.0 + result.net)
+        assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
 def _wait_for_fleet(client: TestClient, *, size: int) -> None:

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from energetica.workshop.facilities import FacilityId
     from energetica.workshop.fleet import OwnedFacility
     from energetica.workshop.prices import LockedPrices, PriceSheet
+    from energetica.workshop.trading import TradingResult
 
 
 @dataclass(eq=False)
@@ -66,6 +67,7 @@ class WorkshopNetwork:
         stored_energy: dict[FacilityId, float],
         prices: PriceSheet,
         locked_prices: list[LockedPrices],
+        trading_results: list[TradingResult],
     ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
@@ -82,6 +84,7 @@ class WorkshopNetwork:
                 stored_energy=stored_energy,
                 prices=prices,
                 locked_prices=locked_prices,
+                trading_results=trading_results,
             )
             self.members[account_id] = player
             return player

@@ -36,6 +36,10 @@ from energetica.sim.national_demand import DemandCurve
 #: Workshop's seasonal cycle is a real calendar year, so a season is 365/4 days (#992 §2).
 DAYS_PER_YEAR = 365
 
+#: The nominal demand each player brings to the session's Round-1 amplitude, in W. A placeholder until the
+#: game-balance pass (#1145).
+PER_PLAYER_BASE_AMPLITUDE = 50e6
+
 
 @dataclass(frozen=True, slots=True)
 class DemandTier:

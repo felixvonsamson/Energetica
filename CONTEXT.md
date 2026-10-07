@@ -150,3 +150,15 @@ When storage retires, its **stored energy** stays with the type while the pool's
 Whatever no longer fits is lost when that Round's Investment phase closes, unless the player builds
 more of the same type in it. Example: three batteries of capacity 100 hold 150 (SOC 50%). Replaced by
 two, they hold 150 (SOC 75%). Replaced by one, it holds 100 (SOC 100%) and 50 is lost.
+
+**Representative day** (#1003):
+The one simulated day that stands for a whole Trading period: the middle day of its season, cleared
+at the Round's clearings per day. Its trading money and energy are scaled ×365/4 (an average season)
+to give the period's total. O&M is not scaled, since it is already one period's share, and **stored
+energy** is what the pool really holds at the end of the day.
+_Avoid_: sample day, typical day.
+
+**Settling a Trading period** (#1003):
+What happens once a Trading period's price-setting window closes, or when the moderator advances
+past it first: each player's prices are locked, the **representative day** is simulated, and each
+player is paid its result. A period is settled once.

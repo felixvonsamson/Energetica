@@ -37,6 +37,22 @@ from energetica.workshop.session import (
 )
 from energetica.workshop import session as session_module
 from energetica.workshop.setup import NotAWorkshopRunError
+from energetica.sim.national_demand import national_demand_curve
+from energetica.workshop.demand_block import (
+    PER_PLAYER_BASE_AMPLITUDE,
+    SettlementPeriod,
+    nominal_demand,
+    round_one_amplitude,
+)
+from energetica.workshop.fleet import om_owed
+from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
+from energetica.workshop.trading import (
+    REPRESENTATIVE_DAYS,
+    Bidder,
+    TradingOutcome,
+    representative_weather,
+    simulate_trading_period,
+)
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -715,9 +731,11 @@ def _batteries_retiring(path: Path, clock: _Clock) -> WorkshopSession:
     alice = session.join(_account(1, "alice"))
     alice.money = 10_000_000.0
     alice.owned_facilities.extend([OwnedFacility(facility=BATTERIES, built_round=1)] * 3)
-    alice.stored_energy[BATTERIES] = 1.5 * BATTERY_CAPACITY
-    while session.checkpoint != Investment(round=2):
+    while session.checkpoint != Recap(round=1):
         session.advance()
+    # Set after Round 1's Trading periods, which charge and discharge the batteries.
+    alice.stored_energy[BATTERIES] = 1.5 * BATTERY_CAPACITY
+    session.advance()
     return session
 
 
@@ -967,3 +985,215 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
 
     assert session.checkpoint == TradingPeriod(round=1, season="spring")
     assert session.network.members[1].locked_prices == []
+
+
+# --- the Trading-period engine (#1003) ------------------------------------------------------
+
+FLEET = [
+    OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
+    OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
+    OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1),
+    OwnedFacility(facility=BATTERIES, built_round=1),
+]
+
+
+def _pricing(path: Path, clock: _Clock) -> WorkshopSession:
+    """A session in Round 1's spring Trading period, its price-setting window open. Alice (account 1) owns
+    ``FLEET`` and starts with a quarter of her batteries charged.
+    """
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    alice = session.join(_account(1, "alice"))
+    alice.owned_facilities.extend(FLEET)
+    alice.stored_energy = {BATTERIES: BATTERY_CAPACITY / 4}
+    session.advance()
+    session.advance()
+    return session
+
+
+def _expected_outcome(session: WorkshopSession, alice: WorkshopPlayer) -> TradingOutcome:
+    """What the engine makes of Alice's spring, run directly on the session's inputs."""
+    assert session.demand_amplitude is not None
+    return simulate_trading_period(
+        [Bidder(1, FLEET, alice.prices, {BATTERIES: BATTERY_CAPACITY / 4})],
+        round_number=1,
+        season="spring",
+        clearings_per_day=session.levers.clearings_per_day,
+        amplitude=session.demand_amplitude,
+        curve=national_demand_curve(),
+        weather=representative_weather(session.weather_seed),
+    )
+
+
+def test_a_trading_period_settles_once_its_price_setting_window_runs_out(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    session.set_price(1, FacilityId.COMBINED_CYCLE, "sell", 90.0)
+    clock.tick(minutes=5)
+
+    assert session.close_price_setting()
+
+    alice = session.network.members[1]
+    expected = _expected_outcome(session, alice)
+    [result] = alice.trading_results
+    assert result == expected.results[1]
+    assert (result.round, result.season) == (1, "spring")
+    assert result.facilities[FacilityId.COMBINED_CYCLE].revenue > 0
+    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + result.net)
+    assert alice.stored_energy == expected.stored_energy[1]
+    assert [locked.prices.sell[FacilityId.COMBINED_CYCLE] for locked in alice.locked_prices] == [90.0]
+
+
+def test_the_demand_scales_with_the_players_in_the_first_trading_period(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    session.join(_account(2, "bob"))
+    clock.tick(minutes=5)
+    session.close_price_setting()
+
+    assert session.demand_amplitude == pytest.approx(round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=2))
+
+    session.join(_account(3, "carol"))
+    session.advance()
+    clock.tick(minutes=5)
+    session.close_price_setting()
+
+    assert session.demand_amplitude == pytest.approx(round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=2))
+
+
+def test_nothing_settles_while_the_price_setting_window_is_open(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+
+    assert not session.close_price_setting()
+
+    alice = session.network.members[1]
+    assert (alice.trading_results, alice.locked_prices) == ([], [])
+
+
+def test_a_trading_period_settles_only_once(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    session.close_price_setting()
+    money = session.network.members[1].money
+
+    assert not session.close_price_setting()
+    session.advance()
+
+    alice = session.network.members[1]
+    assert alice.money == money
+    assert len(alice.trading_results) == len(alice.locked_prices) == 1
+
+
+def test_advancing_before_the_window_runs_out_settles_the_period(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+
+    session.advance()
+
+    alice = session.network.members[1]
+    assert [(result.round, result.season) for result in alice.trading_results] == [(1, "spring")]
+    assert len(alice.locked_prices) == 1
+
+
+def test_every_trading_period_of_a_round_settles(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    for _ in SEASONS:
+        session.advance()
+
+    assert session.checkpoint == Recap(round=1)
+    seasons = [result.season for result in session.network.members[1].trading_results]
+    assert seasons == list(SEASONS)
+
+
+def test_a_settlement_survives_a_restart(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    session.close_price_setting()
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    before, after = session.network.members[1], reopened.network.members[1]
+    assert after.trading_results == before.trading_results
+    assert (after.money, after.stored_energy) == (before.money, before.stored_energy)
+    assert (reopened.weather_seed, reopened.demand_amplitude) == (session.weather_seed, session.demand_amplitude)
+    assert not reopened.close_price_setting()
+
+
+def test_a_session_keeps_its_weather_seed(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path).weather_seed == session.weather_seed
+
+
+def test_a_session_saved_before_trading_results_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
+        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.network.members[1].trading_results == []
+    assert reopened.levers.clearings_per_day == 24
+
+
+def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+    alice = session.network.members[1]
+    before = (alice.money, dict(alice.stored_energy))
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.close_price_setting()
+    monkeypatch.undo()
+
+    assert (alice.money, alice.stored_energy) == before
+    assert (alice.trading_results, alice.locked_prices) == ([], [])
+    assert session.demand_amplitude is None
+    assert session.close_price_setting()
+
+
+def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Path, clock: _Clock) -> None:
+    # Two combined cycles (108 MW) asking 100 meet every tier of demand willing to pay at least 100: 125% of
+    # nominal demand, which never exceeds 96 MW for one player. Above them the next tier pays only 24, so
+    # every hourly clearing sells 1.25 x nominal demand at 100.
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+    session.join(_account(1, "alice")).owned_facilities.extend(plants)
+    session.advance()
+    session.advance()
+    session.set_price(1, FacilityId.COMBINED_CYCLE, "sell", 100.0)
+    clock.tick(minutes=5)
+
+    session.close_price_setting()
+
+    amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=1)
+    day = REPRESENTATIVE_DAYS["spring"]
+    hourly = [
+        1.25 * nominal_demand(amplitude, national_demand_curve(), SettlementPeriod(day, hour, 24)) for hour in range(24)
+    ]
+    alice = session.network.members[1]
+    [result] = alice.trading_results
+    plant = result.facilities[FacilityId.COMBINED_CYCLE]
+    assert plant.sold == pytest.approx(sum(hourly) * 365 / 4)
+    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 365 / 4)
+    om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
+    assert plant.om == pytest.approx(om)
+    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om)
+
+
+def test_a_failed_simulation_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _pricing(path, clock)
+    clock.tick(minutes=5)
+
+    def unreadable_curve() -> None:
+        raise OSError("the demand curve cannot be read")
+
+    monkeypatch.setattr(session_module, "national_demand_curve", unreadable_curve)
+    with pytest.raises(OSError):
+        session.close_price_setting()
+    monkeypatch.undo()
+
+    alice = session.network.members[1]
+    assert (alice.trading_results, alice.locked_prices) == ([], [])
+    assert session.demand_amplitude is None
+    assert session.close_price_setting()
+    assert len(alice.locked_prices) == 1
