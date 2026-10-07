@@ -308,14 +308,14 @@ def test_the_session_survives_a_restart(session_path: Path) -> None:
     account_id = _player(client, "alice")
     client.post(ENTER_URL)
     _facilitator(client)
-    for _ in range(3):
+    for _ in range(2):
         _advance(client)
 
     restarted = _client(session_path)
     authenticate(restarted, account_id)
     body = restarted.get(SESSION_URL).json()
 
-    assert body["checkpoint"] == _checkpoint("trading_period", 1, "summer")
+    assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
     assert [player["username"] for player in body["players"]] == ["alice"]
 
 
@@ -877,6 +877,10 @@ def test_advancing_while_the_investment_phase_is_open_closes_it_and_buys_the_sel
         assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
 
 
+#: Two combined cycles: enough to meet one player's must-serve demand, so the grid stays up (#1005).
+PLANTS = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+
+
 def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -891,9 +895,7 @@ def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
+    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
     _advance(client)
 
     with client:
@@ -919,9 +921,7 @@ def test_advancing_before_the_window_runs_out_closes_it_and_the_period_settles_i
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
+    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
     _advance(client)
 
     with client:
@@ -1002,9 +1002,7 @@ def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
+    app.state.workshop_session.player(alice).owned_facilities.extend(PLANTS)
     client.post(ADVANCE_URL)
     invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
 

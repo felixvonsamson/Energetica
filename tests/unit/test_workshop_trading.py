@@ -21,7 +21,7 @@ from energetica.workshop.fleet import OwnedFacility, om_owed
 from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PriceSheet
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.trading import (
-    BLACKOUT_PRICE,
+    SCARCITY_PRICE,
     DAYS_PER_YEAR,
     REPRESENTATIVE_DAYS,
     SEASON_DAYS,
@@ -255,24 +255,83 @@ def test_players_compete_on_one_market() -> None:
     assert outcome.results[1].facilities[GAS].revenue == pytest.approx(_mwh_value(1.5, 100))
 
 
-def test_unserved_must_serve_demand_is_a_blackout_and_settles_at_the_blackout_price() -> None:
-    # 8 MW of demand must be served, and one 11 MW wind turbine at 30% produces 3.3 MW. All of it sells.
-    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
+def _calm_from_hour(hour: int, share: float):
+    """Weather under which every renewable produces all its power, until ``hour`` of each day, then ``share``."""
+    return lambda _facility, seconds: 1.0 if seconds % 86_400 < hour * 3_600 else share
+
+
+def test_unserved_must_serve_demand_is_a_blackout_and_nothing_is_produced_from_then_on() -> None:
+    # 8 MW of demand must be served. The 11 MW wind turbine sells all its output at 120 until noon, then
+    # the wind drops to 30%, and its 3.3 MW cannot meet must-serve demand. The grid goes down at noon.
+    outcome = simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=_calm_from_hour(12, 0.3),
+    )
 
     assert outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(_mwh_value(3.3, BLACKOUT_PRICE))
-    assert (wind.sold, wind.dumped) == (pytest.approx(3.3e6 * _HOURS * SEASON_DAYS), 0)
+    assert wind.revenue == pytest.approx(11 * 12 * 120 * SEASON_DAYS)
+    assert wind.generation == wind.sold == pytest.approx(11e6 * 12 * SEASON_DAYS)
+    assert wind.dumped == 0
+    assert wind.capacity_factor == pytest.approx(0.5)
 
 
-def test_supply_exactly_meeting_must_serve_demand_settles_at_the_blackout_price() -> None:
+def test_a_blackout_at_the_first_clearing_leaves_storage_as_it_was() -> None:
+    # The wind's 3.3 MW cannot meet the 8 MW must-serve demand, and the empty batteries hold nothing.
+    outcome = _simulate(
+        _bidder(WIND, BATTERIES, sell={WIND: 0.0}, buy={BATTERIES: 1_000.0}, stored_energy={BATTERIES: 1.0}),
+        share=0.3,
+    )
+
+    assert outcome.blackout
+    assert outcome.stored_energy[1] == {BATTERIES: 1.0}
+    performances = outcome.results[1].facilities.values()
+    assert all(
+        (performance.generation, performance.bought, performance.revenue, performance.purchase_cost) == (0, 0, 0, 0)
+        for performance in performances
+    )
+
+
+def test_a_blackout_ends_a_full_season_on_the_day_it_happens() -> None:
+    # Days 0 and 1 of spring are calm. On day 2 the wind drops to 30% at noon and the grid goes down.
+    third_day = season_days("spring")[2] * 86_400
+
+    def weather(_facility: FacilityId, seconds: float) -> float:
+        return 1.0 if seconds < third_day + 12 * 3_600 else 0.3
+
+    reported: list[int] = []
+    outcome = simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(trading_format="full_season"),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=weather,
+        on_day_done=reported.append,
+    )
+
+    assert outcome.blackout
+    wind = outcome.results[1].facilities[WIND]
+    assert wind.revenue == pytest.approx(11 * 60 * 120)
+    assert wind.capacity_factor == pytest.approx(60 / (24 * SEASON_DAYS))
+    # The days after the blackout are skipped, and still count as done.
+    assert reported == list(range(1, SEASON_DAYS + 1))
+
+
+def test_supply_exactly_meeting_must_serve_demand_is_no_blackout_and_settles_at_the_scarcity_price() -> None:
     # Wind at 8/11 of its 11 MW gives exactly the 8 MW of must-serve demand, so the market clears at the
     # unbounded must-serve bid without leaving any of it unserved.
     outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=8 / 11)
 
     assert not outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(_mwh_value(8, BLACKOUT_PRICE))
+    assert wind.revenue == pytest.approx(_mwh_value(8, SCARCITY_PRICE))
 
 
 def test_a_player_with_nothing_operating_gets_no_result() -> None:
