@@ -19,6 +19,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, om_owed
 from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PriceSheet
 from energetica.workshop.trading import (
+    BLACKOUT_PRICE,
     REPRESENTATIVE_DAYS,
     SEASON_DAYS,
     Bidder,
@@ -244,13 +245,14 @@ def test_players_compete_on_one_market() -> None:
     assert outcome.results[1].facilities[GAS].revenue == pytest.approx(_mwh_value(1.5, 100))
 
 
-def test_unserved_must_serve_demand_is_a_blackout_and_settles_nothing() -> None:
-    # 8 MW of demand must be served, and one 11 MW wind turbine at 30% produces 3.3 MW.
+def test_unserved_must_serve_demand_is_a_blackout_and_settles_at_the_blackout_price() -> None:
+    # 8 MW of demand must be served, and one 11 MW wind turbine at 30% produces 3.3 MW. All of it sells.
     outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
 
     assert outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert (wind.revenue, wind.sold, wind.dumped) == (0, 0, 0)
+    assert wind.revenue == pytest.approx(_mwh_value(3.3, BLACKOUT_PRICE))
+    assert (wind.sold, wind.dumped) == (pytest.approx(3.3e6 * _HOURS * SEASON_DAYS), 0)
 
 
 def test_a_player_with_nothing_operating_gets_no_result() -> None:

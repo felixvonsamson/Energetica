@@ -21,13 +21,15 @@ The weather is ``sim.renewables`` at one fixed position, since Workshop has no m
 per Run. Only the day's settlement is scaled. O&M is already one Trading period's share, and stored
 energy is what the storage really holds at the end of the day.
 
-A clearing where the must-serve demand tier goes unserved is a blackout. Its clearing price is the
-must-serve bid, ``math.inf``, so it cannot be settled: nothing trades or runs in it. What a blackout
-does to the session is #1005's job; here it is only reported.
+A clearing where the must-serve demand tier goes unserved is a blackout. Its clearing price would be the
+must-serve bid, ``math.inf``, so it settles at :data:`BLACKOUT_PRICE` instead. The exact price matters
+little, since a blackout resets every player's money anyway (#992 §8). What a blackout does to the
+session is #1005's job; here it is only reported.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import math
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -78,6 +80,9 @@ WEATHER_POSITION = (0.0, 0.0)
 RENEWABLE_CATEGORIES = frozenset(
     {FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.CSP, FacilityCategory.HYDRO}
 )
+
+#: The price per MWh a blackout clearing settles at, in place of the unbounded must-serve bid.
+BLACKOUT_PRICE = 1000.0
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
 
@@ -323,10 +328,7 @@ def simulate_trading_period(
         result = clear_market(market["capacities"], market["demands"] + demand_block)
         if _is_blackout(result):
             blackout = True
-            for pool in pools.values():
-                pool.record(None, seconds_per_tick)
-            continue
-
+            result = dataclasses.replace(result, price=BLACKOUT_PRICE)
         settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
         sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
         for key, pool in pools.items():
