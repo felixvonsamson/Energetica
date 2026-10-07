@@ -92,3 +92,11 @@ edited moved to `accounts.db`.
   right after the join write. The entry gate itself was never actually broken by the gap (its
   `is_settled` reads the `Player` directly, never `settled_at`); this only fixes the lobby
   display, which does read `settled_at`.
+
+## Later change (#1138, 2026-10-03)
+
+The roster is now a single allowlist. `GET /facilitator/roster` returns `{members}` rather than a
+"joined" and an "invited" list, and the lobby's run card no longer tells settled and unsettled runs
+apart. With no reader of `settled_at` left, `record_join_reconciling_settlement` was removed, and
+the roster's add and the join-link's confirm call `accounts.record_join` directly. The split did
+not fit a Workshop Run, which has no settle step, and this lets both apps serve the same routes.
