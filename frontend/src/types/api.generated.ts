@@ -5230,6 +5230,11 @@ export interface components {
             round_format: components["schemas"]["RoundFormat"];
             /** @description How far the simulation of the Trading period has got while it runs, or null when none is running. The session cannot advance while one is */
             settlement: components["schemas"]["WorkshopSettlementOut"] | null;
+            /**
+             * Blackouts
+             * @description Every Trading period the grid went down in, in order. Each one ended its Round, so the Round's later Trading periods were skipped
+             */
+            blackouts: components["schemas"]["TradingPeriod"][];
         };
         /**
          * WorkshopSettlementOut

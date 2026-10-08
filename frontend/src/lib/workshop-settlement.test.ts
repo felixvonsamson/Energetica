@@ -18,6 +18,7 @@ const SESSION: WorkshopSession = {
         storage: "all",
     },
     settlement: { days_done: 3, days_total: 91 },
+    blackouts: [],
 };
 
 describe("withSettlementProgress", () => {

@@ -6,6 +6,9 @@
  * Rounds → finished` and only the moderator moves it along (#994). Each node on
  * the timeline is `past` (already reached, so its page has something to show),
  * `current`, or `future`, and each has its own page.
+ *
+ * A blackout ends its Round (#1005): the Trading periods after it in that Round
+ * never run, so they are `skipped` and have no page.
  */
 
 import type { ApiSchema } from "@/types/api-helpers";
@@ -13,6 +16,8 @@ import type { ApiSchema } from "@/types/api-helpers";
 export type Checkpoint = ApiSchema<"WorkshopSessionOut">["checkpoint"];
 export type Season = ApiSchema<"TradingPeriod">["season"];
 export type NodeStatus = "past" | "current" | "future";
+export type SeasonStatus = NodeStatus | "skipped";
+export type TradingPeriod = ApiSchema<"TradingPeriod">;
 
 /** The four Trading periods of a Round, in the order they run. */
 export const SEASONS = [
@@ -40,7 +45,12 @@ export interface TimelineRound {
      * period.
      */
     status: NodeStatus;
-    seasons: { season: Season; status: NodeStatus }[];
+    seasons: {
+        season: Season;
+        status: SeasonStatus;
+        /** Whether the grid went down in this Trading period. */
+        blackout: boolean;
+    }[];
     /** The Recap that closes this Round. */
     recap: NodeStatus;
 }
@@ -84,21 +94,33 @@ function statusOf(current: number, first: number, last = first): NodeStatus {
     return "current";
 }
 
-/** Every Round of a session of `roundCount` Rounds, with each node's status. */
+/**
+ * Every Round of a session of `roundCount` Rounds, with each node's status.
+ * `blackouts` are the Trading periods the grid went down in.
+ */
 export function workshopTimeline(
     checkpoint: Checkpoint,
     roundCount: number,
+    blackouts: TradingPeriod[],
 ): TimelineRound[] {
     const current = stepOf(checkpoint);
     return Array.from({ length: roundCount }, (_, index) => {
         const round = index + 1;
         const start = roundStart(round);
+        const blackout = blackouts.find((period) => period.round === round);
+        const blackoutIndex = blackout
+            ? SEASONS.indexOf(blackout.season)
+            : SEASONS.length;
         return {
             round,
             status: statusOf(current, start, start + SEASONS.length),
             seasons: SEASONS.map((season, i) => ({
                 season,
-                status: statusOf(current, start + 1 + i),
+                status:
+                    i > blackoutIndex
+                        ? "skipped"
+                        : statusOf(current, start + 1 + i),
+                blackout: i === blackoutIndex,
             })),
             recap: statusOf(current, start + STEPS_PER_ROUND - 1),
         };

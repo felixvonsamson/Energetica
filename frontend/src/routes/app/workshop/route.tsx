@@ -55,6 +55,7 @@ function WorkshopLayout() {
                 <WorkshopTimeline
                     checkpoint={session.checkpoint}
                     roundCount={session.round_count}
+                    blackouts={session.blackouts}
                 />
             )}
             <SettlementProgress />

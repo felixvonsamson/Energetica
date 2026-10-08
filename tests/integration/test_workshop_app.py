@@ -254,6 +254,29 @@ def test_the_session_names_the_checkpoint_an_advance_moves_to(session_path: Path
     assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
+def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_path: Path) -> None:
+    # Alice owns nothing, so nothing meets her must-serve demand and the grid goes down in spring.
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+    _facilitator(client)
+    assert client.get(SESSION_URL).json()["blackouts"] == []
+
+    for _ in range(2):
+        _advance(client)
+    # Closes the price-setting window, then settles the period as the app does in the background.
+    client.post(ADVANCE_URL)
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    job = session.start_settlement()
+    assert job is not None
+    session.finish_settlement(job, session.run_settlement(job))
+
+    body = client.get(SESSION_URL).json()
+    assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
+    assert body["blackouts"] == [_checkpoint("trading_period", 1, "spring")]
+    assert body["next_checkpoint"] == _checkpoint("recap", 1)
+
+
 def test_reading_the_session_needs_entry(session_path: Path) -> None:
     client = _client(session_path)
     authenticate(client, make_account("stranger"))
