@@ -209,7 +209,7 @@
 
         /* Player colors (light mode): the current player, then the two ends of the other players' shades.
            The shade ends must be written as oklch(L C H), since the shades are mixed between them. */
-        --chart-self: var(--color-pine-500);
+        --chart-self: var(--color-pine-700);
         --chart-others-from: oklch(0.44 0.018 60);
         --chart-others-to: oklch(0.72 0.025 75);
 
