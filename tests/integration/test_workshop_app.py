@@ -1026,7 +1026,7 @@ def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
     app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
-    client.post(ADVANCE_URL)
+    _advance(client)
     invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
 
     with client:
