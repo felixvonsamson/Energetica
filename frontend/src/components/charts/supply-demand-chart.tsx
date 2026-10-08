@@ -44,13 +44,10 @@ import { useMarketData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
 import { getAssetLongName } from "@/lib/assets/asset-names";
-import {
-    getHashBasedChartColor,
-    resolveColor,
-    resolveCSSVar,
-} from "@/lib/charts/color-utils";
+import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
 import { formatDuration, formatMoney, formatPower } from "@/lib/format-utils";
 
@@ -171,6 +168,7 @@ function MeritOrderChartInner({
     const { currentTick } = useGameTick();
     const { data: gameEngine } = useGameEngine();
     const getColor = useAssetColorGetter();
+    const getPlayerColor = usePlayerColorGetter();
     const playerMap = usePlayerMap();
     const marketDetails = useElectricityMarket(marketId);
 
@@ -221,9 +219,9 @@ function MeritOrderChartInner({
             if (mode === "type") {
                 return resolveColor(getColor(facility));
             }
-            return resolveColor(getHashBasedChartColor(playerId.toString()));
+            return getPlayerColor(playerId);
         },
-        [getColor],
+        [getColor, getPlayerColor],
     );
 
     const {
