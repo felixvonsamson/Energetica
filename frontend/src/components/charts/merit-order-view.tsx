@@ -406,7 +406,9 @@ function MeritOrderViewInner({
             );
             return {
                 value: [block.x1, block.x2, block.y1, block.y2],
-                itemStyle: { color, opacity: 0.7 },
+                // Player colors are drawn as they are, so the current player shows
+                // in the theme's own color. Technology colors stay translucent.
+                itemStyle: { color, opacity: colorMode === "player" ? 1 : 0.7 },
             };
         });
 
