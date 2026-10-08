@@ -114,6 +114,29 @@ class MarketClearing:
     unserved: float  # market-level W of demand that was bid but did not clear (total demand - cleared demand)
 
 
+def merit_order(entries: list[MarketEntry], *, descending: bool = False) -> list[MarketEntry]:
+    """Sort ``entries`` by price, ascending for offers and ``descending`` for demands, and set each one's
+    ``cumul_capacities``. Entries at the same price keep the order they were placed in.
+    """
+    ordered = sorted(entries, key=lambda e: e.price, reverse=descending)
+    cumul = 0.0
+    for entry in ordered:
+        cumul += entry.capacity
+        entry.cumul_capacities = cumul
+    return ordered
+
+
+def order_columns(entries: list[MarketEntry]) -> dict[str, list]:
+    """``entries``, already in merit order, as one list per field: the shape the merit-order chart reads."""
+    return {
+        "player_id": [e.player_id for e in entries],
+        "capacity": [e.capacity for e in entries],
+        "price": [e.price for e in entries],
+        "facility": [e.facility for e in entries],
+        "cumul_capacities": [e.cumul_capacities for e in entries],
+    }
+
+
 def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> MarketClearing:
     """Clear a uniform-price market.
 
@@ -125,17 +148,8 @@ def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> Marke
     Mutates the passed entries' ``cumul_capacities`` in place — the caller's
     chart serialization relies on the merit-order position being recorded there.
     """
-    sorted_offers = sorted(offers, key=lambda e: e.price)
-    cumul = 0.0
-    for entry in sorted_offers:
-        cumul += entry.capacity
-        entry.cumul_capacities = cumul
-
-    sorted_demands = sorted(demands, key=lambda e: e.price, reverse=True)
-    cumul = 0.0
-    for entry in sorted_demands:
-        cumul += entry.capacity
-        entry.cumul_capacities = cumul
+    sorted_offers = merit_order(offers)
+    sorted_demands = merit_order(demands, descending=True)
 
     price, quantity = market_optimum(sorted_offers, sorted_demands)
 

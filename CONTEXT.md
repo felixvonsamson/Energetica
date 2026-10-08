@@ -180,6 +180,17 @@ result. The moderator can close the window early by advancing, as with the Inves
 session only leaves the period once it is settled, and cannot advance while the simulation runs. A
 period is settled once.
 
+**Settlement point** (#1007):
+One clearing of the market within a Trading period's simulated days: there are as many per day as the
+round format's clearings per day. The review charts step through a period one settlement point at a time.
+_Avoid_: tick, timestep.
+
+**Trading-period record** (#1007):
+Everything a settled Trading period did at each of its settlement points, kept at full resolution for its
+review: the price and cleared power, each player's generation, dumping, charging and stored energy per
+facility type, what each demand tier was served, and every bid placed, sold or not, from which the merit
+order at any point is rebuilt. It is saved to its own file beside the session's.
+
 **Operating profit** (#1006):
 All of a player's trading income, after any climate-event `revenue_tax`, minus their operating costs:
 O&M, fuel bought, the energy storage bought to charge, and renewable output dumped unsold. Fuel counts

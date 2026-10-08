@@ -39,6 +39,7 @@ from energetica.sim.fuel_and_pollution import emissions_produced, fuel_burned
 from energetica.sim.market import (
     clear_market,
     init_market,
+    order_columns,
     place_bid,
     place_headroom_ask,
     place_must_run_ask,
@@ -117,20 +118,8 @@ def update_electricity() -> None:
             pickle.dump(
                 {
                     **market,
-                    "capacities": {
-                        "player_id": [e.player_id for e in market["capacities"]],
-                        "capacity": [e.capacity for e in market["capacities"]],
-                        "price": [e.price for e in market["capacities"]],
-                        "facility": [e.facility for e in market["capacities"]],
-                        "cumul_capacities": [e.cumul_capacities for e in market["capacities"]],
-                    },
-                    "demands": {
-                        "player_id": [e.player_id for e in market["demands"]],
-                        "capacity": [e.capacity for e in market["demands"]],
-                        "price": [e.price for e in market["demands"]],
-                        "facility": [e.facility for e in market["demands"]],
-                        "cumul_capacities": [e.cumul_capacities for e in market["demands"]],
-                    },
+                    "capacities": order_columns(market["capacities"]),
+                    "demands": order_columns(market["demands"]),
                 },
                 file,
             )
