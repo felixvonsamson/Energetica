@@ -179,3 +179,11 @@ the days the **round format** calls for are simulated in the background, and eac
 result. The moderator can close the window early by advancing, as with the Investment phase, but the
 session only leaves the period once it is settled, and cannot advance while the simulation runs. A
 period is settled once.
+
+**Operating profit** (#1006):
+All of a player's trading income, after any climate-event `revenue_tax`, minus their operating costs:
+O&M, fuel bought, the energy storage bought to charge, and renewable output dumped unsold. Fuel counts
+when it is bought, not when it is burned, since its price changes over time. Facility investments, the
+carbon tax, the floor top-up and blackout resets are left out. Summed over the session, it is the first
+term of the final score.
+_Avoid_: revenue, gross proceeds, net.
