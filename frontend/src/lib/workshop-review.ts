@@ -198,3 +198,25 @@ export function dateOfDay(dayOfYear: number): string {
     // A non-leap year, the calendar the demand curve and seasons use.
     return DATE_FORMAT.format(new Date(Date.UTC(2001, 0, 1 + dayOfYear)));
 }
+
+/**
+ * The days that can be reviewed: all of them, or up to the day the grid went
+ * down. Days after a blackout never cleared.
+ */
+export function reviewableDays(
+    days: readonly number[],
+    blackoutAt: number | null,
+    clearingsPerDay: number,
+): number[] {
+    if (blackoutAt === null) return [...days];
+    return days.slice(0, Math.floor(blackoutAt / clearingsPerDay) + 1);
+}
+
+/** Whether `point` is one of the settlement points of the `day`-th day. */
+export function isPointOfDay(
+    point: number,
+    day: number,
+    clearingsPerDay: number,
+): boolean {
+    return Math.floor(point / clearingsPerDay) === day;
+}

@@ -646,6 +646,18 @@ export function TimeSeriesChart({
             };
         });
 
+        // With no series shown, an empty one still carries the marker, so the
+        // chart stays lined up with whatever picks the tick.
+        if (series.length === 0 && markLine) {
+            series.push({
+                name: "marker",
+                type: "line",
+                data: [],
+                silent: true,
+                markLine,
+            });
+        }
+
         return {
             animation: false,
             grid: { left: 70, right: 20, top: 15, bottom: 45 },

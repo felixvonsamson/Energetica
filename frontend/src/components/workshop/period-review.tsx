@@ -61,11 +61,13 @@ import {
     type PowerView,
     TIER_NAMES,
     dateOfDay,
+    isPointOfDay,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
     priceRows,
+    reviewableDays,
     timeOfDay,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -235,9 +237,14 @@ function Review({
         [cpd, period.days],
     );
 
+    // While another day loads, the charts still show the last one. A click on
+    // it would pick a point outside the chosen day, so it is ignored.
     const onTickClick = useCallback(
-        (tick: number) => setPoint(Math.min(tick, lastPoint)),
-        [lastPoint, setPoint],
+        (tick: number) => {
+            if (!isPointOfDay(tick, dayIndex, cpd)) return;
+            setPoint(Math.min(tick, lastPoint));
+        },
+        [dayIndex, cpd, lastPoint, setPoint],
     );
 
     // The day shown, which may still be the previous one while the next loads.
@@ -262,7 +269,8 @@ function Review({
             )}
             {period.days.length > 1 && (
                 <DayPicker
-                    days={period.days}
+                    // Days after a blackout never cleared, so the list ends at it.
+                    days={reviewableDays(period.days, period.blackout_at, cpd)}
                     value={dayIndex}
                     onChange={chooseDay}
                 />

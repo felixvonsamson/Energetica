@@ -5,11 +5,13 @@ import {
     DUMPING,
     EXPORTS,
     dateOfDay,
+    isPointOfDay,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
     priceRows,
+    reviewableDays,
     seriesEnergy,
     timeOfDay,
 } from "./workshop-review";
@@ -203,5 +205,26 @@ describe("dateOfDay", () => {
     it("counts days from 1 January", () => {
         expect(dateOfDay(0)).toBe("1 Jan");
         expect(dateOfDay(59)).toBe("1 Mar");
+    });
+});
+
+describe("reviewableDays", () => {
+    it("lists every day when the grid held", () => {
+        expect(reviewableDays([59, 60, 61], null, 24)).toEqual([59, 60, 61]);
+    });
+
+    it("ends at the day the grid went down", () => {
+        // Point 30 is 06:00 on the second day.
+        expect(reviewableDays([59, 60, 61], 30, 24)).toEqual([59, 60]);
+        expect(reviewableDays([59, 60, 61], 0, 24)).toEqual([59]);
+    });
+});
+
+describe("isPointOfDay", () => {
+    it("tells whether a point belongs to the day", () => {
+        expect(isPointOfDay(24, 1, 24)).toBe(true);
+        expect(isPointOfDay(47, 1, 24)).toBe(true);
+        expect(isPointOfDay(23, 1, 24)).toBe(false);
+        expect(isPointOfDay(48, 1, 24)).toBe(false);
     });
 });

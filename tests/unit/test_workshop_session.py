@@ -14,6 +14,7 @@ from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
 from energetica.workshop.round_format import RoundFormat
@@ -1283,6 +1284,29 @@ def test_a_settled_period_keeps_its_record_across_a_restart(path: Path, clock: _
     assert reloaded is not None
     assert reloaded.pools == record.pools
     assert reopened.period_record(TradingPeriod(round=1, season="summer")) is None
+
+
+def test_a_period_is_listed_only_once_its_record_is_written(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A page reading records does not wait for the session's lock, so it must never find a period listed
+    # before its record exists.
+    session = _pricing(path, clock)
+    spring = TradingPeriod(round=1, season="spring")
+    clock.tick(minutes=5)
+    listed_while_writing: list[bool] = []
+    real_save = TradingPeriodRecord.save
+
+    def save(record: TradingPeriodRecord, record_path: Path) -> None:
+        listed_while_writing.append(spring in session.recorded_periods)
+        real_save(record, record_path)
+
+    monkeypatch.setattr(TradingPeriodRecord, "save", save)
+
+    assert _settle(session)
+
+    assert listed_while_writing == [False]
+    assert spring in session.recorded_periods
 
 
 def test_a_record_read_once_is_kept_in_memory(path: Path, clock: _Clock) -> None:

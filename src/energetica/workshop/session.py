@@ -806,7 +806,6 @@ class WorkshopSession:
         previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
         recorded_periods = self.recorded_periods
         self.demand_amplitude = job.demand_amplitude
-        self.recorded_periods = [*recorded_periods, period]
         if outcome.blackout:
             self.blackouts = [*blackouts, period]
         for player in players:
@@ -825,8 +824,10 @@ class WorkshopSession:
                 player.trading_results.append(result)
         self.settled_period = period
         try:
-            # Written before the session lists it, so a listed period always has its record.
+            # Listed only once its record is written: a page reading records does not take the session's
+            # lock, so it may look in between.
             outcome.record.save(self.record_path(period))
+            self.recorded_periods = [*recorded_periods, period]
             self._save(self.checkpoint, self.phase_timer)
         except BaseException:
             # Undo the settlement, so the session matches the file and the next attempt retries it.
