@@ -71,10 +71,17 @@ describe("playerColorGetter", () => {
         expect(color(1)).toBe("oklch(0.3000 0.0200 250.00)");
     });
 
-    it("places a player it was not told about after the others", () => {
-        const color = playerColorGetter(palette, null, [1, 2]);
+    it("gives a player it was not told about the same shade in every getter", () => {
+        const one = playerColorGetter(palette, 1, [1, 2, 3]);
+        const other = playerColorGetter(palette, 1, [1, 2, 3]);
 
-        expect(color(9)).toBe(playerColorGetter(palette, null, [1, 2, 9])(9));
+        const oneFirst = [8, 9].map(one);
+        const otherFirst = [9, 8].map(other).reverse();
+
+        expect(otherFirst).toEqual(oneFirst);
+        expect(oneFirst[0]).not.toBe(oneFirst[1]);
+        expect(oneFirst).not.toContain(one(2));
+        expect(oneFirst).not.toContain(one(3));
     });
 
     it("falls back to the first shade end when it cannot read the shades", () => {

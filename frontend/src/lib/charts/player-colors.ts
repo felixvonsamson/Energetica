@@ -62,9 +62,11 @@ export interface PlayerPalette {
  * Make a function that gives each player's chart color.
  *
  * `playerIds` should list every player in the game, so that shades stay put
- * whichever players a chart shows. A player missing from it is placed as if
- * added to the end. `currentPlayerId` is `null` for a viewer with no player,
- * who sees every player as an other.
+ * whichever players a chart shows. A player missing from it, such as one who
+ * joined after the list was fetched, gets a position past the listed players
+ * worked out from its id alone, so every getter made from the same list gives
+ * it the same shade, whatever order they are called in. `currentPlayerId` is
+ * `null` for a viewer with no player, who sees every player as an other.
  */
 export function playerColorGetter(
     palette: PlayerPalette,
@@ -81,11 +83,7 @@ export function playerColorGetter(
     return (playerId: number) => {
         if (playerId === currentPlayerId) return palette.self;
         if (!from || !to) return palette.othersFrom;
-        let index = positions.get(playerId);
-        if (index === undefined) {
-            index = positions.size;
-            positions.set(playerId, index);
-        }
+        const index = positions.get(playerId) ?? others.length + playerId;
         return mix(from, to, shadePosition(index));
     };
 }
