@@ -29,9 +29,9 @@ them back into the merit order the market cleared. Lines are kept in the order t
 at the same price come out in the order the market saw them.
 
 **Blackouts.** At the point the grid went down, ``blackout_at``, the market cleared but settled nothing:
-its merit order shows why, its price is the unbounded must-serve bid, ``math.inf``, and its series are
-zero. Points after it never cleared: their price and quantity are NaN, they have no merit order, and
-their series are zero apart from ``stored``, which holds steady.
+its merit order shows why. Its price is ``math.inf`` when supply is exhausted, or zero when there are
+no supply offers. Its series are zero apart from ``stored``, which holds steady. Points after it never
+cleared: their price and quantity are NaN, they have no merit order, and storage still holds steady.
 
 A record is saved to its own compressed NumPy file, apart from the session file, since a full season's
 record can take megabytes.
