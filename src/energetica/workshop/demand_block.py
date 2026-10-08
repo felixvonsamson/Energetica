@@ -15,9 +15,9 @@ Each tier bids under a reserved negative ``player_id`` and carries its label in 
 ``facility`` field, so a clearing's demand side reads like any other and needs no new dump shape.
 
 Pure: no players, no state, no I/O. ``unserved`` and ``Fill.unmet`` on the resulting clearing are
-how a blackout will be detected (an unmet must-serve tier), and are never shown to players as a
-number. In that case the clearing price is ``math.inf``, the must-serve bid, so a blackout period
-must not be settled as a normal one.
+how a blackout is detected (an unmet must-serve tier), and are never shown to players as a
+number. In that case the clearing price is ``math.inf``, the must-serve bid, so the Trading-period
+engine settles nothing from that clearing on (#1005).
 
 ``amplitude`` is a free per-Round number. This module only knows its Round-1 baseline. How it moves
 in later Rounds is open: the demand-shift events are specified, but the "player progression"

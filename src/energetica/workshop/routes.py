@@ -100,6 +100,7 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
         ],
         round_format=session.current_format(),
         settlement=None if settlement is None else WorkshopSettlementOut.from_progress(settlement),
+        blackouts=session.blackouts,
     )
 
 

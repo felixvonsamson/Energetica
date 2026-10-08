@@ -17,6 +17,7 @@ from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
@@ -859,12 +860,14 @@ GAS = FacilityId.GAS_BURNER
 
 def _trading(path: Path, clock: _Clock) -> WorkshopSession:
     """A session in Round 1's spring Trading period, its price-setting window open. Alice (account 1) owns
-    a gas burner and batteries.
+    a gas burner and batteries. The batteries start full, so that with the gas burner they keep the grid up.
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.join(_account(1, "alice")).owned_facilities.extend(
+    alice = session.join(_account(1, "alice"))
+    alice.owned_facilities.extend(
         [OwnedFacility(facility=GAS, built_round=1), OwnedFacility(facility=BATTERIES, built_round=1)]
     )
+    alice.stored_energy = {BATTERIES: BATTERY_CAPACITY}
     _advance(session)
     _advance(session)
     return session
@@ -1440,7 +1443,9 @@ def test_storage_built_in_a_full_season_keeps_running_after_switching_back(path:
 
 def test_a_full_season_trading_period_simulates_every_day_of_its_season(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=GAS, built_round=1))
+    # Two combined cycles meet the must-serve demand of one player, so the grid never goes down.
+    plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+    session.join(_account(1, "alice")).owned_facilities.extend(plants)
     _set_format(session, trading_format="full_season")
     _advance(session)
     _advance(session)
@@ -1464,4 +1469,90 @@ def test_a_full_season_trading_period_simulates_every_day_of_its_season(path: Pa
 
     assert reported == list(range(1, 92))
     [result] = session.network.members[1].trading_results
-    assert result.facilities[GAS].generation > 0
+    assert result.facilities[FacilityId.COMBINED_CYCLE].generation > 0
+
+
+# --- blackout -----------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("season", SEASONS)
+def test_a_blackout_ends_the_round_after_its_trading_period(season: Season) -> None:
+    period = TradingPeriod(round=1, season=season)
+
+    assert next_checkpoint(period, round_count=3, blackout=True) == Recap(round=1)
+
+
+def _blacked_out(path: Path, clock: _Clock) -> WorkshopSession:
+    """A session in Round 1's settled spring Trading period, in which the grid went down: Alice (account 1)
+    owns nothing, so nothing meets the must-serve demand her presence brings.
+    """
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice"))
+    _advance(session)
+    _advance(session)
+    clock.tick(minutes=5)
+    _settle(session)
+    return session
+
+
+def test_a_blackout_is_recorded_with_its_trading_period(path: Path, clock: _Clock) -> None:
+    session = _blacked_out(path, clock)
+
+    assert session.blackouts == [TradingPeriod(round=1, season="spring")]
+
+
+def test_the_session_waits_on_the_blacked_out_period_then_skips_to_the_recap(path: Path, clock: _Clock) -> None:
+    session = _blacked_out(path, clock)
+
+    assert session.checkpoint == TradingPeriod(round=1, season="spring")
+    assert session.upcoming_checkpoint() == Recap(round=1)
+    assert session.advance() == Recap(round=1)
+    assert session.advance() == Investment(round=2)
+
+
+def test_the_round_after_a_blackout_runs_all_its_trading_periods(path: Path, clock: _Clock) -> None:
+    session = _blacked_out(path, clock)
+    _advance(session)
+    _advance(session)
+    # Alice builds enough to keep the grid up for the rest of the session.
+    session.network.members[1].owned_facilities.extend(FLEET)
+
+    visited = [_advance(session) for _ in range(5)]
+
+    assert visited == [*(TradingPeriod(round=2, season=season) for season in SEASONS), Recap(round=2)]
+
+
+def test_a_blackout_survives_a_restart(path: Path, clock: _Clock) -> None:
+    session = _blacked_out(path, clock)
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    assert reopened.blackouts == session.blackouts
+    assert reopened.advance() == Recap(round=1)
+
+
+def test_a_session_saved_before_blackouts_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, "players": []}',
+        encoding="utf-8",
+    )
+
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path).blackouts == []
+
+
+def test_a_failed_save_records_no_blackout(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    session.join(_account(1, "alice"))
+    _advance(session)
+    _advance(session)
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+    outcome = session.run_settlement(job)
+    assert outcome.blackout
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.finish_settlement(job, outcome)
+
+    assert session.blackouts == []

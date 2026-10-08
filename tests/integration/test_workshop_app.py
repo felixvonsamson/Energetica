@@ -254,6 +254,29 @@ def test_the_session_names_the_checkpoint_an_advance_moves_to(session_path: Path
     assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
+def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_path: Path) -> None:
+    # Alice owns nothing, so nothing meets her must-serve demand and the grid goes down in spring.
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+    _facilitator(client)
+    assert client.get(SESSION_URL).json()["blackouts"] == []
+
+    for _ in range(2):
+        _advance(client)
+    # Closes the price-setting window, then settles the period as the app does in the background.
+    client.post(ADVANCE_URL)
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    job = session.start_settlement()
+    assert job is not None
+    session.finish_settlement(job, session.run_settlement(job))
+
+    body = client.get(SESSION_URL).json()
+    assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
+    assert body["blackouts"] == [_checkpoint("trading_period", 1, "spring")]
+    assert body["next_checkpoint"] == _checkpoint("recap", 1)
+
+
 def test_reading_the_session_needs_entry(session_path: Path) -> None:
     client = _client(session_path)
     authenticate(client, make_account("stranger"))
@@ -308,14 +331,14 @@ def test_the_session_survives_a_restart(session_path: Path) -> None:
     account_id = _player(client, "alice")
     client.post(ENTER_URL)
     _facilitator(client)
-    for _ in range(3):
+    for _ in range(2):
         _advance(client)
 
     restarted = _client(session_path)
     authenticate(restarted, account_id)
     body = restarted.get(SESSION_URL).json()
 
-    assert body["checkpoint"] == _checkpoint("trading_period", 1, "summer")
+    assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
     assert [player["username"] for player in body["players"]] == ["alice"]
 
 
@@ -877,6 +900,10 @@ def test_advancing_while_the_investment_phase_is_open_closes_it_and_buys_the_sel
         assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
 
 
+#: Two combined cycles: enough to meet one player's must-serve demand, so the grid stays up (#1005).
+GRID_KEEPING_FLEET = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+
+
 def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -891,9 +918,7 @@ def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
     _advance(client)
 
     with client:
@@ -919,9 +944,7 @@ def test_advancing_before_the_window_runs_out_closes_it_and_the_period_settles_i
     session_path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
     _advance(client)
 
     with client:
@@ -1002,10 +1025,8 @@ def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
 
     monkeypatch.setattr(session_module, "simulate_trading_period", held_after_the_first_day)
     app, client, _, [alice] = _investing(session_path, clock, "alice")
-    app.state.workshop_session.player(alice).owned_facilities.append(
-        OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)
-    )
-    client.post(ADVANCE_URL)
+    app.state.workshop_session.player(alice).owned_facilities.extend(GRID_KEEPING_FLEET)
+    _advance(client)
     invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
 
     with client:
