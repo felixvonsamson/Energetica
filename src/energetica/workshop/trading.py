@@ -28,18 +28,21 @@ The weather is ``sim.renewables`` at one fixed position, since Workshop has no m
 per Run. Only the market settlement is scaled. O&M is already one Trading period's share, and stored
 energy is what the storage really holds at the end of the period.
 
-A clearing where the must-serve demand tier goes unserved is a blackout. Its clearing price would be the
-must-serve bid, ``math.inf``, so it settles at :data:`BLACKOUT_PRICE` instead. So does a clearing where
-supply exactly meets must-serve demand, which also clears at that bid without being a blackout. The exact price matters
-little, since a blackout resets every player's money anyway (#992 §8). What a blackout does to the
-session is #1005's job; here it is only reported.
+A clearing where the must-serve demand tier goes unserved is a blackout: the grid goes down, and the
+simulation stops there (#1005). That clearing and every one after it, to the end of the simulated days,
+produce, sell and buy nothing, and storage keeps the energy it held. In representative-day mode the part
+of the day before the blackout is still scaled ×91. What a blackout does to the session is the session's
+job; here it is only reported.
+
+A clearing where supply exactly meets must-serve demand is no blackout, but it clears at the must-serve
+bid, ``math.inf``, so it settles at :data:`SCARCITY_PRICE` instead.
 """
 
 from __future__ import annotations
 
 import dataclasses
 import math
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -101,8 +104,9 @@ RENEWABLE_CATEGORIES = frozenset(
     {FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.CSP, FacilityCategory.HYDRO}
 )
 
-#: The price per MWh a clearing settles at when it would clear at the unbounded must-serve bid.
-BLACKOUT_PRICE = 1000.0
+#: The price per MWh a clearing settles at when supply exactly meets must-serve demand, which would
+#: otherwise clear at the unbounded must-serve bid.
+SCARCITY_PRICE = 1000.0
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
 
@@ -196,7 +200,7 @@ class TradingOutcome:
     """Each player's stored energy at the end of the period, by player id, in Wh. A type holding nothing is
     left out."""
     blackout: bool
-    """Whether any clearing left must-serve demand unserved."""
+    """Whether a clearing left must-serve demand unserved, which stopped the simulation there."""
 
 
 @dataclass(slots=True)
@@ -323,6 +327,12 @@ def _is_blackout(clearing: MarketClearing) -> bool:
     )
 
 
+def _record_nothing(pools: Iterable[_Pool], seconds_per_tick: float) -> None:
+    """Record that a clearing the grid was down for produced nothing."""
+    for pool in pools:
+        pool.record(None, seconds_per_tick)
+
+
 def simulated_days(season: Season, round_format: RoundFormat) -> list[int]:
     """The days of the year a Trading period in ``season`` clears, in order, under ``round_format``."""
     if round_format.trading_format == "full_season":
@@ -357,6 +367,9 @@ def simulate_trading_period(
 
     for days_done, day in enumerate(days, start=1):
         for clearing in range(clearings_per_day):
+            if blackout:
+                _record_nothing(pools.values(), seconds_per_tick)
+                continue
             market = init_market()
             seconds = day * SECONDS_PER_DAY + clearing * seconds_per_tick
             # Every facility stands at the same position, so each type's weather is worked out once.
@@ -365,9 +378,12 @@ def simulate_trading_period(
                 pool.place(market, shares.get(pool.facility, 0.0), seconds_per_tick)
             demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
             result = clear_market(market["capacities"], market["demands"] + demand_block)
-            blackout = blackout or _is_blackout(result)
+            if _is_blackout(result):
+                blackout = True
+                _record_nothing(pools.values(), seconds_per_tick)
+                continue
             if not math.isfinite(result.price):
-                result = dataclasses.replace(result, price=BLACKOUT_PRICE)
+                result = dataclasses.replace(result, price=SCARCITY_PRICE)
             settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
             sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
             for key, pool in pools.items():

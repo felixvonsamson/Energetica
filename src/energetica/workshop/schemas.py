@@ -10,7 +10,7 @@ from energetica.workshop.facilities import FacilityId, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.session import Checkpoint, SettlementProgress
+from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
 
 
 class WorkshopPlayerOut(BaseModel):
@@ -82,6 +82,10 @@ class WorkshopSessionOut(BaseModel):
     settlement: WorkshopSettlementOut | None = Field(
         description="How far the simulation of the Trading period has got while it runs, or null when none is "
         "running. The session cannot advance while one is"
+    )
+    blackouts: list[TradingPeriod] = Field(
+        description="Every Trading period the grid went down in, in order. Each one ended its Round, so the "
+        "Round's later Trading periods were skipped"
     )
 
 

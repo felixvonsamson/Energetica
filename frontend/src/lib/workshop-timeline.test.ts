@@ -7,7 +7,7 @@ import {
     checkpointLabel,
     checkpointPage,
     isSeason,
-    type NodeStatus,
+    type SeasonStatus,
     type TimelineRound,
     workshopTimeline,
 } from "./workshop-timeline";
@@ -17,6 +17,7 @@ describe("workshopTimeline", () => {
         const timeline = workshopTimeline(
             { kind: "trading_period", round: 1, season: "summer" },
             2,
+            [],
         );
 
         expect(timeline).toEqual([
@@ -24,10 +25,10 @@ describe("workshopTimeline", () => {
                 round: 1,
                 status: "current",
                 seasons: [
-                    { season: "spring", status: "past" },
-                    { season: "summer", status: "current" },
-                    { season: "autumn", status: "future" },
-                    { season: "winter", status: "future" },
+                    { season: "spring", status: "past", blackout: false },
+                    { season: "summer", status: "current", blackout: false },
+                    { season: "autumn", status: "future", blackout: false },
+                    { season: "winter", status: "future", blackout: false },
                 ],
                 recap: "future",
             },
@@ -35,10 +36,10 @@ describe("workshopTimeline", () => {
                 round: 2,
                 status: "future",
                 seasons: [
-                    { season: "spring", status: "future" },
-                    { season: "summer", status: "future" },
-                    { season: "autumn", status: "future" },
-                    { season: "winter", status: "future" },
+                    { season: "spring", status: "future", blackout: false },
+                    { season: "summer", status: "future", blackout: false },
+                    { season: "autumn", status: "future", blackout: false },
+                    { season: "winter", status: "future", blackout: false },
                 ],
                 recap: "future",
             },
@@ -46,7 +47,7 @@ describe("workshopTimeline", () => {
     });
 
     it("shows every node as future before the session starts", () => {
-        const timeline = workshopTimeline({ kind: "not_started" }, 3);
+        const timeline = workshopTimeline({ kind: "not_started" }, 3, []);
 
         expect(timeline).toHaveLength(3);
         expect(allStatuses(timeline)).toEqual(new Set(["future"]));
@@ -56,6 +57,7 @@ describe("workshopTimeline", () => {
         const [first, second] = workshopTimeline(
             { kind: "investment", round: 2 },
             2,
+            [],
         );
 
         expect(first?.status).toBe("past");
@@ -73,6 +75,7 @@ describe("workshopTimeline", () => {
         const [first, second] = workshopTimeline(
             { kind: "recap", round: 1 },
             2,
+            [],
         );
 
         expect(first?.status).toBe("past");
@@ -81,8 +84,45 @@ describe("workshopTimeline", () => {
         expect(second?.status).toBe("future");
     });
 
+    it("marks the season the grid went down in, and skips the rest of its Round", () => {
+        const [first, second] = workshopTimeline(
+            { kind: "investment", round: 2 },
+            2,
+            [{ kind: "trading_period", round: 1, season: "summer" }],
+        );
+
+        expect(first?.seasons).toEqual([
+            { season: "spring", status: "past", blackout: false },
+            { season: "summer", status: "past", blackout: true },
+            { season: "autumn", status: "skipped", blackout: false },
+            { season: "winter", status: "skipped", blackout: false },
+        ]);
+        expect(first?.recap).toBe("past");
+        expect(second?.seasons.map((s) => s.status)).toEqual([
+            "future",
+            "future",
+            "future",
+            "future",
+        ]);
+    });
+
+    it("shows the skipped seasons while the session still waits on the blacked-out one", () => {
+        const [round] = workshopTimeline(
+            { kind: "trading_period", round: 1, season: "spring" },
+            1,
+            [{ kind: "trading_period", round: 1, season: "spring" }],
+        );
+
+        expect(round?.seasons.map((s) => [s.status, s.blackout])).toEqual([
+            ["current", true],
+            ["skipped", false],
+            ["skipped", false],
+            ["skipped", false],
+        ]);
+    });
+
     it("shows every node as past once the session is finished", () => {
-        const timeline = workshopTimeline({ kind: "finished" }, 2);
+        const timeline = workshopTimeline({ kind: "finished" }, 2, []);
 
         expect(allStatuses(timeline)).toEqual(new Set(["past"]));
     });
@@ -157,7 +197,7 @@ describe("isSeason", () => {
     });
 });
 
-function allStatuses(timeline: TimelineRound[]): Set<NodeStatus> {
+function allStatuses(timeline: TimelineRound[]): Set<SeasonStatus> {
     return new Set(
         timeline.flatMap((round) => [
             round.status,
@@ -187,6 +227,7 @@ describe("advanceAction", () => {
             storage: "batteries",
         },
         settlement: null,
+        blackouts: [],
         ...overrides,
     });
 

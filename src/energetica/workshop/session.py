@@ -15,6 +15,10 @@ Players change their prices only while a price-setting window is open (#1002). O
 Trading period is settled (#1003): its prices are recorded, and the engine in
 :mod:`~energetica.workshop.trading` clears the days the Round's format simulates and pays each player.
 
+If the grid goes down in a Trading period (a blackout), the Round ends there (#1005). The session waits
+on that period like any other, and advancing from it skips the Round's remaining Trading periods and goes
+straight to its Recap. Each blackout is recorded with its Trading period.
+
 A full season can take a minute to simulate, so settling happens in three steps (#1004).
 :meth:`WorkshopSession.start_settlement` takes what the engine needs under the session's lock,
 :meth:`WorkshopSession.run_settlement` runs the engine without holding it, reporting each day it has
@@ -171,14 +175,17 @@ class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
 
-def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
-    """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds."""
+def next_checkpoint(checkpoint: Checkpoint, *, round_count: int, blackout: bool = False) -> Checkpoint:
+    """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds.
+
+    ``blackout`` says the grid went down in the Trading period ``checkpoint``, which ends its Round.
+    """
     match checkpoint:
         case NotStarted():
             return Investment(round=1)
         case Investment(round=round_number):
             return TradingPeriod(round=round_number, season=SEASONS[0])
-        case TradingPeriod(round=round_number, season=season) if season != SEASONS[-1]:
+        case TradingPeriod(round=round_number, season=season) if season != SEASONS[-1] and not blackout:
             return TradingPeriod(round=round_number, season=SEASONS[SEASONS.index(season) + 1])
         case TradingPeriod(round=round_number):
             return Recap(round=round_number)
@@ -279,6 +286,8 @@ class _SavedSession(BaseModel):
     settled_period: TradingPeriod | None = None
     # None before Round 1 starts.
     round_format: RoundFormat | None = None
+    # Empty for a file saved before blackouts were recorded.
+    blackouts: list[TradingPeriod] = []
 
 
 class WorkshopSession:
@@ -301,6 +310,7 @@ class WorkshopSession:
         demand_amplitude: float | None = None,
         settled_period: TradingPeriod | None = None,
         round_format: RoundFormat | None = None,
+        blackouts: list[TradingPeriod] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -320,6 +330,8 @@ class WorkshopSession:
         self.settled_period = settled_period
         # The current Round's format, fixed from the levers when its Investment phase opens.
         self.round_format = round_format
+        # Every Trading period the grid went down in, in order (#1005).
+        self.blackouts = [] if blackouts is None else blackouts
         # How far the Trading period being simulated has got, or None if none is. Not saved: a period
         # whose simulation a restart cut short is simulated again from the start.
         self.settlement: SettlementProgress | None = None
@@ -381,6 +393,7 @@ class WorkshopSession:
             demand_amplitude=saved.demand_amplitude,
             settled_period=saved.settled_period,
             round_format=saved.round_format,
+            blackouts=saved.blackouts,
             clock=clock,
         )
 
@@ -432,7 +445,13 @@ class WorkshopSession:
         """The checkpoint :meth:`advance` would move to, or ``None`` once the session is finished."""
         if isinstance(self.checkpoint, Finished):
             return None
-        return next_checkpoint(self.checkpoint, round_count=self.round_count)
+        return self._next_checkpoint()
+
+    def _next_checkpoint(self) -> Checkpoint:
+        """The checkpoint after the current one, skipping to the Recap after a blackout."""
+        return next_checkpoint(
+            self.checkpoint, round_count=self.round_count, blackout=self.checkpoint in self.blackouts
+        )
 
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
@@ -459,7 +478,7 @@ class WorkshopSession:
                 return self.checkpoint
             if isinstance(self.checkpoint, TradingPeriod) and self.settled_period != self.checkpoint:
                 return self.checkpoint
-            checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
+            checkpoint = self._next_checkpoint()
             duration = phase_duration(checkpoint, self.levers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says. A
@@ -696,7 +715,6 @@ class WorkshopSession:
             if settlement is not None and settlement.period == job.period:
                 self.settlement = replace(settlement, days_done=days_done)
 
-        # A blackout is not acted on yet: what it does to the session is #1005.
         return simulate_trading_period(
             job.bidders,
             round_number=job.period.round,
@@ -720,7 +738,8 @@ class WorkshopSession:
         Each player's prices are recorded, holding the prices of the facility types they had operating
         (#1002). Each player is paid what it made, their storage keeps the energy it ends with, and a
         player with anything operating gets a result. A player with nothing operating gets neither a
-        price record nor a result, and nor does one who joined while the period was being simulated.
+        price record nor a result, and nor does one who joined while the period was being simulated. If the
+        grid went down, the period is recorded as a blackout, so that advancing from it ends the Round.
 
         It is saved even if no player had anything operating, since the session must remember that the
         period is settled. If the save fails, nothing changes and the period still counts as being
@@ -740,8 +759,10 @@ class WorkshopSession:
             (player.money, list(player.locked_prices), dict(player.stored_energy), list(player.trading_results))
             for player in players
         ]
-        previous_amplitude, settled_period = self.demand_amplitude, self.settled_period
+        previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
         self.demand_amplitude = job.demand_amplitude
+        if outcome.blackout:
+            self.blackouts = [*blackouts, period]
         for player in players:
             operating = {
                 owned.facility for owned in player.owned_facilities if is_operating(owned, current_round=period.round)
@@ -764,7 +785,7 @@ class WorkshopSession:
             for player, (money, locked_prices, stored_energy, trading_results) in zip(players, before, strict=True):
                 player.money, player.locked_prices = money, locked_prices
                 player.stored_energy, player.trading_results = stored_energy, trading_results
-            self.demand_amplitude, self.settled_period = previous_amplitude, settled_period
+            self.demand_amplitude, self.settled_period, self.blackouts = previous_amplitude, settled_period, blackouts
             raise
 
     def join(self, account: Account) -> WorkshopPlayer:
@@ -806,6 +827,7 @@ class WorkshopSession:
             demand_amplitude=self.demand_amplitude,
             settled_period=self.settled_period,
             round_format=self.round_format,
+            blackouts=self.blackouts,
         )
         _write_atomically(self.path, saved.model_dump_json(indent=2))
 

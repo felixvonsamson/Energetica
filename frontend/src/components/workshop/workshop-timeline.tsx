@@ -8,21 +8,25 @@
  * not link, because nothing has happened in them yet. The page being viewed is
  * underlined.
  *
+ * The season the grid went down in is labeled "Blackout". The seasons after it
+ * in that Round never run, so they are crossed out and do not link (#1005).
+ *
  * Below the `xl` breakpoint the seasons show only their icons, so three Rounds
  * fit a laptop screen. If the timeline is still wider than the screen it
  * scrolls, and `justify-center-safe` keeps the first Round reachable.
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, ScrollText } from "lucide-react";
+import { ChevronRight, ScrollText, ZapOff } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
 import { cn } from "@/lib/utils";
 import {
     type Checkpoint,
-    type NodeStatus,
+    type TradingPeriod,
     recapPage,
+    type SeasonStatus,
     roundPage,
     SEASON_LABELS,
     type TimelineRound,
@@ -34,11 +38,13 @@ import {
 export function WorkshopTimeline({
     checkpoint,
     roundCount,
+    blackouts,
 }: {
     checkpoint: Checkpoint;
     roundCount: number;
+    blackouts: TradingPeriod[];
 }) {
-    const rounds = workshopTimeline(checkpoint, roundCount);
+    const rounds = workshopTimeline(checkpoint, roundCount, blackouts);
 
     return (
         <nav
@@ -83,25 +89,39 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                 Round {round.round}
             </TimelineNode>
             <div className="flex items-center gap-2">
-                {round.seasons.map(({ season, status }) => {
-                    const Icon = SEASON_ICONS[season];
+                {round.seasons.map(({ season, status, blackout }) => {
+                    const Icon = blackout ? ZapOff : SEASON_ICONS[season];
+                    const name = `Round ${round.round}, ${SEASON_LABELS[season]}`;
                     return (
                         <TimelineNode
                             key={season}
                             status={status}
                             page={tradingPeriodPage(round.round, season)}
-                            title={`Round ${round.round}, ${SEASON_LABELS[season]}`}
+                            title={
+                                blackout
+                                    ? `${name}: blackout`
+                                    : status === "skipped"
+                                      ? `${name}: skipped after the blackout`
+                                      : name
+                            }
                             className={cn(
                                 "rounded-full border px-1.5 py-1 text-xs xl:px-2.5",
                                 status === "current"
                                     ? "border-brand bg-brand text-brand-fg"
                                     : "border-border",
+                                blackout &&
+                                    status !== "current" &&
+                                    "border-destructive text-destructive",
+                                status === "skipped" && "line-through",
                             )}
                         >
                             <Icon className="size-3.5" />
                             <span className="hidden xl:inline">
                                 {SEASON_LABELS[season]}
                             </span>
+                            {blackout && (
+                                <span className="font-semibold">Blackout</span>
+                            )}
                         </TimelineNode>
                     );
                 })}
@@ -110,7 +130,10 @@ function RoundBlock({ round }: { round: TimelineRound }) {
     );
 }
 
-/** One node: a link to its page, unless the session has not reached it yet. */
+/**
+ * One node: a link to its page, unless the session has not reached it yet or
+ * skipped it.
+ */
 function TimelineNode({
     status,
     page,
@@ -118,14 +141,14 @@ function TimelineNode({
     className,
     children,
 }: {
-    status: NodeStatus;
+    status: SeasonStatus;
     page: WorkshopPage;
     title?: string;
     className?: string;
     children: ReactNode;
 }) {
     const base = "flex shrink-0 items-center gap-1.5 font-medium";
-    if (status === "future") {
+    if (status === "future" || status === "skipped") {
         return (
             <span
                 aria-disabled="true"
