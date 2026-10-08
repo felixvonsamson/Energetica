@@ -12,8 +12,8 @@ import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
+import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
-import { getHashBasedChartColor, resolveColor } from "@/lib/charts/color-utils";
 import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
@@ -99,6 +99,7 @@ export function MarketClearingVolumeChart({
     breakdownType,
 }: MarketClearingChartProps) {
     const getColor = useAssetColorGetter();
+    const getPlayerColor = usePlayerColorGetter();
     const playerMap = usePlayerMap();
 
     // filters
@@ -122,7 +123,7 @@ export function MarketClearingVolumeChart({
                 ? () => "var(--chart-2)"
                 : breakdownMode === "type"
                   ? getColor
-                  : getHashBasedChartColor,
+                  : (key: string) => getPlayerColor(parseInt(key)),
             filterDataKeys: breakdownEnabled
                 ? breakdownFilter
                 : [quantityFilter],
@@ -140,6 +141,7 @@ export function MarketClearingVolumeChart({
             breakdownEnabled,
             breakdownMode,
             getColor,
+            getPlayerColor,
             breakdownFilter,
             quantityFilter,
             playerMap,
@@ -189,6 +191,7 @@ export function MarketClearingTable({
     const { data: gameEngine } = useGameEngine();
     const playerMap = usePlayerMap();
     const getColor = useAssetColorGetter();
+    const getPlayerColor = usePlayerColorGetter();
 
     // Calculate aggregated data for each item
     const rows = useMemo(() => {
@@ -346,10 +349,8 @@ export function MarketClearingTable({
                                             color={
                                                 breakdownMode === "type"
                                                     ? getColor(row.name)
-                                                    : resolveColor(
-                                                          getHashBasedChartColor(
-                                                              row.name,
-                                                          ),
+                                                    : getPlayerColor(
+                                                          parseInt(row.name),
                                                       )
                                             }
                                             label={formatEnergy(

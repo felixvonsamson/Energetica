@@ -58,8 +58,8 @@ function colorToRgb(color: string): [number, number, number] | null {
  * to the theme foreground only when the color can't be rasterized at all.
  * Results are cached by resolved value, so a theme switch (which changes what a
  * `var()` resolves to) naturally recomputes under a new key. Used by
- * {@link MagnitudeBar} so labels stay readable over facility colors and
- * hash-assigned player colors alike, without a per-asset `-fg` CSS variable.
+ * {@link MagnitudeBar} so labels stay readable over facility colors and player
+ * colors alike, without a per-asset `-fg` CSS variable.
  */
 export function readableTextColor(color: string): string {
     const resolved = resolveColor(color);
@@ -79,30 +79,4 @@ export function readableTextColor(color: string): string {
 
     contrastCache.set(resolved, result);
     return result;
-}
-
-/** Chart color palette using semantic CSS variables. */
-
-export const CHART_COLORS = [
-    "var(--chart-1)",
-    "var(--chart-2)",
-    "var(--chart-3)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-    "var(--chart-6)",
-] as const;
-/**
- * Returns a consistent color from the chart palette based on a hash of the key.
- * Useful for assigning colors to dynamic data series (e.g., player names,
- * IDs).
- */
-
-export function getHashBasedChartColor(key: string): string {
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-        hash = key.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return (
-        CHART_COLORS[Math.abs(hash) % CHART_COLORS.length] ?? CHART_COLORS[0]
-    );
 }
