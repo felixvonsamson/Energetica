@@ -24,6 +24,10 @@ jobs:
       - name: Lint
         run: bun run lint
         working-directory: frontend
+      # `bun run test` runs the package's Vitest script. `bun test` would run Bun's own test runner instead.
+      - name: Unit tests
+        run: bun run test
+        working-directory: frontend
       - name: Guard — no raw-HTML rendering of UGC (ADR-0002, #843)
         run: bun run guard:no-raw-html
         working-directory: frontend
