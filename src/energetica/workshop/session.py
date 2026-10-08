@@ -23,7 +23,9 @@ A full season can take a minute to simulate, so settling happens in three steps 
 :meth:`WorkshopSession.start_settlement` takes what the engine needs under the session's lock,
 :meth:`WorkshopSession.run_settlement` runs the engine without holding it, reporting each day it has
 done, and :meth:`WorkshopSession.finish_settlement` pays the players. The app runs the middle step in
-the background. The session cannot advance while a period is being simulated.
+the background. The session cannot advance while a period is being simulated. Paying the players also
+saves the period's :class:`~energetica.workshop.period_record.TradingPeriodRecord`, every settlement point
+it cleared, to its own file in :attr:`WorkshopSession.records_dir`, for the period's review (#1007).
 
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
 round-configuration levers, the running phase's countdown, and the Run's single shared
@@ -36,9 +38,7 @@ Workshop's own persistence. It shares nothing with the persistent world's model 
 from __future__ import annotations
 
 import math
-import os
 import random
-import tempfile
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
@@ -49,10 +49,12 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from pydantic import BaseModel, Field
 
 from energetica.sim.national_demand import national_demand_curve
+from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
 from energetica.workshop.facilities import CATALOG, FacilityId, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
+from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.round_format import RoundFormat
@@ -288,6 +290,8 @@ class _SavedSession(BaseModel):
     round_format: RoundFormat | None = None
     # Empty for a file saved before blackouts were recorded.
     blackouts: list[TradingPeriod] = []
+    # Empty for a file saved before Trading periods were recorded.
+    recorded_periods: list[TradingPeriod] = []
 
 
 class WorkshopSession:
@@ -311,6 +315,7 @@ class WorkshopSession:
         settled_period: TradingPeriod | None = None,
         round_format: RoundFormat | None = None,
         blackouts: list[TradingPeriod] | None = None,
+        recorded_periods: list[TradingPeriod] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -332,6 +337,9 @@ class WorkshopSession:
         self.round_format = round_format
         # Every Trading period the grid went down in, in order (#1005).
         self.blackouts = [] if blackouts is None else blackouts
+        # Every settled Trading period whose record is saved, in order (#1007). A file in the records folder
+        # that is not listed here, such as one left by an earlier Run, is never read.
+        self.recorded_periods = [] if recorded_periods is None else recorded_periods
         # How far the Trading period being simulated has got, or None if none is. Not saved: a period
         # whose simulation a restart cut short is simulated again from the start.
         self.settlement: SettlementProgress | None = None
@@ -394,8 +402,26 @@ class WorkshopSession:
             settled_period=saved.settled_period,
             round_format=saved.round_format,
             blackouts=saved.blackouts,
+            recorded_periods=saved.recorded_periods,
             clock=clock,
         )
+
+    @property
+    def records_dir(self) -> Path:
+        """The folder each settled Trading period's record is saved in, beside the session file."""
+        return self.path.parent / f"{self.path.stem}_periods"
+
+    def record_path(self, period: TradingPeriod) -> Path:
+        """Where ``period``'s record is saved."""
+        return self.records_dir / f"round-{period.round}-{period.season}.npz"
+
+    def period_record(self, period: TradingPeriod) -> TradingPeriodRecord | None:
+        """What ``period`` did at each settlement point, or None if it has no record: it has not been settled,
+        or was settled before records were kept.
+        """
+        if period not in self.recorded_periods:
+            return None
+        return TradingPeriodRecord.load(self.record_path(period))
 
     def player(self, account_id: int) -> WorkshopPlayer | None:
         """The account's player, or ``None`` if it has not entered the Run or is a facilitator."""
@@ -760,7 +786,9 @@ class WorkshopSession:
             for player in players
         ]
         previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
+        recorded_periods = self.recorded_periods
         self.demand_amplitude = job.demand_amplitude
+        self.recorded_periods = [*recorded_periods, period]
         if outcome.blackout:
             self.blackouts = [*blackouts, period]
         for player in players:
@@ -779,6 +807,8 @@ class WorkshopSession:
                 player.trading_results.append(result)
         self.settled_period = period
         try:
+            # Written before the session lists it, so a listed period always has its record.
+            outcome.record.save(self.record_path(period))
             self._save(self.checkpoint, self.phase_timer)
         except BaseException:
             # Undo the settlement, so the session matches the file and the next attempt retries it.
@@ -786,6 +816,7 @@ class WorkshopSession:
                 player.money, player.locked_prices = money, locked_prices
                 player.stored_energy, player.trading_results = stored_energy, trading_results
             self.demand_amplitude, self.settled_period, self.blackouts = previous_amplitude, settled_period, blackouts
+            self.recorded_periods = recorded_periods
             raise
 
     def join(self, account: Account) -> WorkshopPlayer:
@@ -828,22 +859,6 @@ class WorkshopSession:
             settled_period=self.settled_period,
             round_format=self.round_format,
             blackouts=self.blackouts,
+            recorded_periods=self.recorded_periods,
         )
-        _write_atomically(self.path, saved.model_dump_json(indent=2))
-
-
-def _write_atomically(path: Path, text: str) -> None:
-    """Write ``text`` to ``path`` so that a crash mid-write leaves the previous file whole.
-
-    Writes a temporary file beside ``path`` and renames it into place, which replaces the file in
-    one step.
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=f"{path.name}.", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
-            tmp_file.write(text)
-        os.replace(tmp_name, path)
-    except BaseException:
-        Path(tmp_name).unlink(missing_ok=True)
-        raise
+        write_atomically(self.path, saved.model_dump_json(indent=2))

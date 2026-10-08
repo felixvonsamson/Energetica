@@ -285,7 +285,7 @@ def test_a_session_is_saved_as_soon_as_it_is_opened(path: Path) -> None:
 
 def test_a_failed_save_leaves_the_checkpoint_where_it_was(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
@@ -295,7 +295,7 @@ def test_a_failed_save_leaves_the_checkpoint_where_it_was(path: Path, monkeypatc
 
 def test_a_failed_save_undoes_the_join(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.join(_account(1, "alice"))
@@ -442,7 +442,7 @@ def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, mo
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     _advance(session)
     before = session.phase_timer
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.extend_phase(timedelta(minutes=1))
@@ -659,7 +659,7 @@ def test_a_session_saved_before_selections_existed_still_opens(path: Path) -> No
 def test_a_failed_save_undoes_the_selection_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _investing(path, clock)
     session.select(1, FacilityId.GAS_BURNER)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.select(1, FacilityId.SMALL_WATER_DAM)
@@ -673,7 +673,7 @@ def test_a_failed_save_undoes_the_purchase(path: Path, clock: _Clock, monkeypatc
     session = _investing(path, clock)
     session.select(1, FacilityId.GAS_BURNER)
     clock.tick(minutes=8)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.buy_selections()
@@ -688,7 +688,7 @@ def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
     session = _investing(path, clock)
     session.select(1, FacilityId.GAS_BURNER)
     clock.tick(minutes=8)
-    real_write = session_module._write_atomically
+    real_write = session_module.write_atomically
 
     def fail_to_leave_the_investment_phase(target: Path, text: str) -> None:
         # Only the write that moves the session on fails. A purchase saved on its own beforehand
@@ -697,7 +697,7 @@ def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
             raise OSError("disk full")
         real_write(target, text)
 
-    monkeypatch.setattr(session_module, "_write_atomically", fail_to_leave_the_investment_phase)
+    monkeypatch.setattr(session_module, "write_atomically", fail_to_leave_the_investment_phase)
 
     with pytest.raises(OSError):
         _advance(session)
@@ -752,7 +752,7 @@ def test_a_retirement_survives_a_restart(path: Path) -> None:
 
 def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _owning_wind_and_reactor(path)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
@@ -845,7 +845,7 @@ def test_a_failed_save_keeps_the_energy_that_would_be_lost(
     path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     session = _batteries_retiring(path, clock)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
@@ -1013,7 +1013,7 @@ def test_a_session_saved_before_prices_existed_still_opens(path: Path) -> None:
 
 def test_a_failed_save_undoes_the_price_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _trading(path, clock)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.set_price(1, GAS, "sell", 80.0)
@@ -1025,7 +1025,7 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
     path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     session = _trading(path, clock)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
@@ -1251,7 +1251,7 @@ def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: p
     job = session.start_settlement()
     assert job is not None
     outcome = session.run_settlement(job)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.finish_settlement(job, outcome)
@@ -1265,6 +1265,43 @@ def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: p
     session.finish_settlement(job, outcome)
     assert len(alice.trading_results) == 1
     assert session.settlement is None
+
+
+def test_a_settled_period_keeps_its_record_across_a_restart(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    spring = TradingPeriod(round=1, season="spring")
+    assert session.period_record(spring) is None
+    clock.tick(minutes=5)
+
+    assert _settle(session)
+
+    record = session.period_record(spring)
+    assert record is not None
+    assert (record.round, record.season, record.point_count) == (1, "spring", 24)
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    reloaded = reopened.period_record(spring)
+    assert reloaded is not None
+    assert reloaded.pools == record.pools
+    assert reopened.period_record(TradingPeriod(round=1, season="summer")) is None
+
+
+def test_a_record_the_session_does_not_list_is_never_read(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The record is written, then the session's own save fails, so the period is not settled.
+    session = _pricing(path, clock)
+    spring = TradingPeriod(round=1, season="spring")
+    clock.tick(minutes=5)
+    job = session.start_settlement()
+    assert job is not None
+    outcome = session.run_settlement(job)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.finish_settlement(job, outcome)
+
+    assert session.record_path(spring).exists()
+    assert session.period_record(spring) is None
 
 
 def test_a_cancelled_simulation_stops_and_changes_nothing(path: Path, clock: _Clock) -> None:
@@ -1359,7 +1396,7 @@ def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path)
 
 def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _set_format(session, clearings_per_day=288)
@@ -1550,7 +1587,7 @@ def test_a_failed_save_records_no_blackout(path: Path, clock: _Clock, monkeypatc
     assert job is not None
     outcome = session.run_settlement(job)
     assert outcome.blackout
-    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         session.finish_settlement(job, outcome)

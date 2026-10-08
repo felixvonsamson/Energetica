@@ -34,6 +34,9 @@ produce, sell and buy nothing, and storage keeps the energy it held. In represen
 of the day before the blackout is still scaled ×91. What a blackout does to the session is the session's
 job; here it is only reported.
 
+Besides each player's result, the engine keeps a :class:`~energetica.workshop.period_record.TradingPeriodRecord`
+of every settlement point it cleared, for the period's review.
+
 A clearing where supply exactly meets must-serve demand is no blackout, but it clears at the must-serve
 bid, ``math.inf``, so it settles at :data:`SCARCITY_PRICE` instead.
 """
@@ -45,12 +48,14 @@ import math
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
 from energetica.sim.dispatch import fuel_power_limit, max_output, storage_power_limit
 from energetica.sim.fuel_and_pollution import emissions_produced
 from energetica.sim.market import (
     MarketClearing,
+    MarketEntry,
     clear_market,
     init_market,
     place_bid,
@@ -71,6 +76,7 @@ from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, sett
 from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
+from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
 from energetica.workshop.prices import DUMP_COST, PriceSheet, is_storage
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.seasons import SEASONS, Season
@@ -201,6 +207,8 @@ class TradingOutcome:
     left out."""
     blackout: bool
     """Whether a clearing left must-serve demand unserved, which stopped the simulation there."""
+    record: TradingPeriodRecord
+    """What the period did at each settlement point, for its review."""
 
 
 @dataclass(slots=True)
@@ -215,6 +223,12 @@ class _Pool:
     stored_energy: float = 0.0
     # Output in W at each clearing: what sold, plus what was dumped.
     production: list[float] = field(default_factory=list)
+    # At each clearing: W dumped, W bought to charge, and Wh stored once the clearing is over.
+    dumped_power: list[float] = field(default_factory=list)
+    charged_power: list[float] = field(default_factory=list)
+    stored_series: list[float] = field(default_factory=list)
+    # What the current clearing bought to charge, in W.
+    charging: float = 0.0
     # Energy in Wh, money and emissions over the simulated days.
     sold: float = 0.0
     dumped: float = 0.0
@@ -261,6 +275,7 @@ class _Pool:
         hours = seconds_per_tick / SECONDS_PER_HOUR
         produced = sale.power_produced if sale is not None else 0.0
         self.production.append(produced)
+        self.dumped_power.append(sale.power_dumped if sale is not None else 0.0)
         if sale is not None:
             self.sold += sale.power_sold * hours
             self.dumped += sale.power_dumped * hours
@@ -277,7 +292,14 @@ class _Pool:
         hours = seconds_per_tick / SECONDS_PER_HOUR
         self.bought += bought * hours
         self.purchase_cost += cost
+        self.charging += bought
         self.stored_energy = min(self.capacity, self.stored_energy + bought * hours * self.efficiency**0.5)
+
+    def end_clearing(self) -> None:
+        """Record what the clearing charged and what the pool holds after it, once it has sold and bought."""
+        self.charged_power.append(self.charging)
+        self.stored_series.append(self.stored_energy)
+        self.charging = 0.0
 
     def performance(self, round_number: int, seconds_per_tick: float, scale: float) -> FacilityPerformance:
         """The pool's performance over the Trading period: the simulated days times ``scale``, plus its O&M."""
@@ -331,6 +353,18 @@ def _record_nothing(pools: Iterable[_Pool], seconds_per_tick: float) -> None:
     """Record that a clearing the grid was down for produced nothing."""
     for pool in pools:
         pool.record(None, seconds_per_tick)
+        pool.end_clearing()
+
+
+def _bid_lines(pools: Iterable[_Pool]) -> list[BidLine]:
+    """The bid lines the pools and the demand block place at each clearing, in the order they place them."""
+    pools = list(pools)
+    offers = [BidLine("offer", pool.player_id, pool.name, pool.sell_price, must_run=pool.renewable) for pool in pools]
+    charging = [
+        BidLine("demand", pool.player_id, pool.name, pool.buy_price) for pool in pools if pool.buy_price is not None
+    ]
+    tiers = [BidLine("demand", tier.player_id, tier.label, tier.willingness_to_pay) for tier in DEMAND_TIERS]
+    return [*offers, *charging, *tiers]
 
 
 def simulated_days(season: Season, round_format: RoundFormat) -> list[int]:
@@ -364,9 +398,22 @@ def simulate_trading_period(
     pools = {(pool.player_id, pool.facility.value): pool for bidder in bidders for pool in _pools(bidder, round_number)}
     renewables = {pool.facility for pool in pools.values() if pool.renewable}
     blackout = False
+    blackout_at: int | None = None
+
+    lines = _bid_lines(pools.values())
+    line_index: dict[tuple[Side, int, str], int] = {
+        (line.side, line.player_id, line.facility): index for index, line in enumerate(lines)
+    }
+    point_count = len(days) * clearings_per_day
+    prices = np.full(point_count, math.nan)
+    quantities = np.full(point_count, math.nan)
+    offered = np.zeros((len(lines), point_count))
+    tier_index = {tier.player_id: index for index, tier in enumerate(DEMAND_TIERS)}
+    served = np.zeros((len(DEMAND_TIERS), point_count))
 
     for days_done, day in enumerate(days, start=1):
         for clearing in range(clearings_per_day):
+            point = (days_done - 1) * clearings_per_day + clearing
             if blackout:
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
@@ -377,13 +424,21 @@ def simulate_trading_period(
             for pool in pools.values():
                 pool.place(market, shares.get(pool.facility, 0.0), seconds_per_tick)
             demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
-            result = clear_market(market["capacities"], market["demands"] + demand_block)
+            demands = market["demands"] + demand_block
+            sides: tuple[tuple[Side, list[MarketEntry]], ...] = (("offer", market["capacities"]), ("demand", demands))
+            for side, entries in sides:
+                for entry in entries:
+                    offered[line_index[(side, entry.player_id, entry.facility)], point] = entry.capacity
+            result = clear_market(market["capacities"], demands)
+            prices[point], quantities[point] = result.price, result.quantity
             if _is_blackout(result):
                 blackout = True
+                blackout_at = point
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
             if not math.isfinite(result.price):
                 result = dataclasses.replace(result, price=SCARCITY_PRICE)
+                prices[point] = SCARCITY_PRICE
             settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
             sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
             for key, pool in pools.items():
@@ -392,6 +447,10 @@ def simulate_trading_period(
                 pool = pools.get((purchase.player_id, purchase.facility))
                 if pool is not None:
                     pool.record_purchase(purchase.power_bought, purchase.cost, seconds_per_tick)
+                elif purchase.player_id in tier_index:
+                    served[tier_index[purchase.player_id], point] = purchase.power_bought
+            for pool in pools.values():
+                pool.end_clearing()
         if on_day_done is not None:
             on_day_done(days_done)
 
@@ -412,4 +471,25 @@ def simulate_trading_period(
         energy = {**bidder.stored_energy, **ended}
         stored_energy[bidder.player_id] = {facility: amount for facility, amount in energy.items() if amount > 0}
 
-    return TradingOutcome(results=results, stored_energy=stored_energy, blackout=blackout)
+    def series(values: Callable[[_Pool], list[float]]) -> np.ndarray:
+        return np.array([values(pool) for pool in pools.values()], dtype=np.float64).reshape(len(pools), point_count)
+
+    record = TradingPeriodRecord(
+        round=round_number,
+        season=season,
+        clearings_per_day=clearings_per_day,
+        days=tuple(days),
+        blackout_at=blackout_at,
+        price=prices,
+        quantity=quantities,
+        pools=tuple(pools),
+        generation=series(lambda pool: pool.production),
+        dumped=series(lambda pool: pool.dumped_power),
+        charged=series(lambda pool: pool.charged_power),
+        stored=series(lambda pool: pool.stored_series),
+        tiers=tuple(tier.label for tier in DEMAND_TIERS),
+        served=served,
+        lines=tuple(lines),
+        offered=offered,
+    )
+    return TradingOutcome(results=results, stored_energy=stored_energy, blackout=blackout, record=record)
