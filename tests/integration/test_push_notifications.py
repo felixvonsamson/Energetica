@@ -47,13 +47,15 @@ def test_notify_subscription_does_not_block_caller(monkeypatch: pytest.MonkeyPat
     player.push_subscriptions.append(_subscription())
 
     started = threading.Event()
+    release = threading.Event()
     finished = threading.Event()
     captured: dict[str, object] = {}
 
     def slow_webpush(**kwargs: object) -> None:
+        # Stays in flight until the test releases it, like a slow push service.
         started.set()
         captured.update(kwargs)
-        time.sleep(2)
+        release.wait(timeout=5)
         finished.set()
 
     monkeypatch.setattr(player_module, "webpush", slow_webpush)
@@ -62,11 +64,12 @@ def test_notify_subscription_does_not_block_caller(monkeypatch: pytest.MonkeyPat
     player.push_only(ChatMessagePayload(sender_username="alice", message="hi", chat_id=1))
     elapsed = time.perf_counter() - t0
 
-    # The call returns essentially immediately, long before the 2s webpush completes.
+    # The call returns essentially immediately, while the webpush is still in flight.
     assert elapsed < 0.5, f"push_only blocked the caller for {elapsed:.2f}s"
     # The delivery really was dispatched (runs in the background pool)...
     assert started.wait(timeout=1), "webpush was never dispatched to the background pool"
     assert not finished.is_set(), "webpush finished synchronously — it was not backgrounded"
+    release.set()
     # ...and eventually completes with a bounded timeout applied (issue #763 fix #2).
     assert finished.wait(timeout=3), "background webpush never completed"
     assert captured["timeout"] == player_module._PUSH_TIMEOUT_SECONDS
