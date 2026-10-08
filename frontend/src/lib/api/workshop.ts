@@ -1,6 +1,6 @@
 /**
- * Workshop Run API calls (#994, #995, #996, #998, #999, #1002). Served only by
- * a Workshop Run's backend.
+ * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007). Served
+ * only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -8,6 +8,7 @@ import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type PriceSide = "sell" | "buy";
+type Season = ApiSchema<"TradingPeriod">["season"];
 
 export const workshopApi = {
     /**
@@ -122,4 +123,37 @@ export const workshopApi = {
         apiClient.get<ApiResponse<"/api/v1/workshop/prices/locked", "get">>(
             "/workshop/prices/locked",
         ),
+
+    /** A settled Trading period's simulated days and settlement points. */
+    getPeriod: (round: number, season: Season) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/periods/{round_number}/{season}",
+                "get"
+            >
+        >(`/workshop/periods/${round}/${season}`),
+
+    /**
+     * Every settlement point of one simulated day of a settled Trading period.
+     * `day` is the day's position in the period's days.
+     */
+    getPeriodDay: (round: number, season: Season, day: number) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/periods/{round_number}/{season}/days/{day}",
+                "get"
+            >
+        >(`/workshop/periods/${round}/${season}/days/${day}`),
+
+    /**
+     * The merit order at one settlement point of a settled Trading period,
+     * counted from the period's first point.
+     */
+    getMeritOrder: (round: number, season: Season, point: number) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/periods/{round_number}/{season}/points/{point}/merit-order",
+                "get"
+            >
+        >(`/workshop/periods/${round}/${season}/points/${point}/merit-order`),
 };

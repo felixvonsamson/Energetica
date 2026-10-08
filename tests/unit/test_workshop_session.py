@@ -1285,6 +1285,18 @@ def test_a_settled_period_keeps_its_record_across_a_restart(path: Path, clock: _
     assert reopened.period_record(TradingPeriod(round=1, season="summer")) is None
 
 
+def test_a_record_read_once_is_kept_in_memory(path: Path, clock: _Clock) -> None:
+    session = _pricing(path, clock)
+    spring = TradingPeriod(round=1, season="spring")
+    clock.tick(minutes=5)
+    assert _settle(session)
+
+    first = session.period_record(spring)
+    session.record_path(spring).unlink()
+
+    assert session.period_record(spring) is first
+
+
 def test_a_record_the_session_does_not_list_is_never_read(
     path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:

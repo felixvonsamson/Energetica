@@ -6,9 +6,14 @@
  *
  * Features shared across all variants:
  *
- * - Right-anchored "now" tick label with adaptive round intervals
+ * - Tick labels at adaptive round intervals, from a {@link TimeAxis}
  * - Drag-to-zoom with zoom preservation on new data
  * - React tooltip overlay with colored circles on the axis pointer
+ * - An optional marker on one tick, and a callback when a tick is clicked
+ *
+ * {@link TimeSeriesChart} takes its time axis as a prop, so any mode can use it.
+ * {@link EChartsTimeSeries} is the persistent world's chart: its axis counts
+ * back from the current game tick, with the rightmost point as "now".
  */
 
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
@@ -17,12 +22,14 @@ import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
     DataZoomComponent,
     GridComponent,
+    MarkLineComponent,
     ToolboxComponent,
     TooltipComponent,
 } from "echarts/components";
 import type {
     DataZoomComponentOption,
     GridComponentOption,
+    MarkLineComponentOption,
     ToolboxComponentOption,
     TooltipComponentOption,
 } from "echarts/components";
@@ -61,6 +68,7 @@ echarts.use([
     GridComponent,
     TooltipComponent,
     DataZoomComponent,
+    MarkLineComponent,
     ToolboxComponent,
     CanvasRenderer,
 ]);
@@ -71,6 +79,7 @@ type ECOption = ComposeOption<
     | GridComponentOption
     | TooltipComponentOption
     | DataZoomComponentOption
+    | MarkLineComponentOption
     | ToolboxComponentOption
 >;
 
@@ -120,6 +129,36 @@ export interface EChartsTimeSeriesProps {
     config: EChartsTimeSeriesConfig;
     isLoading?: boolean;
     isError?: boolean;
+    /** Draw a vertical marker at this tick, if it is one of the data's ticks. */
+    markerTick?: number;
+    /** Called with the tick under the pointer when the plot is clicked. */
+    onTickClick?: (tick: number) => void;
+}
+
+/** How a chart's ticks map to time: the x-axis labels and tooltip heading. */
+export interface TimeAxis {
+    /**
+     * The x-axis label for `tick`. `isLast` is true for the rightmost data
+     * point.
+     */
+    formatTick: (tick: number, isLast: boolean) => string;
+    /** The tooltip heading for `tick`. */
+    formatTooltipTitle: (tick: number) => ReactNode;
+    /**
+     * In-game seconds from one tick to the next, used to space labels at round
+     * intervals. Zero when not known yet.
+     */
+    secondsPerTick: number;
+    /**
+     * Which end the label intervals count from: the right for an axis ending
+     * "now", the left for one starting at a round time such as midnight.
+     */
+    anchor: "left" | "right";
+}
+
+export interface TimeSeriesChartProps extends EChartsTimeSeriesProps {
+    /** Callers should memoize it, like `config`. */
+    timeAxis: TimeAxis;
 }
 
 // ── CSS variable resolver ─────────────────────────────────────────────────────
@@ -151,14 +190,13 @@ interface TSTooltipState {
 
 function TSTooltip({
     tooltip,
+    title,
     formatValue,
 }: {
     tooltip: TSTooltipState;
+    title: ReactNode;
     formatValue: (v: number) => ReactNode;
 }) {
-    const { currentTick } = useGameTick();
-    const { data: gameEngine } = useGameEngine();
-
     const divRef = useRef<HTMLDivElement>(null);
 
     // Reposition the tooltip before each paint using Floating UI so it never
@@ -195,11 +233,6 @@ function TSTooltip({
         });
     }, [tooltip]);
 
-    const timestamp =
-        gameEngine && currentTick !== undefined
-            ? `${formatDuration(currentTick - tooltip.tick - 1, gameEngine)} ago`
-            : "--";
-
     const total = tooltip.stacked
         ? tooltip.entries.reduce((s, e) => s + e.value, 0)
         : null;
@@ -217,7 +250,7 @@ function TSTooltip({
             className="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs"
         >
             <div className="font-semibold mb-1 pb-1 border-b border-border/50">
-                {timestamp}
+                {title}
             </div>
             <table>
                 <tbody>
@@ -266,16 +299,60 @@ const NICE_INTERVALS_S = [
 // ── EChartsTimeSeries ─────────────────────────────────────────────────────────
 
 /**
- * Generic ECharts time-series chart component.
+ * The persistent world's time-series chart: {@link TimeSeriesChart} on an axis
+ * that counts back from the current game tick.
  *
  * Callers should memoize the `config` object to prevent unnecessary re-renders.
  */
-export function EChartsTimeSeries({
+export function EChartsTimeSeries(props: EChartsTimeSeriesProps) {
+    const { data: gameEngine } = useGameEngine();
+    const { currentTick } = useGameTick();
+
+    // Keep currentTick in a ref so the axis and tooltip stay fresh without
+    // a new time axis, and so a zoom reset, on every game tick.
+    const currentTickRef = useRef(currentTick);
+    useEffect(() => {
+        currentTickRef.current = currentTick;
+    }, [currentTick]);
+
+    const timeAxis = useMemo((): TimeAxis => {
+        const ago = (tick: number): string | null => {
+            const ct = currentTickRef.current;
+            if (!gameEngine || ct === undefined) return null;
+            return formatDuration(ct - tick - 1, gameEngine);
+        };
+        return {
+            formatTick: (tick, isLast) =>
+                isLast ? "now" : (ago(tick) ?? "--"),
+            formatTooltipTitle: (tick) => {
+                const duration = ago(tick);
+                return duration === null ? "--" : `${duration} ago`;
+            },
+            secondsPerTick: gameEngine?.game_seconds_per_tick ?? 0,
+            anchor: "right",
+        };
+    }, [gameEngine]);
+
+    return <TimeSeriesChart {...props} timeAxis={timeAxis} />;
+}
+
+// ── TimeSeriesChart ───────────────────────────────────────────────────────────
+
+/**
+ * Generic ECharts time-series chart component, on the time axis it is given.
+ *
+ * Callers should memoize the `config` and `timeAxis` objects to prevent
+ * unnecessary re-renders.
+ */
+export function TimeSeriesChart({
     data,
     config,
+    timeAxis,
     isLoading = false,
     isError = false,
-}: EChartsTimeSeriesProps) {
+    markerTick,
+    onTickClick,
+}: TimeSeriesChartProps) {
     const chartRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<echarts.ECharts | null>(null);
     const dataKeyRef = useRef<string>("");
@@ -285,17 +362,6 @@ export function EChartsTimeSeries({
     const [tooltip, setTooltip] = useState<TSTooltipState | null>(null);
     const [containerWidth, setContainerWidth] = useState(0);
     const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
-
-    const { data: gameEngine } = useGameEngine();
-    const { currentTick } = useGameTick();
-
-    // Keep currentTick in a ref so axis/tooltip formatters stay fresh without
-    // triggering full option recomputation (and consequent zoom reset) on
-    // every game tick.
-    const currentTickRef = useRef(currentTick);
-    useEffect(() => {
-        currentTickRef.current = currentTick;
-    }, [currentTick]);
 
     // Reorder data keys according to chartType's predefined ordering
     const processedData = useMemo(() => {
@@ -348,6 +414,7 @@ export function EChartsTimeSeries({
         hideZeroValues: config.hideZeroValues ?? true,
         formatLabel: config.formatLabel,
         stacked: config.stacked ?? false,
+        onTickClick,
     });
     useEffect(() => {
         liveDataRef.current = {
@@ -357,6 +424,7 @@ export function EChartsTimeSeries({
             hideZeroValues: config.hideZeroValues ?? true,
             formatLabel: config.formatLabel,
             stacked: config.stacked ?? false,
+            onTickClick,
         };
     }, [
         processedData,
@@ -365,6 +433,7 @@ export function EChartsTimeSeries({
         config.hideZeroValues,
         config.formatLabel,
         config.stacked,
+        onTickClick,
     ]);
 
     // Forward wheel events to the page so trackpad/mouse scroll works normally.
@@ -397,16 +466,10 @@ export function EChartsTimeSeries({
         const ticks = processedData.map((d) => d.tick as number);
         const isBar = config.chartVariant === "area";
 
-        // "now" label for the rightmost data point; relative in-game time for
-        // all others. Uses currentTickRef so currentTick changes don't trigger
-        // a full option recompute (and zoom reset) on every game tick.
         const lastTick = ticks[ticks.length - 1] ?? -1;
         const formatXTick = (value: string | number): string => {
             const t = Number(value);
-            if (t === lastTick) return "now";
-            const ct = currentTickRef.current;
-            if (!gameEngine || ct === undefined) return "--";
-            return formatDuration(ct - t - 1, gameEngine);
+            return timeAxis.formatTick(t, t === lastTick);
         };
 
         // Visible tick count based on current zoom window — drives both barWidth
@@ -418,15 +481,13 @@ export function EChartsTimeSeries({
         );
 
         // Choose a round label interval giving ~6 labels across the visible
-        // range. Falls back to ticks/7 when game engine data isn't available yet.
+        // range. Falls back to ticks/7 when the time per tick isn't known yet.
         const tickResolution =
             ticks.length >= 2
                 ? ((ticks[ticks.length - 1] ?? 0) - (ticks[0] ?? 0)) /
                   (ticks.length - 1)
                 : 1;
-        const secondsPerDataPoint = gameEngine
-            ? tickResolution * gameEngine.game_seconds_per_tick
-            : 0;
+        const secondsPerDataPoint = tickResolution * timeAxis.secondsPerTick;
         const tickInterval = (() => {
             if (!secondsPerDataPoint)
                 return Math.max(0, Math.round(ticks.length / 7) - 1);
@@ -472,7 +533,28 @@ export function EChartsTimeSeries({
             }
         }
 
-        const series: ECOption["series"] = visibleKeys.map((key) => {
+        // A marker on one tick, drawn on the first series. Its value on a
+        // category axis is the tick's index.
+        const markerIndex =
+            markerTick === undefined ? -1 : ticks.indexOf(markerTick);
+        const markLine: MarkLineComponentOption | undefined =
+            markerIndex < 0
+                ? undefined
+                : {
+                      silent: true,
+                      symbol: ["none", "none"],
+                      animation: false,
+                      label: { show: false },
+                      lineStyle: {
+                          color: resolveCSSVar("--foreground"),
+                          type: "solid",
+                          width: 2,
+                      },
+                      data: [{ xAxis: markerIndex }],
+                  };
+
+        const series: ECOption["series"] = visibleKeys.map((key, index) => {
+            const marker = index === 0 && markLine ? { markLine } : {};
             const rawColor = config.getColor?.(key) ?? "#888";
             const color = resolveColor(rawColor);
             const useGradient = (config.gradientKeys ?? []).includes(key);
@@ -497,6 +579,7 @@ export function EChartsTimeSeries({
                             : color,
                     },
                     animation: false,
+                    ...marker,
                 } satisfies BarSeriesOption;
             }
 
@@ -510,6 +593,7 @@ export function EChartsTimeSeries({
                 data: processedData.map((d) => Number(d[key] ?? 0)),
                 itemStyle: { color },
                 animation: false,
+                ...marker,
             };
 
             if (config.chartVariant === "smoothLine") {
@@ -574,11 +658,15 @@ export function EChartsTimeSeries({
                 axisLabel: {
                     formatter: formatXTick,
                     fontSize: 11,
-                    // Right-anchored interval: the rightmost data point always
-                    // gets the "now" label; every tickInterval steps leftward
-                    // gets another label at a round duration.
+                    // Right-anchored: the rightmost data point always gets a
+                    // label, then every tickInterval steps leftward. Left-
+                    // anchored: the same from the leftmost point.
                     interval: (index: number) =>
-                        (ticks.length - 1 - index) % tickInterval === 0,
+                        (timeAxis.anchor === "right"
+                            ? ticks.length - 1 - index
+                            : index) %
+                            tickInterval ===
+                        0,
                     hideOverlap: true,
                 },
                 axisTick: { show: false },
@@ -649,11 +737,10 @@ export function EChartsTimeSeries({
         processedData,
         visibleKeys,
         config,
-        gameEngine,
+        timeAxis,
         containerWidth,
         zoomRange,
-        // currentTick intentionally omitted — accessed via currentTickRef to
-        // avoid resetting the zoom on every game tick.
+        markerTick,
     ]);
 
     // ── Chart lifecycle ───────────────────────────────────────────────────────
@@ -816,10 +903,30 @@ export function EChartsTimeSeries({
 
         zr.on("mouseout", () => setTooltip(null));
 
+        // A click without a drag selects the tick under the pointer. A drag
+        // zooms instead, and fires no click.
+        zr.on("click", (e: { offsetX: number; offsetY: number }) => {
+            const { processedData: pd, onTickClick: onClick } =
+                liveDataRef.current;
+            if (!onClick || !pd.length) return;
+            if (!chart.containPixel("grid", [e.offsetX, e.offsetY])) return;
+            const rawIndex = chart.convertFromPixel(
+                { xAxisIndex: 0 },
+                e.offsetX,
+            ) as number;
+            const index = Math.max(
+                0,
+                Math.min(Math.round(rawIndex), pd.length - 1),
+            );
+            const tick = pd[index]?.tick;
+            if (typeof tick === "number") onClick(tick);
+        });
+
         return () => {
             chart.off("datazoom");
             chart.getZr().off("mousemove");
             chart.getZr().off("mouseout");
+            chart.getZr().off("click");
             chart.dispose();
             instanceRef.current = null;
         };
@@ -948,6 +1055,7 @@ export function EChartsTimeSeries({
                         ))}
                         <TSTooltip
                             tooltip={tooltip}
+                            title={timeAxis.formatTooltipTitle(tooltip.tick)}
                             formatValue={config.formatValue}
                         />
                     </>

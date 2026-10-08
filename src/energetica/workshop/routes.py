@@ -4,7 +4,8 @@ Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session, extending its running phase and changing the levers are the
 facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
-and prices (#1002) are theirs alone.
+and prices (#1002) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
+Run: players see every bid, as they do in the persistent world.
 """
 
 from __future__ import annotations
@@ -22,12 +23,16 @@ from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
+from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
     WorkshopFacilityOut,
     WorkshopMemberOut,
+    WorkshopMeritOrderOut,
     WorkshopOwnedFacilityOut,
+    WorkshopPeriodDayOut,
+    WorkshopPeriodOut,
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
     WorkshopPlayerOut,
@@ -50,8 +55,10 @@ from energetica.workshop.session import (
     RoundLevers,
     SessionFinishedError,
     SettlementRunningError,
+    TradingPeriod,
     WorkshopSession,
 )
+from energetica.workshop.seasons import Season
 from energetica.workshop.storage import energy_at_risk
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
@@ -306,3 +313,58 @@ def get_locked_prices(player: Player) -> list[LockedPrices]:
     in which they had nothing operating is left out.
     """
     return player.locked_prices
+
+
+def _period_record(session: WorkshopSession, round_number: int, season: Season) -> TradingPeriodRecord:
+    """The record of the period, or 404 if it has none: not settled yet, or settled before records were kept."""
+    record = session.period_record(TradingPeriod(round=round_number, season=season))
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This Trading period has no record")
+    return record
+
+
+# Reads the record from disk the first time, so these run on a worker thread.
+@router.get("/periods/{round_number}/{season}")
+def get_period(
+    _: Annotated[Account, Depends(resolve_entry_account)], session: Session, round_number: int, season: Season
+) -> WorkshopPeriodOut:
+    """A settled Trading period's simulated days and settlement points, for its review."""
+    return WorkshopPeriodOut.from_record(_period_record(session, round_number, season))
+
+
+@router.get("/periods/{round_number}/{season}/days/{day}")
+def get_period_day(
+    _: Annotated[Account, Depends(resolve_entry_account)],
+    session: Session,
+    round_number: int,
+    season: Season,
+    day: int,
+) -> WorkshopPeriodDayOut:
+    """Every settlement point of one simulated day of a settled Trading period: the price, and each player's and
+    each demand tier's power. ``day`` is the day's position in the period's days.
+    """
+    record = _period_record(session, round_number, season)
+    if not 0 <= day < len(record.days):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period did not simulate this day")
+    return WorkshopPeriodDayOut.from_record(record, day)
+
+
+@router.get("/periods/{round_number}/{season}/points/{point}/merit-order")
+def get_merit_order(
+    _: Annotated[Account, Depends(resolve_entry_account)],
+    session: Session,
+    round_number: int,
+    season: Season,
+    point: int,
+) -> WorkshopMeritOrderOut:
+    """The merit order at one settlement point of a settled Trading period, counted from the period's first.
+    Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
+    none.
+    """
+    record = _period_record(session, round_number, season)
+    if not 0 <= point < record.point_count:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period has no such settlement point")
+    order = record.merit_order(point)
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The grid was down at this point")
+    return WorkshopMeritOrderOut.from_merit_order(order)

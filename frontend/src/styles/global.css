@@ -281,6 +281,14 @@
         --asset-color-imports: rgb(255, 89, 94);
         --asset-color-exports: rgb(138, 201, 38);
         --asset-color-dumping: rgb(208, 0, 0);
+        /* Workshop's demand tiers, from must-serve down, and all of them together */
+        --asset-color-must-serve: oklch(0.42 0.13 25);
+        --asset-color-low-flex: oklch(0.52 0.14 35);
+        --asset-color-medium-flex: oklch(0.62 0.14 45);
+        --asset-color-high-flex: oklch(0.7 0.13 60);
+        --asset-color-very-high-flex: oklch(0.78 0.11 75);
+        --asset-color-opportunistic: oklch(0.85 0.08 90);
+        --asset-color-consumers: oklch(0.55 0.14 35);
 
         /* Asset colours - Functional facilities */
         --asset-color-industry: rgb(188, 108, 37);
@@ -496,6 +504,13 @@
         --asset-color-imports: rgb(255, 129, 134);
         --asset-color-exports: rgb(168, 221, 78);
         --asset-color-dumping: rgb(248, 80, 80);
+        --asset-color-must-serve: oklch(0.55 0.15 25);
+        --asset-color-low-flex: oklch(0.63 0.15 35);
+        --asset-color-medium-flex: oklch(0.7 0.14 45);
+        --asset-color-high-flex: oklch(0.77 0.13 60);
+        --asset-color-very-high-flex: oklch(0.83 0.11 75);
+        --asset-color-opportunistic: oklch(0.89 0.08 90);
+        --asset-color-consumers: oklch(0.68 0.14 35);
 
         /* Asset colours - Functional facilities */
         --asset-color-industry: rgb(218, 148, 77);

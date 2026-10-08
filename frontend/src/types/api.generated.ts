@@ -2221,6 +2221,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/periods/{round_number}/{season}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Period
+         * @description A settled Trading period's simulated days and settlement points, for its review.
+         */
+        get: operations["get_period_api_v1_workshop_periods__round_number___season__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/periods/{round_number}/{season}/days/{day}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Period Day
+         * @description Every settlement point of one simulated day of a settled Trading period: the price, and each player's and
+         *     each demand tier's power. ``day`` is the day's position in the period's days.
+         */
+        get: operations["get_period_day_api_v1_workshop_periods__round_number___season__days__day__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/periods/{round_number}/{season}/points/{point}/merit-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Merit Order
+         * @description The merit order at one settlement point of a settled Trading period, counted from the period's first.
+         *     Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
+         *     none.
+         */
+        get: operations["get_merit_order_api_v1_workshop_periods__round_number___season__points__point__merit_order_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5076,6 +5139,63 @@ export interface components {
             username: string;
         };
         /**
+         * WorkshopMeritOrderOut
+         * @description The market at one settlement point of a settled Trading period (#1007). Every bid is listed, whether it
+         *     sold or not.
+         */
+        WorkshopMeritOrderOut: {
+            /** Point */
+            point: number;
+            /** @description Supply, cheapest first */
+            offers: components["schemas"]["WorkshopOrdersOut"];
+            /** @description Demand, highest price first */
+            demands: components["schemas"]["WorkshopOrdersOut"];
+            /**
+             * Price
+             * @description The price the point settled at, or null at a blackout
+             */
+            price: number | null;
+            /** Quantity */
+            quantity: number;
+        };
+        /**
+         * WorkshopOrdersOut
+         * @description One side of the market at a settlement point, in merit order. The same shape as the persistent world's
+         *     merit-order data, plus what cleared.
+         */
+        WorkshopOrdersOut: {
+            /**
+             * Player Id
+             * @description Each bid's player, or a demand tier's reserved negative id
+             */
+            player_id: number[];
+            /**
+             * Capacity
+             * @description Power each bid offered, in W
+             */
+            capacity: number[];
+            /**
+             * Price
+             * @description Each bid's price per MWh. Null for a bid at any price
+             */
+            price: (number | null)[];
+            /**
+             * Facility
+             * @description Each bid's facility type, or a demand tier's label
+             */
+            facility: string[];
+            /**
+             * Cumul Capacities
+             * @description Power offered up to and including each bid, in W
+             */
+            cumul_capacities: number[];
+            /**
+             * Cleared
+             * @description Power each bid sold or bought, in W
+             */
+            cleared: number[];
+        };
+        /**
          * WorkshopOwnedFacilityOut
          * @description One facility the calling player owns.
          */
@@ -5096,6 +5216,70 @@ export interface components {
              * @description True while its construction lag runs. It then keeps its whole lifetime
              */
             under_construction: boolean;
+        };
+        /**
+         * WorkshopPeriodDayOut
+         * @description One simulated day of a settled Trading period, at every settlement point (#1007).
+         *
+         *     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
+         *     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
+         */
+        WorkshopPeriodDayOut: {
+            /**
+             * Day
+             * @description The day's position in the period's days
+             */
+            day: number;
+            /**
+             * First Point
+             * @description The period's settlement point the day starts at
+             */
+            first_point: number;
+            /**
+             * Price
+             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing after it
+             */
+            price: (number | null)[];
+            /**
+             * Quantity
+             * @description The power each point cleared, in W. Null after a blackout
+             */
+            quantity: (number | null)[];
+            /**
+             * Pools
+             * @description Every player's facility types that were operating
+             */
+            pools: components["schemas"]["WorkshopPoolSeriesOut"][];
+            /** Tiers */
+            tiers: components["schemas"]["WorkshopTierSeriesOut"][];
+        };
+        /**
+         * WorkshopPeriodOut
+         * @description What a settled Trading period's review needs before it loads any day (#1007).
+         */
+        WorkshopPeriodOut: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Clearings Per Day
+             * @description Settlement points in each simulated day
+             */
+            clearings_per_day: number;
+            /**
+             * Days
+             * @description The day of the year of each simulated day, in order: one for a representative day, 91 for a full season. Days are asked for by their position in this list
+             */
+            days: number[];
+            /**
+             * Blackout At
+             * @description The settlement point the grid went down at, counted from the period's first, or null if it held. Points after it never cleared
+             */
+            blackout_at: number | null;
         };
         /**
          * WorkshopPhaseExtendIn
@@ -5130,6 +5314,30 @@ export interface components {
             username: string;
             /** Money */
             money: number;
+        };
+        /**
+         * WorkshopPoolSeriesOut
+         * @description One player's facilities of one type over a simulated day, in W at each settlement point.
+         */
+        WorkshopPoolSeriesOut: {
+            /** Player Id */
+            player_id: number;
+            facility: components["schemas"]["FacilityId"];
+            /**
+             * Generation
+             * @description What it produced: sold plus dumped. For storage, discharged
+             */
+            generation: number[];
+            /**
+             * Dumped
+             * @description Renewable output that did not sell
+             */
+            dumped: number[];
+            /**
+             * Charged
+             * @description What storage bought to charge
+             */
+            charged: number[];
         };
         /**
          * WorkshopPriceIn
@@ -5251,6 +5459,22 @@ export interface components {
              * @description Days the simulation covers: 1 for a representative day, 91 for a full season
              */
             days_total: number;
+        };
+        /**
+         * WorkshopTierSeriesOut
+         * @description One demand tier over a simulated day.
+         */
+        WorkshopTierSeriesOut: {
+            /**
+             * Tier
+             * @description The tier's label, such as must_serve
+             */
+            tier: string;
+            /**
+             * Served
+             * @description What it bought at each settlement point, in W
+             */
+            served: number[];
         };
         /**
          * GameExceptionType
@@ -8424,6 +8648,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LockedPrices"][];
+                };
+            };
+        };
+    };
+    get_period_api_v1_workshop_periods__round_number___season__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_period_day_api_v1_workshop_periods__round_number___season__days__day__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+                day: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPeriodDayOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_merit_order_api_v1_workshop_periods__round_number___season__points__point__merit_order_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+                point: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopMeritOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

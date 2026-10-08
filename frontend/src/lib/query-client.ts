@@ -110,6 +110,17 @@ export const queryKeys = {
         // Also under the session's key: a new Trading period opens their window, and a facility that
         // starts operating needs a price.
         prices: ["workshop", "session", "prices"] as const,
+        // Also under the session's key: settling a Trading period adds one.
+        lockedPrices: ["workshop", "session", "prices", "locked"] as const,
+        // A Trading period's review (#1007). The summary sits under the session's key, so a
+        // period that was not settled when first asked for is read again once it is. What a
+        // settled period did never changes, so its days and merit orders are read once.
+        period: (round: number, season: string) =>
+            ["workshop", "session", "periods", round, season] as const,
+        periodDay: (round: number, season: string, day: number) =>
+            ["workshop", "periods", round, season, "days", day] as const,
+        meritOrder: (round: number, season: string, point: number) =>
+            ["workshop", "periods", round, season, "points", point] as const,
     },
     players: {
         all: ["players"] as const,
