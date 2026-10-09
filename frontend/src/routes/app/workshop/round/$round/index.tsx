@@ -32,14 +32,11 @@ function RoundOverviewPage() {
 function PlayerRoundOverview() {
     const { round } = Route.useParams();
     const sheet = useWorkshopBalanceSheet(Number(round));
-    const { data: session } = useWorkshopSession();
-    const checkpoint = session?.checkpoint;
+    const session = useWorkshopSession();
+    const checkpoint = session.data?.checkpoint;
     const activeRound =
         checkpoint && "round" in checkpoint ? checkpoint.round : null;
 
-    // The session says which Round is active, which picks the period the
-    // sheet opens on, so it is waited for too.
-    if (sheet.isPending || !session) return <Loading />;
     if (sheet.isError) {
         const noSuchRound =
             sheet.error instanceof ApiClientError && sheet.error.status === 404;
@@ -51,6 +48,10 @@ function PlayerRoundOverview() {
             </TypographyMuted>
         );
     }
+    // The session says which Round is active, which picks the period the
+    // sheet opens on, so it is waited for too. If it cannot be read, the sheet
+    // opens as for a past Round.
+    if (sheet.isPending || session.isPending) return <Loading />;
     // Keyed by Round, so moving to another Round's sheet starts it afresh.
     return (
         <BalanceSheetView
