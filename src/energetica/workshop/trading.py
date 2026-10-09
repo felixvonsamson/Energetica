@@ -169,6 +169,14 @@ class FacilityPerformance(BaseModel):
     om: float = Field(description="Operation and maintenance cost for the period")
     emissions: float = Field(description="CO₂ emitted generating")
     capacity_factor: float = Field(description="Average output as a share of maximum output, from 0 to 1")
+    # Zero for a result saved before these were kept (#1008).
+    count: int = Field(default=0, description="How many facilities of the type were operating")
+    om_fixed: float = Field(default=0.0, description="The part of the O&M charged whatever the use")
+    om_variable_full: float = Field(
+        default=0.0,
+        description="The part of the O&M that scales with use, at full use. What was charged is this times the "
+        "capacity factor",
+    )
 
     @property
     def net(self) -> float:
@@ -304,6 +312,8 @@ class _Pool:
     def performance(self, round_number: int, seconds_per_tick: float, scale: float) -> FacilityPerformance:
         """The pool's performance over the Trading period: the simulated days times ``scale``, plus its O&M."""
         per_facility = [output / len(self.owned) for output in self.production]
+        facility = CATALOG[self.facility]
+        om_at_full_use = facility.om_per_round / len(SEASONS) * len(self.owned)
         return FacilityPerformance(
             generation=sum(self.production) * seconds_per_tick / SECONDS_PER_HOUR * scale,
             sold=self.sold * scale,
@@ -315,6 +325,9 @@ class _Pool:
             om=sum(om_owed(owned, current_round=round_number, production=per_facility) for owned in self.owned),
             emissions=self.emissions * scale,
             capacity_factor=capacity_factor(self.owned[0], per_facility),
+            count=len(self.owned),
+            om_fixed=om_at_full_use * facility.om_fixed_share,
+            om_variable_full=om_at_full_use * (1 - facility.om_fixed_share),
         )
 
 

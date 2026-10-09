@@ -1,5 +1,5 @@
 /* 1. Import Google font */
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&family=Chivo+Mono:wght@500&family=Poppins:wght@600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&family=Chivo+Mono:wght@400;500&family=Poppins:wght@500;600&display=swap");
 
 /* 2. Tailwind layer injection */
 @import "tailwindcss";

@@ -52,7 +52,7 @@ from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
 from energetica.workshop.facilities import CATALOG, FacilityId, WorkshopFacility
-from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left
+from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
@@ -263,6 +263,8 @@ class _SavedPlayer(BaseModel):
     username: str
     money: float
     owned_facilities: list[OwnedFacility]
+    # Defaults to empty for a file saved before purchases were kept.
+    purchases: list[Purchase] = []
     # Defaults to empty for a file saved before selections existed.
     selection: list[FacilityId] = []
     # Defaults to empty for a file saved before stored energy existed.
@@ -394,6 +396,7 @@ class WorkshopSession:
                 username=player.username,
                 money=player.money,
                 owned_facilities=player.owned_facilities,
+                purchases=player.purchases,
                 selection=player.selection,
                 stored_energy=player.stored_energy,
                 prices=player.prices,
@@ -618,7 +621,13 @@ class WorkshopSession:
         """
         players = self.network.players()
         before = [
-            (player.money, list(player.owned_facilities), list(player.selection), dict(player.stored_energy))
+            (
+                player.money,
+                list(player.owned_facilities),
+                list(player.purchases),
+                list(player.selection),
+                dict(player.stored_energy),
+            )
             for player in players
         ]
         for player in players:
@@ -626,13 +635,17 @@ class WorkshopSession:
             player.owned_facilities.extend(
                 OwnedFacility(facility=facility, built_round=round_number) for facility in player.selection
             )
+            player.purchases.extend(
+                Purchase(facility=facility, round=round_number, price=CATALOG[facility].base_price)
+                for facility in player.selection
+            )
             player.selection.clear()
             player.stored_energy = keep_what_fits(
                 player.stored_energy, player.owned_facilities, current_round=round_number
             )
         changed = any(
             (player.owned_facilities, player.stored_energy) != (owned_facilities, stored_energy)
-            for player, (_, owned_facilities, _, stored_energy) in zip(players, before, strict=True)
+            for player, (_, owned_facilities, _, _, stored_energy) in zip(players, before, strict=True)
         )
         if not changed:
             return False
@@ -640,8 +653,11 @@ class WorkshopSession:
             self._save(checkpoint, phase_timer)
         except BaseException:
             # Undo the purchase, so the session matches the file and the next attempt retries it.
-            for player, (money, owned_facilities, selection, stored_energy) in zip(players, before, strict=True):
+            for player, (money, owned_facilities, purchases, selection, stored_energy) in zip(
+                players, before, strict=True
+            ):
                 player.money, player.owned_facilities, player.selection = money, owned_facilities, selection
+                player.purchases = purchases
                 player.stored_energy = stored_energy
             raise
         return True
@@ -865,6 +881,7 @@ class WorkshopSession:
                     username=player.username,
                     money=player.money,
                     owned_facilities=player.owned_facilities,
+                    purchases=player.purchases,
                     selection=player.selection,
                     stored_energy=player.stored_energy,
                     prices=player.prices,

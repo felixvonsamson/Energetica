@@ -5,7 +5,8 @@ Every route goes through the same entry gate as the persistent world
 accounts. Advancing the session, extending its running phase and changing the levers are the
 facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
 and prices (#1002) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
-Run: players see every bid, as they do in the persistent world.
+Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
+player's own.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from fastapi.concurrency import run_in_threadpool
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
@@ -368,3 +370,20 @@ def get_merit_order(
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The grid was down at this point")
     return WorkshopMeritOrderOut.from_merit_order(order)
+
+
+@router.get("/rounds/{round_number}/balance-sheet")
+def get_balance_sheet(player: Player, session: Session, round_number: int) -> BalanceSheet:
+    """The calling player's balance sheet for a Round: what each settled season earned and cost, and the Round's
+    investments and net profit so far.
+    """
+    if not 1 <= round_number <= session.round_count:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The session has no such Round")
+    settled = session.settled_period
+    return balance_sheet(
+        round_number,
+        results=player.trading_results,
+        purchases=player.purchases,
+        settled=(settled.round, settled.season) if settled is not None else None,
+        blackouts=[(period.round, period.season) for period in session.blackouts],
+    )

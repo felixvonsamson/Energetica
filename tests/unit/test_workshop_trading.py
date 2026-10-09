@@ -218,6 +218,15 @@ def test_om_is_one_trading_periods_share_and_not_scaled() -> None:
     assert outcome.results[1].facilities[GAS].om == pytest.approx(expected)
 
 
+def test_om_is_split_into_its_fixed_part_and_its_variable_part_at_full_use() -> None:
+    outcome = _simulate(_bidder(GAS, GAS, sell={GAS: 200.0}))
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.count == 2
+    assert gas.om == pytest.approx(gas.om_fixed + gas.om_variable_full * gas.capacity_factor)
+    assert gas.om_fixed + gas.om_variable_full == pytest.approx(2 * CATALOG[GAS].om_per_round / 4)
+
+
 def test_the_period_result_totals_its_facilities() -> None:
     outcome = _simulate(_bidder(GAS, WIND, sell={GAS: 100.0, WIND: 500.0}))
 

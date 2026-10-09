@@ -12,9 +12,12 @@
  *
  * While a Trading period is being simulated, a bar under the timeline shows how
  * far it has got (#1155).
+ *
+ * Pages share a content column 1400px wide at most, or 1600px for a page marked
+ * `wide`.
  */
 
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 
 import { Toaster } from "@/components/ui/sonner";
 import { PricePanel } from "@/components/workshop/price-panel";
@@ -27,6 +30,7 @@ import {
     useWorkshopSession,
     useWorkshopSocket,
 } from "@/hooks/use-workshop";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/workshop")({
     component: WorkshopLayout,
@@ -37,6 +41,8 @@ function WorkshopLayout() {
     useWorkshopSocket();
     const { data: session } = useWorkshopSession();
     const { data: entry } = useWorkshopEntry();
+    const matches = useMatches();
+    const wide = matches[matches.length - 1]?.staticData.wide ?? false;
     const [pricePanelOpen, setPricePanelOpen] = useLocalStorage(
         "workshop-price-panel-open",
         false,
@@ -61,7 +67,12 @@ function WorkshopLayout() {
             <SettlementProgress />
             <div className="flex min-h-0 flex-1">
                 <main className="min-w-0 flex-1 overflow-auto">
-                    <div className="mx-auto max-w-[1400px] p-4 md:p-8">
+                    <div
+                        className={cn(
+                            "mx-auto p-4 md:p-8",
+                            wide ? "max-w-[1600px]" : "max-w-[1400px]",
+                        )}
+                    >
                         <Outlet />
                     </div>
                 </main>

@@ -35,6 +35,12 @@ declare module "@tanstack/react-router" {
          * shown in both, such as the join page.
          */
         runMode?: "workshop" | "any";
+        /**
+         * Gives the page a wider content column than the usual 1400px, for a
+         * page with a lot of columns, such as the Workshop balance sheet
+         * (#1008). Read by the Workshop layout.
+         */
+        wide?: boolean;
         infoDialog?: {
             title?: string; // If empty, the dialog title is inferred from route title
             contents: React.ReactNode;
