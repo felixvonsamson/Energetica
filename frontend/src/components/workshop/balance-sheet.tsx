@@ -395,6 +395,28 @@ function gridTemplate(unit: boolean, cols: Column[]): string {
     return [lead, ...rest].join(" ");
 }
 
+const FIELD_NAMES: Record<Field, string> = {
+    volume: "volume",
+    rate: "rate",
+    amount: "amount",
+};
+
+/** The unit column's cells, read out in words in place of their symbols. */
+const UNIT_NAMES: Record<RowUnit, string> = {
+    energy: "Megawatt hours, at an average price per megawatt hour",
+    usage: "Usage in percent, of the full variable cost",
+};
+
+/** A period as a column header names it, with a season's blackout state. */
+function periodName(sheet: BalanceSheet, period: Period): string {
+    if (period === "round") return `Round ${sheet.round}`;
+    const season = sheet.seasons.find((s) => s.season === period);
+    const label = SEASON_LABELS[period];
+    if (season?.blackout) return `${label} (blackout)`;
+    if (season?.status === "skipped") return `${label} (not played)`;
+    return label;
+}
+
 function ruleClass(column: Column): string | undefined {
     if (column.rule === "season") return "border-l border-(--bs-tint)";
     if (column.rule === "round") return "border-l-[1.5px] border-bone-300";
@@ -451,7 +473,9 @@ function Ledger({
             role="table"
             aria-label={`Round ${sheet.round} balance sheet`}
         >
-            <div className="grid" style={template}>
+            {/* The season headings are for the eye: each column header below
+                names its own season for screen readers. */}
+            <div className="grid" style={template} aria-hidden>
                 <div style={{ gridColumn: `span ${unit ? 2 : 1}` }} />
                 {groups.map((group) => (
                     <div
@@ -484,6 +508,7 @@ function Ledger({
                     <div
                         key={`${col.period}-${col.field}`}
                         role="columnheader"
+                        aria-label={`${periodName(sheet, col.period)} ${FIELD_NAMES[col.field]}`}
                         className={cn(
                             "px-2 py-1.5 text-right",
                             ruleClass(col),
@@ -562,6 +587,8 @@ function LedgerRow({
             </div>
             {unit && (
                 <div
+                    role="cell"
+                    aria-label={row.unit && UNIT_NAMES[row.unit]}
                     className={cn(
                         "flex items-center gap-1 px-2 font-mono text-xs font-normal whitespace-nowrap text-(--bs-muted)",
                         padding,
