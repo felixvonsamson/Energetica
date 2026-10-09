@@ -10,30 +10,42 @@ import { playerColorGetter } from "@/lib/charts/player-colors";
  * in `--chart-self`, every other player in a shade between
  * `--chart-others-from` and `--chart-others-to`. See {@link playerColorGetter}.
  *
- * Colors are read after the theme class is applied to the page, as in
- * `useAssetColorGetter`, so they follow a theme toggle.
+ * `playerIds` should list every player in the game, and `currentPlayerId` is
+ * `null` for a viewer with no player. Colors are read after the theme class is
+ * applied to the page, as in `useAssetColorGetter`, so they follow a theme
+ * toggle.
  */
-export function usePlayerColorGetter(): (playerId: number) => string {
+export function usePlayerColors(
+    currentPlayerId: number | null,
+    playerIds: readonly number[],
+): (playerId: number) => string {
     const { resolvedTheme } = useTheme();
     const [appliedTheme, setAppliedTheme] = useState(resolvedTheme);
     useEffect(() => {
         setAppliedTheme(resolvedTheme);
     }, [resolvedTheme]);
 
-    const myId = useMyId();
-    const playerMap = usePlayerMap();
-
     return useMemo(() => {
         void appliedTheme; // read the colors again once the theme changes
-        const playerIds = Object.keys(playerMap ?? {}).map(Number);
         return playerColorGetter(
             {
                 self: resolveCSSVar("--chart-self"),
                 othersFrom: resolveCSSVar("--chart-others-from"),
                 othersTo: resolveCSSVar("--chart-others-to"),
             },
-            myId,
+            currentPlayerId,
             playerIds,
         );
-    }, [appliedTheme, myId, playerMap]);
+    }, [appliedTheme, currentPlayerId, playerIds]);
+}
+
+/** {@link usePlayerColors} for the persistent world's players. */
+export function usePlayerColorGetter(): (playerId: number) => string {
+    const myId = useMyId();
+    const playerMap = usePlayerMap();
+    const playerIds = useMemo(
+        () => Object.keys(playerMap ?? {}).map(Number),
+        [playerMap],
+    );
+    return usePlayerColors(myId, playerIds);
 }

@@ -254,6 +254,10 @@ class SettlementJob:
     cancelled: threading.Event = field(default_factory=threading.Event)
 
 
+#: How many Trading-period records the session keeps in memory once read.
+LOADED_RECORDS = 3
+
+
 class _SavedPlayer(BaseModel):
     account_id: int
     username: str
@@ -340,6 +344,12 @@ class WorkshopSession:
         # Every settled Trading period whose record is saved, in order (#1007). A file in the records folder
         # that is not listed here, such as one left by an earlier Run, is never read.
         self.recorded_periods = [] if recorded_periods is None else recorded_periods
+        # The records read most recently, newest last. A full season's record takes about half a second to
+        # read and a hundred megabytes to hold, so a few are kept for the pages reviewing them.
+        self._loaded_records: dict[TradingPeriod, TradingPeriodRecord] = {}
+        # Requests read records on worker threads. Apart from the session's lock, so reading a record
+        # never holds up a change to the session.
+        self._records_lock = threading.Lock()
         # How far the Trading period being simulated has got, or None if none is. Not saved: a period
         # whose simulation a restart cut short is simulated again from the start.
         self.settlement: SettlementProgress | None = None
@@ -421,7 +431,15 @@ class WorkshopSession:
         """
         if period not in self.recorded_periods:
             return None
-        return TradingPeriodRecord.load(self.record_path(period))
+        with self._records_lock:
+            loaded = self._loaded_records
+            record = loaded.pop(period, None)
+            if record is None:
+                record = TradingPeriodRecord.load(self.record_path(period))
+                while len(loaded) >= LOADED_RECORDS:
+                    del loaded[next(iter(loaded))]
+            loaded[period] = record
+            return record
 
     def player(self, account_id: int) -> WorkshopPlayer | None:
         """The account's player, or ``None`` if it has not entered the Run or is a facilitator."""
@@ -788,7 +806,6 @@ class WorkshopSession:
         previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
         recorded_periods = self.recorded_periods
         self.demand_amplitude = job.demand_amplitude
-        self.recorded_periods = [*recorded_periods, period]
         if outcome.blackout:
             self.blackouts = [*blackouts, period]
         for player in players:
@@ -807,8 +824,10 @@ class WorkshopSession:
                 player.trading_results.append(result)
         self.settled_period = period
         try:
-            # Written before the session lists it, so a listed period always has its record.
+            # Listed only once its record is written: a page reading records does not take the session's
+            # lock, so it may look in between.
             outcome.record.save(self.record_path(period))
+            self.recorded_periods = [*recorded_periods, period]
             self._save(self.checkpoint, self.phase_timer)
         except BaseException:
             # Undo the settlement, so the session matches the file and the next attempt retries it.

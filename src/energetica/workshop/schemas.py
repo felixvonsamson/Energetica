@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import math
+from collections.abc import Iterable
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from energetica.workshop.facilities import FacilityId, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
+from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
 
 
@@ -154,3 +158,133 @@ class WorkshopPricesOut(PriceSheet):
     """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
 
     price_floor: float = Field(description="The lowest price a player can set, per MWh")
+
+
+def _finite_or_none(values: Iterable[float]) -> list[float | None]:
+    """``values`` as JSON can carry them: an unbounded or missing value becomes null."""
+    return [value if math.isfinite(value) else None for value in values]
+
+
+class WorkshopPeriodOut(BaseModel):
+    """What a settled Trading period's review needs before it loads any day (#1007)."""
+
+    round: int
+    season: Season
+    clearings_per_day: int = Field(description="Settlement points in each simulated day")
+    days: list[int] = Field(
+        description="The day of the year of each simulated day, in order: one for a representative day, 91 for a "
+        "full season. Days are asked for by their position in this list"
+    )
+    blackout_at: int | None = Field(
+        description="The settlement point the grid went down at, counted from the period's first, or null if it "
+        "held. Points after it never cleared"
+    )
+
+    @classmethod
+    def from_record(cls, record: TradingPeriodRecord) -> WorkshopPeriodOut:
+        return cls(
+            round=record.round,
+            season=record.season,
+            clearings_per_day=record.clearings_per_day,
+            days=list(record.days),
+            blackout_at=record.blackout_at,
+        )
+
+
+class WorkshopPoolSeriesOut(BaseModel):
+    """One player's facilities of one type over a simulated day, in W at each settlement point."""
+
+    player_id: int
+    facility: FacilityId
+    generation: list[float] = Field(description="What it produced: sold plus dumped. For storage, discharged")
+    dumped: list[float] = Field(description="Renewable output that did not sell")
+    charged: list[float] = Field(description="What storage bought to charge")
+
+
+class WorkshopTierSeriesOut(BaseModel):
+    """One demand tier over a simulated day."""
+
+    tier: str = Field(description="The tier's label, such as must_serve")
+    served: list[float] = Field(description="What it bought at each settlement point, in W")
+
+
+class WorkshopPeriodDayOut(BaseModel):
+    """One simulated day of a settled Trading period, at every settlement point (#1007).
+
+    What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
+    dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
+    """
+
+    day: int = Field(description="The day's position in the period's days")
+    first_point: int = Field(description="The period's settlement point the day starts at")
+    price: list[float | None] = Field(
+        description="The price each point settled at, per MWh. Null where the grid was down: unbounded at the "
+        "blackout itself, and missing after it"
+    )
+    quantity: list[float | None] = Field(description="The power each point cleared, in W. Null after a blackout")
+    pools: list[WorkshopPoolSeriesOut] = Field(description="Every player's facility types that were operating")
+    tiers: list[WorkshopTierSeriesOut]
+
+    @classmethod
+    def from_record(cls, record: TradingPeriodRecord, day: int) -> WorkshopPeriodDayOut:
+        start = day * record.clearings_per_day
+        points = slice(start, start + record.clearings_per_day)
+        return cls(
+            day=day,
+            first_point=start,
+            price=_finite_or_none(record.price[points].tolist()),
+            quantity=_finite_or_none(record.quantity[points].tolist()),
+            pools=[
+                WorkshopPoolSeriesOut(
+                    player_id=player_id,
+                    facility=FacilityId(facility),
+                    generation=record.generation[row, points].tolist(),
+                    dumped=record.dumped[row, points].tolist(),
+                    charged=record.charged[row, points].tolist(),
+                )
+                for row, (player_id, facility) in enumerate(record.pools)
+            ],
+            tiers=[
+                WorkshopTierSeriesOut(tier=tier, served=record.served[row, points].tolist())
+                for row, tier in enumerate(record.tiers)
+            ],
+        )
+
+
+class WorkshopOrdersOut(BaseModel):
+    """One side of the market at a settlement point, in merit order. The same shape as the persistent world's
+    merit-order data, plus what cleared.
+    """
+
+    player_id: list[int] = Field(description="Each bid's player, or a demand tier's reserved negative id")
+    capacity: list[float] = Field(description="Power each bid offered, in W")
+    price: list[float | None] = Field(description="Each bid's price per MWh. Null for a bid at any price")
+    facility: list[str] = Field(description="Each bid's facility type, or a demand tier's label")
+    cumul_capacities: list[float] = Field(description="Power offered up to and including each bid, in W")
+    cleared: list[float] = Field(description="Power each bid sold or bought, in W")
+
+    @classmethod
+    def from_columns(cls, columns: dict[str, list]) -> WorkshopOrdersOut:
+        return cls(**{**columns, "price": _finite_or_none(columns["price"])})
+
+
+class WorkshopMeritOrderOut(BaseModel):
+    """The market at one settlement point of a settled Trading period (#1007). Every bid is listed, whether it
+    sold or not.
+    """
+
+    point: int
+    offers: WorkshopOrdersOut = Field(description="Supply, cheapest first")
+    demands: WorkshopOrdersOut = Field(description="Demand, highest price first")
+    price: float | None = Field(description="The price the point settled at, or null at a blackout")
+    quantity: float
+
+    @classmethod
+    def from_merit_order(cls, order: MeritOrder) -> WorkshopMeritOrderOut:
+        return cls(
+            point=order.point,
+            offers=WorkshopOrdersOut.from_columns(order.offers),
+            demands=WorkshopOrdersOut.from_columns(order.demands),
+            price=order.price if math.isfinite(order.price) else None,
+            quantity=order.quantity,
+        )

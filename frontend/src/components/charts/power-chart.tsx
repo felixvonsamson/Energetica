@@ -8,14 +8,20 @@
  *   filtering)
  * - Percent-mode normalization of the data
  * - Facility icon + name labels in the tooltip
+ *
+ * It takes its data as props. The persistent world's facility order, colors and
+ * labels are the defaults, and Workshop passes its own, with its own time
+ * axis.
  */
 
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import {
     EChartsTimeSeries,
     type EChartsTimeSeriesConfig,
+    type TimeAxis,
+    TimeSeriesChart,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -36,17 +42,29 @@ import type { ChartType } from "@/types/charts";
 export type PowerChartViewMode = "absolute" | "percent";
 
 interface PowerChartProps {
-    chartType: ChartType;
+    /** The persistent world's chart type. Sets the default key order. */
+    chartType?: ChartType;
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
     viewMode: PowerChartViewMode;
+    /** The series keys in stack order, bottom first. Defaults to `chartType`'s. */
+    keyOrder?: readonly string[];
+    /** Each series' color. Defaults to the asset colors. */
+    getColor?: (key: string) => string;
+    /** Each series' tooltip label. Defaults to the facility's icon and name. */
+    formatLabel?: (key: string) => ReactNode;
+    /** The chart's time axis. Defaults to the persistent world's game ticks. */
+    timeAxis?: TimeAxis;
+    height?: number;
+    markerTick?: number;
+    onTickClick?: (tick: number) => void;
 }
 
 // Stable label renderer — defined outside the component so it never causes
 // unnecessary config re-memos.
-function formatLabel(key: string) {
+function formatFacilityLabel(key: string) {
     return (
         <div className="flex items-center gap-1">
             <FacilityIcon facility={key} size={14} />
@@ -62,22 +80,29 @@ export function PowerChart({
     isError,
     hiddenFacilities,
     viewMode,
+    keyOrder,
+    getColor: getColorProp,
+    formatLabel = formatFacilityLabel,
+    timeAxis,
+    height,
+    markerTick,
+    onTickClick,
 }: PowerChartProps) {
-    const getColor = useAssetColorGetter();
+    const getAssetColor = useAssetColorGetter();
+    const getColor = getColorProp ?? getAssetColor;
 
     // Derive visible keys in canonical stack order, excluding hidden facilities
     // and series that are all-zero across the entire data set.
     const visibleKeys = useMemo(() => {
         if (!chartData.length) return [];
-        const keyOrder = KEY_ORDER_BY_CHART_TYPE[
-            chartType
-        ] as readonly string[];
-        return keyOrder.filter(
+        const order: readonly string[] =
+            keyOrder ?? (chartType ? KEY_ORDER_BY_CHART_TYPE[chartType] : []);
+        return order.filter(
             (key) =>
                 !hiddenFacilities.has(key) &&
                 chartData.some((d) => Number(d[key] ?? 0) > 0),
         );
-    }, [chartData, chartType, hiddenFacilities]);
+    }, [chartData, chartType, keyOrder, hiddenFacilities]);
 
     // Build display data containing only visible keys, optionally normalized
     // to percentages. Pre-filtering here means EChartsTimeSeries sees exactly
@@ -117,17 +142,23 @@ export function PowerChart({
             yAxisMin: 0,
             yAxisMax: viewMode === "percent" ? 100 : undefined,
             hideZeroValues: true,
+            height,
         }),
-        [chartType, getColor, viewMode],
+        [chartType, getColor, formatLabel, viewMode, height],
     );
 
-    return (
-        <EChartsTimeSeries
-            data={displayData}
-            config={config}
-            isLoading={isLoading}
-            isError={isError}
-        />
+    const chartProps = {
+        data: displayData,
+        config,
+        isLoading,
+        isError,
+        markerTick,
+        onTickClick,
+    };
+    return timeAxis ? (
+        <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
+    ) : (
+        <EChartsTimeSeries {...chartProps} />
     );
 }
 

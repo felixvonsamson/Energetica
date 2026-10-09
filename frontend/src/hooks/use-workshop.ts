@@ -1,11 +1,12 @@
 /**
  * Hooks for a Workshop Run (#995): entering it, following the session as the
  * moderator advances it, reading the facility catalog and fleet (#998), picking
- * facilities to buy in the Investment phase (#999), and setting prices in a
- * Trading period's price-setting window (#1002).
+ * facilities to buy in the Investment phase (#999), setting prices in a Trading
+ * period's price-setting window (#1002), and reviewing a settled Trading period
+ * (#1007).
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
 type WorkshopSettlement = ApiSchema<"WorkshopSettlementOut">;
+type Season = ApiSchema<"TradingPeriod">["season"];
 
 /** The server's `invalidate` message: the query keys a page should re-read. */
 interface InvalidateMessage {
@@ -352,5 +354,67 @@ export function useExtendPhase() {
         onSuccess: (session) => {
             queryClient.setQueryData(queryKeys.workshop.session, session);
         },
+    });
+}
+
+/**
+ * The prices each completed Trading period ran at for the visitor, oldest
+ * first. Players only.
+ */
+export function useLockedPrices({ enabled = true } = {}) {
+    return useQuery({
+        queryKey: queryKeys.workshop.lockedPrices,
+        queryFn: workshopApi.getLockedPrices,
+        enabled,
+    });
+}
+
+/**
+ * A settled Trading period's simulated days and settlement points. Fails with a
+ * 404 until the period is settled, and is read again when the session changes.
+ */
+export function useWorkshopPeriod(round: number, season: Season) {
+    return useQuery({
+        queryKey: queryKeys.workshop.period(round, season),
+        queryFn: () => workshopApi.getPeriod(round, season),
+        retry: false,
+    });
+}
+
+/**
+ * Every settlement point of one simulated day of a settled Trading period.
+ * While another day loads, the last one stays on screen.
+ */
+export function useWorkshopPeriodDay(
+    round: number,
+    season: Season,
+    day: number,
+    { enabled = true } = {},
+) {
+    return useQuery({
+        queryKey: queryKeys.workshop.periodDay(round, season, day),
+        queryFn: () => workshopApi.getPeriodDay(round, season, day),
+        enabled,
+        staleTime: Infinity,
+        placeholderData: keepPreviousData,
+    });
+}
+
+/**
+ * The merit order at one settlement point of a settled Trading period. While
+ * the next point loads, the last one stays on screen, so scrubbing does not
+ * flicker.
+ */
+export function useWorkshopMeritOrder(
+    round: number,
+    season: Season,
+    point: number | null,
+) {
+    return useQuery({
+        queryKey: queryKeys.workshop.meritOrder(round, season, point ?? -1),
+        queryFn: () => workshopApi.getMeritOrder(round, season, point ?? 0),
+        enabled: point !== null,
+        staleTime: Infinity,
+        placeholderData: keepPreviousData,
     });
 }

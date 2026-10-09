@@ -1084,3 +1084,55 @@ def test_instance_app_starts_workshop_without_the_persistent_world(session_path:
 
     assert output["freeplay"] == []
     assert SESSION_URL in output["paths"]
+
+
+# --- Trading-period review (#1007) ----------------------------------------------------------
+
+PERIOD_URL = "/api/v1/workshop/periods/1/spring"
+
+
+def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+    assert client.get(PERIOD_URL).status_code == 404
+    authenticate(client, facilitator)
+    _advance(client)
+
+    for account in (alice, facilitator):
+        authenticate(client, account)
+        period = client.get(PERIOD_URL).json()
+        assert (period["clearings_per_day"], len(period["days"])) == (24, 1)
+
+        day = client.get(f"{PERIOD_URL}/days/0").json()
+        assert (day["first_point"], len(day["price"])) == (0, 24)
+        [pool] = day["pools"]
+        assert (pool["player_id"], pool["facility"]) == (alice, "gas_burner")
+        assert len(pool["generation"]) == 24
+        assert [tier["tier"] for tier in day["tiers"]][0] == "must_serve"
+
+        order = client.get(f"{PERIOD_URL}/points/0/merit-order").json()
+        assert order["offers"]["player_id"] == [alice]
+        assert order["offers"]["price"] == [80.0]
+        # The must-serve tier bids at any price, which JSON carries as null.
+        assert order["demands"]["facility"][0] == "must_serve"
+        assert order["demands"]["price"][0] is None
+
+
+def test_a_period_has_only_the_days_and_points_it_simulated(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, alice)
+
+    assert client.get(f"{PERIOD_URL}/days/1").status_code == 404
+    assert client.get(f"{PERIOD_URL}/points/24/merit-order").status_code == 404
+    assert client.get("/api/v1/workshop/periods/1/summer").status_code == 404
+
+
+def test_reviewing_a_period_needs_entry(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, _ = _trading(session_path, clock)
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, make_account("stranger"))
+
+    assert client.get(PERIOD_URL).status_code == 403
