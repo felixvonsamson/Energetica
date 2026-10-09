@@ -28,10 +28,11 @@ from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
-from energetica.workshop.facilities import FacilityId
+from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
-from energetica.workshop.session import TradingPeriod, WorkshopSession
+from energetica.workshop.session import RoundLevers, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 
 from . import _socketio_helpers as socket
@@ -57,6 +58,7 @@ SELECTION_URL = "/api/v1/workshop/selection"
 PRICES_URL = "/api/v1/workshop/prices"
 LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
 BALANCE_SHEET_URL = "/api/v1/workshop/rounds/{round}/balance-sheet"
+FUEL_URL = "/api/v1/workshop/fuel"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -799,6 +801,139 @@ def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
     assert client.get(LOCKED_PRICES_URL).status_code == 403
 
 
+# --- fuel (#1009) ---------------------------------------------------------------------------
+
+
+def _fuel_trading(session_path: Path, clock: _Clock, *, manual: bool = True) -> tuple[TestClient, int, int]:
+    """An app in Round 1's spring price-setting window, with Alice owning six gas burners, enough to meet demand.
+    Fuel procurement is manual unless ``manual`` is false.
+
+    Returns a client left signed in as Alice, and the facilitator's and Alice's account ids.
+    """
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    session: WorkshopSession = app.state.workshop_session
+    session.network.members[alice].owned_facilities.extend(
+        [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)] * 6
+    )
+    session.set_levers(RoundLevers(fuel_procurement="manual" if manual else "automatic"))
+    _advance(client)
+    authenticate(client, alice)
+    return client, facilitator, alice
+
+
+def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock: _Clock) -> None:
+    client, _, alice = _fuel_trading(session_path, clock)
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    need = season_need(Fuel.GAS, session.network.members[alice].owned_facilities, current_round=1)
+
+    response = client.get(FUEL_URL)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "procurement": "manual",
+        "fuels": [
+            {
+                "fuel": "gas",
+                "name": "Gas",
+                "price": session.fuel_prices[Fuel.GAS].price,
+                "change": None,
+                "shocked": False,
+                "stock": 0.0,
+                "season_need": pytest.approx(need),
+                "stockpile_limit": pytest.approx(3 * need),
+                "order": pytest.approx(need),
+            }
+        ],
+    }
+
+
+def test_under_automatic_procurement_a_player_sees_prices_but_orders_nothing(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _fuel_trading(session_path, clock, manual=False)
+
+    body = client.get(FUEL_URL).json()
+
+    assert body["procurement"] == "automatic"
+    assert [(line["fuel"], line["order"]) for line in body["fuels"]] == [("gas", None)]
+
+
+def test_a_player_sets_their_order_and_it_is_capped_by_the_stockpile_limit(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _fuel_trading(session_path, clock)
+
+    response = client.put(f"{FUEL_URL}/gas", json={"quantity": 1_000.0})
+    capped = client.put(f"{FUEL_URL}/gas", json={"quantity": 1e15})
+
+    assert response.status_code == 200
+    assert response.json()["fuels"][0]["order"] == 1_000.0
+    line = capped.json()["fuels"][0]
+    assert line["order"] == pytest.approx(line["stockpile_limit"])
+    assert client.get(FUEL_URL).json() == capped.json()
+
+
+@pytest.mark.parametrize(
+    ("manual", "fuel", "error"),
+    [(False, "gas", "WORKSHOP_FUEL_NOT_MANUAL"), (True, "coal", "WORKSHOP_FUEL_NOT_BURNED")],
+    ids=["automatic procurement", "a fuel the player does not burn"],
+)
+def test_an_order_the_rules_forbid_is_an_error(
+    session_path: Path, clock: _Clock, manual: bool, fuel: str, error: str
+) -> None:
+    client, _, _ = _fuel_trading(session_path, clock, manual=manual)
+
+    response = client.put(f"{FUEL_URL}/{fuel}", json={"quantity": 100.0})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == error
+
+
+def test_ordering_once_the_window_runs_out_is_an_error(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _fuel_trading(session_path, clock)
+    clock.tick(minutes=5)
+
+    response = client.put(f"{FUEL_URL}/gas", json={"quantity": 100.0})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_PRICE_SETTING_CLOSED"
+
+
+@pytest.mark.parametrize("body", [{"quantity": -1.0}, {"quantity": None}, {}], ids=["negative", "null", "missing"])
+def test_an_order_must_be_a_quantity(session_path: Path, clock: _Clock, body: dict) -> None:
+    client, _, _ = _fuel_trading(session_path, clock)
+
+    assert client.put(f"{FUEL_URL}/gas", json=body).status_code == 422
+    assert client.put(f"{FUEL_URL}/wood", json={"quantity": 1.0}).status_code == 422
+
+
+def test_the_facilitator_has_no_fuel(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, _ = _fuel_trading(session_path, clock)
+    authenticate(client, facilitator)
+
+    assert client.get(FUEL_URL).status_code == 403
+
+
+def test_the_fuel_paid_for_shows_on_the_balance_sheet(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _fuel_trading(session_path, clock)
+    # As much as the stockpile limit allows, more than the season burns, so some is left over.
+    line = client.put(f"{FUEL_URL}/gas", json={"quantity": 1e15}).json()["fuels"][0]
+    quantity, price = line["order"], line["price"]
+
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, alice)
+
+    spring = client.get(BALANCE_SHEET_URL.format(round=1)).json()["seasons"][0]["sheet"]
+    assert spring["fuel"] == [
+        {
+            "fuel": "gas",
+            "name": "Gas",
+            "quantity": quantity,
+            "price": pytest.approx(price),
+            "cost": pytest.approx(quantity * price),
+        }
+    ]
+    assert spring["fuel_total"] == pytest.approx(quantity * price)
+    assert client.get(FUEL_URL).json()["fuels"][0]["stock"] > 0
+
+
 # --- round format: full-season mode, clearings per day and storage (#1004) ------------------
 
 LEVERS_URL = "/api/v1/workshop/levers"
@@ -854,7 +989,12 @@ def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(ses
 
 def _levers(**round_format: object) -> dict:
     """The default levers, with the Round format given."""
-    return {"investment_minutes": 8, "price_setting_minutes": 5, "round_format": round_format}
+    return {
+        "investment_minutes": 8,
+        "price_setting_minutes": 5,
+        "round_format": round_format,
+        "fuel_procurement": "automatic",
+    }
 
 
 def test_the_facilitator_reads_and_changes_the_levers(session_path: Path) -> None:

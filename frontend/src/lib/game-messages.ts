@@ -61,6 +61,8 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
         "Prices are locked. Wait for the next Trading period.",
     WORKSHOP_PRICE_BELOW_FLOOR: "This price is below the price floor.",
     WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
+    WORKSHOP_FUEL_NOT_MANUAL: "Fuel is bought for you this season.",
+    WORKSHOP_FUEL_NOT_BURNED: "None of your facilities burn this fuel.",
     WORKSHOP_SETTLEMENT_RUNNING:
         "The Trading period is still being simulated. Advance once it has finished.",
 

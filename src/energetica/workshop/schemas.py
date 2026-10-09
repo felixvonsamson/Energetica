@@ -8,8 +8,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from energetica.workshop.facilities import FacilityId, WorkshopFacility
+from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
+from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
@@ -158,6 +159,48 @@ class WorkshopPricesOut(PriceSheet):
     """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
 
     price_floor: float = Field(description="The lowest price a player can set, per MWh")
+
+
+class WorkshopFuelLineOut(BaseModel):
+    """One fuel the calling player's operating facilities burn, in the current Trading period (#1009). Quantities
+    are in kg.
+    """
+
+    fuel: Fuel
+    name: str
+    price: float = Field(description="The season's price per kg")
+    change: float | None = Field(
+        description="The change since last season, as a share of last season's price, such as 0.15 for +15%. Null "
+        "in the first season"
+    )
+    shocked: bool = Field(description="Whether a price shock landed this season")
+    stock: float = Field(description="What the player holds")
+    season_need: float = Field(
+        description="What the player's facilities burning it burn running at full output for the whole season"
+    )
+    stockpile_limit: float = Field(description="The most the player's stock may hold, counting what they order")
+    order: float | None = Field(
+        description="What the player buys when the price-setting window closes. Null under automatic procurement"
+    )
+
+
+class WorkshopFuelOut(BaseModel):
+    """The fuel the calling player buys this season (#1009)."""
+
+    procurement: FuelProcurement | None = Field(
+        description="How players get fuel in the current Trading period, or null before the first one: billed for "
+        "what they burned, or buying it themselves in the price-setting window"
+    )
+    fuels: list[WorkshopFuelLineOut] = Field(
+        description="Each fuel the player's operating facilities burn, in a fixed order. Empty before the first "
+        "Trading period"
+    )
+
+
+class WorkshopFuelOrderIn(BaseModel):
+    """How much of one fuel to buy, in kg."""
+
+    quantity: float = Field(ge=0, allow_inf_nan=False, description="In kg. Cut down to fit the stockpile limit")
 
 
 def _finite_or_none(values: Iterable[float]) -> list[float | None]:

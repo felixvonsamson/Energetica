@@ -22,7 +22,8 @@ earned. A player's facilities of one type run as one pool, its power scaled by h
 Renewable facilities (wind, solar and hydro) produce whatever the weather gives them and offer it as
 must-run power: what does not sell is dumped at :data:`~energetica.workshop.prices.DUMP_COST` per MWh
 and still counts as generated. Controllable facilities produce only what they sell. There are no
-ramping limits for now (#1151), and no fuel stock limits generation yet (#1010).
+ramping limits for now (#1151), and no fuel stock limits generation yet (#1010). The engine counts the fuel
+each facility type burns, but the session pays for fuel when it settles the period (#1009).
 
 The weather is ``sim.renewables`` at one fixed position, since Workshop has no map, with a random seed
 per Run. Only the market settlement is scaled. O&M is already one Trading period's share, and stored
@@ -52,7 +53,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
 from energetica.sim.dispatch import fuel_power_limit, max_output, storage_power_limit
-from energetica.sim.fuel_and_pollution import emissions_produced
+from energetica.sim.fuel_and_pollution import emissions_produced, fuel_burned
 from energetica.sim.market import (
     MarketClearing,
     MarketEntry,
@@ -76,6 +77,7 @@ from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, sett
 from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
+from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
 from energetica.workshop.prices import DUMP_COST, PriceSheet, is_storage
 from energetica.workshop.round_format import RoundFormat
@@ -177,6 +179,8 @@ class FacilityPerformance(BaseModel):
         description="The part of the O&M that scales with use, at full use. What was charged is this times the "
         "capacity factor",
     )
+    # Zero for a result saved before fuel was counted (#1009).
+    fuel_burned: float = Field(default=0.0, description="Fuel burned generating, in kg. Zero if it burns none")
 
     @property
     def net(self) -> float:
@@ -192,6 +196,10 @@ class TradingResult(BaseModel):
     round: int = Field(ge=1)
     season: Season
     facilities: dict[FacilityId, FacilityPerformance]
+    # Empty for a result saved before fuel was paid for (#1009).
+    fuel: list[FuelPurchase] = Field(
+        default=[], description="The fuel the player paid for in the period, which the session adds when it settles it"
+    )
 
     @property
     def revenue(self) -> float:
@@ -199,9 +207,14 @@ class TradingResult(BaseModel):
         return sum(performance.revenue for performance in self.facilities.values())
 
     @property
+    def fuel_cost(self) -> float:
+        """What the fuel the player paid for in the period cost."""
+        return sum(purchase.cost for purchase in self.fuel)
+
+    @property
     def net(self) -> float:
         """What the period added to the player's money."""
-        return sum(performance.net for performance in self.facilities.values())
+        return sum(performance.net for performance in self.facilities.values()) - self.fuel_cost
 
 
 @dataclass(frozen=True, slots=True)
@@ -245,6 +258,7 @@ class _Pool:
     dump_cost: float = 0.0
     purchase_cost: float = 0.0
     emissions: float = 0.0
+    fuel_burned: float = 0.0
     # Worked out once from the catalog, since the pool places an offer at every clearing.
     name: str = field(init=False)
     power: float = field(init=False)
@@ -294,6 +308,8 @@ class _Pool:
         else:
             pollution = CATALOG[self.facility].base_pollution * self.power / 1_000_000 * hours
             self.emissions += emissions_produced(pollution, produced, self.power)
+            burn = FUEL_USE.get(self.facility, 0.0) * self.power / 1_000_000 * hours
+            self.fuel_burned += fuel_burned(burn, produced, self.power)
 
     def record_purchase(self, bought: float, cost: float, seconds_per_tick: float) -> None:
         """Record what this clearing bought of the pool's bid to charge."""
@@ -328,6 +344,7 @@ class _Pool:
             count=len(self.owned),
             om_fixed=om_at_full_use * facility.om_fixed_share,
             om_variable_full=om_at_full_use * (1 - facility.om_fixed_share),
+            fuel_burned=self.fuel_burned * scale,
         )
 
 

@@ -5,8 +5,9 @@ from __future__ import annotations
 import pytest
 
 from energetica.workshop.balance_sheet import balance_sheet, period_sheet, season_status
-from energetica.workshop.facilities import FacilityId
+from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.fuel import FuelPurchase
 from energetica.workshop.operating_profit import round_operating_profit
 from energetica.workshop.seasons import Season
 from energetica.workshop.trading import FacilityPerformance, TradingResult
@@ -99,6 +100,47 @@ def test_the_round_total_adds_up_its_seasons_and_matches_the_operating_profit_ac
     gas = next(line for line in sheet.total.om if line.facility == GAS)
     # Usage over the Round is the variable part charged over the variable part at full use.
     assert gas.usage == pytest.approx((1_600.0 + 800.0) / 6_400.0)
+
+
+def _with_fuel(result: TradingResult, *purchases: FuelPurchase) -> TradingResult:
+    return result.model_copy(update={"fuel": list(purchases)})
+
+
+def test_fuel_has_a_line_per_fuel_and_comes_off_the_operating_income() -> None:
+    spring = _with_fuel(
+        SPRING,
+        FuelPurchase(fuel=Fuel.URANIUM, quantity=2.0, price=1_000.0),
+        FuelPurchase(fuel=Fuel.GAS, quantity=10_000.0, price=0.5),
+    )
+
+    sheet = period_sheet([spring])
+
+    assert [(line.fuel, line.name, line.quantity, line.price, line.cost) for line in sheet.fuel] == [
+        (Fuel.GAS, "Gas", 10_000.0, 0.5, 5_000.0),
+        (Fuel.URANIUM, "Uranium", 2.0, 1_000.0, 2_000.0),
+    ]
+    assert sheet.fuel_total == pytest.approx(7_000.0)
+    assert sheet.operating_income == pytest.approx(period_sheet([SPRING]).operating_income - 7_000.0)
+
+
+def test_the_round_totals_fuel_at_its_average_price() -> None:
+    spring = _with_fuel(SPRING, FuelPurchase(fuel=Fuel.GAS, quantity=10_000.0, price=0.5))
+    summer = _with_fuel(SUMMER, FuelPurchase(fuel=Fuel.GAS, quantity=30_000.0, price=0.7))
+
+    [line] = period_sheet([spring, summer]).fuel
+
+    assert line.quantity == pytest.approx(40_000.0)
+    assert line.cost == pytest.approx(5_000.0 + 21_000.0)
+    assert line.quantity * line.price == pytest.approx(line.cost)
+    sheet = balance_sheet(1, results=[spring, summer], purchases=[], settled=(1, "summer"), blackouts=[])
+    assert sheet.total is not None
+    assert sheet.total.operating_income == pytest.approx(round_operating_profit([spring, summer], 1))
+
+
+def test_a_season_with_no_fuel_has_no_fuel_lines() -> None:
+    sheet = period_sheet([SPRING])
+
+    assert (sheet.fuel, sheet.fuel_total) == ([], 0.0)
 
 
 def test_seasons_fill_in_as_they_are_settled() -> None:

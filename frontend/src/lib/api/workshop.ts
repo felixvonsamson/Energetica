@@ -1,12 +1,13 @@
 /**
- * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008).
- * Served only by a Workshop Run's backend.
+ * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
+ * #1009). Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
+type Fuel = ApiSchema<"Fuel">;
 type PriceSide = "sell" | "buy";
 type Season = ApiSchema<"TradingPeriod">["season"];
 
@@ -124,7 +125,27 @@ export const workshopApi = {
             "/workshop/prices/locked",
         ),
 
-    /** A settled Trading period's simulated days and settlement points. */
+    /**
+     * The fuel the visitor's facilities burn: this season's prices, their
+     * stock, and under manual procurement what they buy when the price-setting
+     * window closes. Players only.
+     */
+    getFuel: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/fuel", "get">>(
+            "/workshop/fuel",
+        ),
+
+    /**
+     * Set how much of a fuel the visitor buys when the price-setting window
+     * closes, in kg. The server cuts it down to fit the stockpile limit.
+     * Returns all the visitor's fuel.
+     */
+    setFuelOrder: ({ fuel, quantity }: { fuel: Fuel; quantity: number }) =>
+        apiClient.put<ApiResponse<"/api/v1/workshop/fuel/{fuel}", "put">>(
+            `/workshop/fuel/${fuel}`,
+            { quantity },
+        ),
+
     /**
      * The visitor's balance sheet for a Round (#1008): what each settled season
      * earned and cost, and the Round's investments and net profit so far.
@@ -138,6 +159,7 @@ export const workshopApi = {
             >
         >(`/workshop/rounds/${round}/balance-sheet`),
 
+    /** A settled Trading period's simulated days and settlement points. */
     getPeriod: (round: number, season: Season) =>
         apiClient.get<
             ApiResponse<

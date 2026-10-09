@@ -274,6 +274,69 @@ export function useSetPrice(
     });
 }
 
+/**
+ * The fuel the visitor's facilities burn: this season's prices, their stock,
+ * and what they buy. Players only.
+ */
+export function useWorkshopFuel() {
+    return useQuery({
+        queryKey: queryKeys.workshop.fuel,
+        queryFn: workshopApi.getFuel,
+    });
+}
+
+/**
+ * Set how much `fuel` the visitor buys, in kg. Like {@link useSetPrice}, the new
+ * quantity shows straight away, changes are sent one at a time, and only this
+ * fuel's order is taken from the answer, which is the quantity after the server
+ * cut it down to fit the stockpile limit.
+ */
+export function useSetFuelOrder(fuel: ApiSchema<"Fuel">) {
+    return useMutation({
+        mutationFn: (quantity: number) =>
+            workshopApi.setFuelOrder({ fuel, quantity }),
+        scope: { id: `workshop-fuel-${fuel}` },
+        onMutate: (quantity) => {
+            queryClient.setQueryData(
+                queryKeys.workshop.fuel,
+                (current: ApiSchema<"WorkshopFuelOut"> | undefined) =>
+                    current && withFuelOrder(current, fuel, quantity),
+            );
+        },
+        onSuccess: (answer) => {
+            const order = answer.fuels.find(
+                (line) => line.fuel === fuel,
+            )?.order;
+            if (order === undefined || order === null) return;
+            queryClient.setQueryData(
+                queryKeys.workshop.fuel,
+                (current: ApiSchema<"WorkshopFuelOut"> | undefined) =>
+                    current && withFuelOrder(current, fuel, order),
+            );
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+            // Undo the quantity shown, and re-read whether the window is open.
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        },
+    });
+}
+
+function withFuelOrder(
+    current: ApiSchema<"WorkshopFuelOut">,
+    fuel: ApiSchema<"Fuel">,
+    order: number,
+): ApiSchema<"WorkshopFuelOut"> {
+    return {
+        ...current,
+        fuels: current.fuels.map((line) =>
+            line.fuel === fuel ? { ...line, order } : line,
+        ),
+    };
+}
+
 function withPrice(
     prices: ApiSchema<"WorkshopPricesOut">,
     facility: ApiSchema<"FacilityId">,
