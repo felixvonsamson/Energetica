@@ -8,12 +8,13 @@
  * amount, and the rows indented under a line break it down. The sheet fits its
  * page rather than scrolling sideways: where there is no room for every
  * season's volume and rate, only the season picked in the waterfall shows them.
- * A season not settled yet shows "–"; one a blackout skipped shows a blackout
- * mark. The colours belong to the sheet, not the theme, so it reads as paper in
- * dark mode too.
+ * A season not settled yet shows "–". As on the timeline, the season the grid
+ * went down in is marked with a red zap-off icon, and the seasons it skipped
+ * are struck through and read "skipped". The colours belong to the sheet, not
+ * the theme, so it reads as paper in dark mode too.
  */
 
-import { Zap } from "lucide-react";
+import { ZapOff } from "lucide-react";
 import {
     type CSSProperties,
     type ReactNode,
@@ -288,10 +289,11 @@ function PeriodTab({
     );
 }
 
+/** The season the grid went down in, marked as on the timeline. */
 function BlackoutMark() {
     return (
-        <Zap
-            className="size-3.5 text-amber-600"
+        <ZapOff
+            className="size-3.5 text-(--bs-negative)"
             aria-label="Blackout"
             role="img"
         />
@@ -406,11 +408,17 @@ function Ledger({
                 <span
                     className={cn(
                         "inline-flex items-center gap-1",
-                        s.status === "skipped" && "text-(--bs-muted)",
+                        s.status === "skipped" &&
+                            "text-(--bs-muted) line-through",
                     )}
+                    title={
+                        s.status === "skipped"
+                            ? "Not played: a blackout ended the Round"
+                            : undefined
+                    }
                 >
                     {SEASON_LABELS[s.season]}
-                    {(s.blackout || s.status === "skipped") && <BlackoutMark />}
+                    {s.blackout && <BlackoutMark />}
                 </span>
             ),
             span: expanded(s.season) ? 3 : 1,
@@ -678,8 +686,11 @@ function CellValue({
         }
         if (season.status === "skipped" || !season.sheet) {
             return col.field === "amount" && row.level === 0 ? (
-                <span title="Not played: a blackout ended the Round">
-                    <Zap className="inline size-3.5 text-amber-600" />
+                <span
+                    className="text-sm text-(--bs-muted) italic"
+                    title="Not played: a blackout ended the Round"
+                >
+                    skipped
                 </span>
             ) : null;
         }
