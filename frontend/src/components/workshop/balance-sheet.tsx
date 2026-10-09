@@ -25,6 +25,7 @@ import {
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { CoinIcon } from "@/components/ui/coin-icon";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { cn } from "@/lib/utils";
 import {
     type BalanceSheet,
@@ -60,7 +61,12 @@ const FOCUS =
 
 export function BalanceSheetView({ sheet }: { sheet: BalanceSheet }) {
     const [period, setPeriod] = useState<Period>("round");
-    const [detailed, setDetailed] = useState(true);
+    // Simple by default. The player's last choice is kept in this browser, so
+    // it carries over from one Round's sheet to the next and across visits.
+    const [detailed, setDetailed] = useLocalStorage(
+        "workshop-balance-sheet-detailed",
+        false,
+    );
     const closed = sheet.seasons.every((s) => s.status !== "upcoming");
 
     return (
@@ -100,7 +106,7 @@ export function BalanceSheetView({ sheet }: { sheet: BalanceSheet }) {
                         </div>
                         <DetailedToggle
                             on={detailed}
-                            onChange={() => setDetailed((on) => !on)}
+                            onChange={() => setDetailed(!detailed)}
                         />
                     </div>
                     <Waterfall
