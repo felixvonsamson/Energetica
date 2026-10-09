@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 from energetica.workshop.trading import Bidder, TradingResult
 
@@ -47,6 +47,9 @@ class WorkshopPlayer:
     money: float = WORKSHOP_STARTING_BUDGET
 
     owned_facilities: list[OwnedFacility] = field(default_factory=list)
+
+    # Every facility the player bought, oldest first, including those since retired (#1008).
+    purchases: list[Purchase] = field(default_factory=list)
 
     # The facilities picked in the open Investment phase, bought together when it closes (#999). One
     # entry per copy, in the order they were picked.

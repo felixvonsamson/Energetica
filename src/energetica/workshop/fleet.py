@@ -26,6 +26,19 @@ class OwnedFacility(BaseModel):
     built_round: int
 
 
+class Purchase(BaseModel):
+    """One facility a player bought, and what they paid for it (#1008).
+
+    Kept after the facility retires, so a past Round's investments can still be shown.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    facility: FacilityId
+    round: int
+    price: float
+
+
 class LifetimeLeft(NamedTuple):
     """How long an owned facility has left."""
 

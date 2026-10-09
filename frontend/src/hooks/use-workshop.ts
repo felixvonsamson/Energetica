@@ -370,6 +370,18 @@ export function useLockedPrices({ enabled = true } = {}) {
 }
 
 /**
+ * The player's balance sheet for a Round (#1008). Read again whenever the
+ * session changes, so it fills in as the Round's seasons are settled.
+ */
+export function useWorkshopBalanceSheet(round: number) {
+    return useQuery({
+        queryKey: queryKeys.workshop.balanceSheet(round),
+        queryFn: () => workshopApi.getBalanceSheet(round),
+        retry: false,
+    });
+}
+
+/**
  * A settled Trading period's simulated days and settlement points. Fails with a
  * 404 until the period is settled, and is read again when the session changes.
  */

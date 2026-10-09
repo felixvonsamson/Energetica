@@ -16,7 +16,7 @@ from energetica.workshop.player import WorkshopPlayer
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
     from energetica.workshop.facilities import FacilityId
-    from energetica.workshop.fleet import OwnedFacility
+    from energetica.workshop.fleet import OwnedFacility, Purchase
     from energetica.workshop.prices import LockedPrices, PriceSheet
     from energetica.workshop.trading import TradingResult
 
@@ -63,6 +63,7 @@ class WorkshopNetwork:
         username: str,
         money: float,
         owned_facilities: list[OwnedFacility],
+        purchases: list[Purchase],
         selection: list[FacilityId],
         stored_energy: dict[FacilityId, float],
         prices: PriceSheet,
@@ -80,6 +81,7 @@ class WorkshopNetwork:
                 network=self,
                 money=money,
                 owned_facilities=owned_facilities,
+                purchases=purchases,
                 selection=selection,
                 stored_energy=stored_energy,
                 prices=prices,

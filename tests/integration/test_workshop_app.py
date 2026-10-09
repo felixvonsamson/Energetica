@@ -56,6 +56,7 @@ FLEET_URL = "/api/v1/workshop/fleet"
 SELECTION_URL = "/api/v1/workshop/selection"
 PRICES_URL = "/api/v1/workshop/prices"
 LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
+BALANCE_SHEET_URL = "/api/v1/workshop/rounds/{round}/balance-sheet"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -801,6 +802,54 @@ def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
 # --- round format: full-season mode, clearings per day and storage (#1004) ------------------
 
 LEVERS_URL = "/api/v1/workshop/levers"
+
+
+# --- balance sheet (#1008) ------------------------------------------------------------------
+
+
+def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_path: Path, clock: _Clock) -> None:
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    authenticate(client, facilitator)
+    _advance(client)
+
+    authenticate(client, alice)
+    before = client.get(BALANCE_SHEET_URL.format(round=1)).json()
+    assert [season["status"] for season in before["seasons"]] == ["upcoming"] * 4
+    assert before["total"] is None
+    assert before["investments"] == [{"facility": "gas_burner", "name": "Gas burner", "count": 1, "cost": 90_000.0}]
+    assert before["net_profit"] == pytest.approx(-90_000.0)
+
+    authenticate(client, facilitator)
+    _advance(client)
+
+    authenticate(client, alice)
+    after = client.get(BALANCE_SHEET_URL.format(round=1)).json()
+    [result] = app.state.workshop_session.player(alice).trading_results
+    # One gas burner cannot meet the must-serve demand, so the grid goes down and ends the Round.
+    assert [(season["status"], season["blackout"]) for season in after["seasons"]] == [
+        ("settled", True),
+        ("skipped", False),
+        ("skipped", False),
+        ("skipped", False),
+    ]
+    assert after["total"]["operating_income"] == pytest.approx(result.net)
+    assert after["net_profit"] == pytest.approx(result.net - 90_000.0)
+
+
+def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(session_path: Path) -> None:
+    client = _client(session_path)
+    alice = _player(client, "alice")
+    client.post(ENTER_URL)
+    facilitator = _facilitator(client)
+
+    authenticate(client, alice)
+    assert client.get(BALANCE_SHEET_URL.format(round=1)).status_code == 200
+    assert client.get(BALANCE_SHEET_URL.format(round=0)).status_code == 404
+    assert client.get(BALANCE_SHEET_URL.format(round=99)).status_code == 404
+    authenticate(client, facilitator)
+    assert client.get(BALANCE_SHEET_URL.format(round=1)).status_code == 403
 
 
 def _levers(**round_format: object) -> dict:

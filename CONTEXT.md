@@ -198,3 +198,10 @@ when it is bought, not when it is burned, since its price changes over time. Fac
 carbon tax, the floor top-up and blackout resets are left out. Summed over the session, it is the first
 term of the final score.
 _Avoid_: revenue, gross proceeds, net.
+
+**Balance sheet** (#1008):
+A player's statement for one Round, shown on the Round overview: a column per season and one for the
+Round. Market income, dumping cost and O&M add up to the season's operating income; the Round column
+then takes off the Round's investments to give its **net profit**. A season fills in once it is settled.
+Market income already has the cost of the energy storage bought to charge taken off.
+_Avoid_: recap (the Recap is the narrative page between Rounds), income statement.

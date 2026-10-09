@@ -13,7 +13,7 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
-from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
@@ -645,6 +645,19 @@ def test_a_purchase_survives_a_restart(path: Path, clock: _Clock) -> None:
     assert alice.selection == []
 
 
+def test_each_purchase_is_kept_with_its_round_and_price_and_survives_a_restart(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    session.buy_selections()
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    gas = Purchase(facility=FacilityId.GAS_BURNER, round=1, price=90_000)
+    assert reopened.network.members[1].purchases == [gas, gas]
+
+
 def test_a_session_saved_before_selections_existed_still_opens(path: Path) -> None:
     path.write_text(
         '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
@@ -655,6 +668,7 @@ def test_a_session_saved_before_selections_existed_still_opens(path: Path) -> No
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert reopened.network.members[1].selection == []
+    assert reopened.network.members[1].purchases == []
 
 
 def test_a_failed_save_undoes_the_selection_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:

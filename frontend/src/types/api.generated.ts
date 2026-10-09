@@ -2284,6 +2284,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/rounds/{round_number}/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Balance Sheet
+         * @description The calling player's balance sheet for a Round: what each settled season earned and cost, and the Round's
+         *     investments and net profit so far.
+         */
+        get: operations["get_balance_sheet_api_v1_workshop_rounds__round_number__balance_sheet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4882,6 +4903,33 @@ export interface components {
             password: string;
         };
         /**
+         * BalanceSheet
+         * @description A player's balance sheet for one Round.
+         */
+        BalanceSheet: {
+            /** Round */
+            round: number;
+            /**
+             * Seasons
+             * @description One per season, in the order they run
+             */
+            seasons: components["schemas"]["SeasonSheet"][];
+            /** @description The settled seasons added up, or None if none is settled yet */
+            total: components["schemas"]["PeriodSheet"] | null;
+            /**
+             * Investments
+             * @description One line per facility type bought, in catalog order
+             */
+            investments: components["schemas"]["InvestmentLine"][];
+            /** Investment Total */
+            investment_total: number;
+            /**
+             * Net Profit
+             * @description The Round's operating income so far minus its investments
+             */
+            net_profit: number;
+        };
+        /**
          * FacilityCategory
          * @description The groups of #975. A base tier and its upgrade share one.
          * @enum {string}
@@ -4918,6 +4966,19 @@ export interface components {
             round: number;
         };
         /**
+         * InvestmentLine
+         * @description The facilities of one type bought in the Round's Investment phase.
+         */
+        InvestmentLine: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+            /** Cost */
+            cost: number;
+        };
+        /**
          * LockedPrices
          * @description The prices a player's facilities were offered at during one Trading period.
          */
@@ -4942,6 +5003,83 @@ export interface components {
              * @enum {string}
              */
             kind: "not_started";
+        };
+        /**
+         * OmLine
+         * @description The O&M of one facility type over a period.
+         */
+        OmLine: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /**
+             * Count
+             * @description How many facilities of the type were operating
+             */
+            count: number;
+            /**
+             * Om
+             * @description O&M charged: the fixed part plus the variable part
+             */
+            om: number;
+            /**
+             * Fixed
+             * @description The part charged whatever the use
+             */
+            fixed: number;
+            /**
+             * Variable Full
+             * @description The variable part at full use
+             */
+            variable_full: number;
+            /**
+             * Usage
+             * @description Capacity factor, from 0 to 1. The variable part charged is variable_full × usage
+             */
+            usage: number;
+        };
+        /**
+         * PeriodSheet
+         * @description What a player earned and spent running their fleet over a season, or over the Round so far.
+         *
+         *     Energy is in Wh. Average prices are the money divided by the energy.
+         */
+        PeriodSheet: {
+            /** Energy Sold */
+            energy_sold: number;
+            /** Sale Revenue */
+            sale_revenue: number;
+            /**
+             * Energy Bought
+             * @description Energy storage bought to charge
+             */
+            energy_bought: number;
+            /** Purchase Cost */
+            purchase_cost: number;
+            /**
+             * Market Income
+             * @description Sale revenue minus the cost of the energy bought
+             */
+            market_income: number;
+            /**
+             * Energy Dumped
+             * @description Renewable energy that did not sell
+             */
+            energy_dumped: number;
+            /** Dump Cost */
+            dump_cost: number;
+            /**
+             * Om
+             * @description One line per facility type that was operating, in catalog order
+             */
+            om: components["schemas"]["OmLine"][];
+            /** Om Total */
+            om_total: number;
+            /**
+             * Operating Income
+             * @description Market income minus dumping cost and O&M
+             */
+            operating_income: number;
         };
         /**
          * PriceSheet
@@ -5024,6 +5162,30 @@ export interface components {
              */
             price_setting_minutes: number;
             round_format?: components["schemas"]["RoundFormat"];
+        };
+        /**
+         * SeasonSheet
+         * @description One season's column of the balance sheet.
+         */
+        SeasonSheet: {
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Status
+             * @description settled: simulated, with figures. upcoming: not simulated yet. skipped: a blackout earlier in the Round ended it before this season
+             * @enum {string}
+             */
+            status: "settled" | "upcoming" | "skipped";
+            /**
+             * Blackout
+             * @description Whether a blackout ended the Round in this season
+             */
+            blackout: boolean;
+            /** @description The season's figures, if it is settled */
+            sheet: components["schemas"]["PeriodSheet"] | null;
         };
         /**
          * TradingPeriod
@@ -8737,6 +8899,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopMeritOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_balance_sheet_api_v1_workshop_rounds__round_number__balance_sheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheet"];
                 };
             };
             /** @description Validation Error */

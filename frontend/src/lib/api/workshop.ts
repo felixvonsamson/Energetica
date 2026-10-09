@@ -1,6 +1,6 @@
 /**
- * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007). Served
- * only by a Workshop Run's backend.
+ * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008).
+ * Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -125,6 +125,19 @@ export const workshopApi = {
         ),
 
     /** A settled Trading period's simulated days and settlement points. */
+    /**
+     * The visitor's balance sheet for a Round (#1008): what each settled season
+     * earned and cost, and the Round's investments and net profit so far.
+     * Players only.
+     */
+    getBalanceSheet: (round: number) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/rounds/{round_number}/balance-sheet",
+                "get"
+            >
+        >(`/workshop/rounds/${round}/balance-sheet`),
+
     getPeriod: (round: number, season: Season) =>
         apiClient.get<
             ApiResponse<

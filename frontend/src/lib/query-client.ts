@@ -117,6 +117,10 @@ export const queryKeys = {
         // settled period did never changes, so its days and merit orders are read once.
         period: (round: number, season: string) =>
             ["workshop", "session", "periods", round, season] as const,
+        // A player's balance sheet for a Round (#1008). Under the session's key, so it fills in
+        // as each of the Round's Trading periods is settled.
+        balanceSheet: (round: number) =>
+            ["workshop", "session", "balance-sheet", round] as const,
         periodDay: (round: number, season: string, day: number) =>
             ["workshop", "periods", round, season, "days", day] as const,
         meritOrder: (round: number, season: string, point: number) =>
