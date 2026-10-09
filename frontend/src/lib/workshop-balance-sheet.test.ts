@@ -7,6 +7,7 @@ import {
     formatAmount,
     formatRate,
     formatVolume,
+    initialPeriod,
     waterfallScale,
     waterfallSteps,
 } from "./workshop-balance-sheet";
@@ -163,5 +164,29 @@ describe("waterfallSteps", () => {
         const at = waterfallScale(steps);
         expect(at(-125_560)).toBe(0);
         expect(at(392_570)).toBe(100);
+    });
+});
+
+describe("initialPeriod", () => {
+    const settledUpTo = (count: number): BalanceSheet => ({
+        ...SHEET,
+        seasons: SHEET.seasons.map((season, i) => ({
+            ...season,
+            status: i < count ? "settled" : "upcoming",
+            sheet: i < count ? SPRING : null,
+        })),
+    });
+
+    it("opens the active Round on its last settled season", () => {
+        expect(initialPeriod(settledUpTo(3), 1)).toBe("autumn");
+    });
+
+    it("opens the active Round on the Round while nothing is settled", () => {
+        expect(initialPeriod(settledUpTo(0), 1)).toBe("round");
+    });
+
+    it("opens a past Round on the Round", () => {
+        expect(initialPeriod(settledUpTo(4), 2)).toBe("round");
+        expect(initialPeriod(settledUpTo(4), null)).toBe("round");
     });
 });

@@ -13,6 +13,7 @@ import { BalanceSheetView } from "@/components/workshop/balance-sheet";
 import {
     useWorkshopBalanceSheet,
     useWorkshopEntry,
+    useWorkshopSession,
 } from "@/hooks/use-workshop";
 import { ApiClientError } from "@/lib/api-client";
 
@@ -31,8 +32,14 @@ function RoundOverviewPage() {
 function PlayerRoundOverview() {
     const { round } = Route.useParams();
     const sheet = useWorkshopBalanceSheet(Number(round));
+    const { data: session } = useWorkshopSession();
+    const checkpoint = session?.checkpoint;
+    const activeRound =
+        checkpoint && "round" in checkpoint ? checkpoint.round : null;
 
-    if (sheet.isPending) return <Loading />;
+    // The session says which Round is active, which picks the period the
+    // sheet opens on, so it is waited for too.
+    if (sheet.isPending || !session) return <Loading />;
     if (sheet.isError) {
         const noSuchRound =
             sheet.error instanceof ApiClientError && sheet.error.status === 404;
@@ -44,7 +51,14 @@ function PlayerRoundOverview() {
             </TypographyMuted>
         );
     }
-    return <BalanceSheetView sheet={sheet.data} />;
+    // Keyed by Round, so moving to another Round's sheet starts it afresh.
+    return (
+        <BalanceSheetView
+            key={sheet.data.round}
+            sheet={sheet.data}
+            activeRound={activeRound}
+        />
+    );
 }
 
 function Loading() {

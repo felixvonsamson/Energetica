@@ -232,6 +232,23 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
 
 // --- Waterfall ------------------------------------------------------------
 
+/** What the waterfall shows: one season, or the Round as a whole. */
+export type Period = SeasonSheet["season"] | "round";
+
+/**
+ * The period the waterfall opens on. For the Round the session is in, that is
+ * its last settled season, so the newest result is in view. For a past Round,
+ * or one with nothing settled yet, it is the Round as a whole.
+ */
+export function initialPeriod(
+    sheet: BalanceSheet,
+    activeRound: number | null,
+): Period {
+    if (sheet.round !== activeRound) return "round";
+    const settled = sheet.seasons.filter((s) => s.status === "settled");
+    return settled.at(-1)?.season ?? "round";
+}
+
 export interface WaterfallStep {
     label: string;
     /** The change it makes, or the total it shows. Null while pending. */

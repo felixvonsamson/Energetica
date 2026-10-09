@@ -31,17 +31,17 @@ import {
     type BalanceSheet,
     type Row,
     type RowUnit,
+    type Period,
     type SeasonSheet,
     balanceSheetRows,
     formatAmount,
     formatRate,
     formatVolume,
+    initialPeriod,
     waterfallScale,
     waterfallSteps,
 } from "@/lib/workshop-balance-sheet";
 import { SEASON_LABELS, type Season } from "@/lib/workshop-timeline";
-
-type Period = Season | "round";
 
 const SHEET_COLORS = {
     "--bs-muted": "oklch(50% 0.07 145)",
@@ -59,8 +59,21 @@ const SHEET_COLORS = {
 const FOCUS =
     "outline-none focus-visible:ring-[3px] focus-visible:ring-pine-500/50 rounded-sm";
 
-export function BalanceSheetView({ sheet }: { sheet: BalanceSheet }) {
-    const [period, setPeriod] = useState<Period>("round");
+/**
+ * `activeRound` is the Round the session is in, if any. The waterfall opens on
+ * its last settled season, and on the Round as a whole for any other Round.
+ * Give each Round its own `key`, so the period picked does not carry over.
+ */
+export function BalanceSheetView({
+    sheet,
+    activeRound,
+}: {
+    sheet: BalanceSheet;
+    activeRound: number | null;
+}) {
+    const [period, setPeriod] = useState<Period>(() =>
+        initialPeriod(sheet, activeRound),
+    );
     // Simple by default. The player's last choice is kept in this browser, so
     // it carries over from one Round's sheet to the next and across visits.
     const [detailed, setDetailed] = useLocalStorage(
@@ -176,7 +189,8 @@ function Waterfall({
     return (
         <div className="flex flex-col gap-2.5">
             <div
-                role="tablist"
+                role="group"
+                aria-label="Period shown in the chart"
                 className="flex gap-[18px] border-b border-bone-300"
             >
                 {sheet.seasons.map((s) => (
@@ -277,8 +291,7 @@ function PeriodTab({
     return (
         <button
             type="button"
-            role="tab"
-            aria-selected={active}
+            aria-pressed={active}
             disabled={disabled}
             onClick={onClick}
             className={cn(
