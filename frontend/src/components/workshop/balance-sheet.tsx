@@ -36,6 +36,7 @@ import {
     balanceSheetRows,
     formatAmount,
     formatRate,
+    formatFuelVolume,
     formatVolume,
     initialPeriod,
     waterfallScale,
@@ -405,6 +406,7 @@ const FIELD_NAMES: Record<Field, string> = {
 const UNIT_NAMES: Record<RowUnit, string> = {
     energy: "Megawatt hours, at an average price per megawatt hour",
     usage: "Usage in percent, of the full variable cost",
+    fuel: "Tonnes, at an average price per tonne",
 };
 
 /** A period as a column header names it, with a season's blackout state. */
@@ -688,15 +690,26 @@ function RowLabel({
 function UnitLabel({ unit }: { unit: RowUnit }) {
     const coin = <CoinIcon className="size-[13px]" />;
     const times = <span className="opacity-60">×</span>;
-    return unit === "energy" ? (
-        <>
-            MWh {times} {coin}/MWh
-        </>
-    ) : (
-        <>
-            % {times} {coin}
-        </>
-    );
+    switch (unit) {
+        case "energy":
+            return (
+                <>
+                    MWh {times} {coin}/MWh
+                </>
+            );
+        case "fuel":
+            return (
+                <>
+                    t {times} {coin}/t
+                </>
+            );
+        case "usage":
+            return (
+                <>
+                    % {times} {coin}
+                </>
+            );
+    }
 }
 
 function CellValue({
@@ -748,9 +761,11 @@ function CellValue({
         if (value === undefined) return null;
         return (
             <span className="text-[12.5px] font-normal text-(--bs-light)">
-                {col.field === "volume"
-                    ? formatVolume(value)
-                    : formatRate(value)}
+                {col.field !== "volume"
+                    ? formatRate(value)
+                    : row.unit === "fuel"
+                      ? formatFuelVolume(value)
+                      : formatVolume(value)}
             </span>
         );
     }

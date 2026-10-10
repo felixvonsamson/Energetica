@@ -6,6 +6,7 @@ import {
     balanceSheetRows,
     formatAmount,
     formatRate,
+    formatFuelVolume,
     formatVolume,
     initialPeriod,
     waterfallScale,
@@ -41,7 +42,17 @@ const SPRING: PeriodSheet = {
         },
     ],
     om_total: 10_380,
-    operating_income: 374_440,
+    fuel: [
+        {
+            fuel: "coal",
+            name: "Coal",
+            quantity: 8_000,
+            price: 0.5,
+            cost: 4_000,
+        },
+    ],
+    fuel_total: 4_000,
+    operating_income: 370_440,
 };
 
 const SHEET: BalanceSheet = {
@@ -62,7 +73,7 @@ const SHEET: BalanceSheet = {
         },
     ],
     investment_total: 90_000,
-    net_profit: 284_440,
+    net_profit: 280_440,
 };
 
 describe("formats", () => {
@@ -71,6 +82,14 @@ describe("formats", () => {
         expect(formatAmount(-7_750)).toBe("−7'750");
         expect(formatAmount(-2_100_000)).toBe("−2'100k");
         expect(formatAmount(-0.2)).toBe("0");
+    });
+
+    it("writes fuel in tonnes to the nearest kg below 10 t, so a few kg of uranium shows", () => {
+        expect(formatFuelVolume(0.002)).toBe("0.002");
+        expect(formatFuelVolume(2.5)).toBe("2.5");
+        expect(formatFuelVolume(9.9996)).toBe("10");
+        expect(formatFuelVolume(88_058.88)).toBe("88'059");
+        expect(formatFuelVolume(0)).toBe("0");
     });
 
     it("writes volumes whole and rates with one decimal unless whole", () => {
@@ -99,6 +118,7 @@ describe("balanceSheetRows", () => {
             "om-coal_burner-fixed",
             "om-coal_burner-variable",
             "fuel",
+            "fuel-coal",
             "operating",
             "investments",
             "investment-gas_burner",
@@ -124,10 +144,22 @@ describe("balanceSheetRows", () => {
         );
     });
 
+    it("shows each fuel as tonnes times the price per tonne", () => {
+        expect(row("fuel").cell(SPRING).amount).toBe(-4_000);
+        const coal = row("fuel-coal").cell(SPRING);
+        expect(coal).toEqual({ volume: 8, rate: 500, amount: -4_000 });
+        expect(row("fuel-coal").unit).toBe("fuel");
+    });
+
+    it("shows zero for a fuel a season did not buy", () => {
+        const summer = { ...SPRING, fuel: [], fuel_total: 0 };
+        expect(row("fuel-coal").cell(summer)).toEqual({ amount: 0 });
+    });
+
     it("puts investments and net profit in the Round only", () => {
         expect(row("investments").cell(SPRING).amount).toBeNull();
         expect(row("investments").roundAmount).toBe(-90_000);
-        expect(row("net").roundAmount).toBe(284_440);
+        expect(row("net").roundAmount).toBe(280_440);
     });
 });
 
@@ -141,6 +173,11 @@ describe("waterfallSteps", () => {
             "Fuel cost",
             "Operating income",
         ]);
+        expect(steps[3]).toMatchObject({
+            kind: "change",
+            value: -4_000,
+            to: 370_440,
+        });
         expect(steps[2]).toMatchObject({
             from: 392_570 - 7_750,
             to: 392_570 - 7_750 - 10_380,
@@ -148,21 +185,21 @@ describe("waterfallSteps", () => {
         expect(steps[4]).toMatchObject({
             kind: "subtotal",
             from: 0,
-            to: 374_440,
+            to: 370_440,
         });
     });
 
     it("takes the Round on to net profit, and scales a loss below zero", () => {
         const steps = waterfallSteps(SPRING, {
             investment_total: 500_000,
-            net_profit: -125_560,
+            net_profit: -129_560,
         });
         expect(steps.at(-1)).toMatchObject({
             label: "Net profit",
-            to: -125_560,
+            to: -129_560,
         });
         const at = waterfallScale(steps);
-        expect(at(-125_560)).toBe(0);
+        expect(at(-129_560)).toBe(0);
         expect(at(392_570)).toBe(100);
     });
 });

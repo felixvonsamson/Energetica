@@ -4,7 +4,7 @@ Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session, extending its running phase and changing the levers are the
 facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
-and prices (#1002) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
+and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
 player's own.
 """
@@ -22,7 +22,8 @@ from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
-from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -30,6 +31,9 @@ from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
     WorkshopFacilityOut,
+    WorkshopFuelLineOut,
+    WorkshopFuelOrderIn,
+    WorkshopFuelOut,
     WorkshopMemberOut,
     WorkshopMeritOrderOut,
     WorkshopOwnedFacilityOut,
@@ -47,6 +51,9 @@ from energetica.workshop.schemas import (
 )
 from energetica.workshop.session import (
     FacilityNotOfferedError,
+    FuelNotBurnedError,
+    FuelNotManualError,
+    InvalidFuelQuantityError,
     InvestmentClosedError,
     NoPhaseRunningError,
     NotEnoughMoneyError,
@@ -315,6 +322,59 @@ def get_locked_prices(player: Player) -> list[LockedPrices]:
     in which they had nothing operating is left out.
     """
     return player.locked_prices
+
+
+def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelOut:
+    needs = session.fuel_needs(player, session.current_round())
+    lines = []
+    for fuel in Fuel:
+        price = session.fuel_prices.get(fuel)
+        need = needs.get(fuel)
+        if need is None or price is None:
+            continue
+        lines.append(
+            WorkshopFuelLineOut(
+                fuel=fuel,
+                name=FUEL_NAMES[fuel],
+                price=price.price,
+                change=price.change,
+                shocked=price.shocked,
+                stock=player.fuel_stock.get(fuel, 0.0),
+                season_need=need,
+                stockpile_limit=STOCKPILE_SEASONS * need,
+                order=player.fuel_order.get(fuel) if session.fuel_procurement == "manual" else None,
+            )
+        )
+    return WorkshopFuelOut(procurement=session.fuel_procurement, fuels=lines)
+
+
+@router.get("/fuel")
+def get_fuel(player: Player, session: Session) -> WorkshopFuelOut:
+    """The fuel the calling player's operating facilities burn: this season's prices, their stock, and under manual
+    procurement what they buy when the price-setting window closes.
+    """
+    return _fuel_out(player, session)
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/fuel/{fuel}")
+async def set_fuel_order(player: Player, session: Session, fuel: Fuel, order: WorkshopFuelOrderIn) -> WorkshopFuelOut:
+    """Set how much ``fuel`` the calling player buys when the price-setting window closes. Only under manual
+    procurement, while the window is open, and for a fuel their operating facilities burn. A quantity that would
+    take their stock over the stockpile limit is cut down to fit.
+    """
+    try:
+        await run_in_threadpool(session.set_fuel_order, player.account_id, fuel, order.quantity)
+    except PriceSettingClosedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_PRICE_SETTING_CLOSED) from exc
+    except FuelNotManualError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_FUEL_NOT_MANUAL) from exc
+    except FuelNotBurnedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_FUEL_NOT_BURNED) from exc
+    except InvalidFuelQuantityError as exc:
+        # The request model already refuses such a quantity, so this only guards the session's own check.
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    return _fuel_out(player, session)
 
 
 def _period_record(session: WorkshopSession, round_number: int, season: Season) -> TradingPeriodRecord:

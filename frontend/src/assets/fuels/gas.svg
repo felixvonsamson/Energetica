@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><!-- Placeholder until the real image (#1009) -->
+<rect width="120" height="120" fill="#dfe6f5"/>
+<path d="M60 18 C72 40 88 50 88 72 a28 28 0 0 1 -56 0 C32 56 44 48 48 34 C52 46 56 50 60 52 C62 42 62 30 60 18 Z" fill="#7d9be0"/>
+<path d="M60 58 C66 68 74 72 74 82 a14 14 0 0 1 -28 0 C46 74 54 68 60 58 Z" fill="#c9d6f7"/>
+<text x="60" y="114" font-family="sans-serif" font-size="9" fill="#5d6b8a" text-anchor="middle">placeholder</text>
+</svg>
