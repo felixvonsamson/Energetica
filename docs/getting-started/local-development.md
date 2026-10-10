@@ -34,6 +34,7 @@ convenience, since it spans both.)
 | Full **local app** dev (frontend + backend)  | `bun run dev`                                    | local lobby + app       |
 | Just the **lobby**, locally                  | `bun run dev:lobby`                              | local lobby             |
 | **Backend** iteration, driven from the CLI   | `bun run serve:lobby` + `bun run serve:app`      | local lobby + app       |
+| Run a **Workshop Run** locally               | see [below](#running-a-workshop-run-locally)     | local lobby + app       |
 
 `BACKEND=game` selects the live game deployment; `edu` and `ethz` select the other two (each maps to
 `frontend/.env.{deployment}`). Omit `BACKEND` for a local backend. To pin one specific instance or
@@ -125,6 +126,109 @@ browser gets:
 bun run dev:login                                        # demo / demo1234 → .energetica-dev/cookies.txt
 curl -b .energetica-dev/cookies.txt localhost:8000/api/v1/auth/me
 ```
+
+## Running a Workshop Run locally
+
+An instance backend runs one of two kinds of Run: the persistent world, or a Workshop Run (a
+moderated classroom session, see [Workshop Mode in CONTEXT.md](../../CONTEXT.md#workshop-mode)). It
+reads which one from its `instance.json`. With no `instance.json`, as in the full local stack above,
+it runs the persistent world. To run Workshop Mode, give the local app backend an `instance.json`
+that says so.
+
+### 1. Describe the Run (once)
+
+The folder name is the Run's **slug**, its short identifier. Keep the file in the dev scratch:
+
+```bash
+mkdir -p .energetica-dev/etc/workshop-demo
+cat > .energetica-dev/etc/workshop-demo/instance.json <<'EOF'
+{"name": "Workshop demo", "advertised": false, "starts_at": "2026-03-01T00:00:00Z", "run": {"mode": "workshop"}}
+EOF
+```
+
+### 2. Give two accounts access (once)
+
+A Workshop Run is always private, so only accounts on its roster can enter. You need two accounts:
+a **facilitator**, who runs the session, and at least one **player**. One account cannot be both in
+the same Run.
+
+Start the lobby first (`bun run serve:lobby`, or `bun run dev`), so the seeded `demo` account exists.
+Create a second account by signing up on the lobby at http://localhost:5174 (sign-ups are on in local
+development), or from the shell:
+
+```bash
+ENERGETICA_ACCOUNTS_DB_PATH=.energetica-dev/accounts.db .venv/bin/python -c '
+from energetica.identity import accounts
+from energetica.kernel.session import generate_password_hash
+accounts.get_or_create_account_id(username="alice", pwhash=generate_password_hash("alice1234"))'
+```
+
+Setting `ENERGETICA_ACCOUNTS_DB_PATH` matters: without it, the account goes into
+`instance/accounts.db`, which the lobby does not read.
+
+Then make `demo` the facilitator and put `alice` on the roster. Both scripts default to the
+production accounts path, so point them at the dev one:
+
+```bash
+.venv/bin/python scripts/lobby/grant-facilitator.py --username demo --slug workshop-demo --accounts-db .energetica-dev/accounts.db
+.venv/bin/python scripts/lobby/whitelist-run.py workshop-demo add alice --accounts-db .energetica-dev/accounts.db
+```
+
+Once the Run is up, the facilitator can also add players from the roster page or with a join link.
+
+### 3. Start the stack with the Run's slug
+
+Two environment variables tell the app backend which `instance.json` to read. Set them for any of
+the full-stack commands above:
+
+```bash
+export ENERGETICA_INSTANCE_CONFIG_DIR="$PWD/.energetica-dev/etc"
+export ENERGETICA_INSTANCE_SLUG=workshop-demo
+bun run dev            # or bun run serve:app in its own terminal, next to the lobby and frontends
+```
+
+Check that the backend is in Workshop Mode:
+
+```bash
+curl localhost:8000/api/v1/run     # {"mode":"workshop"}
+```
+
+Unset `ENERGETICA_INSTANCE_SLUG` to go back to the persistent world.
+
+### 4. Play a session
+
+Open http://localhost:5173 and log in. The session cookie is shared by every `localhost` port, so one
+browser window holds one account. Use a private window, or a second browser, for the other one.
+
+- As the **facilitator**, the top bar has the buttons that advance the session and extend the running
+  phase.
+- As a **player**, you buy facilities in the Investment phase and set prices in each Trading period.
+
+The round-configuration levers (such as the Round format) have no page yet (#1018). Change them through
+the API with a facilitator session:
+
+```bash
+bash scripts/dev-login.sh demo demo1234     # saves the session to .energetica-dev/cookies.txt
+curl -b .energetica-dev/cookies.txt localhost:8000/api/v1/workshop/levers
+curl -b .energetica-dev/cookies.txt -X PUT localhost:8000/api/v1/workshop/levers \
+    -H 'Content-Type: application/json' \
+    -d '{"round_format": {"trading_format": "full_season", "storage": "all"}}'
+```
+
+A `PUT` replaces every lever, so a lever left out of the body goes back to its default.
+
+### 5. Saved state and starting over
+
+The session is saved to `instance/workshop_session.json` after every change, and each settled Trading
+period's record goes in `instance/workshop_session_periods/`. Restarting the backend resumes the
+session where it was. To start the session over, keeping accounts and the Run's `instance.json`:
+
+```bash
+bun run serve:app --rm_instance
+```
+
+`bun run rm-instance` (see below) also deletes `.energetica-dev/`, which holds the accounts and the
+Run's `instance.json`, so you would repeat steps 1 and 2.
 
 ## Command reference
 
