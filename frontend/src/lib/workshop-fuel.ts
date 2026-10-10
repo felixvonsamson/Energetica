@@ -6,9 +6,25 @@
  * The server counts fuel in kg. Players type and read it in tonnes.
  */
 
+import coal from "@/assets/fuels/coal.svg";
+import gas from "@/assets/fuels/gas.svg";
+import uranium from "@/assets/fuels/uranium.svg";
+import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import type { ApiSchema } from "@/types/api-helpers";
 
+type Fuel = ApiSchema<"Fuel">;
 type FuelLine = ApiSchema<"WorkshopFuelLineOut">;
+
+/** Each fuel's image in the bids panel. These are placeholders for now. */
+export const workshopFuelImages: Record<Fuel, string> = { coal, gas, uranium };
+
+/**
+ * The fuel's colour, the same one the charts use. Each fuel has an
+ * `--asset-color-*` token in `global.css`.
+ */
+export function workshopFuelColor(fuel: Fuel): string {
+    return assetCSSColourVariable(fuel);
+}
 
 export const KG_PER_TONNE = 1_000;
 
