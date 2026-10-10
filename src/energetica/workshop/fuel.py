@@ -23,6 +23,7 @@ Quantities are in kg and prices per kg. Every value here is a placeholder until 
 
 from __future__ import annotations
 
+import math
 import random
 from collections.abc import Iterable, Mapping
 from typing import Literal
@@ -72,6 +73,8 @@ STOCKPILE_SEASONS = 3
 
 FuelProcurement = Literal["automatic", "manual"]
 """How players get fuel: billed for what they burned, or buying it themselves in each price-setting window."""
+
+_KG_PER_TONNE = 1_000
 
 _SEASON_HOURS = DAYS_PER_YEAR // len(SEASONS) * 24
 
@@ -175,8 +178,15 @@ def default_orders(
 ) -> dict[Fuel, float]:
     """The quantity of each fuel in ``needs`` a price-setting window starts with: the ``previous`` quantity, or the
     season need for a fuel that has none, capped by the stockpile limit. A fuel not in ``needs`` is dropped.
+
+    A season need of coal or gas is rounded up to whole tonnes, so the player reads a round number. Uranium is
+    bought by the kg, so its need is kept as it is.
     """
     return {
-        fuel: capped_order(previous.get(fuel, need), stock=stocks.get(fuel, 0.0), need=need)
+        fuel: capped_order(
+            previous.get(fuel, need if fuel == Fuel.URANIUM else float(math.ceil(need / _KG_PER_TONNE) * _KG_PER_TONNE)),
+            stock=stocks.get(fuel, 0.0),
+            need=need,
+        )
         for fuel, need in needs.items()
     }

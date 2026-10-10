@@ -9,6 +9,7 @@ has already imported the persistent world.
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 import sys
@@ -841,7 +842,7 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "stock": 0.0,
                 "season_need": pytest.approx(need),
                 "stockpile_limit": pytest.approx(3 * need),
-                "order": pytest.approx(need),
+                "order": math.ceil(need / 1_000) * 1_000.0,
             }
         ],
     }

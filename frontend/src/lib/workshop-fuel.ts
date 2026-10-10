@@ -16,9 +16,12 @@ export type ParsedTonnes =
     | { ok: true; kg: number }
     | { ok: false; reason: "empty" | "invalid" | "negative" };
 
-/** Read a quantity typed into a fuel field, in tonnes, as kg. */
+/**
+ * Read a quantity typed into a fuel field, in tonnes, as kg. Thousands
+ * separators, an apostrophe or a space, are ignored.
+ */
 export function parseTonnes(text: string): ParsedTonnes {
-    const trimmed = text.trim();
+    const trimmed = text.replace(/['\s]/g, "");
     if (trimmed === "") return { ok: false, reason: "empty" };
     const tonnes = Number(trimmed);
     if (!Number.isFinite(tonnes)) return { ok: false, reason: "invalid" };
@@ -27,11 +30,16 @@ export function parseTonnes(text: string): ParsedTonnes {
 }
 
 /**
- * `kg` as a fuel field shows it: tonnes, to the nearest kg. Uranium is bought
- * by the kg, so anything coarser would hide most of an order.
+ * `kg` as a fuel field shows it: tonnes, to the nearest kg, with thousands
+ * separated by an apostrophe as elsewhere in the game. Uranium is bought by the
+ * kg, so anything coarser would hide most of an order.
  */
 export function tonnesFieldText(kg: number): string {
-    return String(Number((kg / KG_PER_TONNE).toFixed(3)));
+    const [whole = "0", fraction] = String(
+        Number((kg / KG_PER_TONNE).toFixed(3)),
+    ).split(".");
+    const separated = whole.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return fraction === undefined ? separated : `${separated}.${fraction}`;
 }
 
 /** How many seasons at full output the stockpile limit holds, such as 3. */

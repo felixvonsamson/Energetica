@@ -4,10 +4,10 @@
  * only the fuels the player's operating facilities burn.
  *
  * Each row shows the season's price and its change since last season (in red,
- * with a note, when a price shock landed), the player's stock, and what their
- * facilities burn running at full output all season. The quantity starts at a
- * default the server sets, and a quantity that would take the stock over the
- * stockpile limit is cut down to fit.
+ * with a note, when a price shock landed), the player's stock, and their
+ * maximum consumption: what their facilities burn running at full output all
+ * season. The quantity starts at a default the server sets, and a quantity that
+ * would take the stock over the stockpile limit is cut down to fit.
  */
 
 import { Flame } from "lucide-react";
@@ -45,15 +45,10 @@ export function FuelOrders({
         <section aria-labelledby="fuel-heading" className="mt-6">
             <h3
                 id="fuel-heading"
-                className="mb-2 font-titles text-xl leading-tight text-fg-base"
+                className="mb-3 font-titles text-xl leading-tight text-fg-base"
             >
                 Fuel
             </h3>
-            <p className="mb-3 text-[13px] leading-snug text-fg-subtle">
-                Bought when the window closes, and paid for at this
-                season&apos;s price once it is simulated. Fuel you do not burn
-                carries over.
-            </p>
             <ul className="flex flex-col gap-3">
                 {fuels.map((line) => (
                     <FuelRow key={line.fuel} line={line} open={open} />
@@ -97,15 +92,19 @@ function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
                     Geopolitical shock
                 </p>
             )}
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 text-[13px] leading-snug">
-                <dt className="text-fg-subtle">In stock</dt>
-                <dd className="text-right font-bold text-fg-base">
-                    {formatMass(line.stock)}
-                </dd>
-                <dt className="text-fg-subtle">Full output all season</dt>
-                <dd className="text-right font-bold text-fg-base">
-                    {formatMass(line.season_need)}
-                </dd>
+            <dl className="flex flex-wrap justify-between gap-x-3 text-[13px] leading-snug">
+                <div className="flex gap-1">
+                    <dt className="text-fg-subtle">Stock:</dt>
+                    <dd className="font-bold text-fg-base">
+                        {formatMass(line.stock)}
+                    </dd>
+                </div>
+                <div className="flex gap-1">
+                    <dt className="text-fg-subtle">Max consumption:</dt>
+                    <dd className="font-bold text-fg-base">
+                        {formatMass(line.season_need)}/season
+                    </dd>
+                </div>
             </dl>
             {line.order !== null && (
                 <OrderField line={line} order={line.order} disabled={!open} />

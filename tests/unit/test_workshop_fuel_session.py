@@ -4,6 +4,8 @@ quantities a player orders in the price-setting window, and what settling a Trad
 
 from __future__ import annotations
 
+import math
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -91,6 +93,11 @@ def _need(session: WorkshopSession, fuel: Fuel = Fuel.GAS) -> float:
     return season_need(fuel, session.network.members[1].owned_facilities, current_round=1)
 
 
+def _whole_tonnes(kg: float) -> float:
+    """``kg`` rounded up to whole tonnes, as a default order of coal or gas is."""
+    return math.ceil(kg / 1_000) * 1_000.0
+
+
 # --- the lever and the prices -----------------------------------------------------------------------
 
 
@@ -158,7 +165,7 @@ def test_a_shock_must_keep_the_price_positive(path: Path) -> None:
 def test_the_first_window_orders_a_season_at_full_output(path: Path) -> None:
     session = _trading(path, facilities=(GAS, GAS))
 
-    assert session.network.members[1].fuel_order == {Fuel.GAS: pytest.approx(_need(session))}
+    assert session.network.members[1].fuel_order == {Fuel.GAS: _whole_tonnes(_need(session))}
 
 
 def test_automatic_procurement_orders_nothing(path: Path) -> None:
@@ -421,6 +428,6 @@ def test_each_fuel_the_fleet_burns_gets_its_own_default(path: Path) -> None:
     alice = session.network.members[1]
     assert OwnedFacility(facility=FacilityId.COAL_BURNER, built_round=1) in alice.owned_facilities
     assert alice.fuel_order == {
-        Fuel.GAS: pytest.approx(_need(session)),
-        Fuel.COAL: pytest.approx(_need(session, Fuel.COAL)),
+        Fuel.GAS: _whole_tonnes(_need(session)),
+        Fuel.COAL: _whole_tonnes(_need(session, Fuel.COAL)),
     }

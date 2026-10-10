@@ -189,7 +189,17 @@ def test_an_order_is_capped_so_the_stock_stays_within_the_limit() -> None:
 
 
 def test_the_first_default_buys_a_season_at_full_output() -> None:
-    assert default_orders({}, needs={Fuel.COAL: 80.0}, stocks={}) == {Fuel.COAL: 80.0}
+    assert default_orders({}, needs={Fuel.COAL: 80_000.0}, stocks={}) == {Fuel.COAL: 80_000.0}
+
+
+def test_the_first_default_rounds_coal_and_gas_up_to_whole_tonnes_but_not_uranium() -> None:
+    orders = default_orders({}, needs={Fuel.COAL: 80_000.4, Fuel.GAS: 1_200.0, Fuel.URANIUM: 41.7}, stocks={})
+
+    assert orders == {Fuel.COAL: 81_000.0, Fuel.GAS: 2_000.0, Fuel.URANIUM: 41.7}
+
+
+def test_a_rounded_default_is_still_capped_by_the_stockpile_limit() -> None:
+    assert default_orders({}, needs={Fuel.COAL: 100.0}, stocks={}) == {Fuel.COAL: 300.0}
 
 
 def test_after_that_the_default_repeats_the_last_purchase() -> None:
@@ -199,9 +209,9 @@ def test_after_that_the_default_repeats_the_last_purchase() -> None:
 
 
 def test_a_newly_burned_fuel_defaults_to_its_season_need_and_a_fuel_no_longer_burned_is_dropped() -> None:
-    orders = default_orders({Fuel.COAL: 30.0}, needs={Fuel.GAS: 40.0}, stocks={Fuel.COAL: 10.0})
+    orders = default_orders({Fuel.COAL: 30.0}, needs={Fuel.GAS: 40_000.0}, stocks={Fuel.COAL: 10.0})
 
-    assert orders == {Fuel.GAS: 40.0}
+    assert orders == {Fuel.GAS: 40_000.0}
 
 
 def test_a_default_is_capped_by_the_stockpile_limit() -> None:

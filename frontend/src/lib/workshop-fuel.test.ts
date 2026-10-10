@@ -14,6 +14,11 @@ describe("parseTonnes", () => {
         expect(parseTonnes(" 0 ")).toEqual({ ok: true, kg: 0 });
     });
 
+    it("ignores thousands separators, as an apostrophe or a space", () => {
+        expect(parseTonnes("88'059")).toEqual({ ok: true, kg: 88_059_000 });
+        expect(parseTonnes("1 234.5")).toEqual({ ok: true, kg: 1_234_500 });
+    });
+
     it("refuses an empty field, a negative quantity and text", () => {
         expect(parseTonnes("")).toEqual({ ok: false, reason: "empty" });
         expect(parseTonnes("-1")).toEqual({ ok: false, reason: "negative" });
@@ -27,10 +32,16 @@ describe("parseTonnes", () => {
 
 describe("tonnesFieldText", () => {
     it("shows kg as tonnes to the nearest kg, without trailing zeros", () => {
-        expect(tonnesFieldText(50_888_784.4)).toBe("50888.784");
         expect(tonnesFieldText(417.2)).toBe("0.417");
         expect(tonnesFieldText(2_000)).toBe("2");
         expect(tonnesFieldText(0)).toBe("0");
+    });
+
+    it("separates thousands with an apostrophe", () => {
+        expect(tonnesFieldText(50_888_784.4)).toBe("50'888.784");
+        expect(tonnesFieldText(88_059_000)).toBe("88'059");
+        expect(tonnesFieldText(1_234_567_000)).toBe("1'234'567");
+        expect(tonnesFieldText(999_000)).toBe("999");
     });
 });
 
