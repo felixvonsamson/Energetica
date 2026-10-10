@@ -302,16 +302,29 @@ curl -s -b .energetica-dev/alice.txt localhost:8000/api/v1/workshop/fleet; echo 
 Log in as `alice` / `alice1234` in the browser to see her bids panel with the window open.
 
 **f. Settle a Trading period and go to the next one.** The first advance closes the window, and the
-period is simulated in the background. Advancing is refused until it is settled:
+period is simulated in the background. The simulation starts up to a second later, so `"settlement":
+null` in the session does not prove the period is settled: it may not have started yet. Instead, keep
+advancing until the checkpoint changes. Until the period is settled, an advance either leaves the session
+where it is or is refused with `WORKSHOP_SETTLEMENT_RUNNING`, so it cannot skip a season:
 
 ```bash
-curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance
-until curl -s -b .energetica-dev/prof.txt localhost:8000/api/v1/workshop/session | grep -q '"settlement":null'; do sleep 0.5; done
-curl -s -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # the next season's window
+checkpoint() {  # the checkpoint in an answer, or "busy" for a refused advance
+    .venv/bin/python -c 'import json, sys; print(json.load(sys.stdin).get("checkpoint", "busy"))'
+}
+advance() { curl -s -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance; }
+
+period=$(curl -s -b .energetica-dev/prof.txt localhost:8000/api/v1/workshop/session | checkpoint)
+advance >/dev/null                          # closes the window
+for attempt in $(seq 240); do               # up to 2 minutes: a full season takes about one
+    now=$(advance | checkpoint)
+    if [ "$now" != "$period" ] && [ "$now" != busy ]; then break; fi
+    sleep 0.5
+done
+echo "$now"                                 # the next season, or the Recap after a blackout
 ```
 
-If the response lists the period under `blackouts`, the Round ended there and the session moved to its
-Recap instead: buy more capacity next time.
+If it shows the Recap and the session lists the period under `blackouts`, the Round ended there: buy
+more capacity next time.
 
 ### 6. Saved state and starting over
 
