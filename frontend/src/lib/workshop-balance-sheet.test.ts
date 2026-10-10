@@ -6,6 +6,7 @@ import {
     balanceSheetRows,
     formatAmount,
     formatRate,
+    formatFuelVolume,
     formatVolume,
     initialPeriod,
     waterfallScale,
@@ -81,6 +82,14 @@ describe("formats", () => {
         expect(formatAmount(-7_750)).toBe("−7'750");
         expect(formatAmount(-2_100_000)).toBe("−2'100k");
         expect(formatAmount(-0.2)).toBe("0");
+    });
+
+    it("writes fuel in tonnes to the nearest kg below 10 t, so a few kg of uranium shows", () => {
+        expect(formatFuelVolume(0.002)).toBe("0.002");
+        expect(formatFuelVolume(2.5)).toBe("2.5");
+        expect(formatFuelVolume(9.9996)).toBe("10");
+        expect(formatFuelVolume(88_058.88)).toBe("88'059");
+        expect(formatFuelVolume(0)).toBe("0");
     });
 
     it("writes volumes whole and rates with one decimal unless whole", () => {

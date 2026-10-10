@@ -43,6 +43,15 @@ export function formatVolume(value: number): string {
         : group(value);
 }
 
+/**
+ * Fuel in tonnes: like a volume, but to the nearest kg below 10 t, since a
+ * season's uranium can be a few kg.
+ */
+export function formatFuelVolume(tonnes: number): string {
+    const rounded = Number(tonnes.toFixed(3));
+    return Math.abs(rounded) < 10 ? String(rounded) : group(tonnes);
+}
+
 /** A rate: one decimal unless it is a whole number. */
 export function formatRate(value: number): string {
     const rounded = Math.round(value * 10) / 10;

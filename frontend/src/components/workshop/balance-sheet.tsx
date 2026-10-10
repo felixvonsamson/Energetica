@@ -36,6 +36,7 @@ import {
     balanceSheetRows,
     formatAmount,
     formatRate,
+    formatFuelVolume,
     formatVolume,
     initialPeriod,
     waterfallScale,
@@ -760,9 +761,11 @@ function CellValue({
         if (value === undefined) return null;
         return (
             <span className="text-[12.5px] font-normal text-(--bs-light)">
-                {col.field === "volume"
-                    ? formatVolume(value)
-                    : formatRate(value)}
+                {col.field !== "volume"
+                    ? formatRate(value)
+                    : row.unit === "fuel"
+                      ? formatFuelVolume(value)
+                      : formatVolume(value)}
             </span>
         );
     }

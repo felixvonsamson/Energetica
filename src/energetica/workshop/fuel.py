@@ -184,7 +184,9 @@ def default_orders(
     """
     return {
         fuel: capped_order(
-            previous.get(fuel, need if fuel == Fuel.URANIUM else float(math.ceil(need / _KG_PER_TONNE) * _KG_PER_TONNE)),
+            previous.get(
+                fuel, need if fuel == Fuel.URANIUM else float(math.ceil(need / _KG_PER_TONNE) * _KG_PER_TONNE)
+            ),
             stock=stocks.get(fuel, 0.0),
             need=need,
         )
