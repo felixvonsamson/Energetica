@@ -67,6 +67,7 @@ from energetica.workshop.session import (
     RoundLevers,
     SessionFinishedError,
     SettlementRunningError,
+    StorageLeverLockedError,
     TradingPeriod,
     WorkshopSession,
 )
@@ -200,9 +201,13 @@ async def set_levers(
     _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, levers: RoundLevers
 ) -> RoundLevers:
     """Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
-    and the Round format to the next Round. Every storage type needs the full-season format.
+    and the Round format to the next Round. Every storage type needs the full-season format. Once a Recap has
+    announced every storage type for the next Round, the storage lever cannot be switched back until it starts.
     """
-    await run_in_threadpool(session.set_levers, levers)
+    try:
+        await run_in_threadpool(session.set_levers, levers)
+    except StorageLeverLockedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_STORAGE_LEVER_LOCKED) from exc
     await invalidate_session(request.app)
     return session.levers
 

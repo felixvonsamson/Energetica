@@ -1384,3 +1384,16 @@ def test_players_never_see_unlock_progress(session_path: Path) -> None:
     client.post(ENTER_URL)
 
     assert client.get(UNLOCKS_URL).status_code == 403
+
+
+def test_the_facilitator_cannot_switch_back_storage_the_recap_announced(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock, "alice")
+    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
+    while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
+        _advance(client)
+
+    response = client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="batteries"))
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_STORAGE_LEVER_LOCKED"
+    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "all"

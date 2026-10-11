@@ -227,5 +227,6 @@ An **upgrade tier** unlocks once the money every player has spent buying its **b
 unlock threshold, which is the same for every technology and grows with the number of players. That is
 checked when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar power
 unlocks from a set Round instead, and hydrogen storage and pumped hydro the first Round that allows
-every storage type, checked at the Recap before it, and again when that Round starts. Only the facilitator sees how close an unlock is.
+every storage type, checked at the Recap before it, and again when that Round starts. Once a Recap has
+announced them, the storage lever stays on every type until that Round starts. Only the facilitator sees how close an unlock is.
 _Avoid_: tech tree, research.

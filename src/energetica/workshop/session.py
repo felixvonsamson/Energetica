@@ -204,6 +204,12 @@ class InvalidFuelQuantityError(Exception):
     """Raised when a fuel order is negative or not a finite number (#1009)."""
 
 
+class StorageLeverLockedError(Exception):
+    """Raised when switching the storage lever away from every type after a Recap announced that full-season storage
+    unlocks next Round (#1011).
+    """
+
+
 class SettlementRunningError(Exception):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
@@ -946,8 +952,17 @@ class WorkshopSession:
     def set_levers(self, levers: RoundLevers) -> None:
         """Replace the levers with ``levers``. The timing levers apply to the next phase that opens, the fuel
         procurement lever to the next Trading period, and the Round format to the next Round.
+
+        Once a Recap has announced that full-season storage unlocks next Round, the storage lever must keep
+        allowing every type until that Round starts, or players could not buy what was announced. Raises
+        :class:`StorageLeverLockedError` if ``levers`` would switch it back.
         """
         with self._lock:
+            announced = any(
+                unlock.trigger == "format_lever" and unlock.round > self.current_round() for unlock in self.unlocks
+            )
+            if announced and levers.round_format.storage != "all":
+                raise StorageLeverLockedError("the Recap announced every storage type for the next Round")
             before, self.levers = self.levers, levers
             try:
                 self._save(self.checkpoint, self.phase_timer)

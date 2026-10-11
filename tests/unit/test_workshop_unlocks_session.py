@@ -13,7 +13,14 @@ from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.session import Investment, Recap, RoundLevers, TradingPeriod, WorkshopSession
+from energetica.workshop.session import (
+    Investment,
+    Recap,
+    RoundLevers,
+    StorageLeverLockedError,
+    TradingPeriod,
+    WorkshopSession,
+)
 from energetica.workshop.unlocks import Unlock
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
@@ -169,3 +176,40 @@ def test_full_season_storage_set_during_the_recap_unlocks_when_the_round_starts(
         Unlock(facility=FacilityId.PUMPED_HYDRO, round=2, trigger="format_lever"),
     ]
     assert {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} <= _offered(session)
+
+
+def _full_season() -> RoundLevers:
+    return RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all"))
+
+
+def test_the_storage_lever_cannot_be_switched_back_once_the_recap_announced_full_season_storage(path: Path) -> None:
+    session = _session(path)
+    session.set_levers(_full_season())
+    _to_next(session, Recap)
+
+    with pytest.raises(StorageLeverLockedError):
+        session.set_levers(RoundLevers())
+
+    assert session.levers == _full_season()
+    # Other levers can still change.
+    session.set_levers(_full_season().model_copy(update={"fuel_procurement": "manual"}))
+
+
+def test_the_storage_lever_can_be_switched_back_before_the_recap_announces_anything(path: Path) -> None:
+    session = _session(path)
+    session.set_levers(_full_season())
+
+    session.set_levers(RoundLevers())
+
+    assert session.levers == RoundLevers()
+
+
+def test_the_storage_lever_is_free_again_once_the_announced_round_has_started(path: Path) -> None:
+    session = _session(path)
+    session.set_levers(_full_season())
+    _to_next(session, Recap)
+    session.advance()
+
+    session.set_levers(RoundLevers())
+
+    assert session.levers == RoundLevers()
