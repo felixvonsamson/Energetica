@@ -113,6 +113,9 @@ export const queryKeys = {
         // Also under the session's key: a new Trading period sets the season's fuel prices and
         // default orders, and settling one changes the stock (#1009).
         fuel: ["workshop", "session", "fuel"] as const,
+        // Also under the session's key: each purchase adds to a technology's progress, and a Recap
+        // can unlock one (#1011).
+        unlocks: ["workshop", "session", "unlocks"] as const,
         // Also under the session's key: settling a Trading period adds one.
         lockedPrices: ["workshop", "session", "prices", "locked"] as const,
         // A Trading period's review (#1007). The summary sits under the session's key, so a

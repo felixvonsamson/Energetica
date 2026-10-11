@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 # A Workshop player's Round-1 starting budget (#992 §8/§9). A placeholder: the real figure is
 # game-balance tuning, deferred along with every other Workshop magnitude in #992.
-WORKSHOP_STARTING_BUDGET = 25_000.0
+WORKSHOP_STARTING_BUDGET = 1_000_000.0
 
 
 # `eq=False` keeps equality and hashing by identity. Field-wise equality would recurse, since the

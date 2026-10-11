@@ -175,7 +175,7 @@ def test_a_player_entering_is_placed_into_the_shared_network(session_path: Path)
     assert response.status_code == 200
     assert response.json() == {
         "role": "player",
-        "player": {"account_id": account_id, "username": "alice", "money": 25_000.0},
+        "player": {"account_id": account_id, "username": "alice", "money": 1_000_000.0},
     }
     assert [player["username"] for player in client.get(SESSION_URL).json()["players"]] == ["alice"]
 
@@ -1353,3 +1353,74 @@ def test_reviewing_a_period_needs_entry(session_path: Path, clock: _Clock) -> No
     authenticate(client, make_account("stranger"))
 
     assert client.get(PERIOD_URL).status_code == 403
+
+
+# --- tech-grade unlocks (#1011) --------------------------------------------------------------
+
+UNLOCKS_URL = "/api/v1/workshop/unlocks"
+
+
+def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_path: Path, clock: _Clock) -> None:
+    app, client, facilitator, [alice, _] = _investing(session_path, clock, "alice", "bob")
+    authenticate(client, alice)
+    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    authenticate(client, facilitator)
+    client.post(ADVANCE_URL)  # closes the Investment phase
+    app.state.workshop_session.buy_selections()  # as the app does in the background
+
+    response = client.get(UNLOCKS_URL)
+
+    assert response.status_code == 200
+    body = response.json()
+    # Half of two starting budgets of 1,000,000.
+    assert body["threshold"] == 1_000_000.0
+    assert body["csp_unlock_round"] == 3
+    assert body["unlocks"] == []
+    technologies = {technology["base"]: technology for technology in body["technologies"]}
+    assert technologies["gas_burner"] == {
+        "base": "gas_burner",
+        "base_name": "Gas burner",
+        "upgrade": "combined_cycle",
+        "upgrade_name": "Combined cycle",
+        "invested": 90_000.0,
+        "unlocked_round": None,
+    }
+    assert technologies["coal_burner"]["invested"] == 0.0
+    assert len(technologies) == 7
+
+
+def test_the_progress_shows_the_round_an_upgrade_unlocked_from(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    # 840,000, past the threshold of half one starting budget.
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
+    authenticate(client, facilitator)
+    while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
+        _advance(client)
+
+    body = client.get(UNLOCKS_URL).json()
+
+    nuclear = next(technology for technology in body["technologies"] if technology["base"] == "nuclear_reactor")
+    assert nuclear["unlocked_round"] == 2
+    assert body["unlocks"] == [{"facility": "nuclear_reactor_gen4", "round": 2, "trigger": "investment_threshold"}]
+
+
+def test_players_never_see_unlock_progress(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+
+    assert client.get(UNLOCKS_URL).status_code == 403
+
+
+def test_the_facilitator_cannot_switch_back_storage_the_recap_announced(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock, "alice")
+    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
+    while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
+        _advance(client)
+
+    response = client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="batteries"))
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_STORAGE_LEVER_LOCKED"
+    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "all"

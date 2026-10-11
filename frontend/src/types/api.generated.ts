@@ -2061,9 +2061,31 @@ export interface paths {
         /**
          * Set Levers
          * @description Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
-         *     and the Round format to the next Round. Every storage type needs the full-season format.
+         *     and the Round format to the next Round. Every storage type needs the full-season format. Once a Recap has
+         *     announced every storage type for the next Round, the storage lever cannot be switched back until it starts.
          */
         put: operations["set_levers_api_v1_workshop_levers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/unlocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unlocks
+         * @description How far each technology is from unlocking its upgrade, and what has unlocked so far. Facilitator only, so
+         *     that each unlock comes as a surprise to the players.
+         */
+        get: operations["get_unlocks_api_v1_workshop_unlocks_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -5287,6 +5309,20 @@ export interface components {
             season: "spring" | "summer" | "autumn" | "winter";
         };
         /**
+         * Unlock
+         * @description A facility becoming available to buy, for the Recap to announce.
+         */
+        Unlock: {
+            facility: components["schemas"]["FacilityId"];
+            /** Round */
+            round: number;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "investment_threshold" | "round_gate" | "format_lever";
+        };
+        /**
          * WorkshopEntryOut
          * @description The result of entering the Run.
          */
@@ -5781,6 +5817,28 @@ export interface components {
             days_total: number;
         };
         /**
+         * WorkshopTechnologyProgressOut
+         * @description How far one base tier's upgrade is from unlocking (#1011). For the facilitator only.
+         */
+        WorkshopTechnologyProgressOut: {
+            base: components["schemas"]["FacilityId"];
+            /** Base Name */
+            base_name: string;
+            upgrade: components["schemas"]["FacilityId"];
+            /** Upgrade Name */
+            upgrade_name: string;
+            /**
+             * Invested
+             * @description Money every player has spent on the base tier so far
+             */
+            invested: number;
+            /**
+             * Unlocked Round
+             * @description The first Round the upgrade can be bought in, or null while it is locked
+             */
+            unlocked_round: number | null;
+        };
+        /**
          * WorkshopTierSeriesOut
          * @description One demand tier over a simulated day.
          */
@@ -5797,10 +5855,37 @@ export interface components {
             served: number[];
         };
         /**
+         * WorkshopUnlocksOut
+         * @description Every technology's progress toward unlocking, and what has unlocked so far (#1011). For the facilitator
+         *     only: players learn of an unlock at the Recap, never how close one is.
+         */
+        WorkshopUnlocksOut: {
+            /**
+             * Threshold
+             * @description The spend on a base tier that unlocks its upgrade, the same for every technology. It grows with the number of players
+             */
+            threshold: number;
+            /**
+             * Technologies
+             * @description Each base tier, in catalog order
+             */
+            technologies: components["schemas"]["WorkshopTechnologyProgressOut"][];
+            /**
+             * Csp Unlock Round
+             * @description The first Round Concentrated solar power can be bought in
+             */
+            csp_unlock_round: number;
+            /**
+             * Unlocks
+             * @description Every facility unlocked so far, in the order they unlocked
+             */
+            unlocks: components["schemas"]["Unlock"][];
+        };
+        /**
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_STORAGE_LEVER_LOCKED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -8768,6 +8853,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unlocks_api_v1_workshop_unlocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopUnlocksOut"];
                 };
             };
         };

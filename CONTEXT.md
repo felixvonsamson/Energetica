@@ -221,3 +221,13 @@ manual order of a fuel defaults to it. After that, an order defaults to what the
 **Stockpile limit** (#1009):
 The most fuel of one type a player may hold: 3 times its season need. An order that would go over it is
 cut down to fit. Unused fuel carries over, and fuel left at the end of the session is worth nothing.
+
+**Unlock** (#1011):
+A facility becoming available to buy partway through a session, kept so the Recap can announce it.
+An **upgrade tier** unlocks once the money every player has spent buying its **base tier** reaches the
+unlock threshold, which is the same for every technology and grows with the number of players. That is
+checked when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar power
+unlocks from a set Round instead, and hydrogen storage and pumped hydro the first Round that allows
+every storage type, checked at the Recap before it, and again when that Round starts. Once a Recap has
+announced them, the storage lever stays on every type until that Round starts. Only the facilitator sees how close an unlock is.
+_Avoid_: tech tree, research.

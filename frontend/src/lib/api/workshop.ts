@@ -1,6 +1,6 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009). Served only by a Workshop Run's backend.
+ * #1009, #1011). Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -123,6 +123,15 @@ export const workshopApi = {
     getLockedPrices: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/prices/locked", "get">>(
             "/workshop/prices/locked",
+        ),
+
+    /**
+     * How far each technology is from unlocking its upgrade, and what has
+     * unlocked so far (#1011). Facilitator only.
+     */
+    getUnlocks: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/unlocks", "get">>(
+            "/workshop/unlocks",
         ),
 
     /**

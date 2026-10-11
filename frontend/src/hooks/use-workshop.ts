@@ -2,8 +2,8 @@
  * Hooks for a Workshop Run (#995): entering it, following the session as the
  * moderator advances it, reading the facility catalog and fleet (#998), picking
  * facilities to buy in the Investment phase (#999), setting prices in a Trading
- * period's price-setting window (#1002), and reviewing a settled Trading period
- * (#1007).
+ * period's price-setting window (#1002), reviewing a settled Trading period
+ * (#1007), and following technology unlocks as the facilitator (#1011).
  */
 
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
@@ -282,6 +282,17 @@ export function useWorkshopFuel() {
     return useQuery({
         queryKey: queryKeys.workshop.fuel,
         queryFn: workshopApi.getFuel,
+    });
+}
+
+/**
+ * How far each technology is from unlocking its upgrade (#1011). Facilitator
+ * only. Re-read whenever the session changes, so it follows each purchase.
+ */
+export function useWorkshopUnlocks() {
+    return useQuery({
+        queryKey: queryKeys.workshop.unlocks,
+        queryFn: workshopApi.getUnlocks,
     });
 }
 
