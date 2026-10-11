@@ -33,7 +33,7 @@ class WorkshopExceptionType(ErrorCode):
 
 Players receive a code's string value, so values are unique across all the enums.
 
-The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `GameExceptionType`. The merged schema behind `api.generated.ts` gets every code until it is deleted. The frontend consumes it via `ApiSchema<"GameExceptionType">`, re-exported as `GameExceptionType` from `lib/game-messages.ts`.
+The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `GameExceptionType`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). The frontend consumes it via `ApiSchema<"GameExceptionType">`, re-exported as `GameExceptionType` from `lib/game-messages.ts`.
 
 This creates a closed loop:
 - `GAME_ERROR_MESSAGES: Record<GameExceptionType, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.

@@ -72,7 +72,7 @@ def _add_probe_routes(app: FastAPI, own_code: ErrorCode) -> None:
 
     @app.get(GAME_ERROR_PATH)
     def _raise_game_error() -> None:
-        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED, required=10)
+        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED, slug="probe-run")
 
     @app.get(OWN_CODE_PATH)
     def _raise_own_code() -> None:
@@ -120,7 +120,7 @@ def test_game_error_envelope(app_name: str) -> None:
     response = CLIENT_FACTORIES[app_name]().get(GAME_ERROR_PATH)
 
     assert response.status_code == 400
-    assert response.json() == {"game_exception_type": "INSTANCE_ACCESS_DENIED", "kwargs": {"required": 10}}
+    assert response.json() == {"game_exception_type": "INSTANCE_ACCESS_DENIED", "kwargs": {"slug": "probe-run"}}
 
 
 @every_app
@@ -182,9 +182,15 @@ def test_each_app_schema_has_the_shared_codes_plus_its_own(schemas: dict[str, di
 
 @pytest.mark.parametrize("app_name", ["freeplay", "lobby"])
 def test_no_workshop_code_outside_the_workshop(schemas: dict[str, dict], app_name: str) -> None:
-    """Workshop's codes reach neither the kernel nor another app's schema."""
-    assert not {code for code in GameExceptionType if code.startswith("WORKSHOP_")}
-    assert not {code for code in _schema_codes(schemas[app_name]) if code.startswith("WORKSHOP_")}
+    """Workshop's codes reach neither the kernel nor another app's schema.
+
+    Checked both by value and by the ``WORKSHOP_`` prefix, so a Workshop code added to the wrong
+    enum fails too.
+    """
+    workshop_codes = {code.value for code in WorkshopExceptionType}
+    for codes in ({code.value for code in GameExceptionType}, _schema_codes(schemas[app_name])):
+        assert not codes & workshop_codes
+        assert not {code for code in codes if code.startswith("WORKSHOP_")}
 
 
 def test_merged_schema_keeps_every_code(schemas: dict[str, dict]) -> None:
