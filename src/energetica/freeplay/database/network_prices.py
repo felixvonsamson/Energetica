@@ -18,8 +18,9 @@ from energetica.enums import (
     StorageFacilityType,
     renewable_facility_types,
 )
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.kernel.hashing import stable_hash
 from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 
@@ -102,7 +103,7 @@ class NetworkPrices:
         for storage_type in StorageFacilityType:
             if storage_type in merged_asks and storage_type in merged_bids:
                 if merged_asks[storage_type] < merged_bids[storage_type]:
-                    raise GameError(GameExceptionType.STORAGE_PRICE_INVERSION)
+                    raise GameError(FreeplayExceptionType.STORAGE_PRICE_INVERSION)
         self.bid_prices |= updated_bids
         self.ask_prices |= updated_asks
 
@@ -166,7 +167,7 @@ class NetworkPrices:
             None,
         )
         if idx is None:
-            raise GameError(GameExceptionType.MALFORMED_REQUEST)
+            raise GameError(FreeplayExceptionType.MALFORMED_REQUEST)
 
         new_idx = idx + delta
         if new_idx < 0 or new_idx >= len(priorities):
@@ -183,7 +184,7 @@ class NetworkPrices:
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
         old_priority = self.get_facility_priorities(player)
         if set(old_priority) != set(new_priority):
-            raise GameError(GameExceptionType.MALFORMED_REQUEST)
+            raise GameError(FreeplayExceptionType.MALFORMED_REQUEST)
 
         # Reorder the prices according to the new priority list
         sorted_prices = sorted(

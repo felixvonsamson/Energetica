@@ -3,23 +3,24 @@
 from energetica.freeplay.constants import NETWORK_MEMBER_LIMIT
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 
 
 # TODO (Felix): Move this to a method in Player
 def join_network(player: Player, network: Network | None) -> Network:
     """Add a player to a network."""
     if not player.achievements["network"]:
-        raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
+        raise GameError(FreeplayExceptionType.NETWORK_NOT_UNLOCKED)
     if network is None:
         # TODO(mglst): this logic should be handled by the router so that it can return a relevant HTTP error code such
         # as HTTP_404_NOT_FOUND
-        raise GameError(GameExceptionType.NO_SUCH_NETWORK)
+        raise GameError(FreeplayExceptionType.NO_SUCH_NETWORK)
     if player.money <= 0:
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+        raise GameError(FreeplayExceptionType.NOT_ENOUGH_MONEY)
     if len(network.members) >= NETWORK_MEMBER_LIMIT:
-        raise GameError(GameExceptionType.NETWORK_FULL)
+        raise GameError(FreeplayExceptionType.NETWORK_FULL)
     if player.network is not None:
         leave_network(player)
     player.network = network
@@ -40,11 +41,11 @@ def create_network(player: Player, name: str) -> Network:
     Network name must pass validation, namely it must not be too long, nor too short, and must not already be in use.
     """
     if not player.achievements["network"]:
-        raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
+        raise GameError(FreeplayExceptionType.NETWORK_NOT_UNLOCKED)
     if len(list(Network.filter_by(name=name))):
-        raise GameError(GameExceptionType.NAME_ALREADY_USED)
+        raise GameError(FreeplayExceptionType.NAME_ALREADY_USED)
     if player.money <= 0:
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+        raise GameError(FreeplayExceptionType.NOT_ENOUGH_MONEY)
     if player.network is not None:
         leave_network(player)
     new_network = Network(name=name, members=[player], created_tick=engine.total_t)
@@ -61,7 +62,7 @@ def leave_network(player: Player) -> Network | None:
     """Make a player leave their network."""
     network = player.network
     if network is None:
-        raise GameError(GameExceptionType.NOT_IN_NETWORK)
+        raise GameError(FreeplayExceptionType.NOT_IN_NETWORK)
     player.network = None
     player.overdraft_warning_sent = False
     network.members.remove(player)

@@ -6,9 +6,10 @@ from energetica.enums import Fuel
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.database.resource_on_sale import ResourceOnSale
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
 from energetica.kernel.formatting import format_mass, format_money
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.schemas.notifications import ResourceSoldPayload, ShipmentArrivedPayload
 
 
@@ -24,7 +25,7 @@ def calculate_shipment_duration(buyer: Player, seller: Player) -> float:
 def create_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
     """Put an offer on the resource market."""
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
-        raise GameError(GameExceptionType.NOT_ENOUGH_RESOURCE)
+        raise GameError(FreeplayExceptionType.NOT_ENOUGH_RESOURCE)
     player.resources_on_sale[fuel] += quantity
     ask = ResourceOnSale(
         resource=fuel,
@@ -44,7 +45,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
     Return the resulting ResourceOnSale if this is a partial purchase, return None otherwise.
     """
     if quantity > sale.quantity:
-        raise GameError(GameExceptionType.INVALID_QUANTITY)
+        raise GameError(FreeplayExceptionType.INVALID_QUANTITY)
     total_price = sale.unit_price * quantity
     if buyer == sale.player:
         # TODO(mglst): this should be a different function
@@ -58,7 +59,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         return None if sale.quantity == 0 else sale
     else:
         if total_price > buyer.money:
-            raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+            raise GameError(FreeplayExceptionType.NOT_ENOUGH_MONEY)
         # Player buys form another player
         sale.quantity -= quantity
         buyer.money -= total_price

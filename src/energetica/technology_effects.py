@@ -27,8 +27,9 @@ from energetica.enums import (
     str_to_project_type,
 )
 from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.map.hex_tile import HexTile
@@ -143,7 +144,7 @@ def current_multiplier(player: Player, multiplier: str, facility_type: ProjectTy
     if multiplier == "extraction_emissions_multiplier":
         assert isinstance(facility_type, ExtractionFacilityType)
         return extraction_emissions_multiplier(player, facility_type)
-    raise GameError(GameExceptionType.INVALID_MULTIPLIER)
+    raise GameError(FreeplayExceptionType.INVALID_MULTIPLIER)
 
 
 def current_multipliers(player: Player, facility_type: ProjectType) -> dict[str, float]:

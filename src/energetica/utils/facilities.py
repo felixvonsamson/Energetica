@@ -14,8 +14,9 @@ from energetica.enums import (
 )
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.schemas.notifications import EmergencyFacilityCreatedPayload, FacilityDestroyedPayload
 from energetica.utils.projects import invalidate_data_on_project_update
 
@@ -24,11 +25,11 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     """Upgrade a facility."""
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
-        raise GameError(GameExceptionType.FACILITY_NOT_UPGRADABLE)
+        raise GameError(FreeplayExceptionType.FACILITY_NOT_UPGRADABLE)
     if facility.player.money < upgrade_cost:
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+        raise GameError(FreeplayExceptionType.NOT_ENOUGH_MONEY)
     if facility.decommissioning:
-        raise GameError(GameExceptionType.FACILITY_IS_DECOMMISSIONING)
+        raise GameError(FreeplayExceptionType.FACILITY_IS_DECOMMISSIONING)
     facility.player.money -= upgrade_cost
     new_multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
     new_multipliers.pop("next_available_location", None)
@@ -61,7 +62,7 @@ def upgrade_all_facilities(
         ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+        raise GameError(FreeplayExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         upgrade_facility(facility)
     engine.log(f"All facilities of type {facility_type} upgraded for {player.username}.")

@@ -1,9 +1,10 @@
 /**
  * Centralised mapping of all game error codes and action messages.
  *
- * Error codes correspond to `GameExceptionType` values from the Python backend
- * (`energetica/kernel/game_error.py`). When a new `GameExceptionType` is added
- * on the backend, add a matching entry here so the frontend surfaces a readable
+ * Error codes correspond to the values of the Python backend's error code
+ * enums: the kernel's shared `GameExceptionType` and each layer's and app's own
+ * (see `docs/architecture/error-handling.md`). When a new code is added on the
+ * backend, add a matching entry here so the frontend surfaces a readable
  * message.
  *
  * For each mutation that produces a toast, the success/error wording is also

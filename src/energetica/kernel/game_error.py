@@ -13,88 +13,25 @@ from typing import Any
 class GameError(Exception):
     """Define the exception class for the game engine."""
 
-    def __init__(self, exception_type: GameExceptionType, **kwargs: Any):
+    def __init__(self, exception_type: ErrorCode, **kwargs: Any):
         self.exception_type = exception_type
         self.kwargs = kwargs
         Exception.__init__(self, exception_type)
 
 
-class GameExceptionType(StrEnum):
-    NOT_ENOUGH_MONEY = "Not enough money"
-    # Tile related
-    TILE_NOT_FOUND = "TileNotFound"
-    NO_TILE = "noTile"
-    NO_LOCATION = "noLocation"
-    PLAYER_HAS_NO_TILE = "Player has no tile"
-    LOCATION_OCCUPIED = "locationOccupied"
-    CHOICE_UNMODIFIABLE = "choiceUnmodifiable"
-    # Auth related
-    USERNAME_TAKEN = "USERNAME_TAKEN"
+class ErrorCode(StrEnum):
+    """The base of every error code enum. It has no codes of its own.
+
+    The kernel holds only the codes every app can return, in :class:`GameExceptionType`. The
+    identity layer and each app subclass this with their own codes, so an app's codes do not leak
+    into another app's schema. A code's value is what players receive, so values are unique across
+    all of them.
+    """
+
+
+class GameExceptionType(ErrorCode):
+    """The error codes every app can return: the lobby and both Instance apps."""
+
     USER_NOT_FOUND = "USER_NOT_FOUND"
-    INVALID_PASSWORD = "INVALID_PASSWORD"
     NOT_AUTHENTICATED = "NOT_AUTHENTICATED"
-    USER_IS_NOT_A_PLAYER = "USER_IS_NOT_A_PLAYER"
-    ACCOUNT_IS_NOT_A_FACILITATOR = "ACCOUNT_IS_NOT_A_FACILITATOR"
-    PLAYER_NOT_SET_UP = "PLAYER_NOT_SET_UP"
-    SIGNUP_DISABLED = "SIGNUP_DISABLED"
-    OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     INSTANCE_ACCESS_DENIED = "INSTANCE_ACCESS_DENIED"
-    INSTANCE_NOT_PRIVATE = "INSTANCE_NOT_PRIVATE"
-    JOIN_LINK_INVALID = "JOIN_LINK_INVALID"
-    JOIN_LINK_CLOSED = "JOIN_LINK_CLOSED"
-    RUN_NOT_FOUND = "RUN_NOT_FOUND"
-    # Workshop
-    WORKSHOP_SESSION_FINISHED = "WORKSHOP_SESSION_FINISHED"
-    WORKSHOP_NO_PHASE_RUNNING = "WORKSHOP_NO_PHASE_RUNNING"
-    WORKSHOP_INVESTMENT_CLOSED = "WORKSHOP_INVESTMENT_CLOSED"
-    WORKSHOP_FACILITY_NOT_OFFERED = "WORKSHOP_FACILITY_NOT_OFFERED"
-    WORKSHOP_NOT_ENOUGH_MONEY = "WORKSHOP_NOT_ENOUGH_MONEY"
-    WORKSHOP_NOT_SELECTED = "WORKSHOP_NOT_SELECTED"
-    WORKSHOP_PRICE_SETTING_CLOSED = "WORKSHOP_PRICE_SETTING_CLOSED"
-    WORKSHOP_PRICE_BELOW_FLOOR = "WORKSHOP_PRICE_BELOW_FLOOR"
-    WORKSHOP_NOT_STORAGE = "WORKSHOP_NOT_STORAGE"
-    WORKSHOP_FUEL_NOT_MANUAL = "WORKSHOP_FUEL_NOT_MANUAL"
-    WORKSHOP_FUEL_NOT_BURNED = "WORKSHOP_FUEL_NOT_BURNED"
-    WORKSHOP_SETTLEMENT_RUNNING = "WORKSHOP_SETTLEMENT_RUNNING"
-    WORKSHOP_STORAGE_LEVER_LOCKED = "WORKSHOP_STORAGE_LEVER_LOCKED"
-    # Lifecycle
-    INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
-    # Technology effects
-    INVALID_MULTIPLIER = "InvalidMultiplier"
-    # network prices
-    MALFORMED_REQUEST = "malformedRequest"
-    STORAGE_PRICE_INVERSION = "storagePriceInversion"
-    # Project
-    PROJECT_NOT_FOUND = "Project not found"
-    CANNOT_DECREASE_PRIORITY_OF_LAST_PROJECT = "CannotDecreasePriorityOfLastProject"
-    CANNOT_INCREASE_PRIORITY_OF_FIRST_PROJECT = "CannotIncreasePriorityOfFirstProject"
-    REQUIREMENTS_PREVENT_REORDER = "requirementsPreventReorder"
-    CANNOT_PAUSE = "cannotPause"
-    CANNOT_RESUME = "cannotResume"
-    CANNOT_SWAP_PAUSED_PROJECT = "CannotSwapPausedProject"
-    PAUSED_PREREQUISITE_PREVENT_UNPAUSE = "PausedPrerequisitePreventUnpause"
-    REQUIREMENTS_NOT_SATISFIED = "Requirements not satisfied"
-    HAS_DEPENDENTS = "HasDependents"
-    # Facilities
-    FACILITY_NOT_UPGRADABLE = "Facility not upgradable"
-    FACILITY_IS_DECOMMISSIONING = "FacilityIsDecommissioning"
-    FACILITY_NOT_FOUND = "Facility not found"
-    CANNOT_REMOVE_TECHNOLOGY_OR_FUNCTIONAL_FACILITIES = "Cannot remove technologies or functional facilities"
-    # Chat
-    WRONG_TITLE_LENGTH = "wrongTitleLength"
-    CHAT_ALREADY_EXISTS = "chatAlreadyExist"
-    NOT_IN_CHAT = "notInChat"
-    NO_MESSAGE = "noMessage"
-    MESSAGE_TOO_LONG = "messageTooLong"
-    # Daily quiz
-    QUIZ_ALREADY_ANSWERED = "quizAlreadyAnswered"
-    # Network
-    NETWORK_NOT_UNLOCKED = "networkNotUnlocked"
-    NO_SUCH_NETWORK = "noSuchNetwork"
-    PLAYER_ALREADY_IN_NETWORK = "playerAlreadyInNetwork"
-    NAME_ALREADY_USED = "nameAlreadyUsed"
-    NOT_IN_NETWORK = "notInNetwork"
-    NETWORK_FULL = "networkFull"
-    # Resource market
-    NOT_ENOUGH_RESOURCE = "notEnoughResource"
-    INVALID_QUANTITY = "invalidQuantity"

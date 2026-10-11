@@ -17,7 +17,7 @@ from typing import Annotated, Callable, TypeVar
 from fastapi import APIRouter, Depends, Query
 
 from energetica.identity import accounts, instance_config
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.identity.game_error import IdentityExceptionType
 from energetica.identity.schemas.facilitator import (
     FacilitatorAccessOut,
     FacilitatorAccessPatch,
@@ -26,6 +26,7 @@ from energetica.identity.schemas.facilitator import (
     RosterCandidatesOut,
 )
 from energetica.identity.web import get_facilitator
+from energetica.kernel.game_error import GameError, GameExceptionType
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
 
@@ -43,7 +44,7 @@ def _or_not_private(mutate: Callable[[], _T]) -> _T:
     try:
         return mutate()
     except instance_config.InstanceNotPrivateError as exc:
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+        raise GameError(IdentityExceptionType.INSTANCE_NOT_PRIVATE) from exc
 
 
 def _access_out() -> FacilitatorAccessOut:
@@ -79,9 +80,9 @@ def _require_private_slug() -> str:
     try:
         config = instance_config.load_instance_config()
     except instance_config.InstanceConfigError as exc:
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+        raise GameError(IdentityExceptionType.INSTANCE_NOT_PRIVATE) from exc
     if config is None or not isinstance(config.access, instance_config.PrivateAccess):
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE)
+        raise GameError(IdentityExceptionType.INSTANCE_NOT_PRIVATE)
     slug = instance_config.instance_slug()
     assert slug is not None  # a loaded config implies a configured slug
     return slug

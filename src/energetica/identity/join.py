@@ -21,9 +21,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.identity.game_error import IdentityExceptionType
 from energetica.identity.schemas.join import JoinLinkOut, Viewer
 from energetica.identity.web import get_current_account
+from energetica.kernel.game_error import GameError, GameExceptionType
 
 router = APIRouter(prefix="/join", tags=["Join"])
 
@@ -39,12 +40,12 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
     try:
         config = instance_config.load_instance_config()
     except instance_config.InstanceConfigError as exc:
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID) from exc
+        raise GameError(IdentityExceptionType.JOIN_LINK_INVALID) from exc
     if config is None or not isinstance(config.access, instance_config.PrivateAccess):
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID)
+        raise GameError(IdentityExceptionType.JOIN_LINK_INVALID)
     access = config.access
     if access.join_token is None or not secrets.compare_digest(access.join_token, token):
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID)
+        raise GameError(IdentityExceptionType.JOIN_LINK_INVALID)
     return config.name, access
 
 
@@ -85,7 +86,7 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
     _, access = _resolve(token)
     if not access.join_open:
-        raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
+        raise GameError(IdentityExceptionType.JOIN_LINK_CLOSED)
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:

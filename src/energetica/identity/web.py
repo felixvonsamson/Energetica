@@ -17,6 +17,7 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
+from energetica.identity.game_error import IdentityExceptionType
 from energetica.kernel.game_error import GameExceptionType
 from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 
@@ -66,7 +67,7 @@ def get_playing_account(request: Request) -> Account:
     """
     account = get_current_account(request)
     if account is None or get_role(account.account_id) != "player":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityExceptionType.USER_IS_NOT_A_PLAYER)
     return account
 
 
@@ -82,7 +83,7 @@ def get_facilitator(request: Request) -> Account:
     account = get_current_account(request)
     if account is None or get_role(account.account_id) != "facilitator":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
+            status_code=status.HTTP_403_FORBIDDEN, detail=IdentityExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
         )
     return account
 

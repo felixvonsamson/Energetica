@@ -16,11 +16,12 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.messages import Chat, Message
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.game_error import FreeplayExceptionType
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import CreateUserAction
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.weather import WeatherOut
 from energetica.sim.renewables import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -299,7 +300,7 @@ def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.daily_question
     if player.id in quiz_data["player_answers"]:
-        raise GameError(GameExceptionType.QUIZ_ALREADY_ANSWERED)
+        raise GameError(FreeplayExceptionType.QUIZ_ALREADY_ANSWERED)
     quiz_data["player_answers"][player.id] = player_answer
     player.progression_metrics["quiz_answers_total"] += 1
     if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":

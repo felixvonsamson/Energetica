@@ -9,30 +9,41 @@ The backend produces three distinct error shapes. The API client in `lib/api-cli
 { "detail": "USERNAME_TAKEN" }
 ```
 
-**Game errors** and **validation errors** come from two exception handlers that the game app and the lobby app each define separately. `tests/integration/test_error_envelope_contract.py` pins both shapes and asserts the two apps agree; read it for the exact status codes and body keys.
+**Game errors** and **validation errors** come from two exception handlers that every app installs with `install_error_handlers` (`energetica/kernel/error_envelope.py`). `tests/integration/test_error_envelope_contract.py` pins both shapes and asserts the freeplay, Workshop and lobby apps agree; read it for the exact status codes and body keys.
 
 `ApiClientError.getErrorMessage()` extracts the meaningful string from whichever format arrived.
 
 ## Error codes and type safety
 
-Backend game error codes live in `energetica/kernel/game_error.py` as a `StrEnum`:
+Backend error codes are split by who can return them. Each group is an enum that subclasses `ErrorCode`, a `StrEnum` with no codes of its own in `energetica/kernel/game_error.py`:
+
+| Enum | Module | Holds |
+| --- | --- | --- |
+| `GameExceptionType` | `energetica/kernel/game_error.py` | Codes every app can return, such as `NOT_AUTHENTICATED` |
+| `IdentityExceptionType` | `energetica/identity/game_error.py` | Codes of the join and facilitator routes, which both Instance apps mount and the lobby does not |
+| `FreeplayExceptionType` | `energetica/freeplay/game_error.py` | The persistent world's own codes |
+| `WorkshopExceptionType` | `energetica/workshop/game_error.py` | Workshop's own codes |
+| `LobbyExceptionType` | `lobby/game_error.py` | The lobby's own codes |
 
 ```python
-class GameExceptionType(StrEnum):
-    USERNAME_TAKEN = "USERNAME_TAKEN"
-    USER_NOT_FOUND = "USER_NOT_FOUND"
+class WorkshopExceptionType(ErrorCode):
+    WORKSHOP_SESSION_FINISHED = "WORKSHOP_SESSION_FINISHED"
     # ...
 ```
 
-The enum is injected into the OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. The frontend consumes it via `ApiSchema<"GameExceptionType">`, re-exported as `GameExceptionType` from `lib/game-messages.ts`.
+Players receive a code's string value, so values are unique across all the enums.
+
+The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `GameExceptionType`. The merged schema behind `api.generated.ts` gets every code until it is deleted. The frontend consumes it via `ApiSchema<"GameExceptionType">`, re-exported as `GameExceptionType` from `lib/game-messages.ts`.
 
 This creates a closed loop:
 - `GAME_ERROR_MESSAGES: Record<GameExceptionType, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.
 - `isErrorType(error, errorType: GameExceptionType)` — compile error at every call site using an unknown code.
 
-When adding a new backend error: add it to `GameExceptionType` in Python, run `generate-types`, then add the corresponding entry to `GAME_ERROR_MESSAGES`. The compiler will tell you if you miss either step.
+When adding a new backend error: add it to the enum of the layer or app that raises it, run `generate-types`, then add the corresponding entry to `GAME_ERROR_MESSAGES`. The compiler will tell you if you miss either step.
 
-Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.) are included in `GameExceptionType` even though they don't go through the `GameError` handler — the enum serves as the single registry of all error codes.
+Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.) are included in these enums even though they don't go through the `GameError` handler — the enums serve as the registry of all error codes.
+
+`tests/integration/test_error_envelope_contract.py` pins which enums each app's schema gets, and fails if a Workshop code reaches the kernel or another app's schema.
 
 ## Utilities
 
@@ -96,7 +107,7 @@ Clear all error state at the top of the submit handler, before validation.
 
 ## Adding a new error code
 
-1. Add the value to `GameExceptionType` in `energetica/kernel/game_error.py`. Use `SCREAMING_CASE` for the string value.
+1. Add the value to the enum of the layer or app that raises it (see the table above). Use `SCREAMING_CASE` for the string value. Only codes every app can return go in the kernel's `GameExceptionType`.
 2. Raise it from the appropriate backend route via `HTTPException` (to preserve a meaningful HTTP status code) or `GameError` (for business logic errors where 400 is acceptable).
 3. Run `bun run generate-types`.
 4. Add an entry to `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts` — the compiler will flag the missing key.
