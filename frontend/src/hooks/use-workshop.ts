@@ -326,13 +326,16 @@ export function useEventChangePending(): boolean {
 
 /**
  * Pick an event, or drop a pick (#1012). Each answer is the events after the
- * change, so it replaces the cached events. Retrying is harmless: picking or
- * dropping twice leaves the same picks.
+ * change, so it replaces the cached events.
  */
 export function usePickEvent() {
     return useMutation({
         mutationKey: EVENT_CHANGE,
         mutationFn: workshopApi.pickEvent,
+        // Never retried: a pick waits for the next boundary. If the server saved it but its
+        // response was lost, the boundary can pass and fire it before a retry arrives. The
+        // retry would then pick it again for the boundary after.
+        retry: false,
         onSuccess: (events) => {
             queryClient.setQueryData(queryKeys.workshop.events, events);
         },
@@ -340,7 +343,10 @@ export function usePickEvent() {
     });
 }
 
-/** Drop an event's pick before it fires (#1012). See {@link usePickEvent}. */
+/**
+ * Drop an event's pick before it fires (#1012). See {@link usePickEvent}.
+ * Retrying is harmless: dropping twice leaves the same picks.
+ */
 export function useDropEvent() {
     return useMutation({
         mutationKey: EVENT_CHANGE,
