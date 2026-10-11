@@ -326,6 +326,7 @@ def get_locked_prices(player: Player) -> list[LockedPrices]:
 
 def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelOut:
     needs = session.fuel_needs(player, session.current_round())
+    run_out = player.trading_results[-1].fuels_run_out if player.trading_results else set()
     lines = []
     for fuel in Fuel:
         price = session.fuel_prices.get(fuel)
@@ -343,6 +344,7 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
                 season_need=need,
                 stockpile_limit=STOCKPILE_SEASONS * need,
                 order=player.fuel_order.get(fuel) if session.fuel_procurement == "manual" else None,
+                ran_out=fuel in run_out,
             )
         )
     return WorkshopFuelOut(procurement=session.fuel_procurement, fuels=lines)

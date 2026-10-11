@@ -99,6 +99,10 @@ DEFAULT_ROUND_COUNT = 3
 # How many different weather seeds there are. The noise behind ``sim.renewables`` repeats after 256.
 WEATHER_SEEDS = 256
 
+# What is left of a fuel stock burned to the end, as a share of what was held, below which it counts as empty:
+# spreading the stock over the clearings leaves a rounding error (#1010).
+_EMPTY_STOCK = 1e-9
+
 Clock = Callable[[], datetime]
 
 
@@ -903,7 +907,13 @@ class WorkshopSession:
                 period=period,
                 # Copies, so the engine never reads a list the session changes.
                 bidders=[
-                    Bidder(player.account_id, list(player.owned_facilities), player.prices, dict(player.stored_energy))
+                    Bidder(
+                        player.account_id,
+                        list(player.owned_facilities),
+                        player.prices,
+                        dict(player.stored_energy),
+                        fuel=self._fuel_held(player),
+                    )
                     for player in players
                 ],
                 round_format=round_format,
@@ -1022,15 +1032,26 @@ class WorkshopSession:
             self.recorded_periods = recorded_periods
             raise
 
+    def _fuel_held(self, player: WorkshopPlayer) -> dict[Fuel, float] | None:
+        """The fuel ``player``'s facilities can burn in the Trading period being settled: under manual procurement,
+        their stock plus their order (#1010). None under automatic procurement, where fuel never runs short.
+        The caller holds the lock.
+        """
+        if self.fuel_procurement != "manual":
+            return None
+        held = dict(player.fuel_stock)
+        for fuel, quantity in player.fuel_order.items():
+            held[fuel] = held.get(fuel, 0.0) + quantity
+        return held
+
     def _fuel_payment(self, player: WorkshopPlayer, result: TradingResult) -> tuple[TradingResult, dict[Fuel, float]]:
         """What ``player`` pays for the fuel of the Trading period ``result`` is for: the result with the fuel they paid
         for, and their stock afterwards. Changes nothing. The caller holds the lock.
 
         Under manual procurement, the player pays for their order, which joins their stock, and the period's burn
-        comes out of it. Under automatic procurement, the burn comes out of their stock first, and they pay for the
-        rest. Either way it is at the season's price. Until a short stock limits generation (#1010), a player can
-        burn more than they hold under manual procurement too: they pay for the shortfall as under automatic
-        procurement, so that ordering too little is never free.
+        comes out of it. Their facilities could burn no more than that (:meth:`_fuel_held`). Under automatic
+        procurement, the burn comes out of their stock first, and they pay for the rest. Either way it is at the
+        season's price.
         """
         burned: dict[Fuel, float] = {}
         for facility, performance in result.facilities.items():
@@ -1045,9 +1066,9 @@ class WorkshopSession:
                     bought[fuel] = quantity
                     stock[fuel] = stock.get(fuel, 0.0) + quantity
             for fuel, amount in burned.items():
-                shortfall = max(0.0, amount - stock.get(fuel, 0.0))
-                bought[fuel] = bought.get(fuel, 0.0) + shortfall
-                stock[fuel] = stock.get(fuel, 0.0) + shortfall - amount
+                held = stock.get(fuel, 0.0)
+                # Burning all of it can leave a rounding error either side of zero, which counts as none.
+                stock[fuel] = held - amount if held - amount > held * _EMPTY_STOCK else 0.0
         else:
             for fuel, amount in burned.items():
                 from_stock = min(stock.get(fuel, 0.0), amount)

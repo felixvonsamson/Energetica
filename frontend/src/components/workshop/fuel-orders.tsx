@@ -9,7 +9,8 @@
  * last season (in red, with a note, when a price shock landed), and the
  * quantity to buy. The quantity starts at a default the server sets, and a
  * quantity that would take the stock over the stockpile limit is cut down to
- * fit.
+ * fit. A note under the stock says when the fuel ran out last season, which
+ * held back the output of the facilities burning it (#1010).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -101,6 +102,12 @@ function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
                             </dd>
                         </div>
                     </dl>
+                    {line.ran_out && (
+                        <p className="text-[13px] leading-snug text-warning">
+                            Ran out last season, so your facilities produced
+                            less.
+                        </p>
+                    )}
                 </div>
                 <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
