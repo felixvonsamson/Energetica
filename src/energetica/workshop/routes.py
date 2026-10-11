@@ -3,7 +3,8 @@
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session, extending its running phase and changing the levers are the
-facilitator's alone, and each tells every open page (#1140). A player's investment selection (#999)
+facilitator's alone, and each tells every open page (#1140). So is reading how close each technology is to
+unlocking (#1011). A player's investment selection (#999)
 and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
 player's own.
@@ -48,6 +49,8 @@ from energetica.workshop.schemas import (
     WorkshopSelectionOut,
     WorkshopSessionOut,
     WorkshopSettlementOut,
+    WorkshopTechnologyProgressOut,
+    WorkshopUnlocksOut,
 )
 from energetica.workshop.session import (
     FacilityNotOfferedError,
@@ -69,6 +72,7 @@ from energetica.workshop.session import (
 )
 from energetica.workshop.seasons import Season
 from energetica.workshop.storage import energy_at_risk
+from energetica.workshop.unlocks import CSP_UNLOCK_ROUND, UPGRADES
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -201,6 +205,31 @@ async def set_levers(
     await run_in_threadpool(session.set_levers, levers)
     await invalidate_session(request.app)
     return session.levers
+
+
+@router.get("/unlocks")
+def get_unlocks(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> WorkshopUnlocksOut:
+    """How far each technology is from unlocking its upgrade, and what has unlocked so far. Facilitator only, so
+    that each unlock comes as a surprise to the players.
+    """
+    progress = session.unlock_progress()
+    unlocked_round = {unlock.facility: unlock.round for unlock in progress.unlocks}
+    return WorkshopUnlocksOut(
+        threshold=progress.threshold,
+        technologies=[
+            WorkshopTechnologyProgressOut(
+                base=base,
+                base_name=CATALOG[base].name,
+                upgrade=upgrade,
+                upgrade_name=CATALOG[upgrade].name,
+                invested=progress.invested[base],
+                unlocked_round=unlocked_round.get(upgrade),
+            )
+            for base, upgrade in UPGRADES.items()
+        ],
+        csp_unlock_round=CSP_UNLOCK_ROUND,
+        unlocks=progress.unlocks,
+    )
 
 
 @router.get("/facilities")

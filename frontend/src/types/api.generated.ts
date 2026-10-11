@@ -2071,6 +2071,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/unlocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unlocks
+         * @description How far each technology is from unlocking its upgrade, and what has unlocked so far. Facilitator only, so
+         *     that each unlock comes as a surprise to the players.
+         */
+        get: operations["get_unlocks_api_v1_workshop_unlocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/facilities": {
         parameters: {
             query?: never;
@@ -5287,6 +5308,20 @@ export interface components {
             season: "spring" | "summer" | "autumn" | "winter";
         };
         /**
+         * Unlock
+         * @description A facility becoming available to buy, for the Recap to announce.
+         */
+        Unlock: {
+            facility: components["schemas"]["FacilityId"];
+            /** Round */
+            round: number;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "investment_threshold" | "round_gate" | "format_lever";
+        };
+        /**
          * WorkshopEntryOut
          * @description The result of entering the Run.
          */
@@ -5776,6 +5811,28 @@ export interface components {
             days_total: number;
         };
         /**
+         * WorkshopTechnologyProgressOut
+         * @description How far one base tier's upgrade is from unlocking (#1011). For the facilitator only.
+         */
+        WorkshopTechnologyProgressOut: {
+            base: components["schemas"]["FacilityId"];
+            /** Base Name */
+            base_name: string;
+            upgrade: components["schemas"]["FacilityId"];
+            /** Upgrade Name */
+            upgrade_name: string;
+            /**
+             * Invested
+             * @description Money every player has spent on the base tier so far
+             */
+            invested: number;
+            /**
+             * Unlocked Round
+             * @description The first Round the upgrade can be bought in, or null while it is locked
+             */
+            unlocked_round: number | null;
+        };
+        /**
          * WorkshopTierSeriesOut
          * @description One demand tier over a simulated day.
          */
@@ -5790,6 +5847,33 @@ export interface components {
              * @description What it bought at each settlement point, in W
              */
             served: number[];
+        };
+        /**
+         * WorkshopUnlocksOut
+         * @description Every technology's progress toward unlocking, and what has unlocked so far (#1011). For the facilitator
+         *     only: players learn of an unlock at the Recap, never how close one is.
+         */
+        WorkshopUnlocksOut: {
+            /**
+             * Threshold
+             * @description The spend on a base tier that unlocks its upgrade, the same for every technology. It grows with the number of players
+             */
+            threshold: number;
+            /**
+             * Technologies
+             * @description Each base tier, in catalog order
+             */
+            technologies: components["schemas"]["WorkshopTechnologyProgressOut"][];
+            /**
+             * Csp Unlock Round
+             * @description The first Round Concentrated solar power can be bought in
+             */
+            csp_unlock_round: number;
+            /**
+             * Unlocks
+             * @description Every facility unlocked so far, in the order they unlocked
+             */
+            unlocks: components["schemas"]["Unlock"][];
         };
         /**
          * GameExceptionType
@@ -8763,6 +8847,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unlocks_api_v1_workshop_unlocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopUnlocksOut"];
                 };
             };
         };

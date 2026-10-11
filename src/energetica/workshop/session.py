@@ -49,7 +49,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
@@ -85,7 +85,14 @@ from energetica.workshop.trading import (
     simulate_trading_period,
     simulated_days,
 )
-from energetica.workshop.unlocks import available_facilities
+from energetica.workshop.unlocks import (
+    Unlock,
+    available_facilities,
+    format_lever_unlocks,
+    invested,
+    round_end_unlocks,
+    unlock_threshold,
+)
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -284,6 +291,17 @@ class SettlementJob:
     cancelled: threading.Event = field(default_factory=threading.Event)
 
 
+class UnlockProgress(NamedTuple):
+    """How far each technology is from unlocking its upgrade, for the facilitator (#1011)."""
+
+    threshold: float
+    """The spend on a base tier that unlocks its upgrade, with the players the session has now."""
+    invested: dict[FacilityId, float]
+    """The money every player has spent on each base tier so far."""
+    unlocks: list[Unlock]
+    """Every facility unlocked so far, in order."""
+
+
 #: How many Trading-period records the session keeps in memory once read.
 LOADED_RECORDS = 3
 
@@ -335,6 +353,8 @@ class _SavedSession(BaseModel):
     fuel_procurement: FuelProcurement | None = None
     fuel_prices: dict[Fuel, FuelPrice] = {}
     pending_fuel_shocks: dict[Fuel, float] = {}
+    # Empty for a file saved before facilities unlocked.
+    unlocks: list[Unlock] = []
 
 
 class WorkshopSession:
@@ -362,6 +382,7 @@ class WorkshopSession:
         fuel_procurement: FuelProcurement | None = None,
         fuel_prices: dict[Fuel, FuelPrice] | None = None,
         pending_fuel_shocks: dict[Fuel, float] | None = None,
+        unlocks: list[Unlock] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -393,6 +414,9 @@ class WorkshopSession:
         self.fuel_prices = {} if fuel_prices is None else fuel_prices
         # Price shocks that land when the next Trading period opens, as a factor per fuel (#1009, #1012).
         self.pending_fuel_shocks = {} if pending_fuel_shocks is None else pending_fuel_shocks
+        # Every facility unlocked so far, in order (#1011). Kept rather than worked out again from the purchases,
+        # since the threshold moves with the headcount, and an unlock that has been announced must stay.
+        self.unlocks = [] if unlocks is None else unlocks
         # The records read most recently, newest last. A full season's record takes about half a second to
         # read and a hundred megabytes to hold, so a few are kept for the pages reviewing them.
         self._loaded_records: dict[TradingPeriod, TradingPeriodRecord] = {}
@@ -468,6 +492,7 @@ class WorkshopSession:
             fuel_procurement=saved.fuel_procurement,
             fuel_prices=saved.fuel_prices,
             pending_fuel_shocks=saved.pending_fuel_shocks,
+            unlocks=saved.unlocks,
             clock=clock,
         )
 
@@ -518,7 +543,23 @@ class WorkshopSession:
 
     def offered_facilities(self) -> list[WorkshopFacility]:
         """The facilities players can buy in the current Round."""
-        return available_facilities(self.current_format().storage)
+        unlocked = {unlock.facility for unlock in self.unlocks if unlock.round <= self.current_round()}
+        return available_facilities(self.current_format().storage, unlocked)
+
+    def unlock_progress(self) -> UnlockProgress:
+        """How far each technology is from unlocking, read in one step so its parts agree (#1011)."""
+        with self._lock:
+            return UnlockProgress(self._unlock_threshold(), self._invested(), list(self.unlocks))
+
+    def _invested(self) -> dict[FacilityId, float]:
+        """The money every player has spent on each base tier so far. The caller holds the lock."""
+        return invested(purchase for player in self.network.players() for purchase in player.purchases)
+
+    def _unlock_threshold(self) -> float:
+        """The spend on a base tier that unlocks its upgrade, with the players the session has now. The caller
+        holds the lock.
+        """
+        return unlock_threshold(len(self.network.players()))
 
     def investment_open(self) -> bool:
         """Whether players can change their selection: the session is in an Investment phase and its time
@@ -595,6 +636,7 @@ class WorkshopSession:
                     undos.append(self._apply_retirement(checkpoint.round)[1])
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
+                undos.append(self._apply_unlocks(checkpoint))
                 self._save(checkpoint, phase_timer)
             except BaseException:
                 # Undo the changes, so the session matches the file and the next advance retries them.
@@ -729,6 +771,37 @@ class WorkshopSession:
                 player.stored_energy = stored_energy
 
         return changed, undo
+
+    def _apply_unlocks(self, checkpoint: Checkpoint) -> Callable[[], None]:
+        """Unlock what the move to ``checkpoint`` unlocks, without saving. Returns what undoes it.
+
+        At a Round's Recap, an upgrade whose base tier has had enough spent on it unlocks from the next Round, and
+        so does Concentrated solar power once that Round is far enough on. The last Round's Recap unlocks nothing.
+        At a Round's Investment phase, full-season storage unlocks if it is the first Round to allow every storage
+        type. The caller holds the lock, and has fixed the Round's format.
+        """
+        before = self.unlocks
+        unlocked = {unlock.facility for unlock in before}
+        match checkpoint:
+            case Recap(round=round_number) if round_number < self.round_count:
+                new = round_end_unlocks(
+                    next_round=round_number + 1,
+                    spent=self._invested(),
+                    threshold=self._unlock_threshold(),
+                    unlocked=unlocked,
+                )
+            case Investment(round=round_number):
+                new = format_lever_unlocks(
+                    round_number=round_number, storage=self.current_format().storage, unlocked=unlocked
+                )
+            case _:
+                new = []
+        self.unlocks = [*before, *new]
+
+        def undo() -> None:
+            self.unlocks = before
+
+        return undo
 
     def _apply_retirement(self, round_number: int) -> tuple[bool, Callable[[], None]]:
         """Retire every facility past its lifetime in Round ``round_number``, without saving. Returns whether any
@@ -1115,5 +1188,6 @@ class WorkshopSession:
             fuel_procurement=self.fuel_procurement,
             fuel_prices=self.fuel_prices,
             pending_fuel_shocks=self.pending_fuel_shocks,
+            unlocks=self.unlocks,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

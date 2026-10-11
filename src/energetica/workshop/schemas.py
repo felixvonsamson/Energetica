@@ -16,6 +16,7 @@ from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
+from energetica.workshop.unlocks import Unlock
 
 
 class WorkshopPlayerOut(BaseModel):
@@ -206,6 +207,33 @@ class WorkshopFuelOrderIn(BaseModel):
 def _finite_or_none(values: Iterable[float]) -> list[float | None]:
     """``values`` as JSON can carry them: an unbounded or missing value becomes null."""
     return [value if math.isfinite(value) else None for value in values]
+
+
+class WorkshopTechnologyProgressOut(BaseModel):
+    """How far one base tier's upgrade is from unlocking (#1011). For the facilitator only."""
+
+    base: FacilityId
+    base_name: str
+    upgrade: FacilityId
+    upgrade_name: str
+    invested: float = Field(description="Money every player has spent on the base tier so far")
+    unlocked_round: int | None = Field(
+        description="The first Round the upgrade can be bought in, or null while it is locked"
+    )
+
+
+class WorkshopUnlocksOut(BaseModel):
+    """Every technology's progress toward unlocking, and what has unlocked so far (#1011). For the facilitator
+    only: players learn of an unlock at the Recap, never how close one is.
+    """
+
+    threshold: float = Field(
+        description="The spend on a base tier that unlocks its upgrade, the same for every technology. It grows "
+        "with the number of players"
+    )
+    technologies: list[WorkshopTechnologyProgressOut] = Field(description="Each base tier, in catalog order")
+    csp_unlock_round: int = Field(description="The first Round Concentrated solar power can be bought in")
+    unlocks: list[Unlock] = Field(description="Every facility unlocked so far, in the order they unlocked")
 
 
 class WorkshopPeriodOut(BaseModel):

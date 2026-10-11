@@ -1,14 +1,21 @@
 /**
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
  * is in it, and the countdown on the running phase (#996). The facilitator also
- * gets the buttons that advance the session and extend the phase. A player gets
- * a link to the facility page (#998) and the button that opens the
- * price-setting panel (#1002), which shows a clock badge while the
- * price-setting window is open.
+ * gets the buttons that advance the session and extend the phase, and a link to
+ * their console (#1011). A player gets a link to the facility page (#998) and
+ * the button that opens the price-setting panel (#1002), which shows a clock
+ * badge while the price-setting window is open.
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Factory, Tags, TimerOff } from "lucide-react";
+import {
+    ChevronRight,
+    Clock,
+    Factory,
+    SlidersHorizontal,
+    Tags,
+    TimerOff,
+} from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +75,14 @@ export function WorkshopTopBar({
                         panelOpen={pricePanelOpen}
                         onClick={onTogglePricePanel}
                     />
+                )}
+                {isFacilitator && (
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link to="/app/workshop/console">
+                            <SlidersHorizontal className="size-4" />
+                            Console
+                        </Link>
+                    </Button>
                 )}
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />
