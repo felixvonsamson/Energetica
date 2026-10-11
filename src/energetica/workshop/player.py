@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 from energetica.workshop.trading import Bidder, TradingResult
@@ -65,6 +65,13 @@ class WorkshopPlayer:
 
     # The prices each completed Trading period ran at, oldest first (#1002).
     locked_prices: list[LockedPrices] = field(default_factory=list)
+
+    # The fuel the player holds, in kg (#1009). A fuel they hold none of is left out.
+    fuel_stock: dict[Fuel, float] = field(default_factory=dict)
+
+    # The fuel the player buys when the price-setting window closes, in kg, under manual procurement (#1009). Each
+    # window starts from what they bought in the last one, so it also says what that was.
+    fuel_order: dict[Fuel, float] = field(default_factory=dict)
 
     # How each completed Trading period went, oldest first (#1003). A period in which the player had
     # nothing operating has no result.

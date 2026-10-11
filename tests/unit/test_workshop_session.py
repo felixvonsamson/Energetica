@@ -1096,7 +1096,9 @@ def test_a_trading_period_settles_once_its_price_setting_window_runs_out(path: P
     alice = session.network.members[1]
     expected = _expected_outcome(session, alice)
     [result] = alice.trading_results
-    assert result == expected.results[1]
+    # Fuel procurement is automatic, so settling adds the fuel the plants burned (#1009).
+    assert result == expected.results[1].model_copy(update={"fuel": result.fuel})
+    assert result.fuel_cost > 0
     assert (result.round, result.season) == (1, "spring")
     assert result.facilities[FacilityId.COMBINED_CYCLE].revenue > 0
     assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + result.net)
@@ -1393,7 +1395,8 @@ def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Pat
     assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 91)
     om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
     assert plant.om == pytest.approx(om)
-    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om)
+    # Fuel procurement is automatic, so the plants' fuel is paid for too (#1009).
+    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om - result.fuel_cost)
 
 
 def test_a_failed_simulation_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:

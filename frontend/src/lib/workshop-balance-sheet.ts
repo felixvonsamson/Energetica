@@ -4,9 +4,11 @@
  *
  * Only level-0 rows add up to the result. The rows indented under them break
  * those lines down, with a volume and a rate where the amount is one times the
- * other. Energy arrives in Wh and is shown in MWh.
+ * other. Energy arrives in Wh and is shown in MWh, and fuel arrives in kg and
+ * is shown in tonnes.
  */
 
+import { KG_PER_TONNE } from "@/lib/workshop-fuel";
 import type { ApiSchema } from "@/types/api-helpers";
 
 export type BalanceSheet = ApiSchema<"BalanceSheet">;
@@ -41,6 +43,15 @@ export function formatVolume(value: number): string {
         : group(value);
 }
 
+/**
+ * Fuel in tonnes: like a volume, but to the nearest kg below 10 t, since a
+ * season's uranium can be a few kg.
+ */
+export function formatFuelVolume(tonnes: number): string {
+    const rounded = Number(tonnes.toFixed(3));
+    return Math.abs(rounded) < 10 ? String(rounded) : group(tonnes);
+}
+
 /** A rate: one decimal unless it is a whole number. */
 export function formatRate(value: number): string {
     const rounded = Math.round(value * 10) / 10;
@@ -62,7 +73,7 @@ export interface Cell {
 }
 
 /** The unit column: what the volume and the rate are measured in. */
-export type RowUnit = "energy" | "usage";
+export type RowUnit = "energy" | "usage" | "fuel";
 
 export interface Row {
     id: string;
@@ -94,6 +105,7 @@ function energyCell(energy: number, money: number): Cell {
 /** The balance sheet's rows, top to bottom. */
 export function balanceSheetRows(sheet: BalanceSheet): Row[] {
     const omLines = sheet.total?.om ?? [];
+    const fuelLines = sheet.total?.fuel ?? [];
     const omLine = (period: PeriodSheet, facility: string) =>
         period.om.find((line) => line.facility === facility);
 
@@ -182,17 +194,33 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
     // - Carbon tax (#1015), below operating income, which leaves it out: what
     //   was paid on the CO₂ emitted (tonnes times the price per tonne), less
     //   the share received back.
+    // Fuel is paid for each season (#1009), as tonnes times the price per tonne.
+    rows.push({
+        id: "fuel",
+        label: "Fuel cost",
+        level: 0,
+        kind: "line",
+        cell: (p) => ({ amount: -p.fuel_total }),
+    });
+    for (const line of fuelLines) {
+        rows.push({
+            id: `fuel-${line.fuel}`,
+            label: line.name,
+            level: 1,
+            kind: "line",
+            unit: "fuel",
+            cell: (p) => {
+                const bought = p.fuel.find((f) => f.fuel === line.fuel);
+                if (!bought) return { amount: 0 };
+                return {
+                    volume: bought.quantity / KG_PER_TONNE,
+                    rate: bought.price * KG_PER_TONNE,
+                    amount: -bought.cost,
+                };
+            },
+        });
+    }
     rows.push(
-        // Pending until fuel can be bought (#1009). If it is bought once per
-        // Round rather than per season, its cost belongs to the Round column
-        // only, like the investments.
-        {
-            id: "fuel",
-            label: "Fuel cost",
-            level: 0,
-            kind: "pending",
-            cell: () => empty,
-        },
         {
             id: "operating",
             label: "Operating income",
@@ -290,13 +318,7 @@ export function waterfallSteps(
     change("O&M", -period.om_total);
     // The revenue tax (#1012) goes here, and the carbon tax (#1015) after
     // operating income, followed by a season's result.
-    steps.push({
-        label: "Fuel cost",
-        value: null,
-        kind: "pending",
-        from: running,
-        to: running,
-    });
+    change("Fuel cost", -period.fuel_total);
     subtotal("Operating income", period.operating_income);
     if (round) {
         change("Investments", -round.investment_total);

@@ -6,6 +6,9 @@
  * the page rather than over it, so the player can set prices while still
  * looking at their data.
  *
+ * Under manual fuel procurement, the panel also holds the fuel the player buys
+ * for the season (#1009), below the prices.
+ *
  * Prices can be changed while a Trading period's price-setting window is open,
  * and are locked when its countdown ends. A field cannot be left empty or set
  * below the price floor: it goes back to the last price when it loses focus.
@@ -17,12 +20,15 @@ import { useEffect, useId, useRef, useState } from "react";
 import { CoinIcon } from "@/components/ui/coin-icon";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { FuelOrders } from "@/components/workshop/fuel-orders";
 import {
     usePriceSettingOpen,
     useSetPrice,
     useWorkshopFacilities,
     useWorkshopFleet,
+    useWorkshopFuel,
     useWorkshopPrices,
+    useWorkshopSession,
 } from "@/hooks/use-workshop";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import {
@@ -48,6 +54,9 @@ export function PricePanel({ onClose }: { onClose: () => void }) {
     const prices = useWorkshopPrices();
     const fleet = useWorkshopFleet();
     const facilities = useWorkshopFacilities();
+    const fuel = useWorkshopFuel();
+    const session = useWorkshopSession();
+    const inTradingPeriod = session.data?.checkpoint.kind === "trading_period";
     const open = usePriceSettingOpen();
     const catalog = new Map(
         facilities.data?.map((facility) => [facility.id, facility]),
@@ -86,15 +95,26 @@ export function PricePanel({ onClose }: { onClose: () => void }) {
                         <Spinner />
                     </div>
                 ) : (
-                    <PriceList
-                        // Starting the fields afresh when the window opens or closes drops
-                        // anything half-typed, so it does not come back in the next window.
-                        key={String(open)}
-                        fleet={fleet.data}
-                        catalog={catalog}
-                        prices={prices.data}
-                        open={open}
-                    />
+                    <>
+                        <PriceList
+                            // Starting the fields afresh when the window opens or closes drops
+                            // anything half-typed, so it does not come back in the next window.
+                            key={String(open)}
+                            fleet={fleet.data}
+                            catalog={catalog}
+                            prices={prices.data}
+                            open={open}
+                        />
+                        {/* Last season's prices are no use outside a Trading period. */}
+                        {inTradingPeriod &&
+                            fuel.data?.procurement === "manual" && (
+                                <FuelOrders
+                                    key={`fuel-${String(open)}`}
+                                    fuels={fuel.data.fuels}
+                                    open={open}
+                                />
+                            )}
+                    </>
                 )}
             </div>
         </aside>

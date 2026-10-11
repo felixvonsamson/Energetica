@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from energetica.workshop.facilities import FacilityId
+from energetica.workshop.facilities import FacilityId, Fuel
+from energetica.workshop.fuel import FuelPurchase
 from energetica.workshop.operating_profit import (
     period_operating_profit,
     round_operating_profit,
@@ -51,6 +52,14 @@ def test_a_period_earns_its_income_less_every_operating_cost() -> None:
     )
 
     assert period_operating_profit(result) == pytest.approx(1_900.0 - 100.0 - 30.0 - 20.0 - 250.0 - 10.0)
+
+
+def test_the_fuel_a_period_paid_for_is_an_operating_cost() -> None:
+    result = _result(1, "spring", {GAS: _performance(revenue=1_000.0, om=100.0)}).model_copy(
+        update={"fuel": [FuelPurchase(fuel=Fuel.GAS, quantity=400.0, price=0.5)]}
+    )
+
+    assert period_operating_profit(result) == pytest.approx(1_000.0 - 100.0 - 200.0)
 
 
 def test_a_period_can_lose_money() -> None:

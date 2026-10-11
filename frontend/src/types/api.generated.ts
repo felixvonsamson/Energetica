@@ -2221,6 +2221,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/fuel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Fuel
+         * @description The fuel the calling player's operating facilities burn: this season's prices, their stock, and under manual
+         *     procurement what they buy when the price-setting window closes.
+         */
+        get: operations["get_fuel_api_v1_workshop_fuel_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/fuel/{fuel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Fuel Order
+         * @description Set how much ``fuel`` the calling player buys when the price-setting window closes. Only under manual
+         *     procurement, while the window is open, and for a fuel their operating facilities burn. A quantity that would
+         *     take their stock over the stockpile limit is cut down to fit.
+         */
+        put: operations["set_fuel_order_api_v1_workshop_fuel__fuel__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/periods/{round_number}/{season}": {
         parameters: {
             query?: never;
@@ -4953,6 +4996,27 @@ export interface components {
             kind: "finished";
         };
         /**
+         * FuelLine
+         * @description The fuel of one type paid for over a period.
+         */
+        FuelLine: {
+            fuel: components["schemas"]["Fuel"];
+            /** Name */
+            name: string;
+            /**
+             * Quantity
+             * @description In kg
+             */
+            quantity: number;
+            /**
+             * Price
+             * @description Average price per kg: the cost divided by the quantity
+             */
+            price: number;
+            /** Cost */
+            cost: number;
+        };
+        /**
          * Investment
          * @description A Round's Investment phase, where players build facilities and buy fuel.
          */
@@ -5076,8 +5140,19 @@ export interface components {
             /** Om Total */
             om_total: number;
             /**
+             * Fuel
+             * @description One line per fuel paid for, in the order of the fuels
+             * @default []
+             */
+            fuel: components["schemas"]["FuelLine"][];
+            /**
+             * Fuel Total
+             * @default 0
+             */
+            fuel_total: number;
+            /**
              * Operating Income
-             * @description Market income minus dumping cost and O&M
+             * @description Market income minus dumping cost, O&M and fuel
              */
             operating_income: number;
         };
@@ -5162,6 +5237,12 @@ export interface components {
              */
             price_setting_minutes: number;
             round_format?: components["schemas"]["RoundFormat"];
+            /**
+             * Fuel Procurement
+             * @default automatic
+             * @enum {string}
+             */
+            fuel_procurement: "automatic" | "manual";
         };
         /**
          * SeasonSheet
@@ -5289,6 +5370,78 @@ export interface components {
              * @description Whether players can buy it in the current Round. A facility the player owns but can no longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown
              */
             for_sale: boolean;
+        };
+        /**
+         * WorkshopFuelLineOut
+         * @description One fuel the calling player's operating facilities burn, in the current Trading period (#1009). Quantities
+         *     are in kg.
+         */
+        WorkshopFuelLineOut: {
+            fuel: components["schemas"]["Fuel"];
+            /** Name */
+            name: string;
+            /**
+             * Price
+             * @description The season's price per kg
+             */
+            price: number;
+            /**
+             * Change
+             * @description The change since last season, as a share of last season's price, such as 0.15 for +15%. Null in the first season
+             */
+            change: number | null;
+            /**
+             * Shocked
+             * @description Whether a price shock landed this season
+             */
+            shocked: boolean;
+            /**
+             * Stock
+             * @description What the player holds
+             */
+            stock: number;
+            /**
+             * Season Need
+             * @description What the player's facilities burning it burn running at full output for the whole season
+             */
+            season_need: number;
+            /**
+             * Stockpile Limit
+             * @description The most the player's stock may hold, counting what they order
+             */
+            stockpile_limit: number;
+            /**
+             * Order
+             * @description What the player buys when the price-setting window closes. Null under automatic procurement
+             */
+            order: number | null;
+        };
+        /**
+         * WorkshopFuelOrderIn
+         * @description How much of one fuel to buy, in kg.
+         */
+        WorkshopFuelOrderIn: {
+            /**
+             * Quantity
+             * @description In kg. Cut down to fit the stockpile limit
+             */
+            quantity: number;
+        };
+        /**
+         * WorkshopFuelOut
+         * @description The fuel the calling player buys this season (#1009).
+         */
+        WorkshopFuelOut: {
+            /**
+             * Procurement
+             * @description How players get fuel in the current Trading period, or null before the first one: billed for what they burned, or buying it themselves in the price-setting window
+             */
+            procurement: ("automatic" | "manual") | null;
+            /**
+             * Fuels
+             * @description Each fuel the player's operating facilities burn, in a fixed order. Empty before the first Trading period
+             */
+            fuels: components["schemas"]["WorkshopFuelLineOut"][];
         };
         /**
          * WorkshopMemberOut
@@ -5642,7 +5795,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_SETTLEMENT_RUNNING" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -8810,6 +8963,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LockedPrices"][];
+                };
+            };
+        };
+    };
+    get_fuel_api_v1_workshop_fuel_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopFuelOut"];
+                };
+            };
+        };
+    };
+    set_fuel_order_api_v1_workshop_fuel__fuel__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fuel: components["schemas"]["Fuel"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopFuelOrderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopFuelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

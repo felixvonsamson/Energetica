@@ -201,7 +201,22 @@ _Avoid_: revenue, gross proceeds, net.
 
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the
-Round. Market income, dumping cost and O&M add up to the season's operating income; the Round column
+Round. Market income, dumping cost, O&M and fuel cost add up to the season's operating income; the Round column
 then takes off the Round's investments to give its **net profit**. A season fills in once it is settled.
 Market income already has the cost of the energy storage bought to charge taken off.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
+
+**Fuel procurement** (#1009):
+How players get fuel, a lever fixed when each Trading period opens. Under **automatic** procurement, a
+player pays for the fuel their facilities burned, less what their stock covered. Under **manual**
+procurement, they buy each fuel in the price-setting window, and its cost is charged when the period is
+settled. Either way fuel is paid for at the season's price, which moves a little each season and jumps
+when a price shock lands.
+
+**Season need** (#1009):
+The fuel a player's operating facilities burn running at full output for a whole season. The first
+manual order of a fuel defaults to it. After that, an order defaults to what the player bought last time.
+
+**Stockpile limit** (#1009):
+The most fuel of one type a player may hold: 3 times its season need. An order that would go over it is
+cut down to fit. Unused fuel carries over, and fuel left at the end of the session is worth nothing.

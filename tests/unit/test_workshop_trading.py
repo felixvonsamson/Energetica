@@ -16,8 +16,9 @@ import math
 import pytest
 
 from energetica.sim.national_demand import DemandCurve
-from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, om_owed
+from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PriceSheet
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.trading import (
@@ -243,6 +244,37 @@ def test_emissions_follow_generation() -> None:
     assert outcome.results[1].facilities[GAS].emissions == pytest.approx(
         CATALOG[GAS].base_pollution * 11 * _HOURS * SEASON_DAYS
     )
+
+
+def test_fuel_burned_follows_generation() -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
+
+    assert outcome.results[1].facilities[GAS].fuel_burned == pytest.approx(FUEL_USE[GAS] * 11 * _HOURS * SEASON_DAYS)
+
+
+def test_a_facility_that_burns_nothing_burns_no_fuel() -> None:
+    outcome = _simulate(_bidder(WIND))
+
+    assert outcome.results[1].facilities[WIND].fuel_burned == 0.0
+
+
+def test_the_engine_buys_no_fuel_the_session_pays_for_it() -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
+
+    assert outcome.results[1].fuel == []
+
+
+def test_a_results_fuel_comes_off_what_it_added_to_the_players_money() -> None:
+    result = _simulate(_bidder(GAS, sell={GAS: 100.0})).results[1]
+    fuel = [
+        FuelPurchase(fuel=Fuel.GAS, quantity=1_000.0, price=0.5),
+        FuelPurchase(fuel=Fuel.GAS, quantity=10.0, price=2.0),
+    ]
+
+    with_fuel = result.model_copy(update={"fuel": fuel})
+
+    assert with_fuel.fuel_cost == pytest.approx(520.0)
+    assert with_fuel.net == pytest.approx(result.net - 520.0)
 
 
 def test_clearing_more_often_settles_the_same_steady_day() -> None:

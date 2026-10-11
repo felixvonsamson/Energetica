@@ -1,17 +1,18 @@
 """A player's balance sheet for one Round, which the Round overview shows (#1008).
 
 It has a column for each season and one for the Round. Each column breaks the player's operating income down
-into market income, dumping cost and O&M, with the volumes and prices behind them. The Round column then takes
+into market income, dumping cost, O&M and fuel, with the volumes and prices behind them. The Round column then takes
 off the Round's investments to give its net profit. Operating income is added up by
 :mod:`~energetica.workshop.operating_profit`, so the overview and the final score always agree.
 
 The sheet fills in as the Round's Trading periods are settled: a season not settled yet has no figures, and
 neither does one a blackout ended the Round before.
 
-Three parts are still to come. Fuel cost (#1009) depends on whether fuel is bought once per Round or once per
-season, which #1009 decides: per Round, it belongs with the investments in the Round column. The climate-event
-revenue tax (#1012) comes off market income inside operating income, as #1006 already counts it. The carbon
-tax (#1015) sits below operating income, which leaves it out, beside the investments.
+Fuel is paid for once per season (#1009), so each season's column has its own fuel cost.
+
+Two parts are still to come. The climate-event revenue tax (#1012) comes off market income inside operating
+income, as #1006 already counts it. The carbon tax (#1015) sits below operating income, which leaves it out,
+beside the investments.
 """
 
 from __future__ import annotations
@@ -21,8 +22,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.fuel import FUEL_NAMES
 from energetica.workshop.operating_profit import period_operating_profit, round_operating_profit
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import TradingResult
@@ -44,6 +46,18 @@ class OmLine(BaseModel):
     usage: float = Field(description="Capacity factor, from 0 to 1. The variable part charged is variable_full × usage")
 
 
+class FuelLine(BaseModel):
+    """The fuel of one type paid for over a period."""
+
+    model_config = ConfigDict(frozen=True)
+
+    fuel: Fuel
+    name: str
+    quantity: float = Field(description="In kg")
+    price: float = Field(description="Average price per kg: the cost divided by the quantity")
+    cost: float
+
+
 class PeriodSheet(BaseModel):
     """What a player earned and spent running their fleet over a season, or over the Round so far.
 
@@ -61,7 +75,10 @@ class PeriodSheet(BaseModel):
     dump_cost: float
     om: list[OmLine] = Field(description="One line per facility type that was operating, in catalog order")
     om_total: float
-    operating_income: float = Field(description="Market income minus dumping cost and O&M")
+    # Default to none for a sheet without fuel.
+    fuel: list[FuelLine] = Field(default=[], description="One line per fuel paid for, in the order of the fuels")
+    fuel_total: float = 0.0
+    operating_income: float = Field(description="Market income minus dumping cost, O&M and fuel")
 
 
 class SeasonSheet(BaseModel):
@@ -151,6 +168,23 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
     purchase_cost = sum(performance.purchase_cost for _, performance in performances)
     dump_cost = sum(performance.dump_cost for _, performance in performances)
     om_total = sum(line.om for line in om.values())
+    quantities: dict[Fuel, float] = {}
+    costs: dict[Fuel, float] = {}
+    for result in results:
+        for purchase in result.fuel:
+            quantities[purchase.fuel] = quantities.get(purchase.fuel, 0.0) + purchase.quantity
+            costs[purchase.fuel] = costs.get(purchase.fuel, 0.0) + purchase.cost
+    fuel = [
+        FuelLine(
+            fuel=fuel,
+            name=FUEL_NAMES[fuel],
+            quantity=quantities[fuel],
+            price=costs[fuel] / quantities[fuel],
+            cost=costs[fuel],
+        )
+        for fuel in Fuel
+        if quantities.get(fuel, 0.0) > 0
+    ]
     return PeriodSheet(
         energy_sold=sum(performance.sold for _, performance in performances),
         sale_revenue=sale_revenue,
@@ -161,6 +195,8 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         dump_cost=dump_cost,
         om=sorted(om.values(), key=lambda line: _catalog_order(line.facility)),
         om_total=om_total,
+        fuel=fuel,
+        fuel_total=sum(line.cost for line in fuel),
         operating_income=sum(period_operating_profit(result) for result in results),
     )
 
