@@ -1040,7 +1040,7 @@ class WorkshopSession:
             round_format=job.round_format,
             amplitude=job.demand_amplitude,
             curve=national_demand_curve(),
-            weather=representative_weather(job.weather_seed),
+            weather=representative_weather(job.weather_seed, job.period.round),
             on_day_done=on_day_done,
         )
 

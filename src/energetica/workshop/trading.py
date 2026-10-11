@@ -135,14 +135,19 @@ Weather = Callable[[FacilityId, float], float]
 """The share of its power a renewable facility produces at a time, in seconds from 1 January, from 0 to 1."""
 
 
-def representative_weather(seed: int) -> Weather:
-    """The weather of ``sim.renewables`` at :data:`WEATHER_POSITION`, for a Run whose random seed is ``seed``.
+def representative_weather(seed: int, round_number: int = 1) -> Weather:
+    """The weather of ``sim.renewables`` at :data:`WEATHER_POSITION`, in Round ``round_number`` of a Run whose
+    random seed is ``seed``.
 
-    The river table covers a year of its own length, so hydro reads it at the same share of the year.
+    Each Round is a year of its own, so a season's weather differs from one Round to the next (#1164). The noise
+    behind the wind repeats after about eleven years. The river table covers a year of its own length, so hydro
+    reads it at the same share of the year, the same in every Round.
     """
     river_year = len(RIVER_FLOW_SPEED_SEASONAL)
+    year_start = (round_number - 1) * DAYS_PER_YEAR * SECONDS_PER_DAY
 
-    def weather(facility: FacilityId, seconds: float) -> float:
+    def weather(facility: FacilityId, seconds_into_year: float) -> float:
+        seconds = year_start + seconds_into_year
         match CATALOG[facility].category:
             case FacilityCategory.WIND:
                 share = wind_power_fraction(calculate_wind_speed(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR))
@@ -150,7 +155,9 @@ def representative_weather(seed: int) -> Weather:
                 irradiance = calculate_solar_irradiance(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR)[0]
                 share = solar_power_fraction(irradiance)
             case FacilityCategory.HYDRO:
-                share = hydro_power_fraction(calculate_river_speed(seconds * river_year / DAYS_PER_YEAR, river_year))
+                share = hydro_power_fraction(
+                    calculate_river_speed(seconds_into_year * river_year / DAYS_PER_YEAR, river_year)
+                )
             case _:
                 raise ValueError(f"{facility} does not follow the weather")
         # ``sim.renewables`` computes with numpy, so its results are numpy floats. Saved results need plain ones.

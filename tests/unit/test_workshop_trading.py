@@ -517,6 +517,15 @@ def test_the_same_seed_gives_the_same_weather_and_another_seed_other_weather() -
     assert winds[0] != winds[2]
 
 
+def test_each_round_has_weather_of_its_own() -> None:
+    noon = REPRESENTATIVE_DAYS["spring"] * 86_400 + 12 * 3_600
+
+    assert representative_weather(7)(WIND, noon) == representative_weather(7, round_number=1)(WIND, noon)
+    assert representative_weather(7, round_number=1)(WIND, noon) != representative_weather(7, round_number=2)(
+        WIND, noon
+    )
+
+
 def test_each_season_is_represented_by_its_middle_day() -> None:
     assert list(REPRESENTATIVE_DAYS) == ["spring", "summer", "autumn", "winter"]
     for season, day in REPRESENTATIVE_DAYS.items():
