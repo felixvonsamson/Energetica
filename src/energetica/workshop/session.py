@@ -83,7 +83,7 @@ from energetica.workshop.trading import (
     TradingResult,
     representative_weather,
     simulate_trading_period,
-    simulated_days,
+    simulated_day_count,
 )
 from energetica.workshop.unlocks import (
     Unlock,
@@ -1015,7 +1015,7 @@ class WorkshopSession:
                 demand_amplitude=demand_amplitude,
                 weather_seed=self.weather_seed,
             )
-            self.settlement = SettlementProgress(period, 0, len(simulated_days(period.season, round_format)))
+            self.settlement = SettlementProgress(period, 0, simulated_day_count(round_format))
             return job
 
     def run_settlement(self, job: SettlementJob) -> TradingOutcome:

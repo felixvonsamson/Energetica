@@ -5218,11 +5218,11 @@ export interface components {
         RoundFormat: {
             /**
              * Trading Format
-             * @description How each Trading period is simulated: one representative day scaled to the season, or every day of the season
+             * @description How each Trading period is simulated: the season's middle day scaled to the season, one or three days matched to the season's average weather and demand and scaled to it, or every day of the season
              * @default representative_day
              * @enum {string}
              */
-            trading_format: "representative_day" | "full_season";
+            trading_format: "representative_day" | "matched_day" | "matched_days" | "full_season";
             /**
              * Clearings Per Day
              * @description How many times a day the market clears in a Trading period
@@ -5628,7 +5628,7 @@ export interface components {
             clearings_per_day: number;
             /**
              * Days
-             * @description The day of the year of each simulated day, in order: one for a representative day, 91 for a full season. Days are asked for by their position in this list
+             * @description The day of the year of each simulated day, in order: one for a representative or matched day, three for matched days, 91 for a full season. Days are asked for by their position in this list
              */
             days: number[];
             /**
@@ -5812,7 +5812,7 @@ export interface components {
             days_done: number;
             /**
              * Days Total
-             * @description Days the simulation covers: 1 for a representative day, 91 for a full season
+             * @description Days the simulation covers: 1 for a representative or matched day, 3 for matched days, 91 for a full season
              */
             days_total: number;
         };

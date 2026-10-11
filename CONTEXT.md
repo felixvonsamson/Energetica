@@ -157,7 +157,7 @@ winter runs over the end of the year. The demand curve and the weather use this 
 
 **Round format** (#1004):
 The three levers that say how a Round's Trading periods are simulated: the **trading-round format**
-(representative day or full season), the clearings per day (24, 96 or 288), and the storage
+(representative day, matched day, matched days or full season), the clearings per day (24, 96 or 288), and the storage
 availability (none, batteries only, or every type). The moderator can change the levers at any time,
 but a Round keeps the format it started with. Every storage type needs the full-season format. If the
 moderator switches back, storage already built keeps running, but no more of it can be bought.
@@ -168,6 +168,14 @@ day of its season, cleared at the Round's clearings per day. Its trading money a
 ×91 (the days in a season) to give the period's total. O&M is not scaled, since it is already one
 period's share, and **stored energy** is what the pool really holds at the end of the day.
 _Avoid_: sample day, typical day.
+
+**Matched day**, **matched days** (#1164):
+Formats in which the simulated days are chosen to match the season's average weather and demand,
+instead of being its middle day. One matched day is the season's day closest to the average. Three
+matched days are chosen by sorting the season's days into three equal groups by wind (calm, middling,
+windy) and three by sunshine (dull, middling, sunny), and taking the trio with one day from each wind
+group and one from each sunshine group (a Latin square) whose average is closest to the season's. Each is scaled by the same share of the
+91 days. The days are real days of the season, so the season's own luck still decides its total.
 
 **Full season** (#1004):
 In full-season mode, all 91 days of a Trading period's season are simulated one after another and

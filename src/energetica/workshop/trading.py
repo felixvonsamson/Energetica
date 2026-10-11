@@ -5,6 +5,8 @@ The Round's format (:mod:`~energetica.workshop.round_format`) says which days:
 
 - in representative-day mode, the middle day of the season stands for all of it, and its result is
   scaled ×91 to become the period's real total (#992 §2);
+- in the matched formats, one or three days chosen to match the season's average weather and demand stand
+  for it (:mod:`~energetica.workshop.day_matching`, #1164), each scaled by the same share of the 91 days;
 - in full-season mode, all 91 days of the season are cleared one after the other and added up, with no
   scaling. Storage carries its charge from one day to the next.
 
@@ -84,7 +86,14 @@ from energetica.sim.renewables import (
     wind_power_fraction,
 )
 from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, settle_clearing
-from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
+from energetica.workshop.day_matching import MATCHED_DAY_COUNT, DayConditions, matched_day, matched_days
+from energetica.workshop.demand_block import (
+    DAYS_PER_YEAR,
+    DEMAND_TIERS,
+    SettlementPeriod,
+    build_demand_block,
+    nominal_demand,
+)
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
@@ -501,11 +510,41 @@ def _bid_lines(pools: Iterable[_Pool]) -> list[BidLine]:
     return [*offers, *charging, *tiers]
 
 
-def simulated_days(season: Season, round_format: RoundFormat) -> list[int]:
-    """The days of the year a Trading period in ``season`` clears, in order, under ``round_format``."""
-    if round_format.trading_format == "full_season":
-        return season_days(season)
-    return [REPRESENTATIVE_DAYS[season]]
+def simulated_day_count(round_format: RoundFormat) -> int:
+    """How many days a Trading period clears under ``round_format``."""
+    match round_format.trading_format:
+        case "full_season":
+            return SEASON_DAYS
+        case "matched_days":
+            return MATCHED_DAY_COUNT
+        case "representative_day" | "matched_day":
+            return 1
+
+
+def day_conditions(day: int, weather: Weather, curve: DemandCurve) -> DayConditions:
+    """What ``day`` of the year was like under ``weather`` and ``curve``, sampled every hour."""
+    hours = [day * SECONDS_PER_DAY + hour * SECONDS_PER_HOUR for hour in range(24)]
+    return DayConditions(
+        wind=sum(weather(FacilityId.ONSHORE_WIND_TURBINE, seconds) for seconds in hours) / 24,
+        sun=sum(weather(FacilityId.PV_SOLAR, seconds) for seconds in hours) / 24,
+        demand=sum(nominal_demand(1.0, curve, SettlementPeriod(day, hour, 24)) for hour in range(24)) / 24,
+    )
+
+
+def simulated_days(season: Season, round_format: RoundFormat, weather: Weather, curve: DemandCurve) -> list[int]:
+    """The days of the year a Trading period in ``season`` clears, in order, under ``round_format``.
+
+    The matched formats choose their days from the season's ``weather`` and demand ``curve``.
+    """
+    match round_format.trading_format:
+        case "full_season":
+            return season_days(season)
+        case "representative_day":
+            return [REPRESENTATIVE_DAYS[season]]
+        case "matched_day" | "matched_days":
+            days = season_days(season)
+            choose = matched_day if round_format.trading_format == "matched_day" else matched_days
+            return [days[index] for index in choose([day_conditions(day, weather, curve) for day in days])]
 
 
 def simulate_trading_period(
@@ -526,7 +565,7 @@ def simulate_trading_period(
     """
     clearings_per_day = round_format.clearings_per_day
     seconds_per_tick = SECONDS_PER_DAY / clearings_per_day
-    days = simulated_days(season, round_format)
+    days = simulated_days(season, round_format, weather, curve)
     # A representative day stands for the whole season. Full-season days are all literal.
     scale = SEASON_DAYS / len(days)
     pools = {

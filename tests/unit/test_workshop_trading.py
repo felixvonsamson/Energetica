@@ -526,6 +526,16 @@ def test_each_round_has_weather_of_its_own() -> None:
     )
 
 
+@pytest.mark.parametrize(("trading_format", "days"), [("matched_day", 1), ("matched_days", 3)])
+def test_matched_days_are_days_of_the_season_scaled_to_it(trading_format: TradingFormat, days: int) -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}), trading_format=trading_format)
+
+    assert len(outcome.record.days) == days
+    assert set(outcome.record.days) <= set(season_days("spring"))
+    # Every day is the same here, so the matched days add up to what the representative day does.
+    assert outcome.results[1].facilities[GAS].revenue == pytest.approx(_mwh_value(11, 120))
+
+
 def test_each_season_is_represented_by_its_middle_day() -> None:
     assert list(REPRESENTATIVE_DAYS) == ["spring", "summer", "autumn", "winter"]
     for season, day in REPRESENTATIVE_DAYS.items():

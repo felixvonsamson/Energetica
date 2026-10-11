@@ -62,7 +62,10 @@ class WorkshopSettlementOut(BaseModel):
     """How far the simulation of the current Trading period has got (#1004)."""
 
     days_done: int = Field(description="Days of the season simulated so far")
-    days_total: int = Field(description="Days the simulation covers: 1 for a representative day, 91 for a full season")
+    days_total: int = Field(
+        description="Days the simulation covers: 1 for a representative or matched day, 3 for matched days, 91 for a full "
+        "season",
+    )
 
     @classmethod
     def from_progress(cls, progress: SettlementProgress) -> WorkshopSettlementOut:
@@ -247,7 +250,7 @@ class WorkshopPeriodOut(BaseModel):
     season: Season
     clearings_per_day: int = Field(description="Settlement points in each simulated day")
     days: list[int] = Field(
-        description="The day of the year of each simulated day, in order: one for a representative day, 91 for a "
+        description="The day of the year of each simulated day, in order: one for a representative or matched day, three for matched days, 91 for a "
         "full season. Days are asked for by their position in this list"
     )
     blackout_at: int | None = Field(

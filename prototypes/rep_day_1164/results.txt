@@ -1,0 +1,47 @@
+
+Bias: mean(method - truth), % of the player's typical season profit
+                       wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                   -2.0%        -13.1%        +10.5%         +6.8%        +43.0%
+closest_1_pool1             +21.0%         +7.4%         -7.3%         -7.5%        -59.8%
+latin_3_pool1                +1.6%         +4.1%         -0.2%         -0.7%         -8.3%
+closest_1_pool11            +21.8%         +8.2%         -4.7%         -2.8%        -71.2%
+latin_3_pool11               +3.4%         +4.8%         -0.4%         +0.2%        -11.1%
+stitched_1_seg3              +3.4%         +4.9%         +3.9%         +0.7%        -25.6%
+shipped_matched_day         +21.0%         +7.4%         -7.3%         -7.5%        -59.8%
+shipped_matched_days         +2.2%         +4.5%         -0.3%         -0.4%        -12.5%
+
+Tracking error: RMS(method - truth), % of the player's typical season profit
+                       wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                   57.3%         54.4%         64.0%         51.1%        295.4%
+closest_1_pool1              33.5%         27.3%         28.8%         25.1%        118.0%
+latin_3_pool1                12.4%         10.0%         12.6%          5.9%         78.0%
+closest_1_pool11             30.4%         22.5%         19.9%         15.9%        112.5%
+latin_3_pool11               13.1%         10.0%         10.4%          6.0%         69.0%
+stitched_1_seg3              19.0%         14.5%         29.7%         10.9%         98.7%
+shipped_matched_day          33.5%         27.3%         28.8%         25.1%        118.0%
+shipped_matched_days         12.7%         10.2%         12.3%          6.0%         74.4%
+
+Season-to-season spread across seeds, ratio to the truth's (1.00 = right)
+                       wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                   10.61         10.07         13.60         13.11          6.51
+closest_1_pool1               5.09          5.25          5.26          6.56          2.34
+latin_3_pool1                 2.85          2.08          2.62          2.07          2.33
+closest_1_pool11              3.80          4.13          3.40          4.28          0.00
+latin_3_pool11                2.87          2.02          2.39          1.92          2.52
+stitched_1_seg3               3.60          2.85          5.78          3.39          2.51
+shipped_matched_day           5.09          5.25          5.26          6.56          2.34
+shipped_matched_days          2.93          2.07          2.58          2.10          2.42
+
+                      pairs ranked   blackouts  wind CF err  PV CF err
+truth                                      0%
+middle_day                     87%         0%       58.8%      46.7%
+closest_1_pool1                99%         0%       10.5%      10.1%
+latin_3_pool1                  99%         0%        0.4%       0.4%
+closest_1_pool11              100%         0%        4.2%       3.9%
+latin_3_pool11                100%         0%        0.0%       0.0%
+stitched_1_seg3                99%         0%        0.3%       0.3%
+shipped_matched_day            99%         0%       10.5%      10.1%
+shipped_matched_days           99%         0%        0.4%       0.4%
+
+pairs ranked: share of player pairs whose order by season profit matches the truth's
+CF err: mean relative error of the simulated days' capacity factor against the season's
