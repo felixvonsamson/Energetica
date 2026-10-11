@@ -246,3 +246,25 @@ def test_session_emissions_count_building_and_running(path: Path) -> None:
     _to_next(session, TradingPeriod)
     _settle(session)
     assert session.emissions() > built
+
+
+def test_after_a_blackout_in_the_last_round_a_trading_period_pick_is_refused(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=1, clock=_Clock())
+    # A player who owns nothing: nothing meets the demand their presence brings, so the grid goes down.
+    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
+    _to_next(session, TradingPeriod)  # spring
+    _settle(session)
+    assert session.blackouts == [TradingPeriod(round=1, season="spring")]
+    with pytest.raises(NoBoundaryLeftError):
+        session.pick_event(EventPick(event="climate.flood", severity="major"))
+
+
+def test_a_pick_the_catalog_no_longer_allows_is_dropped_on_restart(path: Path) -> None:
+    session = _session(path)
+    session.pick_event(EventPick(event="climate.flood", severity="major"))
+    # The flood has no minor severity, as if a catalog edit had removed the one picked.
+    path.write_text(path.read_text().replace('"major"', '"minor"'))
+    reloaded = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
+    assert reloaded.event_picks == []
+    _to_next(reloaded, TradingPeriod)
+    assert reloaded.fired_events == []

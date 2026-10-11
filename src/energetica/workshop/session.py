@@ -67,6 +67,7 @@ from energetica.workshop.events import (
     BoundaryType,
     EventPick,
     FiredEvent,
+    InvalidPickError,
     demand_factor,
     facility_price_factor,
     fuel_shocks,
@@ -260,6 +261,15 @@ def next_checkpoint(checkpoint: Checkpoint, *, round_count: int, blackout: bool 
             return Finished()
         case Finished():
             raise SessionFinishedError("the session is over")
+
+
+def _still_valid(pick: EventPick) -> bool:
+    """Whether ``pick``, saved earlier, is still one the moderator could make."""
+    try:
+        validate_pick(pick)
+    except InvalidPickError:
+        return False
+    return True
 
 
 class RoundLevers(BaseModel):
@@ -463,8 +473,9 @@ class WorkshopSession:
         self.unlocks = [] if unlocks is None else unlocks
         # The events the moderator picked, each waiting for the next boundary of its kind, in the order picked
         # (#1012). At most one per category and kind of boundary.
-        # A pick of an event the catalog no longer has is dropped, so it never blocks an advance.
-        self.event_picks = [pick for pick in event_picks or [] if pick.event in EVENTS]
+        # A pick the catalog no longer allows, such as one of an event or severity since removed, is dropped, so it
+        # never blocks an advance.
+        self.event_picks = [pick for pick in event_picks or [] if _still_valid(pick)]
         # Every event that fired, in order (#1012). Their effects are worked out from this list.
         self.fired_events = [] if fired_events is None else fired_events
         # The records read most recently, newest last. A full season's record takes about half a second to
@@ -1032,11 +1043,14 @@ class WorkshopSession:
         period for a Trading period. The caller holds the lock.
         """
         boundary_kind = Investment if boundary == "round" else TradingPeriod
-        checkpoint = self.checkpoint
+        if isinstance(self.checkpoint, Finished):
+            return False
+        # The first step follows a blackout as advancing does, since one in the last Round ends the session early.
+        checkpoint = self._next_checkpoint()
         while not isinstance(checkpoint, Finished):
-            checkpoint = next_checkpoint(checkpoint, round_count=self.round_count)
             if isinstance(checkpoint, boundary_kind):
                 return True
+            checkpoint = next_checkpoint(checkpoint, round_count=self.round_count)
         return False
 
     def _set_picks(self, picks: list[EventPick]) -> bool:
@@ -1069,11 +1083,10 @@ class WorkshopSession:
                 return lambda: None
         before = (self.event_picks, self.fired_events)
         firing = [pick for pick in self.event_picks if EVENTS[pick.event].boundary_type == boundary]
+        # Built before either list changes, so that an error leaves the session as it was.
+        fired = [FiredEvent.of(pick, round_number=round_number, season=fired_season) for pick in firing]
         self.event_picks = [pick for pick in self.event_picks if pick not in firing]
-        self.fired_events = [
-            *self.fired_events,
-            *(FiredEvent.of(pick, round_number=round_number, season=fired_season) for pick in firing),
-        ]
+        self.fired_events = [*self.fired_events, *fired]
 
         def undo() -> None:
             self.event_picks, self.fired_events = before
