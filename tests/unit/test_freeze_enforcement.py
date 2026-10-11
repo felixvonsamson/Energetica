@@ -19,7 +19,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException, status
 
-from energetica.freeplay.game_error import FreeplayExceptionType
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.identity import instance_config
 from energetica.utils import auth, tick_execution
 
@@ -34,7 +34,7 @@ def test_reject_when_frozen_raises_409(monkeypatch: pytest.MonkeyPatch, frozen_p
     with pytest.raises(HTTPException) as excinfo:
         auth.reject_when_frozen()
     assert excinfo.value.status_code == status.HTTP_409_CONFLICT
-    assert excinfo.value.detail == FreeplayExceptionType.INSTANCE_FROZEN
+    assert excinfo.value.detail == FreeplayErrorCode.INSTANCE_FROZEN
 
 
 @pytest.mark.parametrize("live_phase", ["announced", "active"])

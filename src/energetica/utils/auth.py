@@ -12,11 +12,11 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, Request, status
 
 from energetica.freeplay.database.player import Player
-from energetica.freeplay.game_error import FreeplayExceptionType
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.identity import instance_config
-from energetica.identity.game_error import IdentityExceptionType
+from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_current_account, get_role
-from energetica.kernel.game_error import GameExceptionType
+from energetica.kernel.game_error import SharedErrorCode
 
 
 def reject_when_frozen() -> None:
@@ -44,18 +44,18 @@ def reject_when_frozen() -> None:
     deliberately rejected in favour of this entry guard.
     """
     if instance_config.current_phase() in ("freeze", "ended"):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=FreeplayExceptionType.INSTANCE_FROZEN)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=FreeplayErrorCode.INSTANCE_FROZEN)
 
 
 def get_settled_player(request: Request) -> Player:
     account = get_current_account(request)
     if account is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=SharedErrorCode.NOT_AUTHENTICATED)
     if get_role(account.account_id) != "player":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityExceptionType.USER_IS_NOT_A_PLAYER)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityErrorCode.USER_IS_NOT_A_PLAYER)
     player = next(Player.filter_by(account_id=account.account_id), None)
     if player is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=FreeplayExceptionType.PLAYER_NOT_SET_UP)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=FreeplayErrorCode.PLAYER_NOT_SET_UP)
     if player.last_connection is None or (datetime.now(timezone.utc) - player.last_connection).total_seconds() > 300:
         player.last_connection = datetime.now(timezone.utc)
     return player

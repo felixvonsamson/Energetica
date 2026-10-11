@@ -30,14 +30,14 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from energetica.freeplay.app import create_app
-from energetica.freeplay.game_error import FreeplayExceptionType
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
-from energetica.identity.game_error import IdentityExceptionType
-from energetica.kernel.game_error import ErrorCode, GameError, GameExceptionType
+from energetica.identity.game_error import IdentityErrorCode
+from energetica.kernel.game_error import ErrorCode, GameError, SharedErrorCode
 from energetica.workshop.app import create_workshop_app
-from energetica.workshop.game_error import WorkshopExceptionType
+from energetica.workshop.game_error import WorkshopErrorCode
 from lobby import create_lobby_app
-from lobby.game_error import LobbyExceptionType
+from lobby.game_error import LobbyErrorCode
 
 _GENERATOR = Path(__file__).resolve().parents[2] / "scripts" / "generate_openapi_schema.py"
 
@@ -48,16 +48,16 @@ VALIDATION_PATH = "/probe/validation-error"
 # The codes each app can return, pinned here so that moving a code between enums, or giving an app
 # another enum's codes, is a deliberate change.
 APP_CODES: dict[str, tuple[type[ErrorCode], ...]] = {
-    "freeplay": (GameExceptionType, IdentityExceptionType, FreeplayExceptionType),
-    "workshop": (GameExceptionType, IdentityExceptionType, WorkshopExceptionType),
-    "lobby": (GameExceptionType, LobbyExceptionType),
+    "freeplay": (SharedErrorCode, IdentityErrorCode, FreeplayErrorCode),
+    "workshop": (SharedErrorCode, IdentityErrorCode, WorkshopErrorCode),
+    "lobby": (SharedErrorCode, LobbyErrorCode),
 }
 
 # One code of each app's own, with the value players receive for it.
 OWN_CODES: dict[str, tuple[ErrorCode, str]] = {
-    "freeplay": (FreeplayExceptionType.NOT_ENOUGH_MONEY, "Not enough money"),
-    "workshop": (WorkshopExceptionType.WORKSHOP_NOT_ENOUGH_MONEY, "WORKSHOP_NOT_ENOUGH_MONEY"),
-    "lobby": (LobbyExceptionType.SIGNUP_DISABLED, "SIGNUP_DISABLED"),
+    "freeplay": (FreeplayErrorCode.NOT_ENOUGH_MONEY, "Not enough money"),
+    "workshop": (WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY, "WORKSHOP_NOT_ENOUGH_MONEY"),
+    "lobby": (LobbyErrorCode.SIGNUP_DISABLED, "SIGNUP_DISABLED"),
 }
 
 
@@ -72,7 +72,7 @@ def _add_probe_routes(app: FastAPI, own_code: ErrorCode) -> None:
 
     @app.get(GAME_ERROR_PATH)
     def _raise_game_error() -> None:
-        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED, slug="probe-run")
+        raise GameError(SharedErrorCode.INSTANCE_ACCESS_DENIED, slug="probe-run")
 
     @app.get(OWN_CODE_PATH)
     def _raise_own_code() -> None:
@@ -172,7 +172,7 @@ def schemas() -> dict[str, dict]:
 
 
 def _schema_codes(schema: dict) -> set[str]:
-    return set(schema["components"]["schemas"]["GameExceptionType"]["enum"])
+    return set(schema["components"]["schemas"]["ErrorCode"]["enum"])
 
 
 @pytest.mark.parametrize("app_name", APP_CODES)
@@ -187,8 +187,8 @@ def test_no_workshop_code_outside_the_workshop(schemas: dict[str, dict], app_nam
     Checked both by value and by the ``WORKSHOP_`` prefix, so a Workshop code added to the wrong
     enum fails too.
     """
-    workshop_codes = {code.value for code in WorkshopExceptionType}
-    for codes in ({code.value for code in GameExceptionType}, _schema_codes(schemas[app_name])):
+    workshop_codes = {code.value for code in WorkshopErrorCode}
+    for codes in ({code.value for code in SharedErrorCode}, _schema_codes(schemas[app_name])):
         assert not codes & workshop_codes
         assert not {code for code in codes if code.startswith("WORKSHOP_")}
 

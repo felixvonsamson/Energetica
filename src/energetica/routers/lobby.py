@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameExceptionType
+from energetica.kernel.game_error import SharedErrorCode
 from energetica.identity.my_runs import resolve_my_runs
 from energetica.identity.schemas.lobby import MyRunsResponse
 from energetica.identity.web import get_current_account
@@ -28,6 +28,6 @@ def get_my_runs(account: Annotated[Account | None, Depends(get_current_account)]
     are filtered out.
     """
     if account is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
 
     return resolve_my_runs(account.account_id, account.username)

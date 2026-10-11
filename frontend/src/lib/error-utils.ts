@@ -22,7 +22,7 @@
  */
 
 import { ApiClientError } from "@/lib/api-client";
-import { GAME_ERROR_MESSAGES, GameExceptionType } from "@/lib/game-messages";
+import { GAME_ERROR_MESSAGES, ErrorCode } from "@/lib/game-messages";
 
 /**
  * Get a user-friendly error message from any error object.
@@ -120,10 +120,7 @@ export function handleApiError(error: unknown, fallback?: string): string {
  * @param errorType - The error type to check for (from backend)
  * @returns True if the error matches the specified type
  */
-export function isErrorType(
-    error: unknown,
-    errorType: GameExceptionType,
-): boolean {
+export function isErrorType(error: unknown, errorType: ErrorCode): boolean {
     if (error instanceof ApiClientError) {
         return error.getErrorMessage() === errorType;
     }

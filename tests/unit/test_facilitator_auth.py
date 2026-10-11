@@ -14,7 +14,7 @@ from fastapi import HTTPException, status
 
 from energetica.identity import accounts, web
 from energetica.identity.accounts import Account
-from energetica.identity.game_error import IdentityExceptionType
+from energetica.identity.game_error import IdentityErrorCode
 
 
 def _account(account_id: int = 1) -> Account:
@@ -36,7 +36,7 @@ def test_get_facilitator_rejects_a_player(monkeypatch: pytest.MonkeyPatch) -> No
     with pytest.raises(HTTPException) as excinfo:
         web.get_facilitator(request=None)  # type: ignore[arg-type]
     assert excinfo.value.status_code == status.HTTP_403_FORBIDDEN
-    assert excinfo.value.detail == IdentityExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
+    assert excinfo.value.detail == IdentityErrorCode.ACCOUNT_IS_NOT_A_FACILITATOR
 
 
 def test_get_facilitator_rejects_no_session(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -45,4 +45,4 @@ def test_get_facilitator_rejects_no_session(monkeypatch: pytest.MonkeyPatch) -> 
     with pytest.raises(HTTPException) as excinfo:
         web.get_facilitator(request=None)  # type: ignore[arg-type]
     assert excinfo.value.status_code == status.HTTP_403_FORBIDDEN
-    assert excinfo.value.detail == IdentityExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
+    assert excinfo.value.detail == IdentityErrorCode.ACCOUNT_IS_NOT_A_FACILITATOR

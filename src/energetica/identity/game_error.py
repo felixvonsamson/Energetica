@@ -7,7 +7,7 @@ from __future__ import annotations
 from energetica.kernel.game_error import ErrorCode
 
 
-class IdentityExceptionType(ErrorCode):
+class IdentityErrorCode(ErrorCode):
     USER_IS_NOT_A_PLAYER = "USER_IS_NOT_A_PLAYER"
     ACCOUNT_IS_NOT_A_FACILITATOR = "ACCOUNT_IS_NOT_A_FACILITATOR"
     INSTANCE_NOT_PRIVATE = "INSTANCE_NOT_PRIVATE"

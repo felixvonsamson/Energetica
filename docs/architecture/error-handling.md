@@ -19,25 +19,25 @@ Backend error codes are split by who can return them. Each group is an enum that
 
 | Enum | Module | Holds |
 | --- | --- | --- |
-| `GameExceptionType` | `energetica/kernel/game_error.py` | Codes every app can return, such as `NOT_AUTHENTICATED` |
-| `IdentityExceptionType` | `energetica/identity/game_error.py` | Codes of the join and facilitator routes, which both Instance apps mount and the lobby does not |
-| `FreeplayExceptionType` | `energetica/freeplay/game_error.py` | The persistent world's own codes |
-| `WorkshopExceptionType` | `energetica/workshop/game_error.py` | Workshop's own codes |
-| `LobbyExceptionType` | `lobby/game_error.py` | The lobby's own codes |
+| `SharedErrorCode` | `energetica/kernel/game_error.py` | Codes every app can return, such as `NOT_AUTHENTICATED` |
+| `IdentityErrorCode` | `energetica/identity/game_error.py` | Codes of the join and facilitator routes, which both Instance apps mount and the lobby does not |
+| `FreeplayErrorCode` | `energetica/freeplay/game_error.py` | The persistent world's own codes |
+| `WorkshopErrorCode` | `energetica/workshop/game_error.py` | Workshop's own codes |
+| `LobbyErrorCode` | `lobby/game_error.py` | The lobby's own codes |
 
 ```python
-class WorkshopExceptionType(ErrorCode):
+class WorkshopErrorCode(ErrorCode):
     WORKSHOP_SESSION_FINISHED = "WORKSHOP_SESSION_FINISHED"
     # ...
 ```
 
 Players receive a code's string value, so values are unique across all the enums.
 
-The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `GameExceptionType`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). The frontend consumes it via `ApiSchema<"GameExceptionType">`, re-exported as `GameExceptionType` from `lib/game-messages.ts`.
+The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). The frontend consumes it via `ApiSchema<"ErrorCode">`, re-exported as `ErrorCode` from `lib/game-messages.ts`.
 
 This creates a closed loop:
-- `GAME_ERROR_MESSAGES: Record<GameExceptionType, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.
-- `isErrorType(error, errorType: GameExceptionType)` — compile error at every call site using an unknown code.
+- `GAME_ERROR_MESSAGES: Record<ErrorCode, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.
+- `isErrorType(error, errorType: ErrorCode)` — compile error at every call site using an unknown code.
 
 When adding a new backend error: add it to the enum of the layer or app that raises it, run `generate-types`, then add the corresponding entry to `GAME_ERROR_MESSAGES`. The compiler will tell you if you miss either step.
 
@@ -58,7 +58,7 @@ Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.
 
 - `getUserFriendlyError(error)` — exact-match lookup in `GAME_ERROR_MESSAGES`, falls back to the raw error message. Use in form `catch` blocks.
 - `handleApiError(error, fallback?)` — same as above, but also logs to the console. Use in mutation `onError` handlers or anywhere logging is appropriate.
-- `isErrorType(error, code: GameExceptionType)` — exact match against `error.getErrorMessage()`. Use to branch on specific codes.
+- `isErrorType(error, code: ErrorCode)` — exact match against `error.getErrorMessage()`. Use to branch on specific codes.
 - `getValidationFieldErrors(error)` — extracts a `Record<string, string>` from a 422 response, keyed by field name. Useful in forms that rely on backend validation for field-level errors.
 
 ## TanStack Query patterns
@@ -107,7 +107,7 @@ Clear all error state at the top of the submit handler, before validation.
 
 ## Adding a new error code
 
-1. Add the value to the enum of the layer or app that raises it (see the table above). Use `SCREAMING_CASE` for the string value. Only codes every app can return go in the kernel's `GameExceptionType`.
+1. Add the value to the enum of the layer or app that raises it (see the table above). Use `SCREAMING_CASE` for the string value. Only codes every app can return go in the kernel's `SharedErrorCode`.
 2. Raise it from the appropriate backend route via `HTTPException` (to preserve a meaningful HTTP status code) or `GameError` (for business logic errors where 400 is acceptable).
 3. Run `bun run generate-types`.
 4. Add an entry to `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts` — the compiler will flag the missing key.

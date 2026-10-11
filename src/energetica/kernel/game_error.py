@@ -22,14 +22,14 @@ class GameError(Exception):
 class ErrorCode(StrEnum):
     """The base of every error code enum. It has no codes of its own.
 
-    The kernel holds only the codes every app can return, in :class:`GameExceptionType`. The
+    The kernel holds only the codes every app can return, in :class:`SharedErrorCode`. The
     identity layer and each app subclass this with their own codes, so an app's codes do not leak
     into another app's schema. A code's value is what players receive, so values are unique across
     all of them.
     """
 
 
-class GameExceptionType(ErrorCode):
+class SharedErrorCode(ErrorCode):
     """The error codes every app can return: the lobby and both Instance apps."""
 
     USER_NOT_FOUND = "USER_NOT_FOUND"

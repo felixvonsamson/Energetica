@@ -2,8 +2,8 @@
  * Centralised mapping of all game error codes and action messages.
  *
  * Error codes correspond to the values of the Python backend's error code
- * enums: the kernel's shared `GameExceptionType` and each layer's and app's own
- * (see `docs/architecture/error-handling.md`). When a new code is added on the
+ * enums: the kernel's `SharedErrorCode` and each layer's and app's own (see
+ * `docs/architecture/error-handling.md`). When a new code is added on the
  * backend, add a matching entry here so the frontend surfaces a readable
  * message.
  *
@@ -15,7 +15,7 @@ import { ApiClientError, isGameError } from "@/lib/api-client";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import type { ApiSchema } from "@/types/api-helpers";
 
-export type GameExceptionType = ApiSchema<"GameExceptionType">;
+export type ErrorCode = ApiSchema<"ErrorCode">;
 
 // ---------------------------------------------------------------------------
 // Error message map
@@ -25,10 +25,10 @@ export type GameExceptionType = ApiSchema<"GameExceptionType">;
  * Maps every backend game-error code to a human-readable message shown in error
  * toasts and form error states.
  *
- * Keys are the exact string values of `GameExceptionType` (plus a handful of
- * plain HTTP `detail` strings used before game errors were introduced).
+ * Keys are the exact string values of `ErrorCode` (plus a handful of plain HTTP
+ * `detail` strings used before game errors were introduced).
  */
-export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
+export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     // --- Authentication ---
     USERNAME_TAKEN: "This username is already taken. Please choose another.",
     USER_NOT_FOUND: "Username does not exist.",
@@ -150,7 +150,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
 
 // Pydantic validation errors contain the message as a prefix (e.g. "String
 // should have at least 3 characters"), so we match by prefix rather than
-// exact code. These are framework-level errors, not GameExceptionType values.
+// exact code. These are framework-level errors, not ErrorCode values.
 const PYDANTIC_VALIDATION_MESSAGES: Record<string, string> = {
     "Field required": "This field is required.",
     "String should have at least": "This field is too short.",

@@ -5,7 +5,7 @@ from __future__ import annotations
 from energetica.kernel.game_error import ErrorCode
 
 
-class WorkshopExceptionType(ErrorCode):
+class WorkshopErrorCode(ErrorCode):
     WORKSHOP_SESSION_FINISHED = "WORKSHOP_SESSION_FINISHED"
     WORKSHOP_NO_PHASE_RUNNING = "WORKSHOP_NO_PHASE_RUNNING"
     WORKSHOP_INVESTMENT_CLOSED = "WORKSHOP_INVESTMENT_CLOSED"

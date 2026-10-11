@@ -5,7 +5,7 @@ from __future__ import annotations
 from energetica.kernel.game_error import ErrorCode
 
 
-class FreeplayExceptionType(ErrorCode):
+class FreeplayErrorCode(ErrorCode):
     NOT_ENOUGH_MONEY = "Not enough money"
     # Tile related
     TILE_NOT_FOUND = "TileNotFound"

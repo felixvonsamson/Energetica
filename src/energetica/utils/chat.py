@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from energetica.freeplay.database.messages import Chat, Message
-from energetica.freeplay.game_error import FreeplayExceptionType
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError
 from energetica.schemas.notifications import ChatMessagePayload
@@ -29,9 +29,9 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     :param participant_ids: a list of numbers corresponding to player ids
     """
     if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
-        raise GameError(FreeplayExceptionType.WRONG_TITLE_LENGTH)
+        raise GameError(FreeplayErrorCode.WRONG_TITLE_LENGTH)
     if check_existing_chats(participants):
-        raise GameError(FreeplayExceptionType.CHAT_ALREADY_EXISTS)
+        raise GameError(FreeplayErrorCode.CHAT_ALREADY_EXISTS)
     new_chat = Chat(
         name=chat_name,
         participants=set(participants),
@@ -53,13 +53,13 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     if player not in chat.participants:
         # TODO(mglst): this logic should be handled by the router so that it can return a relevant HTTP error code such
         # as HTTP_401_UNAUTHORIZED
-        raise GameError(FreeplayExceptionType.NOT_IN_CHAT)
+        raise GameError(FreeplayErrorCode.NOT_IN_CHAT)
     if len(message_text) == 0:
         # TODO(mglst): this validation logic should be handled by pydantic
-        raise GameError(FreeplayExceptionType.NO_MESSAGE)
+        raise GameError(FreeplayErrorCode.NO_MESSAGE)
     if len(message_text) > 500:
         # TODO(mglst): this validation logic should be handled by pydantic
-        raise GameError(FreeplayExceptionType.MESSAGE_TOO_LONG)
+        raise GameError(FreeplayErrorCode.MESSAGE_TOO_LONG)
     new_message = Message(
         id=len(chat.messages),
         text=message_text,

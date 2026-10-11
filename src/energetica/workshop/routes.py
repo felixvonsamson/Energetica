@@ -21,14 +21,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity.accounts import Account
-from energetica.identity.game_error import IdentityExceptionType
+from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.events import EVENTS, EventPick, InvalidPickError, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
-from energetica.workshop.game_error import WorkshopExceptionType
+from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
@@ -98,7 +98,7 @@ def get_player(account: Annotated[Account, Depends(resolve_entry_account)], sess
     """The calling account's player. A facilitator, or a player who has not entered yet, is refused."""
     player = session.player(account.account_id)
     if player is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityExceptionType.USER_IS_NOT_A_PLAYER)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityErrorCode.USER_IS_NOT_A_PLAYER)
     return player
 
 
@@ -170,9 +170,9 @@ async def advance_session(
     try:
         await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_SESSION_FINISHED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_SESSION_FINISHED) from exc
     except SettlementRunningError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_SETTLEMENT_RUNNING) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_SETTLEMENT_RUNNING) from exc
     # A window the advance closed is simulated now rather than at the next check.
     check_phases_now(request)
     await invalidate_session(request.app)
@@ -192,7 +192,7 @@ async def extend_phase(
     try:
         await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
     except NoPhaseRunningError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_NO_PHASE_RUNNING) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_NO_PHASE_RUNNING) from exc
     await invalidate_session(request.app)
     return _session_out(session)
 
@@ -215,7 +215,7 @@ async def set_levers(
     try:
         await run_in_threadpool(session.set_levers, levers)
     except StorageLeverLockedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_STORAGE_LEVER_LOCKED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_STORAGE_LEVER_LOCKED) from exc
     await invalidate_session(request.app)
     return session.levers
 
@@ -372,11 +372,11 @@ async def add_to_selection(player: Player, session: Session, pick: WorkshopSelec
     try:
         await run_in_threadpool(session.select, player.account_id, pick.facility)
     except InvestmentClosedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
     except FacilityNotOfferedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_FACILITY_NOT_OFFERED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_FACILITY_NOT_OFFERED) from exc
     except NotEnoughMoneyError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_NOT_ENOUGH_MONEY) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY) from exc
     return _selection_out(player, session)
 
 
@@ -388,9 +388,9 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
     try:
         await run_in_threadpool(session.deselect, player.account_id, facility)
     except InvestmentClosedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
     except NotSelectedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_NOT_SELECTED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_SELECTED) from exc
     return _selection_out(player, session)
 
 
@@ -415,11 +415,11 @@ async def set_price(
     try:
         await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
     except PriceSettingClosedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_PRICE_SETTING_CLOSED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_SETTING_CLOSED) from exc
     except PriceBelowFloorError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_PRICE_BELOW_FLOOR) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_BELOW_FLOOR) from exc
     except NotStorageError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_NOT_STORAGE) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_STORAGE) from exc
     return _prices_out(player)
 
 
@@ -480,11 +480,11 @@ async def set_fuel_order(player: Player, session: Session, fuel: Fuel, order: Wo
     try:
         await run_in_threadpool(session.set_fuel_order, player.account_id, fuel, order.quantity)
     except PriceSettingClosedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_PRICE_SETTING_CLOSED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_SETTING_CLOSED) from exc
     except FuelNotManualError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_FUEL_NOT_MANUAL) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_FUEL_NOT_MANUAL) from exc
     except FuelNotBurnedError as exc:
-        raise GameError(WorkshopExceptionType.WORKSHOP_FUEL_NOT_BURNED) from exc
+        raise GameError(WorkshopErrorCode.WORKSHOP_FUEL_NOT_BURNED) from exc
     except InvalidFuelQuantityError as exc:
         # The request model already refuses such a quantity, so this only guards the session's own check.
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
