@@ -1,6 +1,6 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009, #1011). Served only by a Workshop Run's backend.
+ * #1009, #1011, #1012). Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -133,6 +133,32 @@ export const workshopApi = {
         apiClient.get<ApiResponse<"/api/v1/workshop/unlocks", "get">>(
             "/workshop/unlocks",
         ),
+
+    /**
+     * The events the facilitator can pick, without their headlines, the picks
+     * waiting for their boundary, and the events that fired (#1012).
+     * Facilitator only.
+     */
+    getEvents: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/events", "get">>(
+            "/workshop/events",
+        ),
+
+    /**
+     * Pick an event to fire at the next boundary of its kind, in place of the
+     * pick of its category waiting for the same one (#1012).
+     */
+    pickEvent: (pick: ApiSchema<"EventPick">) =>
+        apiClient.put<ApiResponse<"/api/v1/workshop/events/picks", "put">>(
+            "/workshop/events/picks",
+            pick,
+        ),
+
+    /** Drop an event's pick before it fires (#1012). */
+    dropEvent: (eventId: string) =>
+        apiClient.delete<
+            ApiResponse<"/api/v1/workshop/events/picks/{event_id}", "delete">
+        >(`/workshop/events/picks/${encodeURIComponent(eventId)}`),
 
     /**
      * The fuel the visitor's facilities burn: this season's prices, their

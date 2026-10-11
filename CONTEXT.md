@@ -201,7 +201,7 @@ _Avoid_: revenue, gross proceeds, net.
 
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the
-Round. Market income, dumping cost, O&M and fuel cost add up to the season's operating income; the Round column
+Round. Market income, dumping cost, O&M, any revenue tax and fuel cost add up to the season's operating income; the Round column
 then takes off the Round's investments to give its **net profit**. A season fills in once it is settled.
 Market income already has the cost of the energy storage bought to charge taken off.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
@@ -231,3 +231,16 @@ unlocks from a set Round instead, and hydrogen storage and pumped hydro the firs
 every storage type, checked at the Recap before it, and again when that Round starts. Once a Recap has
 announced them, the storage lever stays on every type until that Round starts. Only the facilitator sees how close an unlock is.
 _Avoid_: tech tree, research.
+
+**Event** (#1012):
+A named vignette from a fixed catalog, such as a heatwave, a gas pipeline disruption or an EV tipping
+point, in one of three categories: climate, price shock or geopolitics, and demand shift. The facilitator
+**picks** an event and one of its severities. The pick waits for the next **boundary** of its kind, the
+next Trading period or the next Round, and can be changed or dropped until then; then it **fires**. Each
+category holds at most one pick per boundary. A fired event's headline is told at the Recap, and nobody,
+the facilitator included, sees it before.
+_Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
+
+**Revenue tax** (#1012):
+The share of every player's sale revenue a climate disaster (a drought, wildfire, hurricane or flood)
+takes in the Trading period it fires at. The same share for every player.

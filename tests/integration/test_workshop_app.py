@@ -1424,3 +1424,117 @@ def test_the_facilitator_cannot_switch_back_storage_the_recap_announced(session_
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "WORKSHOP_STORAGE_LEVER_LOCKED"
     assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "all"
+
+
+# --- events (#1012) -------------------------------------------------------------------------
+
+EVENTS_URL = "/api/v1/workshop/events"
+EVENT_PICKS_URL = "/api/v1/workshop/events/picks"
+
+
+def _keeping_the_lights_on(session_path: Path, clock: _Clock) -> tuple[FastAPI, TestClient, int, int]:
+    """An app in Round 1's first Trading period, in which alice owns enough coal and gas burners to meet demand.
+
+    Returns the app, a client left signed in as the facilitator, and the facilitator's and alice's account ids.
+    """
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    for facility in ["coal_burner"] * 3 + ["gas_burner"] * 2:
+        client.post(SELECTION_URL, json={"facility": facility})
+    authenticate(client, facilitator)
+    _advance(client)
+    assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "spring")
+    return app, client, facilitator, alice
+
+
+def test_the_facilitator_lists_the_events_without_their_headlines(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    body = client.get(EVENTS_URL).json()
+
+    flood = next(event for event in body["events"] if event["id"] == "climate.flood")
+    assert flood == {
+        "id": "climate.flood",
+        "name": "Flood",
+        "category": "climate",
+        "boundary_type": "trading_period",
+        "direction": "negative",
+        "effect_kind": "revenue_tax",
+        "severities": ["moderate", "major", "catastrophic"],
+        "suggested_severity": "moderate",
+        "fuel_chosen": False,
+    }
+    assert "substation" not in json.dumps(body)
+    assert (body["picks"], body["fired"], body["emissions"]) == ([], [], 0.0)
+
+
+def test_players_never_see_or_pick_events(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+
+    assert client.get(EVENTS_URL).status_code == 403
+    assert client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "major"}).status_code == 403
+    assert client.delete(f"{EVENT_PICKS_URL}/climate.flood").status_code == 403
+
+
+@pytest.mark.parametrize(
+    "pick",
+    [
+        {"event": "climate.nope", "severity": "major"},
+        {"event": "climate.flood", "severity": "minor"},
+        {"event": "geo.conflict_resolution", "severity": "base"},
+        {"event": "climate.flood", "severity": "major", "fuel": "gas"},
+    ],
+)
+def test_a_pick_the_catalog_does_not_allow_is_rejected(session_path: Path, pick: dict) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.put(EVENT_PICKS_URL, json=pick).status_code == 422
+    assert client.get(EVENTS_URL).json()["picks"] == []
+
+
+def test_the_facilitator_picks_and_drops_an_event(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    picked = client.put(EVENT_PICKS_URL, json={"event": "geo.conflict_resolution", "severity": "base", "fuel": "coal"})
+    assert picked.status_code == 200
+    assert picked.json()["picks"] == [{"event": "geo.conflict_resolution", "severity": "base", "fuel": "coal"}]
+
+    dropped = client.delete(f"{EVENT_PICKS_URL}/geo.conflict_resolution")
+    assert dropped.status_code == 200
+    assert dropped.json()["picks"] == []
+
+
+def test_a_climate_event_picked_mid_round_waits_for_the_next_trading_period(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
+
+    client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "moderate"})
+    # Changed before the boundary: only the last pick fires.
+    client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "major"})
+    _advance(client)  # spring settles untouched, and summer opens
+    assert client.get(EVENTS_URL).json()["fired"] == [
+        {"event": "climate.flood", "name": "Flood", "severity": "major", "fuel": None, "round": 1, "season": "summer"}
+    ]
+    _advance(client)  # summer settles
+
+    authenticate(client, alice)
+    spring, summer = client.get(BALANCE_SHEET_URL.format(round=1)).json()["seasons"][:2]
+    assert spring["sheet"]["revenue_tax"] == 0.0
+    assert summer["sheet"]["sale_revenue"] > 0
+    assert summer["sheet"]["revenue_tax_rate"] == pytest.approx(0.07)
+    assert summer["sheet"]["revenue_tax"] == pytest.approx(0.07 * summer["sheet"]["sale_revenue"])
+
+
+def test_a_facility_price_shock_shows_in_the_catalog_for_its_round(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
+    client.put(EVENT_PICKS_URL, json={"event": "geo.wind_supply_war", "severity": "base"})
+    while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "investment":
+        _advance(client)
+
+    authenticate(client, alice)
+    wind = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "onshore_wind_turbine")
+    assert wind["price"] == pytest.approx(wind["base_price"] * 1.35)

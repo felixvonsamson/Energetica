@@ -13,10 +13,11 @@ tile, map and general-chat coupling.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 from energetica.workshop.trading import Bidder, TradingResult
@@ -77,9 +78,9 @@ class WorkshopPlayer:
     # nothing operating has no result.
     trading_results: list[TradingResult] = field(default_factory=list)
 
-    def selection_cost(self) -> float:
-        """What the selection costs to buy, in full."""
-        return sum(CATALOG[facility].base_price for facility in self.selection)
+    def selection_cost(self, prices: Mapping[FacilityId, float]) -> float:
+        """What the selection costs to buy, in full, at this Round's ``prices``."""
+        return sum(prices[facility] for facility in self.selection)
 
     def bidder(self) -> Bidder:
         """What the Trading-period engine needs to know about this player (#1003)."""

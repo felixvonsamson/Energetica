@@ -407,6 +407,7 @@ const UNIT_NAMES: Record<RowUnit, string> = {
     energy: "Megawatt hours, at an average price per megawatt hour",
     usage: "Usage in percent, of the full variable cost",
     fuel: "Tonnes, at an average price per tonne",
+    tax: "Taxable revenue, at a rate in percent",
 };
 
 /** A period as a column header names it, with a season's blackout state. */
@@ -709,6 +710,12 @@ function UnitLabel({ unit }: { unit: RowUnit }) {
                     % {times} {coin}
                 </>
             );
+        case "tax":
+            return (
+                <>
+                    {coin} {times} %
+                </>
+            );
     }
 }
 
@@ -765,7 +772,9 @@ function CellValue({
                     ? formatRate(value)
                     : row.unit === "fuel"
                       ? formatFuelVolume(value)
-                      : formatVolume(value)}
+                      : row.unit === "tax"
+                        ? formatAmount(value)
+                        : formatVolume(value)}
             </span>
         );
     }

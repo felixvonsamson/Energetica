@@ -38,6 +38,12 @@ Fuel is priced and bought once per Trading period (#1009, :mod:`~energetica.work
 period opens, every fuel gets its price for the season, the fuel procurement lever is fixed for the period,
 and under manual procurement each player's fuel order starts from its default. Players change their orders
 while the price-setting window is open, and settling the period charges for the fuel at the season's price.
+
+The moderator picks events (#1012, :mod:`~energetica.workshop.events`) at any time. Each pick waits for the next
+boundary of its kind and can be changed or dropped until then. A Trading-period pick fires when the next Trading
+period opens, and a Round pick when the next Investment phase opens. The session keeps every event that fired, and
+works out their effects from that list: the demand block's amplitude when a period is simulated, the revenue tax
+when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
 """
 
 from __future__ import annotations
@@ -56,6 +62,19 @@ from pydantic import BaseModel, Field
 from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
+from energetica.workshop.events import (
+    EVENTS,
+    BoundaryType,
+    EventPick,
+    FiredEvent,
+    InvalidPickError,
+    demand_factor,
+    facility_price_factor,
+    fuel_shocks,
+    revenue_tax_rate,
+    slot,
+    validate_pick,
+)
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
@@ -214,6 +233,10 @@ class StorageLeverLockedError(Exception):
     """
 
 
+class NoBoundaryLeftError(Exception):
+    """Raised when picking an event whose boundary will not come again before the session ends (#1012)."""
+
+
 class SettlementRunningError(Exception):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
@@ -242,6 +265,15 @@ def next_checkpoint(checkpoint: Checkpoint, *, round_count: int, blackout: bool 
             return Finished()
         case Finished():
             raise SessionFinishedError("the session is over")
+
+
+def _still_valid(pick: EventPick) -> bool:
+    """Whether ``pick``, saved earlier, is still one the moderator could make."""
+    try:
+        validate_pick(pick)
+    except InvalidPickError:
+        return False
+    return True
 
 
 class RoundLevers(BaseModel):
@@ -296,9 +328,22 @@ class SettlementJob:
     bidders: list[Bidder]
     round_format: RoundFormat
     demand_amplitude: float
+    """The amplitude the period is simulated with, after the events that move it."""
+    base_demand_amplitude: float
+    """The session's amplitude before any event, kept once the period is settled."""
     weather_seed: int
     # Set to stop the simulation after the day it is on.
     cancelled: threading.Event = field(default_factory=threading.Event)
+
+
+class EventsView(NamedTuple):
+    """The events waiting and fired, and what the climate suggestion goes on, for the facilitator (#1012)."""
+
+    picks: list[EventPick]
+    fired: list[FiredEvent]
+    emissions: float
+    """The CO₂ every player has emitted so far, in kg."""
+    players: int
 
 
 class UnlockProgress(NamedTuple):
@@ -362,9 +407,13 @@ class _SavedSession(BaseModel):
     # Default to no prices, no lever fixed and no shock for a file saved before fuel was bought.
     fuel_procurement: FuelProcurement | None = None
     fuel_prices: dict[Fuel, FuelPrice] = {}
+    # Read and ignored: fuel shocks waited here before they became events (#1012), and none was ever set.
     pending_fuel_shocks: dict[Fuel, float] = {}
     # Empty for a file saved before facilities unlocked.
     unlocks: list[Unlock] = []
+    # Empty for a file saved before events existed.
+    event_picks: list[EventPick] = []
+    fired_events: list[FiredEvent] = []
 
 
 class WorkshopSession:
@@ -391,8 +440,9 @@ class WorkshopSession:
         recorded_periods: list[TradingPeriod] | None = None,
         fuel_procurement: FuelProcurement | None = None,
         fuel_prices: dict[Fuel, FuelPrice] | None = None,
-        pending_fuel_shocks: dict[Fuel, float] | None = None,
         unlocks: list[Unlock] | None = None,
+        event_picks: list[EventPick] | None = None,
+        fired_events: list[FiredEvent] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -405,8 +455,8 @@ class WorkshopSession:
         self.phase_timer = phase_timer
         # The random seed of the Run's weather, which the renewables' output follows (#1003).
         self.weather_seed = random.randrange(WEATHER_SEEDS) if weather_seed is None else weather_seed
-        # The demand block's amplitude, in W. Set from the headcount when the first Trading period
-        # settles, and kept for the rest of the session, since no formula moves it yet (#992).
+        # The demand block's amplitude before any event, in W. Set from the headcount when the first Trading
+        # period settles, and kept for the rest of the session. Events move it from there (#1012).
         self.demand_amplitude = demand_amplitude
         # The last Trading period settled, so that none is settled twice.
         self.settled_period = settled_period
@@ -422,11 +472,16 @@ class WorkshopSession:
         self.fuel_procurement: FuelProcurement | None = fuel_procurement
         # Each fuel's price in the current Trading period, set when it opens (#1009). Empty before the first one.
         self.fuel_prices = {} if fuel_prices is None else fuel_prices
-        # Price shocks that land when the next Trading period opens, as a factor per fuel (#1009, #1012).
-        self.pending_fuel_shocks = {} if pending_fuel_shocks is None else pending_fuel_shocks
         # Every facility unlocked so far, in order (#1011). Kept rather than worked out again from the purchases,
         # since the threshold moves with the headcount, and an unlock that has been announced must stay.
         self.unlocks = [] if unlocks is None else unlocks
+        # The events the moderator picked, each waiting for the next boundary of its kind, in the order picked
+        # (#1012). At most one per category and kind of boundary.
+        # A pick the catalog no longer allows, such as one of an event or severity since removed, is dropped, so it
+        # never blocks an advance.
+        self.event_picks = [pick for pick in event_picks or [] if _still_valid(pick)]
+        # Every event that fired, in order (#1012). Their effects are worked out from this list.
+        self.fired_events = [] if fired_events is None else fired_events
         # The records read most recently, newest last. A full season's record takes about half a second to
         # read and a hundred megabytes to hold, so a few are kept for the pages reviewing them.
         self._loaded_records: dict[TradingPeriod, TradingPeriodRecord] = {}
@@ -501,8 +556,9 @@ class WorkshopSession:
             recorded_periods=saved.recorded_periods,
             fuel_procurement=saved.fuel_procurement,
             fuel_prices=saved.fuel_prices,
-            pending_fuel_shocks=saved.pending_fuel_shocks,
             unlocks=saved.unlocks,
+            event_picks=saved.event_picks,
+            fired_events=saved.fired_events,
             clock=clock,
         )
 
@@ -555,6 +611,28 @@ class WorkshopSession:
         """The facilities players can buy in the current Round."""
         unlocked = {unlock.facility for unlock in self.unlocks if unlock.round <= self.current_round()}
         return available_facilities(self.current_format().storage, unlocked)
+
+    def facility_price(self, facility: FacilityId, round_number: int | None = None) -> float:
+        """What ``facility`` costs in Round ``round_number``, by default the current one: its catalog price, moved by
+        any price shock (#1012).
+        """
+        if round_number is None:
+            round_number = self.current_round()
+        return CATALOG[facility].base_price * facility_price_factor(self.fired_events, facility, round_number)
+
+    def facility_prices(self, round_number: int | None = None) -> dict[FacilityId, float]:
+        """What each facility costs in Round ``round_number``, by default the current one."""
+        return {facility: self.facility_price(facility, round_number) for facility in CATALOG}
+
+    def emissions(self) -> float:
+        """The CO₂ every player has emitted so far, in kg: building their facilities and running them."""
+        return sum(
+            sum(CATALOG[purchase.facility].base_construction_pollution for purchase in player.purchases)
+            + sum(
+                performance.emissions for result in player.trading_results for performance in result.facilities.values()
+            )
+            for player in self.network.players()
+        )
 
     def unlock_progress(self) -> UnlockProgress:
         """How far each technology is from unlocking, read in one step so its parts agree (#1011)."""
@@ -615,7 +693,8 @@ class WorkshopSession:
         selection still waiting, so none is lost if the moderator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase fixes the Round's format from
         the levers and retires every facility whose lifetime has ended. Opening a Trading period sets the
-        season's fuel prices and each player's default fuel order (#1009). Raises
+        season's fuel prices and each player's default fuel order (#1009). Opening either fires the events
+        picked for it (#1012). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -644,6 +723,7 @@ class WorkshopSession:
                     undos.append(self._apply_purchases(self.checkpoint.round)[1])
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
+                undos.append(self._fire_events(checkpoint))
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
                 undos.append(self._apply_unlocks(checkpoint))
@@ -681,7 +761,7 @@ class WorkshopSession:
             if facility not in {offered.id for offered in self.offered_facilities()}:
                 raise FacilityNotOfferedError(f"{facility} is not offered")
             player = self.network.members[account_id]
-            if player.selection_cost() + CATALOG[facility].base_price > player.money:
+            if player.selection_cost(self.facility_prices()) + self.facility_price(facility) > player.money:
                 raise NotEnoughMoneyError("the selection would cost more than the player has")
             self._set_selection(player, [*player.selection, facility])
 
@@ -754,14 +834,14 @@ class WorkshopSession:
             )
             for player in players
         ]
+        prices = self.facility_prices(round_number)
         for player in players:
-            player.money -= player.selection_cost()
+            player.money -= player.selection_cost(prices)
             player.owned_facilities.extend(
                 OwnedFacility(facility=facility, built_round=round_number) for facility in player.selection
             )
             player.purchases.extend(
-                Purchase(facility=facility, round=round_number, price=CATALOG[facility].base_price)
-                for facility in player.selection
+                Purchase(facility=facility, round=round_number, price=prices[facility]) for facility in player.selection
             )
             player.selection.clear()
             player.stored_energy = keep_what_fits(
@@ -844,12 +924,13 @@ class WorkshopSession:
         """Set each fuel's price for ``period``, fix the fuel procurement lever for it, and under manual procurement
         start each player's fuel order from its default, without saving. Returns what undoes it.
 
-        A shock waiting to land lands now. The caller holds the lock.
+        A fuel shock that fired for ``period`` lands now. The caller holds the lock, and has fired the events.
         """
         players = self.network.players()
-        before = (self.fuel_procurement, self.fuel_prices, self.pending_fuel_shocks)
+        before = (self.fuel_procurement, self.fuel_prices)
         orders = [player.fuel_order for player in players]
         period_index = (period.round - 1) * len(SEASONS) + SEASONS.index(period.season)
+        shocks = fuel_shocks(self.fired_events, period.round, period.season)
         self.fuel_procurement = self.levers.fuel_procurement
         self.fuel_prices = {
             fuel: next_fuel_price(
@@ -857,11 +938,10 @@ class WorkshopSession:
                 self.fuel_prices.get(fuel),
                 seed=self.weather_seed,
                 period_index=period_index,
-                shock=self.pending_fuel_shocks.get(fuel),
+                shock=shocks.get(fuel),
             )
             for fuel in Fuel
         }
-        self.pending_fuel_shocks = {}
         if self.fuel_procurement == "manual":
             for player in players:
                 player.fuel_order = default_orders(
@@ -869,7 +949,7 @@ class WorkshopSession:
                 )
 
         def undo() -> None:
-            self.fuel_procurement, self.fuel_prices, self.pending_fuel_shocks = before
+            self.fuel_procurement, self.fuel_prices = before
             for player, order in zip(players, orders, strict=True):
                 player.fuel_order = order
 
@@ -936,22 +1016,86 @@ class WorkshopSession:
                 raise
             return quantity
 
-    def schedule_fuel_shock(self, fuel: Fuel, factor: float) -> None:
-        """Make ``fuel``'s price jump by ``factor``, such as 1.65 for +65%, when the next Trading period opens.
-
-        The shock lands in full for that season and then eases back (#1009). The event system (#1012) calls this.
-        """
-        if not (math.isfinite(factor) and factor > 0):
-            raise ValueError(f"a shock must keep the price positive, not multiply it by {factor}")
+    def events_view(self) -> EventsView:
+        """The events waiting and fired, read in one step so its parts agree (#1012)."""
         with self._lock:
-            before = self.pending_fuel_shocks
-            self.pending_fuel_shocks = {**before, fuel: factor}
-            try:
-                self._save(self.checkpoint, self.phase_timer)
-            except BaseException:
-                # Undo the change, so the session matches the file.
-                self.pending_fuel_shocks = before
-                raise
+            return EventsView(
+                list(self.event_picks), list(self.fired_events), self.emissions(), len(self.network.players())
+            )
+
+    def pick_event(self, pick: EventPick) -> bool:
+        """Pick an event to fire at the next boundary of its kind, in place of any pick waiting for the same one.
+
+        Raises :class:`~energetica.workshop.events.InvalidPickError` if the pick names no event, a severity the
+        event does not have, or a wrong fuel, and :class:`NoBoundaryLeftError` if its boundary will not come again,
+        so it would never fire. Returns whether the picks changed.
+        """
+        event = validate_pick(pick)
+        place = slot(event)
+        with self._lock:
+            if not self._boundary_ahead(event.boundary_type):
+                raise NoBoundaryLeftError(f"no {event.boundary_type} boundary is left in the session")
+            return self._set_picks([*(other for other in self.event_picks if slot(EVENTS[other.event]) != place), pick])
+
+    def drop_event(self, event_id: str) -> bool:
+        """Drop the pick of ``event_id``, if it is waiting, so that it does not fire. Returns whether it was."""
+        with self._lock:
+            return self._set_picks([pick for pick in self.event_picks if pick.event != event_id])
+
+    def _boundary_ahead(self, boundary: BoundaryType) -> bool:
+        """Whether a boundary of kind ``boundary`` is still to come: an Investment phase for a Round, a Trading
+        period for a Trading period. The caller holds the lock.
+        """
+        boundary_kind = Investment if boundary == "round" else TradingPeriod
+        if isinstance(self.checkpoint, Finished):
+            return False
+        # The first step follows a blackout as advancing does, since one in the last Round ends the session early.
+        checkpoint = self._next_checkpoint()
+        while not isinstance(checkpoint, Finished):
+            if isinstance(checkpoint, boundary_kind):
+                return True
+            checkpoint = next_checkpoint(checkpoint, round_count=self.round_count)
+        return False
+
+    def _set_picks(self, picks: list[EventPick]) -> bool:
+        """Replace the waiting picks with ``picks`` and save them, unless they are the same, and return whether they
+        changed. The caller holds the lock.
+        """
+        if picks == self.event_picks:
+            return False
+        before, self.event_picks = self.event_picks, picks
+        try:
+            self._save(self.checkpoint, self.phase_timer)
+        except BaseException:
+            # Undo the change, so the session matches the file.
+            self.event_picks = before
+            raise
+        return True
+
+    def _fire_events(self, checkpoint: Checkpoint) -> Callable[[], None]:
+        """Fire the picks waiting for ``checkpoint``, if it is a boundary, without saving. Returns what undoes it.
+
+        A Trading period is the boundary of the picks waiting for one, and an Investment phase that of those waiting
+        for a Round. The caller holds the lock.
+        """
+        match checkpoint:
+            case TradingPeriod(round=round_number, season=season):
+                boundary, fired_season = "trading_period", season
+            case Investment(round=round_number):
+                boundary, fired_season = "round", None
+            case _:
+                return lambda: None
+        before = (self.event_picks, self.fired_events)
+        firing = [pick for pick in self.event_picks if EVENTS[pick.event].boundary_type == boundary]
+        # Built before either list changes, so that an error leaves the session as it was.
+        fired = [FiredEvent.of(pick, round_number=round_number, season=fired_season) for pick in firing]
+        self.event_picks = [pick for pick in self.event_picks if pick not in firing]
+        self.fired_events = [*self.fired_events, *fired]
+
+        def undo() -> None:
+            self.event_picks, self.fired_events = before
+
+        return undo
 
     def set_levers(self, levers: RoundLevers) -> None:
         """Replace the levers with ``levers``. The timing levers apply to the next phase that opens, the fuel
@@ -982,7 +1126,8 @@ class WorkshopSession:
         Returns ``None`` while the window is open, outside a Trading period, while the period is being
         simulated, and once it is settled. Otherwise the period counts as being simulated until
         :meth:`finish_settlement` or :meth:`abandon_settlement`. The first Trading period also fixes the
-        demand block's amplitude from the headcount, once it is settled.
+        demand block's amplitude from the headcount, once it is settled. The events that fired move the amplitude
+        the period is simulated with (#1012).
         """
         with self._lock:
             period = self.checkpoint
@@ -994,9 +1139,9 @@ class WorkshopSession:
             ):
                 return None
             players = self.network.players()
-            demand_amplitude = self.demand_amplitude
-            if demand_amplitude is None:
-                demand_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+            base_amplitude = self.demand_amplitude
+            if base_amplitude is None:
+                base_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
             round_format = self.current_format()
             job = SettlementJob(
                 period=period,
@@ -1012,7 +1157,8 @@ class WorkshopSession:
                     for player in players
                 ],
                 round_format=round_format,
-                demand_amplitude=demand_amplitude,
+                demand_amplitude=base_amplitude * demand_factor(self.fired_events, period.round, period.season),
+                base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
             )
             self.settlement = SettlementProgress(period, 0, len(simulated_days(period.season, round_format)))
@@ -1054,7 +1200,8 @@ class WorkshopSession:
         """Settle ``job``'s Trading period with ``outcome``, what :meth:`run_settlement` made of it.
 
         Each player's prices are recorded, holding the prices of the facility types they had operating
-        (#1002). Each player is paid what it made, less the fuel it paid for (:meth:`_fuel_payment`), their
+        (#1002). Each player is paid what it made, less any revenue tax a climate event took (#1012) and the fuel it
+        paid for (:meth:`_fuel_payment`), their
         storage keeps the energy it ends with, and a player with anything operating gets a result. A player with nothing operating gets neither a
         price record nor a result, and nor does one who joined while the period was being simulated. If the
         grid went down, the period is recorded as a blackout, so that advancing from it ends the Round.
@@ -1074,8 +1221,9 @@ class WorkshopSession:
             raise RuntimeError(f"{period} is not waiting to be settled")
         players = [self.network.members[bidder.player_id] for bidder in job.bidders]
         # Worked out before anything changes, so a failure here leaves the session as it was.
+        tax_rate = revenue_tax_rate(self.fired_events, period.round, period.season)
         paid = {
-            player.account_id: self._fuel_payment(player, result)
+            player.account_id: self._fuel_payment(player, result.model_copy(update={"revenue_tax_rate": tax_rate}))
             for player in players
             if (result := outcome.results.get(player.account_id)) is not None
         }
@@ -1091,7 +1239,7 @@ class WorkshopSession:
         ]
         previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
         recorded_periods = self.recorded_periods
-        self.demand_amplitude = job.demand_amplitude
+        self.demand_amplitude = job.base_demand_amplitude
         if outcome.blackout:
             self.blackouts = [*blackouts, period]
         for player in players:
@@ -1230,7 +1378,8 @@ class WorkshopSession:
             recorded_periods=self.recorded_periods,
             fuel_procurement=self.fuel_procurement,
             fuel_prices=self.fuel_prices,
-            pending_fuel_shocks=self.pending_fuel_shocks,
             unlocks=self.unlocks,
+            event_picks=self.event_picks,
+            fired_events=self.fired_events,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

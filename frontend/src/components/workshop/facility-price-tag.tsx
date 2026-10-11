@@ -110,9 +110,16 @@ export function FacilityPriceTag({
                     >
                         <PinHole />
                         <Money
-                            amount={facility.base_price}
+                            amount={facility.price}
                             className="block text-center text-sm font-extrabold"
                         />
+                        {/* A price shock this Round moved the price (#1012). */}
+                        {facility.price !== facility.base_price && (
+                            <Money
+                                amount={facility.base_price}
+                                className="block text-center text-[10px] line-through opacity-60"
+                            />
+                        )}
                         <span className="mt-0.5 flex gap-3 text-[10px]">
                             <span
                                 className="flex items-center gap-0.5"

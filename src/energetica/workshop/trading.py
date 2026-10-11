@@ -222,11 +222,24 @@ class TradingResult(BaseModel):
     fuel: list[FuelPurchase] = Field(
         default=[], description="The fuel the player paid for in the period, which the session adds when it settles it"
     )
+    # Zero for a result saved before climate events existed (#1012).
+    revenue_tax_rate: float = Field(
+        default=0.0,
+        ge=0,
+        le=1,
+        description="The share of sale revenue a climate event took in the period, the same for every player, "
+        "which the session adds when it settles it",
+    )
 
     @property
     def revenue(self) -> float:
         """Gross market proceeds: money earned for energy sold, before any cost."""
         return sum(performance.revenue for performance in self.facilities.values())
+
+    @property
+    def revenue_tax(self) -> float:
+        """What a climate event took off the period's sale revenue (#1012)."""
+        return self.revenue * self.revenue_tax_rate
 
     @property
     def fuel_cost(self) -> float:
@@ -236,7 +249,7 @@ class TradingResult(BaseModel):
     @property
     def net(self) -> float:
         """What the period added to the player's money."""
-        return sum(performance.net for performance in self.facilities.values()) - self.fuel_cost
+        return sum(performance.net for performance in self.facilities.values()) - self.revenue_tax - self.fuel_cost
 
     @property
     def fuels_run_out(self) -> set[Fuel]:

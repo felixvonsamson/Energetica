@@ -10,9 +10,11 @@ neither does one a blackout ended the Round before.
 
 Fuel is paid for once per season (#1009), so each season's column has its own fuel cost.
 
-Two parts are still to come. The climate-event revenue tax (#1012) comes off market income inside operating
-income, as #1006 already counts it. The carbon tax (#1015) sits below operating income, which leaves it out,
-beside the investments.
+A climate event's revenue tax (#1012) takes a share of the season's sale revenue. It comes off inside operating
+income, above fuel.
+
+The carbon tax (#1015) is still to come. It sits below operating income, which leaves it out, beside the
+investments.
 """
 
 from __future__ import annotations
@@ -75,10 +77,20 @@ class PeriodSheet(BaseModel):
     dump_cost: float
     om: list[OmLine] = Field(description="One line per facility type that was operating, in catalog order")
     om_total: float
+    # Default to none for a sheet without a revenue tax.
+    revenue_tax: float = Field(default=0.0, description="What climate events took off sale revenue")
+    taxable_revenue: float = Field(
+        default=0.0, description="The sale revenue of the seasons a climate event taxed. Zero if none was"
+    )
+    revenue_tax_rate: float = Field(
+        default=0.0,
+        description="The revenue tax as a share of the taxable revenue, from 0 to 1. Over several taxed seasons, "
+        "their average",
+    )
     # Default to none for a sheet without fuel.
     fuel: list[FuelLine] = Field(default=[], description="One line per fuel paid for, in the order of the fuels")
     fuel_total: float = 0.0
-    operating_income: float = Field(description="Market income minus dumping cost, O&M and fuel")
+    operating_income: float = Field(description="Market income minus dumping cost, O&M, revenue tax and fuel")
 
 
 class SeasonSheet(BaseModel):
@@ -168,6 +180,8 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
     purchase_cost = sum(performance.purchase_cost for _, performance in performances)
     dump_cost = sum(performance.dump_cost for _, performance in performances)
     om_total = sum(line.om for line in om.values())
+    revenue_tax = sum(result.revenue_tax for result in results)
+    taxable_revenue = sum(result.revenue for result in results if result.revenue_tax_rate > 0)
     quantities: dict[Fuel, float] = {}
     costs: dict[Fuel, float] = {}
     for result in results:
@@ -195,6 +209,9 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         dump_cost=dump_cost,
         om=sorted(om.values(), key=lambda line: _catalog_order(line.facility)),
         om_total=om_total,
+        revenue_tax=revenue_tax,
+        taxable_revenue=taxable_revenue,
+        revenue_tax_rate=revenue_tax / taxable_revenue if taxable_revenue else 0.0,
         fuel=fuel,
         fuel_total=sum(line.cost for line in fuel),
         operating_income=sum(period_operating_profit(result) for result in results),

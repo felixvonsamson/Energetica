@@ -191,9 +191,7 @@ function Catalog({
                                             ).length
                                         }
                                         investmentOpen={investmentOpen}
-                                        affordable={
-                                            facility.base_price <= moneyLeft
-                                        }
+                                        affordable={facility.price <= moneyLeft}
                                         onAdd={() => add.mutate(facility.id)}
                                         adding={add.isPending}
                                     />

@@ -2093,6 +2093,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Events
+         * @description The events the facilitator can pick, the picks waiting for their boundary, and every event that fired.
+         *     Facilitator only, and without headlines, so that the Recap surprises everyone.
+         */
+        get: operations["get_events_api_v1_workshop_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/events/picks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pick Event
+         * @description Pick an event to fire at the next boundary of its kind: the next Trading period or the next Round. It takes
+         *     the place of any pick of the same category waiting for the same boundary, and can be changed until then. An
+         *     event whose boundary will not come again before the session ends cannot be picked.
+         */
+        put: operations["pick_event_api_v1_workshop_events_picks_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/events/picks/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Drop Event
+         * @description Drop the pick of an event before it fires. Dropping one that is not waiting changes nothing.
+         */
+        delete: operations["drop_event_api_v1_workshop_events_picks__event_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/facilities": {
         parameters: {
             query?: never;
@@ -2103,7 +2166,7 @@ export interface paths {
         /**
          * Get Facilities
          * @description The facilities players can buy in the current Round, and any others the calling player owns, in
-         *     catalog order. One that is not yet unlocked is left out, not shown as locked.
+         *     catalog order, at the current Round's prices. One that is not yet unlocked is left out, not shown as locked.
          */
         get: operations["get_facilities_api_v1_workshop_facilities_get"];
         put?: never;
@@ -4995,6 +5058,24 @@ export interface components {
             net_profit: number;
         };
         /**
+         * EventPick
+         * @description A vignette the moderator picked, waiting for the next boundary of its kind.
+         */
+        EventPick: {
+            /**
+             * Event
+             * @description The event's id
+             */
+            event: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
+            /** @description The fuel it moves, for an event whose fuel the moderator picks */
+            fuel?: components["schemas"]["Fuel"] | null;
+        };
+        /**
          * FacilityCategory
          * @description The groups of #975. A base tier and its upgrade share one.
          * @enum {string}
@@ -5162,6 +5243,24 @@ export interface components {
             /** Om Total */
             om_total: number;
             /**
+             * Revenue Tax
+             * @description What climate events took off sale revenue
+             * @default 0
+             */
+            revenue_tax: number;
+            /**
+             * Taxable Revenue
+             * @description The sale revenue of the seasons a climate event taxed. Zero if none was
+             * @default 0
+             */
+            taxable_revenue: number;
+            /**
+             * Revenue Tax Rate
+             * @description The revenue tax as a share of the taxable revenue, from 0 to 1. Over several taxed seasons, their average
+             * @default 0
+             */
+            revenue_tax_rate: number;
+            /**
              * Fuel
              * @description One line per fuel paid for, in the order of the fuels
              * @default []
@@ -5174,7 +5273,7 @@ export interface components {
             fuel_total: number;
             /**
              * Operating Income
-             * @description Market income minus dumping cost, O&M and fuel
+             * @description Market income minus dumping cost, O&M, revenue tax and fuel
              */
             operating_income: number;
         };
@@ -5336,6 +5435,76 @@ export interface components {
             player: components["schemas"]["WorkshopPlayerOut"] | null;
         };
         /**
+         * WorkshopEventOut
+         * @description An event the facilitator can pick (#1012). Never its headline, so the Recap surprises the facilitator too.
+         */
+        WorkshopEventOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "climate" | "price_shock_geopolitical" | "demand_shift" | "tech_unlock" | "vote";
+            /**
+             * Boundary Type
+             * @description round: it fires when the next Round's Investment phase opens. trading_period: when the next Trading period opens
+             * @enum {string}
+             */
+            boundary_type: "round" | "trading_period";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "negative" | "positive";
+            /**
+             * Effect Kind
+             * @enum {string}
+             */
+            effect_kind: "demand_amplitude_shift" | "revenue_tax" | "facility_capex_multiplier" | "fuel_price_multiplier" | "tech_unlock_trigger" | "vote_outcome";
+            /** Severities */
+            severities: ("base" | "minor" | "moderate" | "major" | "catastrophic")[];
+            /**
+             * Suggested Severity
+             * @description For a climate event, the severity the session's CO₂ so far suggests. Null for any other
+             */
+            suggested_severity: ("base" | "minor" | "moderate" | "major" | "catastrophic") | null;
+            /**
+             * Fuel Chosen
+             * @description Whether the facilitator picks the fuel it moves
+             */
+            fuel_chosen: boolean;
+        };
+        /**
+         * WorkshopEventsOut
+         * @description The events the facilitator can pick, the picks waiting to fire, and those that fired (#1012). For the
+         *     facilitator only.
+         */
+        WorkshopEventsOut: {
+            /**
+             * Events
+             * @description Every event, in catalog order
+             */
+            events: components["schemas"]["WorkshopEventOut"][];
+            /**
+             * Picks
+             * @description The picks waiting for their boundary: at most one per category and kind of boundary
+             */
+            picks: components["schemas"]["EventPick"][];
+            /**
+             * Fired
+             * @description Every event that fired, in order
+             */
+            fired: components["schemas"]["WorkshopFiredEventOut"][];
+            /**
+             * Emissions
+             * @description The CO₂ every player has emitted so far, building and running, in kg
+             */
+            emissions: number;
+        };
+        /**
          * WorkshopFacilityOut
          * @description A facility the calling player can buy, or already owns.
          */
@@ -5406,6 +5575,38 @@ export interface components {
              * @description Whether players can buy it in the current Round. A facility the player owns but can no longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown
              */
             for_sale: boolean;
+            /**
+             * Price
+             * @description What it costs in the current Round: base_price, moved by any price shock
+             */
+            price: number;
+        };
+        /**
+         * WorkshopFiredEventOut
+         * @description An event that fired (#1012).
+         */
+        WorkshopFiredEventOut: {
+            /**
+             * Event
+             * @description The event's id
+             */
+            event: string;
+            /** Name */
+            name: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
+            /** @description The fuel the facilitator picked for it, if it took one */
+            fuel: components["schemas"]["Fuel"] | null;
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @description The Trading period it fired at, or null if it fired with the Round
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
         };
         /**
          * WorkshopFuelLineOut
@@ -8873,6 +9074,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopUnlocksOut"];
+                };
+            };
+        };
+    };
+    get_events_api_v1_workshop_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopEventsOut"];
+                };
+            };
+        };
+    };
+    pick_event_api_v1_workshop_events_picks_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventPick"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopEventsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    drop_event_api_v1_workshop_events_picks__event_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopEventsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
