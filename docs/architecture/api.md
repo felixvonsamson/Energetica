@@ -39,11 +39,13 @@ bun generate-types
 
 This script:
 
-1. Generates OpenAPI spec from FastAPI app (backend doesn't need to be running)
-2. Creates TypeScript types in `frontend/src/types/api.generated.ts`
+1. Generates an OpenAPI spec from each FastAPI app (freeplay, Workshop and the lobby), plus one that merges all three. The backend doesn't need to be running.
+2. Creates TypeScript types from each: the merged `frontend/src/types/api.generated.ts`, and `api.freeplay.generated.ts`, `api.workshop.generated.ts` and `api.lobby.generated.ts` next to it
 3. Formats output with Prettier
 
-**Note:** Don't edit `api.generated.ts` manually - it's auto-generated.
+Frontend code imports the merged file, through `api-helpers.ts`. Each per-app file lists only the routes that app serves. Nothing imports them yet: they are the first step of giving each app its own types (#1171).
+
+**Note:** Don't edit the generated files manually.
 
 ## Error handling
 
