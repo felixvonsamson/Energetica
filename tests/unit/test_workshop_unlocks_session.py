@@ -25,9 +25,9 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
-# With ten players, the threshold is five starting budgets: 125,000 while the budget is 25,000. One gas burner
-# costs 90,000, so two cross it and one does not.
-PLAYERS = 10
+# With two players, the threshold is one starting budget: 1,000,000. One nuclear reactor costs 840,000, so two
+# cross it and one does not.
+PLAYERS = 2
 
 
 class _Clock:
@@ -46,7 +46,7 @@ def path(tmp_path: Path) -> Path:
 
 
 def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
-    """A session in Round 1's Investment phase, with ten players who each hold plenty of money."""
+    """A session in Round 1's Investment phase, with two players who each hold plenty of money."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
     for account_id in range(1, PLAYERS + 1):
         account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
@@ -75,48 +75,50 @@ def _offered(session: WorkshopSession) -> set[FacilityId]:
 
 def test_an_upgrade_unlocks_from_the_next_round_once_the_room_has_spent_enough_on_its_base_tier(path: Path) -> None:
     session = _session(path)
-    session.select(1, FacilityId.GAS_BURNER)
-    session.select(2, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
+    session.select(2, FacilityId.NUCLEAR_REACTOR)
 
     _to_next(session, Recap)
 
-    assert FacilityId.COMBINED_CYCLE not in _offered(session)
-    assert session.unlocks == [Unlock(facility=FacilityId.COMBINED_CYCLE, round=2, trigger="investment_threshold")]
+    assert FacilityId.NUCLEAR_REACTOR_GEN4 not in _offered(session)
+    assert session.unlocks == [
+        Unlock(facility=FacilityId.NUCLEAR_REACTOR_GEN4, round=2, trigger="investment_threshold")
+    ]
     _to_next(session, Investment)
-    assert FacilityId.COMBINED_CYCLE in _offered(session)
+    assert FacilityId.NUCLEAR_REACTOR_GEN4 in _offered(session)
 
 
 def test_spend_below_the_threshold_unlocks_nothing(path: Path) -> None:
     session = _session(path)
-    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
 
     _to_next(session, Investment)
 
     assert session.unlocks == []
-    assert FacilityId.COMBINED_CYCLE not in _offered(session)
+    assert FacilityId.NUCLEAR_REACTOR_GEN4 not in _offered(session)
 
 
 def test_spend_carries_over_from_round_to_round(path: Path) -> None:
     session = _session(path)
-    session.select(1, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
     _to_next(session, Investment)
-    session.select(2, FacilityId.GAS_BURNER)
+    session.select(2, FacilityId.NUCLEAR_REACTOR)
 
     _to_next(session, Investment)
 
-    assert Unlock(facility=FacilityId.COMBINED_CYCLE, round=3, trigger="investment_threshold") in session.unlocks
+    assert Unlock(facility=FacilityId.NUCLEAR_REACTOR_GEN4, round=3, trigger="investment_threshold") in session.unlocks
 
 
 def test_unlocks_survive_a_restart(path: Path) -> None:
     session = _session(path)
-    session.select(1, FacilityId.GAS_BURNER)
-    session.select(2, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
+    session.select(2, FacilityId.NUCLEAR_REACTOR)
     _to_next(session, Investment)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert reopened.unlocks == session.unlocks
-    assert FacilityId.COMBINED_CYCLE in _offered(reopened)
+    assert FacilityId.NUCLEAR_REACTOR_GEN4 in _offered(reopened)
 
 
 def test_concentrated_solar_power_unlocks_from_round_three(path: Path) -> None:
@@ -132,15 +134,30 @@ def test_concentrated_solar_power_unlocks_from_round_three(path: Path) -> None:
 
 def test_the_last_rounds_end_unlocks_nothing(path: Path) -> None:
     session = _session(path, round_count=1)
-    session.select(1, FacilityId.GAS_BURNER)
-    session.select(2, FacilityId.GAS_BURNER)
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
+    session.select(2, FacilityId.NUCLEAR_REACTOR)
 
     _to_next(session, Recap)
 
     assert session.unlocks == []
 
 
-def test_full_season_storage_unlocks_when_a_round_first_allows_every_storage_type(path: Path) -> None:
+def test_full_season_storage_unlocks_at_the_recap_before_the_first_round_to_allow_every_storage_type(
+    path: Path,
+) -> None:
+    session = _session(path)
+    session.set_levers(RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+
+    _to_next(session, Recap)
+
+    assert session.unlocks == [
+        Unlock(facility=FacilityId.HYDROGEN_STORAGE, round=2, trigger="format_lever"),
+        Unlock(facility=FacilityId.PUMPED_HYDRO, round=2, trigger="format_lever"),
+    ]
+    assert not {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} & _offered(session)
+
+
+def test_full_season_storage_set_during_the_recap_unlocks_when_the_round_starts(path: Path) -> None:
     session = _session(path)
     _to_next(session, Recap)
     session.set_levers(RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
@@ -151,3 +168,4 @@ def test_full_season_storage_unlocks_when_a_round_first_allows_every_storage_typ
         Unlock(facility=FacilityId.HYDROGEN_STORAGE, round=2, trigger="format_lever"),
         Unlock(facility=FacilityId.PUMPED_HYDRO, round=2, trigger="format_lever"),
     ]
+    assert {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} <= _offered(session)

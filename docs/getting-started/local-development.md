@@ -246,10 +246,10 @@ for user in prof alice bob; do
 done
 ```
 
-**c. Give the players enough money.** A player starts with 25,000 (a placeholder until the
-game-balance pass), which buys no fuel-burning plant: the cheapest, the gas burner, costs 90,000.
-There is no API for money, so edit the saved session. **Stop the app backend first**: a running
-backend saves over the file on its next change and undoes the edit.
+**c. Give the players more money, if you need it.** A player starts with 1,000,000 (a placeholder
+until the game-balance pass), which is enough for the plants in step d. To test with more, edit the
+saved session, since there is no API for money. **Stop the app backend first**: a running backend
+saves over the file on its next change and undoes the edit.
 
 ```bash
 # Stop the app backend (Ctrl-C in its terminal), then:

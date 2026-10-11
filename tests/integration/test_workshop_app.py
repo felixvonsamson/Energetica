@@ -175,7 +175,7 @@ def test_a_player_entering_is_placed_into_the_shared_network(session_path: Path)
     assert response.status_code == 200
     assert response.json() == {
         "role": "player",
-        "player": {"account_id": account_id, "username": "alice", "money": 25_000.0},
+        "player": {"account_id": account_id, "username": "alice", "money": 1_000_000.0},
     }
     assert [player["username"] for player in client.get(SESSION_URL).json()["players"]] == ["alice"]
 
@@ -1345,8 +1345,8 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 
     assert response.status_code == 200
     body = response.json()
-    # Half of two starting budgets of 25,000.
-    assert body["threshold"] == 25_000.0
+    # Half of two starting budgets of 1,000,000.
+    assert body["threshold"] == 1_000_000.0
     assert body["csp_unlock_round"] == 3
     assert body["unlocks"] == []
     technologies = {technology["base"]: technology for technology in body["technologies"]}
@@ -1365,16 +1365,17 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 def test_the_progress_shows_the_round_an_upgrade_unlocked_from(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
     authenticate(client, alice)
-    client.post(SELECTION_URL, json={"facility": "gas_burner"})
+    # 840,000, past the threshold of half one starting budget.
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
     authenticate(client, facilitator)
     while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
         _advance(client)
 
     body = client.get(UNLOCKS_URL).json()
 
-    gas = next(technology for technology in body["technologies"] if technology["base"] == "gas_burner")
-    assert gas["unlocked_round"] == 2
-    assert body["unlocks"] == [{"facility": "combined_cycle", "round": 2, "trigger": "investment_threshold"}]
+    nuclear = next(technology for technology in body["technologies"] if technology["base"] == "nuclear_reactor")
+    assert nuclear["unlocked_round"] == 2
+    assert body["unlocks"] == [{"facility": "nuclear_reactor_gen4", "round": 2, "trigger": "investment_threshold"}]
 
 
 def test_players_never_see_unlock_progress(session_path: Path) -> None:

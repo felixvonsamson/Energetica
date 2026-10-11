@@ -235,7 +235,7 @@ def test_players_survive_a_restart(path: Path) -> None:
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     players = reopened.network.players()
-    assert [(p.account_id, p.username, p.money) for p in players] == [(1, "alice", 123.0), (2, "bob", 25_000.0)]
+    assert [(p.account_id, p.username, p.money) for p in players] == [(1, "alice", 123.0), (2, "bob", 1_000_000.0)]
     assert all(player.network is reopened.network for player in players)
 
 

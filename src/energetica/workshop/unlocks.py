@@ -4,7 +4,8 @@ A player only ever sees a facility once it is available, so each unlock comes as
 session starts with the base tier of each category (#975). An upgrade unlocks once the money every
 player has spent on its base tier reaches the threshold, which is the same for every technology. The
 check happens when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar
-power has no base tier, so it unlocks from a set Round instead. The session keeps each
+power has no base tier, so it unlocks from a set Round instead. Hydrogen storage and pumped hydro unlock
+the first Round the storage lever allows every type. The session keeps each
 :class:`Unlock`, so the Recap can announce it.
 
 Storage follows the Round's storage lever (#1004): none, batteries only, or every type. Hydrogen storage
@@ -131,10 +132,12 @@ def round_end_unlocks(
 def format_lever_unlocks(
     *, round_number: int, storage: StorageAvailability, unlocked: Collection[FacilityId]
 ) -> list[Unlock]:
-    """What unlocks when Round ``round_number`` starts with the storage lever at ``storage``.
+    """What unlocks if Round ``round_number`` starts with the storage lever at ``storage``.
 
-    Hydrogen storage and pumped hydro unlock the first time a Round allows every storage type. Whether players
-    can buy them still follows each Round's lever (:func:`available_facilities`).
+    Hydrogen storage and pumped hydro unlock the first time a Round allows every storage type. The session checks
+    at the Recap before it, so the Recap can announce them, and again when the Round starts, in case the moderator
+    changed the lever in between. Whether players can buy them still follows each Round's lever
+    (:func:`available_facilities`).
     """
     if storage != "all":
         return []

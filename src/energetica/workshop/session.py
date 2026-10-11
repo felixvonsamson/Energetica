@@ -776,20 +776,27 @@ class WorkshopSession:
         """Unlock what the move to ``checkpoint`` unlocks, without saving. Returns what undoes it.
 
         At a Round's Recap, an upgrade whose base tier has had enough spent on it unlocks from the next Round, and
-        so does Concentrated solar power once that Round is far enough on. The last Round's Recap unlocks nothing.
-        At a Round's Investment phase, full-season storage unlocks if it is the first Round to allow every storage
-        type. The caller holds the lock, and has fixed the Round's format.
+        so does Concentrated solar power once that Round is far enough on. Full-season storage unlocks there too if
+        the storage lever already allows every type for the next Round, so the Recap can announce it. The last
+        Round's Recap unlocks nothing. If the moderator only allows every type during the Recap, full-season storage
+        unlocks when the Round's Investment phase opens instead. The caller holds the lock, and has fixed the
+        Round's format.
         """
         before = self.unlocks
         unlocked = {unlock.facility for unlock in before}
         match checkpoint:
             case Recap(round=round_number) if round_number < self.round_count:
-                new = round_end_unlocks(
-                    next_round=round_number + 1,
-                    spent=self._invested(),
-                    threshold=self._unlock_threshold(),
-                    unlocked=unlocked,
-                )
+                new = [
+                    *round_end_unlocks(
+                        next_round=round_number + 1,
+                        spent=self._invested(),
+                        threshold=self._unlock_threshold(),
+                        unlocked=unlocked,
+                    ),
+                    *format_lever_unlocks(
+                        round_number=round_number + 1, storage=self.levers.round_format.storage, unlocked=unlocked
+                    ),
+                ]
             case Investment(round=round_number):
                 new = format_lever_unlocks(
                     round_number=round_number, storage=self.current_format().storage, unlocked=unlocked
