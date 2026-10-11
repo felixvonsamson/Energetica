@@ -137,6 +137,30 @@ def test_the_round_totals_fuel_at_its_average_price() -> None:
     assert sheet.total.operating_income == pytest.approx(round_operating_profit([spring, summer], 1))
 
 
+def test_a_climate_events_revenue_tax_comes_off_the_operating_income() -> None:
+    spring = SPRING.model_copy(update={"revenue_tax_rate": 0.07})
+
+    sheet = period_sheet([spring])
+
+    assert sheet.revenue_tax == pytest.approx(0.07 * 140_000.0)
+    assert sheet.taxable_revenue == pytest.approx(140_000.0)
+    assert sheet.revenue_tax_rate == pytest.approx(0.07)
+    assert sheet.operating_income == pytest.approx(period_sheet([SPRING]).operating_income - 9_800.0)
+
+
+def test_the_round_totals_the_revenue_tax_over_the_seasons_it_taxed() -> None:
+    spring = SPRING.model_copy(update={"revenue_tax_rate": 0.07})
+
+    sheet = balance_sheet(1, results=[spring, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[])
+
+    assert sheet.total is not None
+    assert sheet.total.revenue_tax == pytest.approx(9_800.0)
+    # Only spring was taxed, so the rate is spring's, not spread over the untaxed summer.
+    assert sheet.total.taxable_revenue == pytest.approx(140_000.0)
+    assert sheet.total.revenue_tax_rate == pytest.approx(0.07)
+    assert sheet.total.operating_income == pytest.approx(round_operating_profit([spring, SUMMER], 1))
+
+
 def test_a_season_with_no_fuel_has_no_fuel_lines() -> None:
     sheet = period_sheet([SPRING])
 

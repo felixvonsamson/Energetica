@@ -52,7 +52,18 @@ const SPRING: PeriodSheet = {
         },
     ],
     fuel_total: 4_000,
+    revenue_tax: 0,
+    taxable_revenue: 0,
+    revenue_tax_rate: 0,
     operating_income: 370_440,
+};
+
+const TAXED: PeriodSheet = {
+    ...SPRING,
+    revenue_tax: 28_880.6,
+    taxable_revenue: 412_580,
+    revenue_tax_rate: 0.07,
+    operating_income: 370_440 - 28_880.6,
 };
 
 const SHEET: BalanceSheet = {
@@ -156,6 +167,24 @@ describe("balanceSheetRows", () => {
         expect(row("fuel-coal").cell(summer)).toEqual({ amount: 0 });
     });
 
+    it("has no revenue tax line in a Round no disaster hit", () => {
+        expect(rows.some((r) => r.id === "revenue-tax")).toBe(false);
+    });
+
+    it("shows a revenue tax above fuel as taxable revenue times the rate", () => {
+        const taxed = balanceSheetRows({ ...SHEET, total: TAXED });
+        const ids = taxed.map((r) => r.id);
+        expect(ids.indexOf("revenue-tax")).toBe(ids.indexOf("fuel") - 1);
+        const tax = taxed.find((r) => r.id === "revenue-tax")!;
+        expect(tax.unit).toBe("tax");
+        expect(tax.cell(TAXED)).toEqual({
+            volume: 412_580,
+            rate: expect.closeTo(7),
+            amount: -28_880.6,
+        });
+        expect(tax.cell(SPRING)).toEqual({ amount: 0 });
+    });
+
     it("puts investments and net profit in the Round only", () => {
         expect(row("investments").cell(SPRING).amount).toBeNull();
         expect(row("investments").roundAmount).toBe(-90_000);
@@ -187,6 +216,19 @@ describe("waterfallSteps", () => {
             from: 0,
             to: 370_440,
         });
+    });
+
+    it("takes a revenue tax off before fuel", () => {
+        const steps = waterfallSteps(TAXED);
+        expect(steps.map((s) => s.label)).toEqual([
+            "Market income",
+            "Dumping cost",
+            "O&M",
+            "Revenue tax",
+            "Fuel cost",
+            "Operating income",
+        ]);
+        expect(steps[4]).toMatchObject({ to: 370_440 - 28_880.6 });
     });
 
     it("takes the Round on to net profit, and scales a loss below zero", () => {

@@ -15,6 +15,7 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop import session as session_module
+from energetica.workshop.events import EventPick
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, STOCKPILE_SEASONS, FuelPurchase, season_need
@@ -38,6 +39,10 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
 )
 
 GAS = FacilityId.GAS_BURNER
+
+# Price shocks the moderator picks (#1012): gas ×1.5, and coal ×0.85.
+GAS_SHOCK = EventPick(event="geo.gas_pipeline_disruption", severity="base")
+COAL_SHOCK = EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL)
 
 
 class _Clock:
@@ -135,28 +140,21 @@ def test_every_fuel_gets_a_new_price_each_trading_period(path: Path) -> None:
     assert session.fuel_prices[Fuel.GAS].price != spring[Fuel.GAS].price
 
 
-def test_a_scheduled_shock_lands_at_the_next_trading_period_only(path: Path) -> None:
+def test_a_picked_shock_lands_at_the_next_trading_period_only(path: Path) -> None:
     session = _trading(path)
 
-    session.schedule_fuel_shock(Fuel.GAS, 1.65)
+    session.pick_event(GAS_SHOCK)
 
     assert not session.fuel_prices[Fuel.GAS].shocked
     _close_and_settle(session)
     session.advance()
     assert session.fuel_prices[Fuel.GAS].shocked
-    assert session.fuel_prices[Fuel.GAS].shock == 1.65
+    assert session.fuel_prices[Fuel.GAS].shock == 1.5
     assert not session.fuel_prices[Fuel.COAL].shocked
     _close_and_settle(session)
     session.advance()
     assert not session.fuel_prices[Fuel.GAS].shocked
-    assert session.fuel_prices[Fuel.GAS].shock == pytest.approx(1.325)
-
-
-def test_a_shock_must_keep_the_price_positive(path: Path) -> None:
-    session = _trading(path)
-
-    with pytest.raises(ValueError):
-        session.schedule_fuel_shock(Fuel.GAS, -1.0)
+    assert session.fuel_prices[Fuel.GAS].shock == pytest.approx(1.25)
 
 
 # --- ordering -----------------------------------------------------------------------------------
@@ -376,7 +374,7 @@ def test_fuel_survives_a_restart(path: Path) -> None:
     session.set_fuel_order(1, Fuel.GAS, 3 * _need(session))
     _close_and_settle(session)
     session.advance()
-    session.schedule_fuel_shock(Fuel.COAL, 2.0)
+    session.pick_event(COAL_SHOCK)
     alice = session.network.members[1]
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
@@ -385,7 +383,7 @@ def test_fuel_survives_a_restart(path: Path) -> None:
     assert (again.fuel_stock, again.fuel_order) == (alice.fuel_stock, alice.fuel_order)
     assert reopened.fuel_prices == session.fuel_prices
     assert reopened.fuel_procurement == "manual"
-    assert reopened.pending_fuel_shocks == {Fuel.COAL: 2.0}
+    assert reopened.event_picks == [COAL_SHOCK]
     assert again.trading_results == alice.trading_results
 
 
@@ -410,7 +408,7 @@ def test_a_failed_save_leaves_the_prices_as_they_were(path: Path, monkeypatch: p
     session = _trading(path)
     _close_and_settle(session)
     prices, order = dict(session.fuel_prices), dict(session.network.members[1].fuel_order)
-    session.schedule_fuel_shock(Fuel.GAS, 2.0)
+    session.pick_event(GAS_SHOCK)
     monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
@@ -418,7 +416,7 @@ def test_a_failed_save_leaves_the_prices_as_they_were(path: Path, monkeypatch: p
 
     assert session.fuel_prices == prices
     assert session.network.members[1].fuel_order == order
-    assert session.pending_fuel_shocks == {Fuel.GAS: 2.0}
+    assert (session.event_picks, session.fired_events) == ([GAS_SHOCK], [])
     assert session.checkpoint == TradingPeriod(round=1, season="spring")
 
 

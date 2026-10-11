@@ -4,7 +4,8 @@ Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session, extending its running phase and changing the levers are the
 facilitator's alone, and each tells every open page (#1140). So is reading how close each technology is to
-unlocking (#1011). A player's investment selection (#999)
+unlocking (#1011), and so are the events: picking them, and reading what fired (#1012). A player's investment
+selection (#999)
 and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
 player's own.
@@ -23,6 +24,7 @@ from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
+from energetica.workshop.events import EVENTS, EventPick, InvalidPickError, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.player import WorkshopPlayer
@@ -31,7 +33,10 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
+    WorkshopEventOut,
+    WorkshopEventsOut,
     WorkshopFacilityOut,
+    WorkshopFiredEventOut,
     WorkshopFuelLineOut,
     WorkshopFuelOrderIn,
     WorkshopFuelOut,
@@ -58,6 +63,7 @@ from energetica.workshop.session import (
     FuelNotManualError,
     InvalidFuelQuantityError,
     InvestmentClosedError,
+    NoBoundaryLeftError,
     NoPhaseRunningError,
     NotEnoughMoneyError,
     NotSelectedError,
@@ -237,18 +243,83 @@ def get_unlocks(_: Annotated[Account, Depends(get_facilitator)], session: Sessio
     )
 
 
+def _events_out(session: WorkshopSession) -> WorkshopEventsOut:
+    view = session.events_view()
+    return WorkshopEventsOut(
+        events=[
+            WorkshopEventOut.from_event(
+                event, suggested_severity(event, emissions=view.emissions, players=view.players)
+            )
+            for event in EVENTS.values()
+        ],
+        picks=view.picks,
+        fired=[
+            WorkshopFiredEventOut(
+                event=fired.event,
+                name=EVENTS[fired.event].name if fired.event in EVENTS else fired.event,
+                severity=fired.severity,
+                fuel=fired.fuel,
+                round=fired.round,
+                season=fired.season,
+            )
+            for fired in view.fired
+        ],
+        emissions=view.emissions,
+    )
+
+
+@router.get("/events")
+def get_events(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> WorkshopEventsOut:
+    """The events the facilitator can pick, the picks waiting for their boundary, and every event that fired.
+    Facilitator only, and without headlines, so that the Recap surprises everyone.
+    """
+    return _events_out(session)
+
+
+# Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/events/picks")
+async def pick_event(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, pick: EventPick
+) -> WorkshopEventsOut:
+    """Pick an event to fire at the next boundary of its kind: the next Trading period or the next Round. It takes
+    the place of any pick of the same category waiting for the same boundary, and can be changed until then. An
+    event whose boundary will not come again before the session ends cannot be picked.
+    """
+    try:
+        changed = await run_in_threadpool(session.pick_event, pick)
+    except InvalidPickError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except NoBoundaryLeftError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    if changed:
+        await invalidate_session(request.app)
+    return _events_out(session)
+
+
+@router.delete("/events/picks/{event_id}")
+async def drop_event(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, event_id: str
+) -> WorkshopEventsOut:
+    """Drop the pick of an event before it fires. Dropping one that is not waiting changes nothing."""
+    if await run_in_threadpool(session.drop_event, event_id):
+        await invalidate_session(request.app)
+    return _events_out(session)
+
+
 @router.get("/facilities")
 def get_facilities(
     account: Annotated[Account, Depends(resolve_entry_account)], session: Session
 ) -> list[WorkshopFacilityOut]:
     """The facilities players can buy in the current Round, and any others the calling player owns, in
-    catalog order. One that is not yet unlocked is left out, not shown as locked.
+    catalog order, at the current Round's prices. One that is not yet unlocked is left out, not shown as locked.
     """
     for_sale = {facility.id for facility in session.offered_facilities()}
     player = session.player(account.account_id)
     owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
     return [
-        WorkshopFacilityOut(**facility.model_dump(), for_sale=facility.id in for_sale)
+        WorkshopFacilityOut(
+            **facility.model_dump(), for_sale=facility.id in for_sale, price=session.facility_price(facility.id)
+        )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned
     ]
@@ -273,7 +344,7 @@ def get_fleet(
 def _selection_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopSelectionOut:
     return WorkshopSelectionOut(
         facilities=list(player.selection),
-        total_cost=player.selection_cost(),
+        total_cost=player.selection_cost(session.facility_prices()),
         money=player.money,
         stored_energy_at_risk=energy_at_risk(
             player.stored_energy,

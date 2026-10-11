@@ -3,10 +3,16 @@
  * moderator advances it, reading the facility catalog and fleet (#998), picking
  * facilities to buy in the Investment phase (#999), setting prices in a Trading
  * period's price-setting window (#1002), reviewing a settled Trading period
- * (#1007), and following technology unlocks as the facilitator (#1011).
+ * (#1007), and following technology unlocks and picking events as the
+ * facilitator (#1011, #1012).
  */
 
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useIsMutating,
+    useMutation,
+    useQuery,
+} from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import { toast } from "sonner";
@@ -293,6 +299,56 @@ export function useWorkshopUnlocks() {
     return useQuery({
         queryKey: queryKeys.workshop.unlocks,
         queryFn: workshopApi.getUnlocks,
+    });
+}
+
+/**
+ * The events the facilitator can pick, the picks waiting, and the events that
+ * fired (#1012). Facilitator only. Re-read whenever the session changes.
+ */
+export function useWorkshopEvents() {
+    return useQuery({
+        queryKey: queryKeys.workshop.events,
+        queryFn: workshopApi.getEvents,
+    });
+}
+
+/** Shared by picking and dropping, to tell whether any change is in flight. */
+const EVENT_CHANGE = ["workshop", "event-change"] as const;
+
+/**
+ * Whether a pick or a drop is in flight. The console waits for each to finish
+ * before the next, so the answers cannot arrive out of order.
+ */
+export function useEventChangePending(): boolean {
+    return useIsMutating({ mutationKey: EVENT_CHANGE }) > 0;
+}
+
+/**
+ * Pick an event, or drop a pick (#1012). Each answer is the events after the
+ * change, so it replaces the cached events. Retrying is harmless: picking or
+ * dropping twice leaves the same picks.
+ */
+export function usePickEvent() {
+    return useMutation({
+        mutationKey: EVENT_CHANGE,
+        mutationFn: workshopApi.pickEvent,
+        onSuccess: (events) => {
+            queryClient.setQueryData(queryKeys.workshop.events, events);
+        },
+        onError: (error) => toast.error(resolveErrorMessage(error)),
+    });
+}
+
+/** Drop an event's pick before it fires (#1012). See {@link usePickEvent}. */
+export function useDropEvent() {
+    return useMutation({
+        mutationKey: EVENT_CHANGE,
+        mutationFn: workshopApi.dropEvent,
+        onSuccess: (events) => {
+            queryClient.setQueryData(queryKeys.workshop.events, events);
+        },
+        onError: (error) => toast.error(resolveErrorMessage(error)),
     });
 }
 

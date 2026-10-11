@@ -73,7 +73,7 @@ export interface Cell {
 }
 
 /** The unit column: what the volume and the rate are measured in. */
-export type RowUnit = "energy" | "usage" | "fuel";
+export type RowUnit = "energy" | "usage" | "fuel" | "tax";
 
 export interface Row {
     id: string;
@@ -188,12 +188,29 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             );
         }
     }
-    // Still to come, each as its own level-0 row:
-    // - Revenue tax (#1012), above fuel: the climate-event tax on sales, broken
-    //   down as the taxable revenue times the rate in percent.
-    // - Carbon tax (#1015), below operating income, which leaves it out: what
-    //   was paid on the CO₂ emitted (tonnes times the price per tonne), less
-    //   the share received back.
+    // A climate event's revenue tax (#1012), only in a Round a disaster hit:
+    // the taxable revenue times the rate in percent. Over the Round, that is the
+    // revenue of the seasons it taxed, at their average rate.
+    if ((sheet.total?.revenue_tax ?? 0) > 0) {
+        rows.push({
+            id: "revenue-tax",
+            label: "Revenue tax",
+            level: 0,
+            kind: "line",
+            unit: "tax",
+            cell: (p) =>
+                p.revenue_tax > 0
+                    ? {
+                          volume: p.taxable_revenue,
+                          rate: p.revenue_tax_rate * 100,
+                          amount: -p.revenue_tax,
+                      }
+                    : { amount: 0 },
+        });
+    }
+    // Still to come: the carbon tax (#1015), below operating income, which
+    // leaves it out: what was paid on the CO₂ emitted (tonnes times the price
+    // per tonne), less the share received back.
     // Fuel is paid for each season (#1009), as tonnes times the price per tonne.
     rows.push({
         id: "fuel",
@@ -316,8 +333,9 @@ export function waterfallSteps(
     change("Market income", period.market_income);
     change("Dumping cost", -period.dump_cost);
     change("O&M", -period.om_total);
-    // The revenue tax (#1012) goes here, and the carbon tax (#1015) after
-    // operating income, followed by a season's result.
+    if (period.revenue_tax > 0) change("Revenue tax", -period.revenue_tax);
+    // The carbon tax (#1015) goes after operating income, followed by a
+    // season's result.
     change("Fuel cost", -period.fuel_total);
     subtotal("Operating income", period.operating_income);
     if (round) {

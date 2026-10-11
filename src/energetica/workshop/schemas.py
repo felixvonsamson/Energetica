@@ -8,6 +8,15 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.events import (
+    BoundaryType,
+    Direction,
+    EffectKind,
+    EventCategory,
+    EventPick,
+    Severity,
+    WorkshopEvent,
+)
 from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.fuel import FuelProcurement
@@ -102,6 +111,7 @@ class WorkshopFacilityOut(WorkshopFacility):
         description="Whether players can buy it in the current Round. A facility the player owns but can no "
         "longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown"
     )
+    price: float = Field(description="What it costs in the current Round: base_price, moved by any price shock")
 
 
 class WorkshopSelectionIn(BaseModel):
@@ -234,6 +244,63 @@ class WorkshopUnlocksOut(BaseModel):
     technologies: list[WorkshopTechnologyProgressOut] = Field(description="Each base tier, in catalog order")
     csp_unlock_round: int = Field(description="The first Round Concentrated solar power can be bought in")
     unlocks: list[Unlock] = Field(description="Every facility unlocked so far, in the order they unlocked")
+
+
+class WorkshopEventOut(BaseModel):
+    """An event the facilitator can pick (#1012). Never its headline, so the Recap surprises the facilitator too."""
+
+    id: str
+    name: str
+    category: EventCategory
+    boundary_type: BoundaryType = Field(
+        description="round: it fires when the next Round's Investment phase opens. trading_period: when the next "
+        "Trading period opens"
+    )
+    direction: Direction
+    effect_kind: EffectKind
+    severities: list[Severity]
+    suggested_severity: Severity | None = Field(
+        description="For a climate event, the severity the session's CO₂ so far suggests. Null for any other"
+    )
+    fuel_chosen: bool = Field(description="Whether the facilitator picks the fuel it moves")
+
+    @classmethod
+    def from_event(cls, event: WorkshopEvent, suggested_severity: Severity | None) -> WorkshopEventOut:
+        return cls(
+            id=event.id,
+            name=event.name,
+            category=event.category,
+            boundary_type=event.boundary_type,
+            direction=event.direction,
+            effect_kind=event.effect.kind,
+            severities=list(event.severities),
+            suggested_severity=suggested_severity,
+            fuel_chosen=event.fuel_chosen,
+        )
+
+
+class WorkshopFiredEventOut(BaseModel):
+    """An event that fired (#1012)."""
+
+    event: str = Field(description="The event's id")
+    name: str
+    severity: Severity
+    fuel: Fuel | None = Field(description="The fuel the facilitator picked for it, if it took one")
+    round: int
+    season: Season | None = Field(description="The Trading period it fired at, or null if it fired with the Round")
+
+
+class WorkshopEventsOut(BaseModel):
+    """The events the facilitator can pick, the picks waiting to fire, and those that fired (#1012). For the
+    facilitator only.
+    """
+
+    events: list[WorkshopEventOut] = Field(description="Every event, in catalog order")
+    picks: list[EventPick] = Field(
+        description="The picks waiting for their boundary: at most one per category and kind of boundary"
+    )
+    fired: list[WorkshopFiredEventOut] = Field(description="Every event that fired, in order")
+    emissions: float = Field(description="The CO₂ every player has emitted so far, building and running, in kg")
 
 
 class WorkshopPeriodOut(BaseModel):
