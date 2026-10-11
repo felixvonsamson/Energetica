@@ -210,7 +210,8 @@ _Avoid_: recap (the Recap is the narrative page between Rounds), income statemen
 How players get fuel, a lever fixed when each Trading period opens. Under **automatic** procurement, a
 player pays for the fuel their facilities burned, less what their stock covered. Under **manual**
 procurement, they buy each fuel in the price-setting window, and its cost is charged when the period is
-settled. Either way fuel is paid for at the season's price, which moves a little each season and jumps
+settled. Their facilities can burn only the fuel they hold plus what they bought: once it runs out, those
+facilities produce less, and the next window notes that it ran out (#1010). Either way fuel is paid for at the season's price, which moves a little each season and jumps
 when a price shock lands.
 
 **Season need** (#1009):

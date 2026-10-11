@@ -64,12 +64,14 @@ def _bidder(
     stored_energy: dict[FacilityId, float] | None = None,
     player_id: int = 1,
     built_round: int = 1,
+    fuel: dict[Fuel, float] | None = None,
 ) -> Bidder:
     return Bidder(
         player_id=player_id,
         owned_facilities=[OwnedFacility(facility=facility, built_round=built_round) for facility in facilities],
         prices=_prices(sell or {}, buy),
         stored_energy=stored_energy or {},
+        fuel=fuel,
     )
 
 
@@ -275,6 +277,114 @@ def test_a_results_fuel_comes_off_what_it_added_to_the_players_money() -> None:
 
     assert with_fuel.fuel_cost == pytest.approx(520.0)
     assert with_fuel.net == pytest.approx(result.net - 520.0)
+
+
+# Fuel stock (#1010). A gas burner at full output burns this much gas over one simulated day.
+_GAS_PER_DAY = FUEL_USE[GAS] * 11 * _HOURS
+
+
+def test_fuel_never_runs_short_when_the_bidder_has_no_fuel_limit() -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert not gas.ran_out_of_fuel
+
+
+def test_enough_fuel_does_not_hold_back_output() -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}, fuel={Fuel.GAS: _GAS_PER_DAY * SEASON_DAYS}))
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert not gas.ran_out_of_fuel
+
+
+def test_a_representative_day_burns_its_share_of_the_stock_and_then_stops() -> None:
+    # Half the season's fuel: the representative day gets half a day's worth, so it runs for 12 hours.
+    stock = _GAS_PER_DAY * SEASON_DAYS / 2
+
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}, fuel={Fuel.GAS: stock}))
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.fuel_burned == pytest.approx(stock)
+    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS / 2)
+    assert gas.ran_out_of_fuel
+
+
+def test_a_full_season_burns_the_stock_day_by_day_and_then_stops() -> None:
+    stock = _GAS_PER_DAY * SEASON_DAYS / 2
+
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}, fuel={Fuel.GAS: stock}), trading_format="full_season")
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.fuel_burned == pytest.approx(stock)
+    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS / 2)
+    assert gas.ran_out_of_fuel
+    generation = outcome.record.generation[0]
+    assert generation[0] == pytest.approx(11e6)
+    assert generation[-1] == 0.0
+
+
+def test_no_fuel_means_no_output() -> None:
+    outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}, fuel={}))
+
+    gas = outcome.results[1].facilities[GAS]
+    assert gas.generation == 0.0
+    assert gas.fuel_burned == 0.0
+    assert gas.ran_out_of_fuel
+
+
+def test_facility_types_burning_the_same_fuel_never_burn_more_than_the_stock() -> None:
+    # One hour of a gas burner's gas, shared with a combined cycle. Whichever offers first reserves what it
+    # could burn, so the other cannot offer the same gas.
+    stock = FUEL_USE[GAS] * 11 * SEASON_DAYS
+    bidder = _bidder(GAS, COMBINED_CYCLE, sell={GAS: 10.0, COMBINED_CYCLE: 10.0}, fuel={Fuel.GAS: stock})
+
+    outcome = _simulate(bidder)
+
+    facilities = outcome.results[1].facilities
+    assert facilities[GAS].fuel_burned + facilities[COMBINED_CYCLE].fuel_burned == pytest.approx(stock)
+    assert facilities[GAS].ran_out_of_fuel
+    assert facilities[COMBINED_CYCLE].ran_out_of_fuel
+
+
+def test_the_cheaper_facility_type_gets_the_shared_fuel_first() -> None:
+    # Just the coal the modern coal plant burns on its own. The coal burner comes first in the fleet but asks too
+    # much to sell, so it must not hold any of that coal back from the modern coal plant.
+    modern = FacilityId.MODERN_COAL_PLANT
+    burner = FacilityId.COAL_BURNER
+    stock = _simulate(_bidder(modern, sell={modern: 10.0})).results[1].facilities[modern].fuel_burned
+
+    outcome = _simulate(_bidder(burner, modern, sell={burner: 5_000.0, modern: 10.0}, fuel={Fuel.COAL: stock}))
+
+    facilities = outcome.results[1].facilities
+    assert facilities[modern].fuel_burned == pytest.approx(stock)
+    assert facilities[burner].fuel_burned == 0.0
+    assert not facilities[burner].ran_out_of_fuel
+
+
+def test_an_offer_priced_out_of_the_market_has_not_run_out_of_fuel() -> None:
+    # The offshore wind farm covers the demand, so the grid holds without the gas burner.
+    outcome = _simulate(_bidder(GAS, OFFSHORE_WIND, sell={GAS: 5_000.0, OFFSHORE_WIND: 0.0}, fuel={}))
+
+    assert not outcome.results[1].facilities[GAS].ran_out_of_fuel
+
+
+def test_a_result_names_the_fuels_that_ran_out() -> None:
+    # The gas burner asks nothing, so it would sell if it had gas.
+    bidder = _bidder(GAS, FacilityId.COAL_BURNER, WIND, sell={GAS: 0.0}, fuel={Fuel.COAL: 1e15})
+
+    result = _simulate(bidder).results[1]
+
+    assert result.fuels_run_out == {Fuel.GAS}
+
+
+def test_a_facility_that_burns_no_fuel_is_not_limited_by_the_stock() -> None:
+    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}, fuel={}))
+
+    wind = outcome.results[1].facilities[WIND]
+    assert wind.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert not wind.ran_out_of_fuel
 
 
 def test_clearing_more_often_settles_the_same_steady_day() -> None:

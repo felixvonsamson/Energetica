@@ -22,8 +22,18 @@ earned. A player's facilities of one type run as one pool, its power scaled by h
 Renewable facilities (wind, solar and hydro) produce whatever the weather gives them and offer it as
 must-run power: what does not sell is dumped at :data:`~energetica.workshop.prices.DUMP_COST` per MWh
 and still counts as generated. Controllable facilities produce only what they sell. There are no
-ramping limits for now (#1151), and no fuel stock limits generation yet (#1010). The engine counts the fuel
-each facility type burns, but the session pays for fuel when it settles the period (#1009).
+ramping limits for now (#1151). The engine counts the fuel each facility type burns, but the session pays for
+fuel when it settles the period (#1009).
+
+A player's fuel stock caps what their facilities burning it can offer (#1010), through
+:func:`~energetica.sim.dispatch.fuel_power_limit`, so a player who bought too little fuel simply generates less.
+The stock drains as it is burned, at the grain the period is simulated at: a representative day gets its
+season's stock divided by the same ×91 its result is scaled by, and a full season burns it day by day. Facility
+types burning the same fuel share the stock much as in the persistent world: at each clearing, each in turn
+reserves the fuel its offer could burn, and the next ones offer only what is left. Here the cheapest offer goes
+first, so fuel held for an offer that does not sell is never fuel a cheaper one could have sold. A bidder with no
+fuel limit, as under automatic procurement, never runs short. A facility type has run out of fuel if, at some
+clearing, its offer was cut short while the market cleared at or above its price, so it could have sold more.
 
 The weather is ``sim.renewables`` at one fixed position, since Workshop has no map, with a random seed
 per Run. Only the market settlement is scaled. O&M is already one Trading period's share, and stored
@@ -75,7 +85,7 @@ from energetica.sim.renewables import (
 )
 from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, settle_clearing
 from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
-from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
@@ -117,6 +127,9 @@ RENEWABLE_CATEGORIES = frozenset(
 SCARCITY_PRICE = 1000.0
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
+# How far below full power a fuel-limited offer may be, as a share, and still count as full: what is left of
+# rounding once the stock is spread over the clearings.
+_SHORT_TOLERANCE = 1e-9
 
 Weather = Callable[[FacilityId, float], float]
 """The share of its power a renewable facility produces at a time, in seconds from 1 January, from 0 to 1."""
@@ -154,6 +167,9 @@ class Bidder:
     owned_facilities: Sequence[OwnedFacility]
     prices: PriceSheet
     stored_energy: Mapping[FacilityId, float]
+    fuel: Mapping[Fuel, float] | None = None
+    """The fuel the player can burn over the period, in kg, or None if fuel never runs short, as under automatic
+    procurement. A fuel left out has none."""
 
 
 class FacilityPerformance(BaseModel):
@@ -181,6 +197,12 @@ class FacilityPerformance(BaseModel):
     )
     # Zero for a result saved before fuel was counted (#1009).
     fuel_burned: float = Field(default=0.0, description="Fuel burned generating, in kg. Zero if it burns none")
+    # False for a result saved before fuel stock limited output (#1010).
+    ran_out_of_fuel: bool = Field(
+        default=False,
+        description="Whether a short fuel stock cut its offer below full power at a clearing where it could have "
+        "sold more",
+    )
 
     @property
     def net(self) -> float:
@@ -216,6 +238,15 @@ class TradingResult(BaseModel):
         """What the period added to the player's money."""
         return sum(performance.net for performance in self.facilities.values()) - self.fuel_cost
 
+    @property
+    def fuels_run_out(self) -> set[Fuel]:
+        """The fuels that ran short, holding back the output of a facility type burning them (#1010)."""
+        return {
+            fuel
+            for facility, performance in self.facilities.items()
+            if performance.ran_out_of_fuel and (fuel := CATALOG[facility].fuel_type) is not None
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class TradingOutcome:
@@ -233,6 +264,27 @@ class TradingOutcome:
 
 
 @dataclass(slots=True)
+class _FuelTank:
+    """The fuel one player's pools share over the simulated days, in kg."""
+
+    left: dict[Fuel, float]
+    # What the offers placed so far in the current clearing could burn, so a later one cannot offer it too.
+    reserved: dict[Fuel, float] = field(default_factory=dict)
+
+    def available(self, fuel: Fuel) -> float:
+        """The ``fuel`` left that no offer of the current clearing has reserved."""
+        return max(0.0, self.left.get(fuel, 0.0) - self.reserved.get(fuel, 0.0))
+
+    def reserve(self, fuel: Fuel, amount: float) -> None:
+        """Hold ``amount`` of ``fuel`` for an offer of the current clearing."""
+        self.reserved[fuel] = self.reserved.get(fuel, 0.0) + amount
+
+    def burn(self, fuel: Fuel, amount: float) -> None:
+        """Take ``amount`` of ``fuel``, burned generating, out of what is left."""
+        self.left[fuel] = max(0.0, self.left.get(fuel, 0.0) - amount)
+
+
+@dataclass(slots=True)
 class _Pool:
     """A player's operating facilities of one type, run as one."""
 
@@ -242,6 +294,12 @@ class _Pool:
     sell_price: float
     buy_price: float | None
     stored_energy: float = 0.0
+    # The player's fuel, or None if it never runs short.
+    tank: _FuelTank | None = None
+    # The most the current clearing's fuel lets the pool offer, in W, and whether that is below its power.
+    fuel_limit: float = math.inf
+    fuel_short: bool = False
+    ran_out_of_fuel: bool = False
     # Output in W at each clearing: what sold, plus what was dumped.
     production: list[float] = field(default_factory=list)
     # At each clearing: W dumped, W bought to charge, and Wh stored once the clearing is over.
@@ -288,9 +346,28 @@ class _Pool:
             charge = storage_power_limit(room, self.efficiency, math.inf, seconds_per_tick)
             place_bid(market, self.player_id, _unramped(charge, self.power), self.buy_price, name)
         else:
-            # No fuel stock exists yet, so fuel does not limit output (#1010).
-            fuel = fuel_power_limit(self.power, ())
-            place_headroom_ask(market, self.player_id, 0.0, _unramped(fuel, self.power), self.sell_price, name)
+            offered = _unramped(self.fuel_limit, self.power)
+            place_headroom_ask(market, self.player_id, 0.0, offered, self.sell_price, name)
+
+    @property
+    def burns_limited_fuel(self) -> bool:
+        """Whether the pool burns a fuel the player holds only so much of."""
+        return self.tank is not None and CATALOG[self.facility].fuel_type is not None
+
+    def reserve_fuel(self, seconds_per_tick: float) -> None:
+        """Work out the most the fuel left lets the pool offer at this clearing, and reserve the fuel that would
+        burn. Only for a pool that :attr:`burns_limited_fuel`.
+        """
+        fuel = CATALOG[self.facility].fuel_type
+        assert self.tank is not None and fuel is not None
+        burn = self._burn_at_full_power(seconds_per_tick)
+        self.fuel_limit = fuel_power_limit(self.power, [(burn, self.tank.available(fuel))])
+        self.tank.reserve(fuel, fuel_burned(burn, _unramped(self.fuel_limit, self.power), self.power))
+        self.fuel_short = self.fuel_limit < self.power * (1 - _SHORT_TOLERANCE)
+
+    def _burn_at_full_power(self, seconds_per_tick: float) -> float:
+        """The fuel, in kg, the pool burns in one clearing at full power."""
+        return FUEL_USE.get(self.facility, 0.0) * self.power / 1_000_000 * seconds_per_tick / SECONDS_PER_HOUR
 
     def record(self, sale: SaleSettlement | None, seconds_per_tick: float) -> None:
         """Record what this clearing sold of the pool's offer, or that it produced nothing if ``sale`` is None."""
@@ -308,8 +385,11 @@ class _Pool:
         else:
             pollution = CATALOG[self.facility].base_pollution * self.power / 1_000_000 * hours
             self.emissions += emissions_produced(pollution, produced, self.power)
-            burn = FUEL_USE.get(self.facility, 0.0) * self.power / 1_000_000 * hours
-            self.fuel_burned += fuel_burned(burn, produced, self.power)
+            burned = fuel_burned(self._burn_at_full_power(seconds_per_tick), produced, self.power)
+            self.fuel_burned += burned
+            fuel = CATALOG[self.facility].fuel_type
+            if self.tank is not None and fuel is not None:
+                self.tank.burn(fuel, burned)
 
     def record_purchase(self, bought: float, cost: float, seconds_per_tick: float) -> None:
         """Record what this clearing bought of the pool's bid to charge."""
@@ -345,6 +425,7 @@ class _Pool:
             om_fixed=om_at_full_use * facility.om_fixed_share,
             om_variable_full=om_at_full_use * (1 - facility.om_fixed_share),
             fuel_burned=self.fuel_burned * scale,
+            ran_out_of_fuel=self.ran_out_of_fuel,
         )
 
 
@@ -353,12 +434,17 @@ def _unramped(resource_limit: float, power: float) -> float:
     return max_output(resource_limit, 0.0, math.inf, power)
 
 
-def _pools(bidder: Bidder, round_number: int) -> list[_Pool]:
-    """One pool per facility type ``bidder`` has operating in ``round_number``."""
+def _pools(bidder: Bidder, round_number: int, scale: float) -> list[_Pool]:
+    """One pool per facility type ``bidder`` has operating in ``round_number``, sharing the bidder's fuel. Each
+    simulated day stands for ``scale`` days, so the days get the fuel divided by it.
+    """
     operating: dict[FacilityId, list[OwnedFacility]] = {}
     for owned in bidder.owned_facilities:
         if is_operating(owned, current_round=round_number):
             operating.setdefault(owned.facility, []).append(owned)
+    tank = None
+    if bidder.fuel is not None:
+        tank = _FuelTank({fuel: amount / scale for fuel, amount in bidder.fuel.items()})
     return [
         _Pool(
             player_id=bidder.player_id,
@@ -367,6 +453,7 @@ def _pools(bidder: Bidder, round_number: int) -> list[_Pool]:
             sell_price=bidder.prices.sell[facility],
             buy_price=bidder.prices.buy[facility] if is_storage(facility) else None,
             stored_energy=bidder.stored_energy.get(facility, 0.0),
+            tank=tank,
         )
         for facility, owned in operating.items()
     ]
@@ -384,6 +471,16 @@ def _record_nothing(pools: Iterable[_Pool], seconds_per_tick: float) -> None:
     for pool in pools:
         pool.record(None, seconds_per_tick)
         pool.end_clearing()
+
+
+def _note_fuel_run_out(pools: Iterable[_Pool], clearing: MarketClearing) -> None:
+    """Mark each pool whose fuel cut its offer short at ``clearing`` as having run out of fuel, if the offer could
+    have sold more: the market cleared at or above its price, or the grid went down.
+    """
+    blackout = _is_blackout(clearing)
+    for pool in pools:
+        if pool.fuel_short and (blackout or clearing.price >= pool.sell_price):
+            pool.ran_out_of_fuel = True
 
 
 def _bid_lines(pools: Iterable[_Pool]) -> list[BidLine]:
@@ -425,7 +522,14 @@ def simulate_trading_period(
     days = simulated_days(season, round_format)
     # A representative day stands for the whole season. Full-season days are all literal.
     scale = SEASON_DAYS / len(days)
-    pools = {(pool.player_id, pool.facility.value): pool for bidder in bidders for pool in _pools(bidder, round_number)}
+    pools = {
+        (pool.player_id, pool.facility.value): pool
+        for bidder in bidders
+        for pool in _pools(bidder, round_number, scale)
+    }
+    tanks = {id(pool.tank): pool.tank for pool in pools.values() if pool.tank is not None}.values()
+    # The order pools reserve fuel in at each clearing: the cheapest offer first.
+    fuel_pools = sorted((pool for pool in pools.values() if pool.burns_limited_fuel), key=lambda pool: pool.sell_price)
     renewables = {pool.facility for pool in pools.values() if pool.renewable}
     blackout = False
     blackout_at: int | None = None
@@ -451,6 +555,10 @@ def simulate_trading_period(
             seconds = day * SECONDS_PER_DAY + clearing * seconds_per_tick
             # Every facility stands at the same position, so each type's weather is worked out once.
             shares = {facility: weather(facility, seconds) for facility in renewables}
+            for tank in tanks:
+                tank.reserved.clear()
+            for pool in fuel_pools:
+                pool.reserve_fuel(seconds_per_tick)
             for pool in pools.values():
                 pool.place(market, shares.get(pool.facility, 0.0), seconds_per_tick)
             demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
@@ -461,6 +569,7 @@ def simulate_trading_period(
                     offered[line_index[(side, entry.player_id, entry.facility)], point] = entry.capacity
             result = clear_market(market["capacities"], demands)
             prices[point], quantities[point] = result.price, result.quantity
+            _note_fuel_run_out(fuel_pools, result)
             if _is_blackout(result):
                 blackout = True
                 blackout_at = point

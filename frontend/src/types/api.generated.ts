@@ -5415,6 +5415,11 @@ export interface components {
              * @description What the player buys when the price-setting window closes. Null under automatic procurement
              */
             order: number | null;
+            /**
+             * Ran Out
+             * @description Whether the fuel ran short in the player's last Trading period, holding back the output of their facilities burning it (#1010)
+             */
+            ran_out: boolean;
         };
         /**
          * WorkshopFuelOrderIn

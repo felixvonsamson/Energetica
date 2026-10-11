@@ -843,6 +843,7 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "season_need": pytest.approx(need),
                 "stockpile_limit": pytest.approx(3 * need),
                 "order": math.ceil(need / 1_000) * 1_000.0,
+                "ran_out": False,
             }
         ],
     }
@@ -933,6 +934,32 @@ def test_the_fuel_paid_for_shows_on_the_balance_sheet(session_path: Path, clock:
     ]
     assert spring["fuel_total"] == pytest.approx(quantity * price)
     assert client.get(FUEL_URL).json()["fuels"][0]["stock"] > 0
+
+
+def test_a_player_reads_that_their_fuel_ran_out_last_season(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _fuel_trading(session_path, clock)
+    client.put(f"{FUEL_URL}/gas", json={"quantity": 1_000.0})
+
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, alice)
+
+    assert client.get(FUEL_URL).json()["fuels"][0]["ran_out"] is True
+
+
+def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, clock: _Clock) -> None:
+    # A player with nothing operating in a period gets no result for it, so their last result can be older than
+    # the last settled period. Its warning is not about last season.
+    client, facilitator, alice = _fuel_trading(session_path, clock)
+    client.put(f"{FUEL_URL}/gas", json={"quantity": 1_000.0})
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, alice)
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    results = session.network.members[alice].trading_results
+    results[-1] = results[-1].model_copy(update={"season": "winter"})
+
+    assert client.get(FUEL_URL).json()["fuels"][0]["ran_out"] is False
 
 
 # --- round format: full-season mode, clearings per day and storage (#1004) ------------------

@@ -38,6 +38,7 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
 )
 
 GAS = FacilityId.GAS_BURNER
+COAL = FacilityId.COAL_BURNER
 
 
 class _Clock:
@@ -242,7 +243,6 @@ def _failing_write(path: Path, text: str) -> None:
 
 def test_settling_pays_for_the_order_at_the_seasons_price(path: Path) -> None:
     session = _trading(path)
-    # More than a season burns, so none of it is a shortfall.
     order = session.set_fuel_order(1, Fuel.GAS, 2 * _need(session))
     price = session.fuel_prices[Fuel.GAS].price
     alice = session.network.members[1]
@@ -268,19 +268,33 @@ def test_fuel_left_over_carries_into_the_stock(path: Path) -> None:
     assert alice.fuel_stock == {Fuel.GAS: pytest.approx(order - burned)}
 
 
-def test_burning_more_than_the_stock_and_order_is_paid_for_and_leaves_none(path: Path) -> None:
-    # Until a short stock limits generation (#1010), ordering too little must not make fuel free.
-    session = _trading(path)
+def test_a_short_order_holds_back_generation_to_the_fuel_held(path: Path) -> None:
+    # The stock and the order are all the gas the facilities can burn (#1010), so the player pays only the order.
+    # Coal plants with all the coal they need keep the grid up once the gas runs out.
+    session = _trading(path, facilities=(*_FLEET, COAL, COAL))
+    alice = session.network.members[1]
+    alice.fuel_stock = {Fuel.GAS: 500.0}
+    session.set_fuel_order(1, Fuel.COAL, 2 * _need(session, Fuel.COAL))
     session.set_fuel_order(1, Fuel.GAS, 1_000.0)
     price = session.fuel_prices[Fuel.GAS].price
 
     _close_and_settle(session)
 
-    alice = session.network.members[1]
-    burned = alice.trading_results[-1].facilities[GAS].fuel_burned
-    [purchase] = alice.trading_results[-1].fuel
-    assert (purchase.quantity, purchase.price) == (pytest.approx(burned), price)
-    assert alice.fuel_stock == {}
+    result = alice.trading_results[-1]
+    assert result.facilities[GAS].fuel_burned == pytest.approx(1_500.0)
+    assert result.facilities[GAS].ran_out_of_fuel
+    assert FuelPurchase(fuel=Fuel.GAS, quantity=1_000.0, price=price) in result.fuel
+    assert Fuel.GAS not in alice.fuel_stock
+
+
+def test_automatic_procurement_never_runs_out_of_fuel(path: Path) -> None:
+    session = _trading(path, manual=False)
+
+    _close_and_settle(session)
+
+    gas = session.network.members[1].trading_results[-1].facilities[GAS]
+    assert gas.capacity_factor > 0
+    assert not gas.ran_out_of_fuel
 
 
 def test_a_period_opened_before_fuel_had_prices_settles_at_the_catalog_price(path: Path) -> None:
