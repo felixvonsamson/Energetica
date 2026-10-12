@@ -11,7 +11,7 @@ frontend/dist-app/*
 frontend/dist-landing/*
 frontend/dist-lobby/*
 frontend/public/instances.json
-scripts/openapi-schema.json
+scripts/openapi-schema*.json
 admin_accounts.txt
 *actions_history.log
 .env

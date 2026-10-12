@@ -19,8 +19,8 @@ LOBBY_BUNDLE_SUBPATH = "dist-lobby"
 
 
 def create_lobby_app(*, schema_only: bool = False) -> FastAPI:
-    """Build the lobby app. ``schema_only`` is accepted for symmetry with the game's ``create_app``
-    (unused today: the lobby reuses the game's generated types, so it needs no schema export).
+    """Build the lobby app. ``schema_only`` is accepted for symmetry with the game's ``create_app``.
+    It changes nothing: the lobby has no engine or session to leave out when exporting its schema.
     """
     app = FastAPI(title="Energetica Lobby")
 

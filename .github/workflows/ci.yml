@@ -204,9 +204,10 @@ jobs:
           PY
 
   api-types-freshness:
-    # Regenerate frontend/src/types/api.generated.ts and fail if it drifts from
-    # what's committed. Generation boots the FastAPI app to emit the OpenAPI
-    # schema (needs Python + deps) then runs openapi-typescript + prettier (needs bun).
+    # Regenerate every API types file (the merged api.generated.ts and one
+    # api.<app>.generated.ts per app) and fail if any drifts from what's committed.
+    # Generation boots the FastAPI apps to emit the OpenAPI schemas (needs Python
+    # + deps) then runs openapi-typescript + prettier (needs bun).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -231,7 +232,11 @@ jobs:
         run: bun run generate-types
       - name: Fail on drift
         run: |
-          if ! git diff --exit-code frontend/src/types/api.generated.ts; then
-            echo "::error::api.generated.ts is stale. Run 'bun run generate-types' and commit the result."
+          # The untracked check catches a types file the generator writes but nobody committed.
+          generated='frontend/src/types/api*.generated.ts'
+          untracked=$(git ls-files --others --exclude-standard -- "$generated")
+          if ! git diff --exit-code -- "$generated" || [ -n "$untracked" ]; then
+            if [ -n "$untracked" ]; then echo "Not committed: $untracked"; fi
+            echo "::error::The generated API types are stale. Run 'bun run generate-types' and commit the result."
             exit 1
           fi
