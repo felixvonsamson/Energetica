@@ -21,6 +21,7 @@ import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
+import { RecapPrototypeToggle } from "@/components/workshop/recap-prototype/recap-prototype";
 import {
     useAdvanceSession,
     useInvestmentOpen,
@@ -83,6 +84,18 @@ export function WorkshopTopBar({
                             Console
                         </Link>
                     </Button>
+                )}
+                {/* PROTOTYPE (#1013): open the Recap over any page. */}
+                {isFacilitator && session && (
+                    <RecapPrototypeToggle
+                        round={
+                            session.checkpoint.kind === "recap" ||
+                            session.checkpoint.kind === "investment" ||
+                            session.checkpoint.kind === "trading_period"
+                                ? session.checkpoint.round
+                                : session.round_count
+                        }
+                    />
                 )}
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />
