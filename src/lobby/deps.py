@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request, status
 
 from energetica.identity import accounts
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameExceptionType
+from energetica.kernel.game_error import SharedErrorCode
 from lobby.session import account_id_from_request
 
 
@@ -26,5 +26,5 @@ def require_current_account(request: Request) -> Account:
     """The authenticated account, or a 401 when unauthenticated."""
     account = get_current_account(request)
     if account is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
     return account

@@ -9,15 +9,19 @@ types file.
 import copy
 import json
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from fastapi import FastAPI
 
 from energetica.freeplay.app import create_app
-from energetica.kernel.game_error import GameExceptionType
+from energetica.freeplay.game_error import FreeplayErrorCode
+from energetica.identity.game_error import IdentityErrorCode
+from energetica.kernel.game_error import ErrorCode, SharedErrorCode
 from energetica.workshop.app import create_workshop_app
+from energetica.workshop.game_error import WorkshopErrorCode
 from lobby import create_lobby_app
+from lobby.game_error import LobbyErrorCode
 
 SCRIPT_DIR = Path(__file__).parent
 
@@ -29,6 +33,14 @@ APPS: dict[str, Callable[[], FastAPI]] = {
     "workshop": lambda: create_workshop_app(schema_only=True),
 }
 
+# The error codes each app can return: the kernel's shared codes, the identity layer's when the app
+# mounts the join and facilitator routes, and the app's own.
+APP_ERROR_CODES: dict[str, tuple[type[ErrorCode], ...]] = {
+    "freeplay": (SharedErrorCode, IdentityErrorCode, FreeplayErrorCode),
+    "lobby": (SharedErrorCode, LobbyErrorCode),
+    "workshop": (SharedErrorCode, IdentityErrorCode, WorkshopErrorCode),
+}
+
 
 def app_spec(name: str) -> dict:
     """Return the OpenAPI schema of the app called ``name``."""
@@ -38,18 +50,20 @@ def app_spec(name: str) -> dict:
     return spec
 
 
-def add_game_exception_type(spec: dict) -> None:
-    """Add ``GameExceptionType`` to ``spec``'s component schemas.
+def add_error_codes(spec: dict, error_codes: Iterable[type[ErrorCode]]) -> None:
+    """Add ``ErrorCode``, holding every code of the enums in ``error_codes``, to ``spec``'s
+    component schemas.
 
     The global GameError exception handler never appears in route response models, so it won't be
     picked up automatically — we add it explicitly so the frontend can use the generated type to
-    constrain error-handling call sites. Every schema gets every code for now; #1174 splits them.
+    constrain error-handling call sites. The schema is called ``ErrorCode`` whichever enums
+    the codes come from, so every frontend refers to the same name.
     """
     spec.setdefault("components", {}).setdefault("schemas", {})
-    spec["components"]["schemas"]["GameExceptionType"] = {
+    spec["components"]["schemas"]["ErrorCode"] = {
         "type": "string",
-        "enum": [e.value for e in GameExceptionType],
-        "title": "GameExceptionType",
+        "enum": list(dict.fromkeys(code.value for enum in error_codes for code in enum)),
+        "title": "ErrorCode",
     }
 
 
@@ -77,13 +91,13 @@ def write_spec(spec: dict, filename: str) -> None:
     print(f"✓ OpenAPI schema generated at {output_path}")
 
 
-def generate_schemas() -> None:
-    """Generate each app's schema and the merged schema, and write them to files.
+def build_schemas() -> dict[str, dict]:
+    """Build each app's schema and the merged schema, keyed by app name and ``"merged"``.
 
-    Each app's schema describes only the routes that app serves. The merged schema is the union of
-    all three, and backs the single ``api.generated.ts`` that every frontend bundle uses today: the
-    game instance, the lobby and the landing. Later work (#1171) moves each frontend app onto its
-    own types file and deletes the merged one.
+    Each app's schema describes only the routes that app serves and the error codes it can return.
+    The merged schema is the union of all three, and backs the single ``api.generated.ts`` that
+    every frontend bundle uses today: the game instance, the lobby and the landing. Later work
+    (#1171) moves each frontend app onto its own types file and deletes the merged one.
     """
     specs = {name: app_spec(name) for name in APPS}
 
@@ -93,9 +107,19 @@ def generate_schemas() -> None:
         merge_spec(merged, spec)
 
     for name, spec in specs.items():
-        add_game_exception_type(spec)
+        add_error_codes(spec, APP_ERROR_CODES[name])
+    add_error_codes(merged, (enum for enums in APP_ERROR_CODES.values() for enum in enums))
+    return {**specs, "merged": merged}
+
+
+def generate_schemas() -> None:
+    """Write each app's schema to ``openapi-schema.<app>.json`` and the merged one to
+    ``openapi-schema.json``.
+    """
+    schemas = build_schemas()
+    merged = schemas.pop("merged")
+    for name, spec in schemas.items():
         write_spec(spec, f"openapi-schema.{name}.json")
-    add_game_exception_type(merged)
     write_spec(merged, "openapi-schema.json")
 
 

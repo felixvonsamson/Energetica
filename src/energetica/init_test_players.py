@@ -18,9 +18,10 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.identity import accounts
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
@@ -56,7 +57,7 @@ def init_test_players() -> None:
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
-            raise GameError(GameExceptionType.TILE_NOT_FOUND)
+            raise GameError(FreeplayErrorCode.TILE_NOT_FOUND)
         player = confirm_location(account, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player

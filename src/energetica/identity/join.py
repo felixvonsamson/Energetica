@@ -21,9 +21,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.schemas.join import JoinLinkOut, Viewer
 from energetica.identity.web import get_current_account
+from energetica.kernel.game_error import GameError, SharedErrorCode
 
 router = APIRouter(prefix="/join", tags=["Join"])
 
@@ -39,12 +40,12 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
     try:
         config = instance_config.load_instance_config()
     except instance_config.InstanceConfigError as exc:
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID) from exc
+        raise GameError(IdentityErrorCode.JOIN_LINK_INVALID) from exc
     if config is None or not isinstance(config.access, instance_config.PrivateAccess):
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID)
+        raise GameError(IdentityErrorCode.JOIN_LINK_INVALID)
     access = config.access
     if access.join_token is None or not secrets.compare_digest(access.join_token, token):
-        raise GameError(GameExceptionType.JOIN_LINK_INVALID)
+        raise GameError(IdentityErrorCode.JOIN_LINK_INVALID)
     return config.name, access
 
 
@@ -82,10 +83,10 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     if account is None:
         # Matches resolve_entry_account's convention: no/invalid session is a 401, not a 400
         # GameError — this is a plain auth failure, not a game-domain rejection.
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
     _, access = _resolve(token)
     if not access.join_open:
-        raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
+        raise GameError(IdentityErrorCode.JOIN_LINK_CLOSED)
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:
@@ -95,4 +96,4 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
         # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
         # (a facilitator has no reason to visit their own join link), but fail closed rather than
         # 500 if it ever happens.
-        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)
+        raise GameError(SharedErrorCode.INSTANCE_ACCESS_DENIED)

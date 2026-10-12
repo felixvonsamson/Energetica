@@ -17,7 +17,8 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameExceptionType
+from energetica.identity.game_error import IdentityErrorCode
+from energetica.kernel.game_error import SharedErrorCode
 from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ def get_playing_account(request: Request) -> Account:
     """
     account = get_current_account(request)
     if account is None or get_role(account.account_id) != "player":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityErrorCode.USER_IS_NOT_A_PLAYER)
     return account
 
 
@@ -82,7 +83,7 @@ def get_facilitator(request: Request) -> Account:
     account = get_current_account(request)
     if account is None or get_role(account.account_id) != "facilitator":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
+            status_code=status.HTTP_403_FORBIDDEN, detail=IdentityErrorCode.ACCOUNT_IS_NOT_A_FACILITATOR
         )
     return account
 
@@ -108,13 +109,13 @@ def _enforce_instance_access(account: Account) -> None:
         config = instance_config.load_instance_config()
     except instance_config.InstanceConfigError as exc:
         logger.warning("entry blocked: %s", exc)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED) from exc
+        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED) from exc
     if config is not None and isinstance(config.access, instance_config.PrivateAccess):
         # A loaded config implies a configured slug — load_instance_config() only returns
         # non-None once _instance_json_path() has resolved one.
         assert slug is not None
         if not accounts.has_joined(account_id=account.account_id, slug=slug):
-            raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+            raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     instance_config.publish(config)
 
 
@@ -151,11 +152,11 @@ def _resolve_entry_token(token: str | None) -> Account:
     """The entry gate, given the session token from whichever request carried it."""
     account_id = account_id_from_token(token) if token else None
     if account_id is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
     account = accounts.get_account_by_id(account_id)
     if account is None:
         # A validly-signed session for an account since deleted from the server-wide store.
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
 
     _enforce_instance_access(account)
     return account

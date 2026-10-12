@@ -13,7 +13,7 @@ Complement to linter enforcement (Ruff + tooling). When in doubt: optimize for c
     -   Multi-line form: opening & closing triple quotes on their own lines.
 -   Prefer dataclasses / simple classes over large dicts for evolving structured data.
 -   Avoid global mutable state; pass explicit context objects (engine, config) where practical.
--   Raise domain-specific errors from `kernel/game_error.py` (avoid bare `Exception`).
+-   Raise domain-specific errors as a `GameError` from `kernel/game_error.py`, with a code from the enum of the layer or app that raises it (avoid bare `Exception`). See `docs/architecture/error-handling.md`.
 
 ## Naming
 

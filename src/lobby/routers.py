@@ -17,12 +17,13 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from energetica.identity import accounts, instance_config, server_config
 from energetica.identity.accounts import Account
-from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.identity.my_runs import resolve_my_runs
 from energetica.identity.schemas.auth import LoginRequest, SignupRequest
 from energetica.identity.schemas.lobby import MyRunsResponse
+from energetica.kernel.game_error import GameError, SharedErrorCode
 from energetica.kernel.session import check_password_hash, generate_password_hash
 from lobby.deps import require_current_account
+from lobby.game_error import LobbyErrorCode
 from lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -40,9 +41,9 @@ def login(request: Request, request_data: LoginRequest) -> Response:
     """
     account = accounts.get_account_by_username(request_data.username)
     if account is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.USER_NOT_FOUND)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.USER_NOT_FOUND)
     if not check_password_hash(plain_password=request_data.password, hashed_password=account.pwhash):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.INVALID_PASSWORD)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, LobbyErrorCode.INVALID_PASSWORD)
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
     return set_lobby_session_cookie(response, account.account_id, request)
@@ -54,13 +55,13 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     joining a run is a later, separate act gated at the instance's entry gate (ADR-0003).
     """
     if not server_config.signups_enabled():
-        raise GameError(GameExceptionType.SIGNUP_DISABLED)
+        raise GameError(LobbyErrorCode.SIGNUP_DISABLED)
 
     pwhash = generate_password_hash(request_data.password)
     try:
         account_id = accounts.create_account(username=request_data.username, pwhash=pwhash)
     except accounts.UsernameTakenError:
-        raise HTTPException(status.HTTP_409_CONFLICT, GameExceptionType.USERNAME_TAKEN)
+        raise HTTPException(status.HTTP_409_CONFLICT, LobbyErrorCode.USERNAME_TAKEN)
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED)
     return set_lobby_session_cookie(response, account_id, request)
@@ -119,13 +120,13 @@ def join_run(slug: str, account: Annotated[Account, Depends(require_current_acco
     """
     fragment = instance_config.load_fragment(slug)
     if fragment is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, GameExceptionType.RUN_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, LobbyErrorCode.RUN_NOT_FOUND)
     if fragment.private:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     try:
         accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
     except accounts.MembershipRoleConflictError:
         # account is this run's facilitator (or server-wide) — a facilitator administers a run,
         # it doesn't also join one as a player (ADR-0004).
-        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

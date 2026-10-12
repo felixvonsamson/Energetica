@@ -21,8 +21,9 @@ from energetica.enums import (
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.ongoing_project import OngoingProject
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
-from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError
 from energetica.kernel.hashing import stable_hash
 from energetica.schemas.notifications import (
     ConstructionFinishedPayload,
@@ -47,13 +48,13 @@ def queue_project(
         technology_effects.project_requirements(player, project_type),
     )
     if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
-        raise GameError(GameExceptionType.REQUIREMENTS_NOT_SATISFIED)
+        raise GameError(FreeplayErrorCode.REQUIREMENTS_NOT_SATISFIED)
 
     real_price = technology_effects.construction_price(player, project_type)
     duration = technology_effects.construction_time(player, project_type)
 
     if player.money < real_price and not ignore_requirements_and_money:
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+        raise GameError(FreeplayErrorCode.NOT_ENOUGH_MONEY)
 
     construction_power = technology_effects.construction_power(player, project_type)
 
@@ -87,7 +88,7 @@ def queue_project(
 def cancel_project(player: Player, project: OngoingProject) -> None:
     """Cancel an ongoing project."""
     if project is None or project.player != player:
-        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
+        raise GameError(FreeplayErrorCode.PROJECT_NOT_FOUND)
 
     dependents = []
     priority_list = player.projects_by_priority[project.project_type.worker_type]
@@ -96,7 +97,7 @@ def cancel_project(player: Player, project: OngoingProject) -> None:
         if project in candidate_dependent.prerequisites:
             dependents.append([candidate_dependent.project_type, candidate_dependent.level])
     if dependents:
-        raise GameError(GameExceptionType.HAS_DEPENDENTS, dependents=dependents)
+        raise GameError(FreeplayErrorCode.HAS_DEPENDENTS, dependents=dependents)
 
     player.money += project.cancellation_refund()
     priority_list.remove(project)
@@ -115,19 +116,19 @@ def cancel_project(player: Player, project: OngoingProject) -> None:
 def resume_project(player: Player, project: OngoingProject) -> None:
     """Resume an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
-        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
+        raise GameError(FreeplayErrorCode.PROJECT_NOT_FOUND)
 
     worker_type = project.project_type.worker_type
 
     if not project.was_paused_by_player():
-        raise GameError(GameExceptionType.CANNOT_RESUME)
+        raise GameError(FreeplayErrorCode.CANNOT_RESUME)
 
     # project is currently pause, and should be unpaused
     if "_prerequisites_and_level" in project.__dict__:
         del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
     for prerequisite in project.prerequisites:
         if prerequisite.status == ProjectStatus.PAUSED:
-            raise GameError(GameExceptionType.PAUSED_PREREQUISITE_PREVENT_UNPAUSE)
+            raise GameError(FreeplayErrorCode.PAUSED_PREREQUISITE_PREVENT_UNPAUSE)
 
     project.unpause()
     # project status is now ONGOING or WAITING.
@@ -154,12 +155,12 @@ def resume_project(player: Player, project: OngoingProject) -> None:
 def pause_project(player: Player, project: OngoingProject) -> None:
     """Pause an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
-        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
+        raise GameError(FreeplayErrorCode.PROJECT_NOT_FOUND)
 
     worker_type = project.project_type.worker_type
 
     if project.was_paused_by_player():
-        raise GameError(GameExceptionType.CANNOT_PAUSE)
+        raise GameError(FreeplayErrorCode.CANNOT_PAUSE)
 
     priority_list = player.projects_by_priority[worker_type]
     project_index = priority_list.index(project)
@@ -225,7 +226,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
-        raise GameError(GameExceptionType.CANNOT_DECREASE_PRIORITY_OF_LAST_PROJECT)
+        raise GameError(FreeplayErrorCode.CANNOT_DECREASE_PRIORITY_OF_LAST_PROJECT)
 
     project_1: OngoingProject = project
     project_2: OngoingProject = priority_list[index + 1]
@@ -239,10 +240,10 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     # 6. paused , paused  (swap)
 
     if project_1 in project_2.prerequisites:
-        raise GameError(GameExceptionType.REQUIREMENTS_PREVENT_REORDER)
+        raise GameError(FreeplayErrorCode.REQUIREMENTS_PREVENT_REORDER)
     if not project_1.was_paused_by_player() and project_2.was_paused_by_player():
         raise GameError(
-            GameExceptionType.CANNOT_SWAP_PAUSED_PROJECT,
+            FreeplayErrorCode.CANNOT_SWAP_PAUSED_PROJECT,
             first_project_type=project_1.project_type,
             second_project_type=project_2.project_type,
         )
@@ -254,7 +255,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         # Here we need to recompute prerequisites. Indeed, if project_2 had a prerequisite but which has not been
         # completed, it will not be removed from the project_2.prerequisites list - not unless we recompute.
         if project_2.prerequisites:
-            raise GameError(GameExceptionType.REQUIREMENTS_PREVENT_REORDER)
+            raise GameError(FreeplayErrorCode.REQUIREMENTS_PREVENT_REORDER)
         project_1.set_waiting()
         project_2.set_ongoing()
 
@@ -274,7 +275,7 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == 0:
-        raise GameError(GameExceptionType.CANNOT_INCREASE_PRIORITY_OF_FIRST_PROJECT)
+        raise GameError(FreeplayErrorCode.CANNOT_INCREASE_PRIORITY_OF_FIRST_PROJECT)
     # Here, to increase the priority of this project, we decrease the priority of the project just above it
     decrease_project_priority(player, priority_list[index - 1])
 
