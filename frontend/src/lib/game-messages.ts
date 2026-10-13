@@ -68,8 +68,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "The Trading period is still being simulated. Advance once it has finished.",
     WORKSHOP_ROUND_LOCKED:
         "This Round's plan is locked: players have been told what it holds.",
-    WORKSHOP_LEVER_INVALID_IN_LATER_ROUND:
-        "This change would carry to a later Round and leave it invalid.",
+    WORKSHOP_LEVERS_INVALID:
+        "This change would leave a Round invalid: every storage type needs the full-season format.",
     WORKSHOP_NO_EVENTS_IN_ROUND_ONE: "Round 1 holds no events.",
 
     // --- Lifecycle ---

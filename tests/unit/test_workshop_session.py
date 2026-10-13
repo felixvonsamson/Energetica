@@ -18,7 +18,7 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
 from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.round_plan import RoundLevers
+from energetica.workshop.round_plan import LeverChanges, RoundLevers
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     SEASONS,
@@ -1365,10 +1365,7 @@ def _set_format(session: WorkshopSession, round_number: int, **round_format: obj
     """Set Round ``round_number``'s format to ``round_format``, keeping its other levers. The change carries to every
     later Round.
     """
-    levers = session.plans[round_number - 1].levers
-    session.set_levers(
-        round_number, levers.model_copy(update={"round_format": RoundFormat.model_validate(round_format)})
-    )
+    session.set_levers(round_number, LeverChanges(**RoundFormat.model_validate(round_format).model_dump()))
 
 
 def test_a_session_starts_with_representative_days_hourly_clearings_and_batteries_only(path: Path) -> None:
@@ -1381,7 +1378,7 @@ def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path)
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
     levers = RoundLevers(round_format=RoundFormat(trading_format="full_season", clearings_per_day=96))
 
-    session.set_levers(1, levers)
+    session.set_levers(1, LeverChanges(trading_format="full_season", clearings_per_day=96))
 
     assert session.plans[0].levers == levers
     assert WorkshopSession.open(WORKSHOP_CONFIG, path).plans[0].levers == levers

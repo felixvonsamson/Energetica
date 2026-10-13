@@ -13,8 +13,7 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
-from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.round_plan import RoundLevers
+from energetica.workshop.round_plan import LeverChanges
 from energetica.workshop.session import (
     Investment,
     Recap,
@@ -153,7 +152,7 @@ def test_full_season_storage_unlocks_at_the_recap_before_the_first_round_to_allo
     path: Path,
 ) -> None:
     session = _session(path)
-    session.set_levers(2, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+    session.set_levers(2, LeverChanges(trading_format="full_season", storage="all"))
 
     _to_next(session, Recap)
 
@@ -168,7 +167,7 @@ def test_full_season_storage_unlocks_at_the_recap_before_the_first_round_to_allo
 
 def test_full_season_storage_unlocks_with_round_one_if_it_allows_every_storage_type(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
-    session.set_levers(1, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+    session.set_levers(1, LeverChanges(trading_format="full_season", storage="all"))
 
     session.advance()
 
@@ -181,8 +180,8 @@ def test_full_season_storage_unlocks_with_round_one_if_it_allows_every_storage_t
 
 def test_full_season_storage_stays_unlocked_once_a_later_round_switches_storage_back(path: Path) -> None:
     session = _session(path)
-    session.set_levers(2, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
-    session.set_levers(3, RoundLevers())
+    session.set_levers(2, LeverChanges(trading_format="full_season", storage="all"))
+    session.set_levers(3, LeverChanges(trading_format="representative_day", storage="batteries"))
 
     _to_next(session, Investment)  # Round 2
     _to_next(session, Investment)  # Round 3

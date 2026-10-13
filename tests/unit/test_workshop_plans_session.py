@@ -14,9 +14,9 @@ from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
-    LeverInvalidInLaterRoundError,
+    InvalidLeversError,
+    LeverChanges,
     PlannedEvent,
-    RoundLevers,
     plans_from,
 )
 from energetica.workshop.session import (
@@ -97,7 +97,7 @@ def test_no_round_is_locked_before_the_session_starts(path: Path) -> None:
     session = _session(path)
 
     assert session.locked_rounds() == 0
-    session.set_levers(1, RoundLevers(fuel_procurement="manual"))
+    session.set_levers(1, LeverChanges(fuel_procurement="manual"))
     assert session.current_format() == RoundFormat()
     assert session.fuel_procurement == "manual"
 
@@ -107,18 +107,18 @@ def test_round_one_locks_when_the_session_starts_and_the_next_round_at_each_reca
     session.advance()
     assert session.locked_rounds() == 1
     with pytest.raises(RoundLockedError):
-        session.set_levers(1, RoundLevers(fuel_procurement="manual"))
-    session.set_levers(2, RoundLevers(fuel_procurement="manual"))
+        session.set_levers(1, LeverChanges(fuel_procurement="manual"))
+    session.set_levers(2, LeverChanges(fuel_procurement="manual"))
 
     _keep_the_lights_on(session)
     _to_next(session, Recap)
     assert session.locked_rounds() == 2
     with pytest.raises(RoundLockedError):
-        session.set_levers(2, RoundLevers())
+        session.set_levers(2, LeverChanges(storage="off"))
     with pytest.raises(RoundLockedError):
         session.plan_event(2, PlannedEvent(event="demand.recession", severity="base"))
     assert session.plans[1].levers.fuel_procurement == "manual"
-    session.set_levers(3, RoundLevers())
+    session.set_levers(3, LeverChanges(storage="off"))
 
     _to_next(session, Recap)  # Recap 2
     assert session.locked_rounds() == 3
@@ -131,7 +131,7 @@ def test_a_round_the_session_does_not_have_is_refused(path: Path) -> None:
 
     for round_number in (0, 4):
         with pytest.raises(NoSuchRoundError):
-            session.set_levers(round_number, RoundLevers())
+            session.set_levers(round_number, LeverChanges())
         with pytest.raises(NoSuchRoundError):
             session.plan_event(round_number, PlannedEvent(event="demand.recession", severity="base"))
 
@@ -139,7 +139,7 @@ def test_a_round_the_session_does_not_have_is_refused(path: Path) -> None:
 def test_a_lever_change_carries_to_every_later_round_and_survives_a_restart(path: Path) -> None:
     session = _session(path, round_count=4)
 
-    session.set_levers(2, RoundLevers(round_format=FULL_SEASON))
+    session.set_levers(2, LeverChanges(trading_format="full_season", storage="all"))
 
     expected = [RoundFormat(), FULL_SEASON, FULL_SEASON, FULL_SEASON]
     assert [plan.levers.round_format for plan in session.plans] == expected
@@ -149,12 +149,12 @@ def test_a_lever_change_carries_to_every_later_round_and_survives_a_restart(path
 
 def test_a_lever_change_that_would_leave_a_later_round_invalid_is_refused(path: Path) -> None:
     session = _session(path, round_count=3)
-    session.set_levers(2, RoundLevers(round_format=RoundFormat(trading_format="full_season")))
-    session.set_levers(3, RoundLevers(round_format=FULL_SEASON))
+    session.set_levers(2, LeverChanges(trading_format="full_season"))
+    session.set_levers(3, LeverChanges(storage="all"))
     plans = session.plans
 
-    with pytest.raises(LeverInvalidInLaterRoundError) as refused:
-        session.set_levers(2, RoundLevers())
+    with pytest.raises(InvalidLeversError) as refused:
+        session.set_levers(2, LeverChanges(trading_format="representative_day"))
 
     assert refused.value.round_number == 3
     assert session.plans == plans
@@ -163,7 +163,7 @@ def test_a_lever_change_that_would_leave_a_later_round_invalid_is_refused(path: 
 
 def test_each_round_runs_with_its_own_levers(path: Path) -> None:
     session = _session(path)
-    session.set_levers(2, RoundLevers(round_format=RoundFormat(clearings_per_day=96), fuel_procurement="manual"))
+    session.set_levers(2, LeverChanges(clearings_per_day=96, fuel_procurement="manual"))
     session.advance()
     _keep_the_lights_on(session)
 

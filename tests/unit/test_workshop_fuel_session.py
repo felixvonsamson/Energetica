@@ -16,7 +16,7 @@ from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop import session as session_module
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
-from energetica.workshop.round_plan import PlannedEvent, RoundLevers
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent, RoundLevers
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, STOCKPILE_SEASONS, FuelPurchase, season_need
 from energetica.workshop.session import (
     FuelNotBurnedError,
@@ -84,7 +84,7 @@ def _trading(path: Path, *, manual: bool = True, facilities: tuple[FacilityId, .
     """A session in Round 1's spring price-setting window, with Alice (account 1) owning ``facilities``."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
     session.join(_account(1, "alice")).money = 10_000_000_000.0
-    session.set_levers(1, RoundLevers(fuel_procurement="manual" if manual else "automatic"))
+    session.set_levers(1, LeverChanges(fuel_procurement="manual" if manual else "automatic"))
     session.advance()
     for facility in facilities:
         session.select(1, facility)

@@ -210,13 +210,13 @@ the API with a facilitator session. This sets Round 2's levers, and every later 
 ```bash
 bash scripts/dev-login.sh demo demo1234     # saves the session to .energetica-dev/cookies.txt
 curl -b .energetica-dev/cookies.txt localhost:8000/api/v1/workshop/plans
-curl -b .energetica-dev/cookies.txt -X PUT localhost:8000/api/v1/workshop/plans/2/levers \
+curl -b .energetica-dev/cookies.txt -X PATCH localhost:8000/api/v1/workshop/plans/2/levers \
     -H 'Content-Type: application/json' \
-    -d '{"round_format": {"trading_format": "full_season", "clearings_per_day": 24, "storage": "all"}, "fuel_procurement": "automatic"}'
+    -d '{"trading_format": "full_season", "storage": "all"}'
 ```
 
-A `PUT` sets every lever of the Round, so a lever left out of the body goes back to its default. Each lever
-that changes also changes in every later Round. A Round's levers lock once the session starts (Round 1) or
+A `PATCH` changes only the levers in its body: `trading_format`, `clearings_per_day`, `storage` and
+`fuel_procurement`. Each lever that changes also changes in every later Round. A Round's levers lock once the session starts (Round 1) or
 the Recap before it opens. The phase timers are at `/api/v1/workshop/timers`.
 
 ### 5. Set up a session from the shell

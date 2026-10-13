@@ -33,7 +33,7 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
-from energetica.workshop.round_plan import LeverInvalidInLaterRoundError, PlannedEvent, RoundLevers
+from energetica.workshop.round_plan import InvalidLeversError, LeverChanges, PlannedEvent
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
     WorkshopEventOut,
@@ -315,26 +315,27 @@ def get_plans(_: Annotated[Account, Depends(get_facilitator)], session: Session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
-@router.put("/plans/{round_number}/levers")
-async def set_round_levers(
+@router.patch("/plans/{round_number}/levers")
+async def change_round_levers(
     _: Annotated[Account, Depends(get_facilitator)],
     session: Session,
     request: Request,
     round_number: int,
-    levers: RoundLevers,
+    changes: LeverChanges,
 ) -> WorkshopPlansOut:
-    """Set a Round's levers, and tell every open page. Each lever that changed also changes in every later Round.
-    A locked Round cannot change, and a change that would leave a later Round invalid is refused, naming that Round.
-    Every storage type needs the full-season format.
+    """Change some of a Round's levers, and tell every open page. A lever left out of the body stays as it is. Each
+    lever that changed also changes in every later Round. A locked Round cannot change, and a change that would
+    leave the Round or a later one invalid is refused, naming that Round. Every storage type needs the full-season
+    format.
     """
     try:
-        changed = await run_in_threadpool(session.set_levers, round_number, levers)
+        changed = await run_in_threadpool(session.set_levers, round_number, changes)
     except NoSuchRoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except RoundLockedError as exc:
         raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
-    except LeverInvalidInLaterRoundError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_LEVER_INVALID_IN_LATER_ROUND, round=exc.round_number) from exc
+    except InvalidLeversError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_LEVERS_INVALID, round=exc.round_number) from exc
     if changed:
         await invalidate_session(request.app)
     return _plans_out(session)

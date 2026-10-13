@@ -33,7 +33,7 @@ from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
-from energetica.workshop.round_plan import RoundLevers
+from energetica.workshop.round_plan import LeverChanges
 from energetica.workshop.session import TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 
@@ -490,7 +490,7 @@ class _Clock:
 
 
 def _investing(
-    session_path: Path, clock: _Clock, *usernames: str, levers: RoundLevers | None = None
+    session_path: Path, clock: _Clock, *usernames: str, levers: LeverChanges | None = None
 ) -> tuple[FastAPI, TestClient, int, list[int]]:
     """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 1,000,000. Round 1 runs
     with ``levers``, by default those of the default plan.
@@ -817,7 +817,7 @@ def _fuel_trading(session_path: Path, clock: _Clock, *, manual: bool = True) -> 
 
     Returns a client left signed in as Alice, and the facilitator's and Alice's account ids.
     """
-    levers = RoundLevers(fuel_procurement="manual" if manual else "automatic")
+    levers = LeverChanges(fuel_procurement="manual" if manual else "automatic")
     app, client, facilitator, [alice] = _investing(session_path, clock, "alice", levers=levers)
     session: WorkshopSession = app.state.workshop_session
     session.network.members[alice].owned_facilities.extend(
@@ -1023,9 +1023,9 @@ def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(ses
     assert client.get(BALANCE_SHEET_URL.format(round=1)).status_code == 403
 
 
-def _levers(**round_format: object) -> dict:
-    """The default levers, with the Round format given."""
-    return {"round_format": round_format, "fuel_procurement": "automatic"}
+def _levers(**changes: object) -> dict:
+    """A change to the levers given, leaving the others as they are."""
+    return changes
 
 
 def _round_formats(client: TestClient) -> list[dict]:
@@ -1039,12 +1039,12 @@ def test_the_facilitator_reads_and_changes_a_rounds_levers(session_path: Path) -
     round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
 
     assert _round_formats(client) == [default] * 3
-    response = client.put(LEVERS_URL.format(round=2), json=_levers(**round_format))
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(**round_format))
 
     assert response.status_code == 200
     assert [plan["levers"]["round_format"] for plan in response.json()["rounds"]] == [default, *[round_format] * 2]
     assert client.get(PLANS_URL).json() == response.json()
-    client.put(LEVERS_URL.format(round=1), json=_levers(**round_format))
+    client.patch(LEVERS_URL.format(round=1), json=_levers(**round_format))
     # Before Round 1 starts, the session shows the format it will start with.
     assert client.get(SESSION_URL).json()["round_format"] == round_format
 
@@ -1055,7 +1055,7 @@ def test_a_locked_round_cannot_change(session_path: Path) -> None:
     assert [plan["locked"] for plan in client.get(PLANS_URL).json()["rounds"]] == [False] * 3
     client.post(ADVANCE_URL)
 
-    response = client.put(LEVERS_URL.format(round=1), json=_levers(storage="off"))
+    response = client.patch(LEVERS_URL.format(round=1), json=_levers(storage="off"))
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "WORKSHOP_ROUND_LOCKED"
@@ -1065,14 +1065,14 @@ def test_a_locked_round_cannot_change(session_path: Path) -> None:
 def test_a_change_that_would_leave_a_later_round_invalid_is_refused(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
-    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season"))
-    client.put(LEVERS_URL.format(round=3), json=_levers(trading_format="full_season", storage="all"))
+    client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season"))
+    client.patch(LEVERS_URL.format(round=3), json=_levers(storage="all"))
     before = client.get(PLANS_URL).json()
 
-    response = client.put(LEVERS_URL.format(round=2), json=_levers())
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="representative_day"))
 
     assert response.status_code == 400
-    assert response.json() == {"game_exception_type": "WORKSHOP_LEVER_INVALID_IN_LATER_ROUND", "kwargs": {"round": 3}}
+    assert response.json() == {"game_exception_type": "WORKSHOP_LEVERS_INVALID", "kwargs": {"round": 3}}
     assert client.get(PLANS_URL).json() == before
 
 
@@ -1080,7 +1080,7 @@ def test_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> N
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.put(LEVERS_URL.format(round=4), json=_levers()).status_code == 404
+    assert client.patch(LEVERS_URL.format(round=4), json=_levers()).status_code == 404
 
 
 def test_the_facilitator_reads_and_changes_the_timers(session_path: Path) -> None:
@@ -1097,15 +1097,38 @@ def test_the_facilitator_reads_and_changes_the_timers(session_path: Path) -> Non
 
 @pytest.mark.parametrize(
     "round_format",
-    [{"storage": "all"}, {"clearings_per_day": 48}, {"storage": "everything"}, {"no_such_lever": 1}],
-    ids=["every storage type without the full-season format", "48 clearings", "unknown storage", "unknown lever"],
+    [{"clearings_per_day": 48}, {"storage": "everything"}, {"no_such_lever": 1}, {"round_format": {}}],
+    ids=["48 clearings", "unknown storage", "unknown lever", "the nested shape"],
 )
 def test_levers_that_are_not_allowed_are_rejected(session_path: Path, round_format: dict) -> None:
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.put(LEVERS_URL.format(round=1), json=_levers(**round_format)).status_code == 422
+    assert client.patch(LEVERS_URL.format(round=1), json=_levers(**round_format)).status_code == 422
     assert _round_formats(client)[0]["storage"] == "batteries"
+
+
+def test_a_change_that_would_leave_the_round_itself_invalid_is_refused(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.patch(LEVERS_URL.format(round=1), json=_levers(storage="all"))
+
+    assert response.status_code == 400
+    assert response.json() == {"game_exception_type": "WORKSHOP_LEVERS_INVALID", "kwargs": {"round": 1}}
+    assert _round_formats(client)[0]["storage"] == "batteries"
+
+
+def test_a_lever_left_out_of_a_change_stays_as_it_is(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.patch(LEVERS_URL.format(round=2), json=_levers(fuel_procurement="manual"))
+
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96))
+
+    rounds = response.json()["rounds"]
+    assert [plan["levers"]["fuel_procurement"] for plan in rounds] == ["automatic", "manual", "manual"]
+    assert [plan["levers"]["round_format"]["clearings_per_day"] for plan in rounds] == [24, 96, 96]
 
 
 def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) -> None:
@@ -1113,7 +1136,7 @@ def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) ->
     _player(client, "alice")
 
     assert client.get(PLANS_URL).status_code == 403
-    assert client.put(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96)).status_code == 403
+    assert client.patch(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96)).status_code == 403
     assert client.get(TIMERS_URL).status_code == 403
     assert client.put(TIMERS_URL, json={"investment_minutes": 3, "price_setting_minutes": 2}).status_code == 403
 
@@ -1121,13 +1144,13 @@ def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) ->
 def test_the_facilities_on_offer_follow_the_rounds_storage_lever(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
-    client.put(LEVERS_URL.format(round=1), json=_levers(storage="off"))
+    client.patch(LEVERS_URL.format(round=1), json=_levers(storage="off"))
     client.post(ADVANCE_URL)
 
     offered = {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     assert "lithium_ion_batteries" not in offered
 
-    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
+    client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
     assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
         _advance(client)
@@ -1142,7 +1165,7 @@ def test_storage_a_player_owns_is_still_listed_once_it_is_no_longer_for_sale(ses
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.HYDROGEN_STORAGE, built_round=1)
     )
-    client.put(LEVERS_URL.format(round=2), json=_levers(storage="off"))
+    client.patch(LEVERS_URL.format(round=2), json=_levers(storage="off"))
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
         _advance(client)
 
@@ -1472,11 +1495,11 @@ def test_players_never_see_unlock_progress(session_path: Path) -> None:
 
 def test_the_recap_locks_the_next_rounds_storage_it_announced(session_path: Path, clock: _Clock) -> None:
     _, client, _, _ = _investing(session_path, clock, "alice")
-    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
+    client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
     while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
         _advance(client)
 
-    response = client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="batteries"))
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="batteries"))
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "WORKSHOP_ROUND_LOCKED"

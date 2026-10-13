@@ -8,9 +8,10 @@ which Rounds are locked from where it is, and refuses to change a locked plan.
 
 A plan's levers are the Round's format (:mod:`~energetica.workshop.round_format`) and its fuel procurement
 (:mod:`~energetica.workshop.fuel`). Changing a lever in one Round also changes it in every later Round, so a
-change made early lasts. Only the levers that changed carry, each on its own: the trading format, the clearings
-per day, the storage availability and the fuel procurement. A change that would leave a later Round invalid,
-such as every storage type in a Round with a representative day, is refused.
+change made early lasts. A change names only the levers it sets (:class:`LeverChanges`), and those that differ
+from the Round's carry, each on its own: the trading format, the clearings per day, the storage availability and
+the fuel procurement. A lever the change leaves out stays as it is in every Round. A change that would leave the
+Round or a later one invalid, such as every storage type in a Round with a representative day, is refused.
 
 A plan's events are the vignettes (:mod:`~energetica.workshop.events`) the facilitator planned for the Round: a
 Round event fires when its Investment phase opens, and a seasonal event when the Trading period of its season
@@ -36,7 +37,7 @@ from energetica.workshop.events import (
     validate_pick,
 )
 from energetica.workshop.fuel import FuelProcurement
-from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
 from energetica.workshop.seasons import SEASONS, Season
 
 
@@ -76,8 +77,19 @@ class RoundPlan(BaseModel):
 EventStatus = Literal["planned", "fired", "skipped"]
 
 
-class LeverInvalidInLaterRoundError(Exception):
-    """Raised when a lever change, carried forward, would leave a later Round invalid."""
+class LeverChanges(BaseModel):
+    """The levers a change to one Round sets. A lever left out stays as it is."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    trading_format: TradingFormat | None = None
+    clearings_per_day: ClearingsPerDay | None = None
+    storage: StorageAvailability | None = None
+    fuel_procurement: FuelProcurement | None = None
+
+
+class InvalidLeversError(Exception):
+    """Raised when a lever change would leave a Round invalid: the Round changed, or a later one it carries to."""
 
     def __init__(self, round_number: int) -> None:
         super().__init__(f"the change would leave Round {round_number} invalid")
@@ -99,22 +111,24 @@ def _from_flat(flat: dict[str, object]) -> RoundLevers:
     return RoundLevers.model_validate({"round_format": flat, "fuel_procurement": fuel_procurement})
 
 
-def with_levers(plans: Sequence[RoundPlan], round_number: int, levers: RoundLevers) -> list[RoundPlan]:
-    """``plans`` with Round ``round_number`` set to ``levers``, and each lever that changed carried to every later
-    Round. Earlier Rounds and every Round's events stay as they were.
+def with_levers(plans: Sequence[RoundPlan], round_number: int, changes: LeverChanges) -> list[RoundPlan]:
+    """``plans`` with ``changes`` applied to Round ``round_number``, and each lever that changed there carried to
+    every later Round. Earlier Rounds, the levers ``changes`` leaves out, and every Round's events stay as they were.
 
-    Raises :class:`LeverInvalidInLaterRoundError`, naming the first such Round, if a later Round would be invalid.
+    Raises :class:`InvalidLeversError`, naming the first such Round, if the Round or a later one would be invalid.
     """
     index = round_number - 1
-    before, after = _flat(plans[index].levers), _flat(levers)
-    changed = {name: value for name, value in after.items() if before[name] != value}
-    updated = [*plans[:index], plans[index].model_copy(update={"levers": levers})]
-    for later_number, plan in enumerate(plans[index + 1 :], start=round_number + 1):
+    before = _flat(plans[index].levers)
+    changed = {name: value for name, value in changes.model_dump(exclude_none=True).items() if before[name] != value}
+    if not changed:
+        return list(plans)
+    updated = list(plans[:index])
+    for number, plan in enumerate(plans[index:], start=round_number):
         try:
-            later = _from_flat({**_flat(plan.levers), **changed})
+            levers = _from_flat({**_flat(plan.levers), **changed})
         except ValidationError as exc:
-            raise LeverInvalidInLaterRoundError(later_number) from exc
-        updated.append(plan.model_copy(update={"levers": later}))
+            raise InvalidLeversError(number) from exc
+        updated.append(plan.model_copy(update={"levers": levers}))
     return updated
 
 

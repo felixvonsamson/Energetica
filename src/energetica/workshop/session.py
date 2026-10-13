@@ -96,7 +96,7 @@ from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
     EventStatus,
     PlannedEvent,
-    RoundLevers,
+    LeverChanges,
     RoundPlan,
     event_status,
     plans_from,
@@ -1040,17 +1040,17 @@ class WorkshopSession:
             ]
             return PlansView(list(self.plans), self.locked_rounds(), statuses)
 
-    def set_levers(self, round_number: int, levers: RoundLevers) -> bool:
-        """Set Round ``round_number``'s levers to ``levers``, and carry each lever that changed to every later Round.
-        Returns whether the plans changed.
+    def set_levers(self, round_number: int, changes: LeverChanges) -> bool:
+        """Apply ``changes`` to Round ``round_number``'s levers, and carry each lever that changed to every later
+        Round. A lever ``changes`` leaves out stays as it is. Returns whether the plans changed.
 
         Raises :class:`NoSuchRoundError` if the session has no such Round, :class:`RoundLockedError` if its plan is
-        locked, and :class:`~energetica.workshop.round_plan.LeverInvalidInLaterRoundError` if the change would leave
-        a later Round invalid. A refused change changes nothing.
+        locked, and :class:`~energetica.workshop.round_plan.InvalidLeversError` if the change would leave the Round or
+        a later one invalid. A refused change changes nothing.
         """
         with self._lock:
             self._check_editable(round_number)
-            return self._set_plans(with_levers(self.plans, round_number, levers))
+            return self._set_plans(with_levers(self.plans, round_number, changes))
 
     def plan_event(self, round_number: int, planned: PlannedEvent) -> bool:
         """Plan an event for Round ``round_number``, in place of any planned for the same slot. Returns whether the

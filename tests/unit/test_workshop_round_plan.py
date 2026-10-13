@@ -7,7 +7,8 @@ import pytest
 from energetica.workshop.events import FiredEvent, InvalidPickError
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
-    LeverInvalidInLaterRoundError,
+    InvalidLeversError,
+    LeverChanges,
     PlannedEvent,
     RoundLevers,
     RoundPlan,
@@ -46,7 +47,7 @@ def test_a_longer_session_repeats_the_last_entry_of_the_default_plan() -> None:
 def test_a_changed_lever_carries_to_every_later_round_but_not_earlier_ones() -> None:
     plans = _plans(*[RoundLevers()] * 4)
 
-    changed = with_levers(plans, 2, RoundLevers(fuel_procurement="manual"))
+    changed = with_levers(plans, 2, LeverChanges(fuel_procurement="manual"))
 
     assert [plan.levers.fuel_procurement for plan in changed] == ["automatic", "manual", "manual", "manual"]
 
@@ -58,7 +59,7 @@ def test_only_the_changed_lever_carries() -> None:
         RoundLevers(round_format=RoundFormat(clearings_per_day=288)),
     )
 
-    changed = with_levers(plans, 2, RoundLevers(fuel_procurement="manual"))
+    changed = with_levers(plans, 2, LeverChanges(fuel_procurement="manual"))
 
     assert changed[2].levers == RoundLevers(round_format=RoundFormat(clearings_per_day=288), fuel_procurement="manual")
 
@@ -69,7 +70,7 @@ def test_each_part_of_the_round_format_carries_on_its_own() -> None:
         RoundLevers(round_format=RoundFormat(storage="off")),
     )
 
-    changed = with_levers(plans, 1, RoundLevers(round_format=RoundFormat(clearings_per_day=96)))
+    changed = with_levers(plans, 1, LeverChanges(clearings_per_day=96))
 
     assert changed[1].levers.round_format == RoundFormat(clearings_per_day=96, storage="off")
 
@@ -77,7 +78,7 @@ def test_each_part_of_the_round_format_carries_on_its_own() -> None:
 def test_several_levers_changed_together_carry_together() -> None:
     plans = _plans(*[RoundLevers()] * 3)
 
-    changed = with_levers(plans, 2, RoundLevers(round_format=FULL_SEASON))
+    changed = with_levers(plans, 2, LeverChanges(trading_format="full_season", storage="all"))
 
     assert [plan.levers.round_format for plan in changed] == [RoundFormat(), FULL_SEASON, FULL_SEASON]
 
@@ -92,23 +93,43 @@ def test_a_change_that_would_make_a_later_round_invalid_is_refused_and_names_tha
     )
 
     # Every storage type would reach Round 4, which uses a representative day.
-    with pytest.raises(LeverInvalidInLaterRoundError) as refused:
-        with_levers(plans, 2, RoundLevers(round_format=FULL_SEASON))
+    with pytest.raises(InvalidLeversError) as refused:
+        with_levers(plans, 2, LeverChanges(storage="all"))
     assert refused.value.round_number == 4
 
     plans = _plans(
         RoundLevers(), RoundLevers(round_format=full_season_batteries), RoundLevers(round_format=FULL_SEASON)
     )
     # A representative day would reach Round 3, which allows every storage type.
-    with pytest.raises(LeverInvalidInLaterRoundError) as refused:
-        with_levers(plans, 2, RoundLevers())
+    with pytest.raises(InvalidLeversError) as refused:
+        with_levers(plans, 2, LeverChanges(trading_format="representative_day"))
     assert refused.value.round_number == 3
+
+
+def test_a_change_that_would_make_the_round_itself_invalid_is_refused_and_names_it() -> None:
+    plans = _plans(RoundLevers(), RoundLevers())
+
+    with pytest.raises(InvalidLeversError) as refused:
+        with_levers(plans, 1, LeverChanges(storage="all"))
+    assert refused.value.round_number == 1
 
 
 def test_leaving_the_levers_as_they_are_changes_nothing() -> None:
     plans = _plans(RoundLevers(), RoundLevers(fuel_procurement="manual"))
 
-    assert with_levers(plans, 1, RoundLevers()) == plans
+    assert with_levers(plans, 1, LeverChanges()) == plans
+    assert with_levers(plans, 1, LeverChanges(fuel_procurement="automatic", clearings_per_day=24)) == plans
+
+
+def test_a_lever_left_out_of_a_change_stays_as_it_is() -> None:
+    plans = _plans(*[RoundLevers(fuel_procurement="manual", round_format=RoundFormat(storage="off"))] * 3)
+
+    changed = with_levers(plans, 2, LeverChanges(clearings_per_day=96))
+
+    assert [plan.levers for plan in changed] == [
+        plans[0].levers,
+        *[RoundLevers(fuel_procurement="manual", round_format=RoundFormat(clearings_per_day=96, storage="off"))] * 2,
+    ]
 
 
 def test_events_never_carry_forward() -> None:
@@ -117,7 +138,7 @@ def test_events_never_carry_forward() -> None:
         RoundPlan(levers=RoundLevers()),
     ]
 
-    changed = with_levers(plans, 1, RoundLevers(fuel_procurement="manual"))
+    changed = with_levers(plans, 1, LeverChanges(fuel_procurement="manual"))
 
     assert changed[1].events == []
     assert changed[0].events == plans[0].events

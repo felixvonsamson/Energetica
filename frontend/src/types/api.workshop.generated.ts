@@ -343,18 +343,19 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /**
-         * Set Round Levers
-         * @description Set a Round's levers, and tell every open page. Each lever that changed also changes in every later Round.
-         *     A locked Round cannot change, and a change that would leave a later Round invalid is refused, naming that Round.
-         *     Every storage type needs the full-season format.
-         */
-        put: operations["set_round_levers_api_v1_workshop_plans__round_number__levers_put"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Change Round Levers
+         * @description Change some of a Round's levers, and tell every open page. A lever left out of the body stays as it is. Each
+         *     lever that changed also changes in every later Round. A locked Round cannot change, and a change that would
+         *     leave the Round or a later one invalid is refused, naming that Round. Every storage type needs the full-season
+         *     format.
+         */
+        patch: operations["change_round_levers_api_v1_workshop_plans__round_number__levers_patch"];
         trace?: never;
     };
     "/api/v1/workshop/plans/{round_number}/events": {
@@ -842,6 +843,20 @@ export interface components {
             join_open: boolean;
             /** @description The visitor's identity and membership state, or `null` if they don't have a valid SSO session yet — `null` means they must first log in/sign up before joining. */
             viewer: components["schemas"]["Viewer"] | null;
+        };
+        /**
+         * LeverChanges
+         * @description The levers a change to one Round sets. A lever left out stays as it is.
+         */
+        LeverChanges: {
+            /** Trading Format */
+            trading_format?: ("representative_day" | "full_season") | null;
+            /** Clearings Per Day */
+            clearings_per_day?: (24 | 96 | 288) | null;
+            /** Storage */
+            storage?: ("off" | "batteries" | "all") | null;
+            /** Fuel Procurement */
+            fuel_procurement?: ("automatic" | "manual") | null;
         };
         /**
          * LockedPrices
@@ -1919,7 +1934,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVER_INVALID_IN_LATER_ROUND" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE";
     };
     responses: never;
     parameters: never;
@@ -2377,7 +2392,7 @@ export interface operations {
             };
         };
     };
-    set_round_levers_api_v1_workshop_plans__round_number__levers_put: {
+    change_round_levers_api_v1_workshop_plans__round_number__levers_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2388,7 +2403,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RoundLevers"];
+                "application/json": components["schemas"]["LeverChanges"];
             };
         };
         responses: {
