@@ -23,14 +23,19 @@ What a fired event does depends on its effect kind:
 A magnitude is always the factor the target gets multiplied by: a 3% tax is ``0.97``, not ``0.03``. The
 moderator never sees an event's headline before it fires, so the Recap surprises them too. Every magnitude is a
 placeholder until the game-balance pass (#1145).
+
+The Recap before a Round tells players what the Round holds (#1188). A round-wide event is told with its exact effect.
+A seasonal event, one that fires with a Trading period, is told only as a vague forecast that never gives a figure.
+Its wording grows more certain with severity: "could" for minor, "likely" for moderate, "almost certainly" for major,
+and a call to prepare for catastrophic. The moderator never sees a forecast before the Recap either.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.seasons import Season
@@ -83,6 +88,27 @@ class WorkshopEvent(BaseModel):
     severities: tuple[Severity, ...]
     magnitude: dict[Severity, float] = Field(description="The factor the target is multiplied by, per severity")
     headlines: dict[Severity, str] = Field(description="The headline the Recap tells, per severity")
+    forecasts: dict[Severity, str] | None = Field(
+        default=None,
+        description="For a seasonal event, the vague forecast the Recap before its Round tells, per severity. It "
+        "takes the season as {season} and, if the moderator picks the fuel, the fuel as {fuel}. None for a "
+        "round-wide event, which the Recap tells with its exact effect",
+    )
+
+    @model_validator(mode="after")
+    def _forecasts_match_the_boundary(self) -> Self:
+        if self.boundary_type == "trading_period":
+            if self.forecasts is None or set(self.forecasts) != set(self.severities):
+                raise ValueError(f"{self.id} needs a forecast for each of its severities")
+        elif self.forecasts is not None:
+            raise ValueError(f"{self.id} fires with the Round, so the Recap tells its exact effect, not a forecast")
+        return self
+
+    def forecast(self, severity: Severity, *, season: Season, fuel: Fuel | None = None) -> str:
+        """The forecast for ``severity``, naming ``season`` and, for an event whose fuel is picked, ``fuel``."""
+        if self.forecasts is None:
+            raise ValueError(f"{self.id} fires with the Round and has no forecast")
+        return self.forecasts[severity].format(season=season, fuel=fuel)
 
     @property
     def fuel_chosen(self) -> bool:
@@ -151,6 +177,7 @@ def _event(
     kind: EffectKind,
     target: tuple[FacilityCategory | Fuel, ...] = (),
     severities: dict[Severity, tuple[float, str]],
+    forecasts: dict[Severity, str] | None = None,
 ) -> WorkshopEvent:
     return WorkshopEvent(
         id=event_id,
@@ -162,12 +189,24 @@ def _event(
         severities=tuple(severities),
         magnitude={severity: magnitude for severity, (magnitude, _) in severities.items()},
         headlines={severity: headline for severity, (_, headline) in severities.items()},
+        forecasts=forecasts,
+    )
+
+
+def _seasonal(
+    severities: dict[Severity, tuple[float, str, str]],
+) -> tuple[dict[Severity, tuple[float, str]], dict[Severity, str]]:
+    """Split each severity's (magnitude, headline, forecast) into what :func:`_event` takes."""
+    return (
+        {severity: (magnitude, headline) for severity, (magnitude, headline, _) in severities.items()},
+        {severity: forecast for severity, (_, _, forecast) in severities.items()},
     )
 
 
 def _temperature(
-    event_id: str, name: str, direction: Direction, severities: dict[Severity, tuple[float, str]]
+    event_id: str, name: str, direction: Direction, severities: dict[Severity, tuple[float, str, str]]
 ) -> WorkshopEvent:
+    magnitudes_and_headlines, forecasts = _seasonal(severities)
     return _event(
         event_id,
         name,
@@ -175,11 +214,13 @@ def _temperature(
         boundary_type="trading_period",
         direction=direction,
         kind="demand_amplitude_shift",
-        severities=severities,
+        severities=magnitudes_and_headlines,
+        forecasts=forecasts,
     )
 
 
-def _disaster(event_id: str, name: str, severities: dict[Severity, tuple[float, str]]) -> WorkshopEvent:
+def _disaster(event_id: str, name: str, severities: dict[Severity, tuple[float, str, str]]) -> WorkshopEvent:
+    magnitudes_and_headlines, forecasts = _seasonal(severities)
     return _event(
         event_id,
         name,
@@ -187,7 +228,8 @@ def _disaster(event_id: str, name: str, severities: dict[Severity, tuple[float, 
         boundary_type="trading_period",
         direction="negative",
         kind="revenue_tax",
-        severities=severities,
+        severities=magnitudes_and_headlines,
+        forecasts=forecasts,
     )
 
 
@@ -206,7 +248,9 @@ def _facility_shock(
     )
 
 
-def _fuel_shock(event_id: str, name: str, target: tuple[Fuel, ...], magnitude: float, headline: str) -> WorkshopEvent:
+def _fuel_shock(
+    event_id: str, name: str, target: tuple[Fuel, ...], magnitude: float, headline: str, forecast: str
+) -> WorkshopEvent:
     return _event(
         event_id,
         name,
@@ -216,6 +260,7 @@ def _fuel_shock(event_id: str, name: str, target: tuple[Fuel, ...], magnitude: f
         kind="fuel_price_multiplier",
         target=target,
         severities={"base": (magnitude, headline)},
+        forecasts={"base": forecast},
     )
 
 
@@ -243,16 +288,25 @@ EVENTS: dict[str, WorkshopEvent] = {
             "Heatwave",
             "negative",
             {
-                "minor": (1.03, "A brief spell of warm weather nudges cooling demand up across the region."),
+                "minor": (
+                    1.03,
+                    "A brief spell of warm weather nudges cooling demand up across the region.",
+                    "Forecasters see a chance of a warm spell this {season}. Air conditioners could run a little "
+                    "harder than usual and nudge power consumption up.",
+                ),
                 "moderate": (
                     1.08,
                     "A regional heatwave pushes cooling demand to a five-year high — expect tighter margins this "
                     "quarter.",
+                    "Climate scientists expect an unusually warm {season}. Air conditioners are likely to run harder "
+                    "than usual and push power consumption up.",
                 ),
                 "major": (
                     1.18,
                     "A record-breaking heatwave grips the region for weeks. Air conditioners run nonstop as cooling "
                     "demand hits an all-time high.",
+                    "Climate scientists warn of a severe heatwave this {season}. Air conditioners will almost "
+                    "certainly run nonstop and drive power consumption to new highs.",
                 ),
             },
         ),
@@ -261,15 +315,24 @@ EVENTS: dict[str, WorkshopEvent] = {
             "Cold snap",
             "negative",
             {
-                "minor": (1.04, "An early cold front sends heating demand up for a few chilly days."),
+                "minor": (
+                    1.04,
+                    "An early cold front sends heating demand up for a few chilly days.",
+                    "Forecasters see a chance of an early cold front this {season}. Heating demand could tick up "
+                    "for a few chilly days.",
+                ),
                 "moderate": (
                     1.10,
                     "A sharp cold snap sends heating demand climbing — heat pumps work overtime to keep up.",
+                    "Meteorologists expect a sharp cold spell this {season}. Heat pumps are likely to work overtime "
+                    "and push power consumption up.",
                 ),
                 "major": (
                     1.22,
                     "An arctic cold snap sends heating demand soaring — heat pumps strain to keep up as outdoor "
                     "temperatures plunge.",
+                    "Meteorologists warn of an arctic blast this {season}. Heating demand will almost certainly "
+                    "soar as temperatures plunge.",
                 ),
             },
         ),
@@ -282,6 +345,8 @@ EVENTS: dict[str, WorkshopEvent] = {
                     0.97,
                     "An unusually mild season keeps both heating and cooling demand low — a quiet quarter for grid "
                     "operators.",
+                    "Long-range forecasts point to gentle weather this {season}. Heating and cooling demand may stay "
+                    "lower than usual.",
                 ),
             },
         ),
@@ -293,11 +358,15 @@ EVENTS: dict[str, WorkshopEvent] = {
                 "moderate": (
                     0.97,
                     "A regional drought tightens water availability. Utilities and industry alike feel the pinch.",
+                    "Hydrologists report falling reservoir levels ahead of {season}. Water is likely to grow scarce, "
+                    "and utilities and industry alike are likely to feel the pinch.",
                 ),
                 "major": (
                     0.93,
                     "A record drought grips the region. Reservoirs sit at historic lows, and every water-dependent "
                     "business — power generation included — feels the squeeze.",
+                    "Hydrologists warn that reservoirs are running dry ahead of {season}. A severe drought will almost "
+                    "certainly squeeze every water-dependent business, power generation included.",
                 ),
             },
         ),
@@ -309,16 +378,22 @@ EVENTS: dict[str, WorkshopEvent] = {
                     0.97,
                     "Wildfires force the evacuation of a substation — grid operators reroute power across the region "
                     "while crews fight the blaze.",
+                    "Fire services report bone-dry forests heading into {season}. Wildfires are likely to threaten "
+                    "substations and power lines across the region.",
                 ),
                 "major": (
                     0.94,
                     "A severe wildfire season forces rolling substation evacuations across the region — grid "
                     "operators scramble to reroute power as crews battle blazes on multiple fronts.",
+                    "Fire services warn of a severe wildfire season this {season}. Blazes will almost certainly force "
+                    "substations offline as crews fight fires on several fronts.",
                 ),
                 "catastrophic": (
                     0.88,
                     "A catastrophic wildfire season overwhelms the region — dozens of substations destroyed and "
                     "entire communities evacuated. Full grid restoration will take months.",
+                    "Fire services urge communities to prepare now: conditions this {season} are the most dangerous on "
+                    "record. Wildfires will almost certainly destroy grid infrastructure across the region.",
                 ),
             },
         ),
@@ -330,11 +405,15 @@ EVENTS: dict[str, WorkshopEvent] = {
                     0.93,
                     "A hurricane makes landfall, downing transmission lines along the coast — restoration crews are "
                     "mobilizing and expect a multi-week recovery.",
+                    "Forecasters are tracking a powerful storm system expected this {season}. A hurricane will "
+                    "almost certainly make landfall and bring down transmission lines along the coast.",
                 ),
                 "catastrophic": (
                     0.82,
                     "A catastrophic category-5 hurricane makes landfall. Transmission infrastructure is devastated "
                     "across the coast — full restoration will take months.",
+                    "Emergency officials urge coastal residents to prepare: an exceptionally powerful hurricane is "
+                    "forecast for {season}. It will almost certainly devastate transmission lines along the coast.",
                 ),
             },
         ),
@@ -346,16 +425,22 @@ EVENTS: dict[str, WorkshopEvent] = {
                     0.97,
                     "Flash flooding knocks out two substations overnight — expect scattered outages while crews "
                     "assess the damage.",
+                    "Heavy rain is forecast for {season}, and rivers are already running high. Flash floods are "
+                    "likely to knock out some substations.",
                 ),
                 "major": (
                     0.93,
                     "Historic flooding submerges substations across the region. Widespread outages persist as crews "
                     "wait for waters to recede.",
+                    "Hydrologists warn of record river levels this {season}. Widespread flooding will almost "
+                    "certainly submerge substations across the region.",
                 ),
                 "catastrophic": (
                     0.85,
                     "Catastrophic, once-in-a-generation flooding overwhelms flood defenses across the region. Dozens "
                     "of substations are underwater, and full recovery will take months.",
+                    "Authorities urge people in low-lying areas to prepare: flood defenses may not hold this {season}. "
+                    "Flooding will almost certainly overwhelm substations across the region.",
                 ),
             },
         ),
@@ -430,6 +515,8 @@ EVENTS: dict[str, WorkshopEvent] = {
             1.30,
             "New sanctions target the world's largest uranium enrichment facility. Utilities relying on its fuel "
             "brace for a price spike.",
+            "Governments are weighing sanctions on a major uranium-enriching nation. Utilities that rely on "
+            "its fuel could see prices climb this {season}.",
         ),
         _fuel_shock(
             "geo.gas_pipeline_disruption",
@@ -438,6 +525,8 @@ EVENTS: dict[str, WorkshopEvent] = {
             1.50,
             "A key gas pipeline is shut down amid a dispute between transit nations. Spot prices spike as buyers "
             "scramble for alternatives.",
+            "Tensions are rising between the nations along a major gas pipeline route. Traders could see "
+            "gas supplies tighten this {season}.",
         ),
         _fuel_shock(
             "geo.coal_nationalization",
@@ -446,6 +535,8 @@ EVENTS: dict[str, WorkshopEvent] = {
             1.25,
             "A wave of nationalizations sweeps the country's coal industry. Analysts warn of supply disruptions and "
             "price hikes.",
+            "Calls to nationalize the coal industry are growing louder in parliament. Analysts warn that coal "
+            "supplies could be disrupted this {season}.",
         ),
         _fuel_shock(
             "geo.gas_discovery",
@@ -453,6 +544,8 @@ EVENTS: dict[str, WorkshopEvent] = {
             (Fuel.GAS,),
             0.80,
             "A major new gas field comes online ahead of schedule, easing supply concerns and pushing prices down.",
+            "Drilling crews report promising results at a new domestic gas field. Traders could see gas supplies "
+            "ease this {season}.",
         ),
         _fuel_shock(
             "geo.conflict_resolution",
@@ -461,6 +554,8 @@ EVENTS: dict[str, WorkshopEvent] = {
             0.85,
             "A ceasefire agreement ends months of fighting in a key fuel-exporting region — prices ease as "
             "shipments resume.",
+            "Peace talks are making progress in a key {fuel}-exporting region. If they succeed, {fuel} "
+            "shipments could resume this {season} and ease prices.",
         ),
         # Demand shifts
         _demand_shift(

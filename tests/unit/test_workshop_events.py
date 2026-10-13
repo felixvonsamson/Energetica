@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+from string import Formatter
+
 import pytest
 
 from energetica.workshop.events import (
@@ -34,6 +37,59 @@ def test_every_event_follows_the_locked_shape() -> None:
         assert set(event.magnitude) == set(event.severities)
         assert set(event.headlines) == set(event.severities)
         assert all(magnitude > 0 for magnitude in event.magnitude.values())
+
+
+def test_every_seasonal_event_has_a_forecast_per_severity_and_round_wide_ones_have_none() -> None:
+    for event in EVENTS.values():
+        if event.boundary_type == "trading_period":
+            assert event.forecasts is not None
+            assert set(event.forecasts) == set(event.severities)
+        else:
+            assert event.forecasts is None
+
+
+def test_a_forecast_names_its_season_and_the_picked_fuel_and_nothing_else() -> None:
+    for event in EVENTS.values():
+        for forecast in (event.forecasts or {}).values():
+            fields = {field for _, field, _, _ in Formatter().parse(forecast) if field is not None}
+            assert fields == ({"season", "fuel"} if event.fuel_chosen else {"season"}), event.id
+
+
+def test_no_forecast_contains_a_figure() -> None:
+    for event in EVENTS.values():
+        for forecast in (event.forecasts or {}).values():
+            assert not re.search(r"\d", forecast), event.id
+
+
+def test_the_wording_of_a_forecast_grows_more_certain_with_severity() -> None:
+    marker: dict[Severity, str] = {
+        "minor": "could",
+        "moderate": "likely",
+        "major": "almost certainly",
+        "catastrophic": "almost certainly",
+    }
+    for event in EVENTS.values():
+        for severity, forecast in (event.forecasts or {}).items():
+            if severity != "base":
+                assert marker[severity] in forecast, (event.id, severity)
+            if severity in ("minor", "moderate"):
+                assert "almost certainly" not in forecast, (event.id, severity)
+            if severity == "catastrophic":
+                assert "urge" in forecast, event.id
+
+
+def test_a_forecast_fills_in_its_season_and_fuel() -> None:
+    heatwave = EVENTS["climate.heatwave"].forecast("minor", season="summer")
+    assert "summer" in heatwave
+    assert "{" not in heatwave
+    resolution = EVENTS["geo.conflict_resolution"].forecast("base", season="winter", fuel=Fuel.COAL)
+    assert "winter" in resolution
+    assert "coal" in resolution
+
+
+def test_a_round_wide_event_has_no_forecast_to_fill_in() -> None:
+    with pytest.raises(ValueError):
+        EVENTS["geo.wind_supply_war"].forecast("base", season="summer")
 
 
 def test_the_boundary_follows_the_category_and_effect() -> None:
