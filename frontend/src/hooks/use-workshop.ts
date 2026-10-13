@@ -337,7 +337,10 @@ export function usePlanChangePending(): boolean {
 
 /**
  * Plan an event for a Round (#1190). Each answer is every Round's plan after
- * the change, so it replaces the cached plans.
+ * the change, so it replaces the cached plans at once. The plans are then read
+ * again: an answer that arrives late, after an advance locked a Round, would
+ * otherwise leave that Round looking editable. A refused change re-reads them
+ * too, so a Round that locked meanwhile shows as locked.
  */
 export function usePlanEvent() {
     return useMutation({
@@ -351,6 +354,10 @@ export function usePlanEvent() {
             queryClient.setQueryData(queryKeys.workshop.plans, plans);
         },
         onError: (error) => toast.error(resolveErrorMessage(error)),
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.plans,
+            }),
     });
 }
 
@@ -364,6 +371,10 @@ export function useUnplanEvent() {
             queryClient.setQueryData(queryKeys.workshop.plans, plans);
         },
         onError: (error) => toast.error(resolveErrorMessage(error)),
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.plans,
+            }),
     });
 }
 
