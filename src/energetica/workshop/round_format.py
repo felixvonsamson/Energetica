@@ -10,8 +10,8 @@ Three levers make up a Round's format:
   full-season mode. With one representative day per season, storage could charge cheaply on the spring
   day and sell on the summer day with none of the real time in between, which is an exploit.
 
-The moderator changes the levers at any time. A Round keeps the format it started with, so a change
-takes effect at the next Round.
+Each Round has its own format, part of its plan (:mod:`~energetica.workshop.round_plan`, #1190). The moderator
+changes it until the plan locks, a Round ahead.
 """
 
 from __future__ import annotations

@@ -3,8 +3,8 @@
  * moderator advances it, reading the facility catalog and fleet (#998), picking
  * facilities to buy in the Investment phase (#999), setting prices in a Trading
  * period's price-setting window (#1002), reviewing a settled Trading period
- * (#1007), and following technology unlocks and picking events as the
- * facilitator (#1011, #1012).
+ * (#1007), and following technology unlocks and planning each Round's events as
+ * the facilitator (#1011, #1012, #1190).
  */
 
 import {
@@ -303,8 +303,8 @@ export function useWorkshopUnlocks() {
 }
 
 /**
- * The events the facilitator can pick, the picks waiting, and the events that
- * fired (#1012). Facilitator only. Re-read whenever the session changes.
+ * The events the facilitator can plan, and the events that fired (#1012).
+ * Facilitator only. Re-read whenever the session changes.
  */
 export function useWorkshopEvents() {
     return useQuery({
@@ -313,48 +313,68 @@ export function useWorkshopEvents() {
     });
 }
 
-/** Shared by picking and dropping, to tell whether any change is in flight. */
-const EVENT_CHANGE = ["workshop", "event-change"] as const;
-
 /**
- * Whether a pick or a drop is in flight. The console waits for each to finish
- * before the next, so the answers cannot arrive out of order.
+ * Every Round's plan, and which are locked (#1190). Facilitator only. Re-read
+ * whenever the session changes, since a Recap locks the next Round.
  */
-export function useEventChangePending(): boolean {
-    return useIsMutating({ mutationKey: EVENT_CHANGE }) > 0;
-}
-
-/**
- * Pick an event, or drop a pick (#1012). Each answer is the events after the
- * change, so it replaces the cached events.
- */
-export function usePickEvent() {
-    return useMutation({
-        mutationKey: EVENT_CHANGE,
-        mutationFn: workshopApi.pickEvent,
-        // Never retried: a pick waits for the next boundary. If the server saved it but its
-        // response was lost, the boundary can pass and fire it before a retry arrives. The
-        // retry would then pick it again for the boundary after.
-        retry: false,
-        onSuccess: (events) => {
-            queryClient.setQueryData(queryKeys.workshop.events, events);
-        },
-        onError: (error) => toast.error(resolveErrorMessage(error)),
+export function useWorkshopPlans() {
+    return useQuery({
+        queryKey: queryKeys.workshop.plans,
+        queryFn: workshopApi.getPlans,
     });
 }
 
+/** Shared by planning and dropping, to tell whether any change is in flight. */
+const PLAN_CHANGE = ["workshop", "plan-change"] as const;
+
 /**
- * Drop an event's pick before it fires (#1012). See {@link usePickEvent}.
- * Retrying is harmless: dropping twice leaves the same picks.
+ * Whether a plan change is in flight. The console waits for each to finish
+ * before the next, so the answers cannot arrive out of order.
  */
-export function useDropEvent() {
+export function usePlanChangePending(): boolean {
+    return useIsMutating({ mutationKey: PLAN_CHANGE }) > 0;
+}
+
+/**
+ * Plan an event for a Round (#1190). Each answer is every Round's plan after
+ * the change, so it replaces the cached plans at once. The plans are then read
+ * again: an answer that arrives late, after an advance locked a Round, would
+ * otherwise leave that Round looking editable. A refused change re-reads them
+ * too, so a Round that locked meanwhile shows as locked.
+ */
+export function usePlanEvent() {
     return useMutation({
-        mutationKey: EVENT_CHANGE,
-        mutationFn: workshopApi.dropEvent,
-        onSuccess: (events) => {
-            queryClient.setQueryData(queryKeys.workshop.events, events);
+        mutationKey: PLAN_CHANGE,
+        mutationFn: workshopApi.planEvent,
+        // Never retried: if the server saved the change but its response was lost, a Recap can
+        // lock the Round before a retry arrives, and the retry would report a lock for a change
+        // that was made.
+        retry: false,
+        onSuccess: (plans) => {
+            queryClient.setQueryData(queryKeys.workshop.plans, plans);
         },
         onError: (error) => toast.error(resolveErrorMessage(error)),
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.plans,
+            }),
+    });
+}
+
+/** Drop an event planned for a Round (#1190). See {@link usePlanEvent}. */
+export function useUnplanEvent() {
+    return useMutation({
+        mutationKey: PLAN_CHANGE,
+        mutationFn: workshopApi.unplanEvent,
+        retry: false,
+        onSuccess: (plans) => {
+            queryClient.setQueryData(queryKeys.workshop.plans, plans);
+        },
+        onError: (error) => toast.error(resolveErrorMessage(error)),
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.plans,
+            }),
     });
 }
 

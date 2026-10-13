@@ -28,22 +28,27 @@ charges them for fuel (#1009) and saves the period's :class:`~energetica.worksho
 it cleared, to its own file in :attr:`WorkshopSession.records_dir`, for the period's review (#1007).
 
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
-round-configuration levers, the running phase's countdown, and the Run's single shared
+Round plans and phase timers, the running phase's countdown, and the Run's single shared
 Network. It is saved to a JSON file after
 every change and reloaded from it on start, so a restart resumes the session where it was. This is
 Workshop's own persistence. It shares nothing with the persistent world's model store or checkpoints
 (#1049), and the file follows the shape of the session rather than of any persistent-world object.
 
-Fuel is priced and bought once per Trading period (#1009, :mod:`~energetica.workshop.fuel`). When a Trading
-period opens, every fuel gets its price for the season, the fuel procurement lever is fixed for the period,
-and under manual procurement each player's fuel order starts from its default. Players change their orders
-while the price-setting window is open, and settling the period charges for the fuel at the season's price.
+Each Round has its own plan (#1190, :mod:`~energetica.workshop.round_plan`): its format, its fuel procurement and
+its events. The moderator edits any Round whose plan is not locked yet. Round 1's plan locks when the session starts,
+and Round N+1's when Recap N opens, so the Recap can tell players what is coming. Which Rounds are locked follows from
+the checkpoint, so it is not saved. The phase timers are not part of any plan: they apply to the next phase that
+opens.
 
-The moderator picks events (#1012, :mod:`~energetica.workshop.events`) at any time. Each pick waits for the next
-boundary of its kind and can be changed or dropped until then. A Trading-period pick fires when the next Trading
-period opens, and a Round pick when the next Investment phase opens. The session keeps every event that fired, and
-works out their effects from that list: the demand block's amplitude when a period is simulated, the revenue tax
-when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
+Fuel is priced and bought once per Trading period (#1009, :mod:`~energetica.workshop.fuel`). When a Trading
+period opens, every fuel gets its price for the season, and under manual procurement each player's fuel order
+starts from its default. Players change their orders while the price-setting window is open, and settling the
+period charges for the fuel at the season's price.
+
+An event planned for a Round (#1012, :mod:`~energetica.workshop.events`) fires when the Round's Investment phase
+opens, and one planned for a season when that season's Trading period opens. The session keeps every event that
+fired, and works out their effects from that list: the demand block's amplitude when a period is simulated, the
+revenue tax when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
 """
 
 from __future__ import annotations
@@ -63,17 +68,11 @@ from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
 from energetica.workshop.events import (
-    EVENTS,
-    BoundaryType,
-    EventPick,
     FiredEvent,
-    InvalidPickError,
     demand_factor,
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
-    slot,
-    validate_pick,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fuel import (
@@ -91,8 +90,21 @@ from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lif
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
-from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_plan import (
+    DEFAULT_PLAN,
+    EventStatus,
+    PlannedEvent,
+    LeverChanges,
+    RoundPlan,
+    event_status,
+    plans_from,
+    still_valid,
+    with_event,
+    with_levers,
+    without_event,
+)
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
@@ -227,14 +239,16 @@ class InvalidFuelQuantityError(Exception):
     """Raised when a fuel order is negative or not a finite number (#1009)."""
 
 
-class StorageLeverLockedError(Exception):
-    """Raised when switching the storage lever away from every type after a Recap announced that full-season storage
-    unlocks next Round (#1011).
-    """
+class NoSuchRoundError(Exception):
+    """Raised when editing the plan of a Round the session does not have (#1190)."""
 
 
-class NoBoundaryLeftError(Exception):
-    """Raised when picking an event whose boundary will not come again before the session ends (#1012)."""
+class RoundLockedError(Exception):
+    """Raised when editing the plan of a Round that is locked (#1190)."""
+
+
+class NoEventsInRoundOneError(Exception):
+    """Raised when planning an event for Round 1, which holds none: no Recap comes before it to tell of it (#1190)."""
 
 
 class SettlementRunningError(Exception):
@@ -267,46 +281,43 @@ def next_checkpoint(checkpoint: Checkpoint, *, round_count: int, blackout: bool 
             raise SessionFinishedError("the session is over")
 
 
-def _still_valid(pick: EventPick) -> bool:
-    """Whether ``pick``, saved earlier, is still one the moderator could make."""
-    try:
-        validate_pick(pick)
-    except InvalidPickError:
-        return False
-    return True
+def locked_rounds(checkpoint: Checkpoint, *, round_count: int) -> int:
+    """How many Rounds have a locked plan at ``checkpoint``: Rounds 1 to the number returned (#1190).
+
+    Round 1 locks when the session starts, and each later Round when the Recap before it opens.
+    """
+    match checkpoint:
+        case NotStarted():
+            return 0
+        case Investment(round=round_number) | TradingPeriod(round=round_number):
+            return round_number
+        case Recap(round=round_number):
+            return min(round_number + 1, round_count)
+        case Finished():
+            return round_count
 
 
-class RoundLevers(BaseModel):
-    """The round-configuration levers the moderator changes during a session.
-
-    Each lever is added by the ticket that builds it (#996, #1012, #1018). They belong to the
-    session, saved with it, and not to ``WorkshopRun`` in ``instance.json``, which the sysadmin
-    writes when the Run is provisioned. Every lever has a default, so a session saved before a lever
-    existed still loads.
+class PhaseTimers(BaseModel):
+    """How long each timed phase is open when it starts (#986). The moderator changes them at any time, and a change
+    applies to the next phase that opens. They belong to the session, not to any Round's plan.
     """
 
-    model_config = {"extra": "forbid"}
+    model_config = {"frozen": True, "extra": "forbid"}
 
-    # How long each timed phase is open when it starts (#986). The round-config page will make them
-    # editable (#1018).
     investment_minutes: int = Field(default=8, ge=1)
     price_setting_minutes: int = Field(default=5, ge=1)
-    # The format the next Round starts with (#1004).
-    round_format: RoundFormat = Field(default_factory=RoundFormat)
-    # How players get fuel from the next Trading period on (#1009).
-    fuel_procurement: FuelProcurement = "automatic"
 
 
-def phase_duration(checkpoint: Checkpoint, levers: RoundLevers) -> timedelta | None:
+def phase_duration(checkpoint: Checkpoint, timers: PhaseTimers) -> timedelta | None:
     """How long the phase opened at ``checkpoint`` runs, or ``None`` if that checkpoint is not timed.
 
     A Trading period's timer is its price-setting window.
     """
     match checkpoint:
         case Investment():
-            return timedelta(minutes=levers.investment_minutes)
+            return timedelta(minutes=timers.investment_minutes)
         case TradingPeriod():
-            return timedelta(minutes=levers.price_setting_minutes)
+            return timedelta(minutes=timers.price_setting_minutes)
         case _:
             return None
 
@@ -337,13 +348,22 @@ class SettlementJob:
 
 
 class EventsView(NamedTuple):
-    """The events waiting and fired, and what the climate suggestion goes on, for the facilitator (#1012)."""
+    """The events fired, and what the climate suggestion goes on, for the facilitator (#1012)."""
 
-    picks: list[EventPick]
     fired: list[FiredEvent]
     emissions: float
     """The CO₂ every player has emitted so far, in kg."""
     players: int
+
+
+class PlansView(NamedTuple):
+    """Every Round's plan and which are locked, for the facilitator (#1190)."""
+
+    plans: list[RoundPlan]
+    locked_rounds: int
+    """Rounds 1 to this one are locked."""
+    statuses: list[list[tuple[PlannedEvent, EventStatus]]]
+    """Each Round's planned events, each with whether it fired, was skipped, or is still to come."""
 
 
 class UnlockProgress(NamedTuple):
@@ -366,20 +386,14 @@ class _SavedPlayer(BaseModel):
     username: str
     money: float
     owned_facilities: list[OwnedFacility]
-    # Defaults to empty for a file saved before purchases were kept.
-    purchases: list[Purchase] = []
-    # Defaults to empty for a file saved before selections existed.
-    selection: list[FacilityId] = []
-    # Defaults to empty for a file saved before stored energy existed.
-    stored_energy: dict[FacilityId, float] = {}
-    # Default to the starting prices and no history for a file saved before prices existed.
-    prices: PriceSheet = DEFAULT_PRICES
-    locked_prices: list[LockedPrices] = []
-    # Defaults to none for a file saved before Trading periods were settled.
-    trading_results: list[TradingResult] = []
-    # Default to none for a file saved before fuel was bought.
-    fuel_stock: dict[Fuel, float] = {}
-    fuel_order: dict[Fuel, float] = {}
+    purchases: list[Purchase]
+    selection: list[FacilityId]
+    stored_energy: dict[FacilityId, float]
+    prices: PriceSheet
+    locked_prices: list[LockedPrices]
+    trading_results: list[TradingResult]
+    fuel_stock: dict[Fuel, float]
+    fuel_order: dict[Fuel, float]
 
 
 class _SavedSession(BaseModel):
@@ -389,31 +403,18 @@ class _SavedSession(BaseModel):
 
     checkpoint: Checkpoint
     round_count: int = Field(ge=1)
-    levers: RoundLevers
-    # Defaults to none for a file saved before phase timers existed.
-    phase_timer: PhaseTimer | None = None
+    timers: PhaseTimers
+    phase_timer: PhaseTimer | None
     players: list[_SavedPlayer]
-    # Default to a new seed, no demand yet and nothing settled for a file saved before Trading periods
-    # were settled.
-    weather_seed: int = Field(default_factory=lambda: random.randrange(WEATHER_SEEDS))
-    demand_amplitude: float | None = None
-    settled_period: TradingPeriod | None = None
-    # None before Round 1 starts.
-    round_format: RoundFormat | None = None
-    # Empty for a file saved before blackouts were recorded.
-    blackouts: list[TradingPeriod] = []
-    # Empty for a file saved before Trading periods were recorded.
-    recorded_periods: list[TradingPeriod] = []
-    # Default to no prices, no lever fixed and no shock for a file saved before fuel was bought.
-    fuel_procurement: FuelProcurement | None = None
-    fuel_prices: dict[Fuel, FuelPrice] = {}
-    # Read and ignored: fuel shocks waited here before they became events (#1012), and none was ever set.
-    pending_fuel_shocks: dict[Fuel, float] = {}
-    # Empty for a file saved before facilities unlocked.
-    unlocks: list[Unlock] = []
-    # Empty for a file saved before events existed.
-    event_picks: list[EventPick] = []
-    fired_events: list[FiredEvent] = []
+    weather_seed: int
+    demand_amplitude: float | None
+    settled_period: TradingPeriod | None
+    blackouts: list[TradingPeriod]
+    recorded_periods: list[TradingPeriod]
+    fuel_prices: dict[Fuel, FuelPrice]
+    unlocks: list[Unlock]
+    plans: list[RoundPlan]
+    fired_events: list[FiredEvent]
 
 
 class WorkshopSession:
@@ -430,18 +431,16 @@ class WorkshopSession:
         path: Path,
         checkpoint: Checkpoint,
         round_count: int,
-        levers: RoundLevers,
+        plans: list[RoundPlan] | None = None,
+        timers: PhaseTimers | None = None,
         phase_timer: PhaseTimer | None = None,
         weather_seed: int | None = None,
         demand_amplitude: float | None = None,
         settled_period: TradingPeriod | None = None,
-        round_format: RoundFormat | None = None,
         blackouts: list[TradingPeriod] | None = None,
         recorded_periods: list[TradingPeriod] | None = None,
-        fuel_procurement: FuelProcurement | None = None,
         fuel_prices: dict[Fuel, FuelPrice] | None = None,
         unlocks: list[Unlock] | None = None,
-        event_picks: list[EventPick] | None = None,
         fired_events: list[FiredEvent] | None = None,
         clock: Clock = utc_now,
     ) -> None:
@@ -451,7 +450,16 @@ class WorkshopSession:
         self.path = path
         self.checkpoint: Checkpoint = checkpoint
         self.round_count = round_count
-        self.levers = levers
+        # One plan per Round, in order (#1190). A new session copies them from the default plan.
+        # An event the catalog no longer allows, such as one of an event or severity since removed, is dropped, so it
+        # never blocks an advance.
+        plans = plans_from(DEFAULT_PLAN, round_count=round_count) if plans is None else plans
+        if len(plans) != round_count:
+            raise ValueError(f"a session of {round_count} Rounds needs as many plans, not {len(plans)}")
+        self.plans = [
+            plan.model_copy(update={"events": [event for event in plan.events if still_valid(event)]}) for plan in plans
+        ]
+        self.timers = PhaseTimers() if timers is None else timers
         self.phase_timer = phase_timer
         # The random seed of the Run's weather, which the renewables' output follows (#1003).
         self.weather_seed = random.randrange(WEATHER_SEEDS) if weather_seed is None else weather_seed
@@ -460,26 +468,16 @@ class WorkshopSession:
         self.demand_amplitude = demand_amplitude
         # The last Trading period settled, so that none is settled twice.
         self.settled_period = settled_period
-        # The current Round's format, fixed from the levers when its Investment phase opens.
-        self.round_format = round_format
         # Every Trading period the grid went down in, in order (#1005).
         self.blackouts = [] if blackouts is None else blackouts
         # Every settled Trading period whose record is saved, in order (#1007). A file in the records folder
         # that is not listed here, such as one left by an earlier Run, is never read.
         self.recorded_periods = [] if recorded_periods is None else recorded_periods
-        # How players get fuel in the current Trading period, fixed from the levers when it opens (#1009). None
-        # before the first one.
-        self.fuel_procurement: FuelProcurement | None = fuel_procurement
         # Each fuel's price in the current Trading period, set when it opens (#1009). Empty before the first one.
         self.fuel_prices = {} if fuel_prices is None else fuel_prices
         # Every facility unlocked so far, in order (#1011). Kept rather than worked out again from the purchases,
         # since the threshold moves with the headcount, and an unlock that has been announced must stay.
         self.unlocks = [] if unlocks is None else unlocks
-        # The events the moderator picked, each waiting for the next boundary of its kind, in the order picked
-        # (#1012). At most one per category and kind of boundary.
-        # A pick the catalog no longer allows, such as one of an event or severity since removed, is dropped, so it
-        # never blocks an advance.
-        self.event_picks = [pick for pick in event_picks or [] if _still_valid(pick)]
         # Every event that fired, in order (#1012). Their effects are worked out from this list.
         self.fired_events = [] if fired_events is None else fired_events
         # The records read most recently, newest last. A full season's record takes about half a second to
@@ -520,7 +518,6 @@ class WorkshopSession:
                 path=path,
                 checkpoint=NotStarted(),
                 round_count=round_count,
-                levers=RoundLevers(),
                 clock=clock,
             )
             session._save(session.checkpoint, session.phase_timer)
@@ -546,18 +543,16 @@ class WorkshopSession:
             path=path,
             checkpoint=saved.checkpoint,
             round_count=saved.round_count,
-            levers=saved.levers,
+            plans=saved.plans,
+            timers=saved.timers,
             phase_timer=saved.phase_timer,
             weather_seed=saved.weather_seed,
             demand_amplitude=saved.demand_amplitude,
             settled_period=saved.settled_period,
-            round_format=saved.round_format,
             blackouts=saved.blackouts,
             recorded_periods=saved.recorded_periods,
-            fuel_procurement=saved.fuel_procurement,
             fuel_prices=saved.fuel_prices,
             unlocks=saved.unlocks,
-            event_picks=saved.event_picks,
             fired_events=saved.fired_events,
             clock=clock,
         )
@@ -603,9 +598,16 @@ class WorkshopSession:
 
     def current_format(self) -> RoundFormat:
         """The current Round's format. Before Round 1 starts, the format it will start with."""
-        if self.round_format is None or isinstance(self.checkpoint, NotStarted):
-            return self.levers.round_format
-        return self.round_format
+        return self.plans[self.current_round() - 1].levers.round_format
+
+    @property
+    def fuel_procurement(self) -> FuelProcurement:
+        """How players get fuel in the current Round (#1009). Before Round 1 starts, how they will in it."""
+        return self.plans[self.current_round() - 1].levers.fuel_procurement
+
+    def locked_rounds(self) -> int:
+        """How many Rounds have a locked plan: Rounds 1 to the number returned (#1190)."""
+        return locked_rounds(self.checkpoint, round_count=self.round_count)
 
     def offered_facilities(self) -> list[WorkshopFacility]:
         """The facilities players can buy in the current Round."""
@@ -691,10 +693,10 @@ class WorkshopSession:
 
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys any
         selection still waiting, so none is lost if the moderator advances before the purchase at the
-        phase's end has happened. Starting a new Round's Investment phase fixes the Round's format from
-        the levers and retires every facility whose lifetime has ended. Opening a Trading period sets the
-        season's fuel prices and each player's default fuel order (#1009). Opening either fires the events
-        picked for it (#1012). Raises
+        phase's end has happened. Starting a new Round's Investment phase
+        retires every facility whose lifetime has ended. Opening a Trading period sets the season's fuel prices
+        and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012).
+        Opening a Recap locks the next Round's plan (#1190). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -709,15 +711,12 @@ class WorkshopSession:
             if isinstance(self.checkpoint, TradingPeriod) and self.settled_period != self.checkpoint:
                 return self.checkpoint
             checkpoint = self._next_checkpoint()
-            duration = phase_duration(checkpoint, self.levers)
+            duration = phase_duration(checkpoint, self.timers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says. A
             # purchase, retirement or new fuel price is saved in the same write, so it happens only if the
             # advance does.
-            round_format = self.round_format
             undos: list[Callable[[], None]] = []
-            if isinstance(checkpoint, Investment):
-                self.round_format = self.levers.round_format
             try:
                 if isinstance(self.checkpoint, Investment):
                     undos.append(self._apply_purchases(self.checkpoint.round)[1])
@@ -732,7 +731,6 @@ class WorkshopSession:
                 # Undo the changes, so the session matches the file and the next advance retries them.
                 for undo in reversed(undos):
                     undo()
-                self.round_format = round_format
                 raise
             self.checkpoint = checkpoint
             self.phase_timer = phase_timer
@@ -867,10 +865,9 @@ class WorkshopSession:
 
         At a Round's Recap, an upgrade whose base tier has had enough spent on it unlocks from the next Round, and
         so does Concentrated solar power once that Round is far enough on. Full-season storage unlocks there too if
-        the storage lever already allows every type for the next Round, so the Recap can announce it. The last
-        Round's Recap unlocks nothing. If the moderator only allows every type during the Recap, full-season storage
-        unlocks when the Round's Investment phase opens instead. The caller holds the lock, and has fixed the
-        Round's format.
+        the next Round's plan allows every storage type, so the Recap can announce it. That plan is locked from the
+        Recap on. The last Round's Recap unlocks nothing. Round 1 has no Recap before it, so full-season storage
+        unlocks when its Investment phase opens if its plan allows every type. The caller holds the lock.
         """
         before = self.unlocks
         unlocked = {unlock.facility for unlock in before}
@@ -884,12 +881,14 @@ class WorkshopSession:
                         unlocked=unlocked,
                     ),
                     *format_lever_unlocks(
-                        round_number=round_number + 1, storage=self.levers.round_format.storage, unlocked=unlocked
+                        round_number=round_number + 1,
+                        storage=self.plans[round_number].levers.round_format.storage,
+                        unlocked=unlocked,
                     ),
                 ]
-            case Investment(round=round_number):
+            case Investment(round=1):
                 new = format_lever_unlocks(
-                    round_number=round_number, storage=self.current_format().storage, unlocked=unlocked
+                    round_number=1, storage=self.plans[0].levers.round_format.storage, unlocked=unlocked
                 )
             case _:
                 new = []
@@ -921,17 +920,17 @@ class WorkshopSession:
         return any(player.owned_facilities != owned for player, owned in before.items()), undo
 
     def _open_fuel_market(self, period: TradingPeriod) -> Callable[[], None]:
-        """Set each fuel's price for ``period``, fix the fuel procurement lever for it, and under manual procurement
-        start each player's fuel order from its default, without saving. Returns what undoes it.
+        """Set each fuel's price for ``period``, and under manual procurement start each player's fuel order from its
+        default, without saving. Returns what undoes it.
 
         A fuel shock that fired for ``period`` lands now. The caller holds the lock, and has fired the events.
         """
         players = self.network.players()
-        before = (self.fuel_procurement, self.fuel_prices)
+        before = self.fuel_prices
         orders = [player.fuel_order for player in players]
         period_index = (period.round - 1) * len(SEASONS) + SEASONS.index(period.season)
         shocks = fuel_shocks(self.fired_events, period.round, period.season)
-        self.fuel_procurement = self.levers.fuel_procurement
+        procurement = self.plans[period.round - 1].levers.fuel_procurement
         self.fuel_prices = {
             fuel: next_fuel_price(
                 fuel,
@@ -942,14 +941,14 @@ class WorkshopSession:
             )
             for fuel in Fuel
         }
-        if self.fuel_procurement == "manual":
+        if procurement == "manual":
             for player in players:
                 player.fuel_order = default_orders(
                     player.fuel_order, needs=self.fuel_needs(player, period.round), stocks=player.fuel_stock
                 )
 
         def undo() -> None:
-            self.fuel_procurement, self.fuel_prices = before
+            self.fuel_prices = before
             for player, order in zip(players, orders, strict=True):
                 player.fuel_order = order
 
@@ -1017,106 +1016,128 @@ class WorkshopSession:
             return quantity
 
     def events_view(self) -> EventsView:
-        """The events waiting and fired, read in one step so its parts agree (#1012)."""
+        """The events fired, and what the climate suggestion goes on, read in one step so its parts agree (#1012)."""
         with self._lock:
-            return EventsView(
-                list(self.event_picks), list(self.fired_events), self.emissions(), len(self.network.players())
-            )
+            return EventsView(list(self.fired_events), self.emissions(), len(self.network.players()))
 
-    def pick_event(self, pick: EventPick) -> bool:
-        """Pick an event to fire at the next boundary of its kind, in place of any pick waiting for the same one.
-
-        Raises :class:`~energetica.workshop.events.InvalidPickError` if the pick names no event, a severity the
-        event does not have, or a wrong fuel, and :class:`NoBoundaryLeftError` if its boundary will not come again,
-        so it would never fire. Returns whether the picks changed.
+    def plans_view(self) -> PlansView:
+        """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts
+        agree (#1190).
         """
-        event = validate_pick(pick)
-        place = slot(event)
         with self._lock:
-            if not self._boundary_ahead(event.boundary_type):
-                raise NoBoundaryLeftError(f"no {event.boundary_type} boundary is left in the session")
-            return self._set_picks([*(other for other in self.event_picks if slot(EVENTS[other.event]) != place), pick])
+            blackouts: dict[int, Season] = {period.round: period.season for period in self.blackouts}
+            statuses: list[list[tuple[PlannedEvent, EventStatus]]] = [
+                [
+                    (
+                        planned,
+                        event_status(
+                            planned, round_number, fired=self.fired_events, blackout=blackouts.get(round_number)
+                        ),
+                    )
+                    for planned in plan.events
+                ]
+                for round_number, plan in enumerate(self.plans, start=1)
+            ]
+            return PlansView(list(self.plans), self.locked_rounds(), statuses)
 
-    def drop_event(self, event_id: str) -> bool:
-        """Drop the pick of ``event_id``, if it is waiting, so that it does not fire. Returns whether it was."""
-        with self._lock:
-            return self._set_picks([pick for pick in self.event_picks if pick.event != event_id])
+    def set_levers(self, round_number: int, changes: LeverChanges) -> bool:
+        """Apply ``changes`` to Round ``round_number``'s levers, and carry each lever that changed to every later
+        Round. A lever ``changes`` leaves out stays as it is. Returns whether the plans changed.
 
-    def _boundary_ahead(self, boundary: BoundaryType) -> bool:
-        """Whether a boundary of kind ``boundary`` is still to come: an Investment phase for a Round, a Trading
-        period for a Trading period. The caller holds the lock.
+        Raises :class:`NoSuchRoundError` if the session has no such Round, :class:`RoundLockedError` if its plan is
+        locked, and :class:`~energetica.workshop.round_plan.InvalidLeversError` if the change would leave the Round or
+        a later one invalid. A refused change changes nothing.
         """
-        boundary_kind = Investment if boundary == "round" else TradingPeriod
-        if isinstance(self.checkpoint, Finished):
+        with self._lock:
+            self._check_editable(round_number)
+            return self._set_plans(with_levers(self.plans, round_number, changes))
+
+    def plan_event(self, round_number: int, planned: PlannedEvent) -> bool:
+        """Plan an event for Round ``round_number``, in place of any planned for the same slot. Returns whether the
+        plan changed.
+
+        Raises :class:`NoSuchRoundError` if the session has no such Round, :class:`RoundLockedError` if its plan is
+        locked, :class:`NoEventsInRoundOneError` for Round 1, and
+        :class:`~energetica.workshop.events.InvalidPickError` if the pick is not one the moderator can make, or
+        lacks the season a seasonal event needs.
+        """
+        with self._lock:
+            self._check_editable(round_number)
+            if round_number == 1:
+                raise NoEventsInRoundOneError("Round 1 holds no events")
+            plans = list(self.plans)
+            plans[round_number - 1] = with_event(plans[round_number - 1], planned)
+            return self._set_plans(plans)
+
+    def unplan_event(self, round_number: int, event_id: str, season: Season | None) -> bool:
+        """Drop the event ``event_id`` planned for Round ``round_number``'s ``season``, or for the Round if None.
+        Returns whether it was planned. Raises like :meth:`plan_event`.
+        """
+        with self._lock:
+            self._check_editable(round_number)
+            plans = list(self.plans)
+            plans[round_number - 1] = without_event(plans[round_number - 1], event_id, season)
+            return self._set_plans(plans)
+
+    def _check_editable(self, round_number: int) -> None:
+        """Raise unless the session has Round ``round_number`` and its plan is not locked. The caller holds the lock."""
+        if not 1 <= round_number <= self.round_count:
+            raise NoSuchRoundError(f"the session has no Round {round_number}")
+        if round_number <= self.locked_rounds():
+            raise RoundLockedError(f"Round {round_number}'s plan is locked")
+
+    def _set_plans(self, plans: list[RoundPlan]) -> bool:
+        """Replace the plans with ``plans`` and save them, unless they are the same, and return whether they changed.
+        The caller holds the lock.
+        """
+        if plans == self.plans:
             return False
-        # The first step follows a blackout as advancing does, since one in the last Round ends the session early.
-        checkpoint = self._next_checkpoint()
-        while not isinstance(checkpoint, Finished):
-            if isinstance(checkpoint, boundary_kind):
-                return True
-            checkpoint = next_checkpoint(checkpoint, round_count=self.round_count)
-        return False
-
-    def _set_picks(self, picks: list[EventPick]) -> bool:
-        """Replace the waiting picks with ``picks`` and save them, unless they are the same, and return whether they
-        changed. The caller holds the lock.
-        """
-        if picks == self.event_picks:
-            return False
-        before, self.event_picks = self.event_picks, picks
+        before, self.plans = self.plans, plans
         try:
             self._save(self.checkpoint, self.phase_timer)
         except BaseException:
             # Undo the change, so the session matches the file.
-            self.event_picks = before
+            self.plans = before
             raise
         return True
 
     def _fire_events(self, checkpoint: Checkpoint) -> Callable[[], None]:
-        """Fire the picks waiting for ``checkpoint``, if it is a boundary, without saving. Returns what undoes it.
+        """Fire the events planned for ``checkpoint``, if it is a boundary, without saving. Returns what undoes it.
 
-        A Trading period is the boundary of the picks waiting for one, and an Investment phase that of those waiting
-        for a Round. The caller holds the lock.
+        An Investment phase fires the events planned for its Round, and a Trading period those planned for its
+        season. The caller holds the lock.
         """
         match checkpoint:
             case TradingPeriod(round=round_number, season=season):
-                boundary, fired_season = "trading_period", season
+                fired_season: Season | None = season
             case Investment(round=round_number):
-                boundary, fired_season = "round", None
+                fired_season = None
             case _:
                 return lambda: None
-        before = (self.event_picks, self.fired_events)
-        firing = [pick for pick in self.event_picks if EVENTS[pick.event].boundary_type == boundary]
-        # Built before either list changes, so that an error leaves the session as it was.
-        fired = [FiredEvent.of(pick, round_number=round_number, season=fired_season) for pick in firing]
-        self.event_picks = [pick for pick in self.event_picks if pick not in firing]
-        self.fired_events = [*self.fired_events, *fired]
+        before = self.fired_events
+        self.fired_events = [
+            *before,
+            *(
+                FiredEvent.of(planned, round_number=round_number, season=fired_season)
+                for planned in self.plans[round_number - 1].events
+                if planned.season == fired_season
+            ),
+        ]
 
         def undo() -> None:
-            self.event_picks, self.fired_events = before
+            self.fired_events = before
 
         return undo
 
-    def set_levers(self, levers: RoundLevers) -> None:
-        """Replace the levers with ``levers``. The timing levers apply to the next phase that opens, the fuel
-        procurement lever to the next Trading period, and the Round format to the next Round.
-
-        Once a Recap has announced that full-season storage unlocks next Round, the storage lever must keep
-        allowing every type until that Round starts, or players could not buy what was announced. Raises
-        :class:`StorageLeverLockedError` if ``levers`` would switch it back.
-        """
+    def set_timers(self, timers: PhaseTimers) -> None:
+        """Replace the phase timers with ``timers``. They apply to the next phase that opens."""
         with self._lock:
-            announced = any(
-                unlock.trigger == "format_lever" and unlock.round > self.current_round() for unlock in self.unlocks
-            )
-            if announced and levers.round_format.storage != "all":
-                raise StorageLeverLockedError("the Recap announced every storage type for the next Round")
-            before, self.levers = self.levers, levers
+            before, self.timers = self.timers, timers
             try:
                 self._save(self.checkpoint, self.phase_timer)
             except BaseException:
                 # Undo the change, so the session matches the file.
-                self.levers = before
+                self.timers = before
                 raise
 
     def start_settlement(self) -> SettlementJob | None:
@@ -1351,7 +1372,7 @@ class WorkshopSession:
         saved = _SavedSession(
             checkpoint=checkpoint,
             round_count=self.round_count,
-            levers=self.levers,
+            timers=self.timers,
             phase_timer=phase_timer,
             players=[
                 _SavedPlayer(
@@ -1373,13 +1394,11 @@ class WorkshopSession:
             weather_seed=self.weather_seed,
             demand_amplitude=self.demand_amplitude,
             settled_period=self.settled_period,
-            round_format=self.round_format,
             blackouts=self.blackouts,
             recorded_periods=self.recorded_periods,
-            fuel_procurement=self.fuel_procurement,
             fuel_prices=self.fuel_prices,
             unlocks=self.unlocks,
-            event_picks=self.event_picks,
+            plans=self.plans,
             fired_events=self.fired_events,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

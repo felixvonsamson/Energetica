@@ -155,12 +155,30 @@ two, they hold 150 (SOC 75%). Replaced by one, it holds 100 (SOC 100%) and 50 is
 364 days, so each of the four seasons is exactly 13 weeks (91 days). Spring starts on 1 March, and
 winter runs over the end of the year. The demand curve and the weather use this year length.
 
-**Round format** (#1004):
+**Round format** (#1004, #1190):
 The three levers that say how a Round's Trading periods are simulated: the **trading-round format**
 (representative day or full season), the clearings per day (24, 96 or 288), and the storage
-availability (none, batteries only, or every type). The moderator can change the levers at any time,
-but a Round keeps the format it started with. Every storage type needs the full-season format. If the
-moderator switches back, storage already built keeps running, but no more of it can be bought.
+availability (none, batteries only, or every type). Each Round's format is part of its **Round plan**,
+so it is set per Round and **locked** a Round ahead. Every storage type needs the full-season format. If a
+later Round switches back, storage already built keeps running, but no more of it can be bought.
+
+**Round plan** (#1190):
+One Round's levers (its **round format** and **fuel procurement**) and the **events** planned for it.
+The session holds one per Round. The facilitator can edit any Round's plan until it is **locked**.
+Changing a lever in one Round also changes it in every later Round: only the levers that changed carry,
+each on its own, and a change that would leave a later Round invalid is refused. Events never carry. The
+phase timers are not part of a plan: they apply to the next phase that opens.
+
+**Default plan** (#1190):
+The levers the workshop recommends for each Round, a fixed list. When a session is created, each
+Round's **Round plan** is copied from it: a shorter session uses the start of the list, and a longer one
+repeats its last entry. It holds levers only, never events.
+
+**Lock** (#1190):
+When a **Round plan** can no longer change, because players have been told what it holds. Round 1's plan
+locks when the session starts, and Round N+1's when Recap N opens, since the Recap tells players what
+comes next. Which Rounds are locked follows from where the session is.
+_Avoid_: freeze, commit.
 
 **Representative day** (#1003):
 In representative-day mode, the one simulated day that stands for a whole Trading period: the middle
@@ -206,8 +224,8 @@ then takes off the Round's investments to give its **net profit**. A season fill
 Market income already has the cost of the energy storage bought to charge taken off.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
 
-**Fuel procurement** (#1009):
-How players get fuel, a lever fixed when each Trading period opens. Under **automatic** procurement, a
+**Fuel procurement** (#1009, #1190):
+How players get fuel, a lever set per Round in its **Round plan**. Under **automatic** procurement, a
 player pays for the fuel their facilities burned, less what their stock covered. Under **manual**
 procurement, they buy each fuel in the price-setting window, and its cost is charged when the period is
 settled. Their facilities can burn only the fuel they hold plus what they bought: once it runs out, those
@@ -228,19 +246,23 @@ An **upgrade tier** unlocks once the money every player has spent buying its **b
 unlock threshold, which is the same for every technology and grows with the number of players. That is
 checked when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar power
 unlocks from a set Round instead, and hydrogen storage and pumped hydro the first Round that allows
-every storage type, checked at the Recap before it, and again when that Round starts. Once a Recap has
-announced them, the storage lever stays on every type until that Round starts. Only the facilitator sees how close an unlock is.
+every storage type, checked at the Recap before it, or when the session starts for Round 1. That Round's
+plan is **locked** by then, so what the Recap announced holds. Only the facilitator sees how close an
+unlock is.
 _Avoid_: tech tree, research.
 
-**Event** (#1012, #1189):
+**Event** (#1012, #1189, #1190):
 A named vignette from a fixed catalog, such as a heatwave, a gas pipeline disruption or an EV tipping
 point, in one of three categories: climate, price shock or geopolitics, and demand shift. The facilitator
-**picks** an event and one of its severities. The pick waits for the next **boundary** of its kind, the
-next Trading period or the next Round, and can be changed or dropped until then; then it **fires**. Each
-category holds at most one pick per boundary. A fired event's headline is told at the Recap, and nobody,
-the facilitator included, sees it before. The Recap before a Round also tells what the Round holds: a Round
-event with its exact effect, and a seasonal event only as a **forecast** that names its season, gives no
-figures, and sounds more certain the more severe the event is.
+**plans** an event and one of its severities for a Round, and a seasonal event also for a season. It can
+be changed or dropped until the Round's plan is **locked**. A Round event **fires** when the Round's
+Investment phase opens, and a seasonal event when its season's Trading period opens. Each category holds
+at most one event per **boundary**: one per Round, or one per season for a seasonal event. Round 1 holds
+none. An event planned for a season that a blackout skips never fires, but stays in the plan. A fired
+event's headline is told at the Recap, and nobody, the facilitator included, sees it before. The Recap
+before a Round also tells what the Round holds: a Round event with its exact effect, and a seasonal event
+only as a **forecast** that names its season, gives no figures, and sounds more certain the more severe
+the event is.
 _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Revenue tax** (#1012):

@@ -13,7 +13,6 @@ from energetica.workshop.events import (
     Direction,
     EffectKind,
     EventCategory,
-    EventPick,
     Severity,
     WorkshopEvent,
 )
@@ -23,6 +22,7 @@ from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_plan import EventStatus, RoundLevers
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
 from energetica.workshop.unlocks import Unlock
@@ -202,9 +202,9 @@ class WorkshopFuelLineOut(BaseModel):
 class WorkshopFuelOut(BaseModel):
     """The fuel the calling player buys this season (#1009)."""
 
-    procurement: FuelProcurement | None = Field(
-        description="How players get fuel in the current Trading period, or null before the first one: billed for "
-        "what they burned, or buying it themselves in the price-setting window"
+    procurement: FuelProcurement = Field(
+        description="How players get fuel in the current Round: billed for what they burned, or buying it themselves "
+        "in the price-setting window"
     )
     fuels: list[WorkshopFuelLineOut] = Field(
         description="Each fuel the player's operating facilities burn, in a fixed order. Empty before the first "
@@ -257,8 +257,8 @@ class WorkshopEventOut(BaseModel):
     name: str
     category: EventCategory
     boundary_type: BoundaryType = Field(
-        description="round: it fires when the next Round's Investment phase opens. trading_period: when the next "
-        "Trading period opens"
+        description="round: it fires when the Investment phase of the Round it is planned for opens. "
+        "trading_period: when the Trading period of the season it is planned for opens"
     )
     direction: Direction
     effect_kind: EffectKind
@@ -295,16 +295,42 @@ class WorkshopFiredEventOut(BaseModel):
 
 
 class WorkshopEventsOut(BaseModel):
-    """The events the facilitator can pick, the picks waiting to fire, and those that fired (#1012). For the
-    facilitator only.
-    """
+    """The events the facilitator can plan, and those that fired (#1012). For the facilitator only."""
 
     events: list[WorkshopEventOut] = Field(description="Every event, in catalog order")
-    picks: list[EventPick] = Field(
-        description="The picks waiting for their boundary: at most one per category and kind of boundary"
-    )
     fired: list[WorkshopFiredEventOut] = Field(description="Every event that fired, in order")
     emissions: float = Field(description="The CO₂ every player has emitted so far, building and running, in kg")
+
+
+class WorkshopPlannedEventOut(BaseModel):
+    """An event planned for a Round (#1190)."""
+
+    event: str = Field(description="The event's id")
+    name: str
+    severity: Severity
+    fuel: Fuel | None = Field(description="The fuel the facilitator picked for it, if it takes one")
+    season: Season | None = Field(description="The season it fires at, or null if it fires with the Round")
+    status: EventStatus = Field(
+        description="planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season"
+    )
+
+
+class WorkshopRoundPlanOut(BaseModel):
+    """One Round's plan (#1190)."""
+
+    round: int
+    locked: bool = Field(
+        description="Whether the plan can no longer change: Round 1's from the start of the session, and each later "
+        "Round's from the Recap before it"
+    )
+    levers: RoundLevers
+    events: list[WorkshopPlannedEventOut] = Field(description="The events planned for the Round, in planning order")
+
+
+class WorkshopPlansOut(BaseModel):
+    """Every Round's plan, in order (#1190). For the facilitator only."""
+
+    rounds: list[WorkshopRoundPlanOut]
 
 
 class WorkshopPeriodOut(BaseModel):

@@ -66,8 +66,11 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_FUEL_NOT_BURNED: "None of your facilities burn this fuel.",
     WORKSHOP_SETTLEMENT_RUNNING:
         "The Trading period is still being simulated. Advance once it has finished.",
-    WORKSHOP_STORAGE_LEVER_LOCKED:
-        "The Recap announced every storage type for the next Round, so storage stays fully available until it starts.",
+    WORKSHOP_ROUND_LOCKED:
+        "This Round's plan is locked: players have been told what it holds.",
+    WORKSHOP_LEVERS_INVALID:
+        "This change would leave a Round invalid: every storage type needs the full-season format.",
+    WORKSHOP_NO_EVENTS_IN_ROUND_ONE: "Round 1 holds no events.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
