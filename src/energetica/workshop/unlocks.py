@@ -135,9 +135,8 @@ def format_lever_unlocks(
     """What unlocks if Round ``round_number`` starts with the storage lever at ``storage``.
 
     Hydrogen storage and pumped hydro unlock the first time a Round allows every storage type. The session checks
-    at the Recap before it, so the Recap can announce them, and again when the Round starts, in case the moderator
-    changed the lever in between. Whether players can buy them still follows each Round's lever
-    (:func:`available_facilities`).
+    at the Recap before it, so the Recap can announce them, or when the session starts for Round 1. Whether players
+    can buy them still follows each Round's lever (:func:`available_facilities`).
     """
     if storage != "all":
         return []

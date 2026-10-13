@@ -1,11 +1,11 @@
 """Workshop's events (#1012, #992 §3–§4): the vignettes the moderator picks, and what they do once they fire.
 
 Each event is a named vignette from a fixed catalog (#978) in one of three categories: climate, price shock or
-geopolitics, and demand shift. The moderator picks a vignette and one of its severities. The pick waits until the
-next boundary of its kind, the start of a Trading period or of a Round, and can be changed or dropped until then.
-At the boundary it fires, and the session keeps a :class:`FiredEvent` so the Recap can tell its headline (#1013).
+geopolitics, and demand shift. The moderator picks a vignette and one of its severities, and plans it for a Round
+(:mod:`~energetica.workshop.round_plan`, #1190). At its boundary, the start of the Round or of one of its Trading
+periods, it fires, and the session keeps a :class:`FiredEvent` so the Recap can tell its headline (#1013).
 
-Each category can hold one pick per boundary at a time (:func:`slot`). Climate events fire when a Trading period
+Each category can hold one pick per boundary (:func:`slot`). Climate events fire when a Trading period
 opens. Demand shifts fire when a Round's Investment phase opens. A price shock on facilities fires with the Round,
 since facilities are bought only in the Investment phase, and a price shock on fuel fires with the Trading period,
 since fuel is bought every season.
@@ -91,7 +91,7 @@ class WorkshopEvent(BaseModel):
 
 
 class EventPick(BaseModel):
-    """A vignette the moderator picked, waiting for the next boundary of its kind."""
+    """A vignette and severity the moderator picked: what is planned for a Round (#1190)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -553,7 +553,7 @@ CLIMATE_SEVERITY_THRESHOLDS: dict[Severity, float] = {
 
 
 def slot(event: WorkshopEvent) -> tuple[EventCategory, BoundaryType]:
-    """The pick ``event`` takes the place of: the one of its category waiting for the same kind of boundary."""
+    """The slot ``event`` takes in a Round's plan: its category and the kind of boundary it fires at."""
     return event.category, event.boundary_type
 
 

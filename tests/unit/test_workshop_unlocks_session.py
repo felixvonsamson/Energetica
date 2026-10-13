@@ -1,5 +1,6 @@
 """Unit tests for tech-grade unlocks in a Workshop session (#1011): spend on a base tier unlocking its upgrade from
-the next Round, Concentrated solar power's Round gate, and the storage lever's unlock of full-season storage.
+the next Round, Concentrated solar power's Round gate, and the storage lever's unlock of full-season storage, read from
+each Round's plan (#1190).
 """
 
 from __future__ import annotations
@@ -13,11 +14,10 @@ from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_plan import RoundLevers
 from energetica.workshop.session import (
     Investment,
     Recap,
-    RoundLevers,
-    StorageLeverLockedError,
     TradingPeriod,
     WorkshopSession,
 )
@@ -153,7 +153,7 @@ def test_full_season_storage_unlocks_at_the_recap_before_the_first_round_to_allo
     path: Path,
 ) -> None:
     session = _session(path)
-    session.set_levers(RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+    session.set_levers(2, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
 
     _to_next(session, Recap)
 
@@ -162,54 +162,33 @@ def test_full_season_storage_unlocks_at_the_recap_before_the_first_round_to_allo
         Unlock(facility=FacilityId.PUMPED_HYDRO, round=2, trigger="format_lever"),
     ]
     assert not {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} & _offered(session)
+    session.advance()  # Round 2
+    assert {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} <= _offered(session)
 
 
-def test_full_season_storage_set_during_the_recap_unlocks_when_the_round_starts(path: Path) -> None:
-    session = _session(path)
-    _to_next(session, Recap)
-    session.set_levers(RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+def test_full_season_storage_unlocks_with_round_one_if_it_allows_every_storage_type(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
+    session.set_levers(1, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
 
     session.advance()
 
     assert session.unlocks == [
-        Unlock(facility=FacilityId.HYDROGEN_STORAGE, round=2, trigger="format_lever"),
-        Unlock(facility=FacilityId.PUMPED_HYDRO, round=2, trigger="format_lever"),
+        Unlock(facility=FacilityId.HYDROGEN_STORAGE, round=1, trigger="format_lever"),
+        Unlock(facility=FacilityId.PUMPED_HYDRO, round=1, trigger="format_lever"),
     ]
     assert {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} <= _offered(session)
 
 
-def _full_season() -> RoundLevers:
-    return RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all"))
-
-
-def test_the_storage_lever_cannot_be_switched_back_once_the_recap_announced_full_season_storage(path: Path) -> None:
+def test_full_season_storage_stays_unlocked_once_a_later_round_switches_storage_back(path: Path) -> None:
     session = _session(path)
-    session.set_levers(_full_season())
-    _to_next(session, Recap)
+    session.set_levers(2, RoundLevers(round_format=RoundFormat(trading_format="full_season", storage="all")))
+    session.set_levers(3, RoundLevers())
 
-    with pytest.raises(StorageLeverLockedError):
-        session.set_levers(RoundLevers())
+    _to_next(session, Investment)  # Round 2
+    _to_next(session, Investment)  # Round 3
 
-    assert session.levers == _full_season()
-    # Other levers can still change.
-    session.set_levers(_full_season().model_copy(update={"fuel_procurement": "manual"}))
-
-
-def test_the_storage_lever_can_be_switched_back_before_the_recap_announces_anything(path: Path) -> None:
-    session = _session(path)
-    session.set_levers(_full_season())
-
-    session.set_levers(RoundLevers())
-
-    assert session.levers == RoundLevers()
-
-
-def test_the_storage_lever_is_free_again_once_the_announced_round_has_started(path: Path) -> None:
-    session = _session(path)
-    session.set_levers(_full_season())
-    _to_next(session, Recap)
-    session.advance()
-
-    session.set_levers(RoundLevers())
-
-    assert session.levers == RoundLevers()
+    assert [unlock.facility for unlock in session.unlocks if unlock.trigger == "format_lever"] == [
+        FacilityId.HYDROGEN_STORAGE,
+        FacilityId.PUMPED_HYDRO,
+    ]
+    assert not {FacilityId.HYDROGEN_STORAGE, FacilityId.PUMPED_HYDRO} & _offered(session)

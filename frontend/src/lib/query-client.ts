@@ -116,9 +116,12 @@ export const queryKeys = {
         // Also under the session's key: each purchase adds to a technology's progress, and a Recap
         // can unlock one (#1011).
         unlocks: ["workshop", "session", "unlocks"] as const,
-        // Also under the session's key: a period or Round opening fires the picks
-        // waiting for it, and settling one adds to the emissions (#1012).
+        // Also under the session's key: a period or Round opening fires the events
+        // planned for it, and settling one adds to the emissions (#1012).
         events: ["workshop", "session", "events"] as const,
+        // Also under the session's key: a Recap locks the next Round's plan, and a
+        // period or Round opening fires its planned events (#1190).
+        plans: ["workshop", "session", "plans"] as const,
         // Also under the session's key: settling a Trading period adds one.
         lockedPrices: ["workshop", "session", "prices", "locked"] as const,
         // A Trading period's review (#1007). The summary sits under the session's key, so a

@@ -2,10 +2,10 @@
 
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
-accounts. Advancing the session, extending its running phase and changing the levers are the
-facilitator's alone, and each tells every open page (#1140). So is reading how close each technology is to
-unlocking (#1011), and so are the events: picking them, and reading what fired (#1012). A player's investment
-selection (#999)
+accounts. Advancing the session, extending its running phase, changing the phase timers and editing each Round's
+plan (#1190) are the facilitator's alone, and each tells every open page (#1140). So is reading how close each
+technology is to unlocking (#1011), and so are the events: planning them, and reading what fired (#1012). A player's
+investment selection (#999)
 and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
 player's own.
@@ -25,7 +25,7 @@ from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
-from energetica.workshop.events import EVENTS, EventPick, InvalidPickError, suggested_severity
+from energetica.workshop.events import EVENTS, InvalidPickError, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
@@ -33,6 +33,7 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
+from energetica.workshop.round_plan import LeverInvalidInLaterRoundError, PlannedEvent, RoundLevers
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
     WorkshopEventOut,
@@ -49,9 +50,12 @@ from energetica.workshop.schemas import (
     WorkshopPeriodOut,
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
+    WorkshopPlannedEventOut,
+    WorkshopPlansOut,
     WorkshopPlayerOut,
     WorkshopPriceIn,
     WorkshopPricesOut,
+    WorkshopRoundPlanOut,
     WorkshopSelectionIn,
     WorkshopSelectionOut,
     WorkshopSessionOut,
@@ -66,17 +70,18 @@ from energetica.workshop.session import (
     FuelNotManualError,
     InvalidFuelQuantityError,
     InvestmentClosedError,
-    NoBoundaryLeftError,
+    NoEventsInRoundOneError,
     NoPhaseRunningError,
+    NoSuchRoundError,
     NotEnoughMoneyError,
     NotSelectedError,
     NotStorageError,
+    PhaseTimers,
     PriceBelowFloorError,
     PriceSettingClosedError,
-    RoundLevers,
+    RoundLockedError,
     SessionFinishedError,
     SettlementRunningError,
-    StorageLeverLockedError,
     TradingPeriod,
     WorkshopSession,
 )
@@ -197,27 +202,21 @@ async def extend_phase(
     return _session_out(session)
 
 
-@router.get("/levers")
-def get_levers(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> RoundLevers:
-    """The round-configuration levers. The format levers apply from the next Round."""
-    return session.levers
+@router.get("/timers")
+def get_timers(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> PhaseTimers:
+    """How long each timed phase is open when it starts."""
+    return session.timers
 
 
 # Waits on the session's lock and writes the session file, so it runs on a worker thread.
-@router.put("/levers")
-async def set_levers(
-    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, levers: RoundLevers
-) -> RoundLevers:
-    """Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
-    and the Round format to the next Round. Every storage type needs the full-season format. Once a Recap has
-    announced every storage type for the next Round, the storage lever cannot be switched back until it starts.
-    """
-    try:
-        await run_in_threadpool(session.set_levers, levers)
-    except StorageLeverLockedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_STORAGE_LEVER_LOCKED) from exc
+@router.put("/timers")
+async def set_timers(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, timers: PhaseTimers
+) -> PhaseTimers:
+    """Replace the phase timers, and tell every open page. They apply to the next phase that opens."""
+    await run_in_threadpool(session.set_timers, timers)
     await invalidate_session(request.app)
-    return session.levers
+    return session.timers
 
 
 @router.get("/unlocks")
@@ -254,11 +253,10 @@ def _events_out(session: WorkshopSession) -> WorkshopEventsOut:
             )
             for event in EVENTS.values()
         ],
-        picks=view.picks,
         fired=[
             WorkshopFiredEventOut(
                 event=fired.event,
-                name=EVENTS[fired.event].name if fired.event in EVENTS else fired.event,
+                name=_event_name(fired.event),
                 severity=fired.severity,
                 fuel=fired.fuel,
                 round=fired.round,
@@ -270,42 +268,125 @@ def _events_out(session: WorkshopSession) -> WorkshopEventsOut:
     )
 
 
+def _event_name(event_id: str) -> str:
+    """The event's name, or its id if the catalog no longer has it."""
+    return EVENTS[event_id].name if event_id in EVENTS else event_id
+
+
 @router.get("/events")
 def get_events(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> WorkshopEventsOut:
-    """The events the facilitator can pick, the picks waiting for their boundary, and every event that fired.
-    Facilitator only, and without headlines, so that the Recap surprises everyone.
+    """The events the facilitator can plan, and every event that fired. Facilitator only, and without headlines, so
+    that the Recap surprises everyone.
     """
     return _events_out(session)
+
+
+def _plans_out(session: WorkshopSession) -> WorkshopPlansOut:
+    view = session.plans_view()
+    return WorkshopPlansOut(
+        rounds=[
+            WorkshopRoundPlanOut(
+                round=round_number,
+                locked=round_number <= view.locked_rounds,
+                levers=plan.levers,
+                events=[
+                    WorkshopPlannedEventOut(
+                        event=planned.event,
+                        name=_event_name(planned.event),
+                        severity=planned.severity,
+                        fuel=planned.fuel,
+                        season=planned.season,
+                        status=status,
+                    )
+                    for planned, status in statuses
+                ],
+            )
+            for round_number, (plan, statuses) in enumerate(zip(view.plans, view.statuses, strict=True), start=1)
+        ]
+    )
+
+
+@router.get("/plans")
+def get_plans(_: Annotated[Account, Depends(get_facilitator)], session: Session) -> WorkshopPlansOut:
+    """Every Round's plan: its levers and planned events, whether it is locked, and what became of each event.
+    Facilitator only, so that players learn of the next Round only at the Recap.
+    """
+    return _plans_out(session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
-@router.put("/events/picks")
-async def pick_event(
-    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, pick: EventPick
-) -> WorkshopEventsOut:
-    """Pick an event to fire at the next boundary of its kind: the next Trading period or the next Round. It takes
-    the place of any pick of the same category waiting for the same boundary, and can be changed until then. An
-    event whose boundary will not come again before the session ends cannot be picked.
+@router.put("/plans/{round_number}/levers")
+async def set_round_levers(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    round_number: int,
+    levers: RoundLevers,
+) -> WorkshopPlansOut:
+    """Set a Round's levers, and tell every open page. Each lever that changed also changes in every later Round.
+    A locked Round cannot change, and a change that would leave a later Round invalid is refused, naming that Round.
+    Every storage type needs the full-season format.
     """
     try:
-        changed = await run_in_threadpool(session.pick_event, pick)
-    except InvalidPickError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
-    except NoBoundaryLeftError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        changed = await run_in_threadpool(session.set_levers, round_number, levers)
+    except NoSuchRoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RoundLockedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
+    except LeverInvalidInLaterRoundError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_LEVER_INVALID_IN_LATER_ROUND, round=exc.round_number) from exc
     if changed:
         await invalidate_session(request.app)
-    return _events_out(session)
+    return _plans_out(session)
 
 
-@router.delete("/events/picks/{event_id}")
-async def drop_event(
-    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, event_id: str
-) -> WorkshopEventsOut:
-    """Drop the pick of an event before it fires. Dropping one that is not waiting changes nothing."""
-    if await run_in_threadpool(session.drop_event, event_id):
+@router.put("/plans/{round_number}/events")
+async def plan_event(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    round_number: int,
+    planned: PlannedEvent,
+) -> WorkshopPlansOut:
+    """Plan an event for a Round, and for a seasonal event a season. It takes the place of any event of the same
+    category planned for the same boundary. A locked Round cannot change, and Round 1 holds no events.
+    """
+    try:
+        changed = await run_in_threadpool(session.plan_event, round_number, planned)
+    except NoSuchRoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RoundLockedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
+    except NoEventsInRoundOneError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_NO_EVENTS_IN_ROUND_ONE) from exc
+    except InvalidPickError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    if changed:
         await invalidate_session(request.app)
-    return _events_out(session)
+    return _plans_out(session)
+
+
+@router.delete("/plans/{round_number}/events/{event_id}")
+async def unplan_event(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    round_number: int,
+    event_id: str,
+    season: Season | None = None,
+) -> WorkshopPlansOut:
+    """Drop an event planned for a Round's ``season``, or for the Round if no season is given. Dropping one that is
+    not planned changes nothing. A locked Round cannot change.
+    """
+    try:
+        changed = await run_in_threadpool(session.unplan_event, round_number, event_id, season)
+    except NoSuchRoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RoundLockedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
+    if changed:
+        await invalidate_session(request.app)
+    return _plans_out(session)
 
 
 @router.get("/facilities")

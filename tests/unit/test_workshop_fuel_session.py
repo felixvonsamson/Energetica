@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import math
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,16 +14,15 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop import session as session_module
-from energetica.workshop.events import EventPick
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.round_plan import PlannedEvent, RoundLevers
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, STOCKPILE_SEASONS, FuelPurchase, season_need
 from energetica.workshop.session import (
     FuelNotBurnedError,
     FuelNotManualError,
     InvalidFuelQuantityError,
     PriceSettingClosedError,
-    RoundLevers,
     TradingPeriod,
     WorkshopSession,
 )
@@ -42,8 +40,9 @@ GAS = FacilityId.GAS_BURNER
 COAL = FacilityId.COAL_BURNER
 
 # Price shocks the moderator picks (#1012): gas ×1.5, and coal ×0.85.
-GAS_SHOCK = EventPick(event="geo.gas_pipeline_disruption", severity="base")
-COAL_SHOCK = EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL)
+# Planned for Round 2's summer: Round 1 holds no events.
+GAS_SHOCK = PlannedEvent(event="geo.gas_pipeline_disruption", severity="base", season="summer")
+COAL_SHOCK = PlannedEvent(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL, season="summer")
 
 
 class _Clock:
@@ -85,7 +84,7 @@ def _trading(path: Path, *, manual: bool = True, facilities: tuple[FacilityId, .
     """A session in Round 1's spring price-setting window, with Alice (account 1) owning ``facilities``."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
     session.join(_account(1, "alice")).money = 10_000_000_000.0
-    session.set_levers(RoundLevers(fuel_procurement="manual" if manual else "automatic"))
+    session.set_levers(1, RoundLevers(fuel_procurement="manual" if manual else "automatic"))
     session.advance()
     for facility in facilities:
         session.select(1, facility)
@@ -93,6 +92,14 @@ def _trading(path: Path, *, manual: bool = True, facilities: tuple[FacilityId, .
     session.advance()  # into spring
     assert session.checkpoint == TradingPeriod(round=1, season="spring")
     return session
+
+
+def _to_round_two_spring(session: WorkshopSession) -> None:
+    """From Round 1's spring price-setting window, settle the rest of Round 1 and open Round 2's spring."""
+    while session.checkpoint != TradingPeriod(round=2, season="spring"):
+        if isinstance(session.checkpoint, TradingPeriod):
+            _close_and_settle(session)
+        session.advance()
 
 
 def _need(session: WorkshopSession, fuel: Fuel = Fuel.GAS) -> float:
@@ -109,17 +116,6 @@ def _whole_tonnes(kg: float) -> float:
 
 def test_fuel_procurement_is_automatic_unless_the_moderator_turns_on_manual() -> None:
     assert RoundLevers().fuel_procurement == "automatic"
-
-
-def test_a_trading_period_fixes_the_procurement_lever_when_it_opens(path: Path) -> None:
-    session = _trading(path, manual=False)
-
-    session.set_levers(RoundLevers(fuel_procurement="manual"))
-
-    assert session.fuel_procurement == "automatic"
-    _close_and_settle(session)
-    session.advance()
-    assert session.fuel_procurement == "manual"
 
 
 def test_no_fuel_has_a_price_before_the_first_trading_period(path: Path) -> None:
@@ -141,10 +137,11 @@ def test_every_fuel_gets_a_new_price_each_trading_period(path: Path) -> None:
     assert session.fuel_prices[Fuel.GAS].price != spring[Fuel.GAS].price
 
 
-def test_a_picked_shock_lands_at_the_next_trading_period_only(path: Path) -> None:
+def test_a_planned_shock_lands_at_its_trading_period_only(path: Path) -> None:
     session = _trading(path)
+    session.plan_event(2, GAS_SHOCK)
 
-    session.pick_event(GAS_SHOCK)
+    _to_round_two_spring(session)
 
     assert not session.fuel_prices[Fuel.GAS].shocked
     _close_and_settle(session)
@@ -298,7 +295,6 @@ def test_automatic_procurement_never_runs_out_of_fuel(path: Path) -> None:
 def test_a_period_opened_before_fuel_had_prices_settles_at_the_catalog_price(path: Path) -> None:
     session = _trading(path, manual=False)
     session.fuel_prices = {}
-    session.fuel_procurement = None
 
     _close_and_settle(session)
 
@@ -388,7 +384,7 @@ def test_fuel_survives_a_restart(path: Path) -> None:
     session.set_fuel_order(1, Fuel.GAS, 3 * _need(session))
     _close_and_settle(session)
     session.advance()
-    session.pick_event(COAL_SHOCK)
+    session.plan_event(2, COAL_SHOCK)
     alice = session.network.members[1]
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
@@ -397,32 +393,17 @@ def test_fuel_survives_a_restart(path: Path) -> None:
     assert (again.fuel_stock, again.fuel_order) == (alice.fuel_stock, alice.fuel_order)
     assert reopened.fuel_prices == session.fuel_prices
     assert reopened.fuel_procurement == "manual"
-    assert reopened.event_picks == [COAL_SHOCK]
+    assert reopened.plans == session.plans
     assert again.trading_results == alice.trading_results
-
-
-def test_a_session_saved_before_fuel_existed_still_opens(path: Path) -> None:
-    session = _trading(path)
-    saved = json.loads(path.read_text())
-    for key in ("fuel_procurement", "fuel_prices", "pending_fuel_shocks"):
-        del saved[key]
-    del saved["levers"]["fuel_procurement"]
-    for player in saved["players"]:
-        del player["fuel_stock"], player["fuel_order"]
-    path.write_text(json.dumps(saved))
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
-
-    assert reopened.fuel_prices == {}
-    assert reopened.network.members[1].fuel_stock == {}
-    assert session.network.members[1].owned_facilities == reopened.network.members[1].owned_facilities
 
 
 def test_a_failed_save_leaves_the_prices_as_they_were(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _trading(path)
+    session.plan_event(2, GAS_SHOCK)
+    _to_round_two_spring(session)
     _close_and_settle(session)
     prices, order = dict(session.fuel_prices), dict(session.network.members[1].fuel_order)
-    session.pick_event(GAS_SHOCK)
+    fired = list(session.fired_events)
     monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
@@ -430,8 +411,8 @@ def test_a_failed_save_leaves_the_prices_as_they_were(path: Path, monkeypatch: p
 
     assert session.fuel_prices == prices
     assert session.network.members[1].fuel_order == order
-    assert (session.event_picks, session.fired_events) == ([GAS_SHOCK], [])
-    assert session.checkpoint == TradingPeriod(round=1, season="spring")
+    assert session.fired_events == fired
+    assert session.checkpoint == TradingPeriod(round=2, season="spring")
 
 
 def test_each_fuel_the_fleet_burns_gets_its_own_default(path: Path) -> None:

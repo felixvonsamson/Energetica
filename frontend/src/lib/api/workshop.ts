@@ -1,6 +1,6 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009, #1011, #1012). Served only by a Workshop Run's backend.
+ * #1009, #1011, #1012, #1190). Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -135,9 +135,8 @@ export const workshopApi = {
         ),
 
     /**
-     * The events the facilitator can pick, without their headlines, the picks
-     * waiting for their boundary, and the events that fired (#1012).
-     * Facilitator only.
+     * The events the facilitator can plan, without their headlines, and the
+     * events that fired (#1012). Facilitator only.
      */
     getEvents: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/events", "get">>(
@@ -145,20 +144,52 @@ export const workshopApi = {
         ),
 
     /**
-     * Pick an event to fire at the next boundary of its kind, in place of the
-     * pick of its category waiting for the same one (#1012).
+     * Every Round's plan: its levers and planned events, whether it is locked,
+     * and what became of each event (#1190). Facilitator only.
      */
-    pickEvent: (pick: ApiSchema<"EventPick">) =>
-        apiClient.put<ApiResponse<"/api/v1/workshop/events/picks", "put">>(
-            "/workshop/events/picks",
-            pick,
+    getPlans: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/plans", "get">>(
+            "/workshop/plans",
         ),
 
-    /** Drop an event's pick before it fires (#1012). */
-    dropEvent: (eventId: string) =>
+    /**
+     * Plan an event for a Round, and for a seasonal event a season, in place of
+     * the one of its category planned for the same boundary (#1190).
+     */
+    planEvent: ({
+        round,
+        planned,
+    }: {
+        round: number;
+        planned: ApiSchema<"PlannedEvent">;
+    }) =>
+        apiClient.put<
+            ApiResponse<"/api/v1/workshop/plans/{round_number}/events", "put">
+        >(`/workshop/plans/${round}/events`, planned),
+
+    /**
+     * Drop an event planned for a Round's season, or for the Round if `season`
+     * is null (#1190).
+     */
+    unplanEvent: ({
+        round,
+        eventId,
+        season,
+    }: {
+        round: number;
+        eventId: string;
+        season: Season | null;
+    }) =>
         apiClient.delete<
-            ApiResponse<"/api/v1/workshop/events/picks/{event_id}", "delete">
-        >(`/workshop/events/picks/${encodeURIComponent(eventId)}`),
+            ApiResponse<
+                "/api/v1/workshop/plans/{round_number}/events/{event_id}",
+                "delete"
+            >
+        >(
+            `/workshop/plans/${round}/events/${encodeURIComponent(eventId)}${
+                season ? `?season=${season}` : ""
+            }`,
+        ),
 
     /**
      * The fuel the visitor's facilities burn: this season's prices, their

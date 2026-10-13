@@ -33,7 +33,8 @@ from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
-from energetica.workshop.session import RoundLevers, TradingPeriod, WorkshopSession
+from energetica.workshop.round_plan import RoundLevers
+from energetica.workshop.session import TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 
 from . import _socketio_helpers as socket
@@ -488,8 +489,11 @@ class _Clock:
         self.now += timedelta(**elapsed)
 
 
-def _investing(session_path: Path, clock: _Clock, *usernames: str) -> tuple[FastAPI, TestClient, int, list[int]]:
-    """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 1,000,000.
+def _investing(
+    session_path: Path, clock: _Clock, *usernames: str, levers: RoundLevers | None = None
+) -> tuple[FastAPI, TestClient, int, list[int]]:
+    """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 1,000,000. Round 1 runs
+    with ``levers``, by default those of the default plan.
 
     Returns the app, a client left signed in as the facilitator, and the facilitator's and players'
     account ids.
@@ -502,6 +506,8 @@ def _investing(session_path: Path, clock: _Clock, *usernames: str) -> tuple[Fast
         client.post(ENTER_URL)
         app.state.workshop_session.player(account_ids[-1]).money = 1_000_000.0
     facilitator = _facilitator(client)
+    if levers is not None:
+        app.state.workshop_session.set_levers(1, levers)
     client.post(ADVANCE_URL)
     return app, client, facilitator, account_ids
 
@@ -811,12 +817,12 @@ def _fuel_trading(session_path: Path, clock: _Clock, *, manual: bool = True) -> 
 
     Returns a client left signed in as Alice, and the facilitator's and Alice's account ids.
     """
-    app, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    levers = RoundLevers(fuel_procurement="manual" if manual else "automatic")
+    app, client, facilitator, [alice] = _investing(session_path, clock, "alice", levers=levers)
     session: WorkshopSession = app.state.workshop_session
     session.network.members[alice].owned_facilities.extend(
         [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)] * 6
     )
-    session.set_levers(RoundLevers(fuel_procurement="manual" if manual else "automatic"))
     _advance(client)
     authenticate(client, alice)
     return client, facilitator, alice
@@ -964,7 +970,9 @@ def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, cl
 
 # --- round format: full-season mode, clearings per day and storage (#1004) ------------------
 
-LEVERS_URL = "/api/v1/workshop/levers"
+PLANS_URL = "/api/v1/workshop/plans"
+LEVERS_URL = "/api/v1/workshop/plans/{round}/levers"
+TIMERS_URL = "/api/v1/workshop/timers"
 
 
 # --- balance sheet (#1008) ------------------------------------------------------------------
@@ -1017,27 +1025,74 @@ def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(ses
 
 def _levers(**round_format: object) -> dict:
     """The default levers, with the Round format given."""
-    return {
-        "investment_minutes": 8,
-        "price_setting_minutes": 5,
-        "round_format": round_format,
-        "fuel_procurement": "automatic",
-    }
+    return {"round_format": round_format, "fuel_procurement": "automatic"}
 
 
-def test_the_facilitator_reads_and_changes_the_levers(session_path: Path) -> None:
+def _round_formats(client: TestClient) -> list[dict]:
+    return [plan["levers"]["round_format"] for plan in client.get(PLANS_URL).json()["rounds"]]
+
+
+def test_the_facilitator_reads_and_changes_a_rounds_levers(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
+    default = {"trading_format": "representative_day", "clearings_per_day": 24, "storage": "batteries"}
     round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
 
-    assert client.get(LEVERS_URL).json()["round_format"]["trading_format"] == "representative_day"
-    response = client.put(LEVERS_URL, json=_levers(**round_format))
+    assert _round_formats(client) == [default] * 3
+    response = client.put(LEVERS_URL.format(round=2), json=_levers(**round_format))
 
     assert response.status_code == 200
-    assert response.json() == _levers(**round_format)
-    assert client.get(LEVERS_URL).json() == response.json()
+    assert [plan["levers"]["round_format"] for plan in response.json()["rounds"]] == [default, *[round_format] * 2]
+    assert client.get(PLANS_URL).json() == response.json()
+    client.put(LEVERS_URL.format(round=1), json=_levers(**round_format))
     # Before Round 1 starts, the session shows the format it will start with.
     assert client.get(SESSION_URL).json()["round_format"] == round_format
+
+
+def test_a_locked_round_cannot_change(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    assert [plan["locked"] for plan in client.get(PLANS_URL).json()["rounds"]] == [False] * 3
+    client.post(ADVANCE_URL)
+
+    response = client.put(LEVERS_URL.format(round=1), json=_levers(storage="off"))
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_ROUND_LOCKED"
+    assert [plan["locked"] for plan in client.get(PLANS_URL).json()["rounds"]] == [True, False, False]
+
+
+def test_a_change_that_would_leave_a_later_round_invalid_is_refused(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season"))
+    client.put(LEVERS_URL.format(round=3), json=_levers(trading_format="full_season", storage="all"))
+    before = client.get(PLANS_URL).json()
+
+    response = client.put(LEVERS_URL.format(round=2), json=_levers())
+
+    assert response.status_code == 400
+    assert response.json() == {"game_exception_type": "WORKSHOP_LEVER_INVALID_IN_LATER_ROUND", "kwargs": {"round": 3}}
+    assert client.get(PLANS_URL).json() == before
+
+
+def test_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.put(LEVERS_URL.format(round=4), json=_levers()).status_code == 404
+
+
+def test_the_facilitator_reads_and_changes_the_timers(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.get(TIMERS_URL).json() == {"investment_minutes": 8, "price_setting_minutes": 5}
+    response = client.put(TIMERS_URL, json={"investment_minutes": 3, "price_setting_minutes": 2})
+
+    assert response.json() == {"investment_minutes": 3, "price_setting_minutes": 2}
+    client.post(ADVANCE_URL)
+    assert client.get(SESSION_URL).json()["phase_timer"]["remaining_seconds"] == pytest.approx(180, abs=5)
 
 
 @pytest.mark.parametrize(
@@ -1049,28 +1104,30 @@ def test_levers_that_are_not_allowed_are_rejected(session_path: Path, round_form
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.put(LEVERS_URL, json=_levers(**round_format)).status_code == 422
-    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "batteries"
+    assert client.put(LEVERS_URL.format(round=1), json=_levers(**round_format)).status_code == 422
+    assert _round_formats(client)[0]["storage"] == "batteries"
 
 
 def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) -> None:
     client = _client(session_path)
     _player(client, "alice")
 
-    assert client.get(LEVERS_URL).status_code == 403
-    assert client.put(LEVERS_URL, json=_levers(clearings_per_day=96)).status_code == 403
+    assert client.get(PLANS_URL).status_code == 403
+    assert client.put(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96)).status_code == 403
+    assert client.get(TIMERS_URL).status_code == 403
+    assert client.put(TIMERS_URL, json={"investment_minutes": 3, "price_setting_minutes": 2}).status_code == 403
 
 
 def test_the_facilities_on_offer_follow_the_rounds_storage_lever(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
-    client.put(LEVERS_URL, json=_levers(storage="off"))
+    client.put(LEVERS_URL.format(round=1), json=_levers(storage="off"))
     client.post(ADVANCE_URL)
 
     offered = {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     assert "lithium_ion_batteries" not in offered
 
-    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
+    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
     assert "hydrogen_storage" not in {facility["id"] for facility in client.get(FACILITIES_URL).json()}
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
         _advance(client)
@@ -1085,7 +1142,7 @@ def test_storage_a_player_owns_is_still_listed_once_it_is_no_longer_for_sale(ses
     app.state.workshop_session.player(alice).owned_facilities.append(
         OwnedFacility(facility=FacilityId.HYDROGEN_STORAGE, built_round=1)
     )
-    client.put(LEVERS_URL, json=_levers(storage="off"))
+    client.put(LEVERS_URL.format(round=2), json=_levers(storage="off"))
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("investment", 2):
         _advance(client)
 
@@ -1413,23 +1470,27 @@ def test_players_never_see_unlock_progress(session_path: Path) -> None:
     assert client.get(UNLOCKS_URL).status_code == 403
 
 
-def test_the_facilitator_cannot_switch_back_storage_the_recap_announced(session_path: Path, clock: _Clock) -> None:
+def test_the_recap_locks_the_next_rounds_storage_it_announced(session_path: Path, clock: _Clock) -> None:
     _, client, _, _ = _investing(session_path, clock, "alice")
-    client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="all"))
+    client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="all"))
     while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
         _advance(client)
 
-    response = client.put(LEVERS_URL, json=_levers(trading_format="full_season", storage="batteries"))
+    response = client.put(LEVERS_URL.format(round=2), json=_levers(trading_format="full_season", storage="batteries"))
 
     assert response.status_code == 400
-    assert response.json()["game_exception_type"] == "WORKSHOP_STORAGE_LEVER_LOCKED"
-    assert client.get(LEVERS_URL).json()["round_format"]["storage"] == "all"
+    assert response.json()["game_exception_type"] == "WORKSHOP_ROUND_LOCKED"
+    assert _round_formats(client)[1]["storage"] == "all"
+    assert [unlock["facility"] for unlock in client.get(UNLOCKS_URL).json()["unlocks"]] == [
+        "hydrogen_storage",
+        "pumped_hydro",
+    ]
 
 
 # --- events (#1012) -------------------------------------------------------------------------
 
 EVENTS_URL = "/api/v1/workshop/events"
-EVENT_PICKS_URL = "/api/v1/workshop/events/picks"
+PLANNED_EVENTS_URL = "/api/v1/workshop/plans/{round}/events"
 
 
 def _keeping_the_lights_on(session_path: Path, clock: _Clock) -> tuple[FastAPI, TestClient, int, int]:
@@ -1466,7 +1527,7 @@ def test_the_facilitator_lists_the_events_without_their_headlines(session_path: 
         "fuel_chosen": False,
     }
     assert "substation" not in json.dumps(body)
-    assert (body["picks"], body["fired"], body["emissions"]) == ([], [], 0.0)
+    assert (body["fired"], body["emissions"]) == ([], 0.0)
 
 
 def test_players_never_see_or_pick_events(session_path: Path) -> None:
@@ -1475,54 +1536,79 @@ def test_players_never_see_or_pick_events(session_path: Path) -> None:
     client.post(ENTER_URL)
 
     assert client.get(EVENTS_URL).status_code == 403
-    assert client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "major"}).status_code == 403
-    assert client.delete(f"{EVENT_PICKS_URL}/climate.flood").status_code == 403
+    flood = {"event": "climate.flood", "severity": "major", "season": "summer"}
+    assert client.get(PLANS_URL).status_code == 403
+    assert client.put(PLANNED_EVENTS_URL.format(round=2), json=flood).status_code == 403
+    assert client.delete(f"{PLANNED_EVENTS_URL.format(round=2)}/climate.flood?season=summer").status_code == 403
 
 
 @pytest.mark.parametrize(
     "pick",
     [
-        {"event": "climate.nope", "severity": "major"},
-        {"event": "climate.flood", "severity": "minor"},
-        {"event": "geo.conflict_resolution", "severity": "base"},
-        {"event": "climate.flood", "severity": "major", "fuel": "gas"},
+        {"event": "climate.nope", "severity": "major", "season": "summer"},
+        {"event": "climate.flood", "severity": "minor", "season": "summer"},
+        {"event": "geo.conflict_resolution", "severity": "base", "season": "summer"},
+        {"event": "climate.flood", "severity": "major", "fuel": "gas", "season": "summer"},
+        {"event": "climate.flood", "severity": "major"},
+        {"event": "demand.recession", "severity": "base", "season": "summer"},
     ],
 )
 def test_a_pick_the_catalog_does_not_allow_is_rejected(session_path: Path, pick: dict) -> None:
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.put(EVENT_PICKS_URL, json=pick).status_code == 422
-    assert client.get(EVENTS_URL).json()["picks"] == []
+    assert client.put(PLANNED_EVENTS_URL.format(round=2), json=pick).status_code == 422
+    assert client.get(PLANS_URL).json()["rounds"][1]["events"] == []
 
 
-def test_the_facilitator_picks_and_drops_an_event(session_path: Path) -> None:
+def test_the_facilitator_plans_and_drops_an_event(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    shock = {"event": "geo.conflict_resolution", "severity": "base", "fuel": "coal", "season": "summer"}
+
+    planned = client.put(PLANNED_EVENTS_URL.format(round=2), json=shock)
+    assert planned.status_code == 200
+    assert planned.json()["rounds"][1]["events"] == [
+        {**shock, "name": "Diplomatic resolution ends a regional conflict", "status": "planned"}
+    ]
+
+    # Without a season, it names the Round-wide event, which is not planned.
+    assert client.delete(f"{PLANNED_EVENTS_URL.format(round=2)}/geo.conflict_resolution").status_code == 200
+    dropped = client.delete(f"{PLANNED_EVENTS_URL.format(round=2)}/geo.conflict_resolution?season=summer")
+    assert dropped.status_code == 200
+    assert dropped.json()["rounds"][1]["events"] == []
+
+
+def test_round_one_holds_no_events(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
 
-    picked = client.put(EVENT_PICKS_URL, json={"event": "geo.conflict_resolution", "severity": "base", "fuel": "coal"})
-    assert picked.status_code == 200
-    assert picked.json()["picks"] == [{"event": "geo.conflict_resolution", "severity": "base", "fuel": "coal"}]
+    response = client.put(PLANNED_EVENTS_URL.format(round=1), json={"event": "demand.recession", "severity": "base"})
 
-    dropped = client.delete(f"{EVENT_PICKS_URL}/geo.conflict_resolution")
-    assert dropped.status_code == 200
-    assert dropped.json()["picks"] == []
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_EVENTS_IN_ROUND_ONE"
 
 
-def test_a_climate_event_picked_mid_round_waits_for_the_next_trading_period(session_path: Path, clock: _Clock) -> None:
+def test_a_climate_event_fires_at_the_season_it_is_planned_for(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
 
-    client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "moderate"})
-    # Changed before the boundary: only the last pick fires.
-    client.put(EVENT_PICKS_URL, json={"event": "climate.flood", "severity": "major"})
-    _advance(client)  # spring settles untouched, and summer opens
+    client.put(
+        PLANNED_EVENTS_URL.format(round=2), json={"event": "climate.flood", "severity": "moderate", "season": "summer"}
+    )
+    # Changed before the Round locks: only the last plan fires.
+    client.put(
+        PLANNED_EVENTS_URL.format(round=2), json={"event": "climate.flood", "severity": "major", "season": "summer"}
+    )
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("trading_period", 2, "summer"):
+        _advance(client)
     assert client.get(EVENTS_URL).json()["fired"] == [
-        {"event": "climate.flood", "name": "Flood", "severity": "major", "fuel": None, "round": 1, "season": "summer"}
+        {"event": "climate.flood", "name": "Flood", "severity": "major", "fuel": None, "round": 2, "season": "summer"}
     ]
+    assert client.get(PLANS_URL).json()["rounds"][1]["events"][0]["status"] == "fired"
     _advance(client)  # summer settles
 
     authenticate(client, alice)
-    spring, summer = client.get(BALANCE_SHEET_URL.format(round=1)).json()["seasons"][:2]
+    spring, summer = client.get(BALANCE_SHEET_URL.format(round=2)).json()["seasons"][:2]
     assert spring["sheet"]["revenue_tax"] == 0.0
     assert summer["sheet"]["sale_revenue"] > 0
     assert summer["sheet"]["revenue_tax_rate"] == pytest.approx(0.07)
@@ -1531,7 +1617,7 @@ def test_a_climate_event_picked_mid_round_waits_for_the_next_trading_period(sess
 
 def test_a_facility_price_shock_shows_in_the_catalog_for_its_round(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
-    client.put(EVENT_PICKS_URL, json={"event": "geo.wind_supply_war", "severity": "base"})
+    client.put(PLANNED_EVENTS_URL.format(round=2), json={"event": "geo.wind_supply_war", "severity": "base"})
     while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "investment":
         _advance(client)
 

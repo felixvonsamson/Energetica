@@ -2046,7 +2046,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/levers": {
+    "/api/v1/workshop/timers": {
         parameters: {
             query?: never;
             header?: never;
@@ -2054,17 +2054,15 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Levers
-         * @description The round-configuration levers. The format levers apply from the next Round.
+         * Get Timers
+         * @description How long each timed phase is open when it starts.
          */
-        get: operations["get_levers_api_v1_workshop_levers_get"];
+        get: operations["get_timers_api_v1_workshop_timers_get"];
         /**
-         * Set Levers
-         * @description Replace the levers, and tell every open page. The timing levers apply to the next phase that opens,
-         *     and the Round format to the next Round. Every storage type needs the full-season format. Once a Recap has
-         *     announced every storage type for the next Round, the storage lever cannot be switched back until it starts.
+         * Set Timers
+         * @description Replace the phase timers, and tell every open page. They apply to the next phase that opens.
          */
-        put: operations["set_levers_api_v1_workshop_levers_put"];
+        put: operations["set_timers_api_v1_workshop_timers_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2102,8 +2100,8 @@ export interface paths {
         };
         /**
          * Get Events
-         * @description The events the facilitator can pick, the picks waiting for their boundary, and every event that fired.
-         *     Facilitator only, and without headlines, so that the Recap surprises everyone.
+         * @description The events the facilitator can plan, and every event that fired. Facilitator only, and without headlines, so
+         *     that the Recap surprises everyone.
          */
         get: operations["get_events_api_v1_workshop_events_get"];
         put?: never;
@@ -2114,7 +2112,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/events/picks": {
+    "/api/v1/workshop/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Plans
+         * @description Every Round's plan: its levers and planned events, whether it is locked, and what became of each event.
+         *     Facilitator only, so that players learn of the next Round only at the Recap.
+         */
+        get: operations["get_plans_api_v1_workshop_plans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/plans/{round_number}/levers": {
         parameters: {
             query?: never;
             header?: never;
@@ -2123,12 +2142,12 @@ export interface paths {
         };
         get?: never;
         /**
-         * Pick Event
-         * @description Pick an event to fire at the next boundary of its kind: the next Trading period or the next Round. It takes
-         *     the place of any pick of the same category waiting for the same boundary, and can be changed until then. An
-         *     event whose boundary will not come again before the session ends cannot be picked.
+         * Set Round Levers
+         * @description Set a Round's levers, and tell every open page. Each lever that changed also changes in every later Round.
+         *     A locked Round cannot change, and a change that would leave a later Round invalid is refused, naming that Round.
+         *     Every storage type needs the full-season format.
          */
-        put: operations["pick_event_api_v1_workshop_events_picks_put"];
+        put: operations["set_round_levers_api_v1_workshop_plans__round_number__levers_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2136,7 +2155,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/events/picks/{event_id}": {
+    "/api/v1/workshop/plans/{round_number}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Plan Event
+         * @description Plan an event for a Round, and for a seasonal event a season. It takes the place of any event of the same
+         *     category planned for the same boundary. A locked Round cannot change, and Round 1 holds no events.
+         */
+        put: operations["plan_event_api_v1_workshop_plans__round_number__events_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/plans/{round_number}/events/{event_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2147,10 +2187,11 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Drop Event
-         * @description Drop the pick of an event before it fires. Dropping one that is not waiting changes nothing.
+         * Unplan Event
+         * @description Drop an event planned for a Round's ``season``, or for the Round if no season is given. Dropping one that is
+         *     not planned changes nothing. A locked Round cannot change.
          */
-        delete: operations["drop_event_api_v1_workshop_events_picks__event_id__delete"];
+        delete: operations["unplan_event_api_v1_workshop_plans__round_number__events__event_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5058,24 +5099,6 @@ export interface components {
             net_profit: number;
         };
         /**
-         * EventPick
-         * @description A vignette the moderator picked, waiting for the next boundary of its kind.
-         */
-        EventPick: {
-            /**
-             * Event
-             * @description The event's id
-             */
-            event: string;
-            /**
-             * Severity
-             * @enum {string}
-             */
-            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
-            /** @description The fuel it moves, for an event whose fuel the moderator picks */
-            fuel?: components["schemas"]["Fuel"] | null;
-        };
-        /**
          * FacilityCategory
          * @description The groups of #975. A base tier and its upgrade share one.
          * @enum {string}
@@ -5278,6 +5301,46 @@ export interface components {
             operating_income: number;
         };
         /**
+         * PhaseTimers
+         * @description How long each timed phase is open when it starts (#986). The moderator changes them at any time, and a change
+         *     applies to the next phase that opens. They belong to the session, not to any Round's plan.
+         */
+        PhaseTimers: {
+            /**
+             * Investment Minutes
+             * @default 8
+             */
+            investment_minutes: number;
+            /**
+             * Price Setting Minutes
+             * @default 5
+             */
+            price_setting_minutes: number;
+        };
+        /**
+         * PlannedEvent
+         * @description An event planned for a Round, and for a seasonal event, a season.
+         */
+        PlannedEvent: {
+            /**
+             * Event
+             * @description The event's id
+             */
+            event: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
+            /** @description The fuel it moves, for an event whose fuel the moderator picks */
+            fuel?: components["schemas"]["Fuel"] | null;
+            /**
+             * Season
+             * @description The season whose Trading period it fires at, for a seasonal event. Null for a Round event, which fires when the Round's Investment phase opens
+             */
+            season?: ("spring" | "summer" | "autumn" | "winter") | null;
+        };
+        /**
          * PriceSheet
          * @description A player's prices, per MWh.
          */
@@ -5339,27 +5402,13 @@ export interface components {
         };
         /**
          * RoundLevers
-         * @description The round-configuration levers the moderator changes during a session.
-         *
-         *     Each lever is added by the ticket that builds it (#996, #1012, #1018). They belong to the
-         *     session, saved with it, and not to ``WorkshopRun`` in ``instance.json``, which the sysadmin
-         *     writes when the Run is provisioned. Every lever has a default, so a session saved before a lever
-         *     existed still loads.
+         * @description The levers of one Round, fixed for the whole Round.
          */
         RoundLevers: {
-            /**
-             * Investment Minutes
-             * @default 8
-             */
-            investment_minutes: number;
-            /**
-             * Price Setting Minutes
-             * @default 5
-             */
-            price_setting_minutes: number;
             round_format?: components["schemas"]["RoundFormat"];
             /**
              * Fuel Procurement
+             * @description How players get fuel in the Round
              * @default automatic
              * @enum {string}
              */
@@ -5450,7 +5499,7 @@ export interface components {
             category: "climate" | "price_shock_geopolitical" | "demand_shift" | "tech_unlock" | "vote";
             /**
              * Boundary Type
-             * @description round: it fires when the next Round's Investment phase opens. trading_period: when the next Trading period opens
+             * @description round: it fires when the Investment phase of the Round it is planned for opens. trading_period: when the Trading period of the season it is planned for opens
              * @enum {string}
              */
             boundary_type: "round" | "trading_period";
@@ -5479,8 +5528,7 @@ export interface components {
         };
         /**
          * WorkshopEventsOut
-         * @description The events the facilitator can pick, the picks waiting to fire, and those that fired (#1012). For the
-         *     facilitator only.
+         * @description The events the facilitator can plan, and those that fired (#1012). For the facilitator only.
          */
         WorkshopEventsOut: {
             /**
@@ -5488,11 +5536,6 @@ export interface components {
              * @description Every event, in catalog order
              */
             events: components["schemas"]["WorkshopEventOut"][];
-            /**
-             * Picks
-             * @description The picks waiting for their boundary: at most one per category and kind of boundary
-             */
-            picks: components["schemas"]["EventPick"][];
             /**
              * Fired
              * @description Every event that fired, in order
@@ -5676,9 +5719,10 @@ export interface components {
         WorkshopFuelOut: {
             /**
              * Procurement
-             * @description How players get fuel in the current Trading period, or null before the first one: billed for what they burned, or buying it themselves in the price-setting window
+             * @description How players get fuel in the current Round: billed for what they burned, or buying it themselves in the price-setting window
+             * @enum {string}
              */
-            procurement: ("automatic" | "manual") | null;
+            procurement: "automatic" | "manual";
             /**
              * Fuels
              * @description Each fuel the player's operating facilities burn, in a fixed order. Empty before the first Trading period
@@ -5861,6 +5905,45 @@ export interface components {
             remaining_seconds: number;
         };
         /**
+         * WorkshopPlannedEventOut
+         * @description An event planned for a Round (#1190).
+         */
+        WorkshopPlannedEventOut: {
+            /**
+             * Event
+             * @description The event's id
+             */
+            event: string;
+            /** Name */
+            name: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
+            /** @description The fuel the facilitator picked for it, if it takes one */
+            fuel: components["schemas"]["Fuel"] | null;
+            /**
+             * Season
+             * @description The season it fires at, or null if it fires with the Round
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
+             * Status
+             * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
+             * @enum {string}
+             */
+            status: "planned" | "fired" | "skipped";
+        };
+        /**
+         * WorkshopPlansOut
+         * @description Every Round's plan, in order (#1190). For the facilitator only.
+         */
+        WorkshopPlansOut: {
+            /** Rounds */
+            rounds: components["schemas"]["WorkshopRoundPlanOut"][];
+        };
+        /**
          * WorkshopPlayerOut
          * @description The calling account's own player in the Run.
          */
@@ -5931,6 +6014,25 @@ export interface components {
              * @description The lowest price a player can set, per MWh
              */
             price_floor: number;
+        };
+        /**
+         * WorkshopRoundPlanOut
+         * @description One Round's plan (#1190).
+         */
+        WorkshopRoundPlanOut: {
+            /** Round */
+            round: number;
+            /**
+             * Locked
+             * @description Whether the plan can no longer change: Round 1's from the start of the session, and each later Round's from the Recap before it
+             */
+            locked: boolean;
+            levers: components["schemas"]["RoundLevers"];
+            /**
+             * Events
+             * @description The events planned for the Round, in planning order
+             */
+            events: components["schemas"]["WorkshopPlannedEventOut"][];
         };
         /**
          * WorkshopSelectionIn
@@ -6086,7 +6188,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_STORAGE_LEVER_LOCKED";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVER_INVALID_IN_LATER_ROUND" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE";
     };
     responses: never;
     parameters: never;
@@ -9005,7 +9107,7 @@ export interface operations {
             };
         };
     };
-    get_levers_api_v1_workshop_levers_get: {
+    get_timers_api_v1_workshop_timers_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -9020,12 +9122,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RoundLevers"];
+                    "application/json": components["schemas"]["PhaseTimers"];
                 };
             };
         };
     };
-    set_levers_api_v1_workshop_levers_put: {
+    set_timers_api_v1_workshop_timers_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -9034,7 +9136,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RoundLevers"];
+                "application/json": components["schemas"]["PhaseTimers"];
             };
         };
         responses: {
@@ -9044,7 +9146,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RoundLevers"];
+                    "application/json": components["schemas"]["PhaseTimers"];
                 };
             };
             /** @description Validation Error */
@@ -9098,16 +9200,38 @@ export interface operations {
             };
         };
     };
-    pick_event_api_v1_workshop_events_picks_put: {
+    get_plans_api_v1_workshop_plans_get: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPlansOut"];
+                };
+            };
+        };
+    };
+    set_round_levers_api_v1_workshop_plans__round_number__levers_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EventPick"];
+                "application/json": components["schemas"]["RoundLevers"];
             };
         };
         responses: {
@@ -9117,7 +9241,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopEventsOut"];
+                    "application/json": components["schemas"]["WorkshopPlansOut"];
                 };
             };
             /** @description Validation Error */
@@ -9131,11 +9255,49 @@ export interface operations {
             };
         };
     };
-    drop_event_api_v1_workshop_events_picks__event_id__delete: {
+    plan_event_api_v1_workshop_plans__round_number__events_put: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                round_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlannedEvent"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPlansOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unplan_event_api_v1_workshop_plans__round_number__events__event_id__delete: {
+        parameters: {
+            query?: {
+                season?: ("spring" | "summer" | "autumn" | "winter") | null;
+            };
+            header?: never;
+            path: {
+                round_number: number;
                 event_id: string;
             };
             cookie?: never;
@@ -9148,7 +9310,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopEventsOut"];
+                    "application/json": components["schemas"]["WorkshopPlansOut"];
                 };
             };
             /** @description Validation Error */

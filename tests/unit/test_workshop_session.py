@@ -18,6 +18,7 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
 from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_plan import RoundLevers
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     SEASONS,
@@ -34,7 +35,6 @@ from energetica.workshop.session import (
     PriceBelowFloorError,
     PriceSettingClosedError,
     Recap,
-    RoundLevers,
     SessionFinishedError,
     SettlementCancelledError,
     SettlementProgress,
@@ -427,18 +427,6 @@ def test_a_phase_timer_and_its_extensions_survive_a_restart(path: Path, clock: _
     assert reopened.phase_timer == session.phase_timer
 
 
-def test_a_session_saved_before_phase_timers_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, "players": []}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    assert reopened.checkpoint == Recap(round=1)
-    assert reopened.phase_timer is None
-
-
 def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     _advance(session)
@@ -658,19 +646,6 @@ def test_each_purchase_is_kept_with_its_round_and_price_and_survives_a_restart(p
     assert reopened.network.members[1].purchases == [gas, gas]
 
 
-def test_a_session_saved_before_selections_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
-        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    assert reopened.network.members[1].selection == []
-    assert reopened.network.members[1].purchases == []
-
-
 def test_a_failed_save_undoes_the_selection_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _investing(path, clock)
     session.select(1, FacilityId.GAS_BURNER)
@@ -844,18 +819,6 @@ def test_stored_energy_survives_a_restart(path: Path, clock: _Clock) -> None:
     assert reopened.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
 
 
-def test_a_session_saved_before_stored_energy_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
-        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    assert reopened.network.members[1].stored_energy == {}
-
-
 def test_a_failed_save_keeps_the_energy_that_would_be_lost(
     path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1011,19 +974,6 @@ def test_prices_survive_a_restart(path: Path, clock: _Clock) -> None:
     alice = reopened.network.members[1]
     assert alice.prices.sell[GAS] == 70.0
     assert [locked.prices.sell[GAS] for locked in alice.locked_prices] == [80.0]
-
-
-def test_a_session_saved_before_prices_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
-        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    alice = reopened.network.members[1]
-    assert (alice.prices, alice.locked_prices) == (DEFAULT_PRICES, [])
 
 
 def test_a_failed_save_undoes_the_price_change(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1247,19 +1197,6 @@ def test_a_session_keeps_its_weather_seed(path: Path) -> None:
     assert WorkshopSession.open(WORKSHOP_CONFIG, path).weather_seed == session.weather_seed
 
 
-def test_a_session_saved_before_trading_results_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
-        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
-        encoding="utf-8",
-    )
-
-    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
-
-    assert reopened.network.members[1].trading_results == []
-    assert reopened.levers.round_format.clearings_per_day == 24
-
-
 def test_a_failed_save_settles_nothing(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _pricing(path, clock)
     clock.tick(minutes=5)
@@ -1424,9 +1361,14 @@ HYDROGEN = FacilityId.HYDROGEN_STORAGE
 FULL_SEASON = {"trading_format": "full_season", "storage": "all"}
 
 
-def _set_format(session: WorkshopSession, **round_format: object) -> None:
-    """Set the levers' Round format to ``round_format``, keeping the other levers."""
-    session.set_levers(session.levers.model_copy(update={"round_format": RoundFormat.model_validate(round_format)}))
+def _set_format(session: WorkshopSession, round_number: int, **round_format: object) -> None:
+    """Set Round ``round_number``'s format to ``round_format``, keeping its other levers. The change carries to every
+    later Round.
+    """
+    levers = session.plans[round_number - 1].levers
+    session.set_levers(
+        round_number, levers.model_copy(update={"round_format": RoundFormat.model_validate(round_format)})
+    )
 
 
 def test_a_session_starts_with_representative_days_hourly_clearings_and_batteries_only(path: Path) -> None:
@@ -1437,14 +1379,12 @@ def test_a_session_starts_with_representative_days_hourly_clearings_and_batterie
 
 def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    levers = RoundLevers(
-        investment_minutes=10, round_format=RoundFormat(trading_format="full_season", clearings_per_day=96)
-    )
+    levers = RoundLevers(round_format=RoundFormat(trading_format="full_season", clearings_per_day=96))
 
-    session.set_levers(levers)
+    session.set_levers(1, levers)
 
-    assert session.levers == levers
-    assert WorkshopSession.open(WORKSHOP_CONFIG, path).levers == levers
+    assert session.plans[0].levers == levers
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path).plans[0].levers == levers
 
 
 def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1452,26 +1392,24 @@ def test_a_failed_save_undoes_the_lever_change(path: Path, monkeypatch: pytest.M
     monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
-        _set_format(session, clearings_per_day=288)
+        _set_format(session, 1, clearings_per_day=288)
 
-    assert session.levers == RoundLevers()
+    assert [plan.levers for plan in session.plans] == [RoundLevers()] * session.round_count
 
 
-def test_before_round_one_the_format_follows_the_levers(path: Path) -> None:
+def test_before_round_one_the_format_follows_its_plan(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
-    _set_format(session, **FULL_SEASON)
+    _set_format(session, 1, **FULL_SEASON)
 
     assert session.current_format().trading_format == "full_season"
 
 
-def test_a_round_keeps_the_format_it_started_with_and_a_change_takes_effect_at_the_next_round(
-    path: Path,
-) -> None:
+def test_each_round_runs_with_the_format_of_its_plan(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
     _advance(session)
 
-    _set_format(session, clearings_per_day=288, **FULL_SEASON)
+    _set_format(session, 2, clearings_per_day=288, **FULL_SEASON)
 
     assert session.current_format() == RoundFormat()
     while session.checkpoint != Investment(round=2):
@@ -1481,14 +1419,14 @@ def test_a_round_keeps_the_format_it_started_with_and_a_change_takes_effect_at_t
 
 def test_a_rounds_format_survives_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    _set_format(session, **FULL_SEASON)
+    _set_format(session, 1, **FULL_SEASON)
     _advance(session)
-    _set_format(session, storage="off")
+    _set_format(session, 2, trading_format="full_season", storage="off")
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert reopened.current_format() == RoundFormat(trading_format="full_season", storage="all")
-    assert reopened.levers.round_format.storage == "off"
+    assert reopened.plans[1].levers.round_format.storage == "off"
 
 
 def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_type(path: Path, clock: _Clock) -> None:
@@ -1496,7 +1434,7 @@ def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_t
     with pytest.raises(FacilityNotOfferedError):
         session.select(1, HYDROGEN)
 
-    _set_format(session, **FULL_SEASON)
+    _set_format(session, 2, **FULL_SEASON)
     while session.checkpoint != Investment(round=2):
         _advance(session)
     session.select(1, HYDROGEN)
@@ -1507,7 +1445,7 @@ def test_hydrogen_storage_can_be_bought_only_in_a_round_allowing_every_storage_t
 def test_without_storage_no_battery_can_be_bought(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice"))
-    _set_format(session, storage="off")
+    _set_format(session, 1, storage="off")
     _advance(session)
 
     with pytest.raises(FacilityNotOfferedError):
@@ -1517,10 +1455,8 @@ def test_without_storage_no_battery_can_be_bought(path: Path, clock: _Clock) -> 
 def test_storage_built_in_a_full_season_keeps_running_after_switching_back(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice")).owned_facilities.append(OwnedFacility(facility=HYDROGEN, built_round=1))
-    _set_format(session, **FULL_SEASON)
-    while session.checkpoint != Investment(round=2):
-        _advance(session)
-    _set_format(session)
+    _set_format(session, 1, **FULL_SEASON)
+    _set_format(session, 3)
     while session.checkpoint != TradingPeriod(round=3, season="spring"):
         _advance(session)
 
@@ -1536,7 +1472,7 @@ def test_a_full_season_trading_period_simulates_every_day_of_its_season(path: Pa
     # Two combined cycles meet the must-serve demand of one player, so the grid never goes down.
     plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
     session.join(_account(1, "alice")).owned_facilities.extend(plants)
-    _set_format(session, trading_format="full_season")
+    _set_format(session, 1, trading_format="full_season")
     _advance(session)
     _advance(session)
     clock.tick(minutes=5)
@@ -1619,15 +1555,6 @@ def test_a_blackout_survives_a_restart(path: Path, clock: _Clock) -> None:
 
     assert reopened.blackouts == session.blackouts
     assert reopened.advance() == Recap(round=1)
-
-
-def test_a_session_saved_before_blackouts_existed_still_opens(path: Path) -> None:
-    path.write_text(
-        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, "players": []}',
-        encoding="utf-8",
-    )
-
-    assert WorkshopSession.open(WORKSHOP_CONFIG, path).blackouts == []
 
 
 def test_a_failed_save_records_no_blackout(path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,5 +1,5 @@
-"""Unit tests for events in a Workshop session (#1012): picks waiting for their boundary, and what they do once
-they fire.
+"""Unit tests for events in a Workshop session (#1012): what they do once they fire. Planning them is tested with
+the Round plans (#1190).
 """
 
 from __future__ import annotations
@@ -12,9 +12,10 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE
-from energetica.workshop.events import EventPick, FiredEvent, InvalidPickError
+from energetica.workshop.events import FiredEvent, InvalidPickError
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
-from energetica.workshop.session import Investment, NoBoundaryLeftError, Recap, TradingPeriod, WorkshopSession
+from energetica.workshop.round_plan import PlannedEvent
+from energetica.workshop.session import Investment, Recap, TradingPeriod, WorkshopSession
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -90,77 +91,34 @@ def _amplitude_for_next_settlement(session: WorkshopSession) -> float:
     return job.demand_amplitude
 
 
-def test_a_pick_replaces_the_one_waiting_for_the_same_boundary(path: Path) -> None:
-    session = _session(path)
-    session.pick_event(EventPick(event="climate.heatwave", severity="minor"))
-    session.pick_event(EventPick(event="geo.wind_supply_war", severity="base"))
-    session.pick_event(EventPick(event="geo.gas_pipeline_disruption", severity="base"))
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    assert [pick.event for pick in session.event_picks] == [
-        "geo.wind_supply_war",
-        "geo.gas_pipeline_disruption",
-        "climate.flood",
-    ]
-
-
 def test_an_invalid_pick_is_refused(path: Path) -> None:
     session = _session(path)
     with pytest.raises(InvalidPickError):
-        session.pick_event(EventPick(event="climate.flood", severity="minor"))
-    assert session.event_picks == []
+        session.plan_event(2, PlannedEvent(event="climate.flood", severity="minor", season="spring"))
+    assert session.plans[1].events == []
 
 
-def test_an_event_whose_boundary_will_not_come_again_cannot_be_picked(path: Path) -> None:
-    session = _session(path, round_count=1)
-    with pytest.raises(NoBoundaryLeftError):
-        session.pick_event(EventPick(event="demand.recession", severity="base"))
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    _to_next(session, Recap)
-    with pytest.raises(NoBoundaryLeftError):
-        session.pick_event(EventPick(event="climate.flood", severity="major"))
-
-
-def test_a_pick_of_an_event_the_catalog_no_longer_has_is_dropped_on_restart(path: Path) -> None:
+def test_fired_events_survive_a_restart(path: Path) -> None:
     session = _session(path)
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    path.write_text(path.read_text().replace('"climate.flood"', '"climate.gone"'))
+    session.plan_event(2, PlannedEvent(event="demand.recession", severity="base"))
+    _to_next(session, Investment)  # Round 2
     reloaded = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
-    assert reloaded.event_picks == []
-    _to_next(reloaded, TradingPeriod)
-
-
-def test_a_pick_can_be_dropped_before_it_fires(path: Path) -> None:
-    session = _session(path)
-    session.pick_event(EventPick(event="climate.heatwave", severity="minor"))
-    session.drop_event("climate.heatwave")
-    _to_next(session, TradingPeriod)
-    assert session.event_picks == []
-    assert session.fired_events == []
-
-
-def test_picks_and_fired_events_survive_a_restart(path: Path) -> None:
-    session = _session(path)
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    session.pick_event(EventPick(event="demand.recession", severity="base"))
-    _to_next(session, TradingPeriod)
-    reloaded = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
-    assert reloaded.event_picks == [EventPick(event="demand.recession", severity="base")]
     assert reloaded.fired_events == session.fired_events
+    assert len(reloaded.fired_events) == 1
 
 
-def test_a_climate_pick_mid_period_waits_for_the_next_trading_period(path: Path) -> None:
+def test_a_climate_event_moves_demand_in_its_trading_period_only(path: Path) -> None:
     session = _session(path)
+    heatwave = PlannedEvent(event="climate.heatwave", severity="major", season="summer")
+    session.plan_event(2, heatwave)
+    _to_next(session, Investment)  # Round 2
     _to_next(session, TradingPeriod)  # spring
-    session.pick_event(EventPick(event="climate.heatwave", severity="major"))
     assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE)
     job = session.start_settlement()
     assert job is not None
     session.finish_settlement(job, session.run_settlement(job))
     session.advance()  # summer opens: the heatwave fires
-    assert session.fired_events == [
-        FiredEvent.of(EventPick(event="climate.heatwave", severity="major"), round_number=1, season="summer")
-    ]
-    assert session.event_picks == []
+    assert session.fired_events == [FiredEvent.of(heatwave, round_number=2, season="summer")]
     assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE * 1.18)
     job = session.start_settlement()
     assert job is not None
@@ -169,11 +127,10 @@ def test_a_climate_pick_mid_period_waits_for_the_next_trading_period(path: Path)
     assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE)
 
 
-def test_a_demand_shift_fires_with_the_next_round_and_lasts(path: Path) -> None:
+def test_a_demand_shift_fires_with_its_round_and_lasts(path: Path) -> None:
     session = _session(path)
-    session.pick_event(EventPick(event="demand.ev_tipping_point", severity="base"))
+    session.plan_event(2, PlannedEvent(event="demand.ev_tipping_point", severity="base"))
     _to_next(session, TradingPeriod)
-    assert session.event_picks != []  # Round 1 had already started
     assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE)
     _to_next(session, Investment)  # Round 2
     assert session.fired_events[0].round == 2
@@ -185,11 +142,12 @@ def test_a_demand_shift_fires_with_the_next_round_and_lasts(path: Path) -> None:
 
 def test_a_disaster_taxes_every_players_revenue_in_its_period(path: Path) -> None:
     session = _session(path)
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    _to_next(session, TradingPeriod)
+    session.plan_event(2, PlannedEvent(event="climate.flood", severity="major", season="spring"))
+    _to_next(session, Investment)  # Round 2
+    _to_next(session, TradingPeriod)  # spring
     _settle(session)
     for player in session.network.players():
-        (result,) = player.trading_results
+        result = player.trading_results[-1]
         assert result.revenue_tax_rate == pytest.approx(0.07)
         assert result.revenue_tax == pytest.approx(0.07 * result.revenue)
         assert result.revenue_tax > 0
@@ -201,7 +159,7 @@ def test_a_disaster_taxes_every_players_revenue_in_its_period(path: Path) -> Non
 
 def test_a_facility_price_shock_moves_the_price_for_its_round_only(path: Path) -> None:
     session = _session(path)
-    session.pick_event(EventPick(event="geo.wind_supply_war", severity="base"))
+    session.plan_event(2, PlannedEvent(event="geo.wind_supply_war", severity="base"))
     _to_next(session, Recap)
     session.advance()  # Round 2's Investment phase: the shock fires
     assert session.checkpoint == Investment(round=2)
@@ -219,14 +177,16 @@ def test_a_facility_price_shock_moves_the_price_for_its_round_only(path: Path) -
     assert session.facility_price(FacilityId.ONSHORE_WIND_TURBINE) == wind
 
 
-def test_a_fuel_shock_lands_with_the_next_trading_period(path: Path) -> None:
+def test_a_fuel_shock_lands_with_its_trading_period(path: Path) -> None:
     session = _session(path)
-    _to_next(session, TradingPeriod)
-    spring_gas = session.fuel_prices[Fuel.GAS]
-    session.pick_event(EventPick(event="geo.gas_pipeline_disruption", severity="base"))
-    session.pick_event(EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL))
-    assert session.event_picks == [EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL)]
-    assert session.fuel_prices[Fuel.GAS] == spring_gas
+    session.plan_event(2, PlannedEvent(event="geo.gas_pipeline_disruption", severity="base", season="summer"))
+    # The same slot: it takes the gas disruption's place.
+    session.plan_event(
+        2, PlannedEvent(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL, season="summer")
+    )
+    _to_next(session, Investment)  # Round 2
+    _to_next(session, TradingPeriod)  # spring
+    assert not session.fuel_prices[Fuel.COAL].shocked
     _to_next(session, TradingPeriod)  # summer
     assert session.fuel_prices[Fuel.COAL].shocked
     assert session.fuel_prices[Fuel.COAL].shock == pytest.approx(0.85)
@@ -246,25 +206,3 @@ def test_session_emissions_count_building_and_running(path: Path) -> None:
     _to_next(session, TradingPeriod)
     _settle(session)
     assert session.emissions() > built
-
-
-def test_after_a_blackout_in_the_last_round_a_trading_period_pick_is_refused(path: Path) -> None:
-    session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=1, clock=_Clock())
-    # A player who owns nothing: nothing meets the demand their presence brings, so the grid goes down.
-    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
-    _to_next(session, TradingPeriod)  # spring
-    _settle(session)
-    assert session.blackouts == [TradingPeriod(round=1, season="spring")]
-    with pytest.raises(NoBoundaryLeftError):
-        session.pick_event(EventPick(event="climate.flood", severity="major"))
-
-
-def test_a_pick_the_catalog_no_longer_allows_is_dropped_on_restart(path: Path) -> None:
-    session = _session(path)
-    session.pick_event(EventPick(event="climate.flood", severity="major"))
-    # The flood has no minor severity, as if a catalog edit had removed the one picked.
-    path.write_text(path.read_text().replace('"major"', '"minor"'))
-    reloaded = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock())
-    assert reloaded.event_picks == []
-    _to_next(reloaded, TradingPeriod)
-    assert reloaded.fired_events == []
