@@ -6,6 +6,7 @@ import re
 from string import Formatter
 
 import pytest
+from pydantic import ValidationError
 
 from energetica.workshop.events import (
     CLIMATE_SEVERITY_THRESHOLDS,
@@ -14,6 +15,7 @@ from energetica.workshop.events import (
     FiredEvent,
     InvalidPickError,
     Severity,
+    WorkshopEvent,
     demand_factor,
     facility_price_factor,
     fuel_shocks,
@@ -46,6 +48,36 @@ def test_every_seasonal_event_has_a_forecast_per_severity_and_round_wide_ones_ha
             assert set(event.forecasts) == set(event.severities)
         else:
             assert event.forecasts is None
+
+
+def _with_forecasts(event_id: str, forecasts: object) -> dict[str, object]:
+    """The catalog event ``event_id``'s fields, with ``forecasts`` in place of its own."""
+    return {**EVENTS[event_id].model_dump(), "forecasts": forecasts}
+
+
+@pytest.mark.parametrize(
+    ("event_id", "forecasts"),
+    [
+        ("climate.flood", None),
+        ("climate.flood", {"moderate": "A wet {season}.", "major": "A very wet {season}."}),
+        (
+            "climate.flood",
+            {
+                "moderate": "A wet {season}.",
+                "major": "A very wet {season}.",
+                "catastrophic": "Prepare for {season}.",
+                "minor": "A damp {season}.",
+            },
+        ),
+        ("demand.recession", {"base": "A slow {season}."}),
+    ],
+    ids=["seasonal without forecasts", "a severity missing", "a severity it does not have", "round-wide with one"],
+)
+def test_forecasts_that_do_not_match_the_events_boundary_and_severities_are_refused(
+    event_id: str, forecasts: object
+) -> None:
+    with pytest.raises(ValidationError):
+        WorkshopEvent.model_validate(_with_forecasts(event_id, forecasts))
 
 
 def test_a_forecast_names_its_season_and_the_picked_fuel_and_nothing_else() -> None:
