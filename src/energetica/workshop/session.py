@@ -91,6 +91,7 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
@@ -251,6 +252,10 @@ class NoEventsInRoundOneError(Exception):
     """Raised when planning an event for Round 1, which holds none: no Recap comes before it to tell of it (#1190)."""
 
 
+class RecapNotOpenError(Exception):
+    """Raised when reading the Recap of a Round whose Recap has not opened yet (#1013)."""
+
+
 class SettlementRunningError(Exception):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
@@ -295,6 +300,19 @@ def locked_rounds(checkpoint: Checkpoint, *, round_count: int) -> int:
             return min(round_number + 1, round_count)
         case Finished():
             return round_count
+
+
+def recap_open(checkpoint: Checkpoint, round_number: int) -> bool:
+    """Whether Round ``round_number``'s Recap has opened at ``checkpoint`` (#1013)."""
+    match checkpoint:
+        case NotStarted():
+            return False
+        case Investment(round=current) | TradingPeriod(round=current):
+            return current > round_number
+        case Recap(round=current):
+            return current >= round_number
+        case Finished():
+            return True
 
 
 class PhaseTimers(BaseModel):
@@ -415,6 +433,8 @@ class _SavedSession(BaseModel):
     unlocks: list[Unlock]
     plans: list[RoundPlan]
     fired_events: list[FiredEvent]
+    # Empty for a session saved before peak demand was kept (#1013).
+    peak_demand: dict[int, float] = {}
 
 
 class WorkshopSession:
@@ -442,6 +462,7 @@ class WorkshopSession:
         fuel_prices: dict[Fuel, FuelPrice] | None = None,
         unlocks: list[Unlock] | None = None,
         fired_events: list[FiredEvent] | None = None,
+        peak_demand: dict[int, float] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -480,6 +501,9 @@ class WorkshopSession:
         self.unlocks = [] if unlocks is None else unlocks
         # Every event that fired, in order (#1012). Their effects are worked out from this list.
         self.fired_events = [] if fired_events is None else fired_events
+        # Each Round's peak demand, in W: the most the market cleared at one settlement point of its Trading periods,
+        # overwritten whenever a period clears more (#1013). A Round no period has cleared in is left out.
+        self.peak_demand = {} if peak_demand is None else peak_demand
         # The records read most recently, newest last. A full season's record takes about half a second to
         # read and a hundred megabytes to hold, so a few are kept for the pages reviewing them.
         self._loaded_records: dict[TradingPeriod, TradingPeriodRecord] = {}
@@ -554,6 +578,7 @@ class WorkshopSession:
             fuel_prices=saved.fuel_prices,
             unlocks=saved.unlocks,
             fired_events=saved.fired_events,
+            peak_demand=saved.peak_demand,
             clock=clock,
         )
 
@@ -628,12 +653,10 @@ class WorkshopSession:
 
     def emissions(self) -> float:
         """The CO₂ every player has emitted so far, in kg: building their facilities and running them."""
-        return sum(
-            sum(CATALOG[purchase.facility].base_construction_pollution for purchase in player.purchases)
-            + sum(
-                performance.emissions for result in player.trading_results for performance in result.facilities.values()
-            )
-            for player in self.network.players()
+        players = self.network.players()
+        return emissions(
+            [purchase for player in players for purchase in player.purchases],
+            [result for player in players for result in player.trading_results],
         )
 
     def unlock_progress(self) -> UnlockProgress:
@@ -1020,6 +1043,30 @@ class WorkshopSession:
         with self._lock:
             return EventsView(list(self.fired_events), self.emissions(), len(self.network.players()))
 
+    def recap(self, round_number: int) -> WorkshopRecap:
+        """The Recap that closes Round ``round_number`` (#1013).
+
+        Raises :class:`NoSuchRoundError` if the session has no such Round, and :class:`RecapNotOpenError` until its
+        Recap opens, so that no headline is told before.
+        """
+        with self._lock:
+            if not 1 <= round_number <= self.round_count:
+                raise NoSuchRoundError(f"the session has no Round {round_number}")
+            if not recap_open(self.checkpoint, round_number):
+                raise RecapNotOpenError(f"Round {round_number}'s Recap has not opened")
+            players = self.network.players()
+            return recap(
+                round_number,
+                round_count=self.round_count,
+                plans=self.plans,
+                fired=self.fired_events,
+                blackouts=[(period.round, period.season) for period in self.blackouts],
+                unlocks=self.unlocks,
+                purchases=[purchase for player in players for purchase in player.purchases],
+                results=[result for player in players for result in player.trading_results],
+                peak_demand=self.peak_demand.get(round_number),
+            )
+
     def plans_view(self) -> PlansView:
         """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts
         agree (#1190).
@@ -1259,8 +1306,11 @@ class WorkshopSession:
             for player in players
         ]
         previous_amplitude, settled_period, blackouts = self.demand_amplitude, self.settled_period, self.blackouts
-        recorded_periods = self.recorded_periods
+        recorded_periods, peak_demand = self.recorded_periods, self.peak_demand
         self.demand_amplitude = job.base_demand_amplitude
+        peak = outcome.peak_demand
+        if peak is not None and peak > peak_demand.get(period.round, -math.inf):
+            self.peak_demand = {**peak_demand, period.round: peak}
         if outcome.blackout:
             self.blackouts = [*blackouts, period]
         for player in players:
@@ -1293,7 +1343,7 @@ class WorkshopSession:
                 player.stored_energy, player.trading_results = stored_energy, trading_results
                 player.fuel_stock = fuel_stock
             self.demand_amplitude, self.settled_period, self.blackouts = previous_amplitude, settled_period, blackouts
-            self.recorded_periods = recorded_periods
+            self.recorded_periods, self.peak_demand = recorded_periods, peak_demand
             raise
 
     def _fuel_held(self, player: WorkshopPlayer) -> dict[Fuel, float] | None:
@@ -1400,5 +1450,6 @@ class WorkshopSession:
             unlocks=self.unlocks,
             plans=self.plans,
             fired_events=self.fired_events,
+            peak_demand=self.peak_demand,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

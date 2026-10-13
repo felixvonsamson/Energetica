@@ -682,6 +682,62 @@ def suggested_severity(event: WorkshopEvent, *, emissions: float, players: int) 
     return reached[-1] if reached else event.severities[0]
 
 
+#: What the effect lines call each facility category, as the subject of a sentence.
+_CATEGORY_NAMES: dict[FacilityCategory, str] = {
+    FacilityCategory.WIND: "wind turbines",
+    FacilityCategory.CONVENTIONAL: "coal and gas plants",
+    FacilityCategory.HYDRO: "water dams",
+    FacilityCategory.NUCLEAR: "nuclear reactors",
+    FacilityCategory.PV: "solar panels",
+    FacilityCategory.CSP: "concentrated solar plants",
+    FacilityCategory.BATTERIES: "batteries",
+    FacilityCategory.HYDROGEN_STORAGE: "hydrogen storage",
+    FacilityCategory.PUMPED_HYDRO: "pumped hydro",
+}
+
+
+def _percent(magnitude: float) -> str:
+    """How far ``magnitude`` moves its target, in whole percent with no sign."""
+    return f"{round(abs(magnitude - 1) * 100)}%"
+
+
+def _signed_percent(magnitude: float) -> str:
+    return ("+" if magnitude >= 1 else "−") + _percent(magnitude)
+
+
+def _more_or_less(magnitude: float) -> str:
+    return "more" if magnitude >= 1 else "less"
+
+
+def _names(targets: Iterable[FacilityCategory | Fuel]) -> str:
+    names = [target.value if isinstance(target, Fuel) else _CATEGORY_NAMES[target] for target in targets]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def effect_line(event: FiredEvent) -> str:
+    """What ``event`` does, in one short line of plain numbers, for the Recap to print under its headline (#1013).
+
+    For example "Demand +18% for the summer" or "Wind turbines cost 35% more in Round 3".
+    """
+    magnitude, season = event.magnitude, event.season
+    match event.kind:
+        case "demand_amplitude_shift" if season is not None:
+            line = f"demand {_signed_percent(magnitude)} for the {season}"
+        case "demand_amplitude_shift":
+            line = f"demand {_signed_percent(magnitude)} from Round {event.round} on"
+        case "revenue_tax":
+            line = f"{_percent(magnitude)} of every player's {season} sales lost"
+        case "facility_capex_multiplier":
+            line = (
+                f"{_names(event.target)} cost {_percent(magnitude)} {_more_or_less(magnitude)} in Round {event.round}"
+            )
+        case "fuel_price_multiplier":
+            line = f"{_names(event.target)} costs {_percent(magnitude)} {_more_or_less(magnitude)} in {season}, then eases back"
+        case _:
+            raise ValueError(f"{event.event} has no effect line for {event.kind}")
+    return line[0].upper() + line[1:]
+
+
 def _product(factors: Iterable[float]) -> float:
     product = 1.0
     for factor in factors:
@@ -689,19 +745,28 @@ def _product(factors: Iterable[float]) -> float:
     return product
 
 
-def demand_factor(fired: Iterable[FiredEvent], round_number: int, season: Season) -> float:
-    """What the events in ``fired`` multiply the demand block's amplitude by in Round ``round_number``'s ``season``.
-
-    A Round's shift lasts to the end of the session, and a Trading period's lasts only that period.
+def round_demand_factor(fired: Iterable[FiredEvent], round_number: int) -> float:
+    """What the Round events in ``fired`` multiply the demand block's amplitude by in Round ``round_number``: a Round's
+    shift lasts to the end of the session.
     """
     return _product(
         event.magnitude
         for event in fired
-        if event.kind == "demand_amplitude_shift"
-        and (
-            (event.season is None and event.round <= round_number)
-            or (event.round, event.season) == (round_number, season)
-        )
+        if event.kind == "demand_amplitude_shift" and event.season is None and event.round <= round_number
+    )
+
+
+def demand_factor(fired: Iterable[FiredEvent], round_number: int, season: Season) -> float:
+    """What the events in ``fired`` multiply the demand block's amplitude by in Round ``round_number``'s ``season``.
+
+    A Round's shift lasts to the end of the session (:func:`round_demand_factor`), and a Trading period's lasts only
+    that period.
+    """
+    fired = list(fired)
+    return round_demand_factor(fired, round_number) * _product(
+        event.magnitude
+        for event in fired
+        if event.kind == "demand_amplitude_shift" and (event.round, event.season) == (round_number, season)
     )
 
 

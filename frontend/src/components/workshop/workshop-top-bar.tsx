@@ -1,10 +1,11 @@
 /**
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
  * is in it, and the countdown on the running phase (#996). The facilitator also
- * gets the buttons that advance the session and extend the phase, and a link to
- * their console (#1011). A player gets a link to the facility page (#998) and
- * the button that opens the price-setting panel (#1002), which shows a clock
- * badge while the price-setting window is open.
+ * gets the buttons that advance the session and extend the phase, a link to
+ * their console (#1011), and a button that opens the latest Recap over the page
+ * (#1013). A player gets a link to the facility page (#998) and the button that
+ * opens the price-setting panel (#1002), which shows a clock badge while the
+ * price-setting window is open.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -21,13 +22,18 @@ import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
+import { RecapButton } from "@/components/workshop/recap-view";
 import {
     useAdvanceSession,
     useInvestmentOpen,
     usePriceSettingOpen,
     useWorkshopEntry,
 } from "@/hooks/use-workshop";
-import { advanceAction, checkpointLabel } from "@/lib/workshop-timeline";
+import {
+    advanceAction,
+    checkpointLabel,
+    latestRecapRound,
+} from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
@@ -45,6 +51,9 @@ export function WorkshopTopBar({
     const { data: entry } = useWorkshopEntry();
     const checkpoint = session?.checkpoint;
     const isFacilitator = entry?.role === "facilitator";
+    const recapRound = session
+        ? latestRecapRound(session.checkpoint, session.round_count)
+        : null;
 
     return (
         <header className="flex h-(--topbar-height) shrink-0 items-center gap-3 border-b border-border-brand bg-topbar px-4">
@@ -83,6 +92,9 @@ export function WorkshopTopBar({
                             Console
                         </Link>
                     </Button>
+                )}
+                {isFacilitator && recapRound !== null && (
+                    <RecapButton round={recapRound} />
                 )}
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />

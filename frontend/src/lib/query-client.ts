@@ -133,6 +133,10 @@ export const queryKeys = {
         // as each of the Round's Trading periods is settled.
         balanceSheet: (round: number) =>
             ["workshop", "session", "balance-sheet", round] as const,
+        // The Recap that closes a Round (#1013). Under the session's key, so it is read
+        // again once the Recap opens.
+        recap: (round: number) =>
+            ["workshop", "session", "recap", round] as const,
         periodDay: (round: number, season: string, day: number) =>
             ["workshop", "periods", round, season, "days", day] as const,
         meritOrder: (round: number, season: string, point: number) =>

@@ -8,7 +8,7 @@ technology is to unlocking (#1011), and so are the events: planning them, and re
 investment selection (#999)
 and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
-player's own.
+player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened.
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
+from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import InvalidLeversError, LeverChanges, PlannedEvent
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
@@ -79,6 +80,7 @@ from energetica.workshop.session import (
     PhaseTimers,
     PriceBelowFloorError,
     PriceSettingClosedError,
+    RecapNotOpenError,
     RoundLockedError,
     SessionFinishedError,
     SettlementRunningError,
@@ -643,3 +645,18 @@ def get_balance_sheet(player: Player, session: Session, round_number: int) -> Ba
         settled=(settled.round, settled.season) if settled is not None else None,
         blackouts=[(period.round, period.season) for period in session.blackouts],
     )
+
+
+@router.get("/rounds/{round_number}/recap")
+def get_recap(
+    _: Annotated[Account, Depends(resolve_entry_account)], session: Session, round_number: int
+) -> WorkshopRecap:
+    """The Recap that closes a Round: what happened in it, and what the next Round holds. The same for everyone in
+    the Run, and refused until it opens, so that no headline is told before.
+    """
+    try:
+        return session.recap(round_number)
+    except NoSuchRoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RecapNotOpenError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN) from exc

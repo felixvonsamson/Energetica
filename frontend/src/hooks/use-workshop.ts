@@ -538,6 +538,18 @@ export function useWorkshopBalanceSheet(round: number) {
 }
 
 /**
+ * The Recap that closes a Round (#1013). Refused until the Recap opens, and
+ * read again whenever the session changes, so it appears as soon as it does.
+ */
+export function useWorkshopRecap(round: number) {
+    return useQuery({
+        queryKey: queryKeys.workshop.recap(round),
+        queryFn: () => workshopApi.getRecap(round),
+        retry: false,
+    });
+}
+
+/**
  * A settled Trading period's simulated days and settlement points. Fails with a
  * 404 until the period is settled, and is read again when the session changes.
  */

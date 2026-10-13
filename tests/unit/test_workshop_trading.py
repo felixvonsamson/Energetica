@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pytest
 
 from energetica.sim.national_demand import DemandCurve
@@ -614,3 +615,28 @@ def test_the_engine_reports_each_day_it_has_simulated(trading_format: TradingFor
     )
 
     assert reported == list(range(1, days + 1))
+
+
+def test_the_peak_demand_is_the_most_the_market_cleared_at_one_settlement_point() -> None:
+    # Demand is half as high again in the second half of each day, so the market clears more then.
+    outcome = simulate_trading_period(
+        [_bidder(WIND, GAS, sell={WIND: 0.0, GAS: 1_000.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(),
+        amplitude=_AMPLITUDE,
+        curve=DemandCurve(intraday=(1.0, 1.5), seasonal=(1.0,)),
+        weather=_steady(1.0),
+    )
+
+    assert not outcome.blackout
+    assert outcome.peak_demand is not None
+    assert outcome.peak_demand == pytest.approx(float(np.nanmax(outcome.record.quantity)))
+    assert outcome.peak_demand > float(np.nanmin(outcome.record.quantity))
+
+
+def test_a_blackout_at_the_first_clearing_leaves_no_peak_demand() -> None:
+    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
+
+    assert outcome.blackout
+    assert outcome.peak_demand is None

@@ -225,6 +225,15 @@ export const workshopApi = {
             >
         >(`/workshop/rounds/${round}/balance-sheet`),
 
+    /**
+     * The Recap that closes a Round (#1013): what happened in it, and what the
+     * next Round holds. Refused until the Recap opens.
+     */
+    getRecap: (round: number) =>
+        apiClient.get<
+            ApiResponse<"/api/v1/workshop/rounds/{round_number}/recap", "get">
+        >(`/workshop/rounds/${round}/recap`),
+
     /** A settled Trading period's simulated days and settlement points. */
     getPeriod: (round: number, season: Season) =>
         apiClient.get<

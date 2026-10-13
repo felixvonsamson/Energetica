@@ -274,6 +274,9 @@ class TradingOutcome:
     """Whether a clearing left must-serve demand unserved, which stopped the simulation there."""
     record: TradingPeriodRecord
     """What the period did at each settlement point, for its review."""
+    peak_demand: float | None = None
+    """The most the market cleared at one settlement point, in W: the period's peak demand (#1013). None if no
+    clearing succeeded, as when the grid went down at the first."""
 
 
 @dataclass(slots=True)
@@ -546,6 +549,8 @@ def simulate_trading_period(
     renewables = {pool.facility for pool in pools.values() if pool.renewable}
     blackout = False
     blackout_at: int | None = None
+    # The most the market has cleared at one settlement point so far, overwritten whenever a clearing clears more.
+    peak_demand: float | None = None
 
     lines = _bid_lines(pools.values())
     line_index: dict[tuple[Side, int, str], int] = {
@@ -588,6 +593,8 @@ def simulate_trading_period(
                 blackout_at = point
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
+            if peak_demand is None or result.quantity > peak_demand:
+                peak_demand = result.quantity
             if not math.isfinite(result.price):
                 result = dataclasses.replace(result, price=SCARCITY_PRICE)
                 prices[point] = SCARCITY_PRICE
@@ -644,4 +651,6 @@ def simulate_trading_period(
         lines=tuple(lines),
         offered=offered,
     )
-    return TradingOutcome(results=results, stored_energy=stored_energy, blackout=blackout, record=record)
+    return TradingOutcome(
+        results=results, stored_energy=stored_energy, blackout=blackout, record=record, peak_demand=peak_demand
+    )

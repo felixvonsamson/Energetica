@@ -234,3 +234,26 @@ export function advanceAction(
         return { kind: "start", label: "Start the session" };
     return { kind: "next", label: `Next: ${checkpointLabel(next)}` };
 }
+
+/**
+ * The Round whose Recap opened last, or `null` before the first one opens
+ * (#1013). During a Round, it is the Recap of the Round before.
+ */
+export function latestRecapRound(
+    checkpoint: Checkpoint,
+    roundCount: number,
+): number | null {
+    switch (checkpoint.kind) {
+        case "not_started":
+            return null;
+        case "investment":
+        case "trading_period":
+            return checkpoint.round > 1 ? checkpoint.round - 1 : null;
+        case "recap":
+            return checkpoint.round;
+        case "finished":
+            return roundCount;
+        default:
+            throw checkpoint satisfies never;
+    }
+}

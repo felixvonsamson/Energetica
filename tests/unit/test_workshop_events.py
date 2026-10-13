@@ -17,6 +17,7 @@ from energetica.workshop.events import (
     Severity,
     WorkshopEvent,
     demand_factor,
+    effect_line,
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
@@ -236,3 +237,40 @@ def test_a_fuel_shock_moves_its_target_or_the_fuel_the_moderator_picked() -> Non
 def test_a_fired_event_keeps_its_effect_whatever_the_catalog_later_says() -> None:
     fired = _fired("geo.rare_earth_ban", round_number=2).model_copy(update={"event": "geo.renamed"})
     assert facility_price_factor([fired], FacilityId.ONSHORE_WIND_TURBINE, 2) == pytest.approx(1.20)
+
+
+@pytest.mark.parametrize(
+    ("event", "severity", "season", "line"),
+    [
+        ("climate.heatwave", "major", "summer", "Demand +18% for the summer"),
+        ("climate.mild_season", "base", "spring", "Demand −3% for the spring"),
+        ("demand.ev_tipping_point", "base", None, "Demand +12% from Round 3 on"),
+        ("demand.recession", "base", None, "Demand −10% from Round 3 on"),
+        ("climate.wildfire", "moderate", "autumn", "3% of every player's autumn sales lost"),
+        ("geo.wind_supply_war", "base", None, "Wind turbines cost 35% more in Round 3"),
+        ("geo.pv_megafactory", "base", None, "Solar panels cost 20% less in Round 3"),
+        ("geo.rare_earth_ban", "base", None, "Wind turbines and batteries cost 20% more in Round 3"),
+        ("geo.gas_pipeline_disruption", "base", "winter", "Gas costs 50% more in winter, then eases back"),
+        ("geo.gas_discovery", "base", "summer", "Gas costs 20% less in summer, then eases back"),
+    ],
+)
+def test_an_event_states_its_effect_in_plain_numbers(
+    event: str, severity: Severity, season: Season | None, line: str
+) -> None:
+    assert effect_line(_fired(event, severity, round_number=3, season=season)) == line
+
+
+def test_a_shock_on_a_picked_fuel_names_that_fuel() -> None:
+    fired = FiredEvent.of(
+        EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL), round_number=2, season="autumn"
+    )
+    assert effect_line(fired) == "Coal costs 15% less in autumn, then eases back"
+
+
+def test_every_event_has_an_effect_line_at_every_severity() -> None:
+    for event in EVENTS.values():
+        season: Season | None = "spring" if event.boundary_type == "trading_period" else None
+        for severity in event.severities:
+            fuel = Fuel.GAS if event.fuel_chosen else None
+            pick = EventPick(event=event.id, severity=severity, fuel=fuel)
+            assert effect_line(FiredEvent.of(pick, round_number=2, season=season))
