@@ -232,13 +232,15 @@ every storage type, checked at the Recap before it, and again when that Round st
 announced them, the storage lever stays on every type until that Round starts. Only the facilitator sees how close an unlock is.
 _Avoid_: tech tree, research.
 
-**Event** (#1012):
+**Event** (#1012, #1189):
 A named vignette from a fixed catalog, such as a heatwave, a gas pipeline disruption or an EV tipping
 point, in one of three categories: climate, price shock or geopolitics, and demand shift. The facilitator
 **picks** an event and one of its severities. The pick waits for the next **boundary** of its kind, the
 next Trading period or the next Round, and can be changed or dropped until then; then it **fires**. Each
 category holds at most one pick per boundary. A fired event's headline is told at the Recap, and nobody,
-the facilitator included, sees it before.
+the facilitator included, sees it before. The Recap before a Round also tells what the Round holds: a Round
+event with its exact effect, and a seasonal event only as a **forecast** that names its season, gives no
+figures, and sounds more certain the more severe the event is.
 _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Revenue tax** (#1012):
