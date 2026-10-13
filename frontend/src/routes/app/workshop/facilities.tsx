@@ -5,8 +5,10 @@
  * the catalog into a selection shown above it, which is bought when the phase
  * closes (#999). A storage type whose retired facilities leave stored energy
  * that nothing holds gets a warning under its price tag, until the selection
- * holds it (#1001). Players only: a facilitator moderates rather than plays, so
- * is sent back to the Workshop home.
+ * holds it (#1001). In a Round that holds a carbon tax vote, the player votes
+ * above the selection while the phase is open (#1014). Players only: a
+ * facilitator moderates rather than plays, so is sent back to the Workshop
+ * home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
  * stats. Each grid cell is a two-row subgrid: the card is centred in the first
@@ -24,6 +26,7 @@ import {
 } from "@/components/ui/segmented-picker";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyH2 } from "@/components/ui/typography";
+import { CarbonTaxBallot } from "@/components/workshop/carbon-tax-vote";
 import { FacilityCard } from "@/components/workshop/facility-card";
 import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
 import { FleetStack } from "@/components/workshop/fleet-stack";
@@ -143,6 +146,7 @@ function Catalog({
 
     return (
         <div className="space-y-8">
+            <CarbonTaxBallot />
             {/* Kept while a closed phase's selection waits to be bought. */}
             {(investmentOpen || selection.facilities.length > 0) && (
                 <InvestmentSelection

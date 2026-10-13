@@ -72,6 +72,11 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "This change would leave a Round invalid: every storage type needs the full-season format.",
     WORKSHOP_NO_EVENTS_IN_ROUND_ONE: "Round 1 holds no events.",
     WORKSHOP_RECAP_NOT_OPEN: "This Round's Recap has not opened yet.",
+    WORKSHOP_NO_VOTE: "This Round holds no vote.",
+    WORKSHOP_NO_VOTE_IN_ROUND_ONE:
+        "Round 1 holds no vote: no Recap comes before it to announce one.",
+    WORKSHOP_CARBON_TAX_PASSED:
+        "A carbon tax has already passed, so it cannot be put to a vote again.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

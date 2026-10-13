@@ -8,7 +8,9 @@ technology is to unlocking (#1011), and so are the events: planning them, and re
 investment selection (#999)
 and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
 Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
-player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened.
+player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
+current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
+anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
 """
 
 from __future__ import annotations
@@ -36,6 +38,7 @@ from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import InvalidLeversError, LeverChanges, PlannedEvent
 from energetica.workshop.schemas import (
+    WorkshopBallotIn,
     WorkshopEntryOut,
     WorkshopEventOut,
     WorkshopEventsOut,
@@ -63,9 +66,11 @@ from energetica.workshop.schemas import (
     WorkshopSettlementOut,
     WorkshopTechnologyProgressOut,
     WorkshopUnlocksOut,
+    WorkshopVoteOut,
 )
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
+    CarbonTaxPassedError,
     FacilityNotOfferedError,
     FuelNotBurnedError,
     FuelNotManualError,
@@ -74,6 +79,8 @@ from energetica.workshop.session import (
     NoEventsInRoundOneError,
     NoPhaseRunningError,
     NoSuchRoundError,
+    NoVoteError,
+    NoVoteInRoundOneError,
     NotEnoughMoneyError,
     NotSelectedError,
     NotStorageError,
@@ -89,6 +96,7 @@ from energetica.workshop.session import (
 )
 from energetica.workshop.storage import energy_at_risk
 from energetica.workshop.unlocks import CSP_UNLOCK_ROUND, UPGRADES
+from energetica.workshop.votes import CARBON_TAX_RATE
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -137,6 +145,7 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
         round_format=session.current_format(),
         settlement=None if settlement is None else WorkshopSettlementOut.from_progress(settlement),
         blackouts=session.blackouts,
+        carbon_tax_since=session.carbon_tax_since(),
     )
 
 
@@ -328,7 +337,8 @@ async def change_round_levers(
     """Change some of a Round's levers, and tell every open page. A lever left out of the body stays as it is. Each
     lever that changed also changes in every later Round. A locked Round cannot change, and a change that would
     leave the Round or a later one invalid is refused, naming that Round. Every storage type needs the full-season
-    format.
+    format. A carbon tax vote cannot be planned for Round 1, which no Recap announces, nor once a carbon tax has
+    passed.
     """
     try:
         changed = await run_in_threadpool(session.set_levers, round_number, changes)
@@ -338,6 +348,10 @@ async def change_round_levers(
         raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
     except InvalidLeversError as exc:
         raise GameError(WorkshopErrorCode.WORKSHOP_LEVERS_INVALID, round=exc.round_number) from exc
+    except NoVoteInRoundOneError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_NO_VOTE_IN_ROUND_ONE) from exc
+    except CarbonTaxPassedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_CARBON_TAX_PASSED) from exc
     if changed:
         await invalidate_session(request.app)
     return _plans_out(session)
@@ -660,3 +674,38 @@ def get_recap(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except RecapNotOpenError as exc:
         raise GameError(WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN) from exc
+
+
+def _vote_out(session: WorkshopSession, account_id: int) -> WorkshopVoteOut:
+    round_number = session.current_round()
+    return WorkshopVoteOut(
+        round=round_number,
+        held=session.vote_held(),
+        tax_rate=CARBON_TAX_RATE,
+        ballot=session.ballot(account_id),
+        passed=session.vote_passed(round_number),
+    )
+
+
+@router.get("/vote")
+def get_vote(account: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> WorkshopVoteOut:
+    """The current Round's carbon tax vote: whether it holds one, the caller's ballot, and once the Investment phase
+    is over, whether it passed.
+    """
+    return _vote_out(session, account.account_id)
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread. It tells no other page,
+# so that nobody can count the ballots.
+@router.put("/vote/ballot")
+async def cast_ballot(player: Player, session: Session, ballot: WorkshopBallotIn) -> WorkshopVoteOut:
+    """Cast the calling player's ballot in the current Round's vote, in place of any they cast before. Only while the
+    Investment phase is open, in a Round that holds a vote.
+    """
+    try:
+        await run_in_threadpool(session.cast_ballot, player.account_id, ballot.ballot)
+    except InvestmentClosedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
+    except NoVoteError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_NO_VOTE) from exc
+    return _vote_out(session, player.account_id)

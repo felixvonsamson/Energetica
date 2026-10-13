@@ -11,7 +11,8 @@ The Recap that closes Round N has two sections, kept strictly apart:
   of them (#1011). The last Round has no Year Ahead.
 
 Everyone in the Run reads the same Recap, the facilitator included, and only once it has opened: a headline is
-never told before. Vote outcomes are not told here, since they are announced live (#1014). Pure: the session
+never told before. Vote outcomes are not told here, since they are announced live (#1014), but a carbon tax vote
+planned for the coming Round is announced in The Year Ahead, with the tax it proposes. Pure: the session
 gathers what a Recap needs, and :func:`recap` builds it.
 """
 
@@ -37,6 +38,7 @@ from energetica.workshop.round_plan import RoundPlan
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RENEWABLE_CATEGORIES, TradingResult
 from energetica.workshop.unlocks import UPGRADES, Unlock, UnlockTrigger
+from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome, vote_held
 
 
 class RecapStory(BaseModel):
@@ -96,6 +98,12 @@ class DemandOutlook(BaseModel):
     )
 
 
+class RecapVote(BaseModel):
+    """A carbon tax vote the coming Round holds in its Investment phase."""
+
+    tax_rate: float = Field(description="What the proposed tax charges per kg of CO₂ emitted")
+
+
 class YearAhead(BaseModel):
     """What the coming Round holds."""
 
@@ -104,6 +112,7 @@ class YearAhead(BaseModel):
     stories: list[RecapStory] = Field(description="The Round events planned for it, which fire when it opens")
     forecasts: list[RecapForecast] = Field(description="Its seasonal events, in season order")
     demand: DemandOutlook | None = Field(description="Null if the market never cleared this Round")
+    carbon_tax_vote: RecapVote | None = Field(description="The vote the Round holds, or null if it holds none")
 
 
 class WorkshopRecap(BaseModel):
@@ -203,6 +212,7 @@ def _year_ahead(
     fired: Sequence[FiredEvent],
     unlocks: Sequence[Unlock],
     peak_demand: float | None,
+    vote_outcomes: Sequence[VoteOutcome],
 ) -> YearAhead:
     # The plan is locked, so its events fire as planned: told as if they had.
     planned_events = [planned for planned in plan.events if planned.event in EVENTS]
@@ -226,6 +236,9 @@ def _year_ahead(
         stories=_stories(event for event in coming if event.season is None),
         forecasts=forecasts,
         demand=demand,
+        carbon_tax_vote=RecapVote(tax_rate=CARBON_TAX_RATE)
+        if vote_held(lever=plan.levers.carbon_tax_vote, round_number=next_round, outcomes=vote_outcomes)
+        else None,
     )
 
 
@@ -240,12 +253,14 @@ def recap(
     purchases: Sequence[Purchase],
     results: Sequence[TradingResult],
     peak_demand: float | None,
+    vote_outcomes: Sequence[VoteOutcome],
 ) -> WorkshopRecap:
     """The Recap that closes Round ``round_number`` of ``round_count``.
 
     ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` the Trading period of every
     blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
     ``peak_demand`` the most the market cleared at one settlement point in the Round, or None if it never cleared.
+    ``vote_outcomes`` holds every vote's outcome so far.
     """
     blackout: Season | None = next(
         (season for blackout_round, season in blackouts if blackout_round == round_number), None
@@ -264,5 +279,6 @@ def recap(
             fired=[event for event in fired if event.round <= round_number],
             unlocks=unlocks,
             peak_demand=peak_demand,
+            vote_outcomes=vote_outcomes,
         ),
     )

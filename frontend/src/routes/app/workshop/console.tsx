@@ -1,8 +1,9 @@
 /**
  * The facilitator's console: for now, how far each technology is from unlocking
- * its upgrade (#1011), and the events to pick (#1012). The full lever console
- * (#1018) builds on this page. Facilitator only: players never see how close an
- * unlock is, so they are sent back to the Workshop home.
+ * its upgrade (#1011), the events to pick (#1012), and the Rounds that put a
+ * carbon tax to the vote (#1014). The full lever console (#1018) builds on this
+ * page. Facilitator only: players never see how close an unlock is, so they are
+ * sent back to the Workshop home.
  */
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
@@ -18,6 +19,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { EventsCard } from "@/components/workshop/events-card";
+import { VotesCard } from "@/components/workshop/votes-card";
 import { useWorkshopEntry, useWorkshopUnlocks } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -38,6 +40,7 @@ function ConsolePage() {
         <div className="space-y-6">
             <TypographyH2>Console</TypographyH2>
             <EventsCard />
+            <VotesCard />
             <TechnologyUnlocksCard />
         </div>
     );

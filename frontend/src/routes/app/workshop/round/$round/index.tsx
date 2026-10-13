@@ -1,6 +1,8 @@
 /**
  * A Round's overview page (#1008): the player's balance sheet for the Round,
- * filling in as each of its Trading periods is settled. Players only: a
+ * filling in as each of its Trading periods is settled. It is where players
+ * land in the Investment phase, so in a Round that holds a carbon tax vote, the
+ * ballot shows above the sheet while the phase is open (#1014). Players only: a
  * facilitator moderates rather than plays, so is sent back to the Workshop
  * home.
  */
@@ -10,6 +12,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyMuted } from "@/components/ui/typography";
 import { BalanceSheetView } from "@/components/workshop/balance-sheet";
+import { CarbonTaxBallot } from "@/components/workshop/carbon-tax-vote";
 import {
     useWorkshopBalanceSheet,
     useWorkshopEntry,
@@ -54,11 +57,15 @@ function PlayerRoundOverview() {
     if (sheet.isPending || session.isPending) return <Loading />;
     // Keyed by Round, so moving to another Round's sheet starts it afresh.
     return (
-        <BalanceSheetView
-            key={sheet.data.round}
-            sheet={sheet.data}
-            activeRound={activeRound}
-        />
+        <div className="space-y-6">
+            {/* The vote is the current Round's, so a past Round's page leaves it out. */}
+            {sheet.data.round === activeRound && <CarbonTaxBallot />}
+            <BalanceSheetView
+                key={sheet.data.round}
+                sheet={sheet.data}
+                activeRound={activeRound}
+            />
+        </div>
     );
 }
 

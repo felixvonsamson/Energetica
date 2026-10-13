@@ -9,10 +9,11 @@
  *   out" report if the grid went down, every event that fired as an article
  *   ending in a line of plain numbers, and the room's figures.
  * - "The Year Ahead" tells what the next Round holds: each facility that unlocks,
- *   with a black-and-white photo, the Round's events with their exact effect,
- *   the change in peak demand, and a seasonal outlook that only hints at the
- *   seasonal events, with no figures. After the last Round, a "Final Edition"
- *   banner takes its place.
+ *   with a black-and-white photo, a carbon tax vote if the Round holds one
+ *   (#1014), the Round's events with their exact effect, the change in peak
+ *   demand, and a seasonal outlook that only hints at the seasonal events, with
+ *   no figures. After the last Round, a "Final Edition" banner takes its
+ *   place.
  *
  * Players and the facilitator read the same page.
  */
@@ -27,12 +28,14 @@ import {
 } from "@/lib/format-utils";
 import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
+import { taxPerTonne } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopRecap = ApiSchema<"WorkshopRecap">;
 type RecapStory = ApiSchema<"RecapStory">;
 type RecapUnlock = ApiSchema<"RecapUnlock">;
 type YearAhead = ApiSchema<"YearAhead">;
+type RecapVote = ApiSchema<"RecapVote">;
 
 const FONTS_ID = "recap-newspaper-fonts";
 const FONTS_URL =
@@ -119,7 +122,8 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
     const nothing =
         yearAhead.stories.length === 0 &&
         yearAhead.forecasts.length === 0 &&
-        yearAhead.unlocks.length === 0;
+        yearAhead.unlocks.length === 0 &&
+        yearAhead.carbon_tax_vote === null;
 
     return (
         <>
@@ -137,6 +141,12 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
                             flip={i % 2 === 1}
                         />
                     ))}
+                    {yearAhead.carbon_tax_vote && (
+                        <VoteArticle
+                            vote={yearAhead.carbon_tax_vote}
+                            round={yearAhead.round}
+                        />
+                    )}
                     {yearAhead.stories.length > 0 && (
                         <div
                             className={`border-t border-neutral-900 pt-5 ${COLUMNS}`}
@@ -316,6 +326,31 @@ function UnlockArticle({
                     {unlock.name} is on sale from Round {round}
                 </p>
             </div>
+        </section>
+    );
+}
+
+/** A carbon tax vote the next Round holds in its Investment phase (#1014). */
+function VoteArticle({ vote, round }: { vote: RecapVote; round: number }) {
+    const perTonne = formatMoney(taxPerTonne(vote.tax_rate));
+    return (
+        <section className="border-t border-neutral-900 pt-5 first:border-t-0 first:pt-0">
+            <Kicker>Politics · Round {round}</Kicker>
+            <h3
+                className={`mt-1 text-3xl leading-[1.05] font-black ${HEADLINE}`}
+            >
+                Carbon tax goes to the vote
+            </h3>
+            <p className="mt-2 text-justify leading-relaxed">
+                Companies will vote on a carbon tax during the next Investment
+                phase. If more of them vote for it than against, every company
+                pays a tax on the CO₂ its facilities emit, and the money is
+                shared equally among all of them. Once passed, the tax stays for
+                good.
+            </p>
+            <p className="mt-2 border-l-2 border-neutral-900 pl-2 text-sm font-bold">
+                Proposed tax: {perTonne} coins per tonne of CO₂
+            </p>
         </section>
     );
 }

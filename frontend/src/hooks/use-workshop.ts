@@ -3,8 +3,9 @@
  * moderator advances it, reading the facility catalog and fleet (#998), picking
  * facilities to buy in the Investment phase (#999), setting prices in a Trading
  * period's price-setting window (#1002), reviewing a settled Trading period
- * (#1007), and following technology unlocks and planning each Round's events as
- * the facilitator (#1011, #1012, #1190).
+ * (#1007), voting on a carbon tax (#1014), and following technology unlocks and
+ * planning each Round's levers and events as the facilitator (#1011, #1012,
+ * #1190).
  */
 
 import {
@@ -324,7 +325,10 @@ export function useWorkshopPlans() {
     });
 }
 
-/** Shared by planning and dropping, to tell whether any change is in flight. */
+/**
+ * Shared by every change to a plan (planning or dropping an event, changing a
+ * lever), to tell whether any change is in flight.
+ */
 const PLAN_CHANGE = ["workshop", "plan-change"] as const;
 
 /**
@@ -336,16 +340,18 @@ export function usePlanChangePending(): boolean {
 }
 
 /**
- * Plan an event for a Round (#1190). Each answer is every Round's plan after
- * the change, so it replaces the cached plans at once. The plans are then read
+ * A change to a plan (#1190). Each answer is every Round's plan after the
+ * change, so it replaces the cached plans at once. The plans are then read
  * again: an answer that arrives late, after an advance locked a Round, would
  * otherwise leave that Round looking editable. A refused change re-reads them
  * too, so a Round that locked meanwhile shows as locked.
  */
-export function usePlanEvent() {
+function usePlanChange<Variables>(
+    change: (variables: Variables) => Promise<ApiSchema<"WorkshopPlansOut">>,
+) {
     return useMutation({
         mutationKey: PLAN_CHANGE,
-        mutationFn: workshopApi.planEvent,
+        mutationFn: change,
         // Never retried: if the server saved the change but its response was lost, a Recap can
         // lock the Round before a retry arrives, and the retry would report a lock for a change
         // that was made.
@@ -361,20 +367,55 @@ export function usePlanEvent() {
     });
 }
 
-/** Drop an event planned for a Round (#1190). See {@link usePlanEvent}. */
+/** Plan an event for a Round (#1190). */
+export function usePlanEvent() {
+    return usePlanChange(workshopApi.planEvent);
+}
+
+/** Drop an event planned for a Round (#1190). */
 export function useUnplanEvent() {
+    return usePlanChange(workshopApi.unplanEvent);
+}
+
+/**
+ * Change some of a Round's levers (#1190), such as whether it holds a carbon
+ * tax vote (#1014).
+ */
+export function useChangeLevers() {
+    return usePlanChange(workshopApi.changeLevers);
+}
+
+/**
+ * The current Round's carbon tax vote (#1014): whether it holds one, the
+ * visitor's ballot, and once the Investment phase is over, whether it passed.
+ * Re-read whenever the session changes, so the result shows once the vote is
+ * counted.
+ */
+export function useWorkshopVote() {
+    return useQuery({
+        queryKey: queryKeys.workshop.vote,
+        queryFn: workshopApi.getVote,
+    });
+}
+
+/**
+ * Cast the visitor's ballot. Ballots are sent one at a time, so an older one
+ * never lands after a newer one, and each answer replaces the cached vote.
+ */
+export function useCastBallot() {
     return useMutation({
-        mutationKey: PLAN_CHANGE,
-        mutationFn: workshopApi.unplanEvent,
-        retry: false,
-        onSuccess: (plans) => {
-            queryClient.setQueryData(queryKeys.workshop.plans, plans);
+        mutationFn: workshopApi.castBallot,
+        scope: { id: "workshop-ballot" },
+        onSuccess: (vote) => {
+            queryClient.setQueryData(queryKeys.workshop.vote, vote);
         },
-        onError: (error) => toast.error(resolveErrorMessage(error)),
-        onSettled: () =>
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.workshop.plans,
-            }),
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+            // The page's view of the session or the vote is out of date.
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        },
     });
 }
 

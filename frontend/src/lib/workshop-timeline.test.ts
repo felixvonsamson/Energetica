@@ -229,6 +229,7 @@ describe("advanceAction", () => {
         },
         settlement: null,
         blackouts: [],
+        carbon_tax_since: null,
         ...overrides,
     });
 

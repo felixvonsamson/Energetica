@@ -33,9 +33,10 @@ from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
-from energetica.workshop.round_plan import LeverChanges
+from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.session import TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
+from energetica.workshop.votes import CARBON_TAX_RATE
 
 from . import _socketio_helpers as socket
 from ._session_helpers import authenticate, make_account
@@ -508,7 +509,9 @@ def _investing(
         app.state.workshop_session.player(account_ids[-1]).money = 1_000_000.0
     facilitator = _facilitator(client)
     if levers is not None:
-        app.state.workshop_session.set_levers(1, levers)
+        # Set as a default plan would: the facilitator cannot propose a vote for Round 1.
+        session: WorkshopSession = app.state.workshop_session
+        session.plans = with_levers(session.plans, 1, levers)
     client.post(ADVANCE_URL)
     return app, client, facilitator, account_ids
 
@@ -1682,3 +1685,89 @@ def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path:
     _facilitator(client)
 
     assert client.get(RECAP_URL.format(round=9)).status_code == 404
+
+
+# --- the carbon tax vote (#1014) ------------------------------------------------------------
+
+VOTE_URL = "/api/v1/workshop/vote"
+BALLOT_URL = "/api/v1/workshop/vote/ballot"
+
+
+def test_players_vote_and_everyone_learns_only_the_result(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, [alice, bob, carol] = _investing(
+        session_path, clock, "alice", "bob", "carol", levers=LeverChanges(carbon_tax_vote=True)
+    )
+
+    responses = []
+    for player, ballot in ((alice, "yes"), (bob, "yes"), (carol, "no")):
+        authenticate(client, player)
+        responses.append(client.put(BALLOT_URL, json={"ballot": ballot}))
+    assert [response.status_code for response in responses] == [200] * 3
+    vote = responses[-1].json()
+    assert vote == {"round": 1, "held": True, "tax_rate": CARBON_TAX_RATE, "ballot": "no", "passed": None}
+    authenticate(client, facilitator)
+    assert client.get(VOTE_URL).json()["ballot"] is None
+    assert client.get(SESSION_URL).json()["carbon_tax_since"] is None
+
+    _advance(client)
+
+    authenticate(client, alice)
+    assert client.get(SESSION_URL).json()["carbon_tax_since"] == 1
+    vote = client.get(VOTE_URL).json()
+    assert vote["passed"] is True
+    assert vote["ballot"] is None
+    # Nothing in any answer tells how anyone voted, or how many did.
+    assert set(vote) == {"round", "held", "tax_rate", "ballot", "passed"}
+
+
+def test_a_ballot_is_refused_in_a_round_that_holds_no_vote(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+
+    response = client.put(BALLOT_URL, json={"ballot": "yes"})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_VOTE"
+    assert client.get(VOTE_URL).json()["held"] is False
+
+
+def test_a_ballot_is_refused_once_the_investment_phase_closes(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice", levers=LeverChanges(carbon_tax_vote=True))
+    clock.tick(hours=1)
+    authenticate(client, alice)
+
+    response = client.put(BALLOT_URL, json={"ballot": "yes"})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_INVESTMENT_CLOSED"
+
+
+def test_only_a_player_casts_a_ballot(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock, "alice", levers=LeverChanges(carbon_tax_vote=True))
+
+    assert client.put(BALLOT_URL, json={"ballot": "yes"}).status_code == 403
+
+
+def test_the_facilitator_cannot_propose_a_vote_for_round_one(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.patch(LEVERS_URL.format(round=1), json=_levers(carbon_tax_vote=True))
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_VOTE_IN_ROUND_ONE"
+
+
+def test_a_passed_carbon_tax_cannot_be_proposed_again(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, [alice] = _investing(
+        session_path, clock, "alice", levers=LeverChanges(carbon_tax_vote=True)
+    )
+    authenticate(client, alice)
+    client.put(BALLOT_URL, json={"ballot": "yes"})
+    authenticate(client, facilitator)
+    _advance(client)
+
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(carbon_tax_vote=True))
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_CARBON_TAX_PASSED"
