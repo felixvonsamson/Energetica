@@ -251,7 +251,7 @@ plan is **locked** by then, so what the Recap announced holds. Only the facilita
 unlock is.
 _Avoid_: tech tree, research.
 
-**Event** (#1012, #1190):
+**Event** (#1012, #1189, #1190):
 A named vignette from a fixed catalog, such as a heatwave, a gas pipeline disruption or an EV tipping
 point, in one of three categories: climate, price shock or geopolitics, and demand shift. The facilitator
 **plans** an event and one of its severities for a Round, and a seasonal event also for a season. It can
@@ -259,7 +259,10 @@ be changed or dropped until the Round's plan is **locked**. A Round event **fire
 Investment phase opens, and a seasonal event when its season's Trading period opens. Each category holds
 at most one event per **boundary**: one per Round, or one per season for a seasonal event. Round 1 holds
 none. An event planned for a season that a blackout skips never fires, but stays in the plan. A fired
-event's headline is told at the Recap, and nobody, the facilitator included, sees it before.
+event's headline is told at the Recap, and nobody, the facilitator included, sees it before. The Recap
+before a Round also tells what the Round holds: a Round event with its exact effect, and a seasonal event
+only as a **forecast** that names its season, gives no figures, and sounds more certain the more severe
+the event is.
 _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Revenue tax** (#1012):
