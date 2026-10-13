@@ -90,3 +90,25 @@ def test_the_recap_reports_the_round_just_played_and_the_one_coming(tmp_path: Pa
     assert recap.year_ahead is None
     # An earlier Recap stays as it was told.
     assert session.recap(1).year_ahead is not None
+
+
+def test_each_rounds_peak_demand_is_the_most_any_of_its_periods_cleared(tmp_path: Path) -> None:
+    path = tmp_path / "session.json"
+    session = _session(path)
+    peaks: list[float] = []
+    while not isinstance(session.checkpoint, Recap):
+        if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
+            session.advance()
+            job = session.start_settlement()
+            assert job is not None
+            outcome = session.run_settlement(job)
+            assert outcome.peak_demand is not None
+            peaks.append(outcome.peak_demand)
+            session.finish_settlement(job, outcome)
+        session.advance()
+    assert session.peak_demand == {1: max(peaks)}
+    recap = session.recap(1)
+    assert recap.year_ahead is not None
+    assert recap.year_ahead.demand is not None
+    assert recap.year_ahead.demand.peak_this_round == max(peaks)
+    assert WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock()).peak_demand == {1: max(peaks)}

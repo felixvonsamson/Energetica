@@ -21,7 +21,6 @@ from collections.abc import Iterable, Sequence
 
 from pydantic import BaseModel, Field
 
-from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.events import (
     EVENTS,
     Direction,
@@ -91,8 +90,10 @@ class RoomFigures(BaseModel):
 class DemandOutlook(BaseModel):
     """How peak demand moves from this Round to the next, through the Round events that last."""
 
-    peak_this_round: float = Field(description="In W")
-    peak_next_round: float = Field(description="In W")
+    peak_this_round: float = Field(description="The most the market cleared at one settlement point this Round, in W")
+    peak_next_round: float = Field(
+        description="This Round's peak moved by the demand shifts that start next Round, in W: a forecast"
+    )
 
 
 class YearAhead(BaseModel):
@@ -102,7 +103,7 @@ class YearAhead(BaseModel):
     unlocks: list[RecapUnlock]
     stories: list[RecapStory] = Field(description="The Round events planned for it, which fire when it opens")
     forecasts: list[RecapForecast] = Field(description="Its seasonal events, in season order")
-    demand: DemandOutlook | None = Field(description="Null before any Trading period has set the demand")
+    demand: DemandOutlook | None = Field(description="Null if the market never cleared this Round")
 
 
 class WorkshopRecap(BaseModel):
@@ -116,12 +117,6 @@ class WorkshopRecap(BaseModel):
     )
     figures: RoomFigures
     year_ahead: YearAhead | None = Field(description="Null after the last Round")
-
-
-def peak_demand(amplitude: float) -> float:
-    """The highest demand the demand curve reaches with ``amplitude``, in W."""
-    curve = national_demand_curve()
-    return amplitude * max(curve.intraday) * max(curve.seasonal)
 
 
 def _season_order(season: Season | None) -> int:
@@ -202,7 +197,12 @@ def _unlock(unlock: Unlock) -> RecapUnlock:
 
 
 def _year_ahead(
-    next_round: int, *, plan: RoundPlan, fired: Sequence[FiredEvent], unlocks: Sequence[Unlock], amplitude: float | None
+    next_round: int,
+    *,
+    plan: RoundPlan,
+    fired: Sequence[FiredEvent],
+    unlocks: Sequence[Unlock],
+    peak_demand: float | None,
 ) -> YearAhead:
     # The plan is locked, so its events fire as planned: told as if they had.
     planned_events = [planned for planned in plan.events if planned.event in EVENTS]
@@ -216,12 +216,10 @@ def _year_ahead(
         if planned.season is not None
     ]
     demand = None
-    if amplitude is not None:
-        peak = peak_demand(amplitude)
-        demand = DemandOutlook(
-            peak_this_round=peak * round_demand_factor(fired, next_round - 1),
-            peak_next_round=peak * round_demand_factor([*fired, *coming], next_round),
-        )
+    if peak_demand is not None:
+        # The peak measured this Round already holds every shift before it, so only next Round's new ones move it.
+        shift = round_demand_factor([*fired, *coming], next_round) / round_demand_factor(fired, next_round - 1)
+        demand = DemandOutlook(peak_this_round=peak_demand, peak_next_round=peak_demand * shift)
     return YearAhead(
         round=next_round,
         unlocks=[_unlock(unlock) for unlock in unlocks if unlock.round == next_round],
@@ -241,13 +239,13 @@ def recap(
     unlocks: Sequence[Unlock],
     purchases: Sequence[Purchase],
     results: Sequence[TradingResult],
-    demand_amplitude: float | None,
+    peak_demand: float | None,
 ) -> WorkshopRecap:
     """The Recap that closes Round ``round_number`` of ``round_count``.
 
     ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` the Trading period of every
     blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
-    ``demand_amplitude`` the session's demand before any event, or None if no Trading period has set it.
+    ``peak_demand`` the most the market cleared at one settlement point in the Round, or None if it never cleared.
     """
     blackout: Season | None = next(
         (season for blackout_round, season in blackouts if blackout_round == round_number), None
@@ -265,6 +263,6 @@ def recap(
             plan=plans[round_number],
             fired=[event for event in fired if event.round <= round_number],
             unlocks=unlocks,
-            amplitude=demand_amplitude,
+            peak_demand=peak_demand,
         ),
     )

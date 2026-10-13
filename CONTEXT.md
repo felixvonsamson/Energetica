@@ -265,6 +265,11 @@ only as a **forecast** that names its season, gives no figures, and sounds more 
 the event is.
 _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
+**Peak demand** (#1013):
+The most the market cleared at one **settlement point** in a Round, kept as the Round's Trading periods settle:
+a clearing that clears more than the peak so far replaces it. A clearing the grid went down at does not count.
+The Recap forecasts next Round's peak as this one moved by the demand shifts that start next Round.
+
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
 strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its

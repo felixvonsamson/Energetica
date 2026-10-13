@@ -7,7 +7,7 @@ import pytest
 from energetica.workshop.events import EVENTS, FiredEvent, Severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
-from energetica.workshop.recap import peak_demand, recap
+from energetica.workshop.recap import recap
 from energetica.workshop.round_plan import PlannedEvent, RoundLevers, RoundPlan
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
@@ -22,7 +22,7 @@ from energetica.workshop.session import (
 from energetica.workshop.trading import FacilityPerformance, TradingResult
 from energetica.workshop.unlocks import Unlock
 
-AMPLITUDE = 100e6
+PEAK = 100e6
 
 
 def _plans(*events: list[PlannedEvent], rounds: int = 3) -> list[RoundPlan]:
@@ -59,7 +59,7 @@ def _recap(round_number: int = 1, **overrides: object):  # noqa: ANN202
         "unlocks": [],
         "purchases": [],
         "results": [],
-        "demand_amplitude": AMPLITUDE,
+        "peak_demand": PEAK,
     }
     arguments.update(overrides)
     return recap(round_number, **arguments)
@@ -199,7 +199,7 @@ def test_the_year_ahead_forecasts_next_rounds_seasonal_events_without_figures() 
     assert set(type(year_ahead.forecasts[0]).model_fields) == {"season", "text"}
 
 
-def test_the_demand_forecast_compares_this_rounds_peak_with_next_rounds() -> None:
+def test_the_demand_forecast_scales_this_rounds_measured_peak_by_next_rounds_demand_shifts() -> None:
     fired = [
         _fired("demand.ev_tipping_point", round_number=2),
         # A climate event passes with its season, so it moves neither Round's peak.
@@ -209,12 +209,13 @@ def test_the_demand_forecast_compares_this_rounds_peak_with_next_rounds() -> Non
     year_ahead = _recap(2, fired=fired, plans=plans).year_ahead
     assert year_ahead is not None
     assert year_ahead.demand is not None
-    assert year_ahead.demand.peak_this_round == pytest.approx(peak_demand(AMPLITUDE) * 1.12)
-    assert year_ahead.demand.peak_next_round == pytest.approx(peak_demand(AMPLITUDE) * 1.12 * 0.90)
+    # The peak measured this Round already holds the shifts that came before it.
+    assert year_ahead.demand.peak_this_round == PEAK
+    assert year_ahead.demand.peak_next_round == pytest.approx(PEAK * 0.90)
 
 
-def test_there_is_no_demand_forecast_before_demand_is_set() -> None:
-    year_ahead = _recap(1, demand_amplitude=None).year_ahead
+def test_there_is_no_demand_forecast_when_the_market_never_cleared() -> None:
+    year_ahead = _recap(1, peak_demand=None).year_ahead
     assert year_ahead is not None
     assert year_ahead.demand is None
 

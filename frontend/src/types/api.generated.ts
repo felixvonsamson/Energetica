@@ -5127,12 +5127,12 @@ export interface components {
         DemandOutlook: {
             /**
              * Peak This Round
-             * @description In W
+             * @description The most the market cleared at one settlement point this Round, in W
              */
             peak_this_round: number;
             /**
              * Peak Next Round
-             * @description In W
+             * @description This Round's peak moved by the demand shifts that start next Round, in W: a forecast
              */
             peak_next_round: number;
         };
@@ -6389,7 +6389,7 @@ export interface components {
              * @description Its seasonal events, in season order
              */
             forecasts: components["schemas"]["RecapForecast"][];
-            /** @description Null before any Trading period has set the demand */
+            /** @description Null if the market never cleared this Round */
             demand: components["schemas"]["DemandOutlook"] | null;
         };
         /**
