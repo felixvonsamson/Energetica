@@ -181,6 +181,7 @@ WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
     "GET /api/v1/workshop/periods/{round_number}/{season}/days/{day}",
     "GET /api/v1/workshop/periods/{round_number}/{season}/points/{point}/merit-order",
     "GET /api/v1/workshop/rounds/{round_number}/balance-sheet",
+    "GET /api/v1/workshop/rounds/{round_number}/recap",
 }
 
 LOBBY_API_ROUTES = frozenset(

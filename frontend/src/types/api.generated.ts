@@ -2475,6 +2475,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/rounds/{round_number}/recap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Recap
+         * @description The Recap that closes a Round: what happened in it, and what the next Round holds. The same for everyone in
+         *     the Run, and refused until it opens, so that no headline is told before.
+         */
+        get: operations["get_recap_api_v1_workshop_rounds__round_number__recap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5100,6 +5121,22 @@ export interface components {
             net_profit: number;
         };
         /**
+         * DemandOutlook
+         * @description How peak demand moves from this Round to the next, through the Round events that last.
+         */
+        DemandOutlook: {
+            /**
+             * Peak This Round
+             * @description In W
+             */
+            peak_this_round: number;
+            /**
+             * Peak Next Round
+             * @description In W
+             */
+            peak_next_round: number;
+        };
+        /**
          * FacilityCategory
          * @description The groups of #975. A base tier and its upgrade share one.
          * @enum {string}
@@ -5387,6 +5424,117 @@ export interface components {
             kind: "recap";
             /** Round */
             round: number;
+        };
+        /**
+         * RecapForecast
+         * @description A seasonal event of the coming Round, told only as a vague forecast: nothing says which event it is, how severe,
+         *     or by how much.
+         */
+        RecapForecast: {
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /** Text */
+            text: string;
+        };
+        /**
+         * RecapStory
+         * @description An event, told as a newspaper article.
+         */
+        RecapStory: {
+            /**
+             * Event
+             * @description The event's id
+             */
+            event: string;
+            /**
+             * Name
+             * @description The event's name, the article's title
+             */
+            name: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "climate" | "price_shock_geopolitical" | "demand_shift" | "tech_unlock" | "vote";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "negative" | "positive";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
+            /**
+             * Season
+             * @description The Trading period it fires at, or null for one that lasts the Round
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /** Headline */
+            headline: string;
+            /**
+             * Effect
+             * @description What it does, in one short line of plain numbers
+             */
+            effect: string;
+        };
+        /**
+         * RecapUnlock
+         * @description A facility players can buy from the coming Round on.
+         */
+        RecapUnlock: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "investment_threshold" | "round_gate" | "format_lever";
+            /** @description The base tier whose spend unlocked it, for an upgrade */
+            base: components["schemas"]["FacilityId"] | null;
+            /** Base Name */
+            base_name: string | null;
+        };
+        /**
+         * RoomFigures
+         * @description The whole room's figures for one Round.
+         */
+        RoomFigures: {
+            /**
+             * Emissions Round
+             * @description CO₂ every player emitted in the Round, building and running, in kg
+             */
+            emissions_round: number;
+            /**
+             * Emissions Total
+             * @description CO₂ every player emitted from Round 1 to the end of this one, in kg
+             */
+            emissions_total: number;
+            /**
+             * Capacity Built
+             * @description Power of every facility bought in the Round, in W
+             */
+            capacity_built: number;
+            /**
+             * Energy Sold
+             * @description Energy every player's generators sold in the Round, in Wh. Storage is left out, since it resells energy generated elsewhere
+             */
+            energy_sold: number;
+            /**
+             * Average Price
+             * @description Sale revenue per MWh sold, or null if nothing sold
+             */
+            average_price: number | null;
+            /**
+             * Renewable Share
+             * @description Share of the energy sold that came from renewables, from 0 to 1. Null if nothing sold
+             */
+            renewable_share: number | null;
         };
         /**
          * RoundFormat
@@ -6031,6 +6179,29 @@ export interface components {
             price_floor: number;
         };
         /**
+         * WorkshopRecap
+         * @description The Recap that closes a Round.
+         */
+        WorkshopRecap: {
+            /** Round */
+            round: number;
+            /** Round Count */
+            round_count: number;
+            /**
+             * Blackout
+             * @description The season the grid went down in this Round, if it did
+             */
+            blackout: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
+             * Stories
+             * @description Every event that fired in the Round: the Round's own first, then each season's in order
+             */
+            stories: components["schemas"]["RecapStory"][];
+            figures: components["schemas"]["RoomFigures"];
+            /** @description Null after the last Round */
+            year_ahead: components["schemas"]["YearAhead"] | null;
+        };
+        /**
          * WorkshopRoundPlanOut
          * @description One Round's plan (#1190).
          */
@@ -6200,10 +6371,32 @@ export interface components {
             unlocks: components["schemas"]["Unlock"][];
         };
         /**
+         * YearAhead
+         * @description What the coming Round holds.
+         */
+        YearAhead: {
+            /** Round */
+            round: number;
+            /** Unlocks */
+            unlocks: components["schemas"]["RecapUnlock"][];
+            /**
+             * Stories
+             * @description The Round events planned for it, which fire when it opens
+             */
+            stories: components["schemas"]["RecapStory"][];
+            /**
+             * Forecasts
+             * @description Its seasonal events, in season order
+             */
+            forecasts: components["schemas"]["RecapForecast"][];
+            /** @description Null before any Trading period has set the demand */
+            demand: components["schemas"]["DemandOutlook"] | null;
+        };
+        /**
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN";
     };
     responses: never;
     parameters: never;
@@ -9710,6 +9903,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BalanceSheet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_recap_api_v1_workshop_rounds__round_number__recap_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopRecap"];
                 };
             };
             /** @description Validation Error */

@@ -91,6 +91,7 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
@@ -251,6 +252,10 @@ class NoEventsInRoundOneError(Exception):
     """Raised when planning an event for Round 1, which holds none: no Recap comes before it to tell of it (#1190)."""
 
 
+class RecapNotOpenError(Exception):
+    """Raised when reading the Recap of a Round whose Recap has not opened yet (#1013)."""
+
+
 class SettlementRunningError(Exception):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
@@ -295,6 +300,19 @@ def locked_rounds(checkpoint: Checkpoint, *, round_count: int) -> int:
             return min(round_number + 1, round_count)
         case Finished():
             return round_count
+
+
+def recap_open(checkpoint: Checkpoint, round_number: int) -> bool:
+    """Whether Round ``round_number``'s Recap has opened at ``checkpoint`` (#1013)."""
+    match checkpoint:
+        case NotStarted():
+            return False
+        case Investment(round=current) | TradingPeriod(round=current):
+            return current > round_number
+        case Recap(round=current):
+            return current >= round_number
+        case Finished():
+            return True
 
 
 class PhaseTimers(BaseModel):
@@ -628,12 +646,10 @@ class WorkshopSession:
 
     def emissions(self) -> float:
         """The CO₂ every player has emitted so far, in kg: building their facilities and running them."""
-        return sum(
-            sum(CATALOG[purchase.facility].base_construction_pollution for purchase in player.purchases)
-            + sum(
-                performance.emissions for result in player.trading_results for performance in result.facilities.values()
-            )
-            for player in self.network.players()
+        players = self.network.players()
+        return emissions(
+            [purchase for player in players for purchase in player.purchases],
+            [result for player in players for result in player.trading_results],
         )
 
     def unlock_progress(self) -> UnlockProgress:
@@ -1019,6 +1035,30 @@ class WorkshopSession:
         """The events fired, and what the climate suggestion goes on, read in one step so its parts agree (#1012)."""
         with self._lock:
             return EventsView(list(self.fired_events), self.emissions(), len(self.network.players()))
+
+    def recap(self, round_number: int) -> WorkshopRecap:
+        """The Recap that closes Round ``round_number`` (#1013).
+
+        Raises :class:`NoSuchRoundError` if the session has no such Round, and :class:`RecapNotOpenError` until its
+        Recap opens, so that no headline is told before.
+        """
+        with self._lock:
+            if not 1 <= round_number <= self.round_count:
+                raise NoSuchRoundError(f"the session has no Round {round_number}")
+            if not recap_open(self.checkpoint, round_number):
+                raise RecapNotOpenError(f"Round {round_number}'s Recap has not opened")
+            players = self.network.players()
+            return recap(
+                round_number,
+                round_count=self.round_count,
+                plans=self.plans,
+                fired=self.fired_events,
+                blackouts=[(period.round, period.season) for period in self.blackouts],
+                unlocks=self.unlocks,
+                purchases=[purchase for player in players for purchase in player.purchases],
+                results=[result for player in players for result in player.trading_results],
+                demand_amplitude=self.demand_amplitude,
+            )
 
     def plans_view(self) -> PlansView:
         """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts

@@ -7,6 +7,7 @@ import {
     checkpointLabel,
     checkpointPage,
     isSeason,
+    latestRecapRound,
     type SeasonStatus,
     type TimelineRound,
     workshopTimeline,
@@ -280,5 +281,22 @@ describe("advanceAction", () => {
         });
 
         expect(advanceAction(over, false)).toBeNull();
+    });
+});
+
+describe("latestRecapRound", () => {
+    it("is the Recap that opened last, or none before the first", () => {
+        expect(latestRecapRound({ kind: "not_started" }, 3)).toBeNull();
+        expect(
+            latestRecapRound({ kind: "investment", round: 1 }, 3),
+        ).toBeNull();
+        expect(
+            latestRecapRound(
+                { kind: "trading_period", round: 2, season: "spring" },
+                3,
+            ),
+        ).toBe(1);
+        expect(latestRecapRound({ kind: "recap", round: 2 }, 3)).toBe(2);
+        expect(latestRecapRound({ kind: "finished" }, 3)).toBe(3);
     });
 });

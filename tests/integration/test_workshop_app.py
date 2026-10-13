@@ -61,6 +61,7 @@ PRICES_URL = "/api/v1/workshop/prices"
 LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
 BALANCE_SHEET_URL = "/api/v1/workshop/rounds/{round}/balance-sheet"
 FUEL_URL = "/api/v1/workshop/fuel"
+RECAP_URL = "/api/v1/workshop/rounds/{round}/recap"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
@@ -1647,3 +1648,37 @@ def test_a_facility_price_shock_shows_in_the_catalog_for_its_round(session_path:
     authenticate(client, alice)
     wind = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "onshore_wind_turbine")
     assert wind["price"] == pytest.approx(wind["base_price"] * 1.35)
+
+
+# --- the Recap (#1013) ----------------------------------------------------------------------
+
+
+def test_everyone_reads_the_recap_once_it_opens_and_not_before(session_path: Path, clock: _Clock) -> None:
+    _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
+    client.put(PLANNED_EVENTS_URL.format(round=2), json={"event": "geo.wind_supply_war", "severity": "base"})
+
+    authenticate(client, alice)
+    early = client.get(RECAP_URL.format(round=1))
+    assert early.status_code == 400
+    assert early.json()["game_exception_type"] == "WORKSHOP_RECAP_NOT_OPEN"
+
+    authenticate(client, facilitator)
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("recap", 1):
+        _advance(client)
+    facilitator_view = client.get(RECAP_URL.format(round=1))
+    authenticate(client, alice)
+    player_view = client.get(RECAP_URL.format(round=1))
+
+    assert player_view.status_code == 200
+    assert player_view.json() == facilitator_view.json()
+    recap = player_view.json()
+    assert recap["round"] == 1
+    assert recap["figures"]["energy_sold"] > 0
+    assert [story["effect"] for story in recap["year_ahead"]["stories"]] == ["Wind turbines cost 35% more in Round 2"]
+
+
+def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.get(RECAP_URL.format(round=9)).status_code == 404

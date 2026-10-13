@@ -71,6 +71,7 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_LEVERS_INVALID:
         "This change would leave a Round invalid: every storage type needs the full-season format.",
     WORKSHOP_NO_EVENTS_IN_ROUND_ONE: "Round 1 holds no events.",
+    WORKSHOP_RECAP_NOT_OPEN: "This Round's Recap has not opened yet.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
