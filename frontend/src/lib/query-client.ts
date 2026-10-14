@@ -122,6 +122,8 @@ export const queryKeys = {
         // Also under the session's key: a Recap locks the next Round's plan, and a
         // period or Round opening fires its planned events (#1190).
         plans: ["workshop", "session", "plans"] as const,
+        // Also under the session's key, so a change from another tab shows here (#1018).
+        timers: ["workshop", "session", "timers"] as const,
         // Also under the session's key: the Investment phase closing counts the vote (#1014).
         vote: ["workshop", "session", "vote"] as const,
         // Also under the session's key: settling a Trading period adds one.

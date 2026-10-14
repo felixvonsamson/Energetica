@@ -51,6 +51,9 @@ export const Route = createFileRoute("/app/facilitator/")({
     component: FacilitatorPage,
     staticData: {
         title: "Facilitator",
+        // Also reached from the Workshop console (#1018). The backend refuses anyone but the
+        // facilitator.
+        runMode: "any",
         routeConfig: { requiredRole: "facilitator" },
         infoDialog: { contents: <FacilitatorHelp /> },
     },

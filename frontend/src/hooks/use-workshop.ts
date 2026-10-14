@@ -4,8 +4,8 @@
  * facilities to buy in the Investment phase (#999), setting prices in a Trading
  * period's price-setting window (#1002), reviewing a settled Trading period
  * (#1007), voting on a carbon tax (#1014), and following technology unlocks and
- * planning each Round's levers and events as the facilitator (#1011, #1012,
- * #1190).
+ * planning each Round's levers, events and phase timers as the facilitator
+ * (#1011, #1012, #1018, #1190).
  */
 
 import {
@@ -23,6 +23,7 @@ import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
 import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
+import { leverChangeError } from "@/lib/workshop-console";
 import { phaseDeadline } from "@/lib/workshop-countdown";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
@@ -349,6 +350,7 @@ export function usePlanChangePending(): boolean {
  */
 function usePlanChange<Variables>(
     change: (variables: Variables) => Promise<ApiSchema<"WorkshopPlansOut">>,
+    errorMessage: (error: unknown) => string = resolveErrorMessage,
 ) {
     return useMutation({
         mutationKey: PLAN_CHANGE,
@@ -360,7 +362,7 @@ function usePlanChange<Variables>(
         onSuccess: (plans) => {
             queryClient.setQueryData(queryKeys.workshop.plans, plans);
         },
-        onError: (error) => toast.error(resolveErrorMessage(error)),
+        onError: (error) => toast.error(errorMessage(error)),
         onSettled: () =>
             queryClient.invalidateQueries({
                 queryKey: queryKeys.workshop.plans,
@@ -380,10 +382,11 @@ export function useUnplanEvent() {
 
 /**
  * Change some of a Round's levers (#1190), such as whether it holds a carbon
- * tax vote (#1014).
+ * tax vote (#1014). A refusal names the Round the change would leave invalid
+ * (#1018).
  */
 export function useChangeLevers() {
-    return usePlanChange(workshopApi.changeLevers);
+    return usePlanChange(workshopApi.changeLevers, leverChangeError);
 }
 
 /**
@@ -562,6 +565,27 @@ export function useExtendPhase() {
         retry: false,
         onSuccess: (session) => {
             queryClient.setQueryData(queryKeys.workshop.session, session);
+        },
+    });
+}
+
+/** How long each timed phase is open when it starts (#996). Facilitator only. */
+export function useWorkshopTimers() {
+    return useQuery({
+        queryKey: queryKeys.workshop.timers,
+        queryFn: workshopApi.getTimers,
+    });
+}
+
+/**
+ * Replace the phase timers (#1018). They apply to the next phase that opens, so
+ * repeating the same change is harmless.
+ */
+export function useSetTimers() {
+    return useMutation({
+        mutationFn: workshopApi.setTimers,
+        onSuccess: (timers) => {
+            queryClient.setQueryData(queryKeys.workshop.timers, timers);
         },
     });
 }

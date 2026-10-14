@@ -10,6 +10,12 @@ interface SegmentedPickerProps<T extends string = string> {
     onValueChange: (value: T) => void;
     children: React.ReactNode;
     className?: string;
+    /**
+     * `"automatic"` (the default) also picks an option when it gains focus, so
+     * a click reports the same pick twice. Pass `"manual"` when each pick sends
+     * a request.
+     */
+    activationMode?: "automatic" | "manual";
 }
 
 /**
@@ -27,10 +33,12 @@ export function SegmentedPicker<T extends string = string>({
     onValueChange,
     children,
     className,
+    activationMode,
 }: SegmentedPickerProps<T>) {
     return (
         <Tabs
             value={value}
+            activationMode={activationMode}
             onValueChange={onValueChange as (value: string) => void}
         >
             <TabsList className={className}>{children}</TabsList>

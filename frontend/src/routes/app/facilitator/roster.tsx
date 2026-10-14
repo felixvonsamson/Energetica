@@ -47,6 +47,9 @@ export const Route = createFileRoute("/app/facilitator/roster")({
     component: RosterPage,
     staticData: {
         title: "Roster",
+        // Also reached from the Workshop console (#1018). The backend refuses anyone but the
+        // facilitator.
+        runMode: "any",
         routeConfig: { requiredRole: "facilitator" },
         infoDialog: { contents: <RosterHelp /> },
     },

@@ -201,11 +201,12 @@ Open http://localhost:5173 and log in. The session cookie is shared by every `lo
 browser window holds one account. Use a private window, or a second browser, for the other one.
 
 - As the **facilitator**, the top bar has the buttons that advance the session and extend the running
-  phase.
+  phase. The **Console** page (`/app/workshop/console`, #1018) plans each Round's levers, events and
+  votes, sets the phase timers, and links to the join link and roster.
 - As a **player**, you buy facilities in the Investment phase and set prices in each Trading period.
 
-Each Round's levers (its Round format and fuel procurement) have no page yet (#1018). Change them through
-the API with a facilitator session. This sets Round 2's levers, and every later Round's along with it:
+To change a Round's levers from the shell instead, use the API with a facilitator session. This sets
+Round 2's levers, and every later Round's along with it:
 
 ```bash
 bash scripts/dev-login.sh demo demo1234     # saves the session to .energetica-dev/cookies.txt
