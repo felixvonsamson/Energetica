@@ -10,11 +10,13 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    pointAxisLabel,
     pointTime,
     priceRows,
     reviewableWeeks,
     seriesEnergy,
     timeOfDay,
+    weekdayOfDay,
 } from "./workshop-review";
 
 // Two points of a week starting at the period's point 24. Alice (1) has wind,
@@ -210,10 +212,30 @@ describe("dateOfDay", () => {
     });
 });
 
+describe("weekdayOfDay", () => {
+    it("starts the year on a Monday", () => {
+        expect(weekdayOfDay(0)).toBe("Mon");
+        expect(weekdayOfDay(6)).toBe("Sun");
+        expect(weekdayOfDay(59)).toBe("Thu");
+    });
+});
+
 describe("pointTime", () => {
-    it("gives the date and time each point of the period starts at", () => {
-        expect(pointTime(0, [59, 60], 24)).toBe("1 Mar, 00:00");
-        expect(pointTime(30, [59, 60], 24)).toBe("2 Mar, 06:00");
+    it("gives the weekday, date and time each point of the period starts at", () => {
+        expect(pointTime(0, [59, 60], 24)).toBe("Thu 1 Mar, 00:00");
+        expect(pointTime(30, [59, 60], 24)).toBe("Fri 2 Mar, 06:00");
+    });
+});
+
+describe("pointAxisLabel", () => {
+    it("labels a midnight with its weekday and date", () => {
+        expect(pointAxisLabel(24, [59, 60], 24)).toBe("Fri 2 Mar");
+        expect(pointAxisLabel(0, [59, 60], 96)).toBe("Thu 1 Mar");
+    });
+
+    it("labels another point with its weekday and time", () => {
+        expect(pointAxisLabel(30, [59, 60], 24)).toBe("Fri 06:00");
+        expect(pointAxisLabel(1, [59, 60], 288)).toBe("Thu 00:05");
     });
 });
 

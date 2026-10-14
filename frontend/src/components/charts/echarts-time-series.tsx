@@ -7,7 +7,7 @@
  * Features shared across all variants:
  *
  * - Tick labels at adaptive round intervals, from a {@link TimeAxis}
- * - Drag-to-zoom with zoom preservation on new data
+ * - Drag-to-zoom with zoom preservation on new data, which charts can share
  * - React tooltip overlay with colored circles on the axis pointer
  * - An optional marker on one tick, and a callback when a tick is clicked
  *
@@ -133,6 +133,28 @@ export interface EChartsTimeSeriesProps {
     markerTick?: number;
     /** Called with the tick under the pointer when the plot is clicked. */
     onTickClick?: (tick: number) => void;
+    /**
+     * A zoom window shared with other charts. When given, the chart shows it,
+     * and reports the player's zooms and resets through `onZoomChange`.
+     */
+    zoom?: ZoomRange;
+    onZoomChange?: (zoom: ZoomRange) => void;
+}
+
+/** The part of the data a chart shows, as percentages from its start. */
+export interface ZoomRange {
+    start: number;
+    end: number;
+}
+
+export const FULL_ZOOM: ZoomRange = { start: 0, end: 100 };
+
+function isFullZoom({ start, end }: ZoomRange): boolean {
+    return start <= 0.5 && end >= 99.5;
+}
+
+function isSameZoom(a: ZoomRange, b: ZoomRange): boolean {
+    return Math.abs(a.start - b.start) < 1e-6 && Math.abs(a.end - b.end) < 1e-6;
 }
 
 /** How a chart's ticks map to time: the x-axis labels and tooltip heading. */
@@ -352,6 +374,8 @@ export function TimeSeriesChart({
     isError = false,
     markerTick,
     onTickClick,
+    zoom,
+    onZoomChange,
 }: TimeSeriesChartProps) {
     const chartRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<echarts.ECharts | null>(null);
@@ -361,7 +385,17 @@ export function TimeSeriesChart({
     const [isZoomed, setIsZoomed] = useState(false);
     const [tooltip, setTooltip] = useState<TSTooltipState | null>(null);
     const [containerWidth, setContainerWidth] = useState(0);
-    const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
+    const [zoomRange, setZoomRange] = useState(FULL_ZOOM);
+    // The shared zoom window, read when the chart is rebuilt.
+    const zoomRef = useRef(zoom);
+    useEffect(() => {
+        zoomRef.current = zoom;
+    }, [zoom]);
+    // Set while the chart applies the shared zoom window, so the zoom it
+    // causes is not reported back as the player's.
+    const isSyncingRef = useRef(false);
+    // The zoom window the chart shows, as of its last zoom.
+    const shownZoomRef = useRef(FULL_ZOOM);
 
     // Reorder data keys according to chartType's predefined ordering
     const processedData = useMemo(() => {
@@ -415,6 +449,7 @@ export function TimeSeriesChart({
         formatLabel: config.formatLabel,
         stacked: config.stacked ?? false,
         onTickClick,
+        onZoomChange,
     });
     useEffect(() => {
         liveDataRef.current = {
@@ -425,6 +460,7 @@ export function TimeSeriesChart({
             formatLabel: config.formatLabel,
             stacked: config.stacked ?? false,
             onTickClick,
+            onZoomChange,
         };
     }, [
         processedData,
@@ -434,6 +470,7 @@ export function TimeSeriesChart({
         config.formatLabel,
         config.stacked,
         onTickClick,
+        onZoomChange,
     ]);
 
     // Forward wheel events to the page so trackpad/mouse scroll works normally.
@@ -777,10 +814,13 @@ export function TimeSeriesChart({
             const dz = Array.isArray(opt.dataZoom) ? opt.dataZoom[0] : null;
             if (dz) {
                 const { start, end } = dz as { start?: number; end?: number };
-                const s = start ?? 0;
-                const e = end ?? 100;
-                setIsZoomed(s > 0.5 || e < 99.5);
-                setZoomRange({ start: s, end: e });
+                const range = { start: start ?? 0, end: end ?? 100 };
+                shownZoomRef.current = range;
+                setIsZoomed(!isFullZoom(range));
+                setZoomRange(range);
+                if (!isSyncingRef.current) {
+                    liveDataRef.current.onZoomChange?.(range);
+                }
             }
         });
 
@@ -959,11 +999,19 @@ export function TimeSeriesChart({
 
         if (isStructuralChange) {
             inst.setOption(option, { notMerge: true });
+            // A rebuilt chart shows all its data, or the shared zoom window.
+            const kept = zoomRef.current ?? FULL_ZOOM;
+            shownZoomRef.current = FULL_ZOOM;
+            if (!isFullZoom(kept)) {
+                isSyncingRef.current = true;
+                inst.dispatchAction({ type: "dataZoom", ...kept });
+                isSyncingRef.current = false;
+            }
             queueMicrotask(() => {
                 setAppliedStructuralKey(structuralKey);
                 setTooltip(null);
-                setIsZoomed(false);
-                setZoomRange({ start: 0, end: 100 });
+                setIsZoomed(!isFullZoom(kept));
+                setZoomRange(kept);
             });
         } else {
             inst.setOption(option, { replaceMerge: ["series"] });
@@ -977,6 +1025,15 @@ export function TimeSeriesChart({
             dataZoomSelectActive: true,
         });
     }, [option, dataKey, structuralKey]);
+
+    // Follow the shared zoom window when another chart changes it.
+    useEffect(() => {
+        const inst = instanceRef.current;
+        if (!inst || !zoom || isSameZoom(zoom, shownZoomRef.current)) return;
+        isSyncingRef.current = true;
+        inst.dispatchAction({ type: "dataZoom", ...zoom });
+        isSyncingRef.current = false;
+    }, [zoom]);
 
     // Respond to container resize — also updates containerWidth so barWidth
     // recomputes on the next option useMemo run.
@@ -995,9 +1052,8 @@ export function TimeSeriesChart({
     const handleResetZoom = useCallback(() => {
         const inst = instanceRef.current;
         if (!inst) return;
-        inst.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
-        setIsZoomed(false);
-        setZoomRange({ start: 0, end: 100 });
+        // The datazoom handler updates the state and reports the reset.
+        inst.dispatchAction({ type: "dataZoom", ...FULL_ZOOM });
         inst.dispatchAction({
             type: "takeGlobalCursor",
             key: "dataZoomSelect",

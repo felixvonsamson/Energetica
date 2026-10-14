@@ -9,6 +9,9 @@
  * - The merit order at one settlement point, picked with the scrubber, which the
  *   three charts above mark. Clicking a chart moves the scrubber there.
  *
+ * The three charts span the whole week and share one zoom window: zooming or
+ * resetting one does the same to the others, so they can be compared.
+ *
  * A period is reviewed one simulated week at a time: a representative week has
  * one, a full season 13. The prices the player set for the period are in their
  * own tab.
@@ -19,8 +22,10 @@ import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
     type EChartsTimeSeriesConfig,
+    FULL_ZOOM,
     type TimeAxis,
     TimeSeriesChart,
+    type ZoomRange,
 } from "@/components/charts/echarts-time-series";
 import { MeritOrderView } from "@/components/charts/merit-order-view";
 import {
@@ -68,6 +73,7 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    pointAxisLabel,
     pointTime,
     priceRows,
     reviewableWeeks,
@@ -153,9 +159,10 @@ export function PeriodReview({
     const { data: entry } = useWorkshopEntry();
     const isPlayer = entry?.role === "player";
     // Held here rather than in the review tab, which unmounts while the prices
-    // tab is open, so the week and point survive a look at the prices.
+    // tab is open, so the week, point and zoom survive a look at the prices.
     const [weekIndex, setWeekIndex] = useState(0);
     const [point, setPoint] = useState(0);
+    const [zoom, setZoom] = useState<ZoomRange>(FULL_ZOOM);
 
     if (period.isPending) return <Spinner />;
     if (period.isError) {
@@ -184,6 +191,8 @@ export function PeriodReview({
                     onWeekIndexChange={setWeekIndex}
                     point={point}
                     onPointChange={setPoint}
+                    zoom={zoom}
+                    onZoomChange={setZoom}
                 />
             </TabsContent>
             <TabsContent value="prices">
@@ -205,12 +214,16 @@ function Review({
     onWeekIndexChange: setWeekIndex,
     point,
     onPointChange: setPoint,
+    zoom,
+    onZoomChange: setZoom,
 }: {
     period: Period;
     weekIndex: number;
     onWeekIndexChange: (index: number) => void;
     point: number;
     onPointChange: (point: number) => void;
+    zoom: ZoomRange;
+    onZoomChange: (zoom: ZoomRange) => void;
 }) {
     const cpd = period.clearings_per_day;
     const labels = useLabels();
@@ -227,7 +240,7 @@ function Review({
 
     const timeAxis = useMemo(
         (): TimeAxis => ({
-            formatTick: (tick) => pointTime(tick, period.days, cpd),
+            formatTick: (tick) => pointAxisLabel(tick, period.days, cpd),
             formatTooltipTitle: (tick) => pointTime(tick, period.days, cpd),
             secondsPerTick: (24 * 3600) / cpd,
             anchor: "left",
@@ -253,6 +266,8 @@ function Review({
         onTickClick,
         isLoading: week.isPending,
         isError: week.isError,
+        zoom,
+        onZoomChange: setZoom,
     };
 
     return (
@@ -346,6 +361,8 @@ interface ChartProps {
     onTickClick: (tick: number) => void;
     isLoading: boolean;
     isError: boolean;
+    zoom: ZoomRange;
+    onZoomChange: (zoom: ZoomRange) => void;
 }
 
 interface PowerCardProps extends ChartProps {

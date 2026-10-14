@@ -202,9 +202,24 @@ export function dateOfDay(dayOfYear: number): string {
 /** The days in a simulated week. */
 export const WEEK_DAYS = 7;
 
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
 /**
- * The date and time a settlement point of the period starts at, as "12 Mar,
- * 06:00".
+ * The weekday of a day of the Workshop year, as "Mon". The year starts on a
+ * Monday.
+ */
+export function weekdayOfDay(dayOfYear: number): string {
+    return WEEKDAYS[dayOfYear % WEEK_DAYS] ?? "";
+}
+
+/** A day of the Workshop year as "Mon 12 Mar". */
+function dayLabel(dayOfYear: number): string {
+    return `${weekdayOfDay(dayOfYear)} ${dateOfDay(dayOfYear)}`;
+}
+
+/**
+ * The weekday, date and time a settlement point of the period starts at, as
+ * "Mon 12 Mar, 06:00".
  */
 export function pointTime(
     point: number,
@@ -212,8 +227,23 @@ export function pointTime(
     clearingsPerDay: number,
 ): string {
     const dayOfYear = days[Math.floor(point / clearingsPerDay)];
-    const date = dayOfYear === undefined ? "" : `${dateOfDay(dayOfYear)}, `;
+    const date = dayOfYear === undefined ? "" : `${dayLabel(dayOfYear)}, `;
     return `${date}${timeOfDay(point, clearingsPerDay)}`;
+}
+
+/**
+ * A settlement point's label on a chart's time axis: "Mon 12 Mar" at midnight,
+ * where a day starts, and "Mon 06:00" at any other time.
+ */
+export function pointAxisLabel(
+    point: number,
+    days: readonly number[],
+    clearingsPerDay: number,
+): string {
+    const dayOfYear = days[Math.floor(point / clearingsPerDay)];
+    if (dayOfYear === undefined) return timeOfDay(point, clearingsPerDay);
+    if (point % clearingsPerDay === 0) return dayLabel(dayOfYear);
+    return `${weekdayOfDay(dayOfYear)} ${timeOfDay(point, clearingsPerDay)}`;
 }
 
 /**
