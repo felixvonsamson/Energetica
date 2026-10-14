@@ -21,6 +21,7 @@ import {
     EChartsTimeSeries,
     type EChartsTimeSeriesConfig,
     type TimeAxis,
+    type ZoomRange,
     TimeSeriesChart,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
@@ -60,6 +61,8 @@ interface PowerChartProps {
     height?: number;
     markerTick?: number;
     onTickClick?: (tick: number) => void;
+    zoom?: ZoomRange;
+    onZoomChange?: (zoom: ZoomRange) => void;
 }
 
 // Stable label renderer — defined outside the component so it never causes
@@ -87,6 +90,8 @@ export function PowerChart({
     height,
     markerTick,
     onTickClick,
+    zoom,
+    onZoomChange,
 }: PowerChartProps) {
     const getAssetColor = useAssetColorGetter();
     const getColor = getColorProp ?? getAssetColor;
@@ -154,6 +159,8 @@ export function PowerChart({
         isError,
         markerTick,
         onTickClick,
+        zoom,
+        onZoomChange,
     };
     return timeAxis ? (
         <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
