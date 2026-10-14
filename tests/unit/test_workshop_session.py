@@ -12,7 +12,7 @@ import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
-from energetica.workshop.facilities import FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
@@ -751,7 +751,7 @@ def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: 
 
 # Lithium-ion batteries last one Round, so batteries built in Round 1 retire as Round 2 starts.
 BATTERIES = FacilityId.LITHIUM_ION_BATTERIES
-BATTERY_CAPACITY = 3_200_000_000.0
+BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
 
 
 def _batteries_retiring(path: Path, clock: _Clock) -> WorkshopSession:

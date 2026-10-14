@@ -33,7 +33,7 @@ _WEEK_HOURS = 7 * 24
 
 GAS = FacilityId.GAS_BURNER  # 11 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 3.2 GWh, 69% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 300 MWh, 69% efficient
 
 
 def _bidder(
@@ -114,8 +114,8 @@ def test_the_series_add_up_to_the_players_result() -> None:
 def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None:
     # The batteries bid above every tier but must-serve, so they buy the 3 MW of wind left over once the
     # 8 MW must-serve demand is met, every hour. They ask too much to ever sell. The week that counts starts from
-    # what the first pass, for the cyclic start, stored.
-    outcome = _simulate(_bidder(WIND, BATTERIES, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}))
+    # what the first pass, for the cyclic start, stored. Three batteries have room for both passes.
+    outcome = _simulate(_bidder(WIND, *[BATTERIES] * 3, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}))
     record = outcome.record
     row = _row(record, 1, BATTERIES)
     # What is bought reaches the store at the square root of the round-trip efficiency.

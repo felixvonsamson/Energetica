@@ -45,7 +45,7 @@ GAS = FacilityId.GAS_BURNER  # 11 MW
 COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 54 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
 OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 130 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 3.2 GWh, 69% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 300 MWh, 69% efficient
 REACTOR = FacilityId.NUCLEAR_REACTOR  # one Round to build
 
 _BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
@@ -203,7 +203,7 @@ def test_nothing_stored_carries_over_into_a_representative_week() -> None:
 
 def test_a_representative_week_starts_from_the_charge_its_first_pass_ended_with() -> None:
     # The batteries charge at full power from the cheap wind and never discharge, since they ask 500. 86 MW fills
-    # them in under two days, so the first pass ends full, and the week that counts starts full and buys nothing.
+    # them in a few hours, so the first pass ends full, and the week that counts starts full and buys nothing.
     bidder = _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0, BATTERIES: 500.0}, buy={BATTERIES: 100.0})
 
     outcome = _simulate(bidder)
@@ -580,7 +580,7 @@ def test_a_full_season_clears_every_day_of_the_season() -> None:
 
 def test_storage_keeps_its_charge_from_one_day_to_the_next_in_a_full_season() -> None:
     # The empty batteries charge at full power from the cheap wind and never discharge, since they ask 500.
-    # 86 MW fills them in under two days, so over the season they buy their capacity and no more.
+    # 86 MW fills them in a few hours, so over the season they buy their capacity and no more.
     bidder = _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0, BATTERIES: 500.0}, buy={BATTERIES: 100.0})
 
     outcome = _simulate(bidder, trading_format="full_season")

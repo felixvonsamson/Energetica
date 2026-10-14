@@ -556,12 +556,12 @@ def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_
     # Handed to the player directly: energy left over from batteries that just retired, and the money
     # for two new ones.
     player = app.state.workshop_session.player(alice)
-    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 5_000_000_000.0
+    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0
     player.money = 2_000_000.0
 
-    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 5_000_000_000.0}
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 500_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
-    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 1_800_000_000.0}
+    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 200_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
     assert response.json()["stored_energy_at_risk"] == {}
 

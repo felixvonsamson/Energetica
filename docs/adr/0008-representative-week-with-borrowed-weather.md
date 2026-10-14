@@ -99,8 +99,8 @@ the bar, with a lower error per season than three matched days for every fleet.
   the players.
 - Weekends show up once the demand curve is regenerated with its weekly pattern over a 364-day year
   starting on a Monday (#1201). Until then the week has no weekends.
-- The cyclic start assumes batteries fill or empty within the week. The lithium-ion battery today holds
-  37 hours at full power, and is cut to 2–4 hours in the balance pass (#1202). A battery that never
+- The cyclic start assumes batteries fill or empty within the week. Lithium-ion and solid-state batteries
+  hold a few hours at full power (#1202), so they do. A battery that never
   fills or empties keeps a small mismatch between its start and end charge.
 - The borrowed wind and solar of a week come from different parts of the season, so they never happened
   at the same time. The weather generator has no link between wind and clouds, so nothing real is lost.
