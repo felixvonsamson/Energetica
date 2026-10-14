@@ -11,6 +11,7 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
+The scoreboard (#1017) is open to everyone in the Run, but only once the session is over.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from energetica.kernel.game_error import GameError
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.events import EVENTS, InvalidPickError, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.final_score import FinalScore
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -90,6 +92,7 @@ from energetica.workshop.session import (
     RecapNotOpenError,
     RoundLockedError,
     SessionFinishedError,
+    SessionNotFinishedError,
     SettlementRunningError,
     TradingPeriod,
     WorkshopSession,
@@ -676,6 +679,17 @@ def get_recap(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except RecapNotOpenError as exc:
         raise GameError(WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN) from exc
+
+
+@router.get("/scoreboard")
+def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> list[FinalScore]:
+    """Every player's final score, highest first, with what it adds up from. The same for everyone in the Run, and
+    refused until the session is over.
+    """
+    try:
+        return session.scoreboard()
+    except SessionNotFinishedError as exc:
+        raise GameError(WorkshopErrorCode.WORKSHOP_SESSION_NOT_FINISHED) from exc
 
 
 def _vote_out(session: WorkshopSession, account_id: int) -> WorkshopVoteOut:

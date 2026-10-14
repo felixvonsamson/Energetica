@@ -54,6 +54,9 @@ A Round whose plan turns on the carbon tax vote holds one in its Investment phas
 :mod:`~energetica.workshop.votes`). Players cast their ballots while the phase is open, and the vote is counted when
 the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
 Once a vote passes, each Trading period settles the carbon tax (#1015, :mod:`~energetica.workshop.carbon_tax`).
+
+Once the session is :class:`Finished`, it ranks the players by their final score (#1017,
+:mod:`~energetica.workshop.final_score`).
 """
 
 from __future__ import annotations
@@ -80,6 +83,7 @@ from energetica.workshop.events import (
     revenue_tax_rate,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
+from energetica.workshop.final_score import FinalScore, scoreboard
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
     FuelPrice,
@@ -273,6 +277,10 @@ class CarbonTaxPassedError(Exception):
 
 class RecapNotOpenError(Exception):
     """Raised when reading the Recap of a Round whose Recap has not opened yet (#1013)."""
+
+
+class SessionNotFinishedError(Exception):
+    """Raised when reading the scoreboard before the session is over (#1017)."""
 
 
 class SettlementRunningError(Exception):
@@ -1130,6 +1138,15 @@ class WorkshopSession:
                 vote_outcomes=self.vote_outcomes,
                 weather=weather,
             )
+
+    def scoreboard(self) -> list[FinalScore]:
+        """Every player's final score, highest first (#1017). Raises :class:`SessionNotFinishedError` until the
+        session is :class:`Finished`, since the score is only final then.
+        """
+        with self._lock:
+            if not isinstance(self.checkpoint, Finished):
+                raise SessionNotFinishedError("the session is not over yet")
+            return scoreboard(self.network.players(), round_count=self.round_count)
 
     def plans_view(self) -> PlansView:
         """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts

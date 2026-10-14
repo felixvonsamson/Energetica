@@ -139,6 +139,9 @@ export const queryKeys = {
         // again once the Recap opens.
         recap: (round: number) =>
             ["workshop", "session", "recap", round] as const,
+        // Every player's final score (#1017). Under the session's key, so it is read again
+        // once the session is over.
+        scoreboard: ["workshop", "session", "scoreboard"] as const,
         periodWeek: (round: number, season: string, week: number) =>
             ["workshop", "periods", round, season, "weeks", week] as const,
         meritOrder: (round: number, season: string, point: number) =>

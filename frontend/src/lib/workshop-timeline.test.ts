@@ -8,6 +8,7 @@ import {
     checkpointPage,
     isSeason,
     latestRecapRound,
+    scoreboardStatus,
     type SeasonStatus,
     type TimelineRound,
     workshopTimeline,
@@ -131,11 +132,11 @@ describe("workshopTimeline", () => {
 
 describe("checkpointPage", () => {
     it("has no page before the session starts", () => {
-        expect(checkpointPage({ kind: "not_started" }, 3)).toBeNull();
+        expect(checkpointPage({ kind: "not_started" })).toBeNull();
     });
 
     it("is the Round overview during the Round's Investment phase", () => {
-        expect(checkpointPage({ kind: "investment", round: 2 }, 3)).toEqual({
+        expect(checkpointPage({ kind: "investment", round: 2 })).toEqual({
             to: "/app/workshop/round/$round",
             params: { round: "2" },
         });
@@ -143,10 +144,11 @@ describe("checkpointPage", () => {
 
     it("is the Trading period's page during a Trading period", () => {
         expect(
-            checkpointPage(
-                { kind: "trading_period", round: 1, season: "autumn" },
-                3,
-            ),
+            checkpointPage({
+                kind: "trading_period",
+                round: 1,
+                season: "autumn",
+            }),
         ).toEqual({
             to: "/app/workshop/round/$round/$season",
             params: { round: "1", season: "autumn" },
@@ -154,17 +156,23 @@ describe("checkpointPage", () => {
     });
 
     it("is the Recap page during a Recap", () => {
-        expect(checkpointPage({ kind: "recap", round: 1 }, 3)).toEqual({
+        expect(checkpointPage({ kind: "recap", round: 1 })).toEqual({
             to: "/app/workshop/recap/$round",
             params: { round: "1" },
         });
     });
 
-    it("is the last Round's Recap once the session is finished", () => {
-        expect(checkpointPage({ kind: "finished" }, 3)).toEqual({
-            to: "/app/workshop/recap/$round",
-            params: { round: "3" },
+    it("is the scoreboard once the session is finished", () => {
+        expect(checkpointPage({ kind: "finished" })).toEqual({
+            to: "/app/workshop/scoreboard",
         });
+    });
+});
+
+describe("scoreboardStatus", () => {
+    it("is future until the session is finished, and current once it is", () => {
+        expect(scoreboardStatus({ kind: "recap", round: 3 })).toBe("future");
+        expect(scoreboardStatus({ kind: "finished" })).toBe("current");
     });
 });
 

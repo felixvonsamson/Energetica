@@ -1690,6 +1690,39 @@ def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path:
     assert client.get(RECAP_URL.format(round=9)).status_code == 404
 
 
+# --- the scoreboard (#1017) -----------------------------------------------------------------
+
+SCOREBOARD_URL = "/api/v1/workshop/scoreboard"
+
+
+def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(session_path: Path) -> None:
+    client = _client(session_path)
+    alice = _player(client, "alice")
+    client.post(ENTER_URL)
+    bob = _player(client, "bob")
+    client.post(ENTER_URL)
+
+    early = client.get(SCOREBOARD_URL)
+    assert early.status_code == 400
+    assert early.json()["game_exception_type"] == "WORKSHOP_SESSION_NOT_FINISHED"
+
+    facilitator = _facilitator(client)
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
+        assert _advance(client).status_code == 200
+    session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
+    session.player(alice).money = 400_000.0
+    session.player(bob).money = 700_000.0
+    facilitator_view = client.get(SCOREBOARD_URL)
+    authenticate(client, alice)
+    player_view = client.get(SCOREBOARD_URL)
+
+    assert player_view.status_code == 200
+    assert player_view.json() == facilitator_view.json()
+    board = player_view.json()
+    assert [(row["username"], row["cash"]) for row in board] == [("bob", 700_000.0), ("alice", 400_000.0)]
+    assert all(row["score"] == row["operating_profit"] + row["cash"] + row["residual_value"] for row in board)
+
+
 # --- the carbon tax vote (#1014) ------------------------------------------------------------
 
 VOTE_URL = "/api/v1/workshop/vote"
