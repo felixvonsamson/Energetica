@@ -23,7 +23,7 @@ def period_operating_profit(result: TradingResult) -> float:
     """The operating profit of one Trading period: what its facility types earned, less the revenue tax and what
     they and their fuel cost to run.
     """
-    return result.net
+    return result.operating_profit
 
 
 def round_operating_profit(results: Iterable[TradingResult], round_number: int) -> float:

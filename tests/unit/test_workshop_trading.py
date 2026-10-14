@@ -260,7 +260,7 @@ def test_the_period_result_totals_its_facilities() -> None:
     result = outcome.results[1]
     gas, wind = result.facilities[GAS], result.facilities[WIND]
     assert result.revenue == pytest.approx(gas.revenue)
-    assert result.net == pytest.approx(gas.revenue - wind.dump_cost - gas.om - wind.om)
+    assert result.operating_profit == pytest.approx(gas.revenue - wind.dump_cost - gas.om - wind.om)
     assert (result.round, result.season) == (1, "spring")
 
 
@@ -300,7 +300,7 @@ def test_a_results_fuel_comes_off_what_it_added_to_the_players_money() -> None:
     with_fuel = result.model_copy(update={"fuel": fuel})
 
     assert with_fuel.fuel_cost == pytest.approx(520.0)
-    assert with_fuel.net == pytest.approx(result.net - 520.0)
+    assert with_fuel.operating_profit == pytest.approx(result.operating_profit - 520.0)
 
 
 # Fuel stock (#1010). A gas burner at full output burns this much gas over one simulated day.

@@ -243,10 +243,19 @@ reset; the top-up is silent.
 
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the
-Round. Market income, dumping cost, O&M, any revenue tax and fuel cost add up to the season's operating income; the Round column
-then takes off the Round's investments to give its **net profit**. A season fills in once it is settled.
+Round. Market income, dumping cost, O&M, any revenue tax and fuel cost add up to the season's operating income.
+Any **carbon tax** comes below it; the Round column then takes off the Round's investments to give its **net
+profit**. A season fills in once it is settled.
 Market income already has the cost of the energy storage bought to charge taken off.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
+
+**Carbon tax** (#1015):
+The tax a passed **vote** puts in force, settled in every Trading period from that Round on. Each player pays a
+fixed price per kg of CO₂ their facilities emitted generating in the period. In a Round's first Trading period, they
+also pay on the CO₂ emitted building what they bought in its Investment phase. Everything paid makes up the
+period's takings, shared out equally among the players settled in the period: the **shared payback** (`carbon_tax_share`
+in the code). It is left out of operating profit, and the Round's **net profit** takes it off.
+_Avoid_: emissions tax, carbon price.
 
 **Fuel procurement** (#1009, #1190):
 How players get fuel, a lever set per Round in its **Round plan**. Under **automatic** procurement, a

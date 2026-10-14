@@ -1047,7 +1047,7 @@ def test_a_trading_period_settles_once_its_price_setting_window_runs_out(path: P
     assert result.fuel_cost > 0
     assert (result.round, result.season) == (1, "spring")
     assert result.facilities[FacilityId.COMBINED_CYCLE].revenue > 0
-    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + result.net)
+    assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + result.operating_profit)
     assert alice.stored_energy == expected.stored_energy[1]
     assert [locked.prices.sell[FacilityId.COMBINED_CYCLE] for locked in alice.locked_prices] == [90.0]
 

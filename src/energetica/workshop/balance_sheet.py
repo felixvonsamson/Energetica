@@ -13,8 +13,9 @@ Fuel is paid for once per season (#1009), so each season's column has its own fu
 A climate event's revenue tax (#1012) takes a share of the season's sale revenue. It comes off inside operating
 income, above fuel.
 
-The carbon tax (#1015) is still to come. It sits below operating income, which leaves it out, beside the
-investments.
+The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
+emitted building the Round's investments, charged in its first season, the tax on the CO₂ emitted generating, and
+the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
 """
 
 from __future__ import annotations
@@ -91,6 +92,26 @@ class PeriodSheet(BaseModel):
     fuel: list[FuelLine] = Field(default=[], description="One line per fuel paid for, in the order of the fuels")
     fuel_total: float = 0.0
     operating_income: float = Field(description="Market income minus dumping cost, O&M, revenue tax and fuel")
+    # Default to zero for a sheet without a carbon tax.
+    construction_emissions: float = Field(
+        default=0.0, description="The CO₂ emitted building the Round's investments that the carbon tax charged, in kg"
+    )
+    construction_carbon_tax: float = Field(
+        default=0.0, description="The carbon tax on construction_emissions, charged in the Round's first season"
+    )
+    taxed_emissions: float = Field(
+        default=0.0, description="The CO₂ emitted generating in the seasons the carbon tax was in force, in kg"
+    )
+    emitted_carbon_tax: float = Field(default=0.0, description="The carbon tax on taxed_emissions")
+    carbon_tax_rate: float = Field(
+        default=0.0, description="What the carbon tax charged per kg of CO₂, or zero if it was not in force"
+    )
+    carbon_tax_share: float = Field(default=0.0, description="The player's share of the carbon tax takings")
+    carbon_tax: float = Field(
+        default=0.0,
+        description="The carbon tax paid on construction and generation, minus the share that came back. Below zero "
+        "when more came back than was paid",
+    )
 
 
 class SeasonSheet(BaseModel):
@@ -128,7 +149,9 @@ class BalanceSheet(BaseModel):
     total: PeriodSheet | None = Field(description="The settled seasons added up, or None if none is settled yet")
     investments: list[InvestmentLine] = Field(description="One line per facility type bought, in catalog order")
     investment_total: float
-    net_profit: float = Field(description="The Round's operating income so far minus its investments")
+    net_profit: float = Field(
+        description="The Round's operating income so far minus its carbon tax so far and its investments"
+    )
 
 
 def _position(round_number: int, season: Season) -> tuple[int, int]:
@@ -215,6 +238,14 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         fuel=fuel,
         fuel_total=sum(line.cost for line in fuel),
         operating_income=sum(period_operating_profit(result) for result in results),
+        construction_emissions=sum(result.construction_emissions for result in results),
+        construction_carbon_tax=sum(result.construction_carbon_tax for result in results),
+        taxed_emissions=sum(result.emissions for result in results if result.carbon_tax_rate > 0),
+        emitted_carbon_tax=sum(result.emitted_carbon_tax for result in results),
+        # The rate is the same in every season a Round taxes: a carbon tax stays once it passes.
+        carbon_tax_rate=max((result.carbon_tax_rate for result in results), default=0.0),
+        carbon_tax_share=sum(result.carbon_tax_share for result in results),
+        carbon_tax=sum(result.carbon_tax for result in results),
     )
 
 
@@ -270,5 +301,7 @@ def balance_sheet(
         total=period_sheet(round_results) if any_settled else None,
         investments=lines,
         investment_total=investment_total,
-        net_profit=round_operating_profit(results, round_number) - investment_total,
+        net_profit=round_operating_profit(results, round_number)
+        - sum(result.carbon_tax for result in round_results)
+        - investment_total,
     )

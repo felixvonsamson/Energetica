@@ -247,8 +247,8 @@ def test_settling_pays_for_the_order_at_the_seasons_price(path: Path) -> None:
 
     result = alice.trading_results[-1]
     assert result.fuel == [FuelPurchase(fuel=Fuel.GAS, quantity=order, price=price)]
-    assert alice.money == pytest.approx(money + result.net)
-    assert result.net == pytest.approx(sum(p.net for p in result.facilities.values()) - order * price)
+    assert alice.money == pytest.approx(money + result.operating_profit)
+    assert result.operating_profit == pytest.approx(sum(p.net for p in result.facilities.values()) - order * price)
 
 
 def test_fuel_left_over_carries_into_the_stock(path: Path) -> None:
