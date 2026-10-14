@@ -93,6 +93,7 @@ from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lif
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
+from energetica.workshop.player import round_start_money
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
@@ -744,7 +745,8 @@ class WorkshopSession:
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys any
         selection still waiting, so none is lost if the moderator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
-        retires every facility whose lifetime has ended. Opening a Trading period sets the season's fuel prices
+        retires every facility whose lifetime has ended, and tops up any player below the cash floor, or resets
+        everyone's cash after a blackout (#1016). Opening a Trading period sets the season's fuel prices
         and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
         Investment phase counts its vote, if it held one (#1014).
         Opening a Recap locks the next Round's plan (#1190). Raises
@@ -765,7 +767,7 @@ class WorkshopSession:
             duration = phase_duration(checkpoint, self.timers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says. A
-            # purchase, retirement or new fuel price is saved in the same write, so it happens only if the
+            # purchase, retirement, round-start cash or new fuel price is saved in the same write, so it happens only if the
             # advance does.
             undos: list[Callable[[], None]] = []
             try:
@@ -774,6 +776,7 @@ class WorkshopSession:
                     undos.append(self._count_vote(self.checkpoint.round))
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
+                    undos.append(self._apply_round_start_money(checkpoint.round))
                 undos.append(self._fire_events(checkpoint))
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
@@ -970,6 +973,26 @@ class WorkshopSession:
                 player.owned_facilities = owned
 
         return any(player.owned_facilities != owned for player, owned in before.items()), undo
+
+    def _apply_round_start_money(self, round_number: int) -> Callable[[], None]:
+        """Set every player's cash for the start of Round ``round_number``, without saving. Returns what undoes it.
+
+        A player below the floor is topped up to it, and a blackout in the Round before resets everyone to the
+        starting budget (#1016). Round 1 starts from the starting budget every player joined with, so it is left
+        alone. The caller holds the lock.
+        """
+        if round_number == 1:
+            return lambda: None
+        after_blackout = any(period.round == round_number - 1 for period in self.blackouts)
+        before = {player: player.money for player in self.network.players()}
+        for player, money in before.items():
+            player.money = round_start_money(money, after_blackout=after_blackout)
+
+        def undo() -> None:
+            for player, money in before.items():
+                player.money = money
+
+        return undo
 
     def _open_fuel_market(self, period: TradingPeriod) -> Callable[[], None]:
         """Set each fuel's price for ``period``, and under manual procurement start each player's fuel order from its

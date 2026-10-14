@@ -53,7 +53,7 @@ from energetica.workshop.demand_block import (
     round_one_amplitude,
 )
 from energetica.workshop.fleet import om_owed
-from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
+from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.seasons import representative_week
 from energetica.workshop.trading import Bidder, TradingOutcome, demand_scale, simulate_trading_period
 from energetica.workshop.weather import representative_weather
@@ -760,13 +760,14 @@ def _batteries_retiring(path: Path, clock: _Clock) -> WorkshopSession:
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     alice = session.join(_account(1, "alice"))
-    alice.money = 10_000_000.0
     alice.owned_facilities.extend([OwnedFacility(facility=BATTERIES, built_round=1)] * 3)
     while session.checkpoint != Recap(round=1):
         _advance(session)
     # Set after Round 1's Trading periods, which charge and discharge the batteries.
     alice.stored_energy[BATTERIES] = 1.5 * BATTERY_CAPACITY
     _advance(session)
+    # Set once Round 2 has started, which sets every player's cash for it (#1016).
+    alice.money = 10_000_000.0
     return session
 
 
@@ -1570,3 +1571,150 @@ def test_a_failed_save_records_no_blackout(path: Path, clock: _Clock, monkeypatc
         session.finish_settlement(job, outcome)
 
     assert session.blackouts == []
+
+
+# --- the budget floor and blackout reset (#1016) --------------------------------------------------
+
+FLOOR = WORKSHOP_CASH_FLOOR
+
+
+def _at_round_one_recap(path: Path) -> WorkshopSession:
+    """A session at Round 1's Recap, with Alice (account 1) and Bob (account 2), and no blackout: both own
+    ``FLEET``, which keeps the grid up.
+    """
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    for account_id, username in [(1, "alice"), (2, "bob")]:
+        session.join(_account(account_id, username)).owned_facilities.extend(FLEET)
+    while session.checkpoint != Recap(round=1):
+        _advance(session)
+    assert session.blackouts == []
+    return session
+
+
+def test_a_player_below_the_floor_is_topped_up_to_exactly_it_as_the_round_starts(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    session.network.members[1].money = 120_000.0
+
+    _advance(session)
+
+    assert session.checkpoint == Investment(round=2)
+    assert session.network.members[1].money == FLOOR
+
+
+def test_a_player_in_debt_is_topped_up_to_the_floor(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    session.network.members[1].money = -300_000.0
+
+    _advance(session)
+
+    assert session.network.members[1].money == FLOOR
+
+
+def test_cash_above_the_floor_carries_forward(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    session.network.members[1].money = FLOOR + 1.0
+    session.network.members[2].money = 3_000_000.0
+
+    _advance(session)
+
+    assert session.network.members[1].money == FLOOR + 1.0
+    assert session.network.members[2].money == 3_000_000.0
+
+
+def test_a_top_up_survives_a_restart(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    session.network.members[1].money = 120_000.0
+    _advance(session)
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.network.members[1].money == FLOOR
+
+
+def test_an_advance_that_fails_to_save_tops_up_nobody(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _at_round_one_recap(path)
+    session.network.members[1].money = 120_000.0
+    monkeypatch.setattr(session_module, "write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        _advance(session)
+
+    assert session.checkpoint == Recap(round=1)
+    assert session.network.members[1].money == 120_000.0
+
+
+def test_round_one_starts_with_the_cash_each_player_holds(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    session.join(_account(1, "alice")).money = 120_000.0
+
+    _advance(session)
+
+    assert session.checkpoint == Investment(round=1)
+    assert session.network.members[1].money == 120_000.0
+
+
+def test_no_top_up_happens_inside_a_round(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    _advance(session)
+    session.network.members[1].money = 120_000.0
+
+    _advance(session)
+
+    assert session.checkpoint == TradingPeriod(round=2, season="spring")
+    assert session.network.members[1].money < FLOOR
+
+
+def _round_starting_after_a_blackout(path: Path, clock: _Clock, *, alice: float, bob: float) -> WorkshopSession:
+    """A session at the Recap of Round 1, which a blackout ended, with Alice (account 1) holding ``alice`` and Bob
+    (account 2) holding ``bob``.
+    """
+    session = _blacked_out(path, clock)
+    session.join(_account(2, "bob"))
+    session.network.members[1].money = alice
+    session.network.members[2].money = bob
+    _advance(session)
+    assert session.checkpoint == Recap(round=1)
+    return session
+
+
+def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+
+    _advance(session)
+
+    assert session.checkpoint == Investment(round=2)
+    assert session.network.members[1].money == WORKSHOP_STARTING_BUDGET
+    assert session.network.members[2].money == WORKSHOP_STARTING_BUDGET
+
+
+def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    session.network.members[1].owned_facilities.append(REACTOR)
+
+    _advance(session)
+
+    assert session.network.members[1].owned_facilities == [REACTOR]
+
+
+def test_a_blacked_out_round_counts_toward_every_facilitys_lifetime(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    # Batteries built in Round 1 last that Round only, though the blackout cut it short.
+    session.network.members[1].owned_facilities.append(OwnedFacility(facility=BATTERIES, built_round=1))
+
+    _advance(session)
+
+    assert session.network.members[1].owned_facilities == []
+
+
+def test_only_the_round_after_a_blackout_is_reset(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    _advance(session)
+    for player in session.network.players():
+        player.owned_facilities.extend(FLEET)
+    while session.checkpoint != Recap(round=2):
+        _advance(session)
+    session.network.members[2].money = 3_000_000.0
+
+    _advance(session)
+
+    assert session.network.members[2].money == 3_000_000.0
