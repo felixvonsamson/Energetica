@@ -1,0 +1,35 @@
+
+Bias: mean(method - truth), % of the player's typical season profit
+                                   wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                               -0.8%         -1.7%         +6.4%         +6.6%        +29.4%
+latin_3_pool1                            +2.2%         +6.2%         -1.1%         -0.9%         -6.1%
+best_week                                -2.0%         -1.5%         +3.6%         +0.1%         -0.3%
+representative_week_own_demand           +4.7%         +4.6%         +5.2%         +2.7%        +15.0%
+representative_week                      -0.2%         +0.6%         +2.1%         -0.3%        -13.1%
+
+Tracking error: RMS(method - truth), % of the player's typical season profit
+                                   wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                               57.9%         57.8%         61.7%         51.6%        266.4%
+latin_3_pool1                            13.2%         14.0%         13.1%          6.4%         72.1%
+best_week                                15.6%         15.3%         14.1%          9.8%         56.2%
+representative_week_own_demand           19.2%         18.4%         12.2%         10.5%         69.0%
+representative_week                      12.9%         13.5%         10.1%          3.8%         38.9%
+
+Season-to-season spread across seeds, ratio to the truth's (1.00 = right)
+                                   wind+peaker  wind+battery    solar+ccgt       nuclear      gas+coal
+middle_day                               10.02         10.20         13.87         13.29          5.75
+latin_3_pool1                             2.90          2.83          2.77          2.23          3.60
+best_week                                 2.96          2.96          3.13          2.98          2.59
+representative_week_own_demand            2.66          2.64          2.17          1.47          2.15
+representative_week                       2.94          3.00          2.10          1.53          2.03
+
+                                  pairs ranked   blackouts  wind CF err  PV CF err
+truth                                                  0%
+middle_day                                 86%         0%       58.8%      46.8%
+latin_3_pool1                              99%         0%        0.4%       0.4%
+best_week                                  98%         0%        3.4%       3.6%
+representative_week_own_demand             99%         0%        0.8%       0.3%
+representative_week                        99%         0%        0.8%       0.3%
+
+pairs ranked: share of player pairs whose order by season profit matches the truth's
+CF err: mean relative error of the simulated days' capacity factor against the season's
