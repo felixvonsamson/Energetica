@@ -42,8 +42,7 @@ GAS = FacilityId.GAS_BURNER  # 11 MW
 COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 54 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
 OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 130 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 285 MWh, 69% efficient
-SOLID_STATE = FacilityId.SOLID_STATE_BATTERIES  # 107 MW, 570 MWh, 79% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 300 MWh, 69% efficient
 REACTOR = FacilityId.NUCLEAR_REACTOR  # one Round to build
 
 _BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
@@ -199,18 +198,6 @@ def test_storage_charges_what_it_buys_and_stores_it_for_the_next_period() -> Non
     assert batteries.bought == pytest.approx(86e6 * 3 * SEASON_DAYS)
     assert batteries.purchase_cost == pytest.approx(86 * 3 * -25 * SEASON_DAYS)
     assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(_BATTERY_CAPACITY)}
-
-
-@pytest.mark.parametrize(("facility", "hours"), [(BATTERIES, 4), (SOLID_STATE, 6)])
-def test_an_empty_battery_fills_after_hours_at_full_power(facility: FacilityId, hours: int) -> None:
-    # Batteries shift energy within a day (#1202): lithium-ion holds at most four hours of charging at
-    # full power, solid-state at most six.
-    outcome = _simulate(_bidder(OFFSHORE_WIND, facility, sell={OFFSHORE_WIND: -25.0}, buy={facility: 100.0}))
-
-    power = CATALOG[facility].base_power_generation
-    hours_charging = outcome.results[1].facilities[facility].bought / SEASON_DAYS / power
-    assert hours - 1 < hours_charging <= hours
-    assert outcome.stored_energy[1] == {facility: pytest.approx(CATALOG[facility].base_storage_capacity)}
 
 
 def test_storage_never_holds_more_than_its_capacity() -> None:

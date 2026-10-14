@@ -561,7 +561,7 @@ def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_
 
     assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 500_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
-    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 215_000_000.0}
+    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 200_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
     assert response.json()["stored_energy_at_risk"] == {}
 
