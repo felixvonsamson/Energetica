@@ -193,9 +193,9 @@ language sitting inside a Python package — without touching a single public UR
 
 `src/energetica/freeplay/data/` is deliberately **not** in that list. It holds the daily quiz
 questions and answers and the map; the Python engine reads them off the filesystem
-(`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them. The national-demand
-curves were there too until #997 moved them to `src/energetica/sim/data/`, so that Workshop can
-read them. They hold nothing secret, and no URL maps there either.
+(`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them. It also holds the
+persistent world's national-demand curves. Workshop's own demand curve is in
+`src/energetica/workshop/data/` (#1201). It holds nothing secret, and no URL maps there either.
 The tables lived at `src/energetica/static/data/` until #1055 moved them next to the engine.
 Apache served that directory until the disclosure fix #1070, which closed a path that let
 anyone who guessed it read the quiz answers. No URL maps into the Python package any more, but

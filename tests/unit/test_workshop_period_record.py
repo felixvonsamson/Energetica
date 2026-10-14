@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from energetica.sim.market import market_optimum, merit_order, MarketEntry
-from energetica.sim.national_demand import DemandCurve
+from energetica.workshop.demand_block import DAYS_PER_YEAR, DemandCurve
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -27,7 +27,7 @@ from energetica.workshop.weather import Shares
 
 from ._weather_helpers import FixedWeather
 
-_FLAT = DemandCurve(intraday=(1.0,), seasonal=(1.0,))
+_FLAT = DemandCurve((1.0,) * DAYS_PER_YEAR)
 _AMPLITUDE = 10e6
 _WEEK_HOURS = 7 * 24
 

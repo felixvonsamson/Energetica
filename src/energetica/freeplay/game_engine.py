@@ -24,7 +24,7 @@ from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
 from energetica.freeplay import legacy_pickle
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
-from energetica.sim.national_demand import national_demand_curve
+from energetica.freeplay.national_demand import national_demand_curve
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.messages import Chat

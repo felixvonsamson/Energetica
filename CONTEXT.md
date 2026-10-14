@@ -152,8 +152,10 @@ more of the same type in it. Example: three batteries of capacity 100 hold 150 (
 two, they hold 150 (SOC 75%). Replaced by one, it holds 100 (SOC 100%) and 50 is lost.
 
 **Workshop year** (#1004):
-364 days, so each of the four seasons is exactly 13 weeks (91 days). Spring starts on 1 March, and
-winter runs over the end of the year. The demand curve and the weather use this year length.
+364 days, so each of the four seasons is exactly 13 weeks (91 days). Day 0 is a Monday, and spring starts
+on day 56, the Monday closest to 1 March, so every season starts on a Monday. Winter runs over the end of the
+year. The demand curve and the weather use this year length. The demand curve (#1201) is French national
+consumption at 15-minute steps, with its weekends, lined up so its year also starts on a Monday.
 
 **Round format** (#1004, #1190):
 The three levers that say how a Round's Trading periods are simulated: the **trading-round format**

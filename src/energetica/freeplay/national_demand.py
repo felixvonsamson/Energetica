@@ -1,10 +1,9 @@
-"""The national electricity demand curve, as the shape that demand follows over a day and a year.
+"""The persistent world's national electricity demand curve, as the shape that demand follows over a day and a year.
 
 The curve is RTE (French grid operator) national consumption, normalised so each array averages
-about 1. It ships as package data in ``sim/data/`` (see ``package-data`` in pyproject.toml), so it
-is addressed relative to this file and resolves wherever the package is installed. It lives in
-``sim`` rather than in a mode's package because both the persistent world and Workshop shape their
-demand with it (#997).
+about 1. It ships as package data in ``freeplay/data/`` (see ``package-data`` in pyproject.toml), so
+it is addressed relative to this file and resolves wherever the package is installed. Workshop has
+its own curve over a 364-day year (:mod:`~energetica.workshop.demand_block`, #1201).
 """
 
 from __future__ import annotations
@@ -20,7 +19,7 @@ _DATA_DIR = Path(__file__).parent / "data"
 
 @dataclass(frozen=True, slots=True)
 class DemandCurve:
-    """The two shape arrays that :func:`~energetica.sim.demand_shape.demand_shape_factor` combines."""
+    """The two shape arrays that :func:`~energetica.freeplay.demand_shape.demand_shape_factor` combines."""
 
     intraday: Sequence[float]
     seasonal: Sequence[float]

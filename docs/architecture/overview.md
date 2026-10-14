@@ -45,7 +45,7 @@ src/energetica/       # Python/FastAPI backend
 ├── schemas/          # Pydantic models
 ├── kernel/           # Error types, session signing, hashing, version, formatting
 ├── identity/         # Accounts store, instance and server configuration, my-runs
-├── sim/              # Market clearing and settlement, demand shape, facility statuses
+├── sim/              # Market clearing and settlement, facility statuses
 └── freeplay/         # The persistent world
     ├── app.py        # Application factory (create_app)
     ├── game_engine.py  # Core game logic
