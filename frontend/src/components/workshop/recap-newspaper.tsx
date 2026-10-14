@@ -7,7 +7,8 @@
  *
  * - "The Year in Review" tells what happened in the Round just closed: a "Lights
  *   out" report if the grid went down, every event that fired as an article
- *   ending in a line of plain numbers, and the room's figures.
+ *   ending in a line of plain numbers, the room's figures, and each season's
+ *   weather against a normal season's (#1200).
  * - "The Year Ahead" tells what the next Round holds: each facility that unlocks,
  *   with a black-and-white photo, a carbon tax vote if the Round holds one
  *   (#1014), the Round's events with their exact effect, the change in peak
@@ -29,6 +30,7 @@ import {
 import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import { taxPerTonne } from "@/lib/workshop-vote";
+import { weatherLine } from "@/lib/workshop-weather";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopRecap = ApiSchema<"WorkshopRecap">;
@@ -99,8 +101,9 @@ export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
                         </p>
                     )}
                 </div>
-                <aside className="lg:border-l lg:border-neutral-900 lg:pl-6">
+                <aside className="space-y-6 lg:border-l lg:border-neutral-900 lg:pl-6">
                     <ByTheNumbers recap={recap} />
+                    <Weather recap={recap} />
                 </aside>
             </div>
 
@@ -452,6 +455,34 @@ function ByTheNumbers({ recap }: { recap: WorkshopRecap }) {
                     ))}
                 </tbody>
             </table>
+        </section>
+    );
+}
+
+/**
+ * How each season's wind and sunshine compared with a normal season's. Hydro
+ * follows a fixed table, so it is left out.
+ */
+function Weather({ recap }: { recap: WorkshopRecap }) {
+    if (recap.weather.length === 0) return null;
+    return (
+        <section className="break-inside-avoid">
+            <p className="border-b-2 border-neutral-900 text-[0.7rem] font-bold tracking-[0.2em] uppercase">
+                Weather
+            </p>
+            {recap.weather.map((report) => (
+                <div
+                    key={report.season}
+                    className="border-b border-dotted border-neutral-400 py-2"
+                >
+                    <p className={`text-lg font-bold italic ${HEADLINE}`}>
+                        {SEASON_LABELS[report.season]}
+                    </p>
+                    <p className="text-sm leading-snug">
+                        {weatherLine(report)}
+                    </p>
+                </div>
+            ))}
         </section>
     );
 }

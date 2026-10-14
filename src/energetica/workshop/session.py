@@ -129,7 +129,7 @@ from energetica.workshop.unlocks import (
     unlock_threshold,
 )
 from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
-from energetica.workshop.weather import representative_weather
+from energetica.workshop.weather import AverageOutput, representative_weather, season_output
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -1084,6 +1084,14 @@ class WorkshopSession:
                 raise NoSuchRoundError(f"the session has no Round {round_number}")
             if not recap_open(self.checkpoint, round_number):
                 raise RecapNotOpenError(f"Round {round_number}'s Recap has not opened")
+            blackout = next((period.season for period in self.blackouts if period.round == round_number), None)
+        # The Round played up to its blackout, if it had one. Worked out without the lock, since it takes a moment
+        # the first time, and the weather seed never changes.
+        played = SEASONS if blackout is None else SEASONS[: SEASONS.index(blackout) + 1]
+        weather: dict[Season, AverageOutput] = {
+            season: season_output(self.weather_seed, round_number, season) for season in played
+        }
+        with self._lock:
             players = self.network.players()
             return recap(
                 round_number,
@@ -1096,6 +1104,7 @@ class WorkshopSession:
                 results=[result for player in players for result in player.trading_results],
                 peak_demand=self.peak_demand.get(round_number),
                 vote_outcomes=self.vote_outcomes,
+                weather=weather,
             )
 
     def plans_view(self) -> PlansView:

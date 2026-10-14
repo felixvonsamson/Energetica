@@ -1374,6 +1374,28 @@ export interface components {
             sheet: components["schemas"]["PeriodSheet"] | null;
         };
         /**
+         * SeasonWeatherReport
+         * @description How a season's wind and sunshine compared with a normal season's (#1200). Hydro follows a fixed table, so it
+         *     is left out.
+         */
+        SeasonWeatherReport: {
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Wind
+             * @description The season's average wind output against a normal season's, as a change: 0.08 is 8% above normal
+             */
+            wind: number;
+            /**
+             * Solar
+             * @description The season's average solar output against a normal season's, as a change: -0.03 is 3% below normal
+             */
+            solar: number;
+        };
+        /**
          * TradingPeriod
          * @description One of a Round's four Trading periods, one per season.
          */
@@ -2013,6 +2035,11 @@ export interface components {
              */
             stories: components["schemas"]["RecapStory"][];
             figures: components["schemas"]["RoomFigures"];
+            /**
+             * Weather
+             * @description Each season the Round played, in order
+             */
+            weather: components["schemas"]["SeasonWeatherReport"][];
             /** @description Null after the last Round */
             year_ahead: components["schemas"]["YearAhead"] | null;
         };

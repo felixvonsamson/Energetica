@@ -21,6 +21,7 @@ from energetica.workshop.session import (
 )
 from energetica.workshop.trading import FacilityPerformance, TradingResult
 from energetica.workshop.unlocks import Unlock
+from energetica.workshop.weather import NORMAL_OUTPUT, AverageOutput
 
 PEAK = 100e6
 
@@ -61,6 +62,7 @@ def _recap(round_number: int = 1, **overrides: object):  # noqa: ANN202
         "results": [],
         "peak_demand": PEAK,
         "vote_outcomes": [],
+        "weather": {},
     }
     arguments.update(overrides)
     return recap(round_number, **arguments)
@@ -142,6 +144,21 @@ def test_a_round_with_nothing_sold_has_no_price_or_share() -> None:
     assert figures.energy_sold == 0.0
     assert figures.average_price is None
     assert figures.renewable_share is None
+
+
+def test_the_weather_compares_each_season_with_a_normal_one() -> None:
+    spring, summer = NORMAL_OUTPUT["spring"], NORMAL_OUTPUT["summer"]
+    weather = {
+        "summer": AverageOutput(wind=summer.wind, solar=summer.solar * 1.1),
+        "spring": AverageOutput(wind=spring.wind * 1.08, solar=spring.solar * 0.97),
+    }
+    reports = _recap(1, weather=weather).weather
+    # In season order, whatever order the seasons came in.
+    assert [report.season for report in reports] == ["spring", "summer"]
+    assert reports[0].wind == pytest.approx(0.08)
+    assert reports[0].solar == pytest.approx(-0.03)
+    assert reports[1].wind == pytest.approx(0.0)
+    assert reports[1].solar == pytest.approx(0.1)
 
 
 def test_the_last_round_has_no_year_ahead() -> None:

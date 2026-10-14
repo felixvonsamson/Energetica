@@ -18,6 +18,7 @@ from energetica.workshop.session import (
     TradingPeriod,
     WorkshopSession,
 )
+from energetica.workshop.weather import NORMAL_OUTPUT, season_output
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -112,3 +113,23 @@ def test_each_rounds_peak_demand_is_the_most_any_of_its_periods_cleared(tmp_path
     assert recap.year_ahead.demand is not None
     assert recap.year_ahead.demand.peak_this_round == max(peaks)
     assert WorkshopSession.open(WORKSHOP_CONFIG, path, clock=_Clock()).peak_demand == {1: max(peaks)}
+
+
+def test_the_recap_tells_the_weather_of_each_season_the_round_played(tmp_path: Path) -> None:
+    session = _session(tmp_path / "session.json")
+    _to_recap(session)
+    weather = session.recap(1).weather
+    assert [report.season for report in weather] == ["spring", "summer", "autumn", "winter"]
+    spring = season_output(session.weather_seed, 1, "spring")
+    assert weather[0].wind == pytest.approx(spring.wind / NORMAL_OUTPUT["spring"].wind - 1)
+    assert weather[0].solar == pytest.approx(spring.solar / NORMAL_OUTPUT["spring"].solar - 1)
+
+
+def test_the_recap_tells_no_weather_after_a_blackout(tmp_path: Path) -> None:
+    # A player who owns nothing cannot meet the demand she brings, so the grid goes down in spring.
+    session = WorkshopSession.open(WORKSHOP_CONFIG, tmp_path / "session.json", round_count=2, clock=_Clock())
+    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
+    session.advance()
+    _to_recap(session)
+    assert session.blackouts == [TradingPeriod(round=1, season="spring")]
+    assert [report.season for report in session.recap(1).weather] == ["spring"]
