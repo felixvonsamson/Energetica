@@ -1710,8 +1710,10 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
         assert _advance(client).status_code == 200
     session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
-    session.player(alice).money = 400_000.0
-    session.player(bob).money = 700_000.0
+    for account_id, money in ((alice, 400_000.0), (bob, 700_000.0)):
+        player = session.player(account_id)
+        assert player is not None
+        player.money = money
     facilitator_view = client.get(SCOREBOARD_URL)
     authenticate(client, alice)
     player_view = client.get(SCOREBOARD_URL)
