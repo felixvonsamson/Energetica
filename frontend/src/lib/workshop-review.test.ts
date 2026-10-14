@@ -5,22 +5,24 @@ import {
     DUMPING,
     EXPORTS,
     dateOfDay,
-    isPointOfDay,
+    isPointOfWeek,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    pointTime,
     priceRows,
-    reviewableDays,
+    reviewableWeeks,
     seriesEnergy,
     timeOfDay,
 } from "./workshop-review";
 
-// Two points of a day starting at the period's point 24. Alice (1) has wind,
+// Two points of a week starting at the period's point 24. Alice (1) has wind,
 // which dumps 1 W at the first point, and batteries, which charge 3 W then
 // discharge 2 W. Bob (2) has gas.
-const day = {
-    day: 1,
+const week = {
+    week: 1,
+    days: [66, 67, 68, 69, 70, 71, 72],
     first_point: 24,
     price: [50, null],
     quantity: [12, 0],
@@ -55,14 +57,14 @@ const day = {
 
 describe("playerPowerRows", () => {
     it("counts each facility type's generation, keyed by the period's point", () => {
-        expect(playerPowerRows(day, 1, "generation")).toEqual([
+        expect(playerPowerRows(week, 1, "generation")).toEqual([
             { tick: 24, onshore_wind_turbine: 10, lithium_ion_batteries: 0 },
             { tick: 25, onshore_wind_turbine: 4, lithium_ion_batteries: 2 },
         ]);
     });
 
     it("counts what was sold, charged and dumped as consumption", () => {
-        expect(playerPowerRows(day, 1, "consumption")).toEqual([
+        expect(playerPowerRows(week, 1, "consumption")).toEqual([
             {
                 tick: 24,
                 [EXPORTS]: 9,
@@ -79,7 +81,7 @@ describe("playerPowerRows", () => {
     });
 
     it("gives a player with nothing operating empty rows", () => {
-        expect(playerPowerRows(day, 3, "generation")).toEqual([
+        expect(playerPowerRows(week, 3, "generation")).toEqual([
             { tick: 24 },
             { tick: 25 },
         ]);
@@ -88,13 +90,13 @@ describe("playerPowerRows", () => {
 
 describe("networkPowerRows", () => {
     it("adds up generation by type or by player", () => {
-        expect(networkPowerRows(day, "generation", "type")[0]).toEqual({
+        expect(networkPowerRows(week, "generation", "type")[0]).toEqual({
             tick: 24,
             onshore_wind_turbine: 10,
             lithium_ion_batteries: 0,
             gas_burner: 5,
         });
-        expect(networkPowerRows(day, "generation", "player")[1]).toEqual({
+        expect(networkPowerRows(week, "generation", "player")[1]).toEqual({
             tick: 25,
             "1": 6,
             "2": 5,
@@ -102,7 +104,7 @@ describe("networkPowerRows", () => {
     });
 
     it("splits consumption into demand tiers, charging and dumping by type", () => {
-        expect(networkPowerRows(day, "consumption", "type")[0]).toEqual({
+        expect(networkPowerRows(week, "consumption", "type")[0]).toEqual({
             tick: 24,
             must_serve: 8,
             low_flex: 3,
@@ -112,7 +114,7 @@ describe("networkPowerRows", () => {
     });
 
     it("groups the tiers as consumers, and gives each player their charging and dumping", () => {
-        expect(networkPowerRows(day, "consumption", "player")[0]).toEqual({
+        expect(networkPowerRows(week, "consumption", "player")[0]).toEqual({
             tick: 24,
             [CONSUMERS]: 11,
             "1": 4,
@@ -126,11 +128,11 @@ describe("networkPowerRows", () => {
                 .filter(([key]) => key !== "tick")
                 .reduce((sum, [, value]) => sum + value, 0);
         const generated = total(
-            networkPowerRows(day, "generation", "type")[0]!,
+            networkPowerRows(week, "generation", "type")[0]!,
         );
 
         for (const grouping of ["type", "player"] as const) {
-            const row = networkPowerRows(day, "consumption", grouping)[0]!;
+            const row = networkPowerRows(week, "consumption", grouping)[0]!;
             expect(total(row)).toBe(generated);
         }
     });
@@ -138,7 +140,7 @@ describe("networkPowerRows", () => {
 
 describe("priceRows", () => {
     it("leaves a gap where the grid was down", () => {
-        const [first, second] = priceRows(day);
+        const [first, second] = priceRows(week);
 
         expect(first).toEqual({ tick: 24, price: 50 });
         expect(second?.tick).toBe(25);
@@ -159,7 +161,7 @@ describe("orderedKeys", () => {
 
 describe("seriesEnergy", () => {
     it("adds up power times the length of each point", () => {
-        const rows = playerPowerRows(day, 1, "generation");
+        const rows = playerPowerRows(week, 1, "generation");
 
         expect(seriesEnergy(rows, "onshore_wind_turbine", 0.5)).toBe(7);
     });
@@ -208,23 +210,38 @@ describe("dateOfDay", () => {
     });
 });
 
-describe("reviewableDays", () => {
-    it("lists every day when the grid held", () => {
-        expect(reviewableDays([59, 60, 61], null, 24)).toEqual([59, 60, 61]);
-    });
-
-    it("ends at the day the grid went down", () => {
-        // Point 30 is 06:00 on the second day.
-        expect(reviewableDays([59, 60, 61], 30, 24)).toEqual([59, 60]);
-        expect(reviewableDays([59, 60, 61], 0, 24)).toEqual([59]);
+describe("pointTime", () => {
+    it("gives the date and time each point of the period starts at", () => {
+        expect(pointTime(0, [59, 60], 24)).toBe("1 Mar, 00:00");
+        expect(pointTime(30, [59, 60], 24)).toBe("2 Mar, 06:00");
     });
 });
 
-describe("isPointOfDay", () => {
-    it("tells whether a point belongs to the day", () => {
-        expect(isPointOfDay(24, 1, 24)).toBe(true);
-        expect(isPointOfDay(47, 1, 24)).toBe(true);
-        expect(isPointOfDay(23, 1, 24)).toBe(false);
-        expect(isPointOfDay(48, 1, 24)).toBe(false);
+describe("reviewableWeeks", () => {
+    const days = Array.from({ length: 14 }, (_, i) => 59 + i);
+
+    it("lists every week when the grid held", () => {
+        expect(reviewableWeeks(days, null, 24)).toEqual([
+            days.slice(0, 7),
+            days.slice(7),
+        ]);
+    });
+
+    it("ends at the week the grid went down in", () => {
+        // Point 30 is 06:00 on the second day, in the first week.
+        expect(reviewableWeeks(days, 30, 24)).toEqual([days.slice(0, 7)]);
+        expect(reviewableWeeks(days, 7 * 24, 24)).toEqual([
+            days.slice(0, 7),
+            days.slice(7),
+        ]);
+    });
+});
+
+describe("isPointOfWeek", () => {
+    it("tells whether a point belongs to the week", () => {
+        expect(isPointOfWeek(7 * 24, 1, 24)).toBe(true);
+        expect(isPointOfWeek(14 * 24 - 1, 1, 24)).toBe(true);
+        expect(isPointOfWeek(7 * 24 - 1, 1, 24)).toBe(false);
+        expect(isPointOfWeek(14 * 24, 1, 24)).toBe(false);
     });
 });

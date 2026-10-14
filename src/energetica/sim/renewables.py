@@ -14,7 +14,6 @@ from datetime import UTC, datetime, timedelta
 
 import numpy as np
 from noise import pnoise3
-from scipy.stats import norm
 
 from energetica.sim.astro import DrHI
 from energetica.sim.renewable_curves import RIVER_FLOW_SPEED_SEASONAL, WIND_POWER_CURVE
@@ -28,34 +27,20 @@ MAX_RIVER_SPEED = 2.5
 WIND_CUT_OUT_SPEED = 85
 
 
-def calculate_solar_irradiance(
-    position: tuple[float, float], total_seconds: float, random_seed: int, days_per_year: int
-) -> tuple[float, float, float]:
-    """
-    Calculate the solar irradiance for a given location and time.
+def clear_sky_index(position: tuple[float, float], weather_seconds: float, random_seed: int) -> float:
+    """The clear-sky index at a time, from 0 to 1: the share of the clear-sky irradiance the clouds let through.
 
-    The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
-    The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
-    The irradiance is capped at :data:`SOLAR_FULL_POWER_IRRADIANCE`.
-
-    Returns:
-        (solar_irradiance, clear_sky_value, clear_sky_index)
+    It is the weather part of solar irradiance, derived from a 3d perlin noise function that moves in time to
+    simulate the cloud cover.
     """
 
     def transformation(noise_value: float, threshold: float = 0, smoothness: float = 2) -> float:
         """Sigmoid transformation."""
         return 1 / (1 + np.exp(-(noise_value - threshold) * 10 / smoothness))
 
-    # Calculate the real day and time in a year for a given tick. The start date is in UTC so the sun does not
-    # depend on the machine's time zone. The game server runs in UTC, so this matches what players saw before.
-    start_date = datetime(2023, 7, 1, tzinfo=UTC)  # 6 months offset because i'm using the southern hemisphere
-    day_of_year = int((total_seconds / 3600 / 24 / days_per_year) % 1 * 365)
-    time_of_day = total_seconds % (3600 * 24)
-    weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
-
-    x_noise = position[0] + total_seconds / 2400
-    y_noise = position[1] + total_seconds / 4000
-    t = total_seconds / 3600 / 24
+    x_noise = position[0] + weather_seconds / 2400
+    y_noise = position[1] + weather_seconds / 4000
+    t = weather_seconds / 3600 / 24
     regional_noise = pnoise3(
         x_noise / 50,
         y_noise / 50,
@@ -72,22 +57,54 @@ def calculate_solar_irradiance(
         threshold=0.5 * regional_noise,
         smoothness=max(0.3, 1 - regional_noise),
     )
-    csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    clear_sky = DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
+    return 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
+
+
+def clear_sky_irradiance(position: tuple[float, float], total_seconds: float, days_per_year: int) -> float:
+    """The irradiance, in W/m^2, under a clear sky: the calendar part of solar irradiance, from the sun's position
+    alone.
+    """
+    # Calculate the real day and time in a year for a given tick. The start date is in UTC so the sun does not
+    # depend on the machine's time zone. The game server runs in UTC, so this matches what players saw before.
+    start_date = datetime(2023, 7, 1, tzinfo=UTC)  # 6 months offset because i'm using the southern hemisphere
+    day_of_year = int((total_seconds / 3600 / 24 / days_per_year) % 1 * 365)
+    time_of_day = total_seconds % (3600 * 24)
+    weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
+    return DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
+
+
+def calculate_solar_irradiance(
+    position: tuple[float, float],
+    total_seconds: float,
+    random_seed: int,
+    days_per_year: int,
+    weather_seconds: float | None = None,
+) -> tuple[float, float, float]:
+    """
+    Calculate the solar irradiance for a given location and time.
+
+    The clear sky index (:func:`clear_sky_index`) is multiplied by the clear sky irradiance
+    (:func:`clear_sky_irradiance`) to get the solar irradiance. The irradiance is capped at
+    :data:`SOLAR_FULL_POWER_IRRADIANCE`.
+
+    The sun's position comes from ``total_seconds``, and the clouds from ``weather_seconds``, which defaults to
+    the same time. A different time borrows the clouds of another day (#1198).
+
+    Returns:
+        (solar_irradiance, clear_sky_value, clear_sky_index)
+    """
+    csi = clear_sky_index(position, total_seconds if weather_seconds is None else weather_seconds, random_seed)
+    clear_sky = clear_sky_irradiance(position, total_seconds, days_per_year)
     return min(SOLAR_FULL_POWER_IRRADIANCE, csi * clear_sky), clear_sky, csi
 
 
-def calculate_wind_speed(
-    position: tuple[float, float], total_seconds: float, random_seed: int, days_per_year: int
-) -> float:
-    """
-    Calculate the wind speed for a given location and time.
+def wind_speed_noise(position: tuple[float, float], weather_seconds: float, random_seed: int) -> float:
+    """The weather part of the wind speed, from 0 to 1.
 
-    The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
-    Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
+    It is derived from a 3d perlin noise function with a superposition of specific frequencies.
     """
     x, y = position
-    t = total_seconds / 60
+    t = weather_seconds / 60
     wind_speed_noise = (
         0.9 * pnoise3(x / 20, y / 20, t / 5760, base=random_seed)
         + 0.06 * pnoise3(x, y, t / 360, base=random_seed)
@@ -95,14 +112,40 @@ def calculate_wind_speed(
         + 0.007 * pnoise3(x * 18, y * 18, t / 15, base=random_seed)
         + 0.003 * pnoise3(x * 108, y * 108, t / 2.5, base=random_seed)
     )
-    wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
-    wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
+    # The normal distribution's CDF with a standard deviation of 0.15. ``math.erfc`` is much faster than
+    # ``scipy.stats.norm.cdf`` on a single value, which matters when a season's weather is sampled (#1198).
+    wind_speed_noise = 0.5 * math.erfc(-wind_speed_noise / (0.15 * math.sqrt(2)))
+    return (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
+
+
+def wind_calendar_factor(total_seconds: float, days_per_year: int) -> float:
+    """The calendar part of the wind speed: two sinusoidal functions simulating the seasonal and diurnal wind
+    patterns, times the top speed.
+    """
+    t = total_seconds / 60
     return (
-        wind_speed_noise
-        * (1 + 0.4 * math.sin(t / 60 / 24 / days_per_year * math.pi * 2 + 0.5 * math.pi))
+        (1 + 0.4 * math.sin(t / 60 / 24 / days_per_year * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 85
-    )  # type: ignore
+    )
+
+
+def calculate_wind_speed(
+    position: tuple[float, float],
+    total_seconds: float,
+    random_seed: int,
+    days_per_year: int,
+    weather_seconds: float | None = None,
+) -> float:
+    """
+    Calculate the wind speed for a given location and time: :func:`wind_speed_noise` times
+    :func:`wind_calendar_factor`.
+
+    The seasonal and diurnal patterns come from ``total_seconds``, and the noise from ``weather_seconds``, which
+    defaults to the same time. A different time borrows the weather of another day (#1198).
+    """
+    noise = wind_speed_noise(position, total_seconds if weather_seconds is None else weather_seconds, random_seed)
+    return noise * wind_calendar_factor(total_seconds, days_per_year)
 
 
 def calculate_river_speed(total_seconds: float, days_per_year: int) -> float:

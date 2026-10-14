@@ -7,7 +7,7 @@ produced, what each demand bought, and what must-run power was dumped, along wit
 caller's job, because those live in each mode's own state.
 
 The caller chooses the length of a tick and the dump cost, since each mode of play has its own. Scaling
-a representative day up to a season is also the caller's job; nothing here knows about it.
+a representative week up to a season is also the caller's job; nothing here knows about it.
 """
 
 from __future__ import annotations

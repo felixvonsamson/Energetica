@@ -1,7 +1,7 @@
 /**
  * Shaping a settled Trading period's record for its review charts (#1007).
  *
- * The API gives one simulated day at a time: the price at each settlement
+ * The API gives one simulated week at a time: the price at each settlement
  * point, and for each player's facility type its generation, dumped power and
  * charging. These functions turn that into the rows the time-series charts
  * draw, one per settlement point, keyed by `tick`: the point's number in the
@@ -19,7 +19,7 @@
 import type { MeritOrderData } from "@/components/charts/merit-order-view";
 import type { ApiSchema } from "@/types/api-helpers";
 
-type PeriodDay = ApiSchema<"WorkshopPeriodDayOut">;
+type PeriodWeek = ApiSchema<"WorkshopPeriodWeekOut">;
 type Pool = ApiSchema<"WorkshopPoolSeriesOut">;
 type MeritOrder = ApiSchema<"WorkshopMeritOrderOut">;
 type Orders = ApiSchema<"WorkshopOrdersOut">;
@@ -44,11 +44,11 @@ export const TIER_NAMES: Record<string, string> = {
     opportunistic: "Opportunistic demand",
 };
 
-/** Rows for the day's points, each starting with every key at zero. */
-function emptyRows(day: PeriodDay, keys: Iterable<string>): ChartRow[] {
+/** Rows for the week's points, each starting with every key at zero. */
+function emptyRows(week: PeriodWeek, keys: Iterable<string>): ChartRow[] {
     const zeros = Object.fromEntries([...keys].map((key) => [key, 0]));
-    return day.price.map(
-        (_, i) => ({ tick: day.first_point + i, ...zeros }) as ChartRow,
+    return week.price.map(
+        (_, i) => ({ tick: week.first_point + i, ...zeros }) as ChartRow,
     );
 }
 
@@ -67,14 +67,14 @@ function isStorage(pool: Pool): boolean {
     return pool.charged.some((value) => value > 0);
 }
 
-/** One player's generation or consumption over the day. */
+/** One player's generation or consumption over the week. */
 export function playerPowerRows(
-    day: PeriodDay,
+    week: PeriodWeek,
     playerId: number,
     view: PowerView,
 ): ChartRow[] {
-    const pools = day.pools.filter((pool) => pool.player_id === playerId);
-    const rows = emptyRows(day, []);
+    const pools = week.pools.filter((pool) => pool.player_id === playerId);
+    const rows = emptyRows(week, []);
     for (const pool of pools) {
         if (view === "generation") {
             addSeries(rows, pool.facility, pool.generation);
@@ -87,29 +87,29 @@ export function playerPowerRows(
     return rows;
 }
 
-/** The whole market's generation or consumption over the day. */
+/** The whole market's generation or consumption over the week. */
 export function networkPowerRows(
-    day: PeriodDay,
+    week: PeriodWeek,
     view: PowerView,
     grouping: NetworkGrouping,
 ): ChartRow[] {
-    const rows = emptyRows(day, []);
+    const rows = emptyRows(week, []);
     if (view === "generation") {
-        for (const pool of day.pools) {
+        for (const pool of week.pools) {
             const key =
                 grouping === "type" ? pool.facility : String(pool.player_id);
             addSeries(rows, key, pool.generation);
         }
         return rows;
     }
-    for (const tier of day.tiers) {
+    for (const tier of week.tiers) {
         addSeries(
             rows,
             grouping === "type" ? tier.tier : CONSUMERS,
             tier.served,
         );
     }
-    for (const pool of day.pools) {
+    for (const pool of week.pools) {
         if (grouping === "type") {
             if (isStorage(pool)) addSeries(rows, pool.facility, pool.charged);
             addSeries(rows, DUMPING, pool.dumped);
@@ -126,10 +126,10 @@ export function networkPowerRows(
  * The market price at each point. Where the grid was down there is none, and
  * the value is `NaN`, which the chart leaves as a gap.
  */
-export function priceRows(day: PeriodDay): ChartRow[] {
-    return day.price.map(
+export function priceRows(week: PeriodWeek): ChartRow[] {
+    return week.price.map(
         (price, i) =>
-            ({ tick: day.first_point + i, price: price ?? NaN }) as ChartRow,
+            ({ tick: week.first_point + i, price: price ?? NaN }) as ChartRow,
     );
 }
 
@@ -199,24 +199,47 @@ export function dateOfDay(dayOfYear: number): string {
     return DATE_FORMAT.format(new Date(Date.UTC(2001, 0, 1 + dayOfYear)));
 }
 
+/** The days in a simulated week. */
+export const WEEK_DAYS = 7;
+
 /**
- * The days that can be reviewed: all of them, or up to the day the grid went
- * down. Days after a blackout never cleared.
+ * The date and time a settlement point of the period starts at, as "12 Mar,
+ * 06:00".
  */
-export function reviewableDays(
+export function pointTime(
+    point: number,
+    days: readonly number[],
+    clearingsPerDay: number,
+): string {
+    const dayOfYear = days[Math.floor(point / clearingsPerDay)];
+    const date = dayOfYear === undefined ? "" : `${dateOfDay(dayOfYear)}, `;
+    return `${date}${timeOfDay(point, clearingsPerDay)}`;
+}
+
+/**
+ * The weeks that can be reviewed, each as the days of the year it simulated:
+ * all of them, or up to the week the grid went down in. Weeks after a blackout
+ * never cleared.
+ */
+export function reviewableWeeks(
     days: readonly number[],
     blackoutAt: number | null,
     clearingsPerDay: number,
-): number[] {
-    if (blackoutAt === null) return [...days];
-    return days.slice(0, Math.floor(blackoutAt / clearingsPerDay) + 1);
+): number[][] {
+    const weeks: number[][] = [];
+    for (let start = 0; start < days.length; start += WEEK_DAYS) {
+        weeks.push(days.slice(start, start + WEEK_DAYS));
+    }
+    if (blackoutAt === null) return weeks;
+    const pointsPerWeek = WEEK_DAYS * clearingsPerDay;
+    return weeks.slice(0, Math.floor(blackoutAt / pointsPerWeek) + 1);
 }
 
-/** Whether `point` is one of the settlement points of the `day`-th day. */
-export function isPointOfDay(
+/** Whether `point` is one of the settlement points of the `week`-th week. */
+export function isPointOfWeek(
     point: number,
-    day: number,
+    week: number,
     clearingsPerDay: number,
 ): boolean {
-    return Math.floor(point / clearingsPerDay) === day;
+    return Math.floor(point / (WEEK_DAYS * clearingsPerDay)) === week;
 }

@@ -54,13 +54,9 @@ from energetica.workshop.demand_block import (
 )
 from energetica.workshop.fleet import om_owed
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
-from energetica.workshop.trading import (
-    REPRESENTATIVE_DAYS,
-    Bidder,
-    TradingOutcome,
-    representative_weather,
-    simulate_trading_period,
-)
+from energetica.workshop.seasons import representative_week
+from energetica.workshop.trading import Bidder, TradingOutcome, demand_scale, simulate_trading_period
+from energetica.workshop.weather import representative_weather
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -838,14 +834,13 @@ GAS = FacilityId.GAS_BURNER
 
 def _trading(path: Path, clock: _Clock) -> WorkshopSession:
     """A session in Round 1's spring Trading period, its price-setting window open. Alice (account 1) owns
-    a gas burner and batteries. The batteries start full, so that with the gas burner they keep the grid up.
+    six gas burners, enough to keep the grid up, and batteries.
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     alice = session.join(_account(1, "alice"))
     alice.owned_facilities.extend(
-        [OwnedFacility(facility=GAS, built_round=1), OwnedFacility(facility=BATTERIES, built_round=1)]
+        [OwnedFacility(facility=GAS, built_round=1)] * 6 + [OwnedFacility(facility=BATTERIES, built_round=1)]
     )
-    alice.stored_energy = {BATTERIES: BATTERY_CAPACITY}
     _advance(session)
     _advance(session)
     return session
@@ -1135,9 +1130,9 @@ def test_the_simulation_reports_its_progress(path: Path, clock: _Clock) -> None:
     job = session.start_settlement()
     assert job is not None
 
-    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 0, 1)
+    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 0, 14)
     outcome = session.run_settlement(job)
-    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 1, 1)
+    assert session.settlement == SettlementProgress(TradingPeriod(round=1, season="spring"), 14, 14)
     session.finish_settlement(job, outcome)
     assert session.settlement is None
 
@@ -1231,7 +1226,7 @@ def test_a_settled_period_keeps_its_record_across_a_restart(path: Path, clock: _
 
     record = session.period_record(spring)
     assert record is not None
-    assert (record.round, record.season, record.point_count) == (1, "spring", 24)
+    assert (record.round, record.season, record.point_count) == (1, "spring", 7 * 24)
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     reloaded = reopened.period_record(spring)
     assert reloaded is not None
@@ -1306,7 +1301,7 @@ def test_a_cancelled_simulation_stops_and_changes_nothing(path: Path, clock: _Cl
     assert session.network.members[1].trading_results == []
 
 
-def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Path, clock: _Clock) -> None:
+def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Path, clock: _Clock) -> None:
     # Two combined cycles (108 MW) asking 100 meet every tier of demand willing to pay at least 100: 125% of
     # nominal demand, which never exceeds 96 MW for one player. Above them the next tier pays only 24, so
     # every hourly clearing sells 1.25 x nominal demand at 100.
@@ -1320,16 +1315,21 @@ def test_a_trading_period_settles_to_the_scaled_day_worked_out_by_hand(path: Pat
 
     _settle(session)
 
-    amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=1)
-    day = REPRESENTATIVE_DAYS["spring"]
+    # The week's demand is scaled to the season's average.
+    curve = national_demand_curve()
+    amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=1) * demand_scale(
+        "spring", RoundFormat(), curve
+    )
     hourly = [
-        1.25 * nominal_demand(amplitude, national_demand_curve(), SettlementPeriod(day, hour, 24)) for hour in range(24)
+        1.25 * nominal_demand(amplitude, curve, SettlementPeriod(day, hour, 24))
+        for day in representative_week("spring")
+        for hour in range(24)
     ]
     alice = session.network.members[1]
     [result] = alice.trading_results
     plant = result.facilities[FacilityId.COMBINED_CYCLE]
-    assert plant.sold == pytest.approx(sum(hourly) * 91)
-    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 91)
+    assert plant.sold == pytest.approx(sum(hourly) * 13)
+    assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 13)
     om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
     assert plant.om == pytest.approx(om)
     # Fuel procurement is automatic, so the plants' fuel is paid for too (#1009).
@@ -1368,7 +1368,7 @@ def _set_format(session: WorkshopSession, round_number: int, **round_format: obj
     session.set_levers(round_number, LeverChanges(**RoundFormat.model_validate(round_format).model_dump()))
 
 
-def test_a_session_starts_with_representative_days_hourly_clearings_and_batteries_only(path: Path) -> None:
+def test_a_session_starts_with_representative_weeks_hourly_clearings_and_batteries_only(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert session.current_format() == RoundFormat()

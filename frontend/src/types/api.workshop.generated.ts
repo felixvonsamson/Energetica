@@ -614,7 +614,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/periods/{round_number}/{season}/days/{day}": {
+    "/api/v1/workshop/periods/{round_number}/{season}/weeks/{week}": {
         parameters: {
             query?: never;
             header?: never;
@@ -622,11 +622,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Period Day
-         * @description Every settlement point of one simulated day of a settled Trading period: the price, and each player's and
-         *     each demand tier's power. ``day`` is the day's position in the period's days.
+         * Get Period Week
+         * @description Every settlement point of one simulated week of a settled Trading period: the price, and each player's and
+         *     each demand tier's power. ``week`` is the week's position in the period, from 0: a representative week is week
+         *     0 of 1, and a full season has 13.
          */
-        get: operations["get_period_day_api_v1_workshop_periods__round_number___season__days__day__get"];
+        get: operations["get_period_week_api_v1_workshop_periods__round_number___season__weeks__week__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -930,7 +931,7 @@ export interface components {
          */
         LeverChanges: {
             /** Trading Format */
-            trading_format?: ("representative_day" | "full_season") | null;
+            trading_format?: ("representative_week" | "full_season") | null;
             /** Clearings Per Day */
             clearings_per_day?: (24 | 96 | 288) | null;
             /** Storage */
@@ -1296,11 +1297,11 @@ export interface components {
         RoundFormat: {
             /**
              * Trading Format
-             * @description How each Trading period is simulated: one representative day scaled to the season, or every day of the season
-             * @default representative_day
+             * @description How each Trading period is simulated: one representative week scaled to the season, or every day of the season
+             * @default representative_week
              * @enum {string}
              */
-            trading_format: "representative_day" | "full_season";
+            trading_format: "representative_week" | "full_season";
             /**
              * Clearings Per Day
              * @description How many times a day the market clears in a Trading period
@@ -1786,21 +1787,59 @@ export interface components {
             under_construction: boolean;
         };
         /**
-         * WorkshopPeriodDayOut
-         * @description One simulated day of a settled Trading period, at every settlement point (#1007).
+         * WorkshopPeriodOut
+         * @description What a settled Trading period's review needs before it loads any week (#1007, #1198).
+         */
+        WorkshopPeriodOut: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Clearings Per Day
+             * @description Settlement points in each simulated day
+             */
+            clearings_per_day: number;
+            /**
+             * Days
+             * @description The day of the year of each simulated day, in order: 7 for a representative week, 91 for a full season
+             */
+            days: number[];
+            /**
+             * Weeks
+             * @description How many weeks the simulated days make: 1 for a representative week, 13 for a full season. Weeks are asked for by their position, from 0
+             */
+            weeks: number;
+            /**
+             * Blackout At
+             * @description The settlement point the grid went down at, counted from the period's first, or null if it held. Points after it never cleared
+             */
+            blackout_at: number | null;
+        };
+        /**
+         * WorkshopPeriodWeekOut
+         * @description One simulated week of a settled Trading period, at every settlement point (#1007, #1198).
          *
          *     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
          *     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
          */
-        WorkshopPeriodDayOut: {
+        WorkshopPeriodWeekOut: {
             /**
-             * Day
-             * @description The day's position in the period's days
+             * Week
+             * @description The week's position in the period's weeks, from 0
              */
-            day: number;
+            week: number;
+            /**
+             * Days
+             * @description The day of the year of each of the week's days, in order
+             */
+            days: number[];
             /**
              * First Point
-             * @description The period's settlement point the day starts at
+             * @description The period's settlement point the week starts at
              */
             first_point: number;
             /**
@@ -1820,34 +1859,6 @@ export interface components {
             pools: components["schemas"]["WorkshopPoolSeriesOut"][];
             /** Tiers */
             tiers: components["schemas"]["WorkshopTierSeriesOut"][];
-        };
-        /**
-         * WorkshopPeriodOut
-         * @description What a settled Trading period's review needs before it loads any day (#1007).
-         */
-        WorkshopPeriodOut: {
-            /** Round */
-            round: number;
-            /**
-             * Season
-             * @enum {string}
-             */
-            season: "spring" | "summer" | "autumn" | "winter";
-            /**
-             * Clearings Per Day
-             * @description Settlement points in each simulated day
-             */
-            clearings_per_day: number;
-            /**
-             * Days
-             * @description The day of the year of each simulated day, in order: one for a representative day, 91 for a full season. Days are asked for by their position in this list
-             */
-            days: number[];
-            /**
-             * Blackout At
-             * @description The settlement point the grid went down at, counted from the period's first, or null if it held. Points after it never cleared
-             */
-            blackout_at: number | null;
         };
         /**
          * WorkshopPhaseExtendIn
@@ -1924,7 +1935,7 @@ export interface components {
         };
         /**
          * WorkshopPoolSeriesOut
-         * @description One player's facilities of one type over a simulated day, in W at each settlement point.
+         * @description One player's facilities of one type over a simulated week, in W at each settlement point.
          */
         WorkshopPoolSeriesOut: {
             /** Player Id */
@@ -2105,12 +2116,12 @@ export interface components {
         WorkshopSettlementOut: {
             /**
              * Days Done
-             * @description Days of the season simulated so far
+             * @description Days cleared so far
              */
             days_done: number;
             /**
              * Days Total
-             * @description Days the simulation covers: 1 for a representative day, 91 for a full season
+             * @description Days the simulation clears: 14 for a representative week, which is cleared twice for its cyclic start, and 91 for a full season
              */
             days_total: number;
         };
@@ -2138,7 +2149,7 @@ export interface components {
         };
         /**
          * WorkshopTierSeriesOut
-         * @description One demand tier over a simulated day.
+         * @description One demand tier over a simulated week.
          */
         WorkshopTierSeriesOut: {
             /**
@@ -3084,14 +3095,14 @@ export interface operations {
             };
         };
     };
-    get_period_day_api_v1_workshop_periods__round_number___season__days__day__get: {
+    get_period_week_api_v1_workshop_periods__round_number___season__weeks__week__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 round_number: number;
                 season: "spring" | "summer" | "autumn" | "winter";
-                day: number;
+                week: number;
             };
             cookie?: never;
         };
@@ -3103,7 +3114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopPeriodDayOut"];
+                    "application/json": components["schemas"]["WorkshopPeriodWeekOut"];
                 };
             };
             /** @description Validation Error */

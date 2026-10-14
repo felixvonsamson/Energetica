@@ -154,7 +154,7 @@ def test_a_lever_change_that_would_leave_a_later_round_invalid_is_refused(path: 
     plans = session.plans
 
     with pytest.raises(InvalidLeversError) as refused:
-        session.set_levers(2, LeverChanges(trading_format="representative_day"))
+        session.set_levers(2, LeverChanges(trading_format="representative_week"))
 
     assert refused.value.round_number == 3
     assert session.plans == plans

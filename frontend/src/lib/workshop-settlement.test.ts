@@ -62,14 +62,17 @@ describe("withSettlementProgress", () => {
 
 describe("settlementLabel", () => {
     it("counts the days of a full season", () => {
-        expect(settlementLabel({ days_done: 12, days_total: 91 })).toBe(
-            "Simulating the season: day 12 of 91",
-        );
+        expect(
+            settlementLabel({ days_done: 12, days_total: 91 }, "full_season"),
+        ).toBe("Simulating the season: day 12 of 91");
     });
 
-    it("names a representative day without counting it", () => {
-        expect(settlementLabel({ days_done: 0, days_total: 1 })).toBe(
-            "Simulating the representative day",
-        );
+    it("names a representative week without counting its days", () => {
+        expect(
+            settlementLabel(
+                { days_done: 3, days_total: 14 },
+                "representative_week",
+            ),
+        ).toBe("Simulating the representative week");
     });
 });

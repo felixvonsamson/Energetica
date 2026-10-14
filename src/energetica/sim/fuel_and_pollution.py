@@ -2,7 +2,7 @@
 
 Pure and player-agnostic, like the rest of :mod:`energetica.sim`. A facility's fuel use and pollution are
 given for running at full power, and both scale linearly with the output it actually produced. The caller
-says which tick length those figures are for; scaling a representative day up to a season is also the
+says which tick length those figures are for; scaling a representative week up to a season is also the
 caller's job.
 """
 

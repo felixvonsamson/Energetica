@@ -139,8 +139,8 @@ export const queryKeys = {
         // again once the Recap opens.
         recap: (round: number) =>
             ["workshop", "session", "recap", round] as const,
-        periodDay: (round: number, season: string, day: number) =>
-            ["workshop", "periods", round, season, "days", day] as const,
+        periodWeek: (round: number, season: string, week: number) =>
+            ["workshop", "periods", round, season, "weeks", week] as const,
         meritOrder: (round: number, season: string, point: number) =>
             ["workshop", "periods", round, season, "points", point] as const,
     },

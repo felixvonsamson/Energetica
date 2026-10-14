@@ -9,15 +9,12 @@ import { useEffect, useState } from "react";
 
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useWorkshopSession } from "@/hooks/use-workshop";
-import {
-    isRepresentativeDay,
-    settlementLabel,
-} from "@/lib/workshop-settlement";
+import { settlementLabel } from "@/lib/workshop-settlement";
 import type { ApiSchema } from "@/types/api-helpers";
 
 /**
  * How long a run must have been going on this page before the bar shows. A
- * representative day is usually over sooner, so it does not flash a bar.
+ * representative week is usually over sooner, so it does not flash a bar.
  */
 const SHOW_AFTER_MS = 500;
 
@@ -25,13 +22,20 @@ export function SettlementProgress() {
     const { data: session } = useWorkshopSession();
     const settlement = session?.settlement;
     // Mounted only while a run goes, so each run starts its wait afresh.
-    return settlement ? <RunningSettlement settlement={settlement} /> : null;
+    return settlement ? (
+        <RunningSettlement
+            settlement={settlement}
+            tradingFormat={session.round_format.trading_format}
+        />
+    ) : null;
 }
 
 function RunningSettlement({
     settlement,
+    tradingFormat,
 }: {
     settlement: ApiSchema<"WorkshopSettlementOut">;
+    tradingFormat: ApiSchema<"RoundFormat">["trading_format"];
 }) {
     const [shown, setShown] = useState(false);
 
@@ -41,8 +45,6 @@ function RunningSettlement({
     }, []);
 
     if (!shown) return null;
-    // A representative day has no days to count, so its bar pulses instead.
-    const pulses = isRepresentativeDay(settlement);
 
     return (
         <div
@@ -50,15 +52,11 @@ function RunningSettlement({
             className="shrink-0 border-b border-border bg-card px-4 py-2"
         >
             <ProgressBar
-                value={pulses ? 1 : settlement.days_done}
-                max={pulses ? 1 : settlement.days_total}
-                label={settlementLabel(settlement)}
-                showPercentage={!pulses}
-                className={
-                    pulses
-                        ? "mx-auto max-w-[1400px] animate-pulse"
-                        : "mx-auto max-w-[1400px]"
-                }
+                value={settlement.days_done}
+                max={settlement.days_total}
+                label={settlementLabel(settlement, tradingFormat)}
+                showPercentage
+                className="mx-auto max-w-[1400px]"
             />
         </div>
     );

@@ -117,9 +117,8 @@ from energetica.workshop.trading import (
     Bidder,
     TradingOutcome,
     TradingResult,
-    representative_weather,
+    cleared_day_count,
     simulate_trading_period,
-    simulated_days,
 )
 from energetica.workshop.unlocks import (
     Unlock,
@@ -130,6 +129,7 @@ from energetica.workshop.unlocks import (
     unlock_threshold,
 )
 from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
+from energetica.workshop.weather import representative_weather
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -1334,7 +1334,7 @@ class WorkshopSession:
                 base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
             )
-            self.settlement = SettlementProgress(period, 0, len(simulated_days(period.season, round_format)))
+            self.settlement = SettlementProgress(period, 0, cleared_day_count(period.season, round_format))
             return job
 
     def run_settlement(self, job: SettlementJob) -> TradingOutcome:
@@ -1359,7 +1359,7 @@ class WorkshopSession:
             round_format=job.round_format,
             amplitude=job.demand_amplitude,
             curve=national_demand_curve(),
-            weather=representative_weather(job.weather_seed),
+            weather=representative_weather(job.weather_seed, job.period.round),
             on_day_done=on_day_done,
         )
 

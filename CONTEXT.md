@@ -157,7 +157,7 @@ winter runs over the end of the year. The demand curve and the weather use this 
 
 **Round format** (#1004, #1190):
 The three levers that say how a Round's Trading periods are simulated: the **trading-round format**
-(representative day, soon representative week, or full season), the clearings per day (24, 96 or 288), and the storage
+(representative week or full season), the clearings per day (24, 96 or 288), and the storage
 availability (none, batteries only, or every type). Each Round's format is part of its **Round plan**,
 so it is set per Round and **locked** a Round ahead. Every storage type needs the full-season format. If a
 later Round switches back, storage already built keeps running, but no more of it can be bought.
@@ -181,21 +181,16 @@ locks when the session starts, and Round N+1's when Recap N opens, since the Rec
 comes next. Which Rounds are locked follows from where the session is.
 _Avoid_: freeze, commit.
 
-**Representative day** (#1003):
-In representative-day mode, the one simulated day that stands for a whole Trading period: the middle
-day of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled
-×91 (the days in a season) to give the period's total. O&M is not scaled, since it is already one
-period's share, and **stored energy** is what the pool really holds at the end of the day. Being
-replaced by the **representative week** (ADR-0008, #1198).
-_Avoid_: sample day, typical day.
-
-**Representative week** (#1164, ADR-0008):
-The seven simulated days that stand for a whole Trading period, replacing the **representative day**:
-the middle week of its season, scaled ×13. Its sun position and seasonal wind are its own, and so is the
+**Representative week** (#1164, ADR-0008, #1198):
+The seven simulated days that stand for a whole Trading period in representative-week mode: the middle
+week of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled ×13
+(the weeks in a season) to give the period's total. O&M is not scaled, since it is already one period's
+share. Its sun position and seasonal wind are its own, and so is the
 shape of its demand, scaled so that its average matches the season's. Its wind and solar weather are
 **borrowed** from the 7-day runs of the season whose output comes closest to the season's real average. **Stored energy** starts each week at its **cyclic start** and does not
 carry over between periods.
-_Avoid_: sample week, typical week.
+It replaced the representative day, the middle day of the season scaled ×91 (#1003).
+_Avoid_: sample week, typical week, representative day.
 
 **Borrowed weather** (#1164, ADR-0008):
 The weather a **representative week** takes from another 7-day run of its season: the wind noise for
@@ -203,7 +198,7 @@ wind, and the clear-sky index (cloud cover) for solar. Only the weather is borro
 so the sun and the seasonal wind still follow the week's own dates.
 
 **Cyclic start** (#1164, ADR-0008):
-The **stored energy** a **representative week** starts with: what the week ends with when cleared once,
+The **stored energy** a **representative week** starts with: what the week ends with when cleared once from empty,
 so that clearing it again starts and ends at about the same charge and the ×13 scaling counts only real
 trading. The jump from the previous period's charge is not priced.
 
