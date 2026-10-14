@@ -23,7 +23,8 @@ from energetica.workshop.session import (
     TradingPeriod,
     WorkshopSession,
 )
-from energetica.workshop.votes import VoteOutcome
+from energetica.workshop.carbon_tax import construction_emissions
+from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
     {
@@ -280,3 +281,53 @@ def test_the_recap_announces_no_vote_when_none_is_planned(path: Path) -> None:
     year_ahead = session.recap(1).year_ahead
     assert year_ahead is not None
     assert year_ahead.carbon_tax_vote is None
+
+
+def _settle_period(session: WorkshopSession) -> None:
+    """Close the current Trading period's price-setting window and settle it."""
+    session.advance()
+    job = session.start_settlement()
+    assert job is not None
+    session.finish_settlement(job, session.run_settlement(job))
+
+
+def test_a_passed_carbon_tax_is_settled_each_trading_period_and_shared_out(path: Path) -> None:
+    session = _vote_in_round_one(path)
+    session.cast_ballot(1, "yes")
+    _keep_the_lights_on(session)
+    # Player 3 buys a wind turbine too, so the players differ in what they emit building.
+    session.select(3, FacilityId.ONSHORE_WIND_TURBINE)
+    _close_investment(session)
+    players = session.network.players()
+    before = {player.account_id: player.money for player in players}
+
+    _settle_period(session)
+
+    results = {player.account_id: player.trading_results[-1] for player in players}
+    for player in players:
+        result = results[player.account_id]
+        assert result.carbon_tax_rate == CARBON_TAX_RATE
+        assert result.construction_emissions == pytest.approx(construction_emissions(player.purchases, 1))
+        assert player.money - before[player.account_id] == pytest.approx(result.net - result.carbon_tax)
+    assert results[3].construction_emissions > results[1].construction_emissions
+    # Everything paid comes back, shared out equally.
+    assert sum(result.carbon_tax for result in results.values()) == pytest.approx(0.0, abs=1e-6)
+    assert len({result.carbon_tax_share for result in results.values()}) == 1
+
+    session.advance()
+    _settle_period(session)
+
+    assert all(player.trading_results[-1].construction_emissions == 0 for player in players)
+    assert all(player.trading_results[-1].carbon_tax_share > 0 for player in players)
+
+
+def test_without_a_passed_vote_no_carbon_tax_is_settled(path: Path) -> None:
+    session = _vote_in_round_one(path)
+    _keep_the_lights_on(session)
+    _close_investment(session)
+
+    _settle_period(session)
+
+    for player in session.network.players():
+        assert player.trading_results[-1].carbon_tax_rate == 0
+        assert player.trading_results[-1].carbon_tax == 0

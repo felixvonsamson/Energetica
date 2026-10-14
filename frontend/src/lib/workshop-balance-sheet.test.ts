@@ -56,6 +56,13 @@ const SPRING: PeriodSheet = {
     taxable_revenue: 0,
     revenue_tax_rate: 0,
     operating_income: 370_440,
+    construction_emissions: 0,
+    construction_carbon_tax: 0,
+    taxed_emissions: 0,
+    emitted_carbon_tax: 0,
+    carbon_tax_rate: 0,
+    carbon_tax_share: 0,
+    carbon_tax: 0,
 };
 
 const TAXED: PeriodSheet = {
@@ -64,6 +71,18 @@ const TAXED: PeriodSheet = {
     taxable_revenue: 412_580,
     revenue_tax_rate: 0.07,
     operating_income: 370_440 - 28_880.6,
+};
+
+// A carbon tax at 0.1 per kg: 100 per tonne.
+const CARBON: PeriodSheet = {
+    ...SPRING,
+    construction_emissions: 5_000,
+    construction_carbon_tax: 500,
+    taxed_emissions: 40_000,
+    emitted_carbon_tax: 4_000,
+    carbon_tax_rate: 0.1,
+    carbon_tax_share: 3_000,
+    carbon_tax: 1_500,
 };
 
 const SHEET: BalanceSheet = {
@@ -185,6 +204,50 @@ describe("balanceSheetRows", () => {
         expect(tax.cell(SPRING)).toEqual({ amount: 0 });
     });
 
+    it("has no carbon tax lines before the tax is in force", () => {
+        expect(rows.some((r) => r.id.startsWith("carbon-tax"))).toBe(false);
+    });
+
+    it("breaks a carbon tax down below operating income", () => {
+        const taxed = balanceSheetRows({ ...SHEET, total: CARBON });
+        const ids = taxed.map((r) => r.id);
+        expect(
+            ids.slice(ids.indexOf("operating"), ids.indexOf("investments")),
+        ).toEqual([
+            "operating",
+            "carbon-tax",
+            "carbon-tax-construction",
+            "carbon-tax-emitted",
+            "carbon-tax-share",
+        ]);
+        const cell = (id: string, period: PeriodSheet) =>
+            taxed.find((r) => r.id === id)!.cell(period);
+        expect(cell("carbon-tax", CARBON).amount).toBe(-1_500);
+        expect(cell("carbon-tax-construction", CARBON)).toEqual({
+            volume: 5,
+            rate: 100,
+            amount: -500,
+        });
+        expect(cell("carbon-tax-emitted", CARBON)).toEqual({
+            volume: 40,
+            rate: 100,
+            amount: -4_000,
+        });
+        expect(cell("carbon-tax-share", CARBON).amount).toBe(3_000);
+    });
+
+    it("leaves the construction tax empty in the seasons that do not charge it", () => {
+        const taxed = balanceSheetRows({ ...SHEET, total: CARBON });
+        const summer = {
+            ...CARBON,
+            construction_emissions: 0,
+            construction_carbon_tax: 0,
+        };
+        expect(
+            taxed.find((r) => r.id === "carbon-tax-construction")!.cell(summer),
+        ).toEqual({ amount: null });
+    });
+
     it("puts investments and net profit in the Round only", () => {
         expect(row("investments").cell(SPRING).amount).toBeNull();
         expect(row("investments").roundAmount).toBe(-90_000);
@@ -229,6 +292,33 @@ describe("waterfallSteps", () => {
             "Operating income",
         ]);
         expect(steps[4]).toMatchObject({ to: 370_440 - 28_880.6 });
+    });
+
+    it("takes a season on to its result after the carbon tax", () => {
+        const steps = waterfallSteps(CARBON);
+        expect(steps.slice(-4)).toEqual([
+            expect.objectContaining({ label: "Operating income", to: 370_440 }),
+            expect.objectContaining({ label: "Carbon tax", value: -4_500 }),
+            expect.objectContaining({ label: "Shared payback", value: 3_000 }),
+            expect.objectContaining({
+                label: "Season result",
+                kind: "subtotal",
+                to: 370_440 - 1_500,
+            }),
+        ]);
+    });
+
+    it("takes the Round's carbon tax off before its investments", () => {
+        const steps = waterfallSteps(CARBON, {
+            investment_total: 90_000,
+            net_profit: 370_440 - 1_500 - 90_000,
+        });
+        expect(steps.slice(-4).map((s) => s.label)).toEqual([
+            "Carbon tax",
+            "Shared payback",
+            "Investments",
+            "Net profit",
+        ]);
     });
 
     it("takes the Round on to net profit, and scales a loss below zero", () => {

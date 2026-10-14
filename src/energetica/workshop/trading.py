@@ -184,6 +184,19 @@ class TradingResult(BaseModel):
         description="The share of sale revenue a climate event took in the period, the same for every player, "
         "which the session adds when it settles it",
     )
+    # Zero for a result saved before the carbon tax existed (#1015), or for a period it was not in force.
+    carbon_tax_rate: float = Field(
+        default=0.0, ge=0, description="What the carbon tax charged per kg of CO₂ in the period, or zero if none"
+    )
+    construction_emissions: float = Field(
+        default=0.0,
+        ge=0,
+        description="The CO₂ emitted building the facilities bought in the Round's Investment phase, in kg, which the "
+        "carbon tax charges in the Round's first Trading period. Zero in any other period",
+    )
+    carbon_tax_share: float = Field(
+        default=0.0, ge=0, description="The player's equal share of the carbon tax every player paid in the period"
+    )
 
     @property
     def revenue(self) -> float:
@@ -202,8 +215,30 @@ class TradingResult(BaseModel):
 
     @property
     def net(self) -> float:
-        """What the period added to the player's money."""
+        """What the period added to the player's money before the carbon tax: its operating profit."""
         return sum(performance.net for performance in self.facilities.values()) - self.revenue_tax - self.fuel_cost
+
+    @property
+    def emissions(self) -> float:
+        """The CO₂ the player's facilities emitted generating in the period, in kg."""
+        return sum(performance.emissions for performance in self.facilities.values())
+
+    @property
+    def construction_carbon_tax(self) -> float:
+        """What the carbon tax charged on :attr:`construction_emissions` (#1015)."""
+        return self.construction_emissions * self.carbon_tax_rate
+
+    @property
+    def emitted_carbon_tax(self) -> float:
+        """What the carbon tax charged on the CO₂ the player's facilities emitted in the period (#1015)."""
+        return self.emissions * self.carbon_tax_rate
+
+    @property
+    def carbon_tax(self) -> float:
+        """What the carbon tax took off the player's money in the period, after their share of it came back. Below
+        zero for a player who got back more than they paid.
+        """
+        return self.construction_carbon_tax + self.emitted_carbon_tax - self.carbon_tax_share
 
     @property
     def fuels_run_out(self) -> set[Fuel]:

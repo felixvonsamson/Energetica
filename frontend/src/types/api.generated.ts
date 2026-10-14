@@ -5160,7 +5160,7 @@ export interface components {
             investment_total: number;
             /**
              * Net Profit
-             * @description The Round's operating income so far minus its investments
+             * @description The Round's operating income so far minus its carbon tax so far and its investments
              */
             net_profit: number;
         };
@@ -5397,6 +5397,46 @@ export interface components {
              * @description Market income minus dumping cost, O&M, revenue tax and fuel
              */
             operating_income: number;
+            /**
+             * Construction Emissions
+             * @description The CO₂ emitted building the Round's investments that the carbon tax charged, in kg
+             * @default 0
+             */
+            construction_emissions: number;
+            /**
+             * Construction Carbon Tax
+             * @default 0
+             */
+            construction_carbon_tax: number;
+            /**
+             * Taxed Emissions
+             * @description The CO₂ emitted generating in the seasons the carbon tax was in force, in kg
+             * @default 0
+             */
+            taxed_emissions: number;
+            /**
+             * Emitted Carbon Tax
+             * @default 0
+             */
+            emitted_carbon_tax: number;
+            /**
+             * Carbon Tax Rate
+             * @description What the carbon tax charged per kg of CO₂, or zero if it was not in force
+             * @default 0
+             */
+            carbon_tax_rate: number;
+            /**
+             * Carbon Tax Share
+             * @description The player's share of the carbon tax every player paid
+             * @default 0
+             */
+            carbon_tax_share: number;
+            /**
+             * Carbon Tax
+             * @description The carbon tax paid on construction and generation, minus the share that came back. Below zero when more came back than was paid
+             * @default 0
+             */
+            carbon_tax: number;
         };
         /**
          * PhaseTimers

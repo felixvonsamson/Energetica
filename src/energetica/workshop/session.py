@@ -53,6 +53,7 @@ revenue tax when it is settled, the facility prices of the Round, and fuel shock
 A Round whose plan turns on the carbon tax vote holds one in its Investment phase (#1014,
 :mod:`~energetica.workshop.votes`). Players cast their ballots while the phase is open, and the vote is counted when
 the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
+Once a vote passes, each Trading period settles the carbon tax (#1015, :mod:`~energetica.workshop.carbon_tax`).
 """
 
 from __future__ import annotations
@@ -127,6 +128,7 @@ from energetica.workshop.unlocks import (
     round_end_unlocks,
     unlock_threshold,
 )
+from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
 from energetica.workshop.weather import AverageOutput, representative_weather, season_output
 
@@ -1382,9 +1384,10 @@ class WorkshopSession:
 
         Each player's prices are recorded, holding the prices of the facility types they had operating
         (#1002). Each player is paid what it made, less any revenue tax a climate event took (#1012) and the fuel it
-        paid for (:meth:`_fuel_payment`), their
-        storage keeps the energy it ends with, and a player with anything operating gets a result. A player with nothing operating gets neither a
-        price record nor a result, and nor does one who joined while the period was being simulated. If the
+        paid for (:meth:`_fuel_payment`), and pays or gets back any carbon tax (#1015,
+        :mod:`~energetica.workshop.carbon_tax`). Their storage keeps the energy it ends with, and a player with anything
+        operating gets a result. A player with nothing operating gets no price record, and gets a result only to hold
+        their share of a carbon tax. One who joined while the period was being simulated gets neither. If the
         grid went down, the period is recorded as a blackout, so that advancing from it ends the Round.
 
         It is saved even if no player had anything operating, since the session must remember that the
@@ -1403,10 +1406,26 @@ class WorkshopSession:
         players = [self.network.members[bidder.player_id] for bidder in job.bidders]
         # Worked out before anything changes, so a failure here leaves the session as it was.
         tax_rate = revenue_tax_rate(self.fired_events, period.round, period.season)
+        # The carbon tax (#1015) charges construction in the Round's first Trading period, which always settles.
+        first = period.season == SEASONS[0]
+        traded = {player.account_id: outcome.results.get(player.account_id) for player in players}
+        results = settle_carbon_tax(
+            {
+                player: result and result.model_copy(update={"revenue_tax_rate": tax_rate})
+                for player, result in traded.items()
+            },
+            {
+                player.account_id: construction_emissions(player.purchases, period.round) if first else 0.0
+                for player in players
+            },
+            rate=carbon_tax_rate(self.vote_outcomes, period.round),
+            round_number=period.round,
+            season=period.season,
+        )
         paid = {
-            player.account_id: self._fuel_payment(player, result.model_copy(update={"revenue_tax_rate": tax_rate}))
+            player.account_id: self._fuel_payment(player, result)
             for player in players
-            if (result := outcome.results.get(player.account_id)) is not None
+            if (result := results.get(player.account_id)) is not None
         }
         before = [
             (
@@ -1438,7 +1457,7 @@ class WorkshopSession:
             player.stored_energy = outcome.stored_energy[player.account_id]
             if player.account_id in paid:
                 result, player.fuel_stock = paid[player.account_id]
-                player.money += result.net
+                player.money += result.net - result.carbon_tax
                 player.trading_results.append(result)
         self.settled_period = period
         try:

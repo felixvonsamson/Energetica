@@ -11,7 +11,8 @@ a vote with no ballots fails. A carbon tax that passes is in force from that Rou
 of the session: nothing turns it off. The lever only starts a vote, so once a vote closes, pass or fail, it is turned
 off for the later Rounds, and the facilitator turns it on again to propose the tax again after a failed vote.
 
-The tax itself is settled once per Trading period (#1015), at :data:`CARBON_TAX_RATE`.
+The tax itself is settled once per Trading period (#1015), at :data:`CARBON_TAX_RATE`, by
+:mod:`~energetica.workshop.carbon_tax`.
 """
 
 from __future__ import annotations

@@ -408,6 +408,7 @@ const UNIT_NAMES: Record<RowUnit, string> = {
     usage: "Usage in percent, of the full variable cost",
     fuel: "Tonnes, at an average price per tonne",
     tax: "Taxable revenue, at a rate in percent",
+    co2: "Tonnes of CO₂, at a price per tonne",
 };
 
 /** A period as a column header names it, with a season's blackout state. */
@@ -716,6 +717,12 @@ function UnitLabel({ unit }: { unit: RowUnit }) {
                     {coin} {times} %
                 </>
             );
+        case "co2":
+            return (
+                <>
+                    t CO₂ {times} {coin}/t
+                </>
+            );
     }
 }
 
@@ -770,7 +777,7 @@ function CellValue({
             <span className="text-[12.5px] font-normal text-(--bs-light)">
                 {col.field !== "volume"
                     ? formatRate(value)
-                    : row.unit === "fuel"
+                    : row.unit === "fuel" || row.unit === "co2"
                       ? formatFuelVolume(value)
                       : row.unit === "tax"
                         ? formatAmount(value)

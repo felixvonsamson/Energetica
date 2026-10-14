@@ -4,8 +4,8 @@
  *
  * Only level-0 rows add up to the result. The rows indented under them break
  * those lines down, with a volume and a rate where the amount is one times the
- * other. Energy arrives in Wh and is shown in MWh, and fuel arrives in kg and
- * is shown in tonnes.
+ * other. Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in
+ * kg and are shown in tonnes.
  */
 
 import { KG_PER_TONNE } from "@/lib/workshop-fuel";
@@ -73,7 +73,7 @@ export interface Cell {
 }
 
 /** The unit column: what the volume and the rate are measured in. */
-export type RowUnit = "energy" | "usage" | "fuel" | "tax";
+export type RowUnit = "energy" | "usage" | "fuel" | "tax" | "co2";
 
 export interface Row {
     id: string;
@@ -99,6 +99,15 @@ function energyCell(energy: number, money: number): Cell {
         volume,
         rate: volume > 0 ? Math.abs(money) / volume : undefined,
         amount: money,
+    };
+}
+
+/** CO₂ taxed, as tonnes times the price per tonne. */
+function co2Cell(emissions: number, ratePerKg: number, tax: number): Cell {
+    return {
+        volume: emissions / KG_PER_TONNE,
+        rate: ratePerKg * KG_PER_TONNE,
+        amount: -tax,
     };
 }
 
@@ -208,9 +217,6 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
                     : { amount: 0 },
         });
     }
-    // Still to come: the carbon tax (#1015), below operating income, which
-    // leaves it out: what was paid on the CO₂ emitted (tonnes times the price
-    // per tonne), less the share received back.
     // Fuel is paid for each season (#1009), as tonnes times the price per tonne.
     rows.push({
         id: "fuel",
@@ -237,14 +243,65 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             },
         });
     }
+    rows.push({
+        id: "operating",
+        label: "Operating income",
+        level: 0,
+        kind: "subtotal",
+        cell: (p) => ({ amount: p.operating_income }),
+    });
+    // The carbon tax (#1015), once it is in force: below operating income, which
+    // leaves it out. It is paid on the CO₂ emitted building the Round's
+    // investments, charged in its first season only, and on the CO₂ emitted
+    // generating, each as tonnes times the price per tonne. The player's share
+    // of what everyone paid comes back.
+    if ((sheet.total?.carbon_tax_rate ?? 0) > 0) {
+        rows.push(
+            {
+                id: "carbon-tax",
+                label: "Carbon tax",
+                level: 0,
+                kind: "line",
+                cell: (p) => ({ amount: -p.carbon_tax }),
+            },
+            {
+                id: "carbon-tax-construction",
+                label: "Tax on construction CO₂",
+                level: 1,
+                kind: "line",
+                unit: "co2",
+                cell: (p) =>
+                    p.construction_emissions > 0
+                        ? co2Cell(
+                              p.construction_emissions,
+                              p.carbon_tax_rate,
+                              p.construction_carbon_tax,
+                          )
+                        : empty,
+            },
+            {
+                id: "carbon-tax-emitted",
+                label: "Tax on emitted CO₂",
+                level: 1,
+                kind: "line",
+                unit: "co2",
+                cell: (p) =>
+                    co2Cell(
+                        p.taxed_emissions,
+                        p.carbon_tax_rate,
+                        p.emitted_carbon_tax,
+                    ),
+            },
+            {
+                id: "carbon-tax-share",
+                label: "Shared payback",
+                level: 1,
+                kind: "line",
+                cell: (p) => ({ amount: p.carbon_tax_share }),
+            },
+        );
+    }
     rows.push(
-        {
-            id: "operating",
-            label: "Operating income",
-            level: 0,
-            kind: "subtotal",
-            cell: (p) => ({ amount: p.operating_income }),
-        },
         {
             id: "investments",
             label: "Investments",
@@ -307,7 +364,9 @@ export interface WaterfallStep {
 /**
  * The waterfall from market income down to a period's result: operating income
  * for a season, and net profit for the Round, which also takes off its
- * investments. Each change runs from the running total; a subtotal is drawn
+ * investments. Once a carbon tax is in force, it comes after operating income,
+ * as what was paid and the share that came back, and a season then ends on its
+ * result after it. Each change runs from the running total; a subtotal is drawn
  * from zero and resets it.
  */
 export function waterfallSteps(
@@ -334,13 +393,21 @@ export function waterfallSteps(
     change("Dumping cost", -period.dump_cost);
     change("O&M", -period.om_total);
     if (period.revenue_tax > 0) change("Revenue tax", -period.revenue_tax);
-    // The carbon tax (#1015) goes after operating income, followed by a
-    // season's result.
     change("Fuel cost", -period.fuel_total);
     subtotal("Operating income", period.operating_income);
+    const carbonTax = period.carbon_tax_rate > 0;
+    if (carbonTax) {
+        change(
+            "Carbon tax",
+            -(period.construction_carbon_tax + period.emitted_carbon_tax),
+        );
+        change("Shared payback", period.carbon_tax_share);
+    }
     if (round) {
         change("Investments", -round.investment_total);
         subtotal("Net profit", round.net_profit);
+    } else if (carbonTax) {
+        subtotal("Season result", period.operating_income - period.carbon_tax);
     }
     return steps;
 }
