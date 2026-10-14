@@ -3,7 +3,8 @@
 The weather is ``sim.renewables`` at one fixed position, since Workshop has no map, with a random seed per Run.
 Each Round is a year of its own, so a season's weather differs from one Round to the next. The calendar (the
 sun's position, the seasonal and daily wind factors) is the same every year. A Round's year of weather starts on
-1 March with its spring, so winter's weather runs on over the new year, and into the next Round's spring.
+day 56, about 1 March, with its spring, so winter's weather runs on over the new year, and into the next Round's
+spring.
 
 In the representative-week format, a Trading period clears the middle week of its season. Wind and solar each
 borrow only their weather from a 7-day run of the season: the noise term for wind, the clear-sky index (cloud

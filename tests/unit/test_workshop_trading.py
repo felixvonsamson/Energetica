@@ -16,8 +16,7 @@ import math
 import numpy as np
 import pytest
 
-from energetica.sim.national_demand import DemandCurve
-from energetica.workshop.demand_block import DAYS_PER_YEAR, SettlementPeriod, nominal_demand
+from energetica.workshop.demand_block import DAYS_PER_YEAR, DemandCurve, SettlementPeriod, nominal_demand
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
@@ -36,7 +35,7 @@ from energetica.workshop.weather import AverageOutput
 
 from ._weather_helpers import FixedWeather, steady
 
-_FLAT = DemandCurve(intraday=(1.0,), seasonal=(1.0,))
+_FLAT = DemandCurve((1.0,) * DAYS_PER_YEAR)
 _AMPLITUDE = 10e6
 _HOURS = 24
 _WEEKS = SEASON_DAYS // 7
@@ -522,10 +521,10 @@ def test_a_player_with_nothing_operating_gets_no_result() -> None:
 # --- seasons ------------------------------------------------------------------------------------
 
 
-def test_the_seasons_cover_the_year_once_spring_first_from_the_first_of_march() -> None:
+def test_the_seasons_cover_the_year_once_spring_first_from_the_monday_closest_to_the_first_of_march() -> None:
     days = [day for season in ("spring", "summer", "autumn", "winter") for day in season_days(season)]
 
-    assert days[0] == 59
+    assert days[0] == 56
     assert sorted(days) == list(range(DAYS_PER_YEAR))
     assert all(len(season_days(season)) == SEASON_DAYS for season in SEASONS)
 
@@ -533,9 +532,9 @@ def test_the_seasons_cover_the_year_once_spring_first_from_the_first_of_march() 
 def test_winter_runs_over_the_end_of_the_year() -> None:
     winter = season_days("winter")
 
-    assert winter[0] == 332
-    assert winter[31:33] == [363, 0]
-    assert winter[-1] == 58
+    assert winter[0] == 329
+    assert winter[34:36] == [363, 0]
+    assert winter[-1] == 55
 
 
 # Full-season mode (#1004). With a flat curve and steady weather every day is the same, so 91 literal days
@@ -624,7 +623,7 @@ def test_the_peak_demand_is_the_most_the_market_cleared_at_one_settlement_point(
         season="spring",
         round_format=RoundFormat(),
         amplitude=_AMPLITUDE,
-        curve=DemandCurve(intraday=(1.0, 1.5), seasonal=(1.0,)),
+        curve=DemandCurve((1.0, 1.5) * DAYS_PER_YEAR),
         weather=steady(1.0),
     )
 
@@ -686,8 +685,11 @@ def test_a_full_season_clears_under_the_seasons_own_weather() -> None:
     assert reads == {"season": SEASON_DAYS * 24, "week": 0}
 
 
-# Demand that peaks in spring, so the middle week of spring has more demand than the season on average.
-_PEAKED = DemandCurve(intraday=(1.0, 0.8, 1.2), seasonal=(0.8, 1.2, 1.0, 1.0))
+# Demand that grows faster and faster through the year, so the middle week of spring has less demand than the
+# season on average. Each day has three values: night, morning and evening.
+_PEAKED = DemandCurve(
+    tuple(level * (1 + (day / DAYS_PER_YEAR) ** 2) for day in range(DAYS_PER_YEAR) for level in (1.0, 0.8, 1.2))
+)
 
 
 def _average_demand(days: list[int], scale: float = 1.0) -> float:

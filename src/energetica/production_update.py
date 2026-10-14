@@ -32,7 +32,7 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
-from energetica.sim.demand_shape import demand_shape_factor
+from energetica.freeplay.demand_shape import demand_shape_factor
 from energetica.sim.dispatch import fuel_power_limit, max_output, min_output, ramping_speed, storage_power_limit
 from energetica.sim.facility_statuses import ProductionStatus
 from energetica.sim.fuel_and_pollution import emissions_produced, fuel_burned

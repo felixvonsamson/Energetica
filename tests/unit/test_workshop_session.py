@@ -45,10 +45,10 @@ from energetica.workshop.session import (
 )
 from energetica.workshop import session as session_module
 from energetica.workshop.setup import NotAWorkshopRunError
-from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.demand_block import (
     PER_PLAYER_BASE_AMPLITUDE,
     SettlementPeriod,
+    national_demand_curve,
     nominal_demand,
     round_one_amplitude,
 )

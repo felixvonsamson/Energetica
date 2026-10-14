@@ -68,9 +68,8 @@ from typing import TYPE_CHECKING, Annotated, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from energetica.sim.national_demand import national_demand_curve
 from energetica.workshop.atomic_file import write_atomically
-from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, round_one_amplitude
+from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
 from energetica.workshop.events import (
     FiredEvent,
     demand_factor,

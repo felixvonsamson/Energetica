@@ -76,9 +76,14 @@ from energetica.sim.market import (
     place_headroom_ask,
     place_must_run_ask,
 )
-from energetica.sim.national_demand import DemandCurve
 from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, settle_clearing
-from energetica.workshop.demand_block import DEMAND_TIERS, SettlementPeriod, build_demand_block, nominal_demand
+from energetica.workshop.demand_block import (
+    DEMAND_TIERS,
+    DemandCurve,
+    SettlementPeriod,
+    build_demand_block,
+    nominal_demand,
+)
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase

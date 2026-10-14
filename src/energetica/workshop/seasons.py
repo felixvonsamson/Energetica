@@ -12,9 +12,9 @@ SEASONS: tuple[Season, ...] = get_args(Season)
 #: How many days a season has: 13 weeks, a quarter of Workshop's 364-day year.
 SEASON_DAYS = DAYS_PER_YEAR // len(SEASONS)
 
-#: The day of the year, counted from 0 on 1 January, that spring starts on: 1 March, in the same calendar
-#: as the demand curve. The other seasons follow it.
-SPRING_START = 59
+#: The day of the year, counted from 0, that spring starts on. Day 0 is a Monday, about 1 January, and so is day 56,
+#: the Monday closest to 1 March. Every season then starts on a Monday, since a season is 13 whole weeks (#1201).
+SPRING_START = 56
 
 WEEK_DAYS = 7
 
