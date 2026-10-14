@@ -157,7 +157,7 @@ winter runs over the end of the year. The demand curve and the weather use this 
 
 **Round format** (#1004, #1190):
 The three levers that say how a Round's Trading periods are simulated: the **trading-round format**
-(representative day or full season), the clearings per day (24, 96 or 288), and the storage
+(representative day, soon representative week, or full season), the clearings per day (24, 96 or 288), and the storage
 availability (none, batteries only, or every type). Each Round's format is part of its **Round plan**,
 so it is set per Round and **locked** a Round ahead. Every storage type needs the full-season format. If a
 later Round switches back, storage already built keeps running, but no more of it can be bought.
@@ -184,8 +184,27 @@ _Avoid_: freeze, commit.
 In representative-day mode, the one simulated day that stands for a whole Trading period: the middle
 day of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled
 ×91 (the days in a season) to give the period's total. O&M is not scaled, since it is already one
-period's share, and **stored energy** is what the pool really holds at the end of the day.
+period's share, and **stored energy** is what the pool really holds at the end of the day. Being
+replaced by the **representative week** (ADR-0008, #1198).
 _Avoid_: sample day, typical day.
+
+**Representative week** (#1164, ADR-0008):
+The seven simulated days that stand for a whole Trading period, replacing the **representative day**:
+the middle week of its season, scaled ×13. Its demand, sun position and seasonal wind are its own, but
+its wind and solar weather are **borrowed** from the 7-day runs of the season whose output comes closest
+to the season's real average. **Stored energy** starts each week at its **cyclic start** and does not
+carry over between periods.
+_Avoid_: sample week, typical week.
+
+**Borrowed weather** (#1164, ADR-0008):
+The weather a **representative week** takes from another 7-day run of its season: the wind noise for
+wind, and the clear-sky index (cloud cover) for solar. Only the weather is borrowed, never the output,
+so the sun and the seasonal wind still follow the week's own dates.
+
+**Cyclic start** (#1164, ADR-0008):
+The **stored energy** a **representative week** starts with: what the week ends with when cleared once,
+so that clearing it again starts and ends at about the same charge and the ×13 scaling counts only real
+trading. The jump from the previous period's charge is not priced.
 
 **Full season** (#1004):
 In full-season mode, all 91 days of a Trading period's season are simulated one after another and
