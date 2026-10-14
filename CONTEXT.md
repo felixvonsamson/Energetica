@@ -290,12 +290,13 @@ The Recap forecasts next Round's peak as this one moved by the demand shifts tha
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
 strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its
-headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout, and
-the room's figures. **The Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if
-it holds one, its Round events with their exact effect, the change in peak demand, and its seasonal events
-as **forecasts**. The last Round has a "Final Edition" instead. Everyone in the Run reads the same Recap,
-and only once it has opened. Not to be confused with a persistent-world run's recap (ADR-0005), which is a
-final table of players.
+headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout,
+the room's figures, and how each season's wind and sunshine compared with a normal season (#1200). **The
+Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if it holds one, its Round
+events with their exact effect, the change in peak demand, and its seasonal events as **forecasts**. The
+last Round has a "Final Edition" instead. Everyone in the Run reads the same Recap, and only once it has
+opened. Not to be confused with a persistent-world run's recap (ADR-0005), which is a final table of
+players.
 _Avoid_: summary, report.
 
 **Vote** (#1014):

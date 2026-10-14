@@ -4,7 +4,8 @@ The Recap that closes Round N has two sections, kept strictly apart:
 
 - **The Year in Review** tells what happened in Round N: every event that fired in it, with its headline and a
   line of plain numbers (:func:`~energetica.workshop.events.effect_line`), the season the grid went down in if it
-  did, and the room's figures for the Round.
+  did, the room's figures for the Round, and each season's weather: how its wind and sunshine compared with a
+  normal season (#1200). The weather only tells what happened, never what is coming.
 - **The Year Ahead** tells what Round N+1 holds. Its plan locks when Recap N opens (#1190), so what the Recap tells
   holds. Round events are told with their headline and exact effect, and seasonal events only as a forecast with
   no figures (#1189). The facilities that unlock for Round N+1 are announced here, the first place players learn
@@ -18,7 +19,7 @@ gathers what a Recap needs, and :func:`recap` builds it.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -39,6 +40,7 @@ from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RENEWABLE_CATEGORIES, TradingResult
 from energetica.workshop.unlocks import UPGRADES, Unlock, UnlockTrigger
 from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome, vote_held
+from energetica.workshop.weather import NORMAL_OUTPUT, AverageOutput
 
 
 class RecapStory(BaseModel):
@@ -89,6 +91,20 @@ class RoomFigures(BaseModel):
     )
 
 
+class SeasonWeatherReport(BaseModel):
+    """How a season's wind and sunshine compared with a normal season's (#1200). Hydro follows a fixed table, so it
+    is left out.
+    """
+
+    season: Season
+    wind: float = Field(
+        description="The season's average wind output against a normal season's, as a change: 0.08 is 8% above normal"
+    )
+    solar: float = Field(
+        description="The season's average solar output against a normal season's, as a change: -0.03 is 3% below normal"
+    )
+
+
 class DemandOutlook(BaseModel):
     """How peak demand moves from this Round to the next, through the Round events that last."""
 
@@ -125,6 +141,7 @@ class WorkshopRecap(BaseModel):
         description="Every event that fired in the Round: the Round's own first, then each season's in order"
     )
     figures: RoomFigures
+    weather: list[SeasonWeatherReport] = Field(description="Each season the Round played, in order")
     year_ahead: YearAhead | None = Field(description="Null after the last Round")
 
 
@@ -192,6 +209,18 @@ def _figures(round_number: int, *, purchases: Sequence[Purchase], results: Seque
     )
 
 
+def _weather(weather: Mapping[Season, AverageOutput]) -> list[SeasonWeatherReport]:
+    return [
+        SeasonWeatherReport(
+            season=season,
+            wind=weather[season].wind / NORMAL_OUTPUT[season].wind - 1,
+            solar=weather[season].solar / NORMAL_OUTPUT[season].solar - 1,
+        )
+        for season in SEASONS
+        if season in weather
+    ]
+
+
 def _unlock(unlock: Unlock) -> RecapUnlock:
     base = next((base for base, upgrade in UPGRADES.items() if upgrade == unlock.facility), None)
     if unlock.trigger != "investment_threshold":
@@ -254,13 +283,15 @@ def recap(
     results: Sequence[TradingResult],
     peak_demand: float | None,
     vote_outcomes: Sequence[VoteOutcome],
+    weather: Mapping[Season, AverageOutput],
 ) -> WorkshopRecap:
     """The Recap that closes Round ``round_number`` of ``round_count``.
 
     ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` the Trading period of every
     blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
     ``peak_demand`` the most the market cleared at one settlement point in the Round, or None if it never cleared.
-    ``vote_outcomes`` holds every vote's outcome so far.
+    ``vote_outcomes`` holds every vote's outcome so far, and ``weather`` the real average wind and solar output of
+    each season the Round played.
     """
     blackout: Season | None = next(
         (season for blackout_round, season in blackouts if blackout_round == round_number), None
@@ -271,6 +302,7 @@ def recap(
         blackout=blackout,
         stories=_stories(event for event in fired if event.round == round_number),
         figures=_figures(round_number, purchases=purchases, results=results),
+        weather=_weather(weather),
         year_ahead=None
         if round_number >= round_count
         else _year_ahead(

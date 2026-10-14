@@ -8,8 +8,15 @@ import pytest
 from energetica.sim.renewables import calculate_solar_irradiance, calculate_wind_speed, wind_power_fraction
 from energetica.workshop.demand_block import DAYS_PER_YEAR
 from energetica.workshop.facilities import FacilityId
-from energetica.workshop.seasons import MIDDLE_WEEK_START, SEASON_DAYS, representative_week, season_days
-from energetica.workshop.weather import WEATHER_POSITION, SeasonWeather, closest_run, representative_weather
+from energetica.workshop.seasons import MIDDLE_WEEK_START, SEASON_DAYS, SEASONS, representative_week, season_days
+from energetica.workshop.weather import (
+    NORMAL_OUTPUT,
+    WEATHER_POSITION,
+    SeasonWeather,
+    closest_run,
+    normal_output,
+    representative_weather,
+)
 
 DAY = 86_400
 WIND = FacilityId.ONSHORE_WIND_TURBINE
@@ -81,6 +88,19 @@ def test_the_season_keeps_its_real_average_output(spring: SeasonWeather) -> None
 
     assert spring.average_output.wind == pytest.approx(wind)
     assert 0 < spring.average_output.solar < 1
+
+
+def test_the_average_output_alone_is_the_seasons(spring: SeasonWeather) -> None:
+    assert representative_weather(7).average_output("spring") == spring.average_output
+
+
+def test_the_normal_output_still_matches_the_weather() -> None:
+    # The full 128 seeds take a while, so a few stand in for them. Seasons differ from normal by a few percent,
+    # so a change to the weather that moves every season by more than this means NORMAL_OUTPUT needs working out again.
+    sample = normal_output(range(8))
+    for season in SEASONS:
+        assert sample[season].wind == pytest.approx(NORMAL_OUTPUT[season].wind, rel=0.05)
+        assert sample[season].solar == pytest.approx(NORMAL_OUTPUT[season].solar, rel=0.05)
 
 
 def test_the_borrowed_week_matches_the_seasons_average_output(spring: SeasonWeather) -> None:

@@ -33,7 +33,8 @@ its merit order shows why. Its price is ``math.inf`` when supply is exhausted, o
 no supply offers. Its series are zero apart from ``stored``, which holds steady. Points after it never
 cleared: their price and quantity are NaN, they have no merit order, and storage still holds steady.
 
-**Weather.** ``average_output`` keeps the season's real average wind and solar output, for the Recap (#1200).
+**Weather.** ``average_output`` keeps the season's real average wind and solar output. The Recap works it out
+again from the weather seed (#1200), so it needs no record.
 
 A record is saved to its own compressed NumPy file, apart from the session file, since a full season's
 record can take megabytes.

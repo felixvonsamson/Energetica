@@ -21,6 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
+from threading import Lock
 from typing import Protocol
 
 import numpy as np
@@ -42,7 +43,14 @@ from energetica.sim.renewables import (
 )
 from energetica.workshop.demand_block import DAYS_PER_YEAR
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
-from energetica.workshop.seasons import MIDDLE_WEEK_START, SPRING_START, WEEK_DAYS, Season, season_days
+from energetica.workshop.seasons import (
+    MIDDLE_WEEK_START,
+    SEASONS,
+    SPRING_START,
+    WEEK_DAYS,
+    Season,
+    season_days,
+)
 
 Array = npt.NDArray[np.float64]
 
@@ -64,6 +72,16 @@ class AverageOutput:
     solar: float
 
 
+#: The real average wind and solar output of a normal season: :func:`normal_output` over seeds 0 to 127. The Recap
+#: tells each season's weather against it (#1200). Work it out again if the weather changes.
+NORMAL_OUTPUT: dict[Season, AverageOutput] = {
+    "spring": AverageOutput(wind=0.4185, solar=0.1481),
+    "summer": AverageOutput(wind=0.2341, solar=0.1917),
+    "autumn": AverageOutput(wind=0.5165, solar=0.0955),
+    "winter": AverageOutput(wind=0.6367, solar=0.0514),
+}
+
+
 @dataclass(frozen=True, slots=True)
 class SeasonWeather:
     """The weather of one season of a Round."""
@@ -74,7 +92,7 @@ class SeasonWeather:
     """The representative week's weather: the middle week of the season, with borrowed weather. Only for the
     days of :func:`~energetica.workshop.seasons.representative_week`."""
     average_output: AverageOutput
-    """The season's real average wind and solar output, for the Recap (#1200)."""
+    """The season's real average wind and solar output."""
     wind_run: int
     """The day of the season, counted from 0, that the run the week borrows its wind from starts on."""
     solar_run: int
@@ -110,6 +128,13 @@ def _wind_output(noise: Array, calendar: Array) -> Array:
 
 def _solar_output(csi: Array, clear_sky: Array) -> Array:
     return np.minimum(SOLAR_FULL_POWER_IRRADIANCE, csi * clear_sky) / SOLAR_FULL_POWER_IRRADIANCE
+
+
+def _average_output(noise: Array, csi: Array, wind_calendar: Array, clear_sky: Array) -> AverageOutput:
+    return AverageOutput(
+        wind=float(_wind_output(noise, wind_calendar).mean()),
+        solar=float(_solar_output(csi, clear_sky).mean()),
+    )
 
 
 def _hours(season: Season) -> list[list[float]]:
@@ -165,9 +190,10 @@ class RunWeather:
         # ``sim.renewables`` computes with numpy, so its results are numpy floats. Saved results need plain ones.
         return float(share)
 
-    def season(self, season: Season, /) -> SeasonWeather:
-        """The weather of ``season``, with the runs its representative week borrows from."""
-        days = season_days(season)
+    def _samples(self, season: Season) -> tuple[Array, Array]:
+        """The weather's part of the wind and of solar at each hourly sample of ``season``, as ``[day, hour]``: the
+        wind's noise term and the clear-sky index.
+        """
 
         def sample(part: Callable[[float], float]) -> Array:
             times = _hours(season)
@@ -175,6 +201,17 @@ class RunWeather:
 
         noise = sample(lambda t: wind_speed_noise(WEATHER_POSITION, t, self.seed))
         csi = sample(lambda t: clear_sky_index(WEATHER_POSITION, t, self.seed))
+        return noise, csi
+
+    def average_output(self, season: Season, /) -> AverageOutput:
+        """The real average wind and solar output of ``season``, without picking the runs the week borrows from."""
+        wind_calendar, clear_sky = _calendar(season)
+        return _average_output(*self._samples(season), wind_calendar, clear_sky)
+
+    def season(self, season: Season, /) -> SeasonWeather:
+        """The weather of ``season``, with the runs its representative week borrows from."""
+        days = season_days(season)
+        noise, csi = self._samples(season)
         wind_calendar, clear_sky = _calendar(season)
         wind_run = closest_run(noise, wind_calendar, _wind_output)
         solar_run = closest_run(csi, clear_sky, _solar_output)
@@ -202,10 +239,7 @@ class RunWeather:
         return SeasonWeather(
             shares=self.share,
             week=week,
-            average_output=AverageOutput(
-                wind=float(_wind_output(noise, wind_calendar).mean()),
-                solar=float(_solar_output(csi, clear_sky).mean()),
-            ),
+            average_output=_average_output(noise, csi, wind_calendar, clear_sky),
             wind_run=wind_run,
             solar_run=solar_run,
         )
@@ -214,3 +248,33 @@ class RunWeather:
 def representative_weather(seed: int, round_number: int = 1) -> RunWeather:
     """The weather of Round ``round_number`` of a Run whose random seed is ``seed``."""
     return RunWeather(seed, round_number)
+
+
+@cache
+def _season_output(seed: int, round_number: int, season: Season) -> AverageOutput:
+    return RunWeather(seed, round_number).average_output(season)
+
+
+_season_output_lock = Lock()
+
+
+def season_output(seed: int, round_number: int, season: Season) -> AverageOutput:
+    """The real average wind and solar output of ``season`` in Round ``round_number`` of a Run whose random seed is
+    ``seed``. Every player reads the Recap at once, so it is worked out once, by the first, and kept.
+    """
+    with _season_output_lock:
+        return _season_output(seed, round_number, season)
+
+
+def normal_output(seeds: range) -> dict[Season, AverageOutput]:
+    """The average output of each season in Round 1 over ``seeds``: what a normal season gives. :data:`NORMAL_OUTPUT`
+    holds it for ``range(128)``.
+    """
+    normal = {}
+    for season in SEASONS:
+        outputs = [RunWeather(seed).average_output(season) for seed in seeds]
+        normal[season] = AverageOutput(
+            wind=sum(output.wind for output in outputs) / len(outputs),
+            solar=sum(output.solar for output in outputs) / len(outputs),
+        )
+    return normal
