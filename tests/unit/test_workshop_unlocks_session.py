@@ -181,7 +181,7 @@ def test_full_season_storage_unlocks_with_round_one_if_it_allows_every_storage_t
 def test_full_season_storage_stays_unlocked_once_a_later_round_switches_storage_back(path: Path) -> None:
     session = _session(path)
     session.set_levers(2, LeverChanges(trading_format="full_season", storage="all"))
-    session.set_levers(3, LeverChanges(trading_format="representative_day", storage="batteries"))
+    session.set_levers(3, LeverChanges(trading_format="representative_week", storage="batteries"))
 
     _to_next(session, Investment)  # Round 2
     _to_next(session, Investment)  # Round 3

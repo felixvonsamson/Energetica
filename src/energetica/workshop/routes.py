@@ -50,7 +50,7 @@ from energetica.workshop.schemas import (
     WorkshopMemberOut,
     WorkshopMeritOrderOut,
     WorkshopOwnedFacilityOut,
-    WorkshopPeriodDayOut,
+    WorkshopPeriodWeekOut,
     WorkshopPeriodOut,
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
@@ -68,7 +68,7 @@ from energetica.workshop.schemas import (
     WorkshopUnlocksOut,
     WorkshopVoteOut,
 )
-from energetica.workshop.seasons import Season
+from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import (
     CarbonTaxPassedError,
     FacilityNotOfferedError,
@@ -606,21 +606,22 @@ def get_period(
     return WorkshopPeriodOut.from_record(_period_record(session, round_number, season))
 
 
-@router.get("/periods/{round_number}/{season}/days/{day}")
-def get_period_day(
+@router.get("/periods/{round_number}/{season}/weeks/{week}")
+def get_period_week(
     _: Annotated[Account, Depends(resolve_entry_account)],
     session: Session,
     round_number: int,
     season: Season,
-    day: int,
-) -> WorkshopPeriodDayOut:
-    """Every settlement point of one simulated day of a settled Trading period: the price, and each player's and
-    each demand tier's power. ``day`` is the day's position in the period's days.
+    week: int,
+) -> WorkshopPeriodWeekOut:
+    """Every settlement point of one simulated week of a settled Trading period: the price, and each player's and
+    each demand tier's power. ``week`` is the week's position in the period, from 0: a representative week is week
+    0 of 1, and a full season has 13.
     """
     record = _period_record(session, round_number, season)
-    if not 0 <= day < len(record.days):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period did not simulate this day")
-    return WorkshopPeriodDayOut.from_record(record, day)
+    if not 0 <= week < len(record.days) // WEEK_DAYS:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period did not simulate this week")
+    return WorkshopPeriodWeekOut.from_record(record, week)
 
 
 @router.get("/periods/{round_number}/{season}/points/{point}/merit-order")

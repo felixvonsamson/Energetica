@@ -223,7 +223,7 @@ describe("advanceAction", () => {
         phase_timer: null,
         players: [],
         round_format: {
-            trading_format: "representative_day",
+            trading_format: "representative_week",
             clearings_per_day: 24,
             storage: "batteries",
         },

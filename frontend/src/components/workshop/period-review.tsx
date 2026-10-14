@@ -9,8 +9,9 @@
  * - The merit order at one settlement point, picked with the scrubber, which the
  *   three charts above mark. Clicking a chart moves the scrubber there.
  *
- * A full-season period is reviewed one simulated day at a time. The prices the
- * player set for the period are in their own tab.
+ * A period is reviewed one simulated week at a time: a representative week has
+ * one, a full season 13. The prices the player set for the period are in their
+ * own tab.
  */
 
 import { Activity, BarChart2, Layers, TrendingUp, Zap } from "lucide-react";
@@ -47,7 +48,7 @@ import {
     useWorkshopFacilities,
     useWorkshopMeritOrder,
     useWorkshopPeriod,
-    useWorkshopPeriodDay,
+    useWorkshopPeriodWeek,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
 import { ApiClientError } from "@/lib/api-client";
@@ -60,21 +61,22 @@ import {
     type NetworkGrouping,
     type PowerView,
     TIER_NAMES,
+    WEEK_DAYS,
     dateOfDay,
-    isPointOfDay,
+    isPointOfWeek,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    pointTime,
     priceRows,
-    reviewableDays,
-    timeOfDay,
+    reviewableWeeks,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type Season = ApiSchema<"TradingPeriod">["season"];
 type Period = ApiSchema<"WorkshopPeriodOut">;
-type PeriodDay = ApiSchema<"WorkshopPeriodDayOut">;
+type PeriodWeek = ApiSchema<"WorkshopPeriodWeekOut">;
 
 const STORAGE_PREFIX = "energetica:workshop:review";
 
@@ -151,8 +153,8 @@ export function PeriodReview({
     const { data: entry } = useWorkshopEntry();
     const isPlayer = entry?.role === "player";
     // Held here rather than in the review tab, which unmounts while the prices
-    // tab is open, so the day and point survive a look at the prices.
-    const [dayIndex, setDayIndex] = useState(0);
+    // tab is open, so the week and point survive a look at the prices.
+    const [weekIndex, setWeekIndex] = useState(0);
     const [point, setPoint] = useState(0);
 
     if (period.isPending) return <Spinner />;
@@ -178,8 +180,8 @@ export function PeriodReview({
             <TabsContent value="review">
                 <Review
                     period={period.data}
-                    dayIndex={dayIndex}
-                    onDayIndexChange={setDayIndex}
+                    weekIndex={weekIndex}
+                    onWeekIndexChange={setWeekIndex}
                     point={point}
                     onPointChange={setPoint}
                 />
@@ -199,24 +201,25 @@ export function PeriodReview({
 
 function Review({
     period,
-    dayIndex,
-    onDayIndexChange: setDayIndex,
+    weekIndex,
+    onWeekIndexChange: setWeekIndex,
     point,
     onPointChange: setPoint,
 }: {
     period: Period;
-    dayIndex: number;
-    onDayIndexChange: (index: number) => void;
+    weekIndex: number;
+    onWeekIndexChange: (index: number) => void;
     point: number;
     onPointChange: (point: number) => void;
 }) {
     const cpd = period.clearings_per_day;
     const labels = useLabels();
-    const day = useWorkshopPeriodDay(period.round, period.season, dayIndex);
+    const pointsPerWeek = WEEK_DAYS * cpd;
+    const week = useWorkshopPeriodWeek(period.round, period.season, weekIndex);
 
-    const chooseDay = (index: number) => {
-        setDayIndex(index);
-        setPoint(index * cpd);
+    const chooseWeek = (index: number) => {
+        setWeekIndex(index);
+        setPoint(index * pointsPerWeek);
     };
 
     // Points after a blackout never cleared, so the scrubber stops at it.
@@ -224,77 +227,76 @@ function Review({
 
     const timeAxis = useMemo(
         (): TimeAxis => ({
-            formatTick: (tick) => timeOfDay(tick, cpd),
-            formatTooltipTitle: (tick) => {
-                const dayOfYear = period.days[Math.floor(tick / cpd)];
-                const date =
-                    dayOfYear === undefined ? "" : `${dateOfDay(dayOfYear)}, `;
-                return `${date}${timeOfDay(tick, cpd)}`;
-            },
+            formatTick: (tick) => pointTime(tick, period.days, cpd),
+            formatTooltipTitle: (tick) => pointTime(tick, period.days, cpd),
             secondsPerTick: (24 * 3600) / cpd,
             anchor: "left",
         }),
         [cpd, period.days],
     );
 
-    // While another day loads, the charts still show the last one. A click on
-    // it would pick a point outside the chosen day, so it is ignored.
+    // While another week loads, the charts still show the last one. A click on
+    // it would pick a point outside the chosen week, so it is ignored.
     const onTickClick = useCallback(
         (tick: number) => {
-            if (!isPointOfDay(tick, dayIndex, cpd)) return;
+            if (!isPointOfWeek(tick, weekIndex, cpd)) return;
             setPoint(Math.min(tick, lastPoint));
         },
-        [dayIndex, cpd, lastPoint, setPoint],
+        [weekIndex, cpd, lastPoint, setPoint],
     );
 
-    // The day shown, which may still be the previous one while the next loads.
-    const shown = day.data;
+    // The week shown, which may still be the previous one while the next loads.
+    const shown = week.data;
     const chart = {
         timeAxis,
         markerTick: point,
         onTickClick,
-        isLoading: day.isPending,
-        isError: day.isError,
+        isLoading: week.isPending,
+        isError: week.isError,
     };
 
     return (
         <div className="space-y-6 pt-4">
             {period.blackout_at !== null && (
                 <TypographyMuted>
-                    The grid went down at {timeOfDay(period.blackout_at, cpd)}
-                    {period.days.length > 1 &&
-                        ` on day ${Math.floor(period.blackout_at / cpd) + 1}`}
-                    . Nothing was produced or sold after that.
+                    The grid went down on{" "}
+                    {pointTime(period.blackout_at, period.days, cpd)}. Nothing
+                    was produced or sold after that.
                 </TypographyMuted>
             )}
-            {period.days.length > 1 && (
-                <DayPicker
-                    // Days after a blackout never cleared, so the list ends at it.
-                    days={reviewableDays(period.days, period.blackout_at, cpd)}
-                    value={dayIndex}
-                    onChange={chooseDay}
+            {period.weeks > 1 && (
+                <WeekPicker
+                    // Weeks after a blackout never cleared, so the list ends at it.
+                    weeks={reviewableWeeks(
+                        period.days,
+                        period.blackout_at,
+                        cpd,
+                    )}
+                    value={weekIndex}
+                    onChange={chooseWeek}
                 />
             )}
             {labels.me !== null && (
                 <PlayerPowerCard
-                    day={shown}
+                    week={shown}
                     labels={labels}
                     cpd={cpd}
                     {...chart}
                 />
             )}
             <NetworkPowerCard
-                day={shown}
+                week={shown}
                 labels={labels}
                 cpd={cpd}
                 {...chart}
             />
-            <PriceCard day={shown} {...chart} />
+            <PriceCard week={shown} {...chart} />
             <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-background/95 p-3 backdrop-blur">
                 <PeriodScrubber
-                    first={dayIndex * cpd}
-                    count={cpd}
+                    first={weekIndex * pointsPerWeek}
+                    count={pointsPerWeek}
                     last={lastPoint}
+                    days={period.days}
                     clearingsPerDay={cpd}
                     point={point}
                     onPointChange={setPoint}
@@ -305,29 +307,30 @@ function Review({
     );
 }
 
-function DayPicker({
-    days,
+function WeekPicker({
+    weeks,
     value,
     onChange,
 }: {
-    days: number[];
+    weeks: number[][];
     value: number;
     onChange: (index: number) => void;
 }) {
     return (
         <div className="max-w-xs">
-            <Label className="mb-2" htmlFor="review-day">
-                Simulated day
+            <Label className="mb-2" htmlFor="review-week">
+                Simulated week
             </Label>
             <select
-                id="review-day"
+                id="review-week"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
                 className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
-                {days.map((dayOfYear, index) => (
-                    <option key={dayOfYear} value={index}>
-                        Day {index + 1} · {dateOfDay(dayOfYear)}
+                {weeks.map((days, index) => (
+                    <option key={days[0]} value={index}>
+                        Week {index + 1} · {dateOfDay(days[0] ?? 0)} to{" "}
+                        {dateOfDay(days[days.length - 1] ?? 0)}
                     </option>
                 ))}
             </select>
@@ -346,7 +349,7 @@ interface ChartProps {
 }
 
 interface PowerCardProps extends ChartProps {
-    day: PeriodDay | undefined;
+    week: PeriodWeek | undefined;
     labels: Labels;
     cpd: number;
 }
@@ -501,7 +504,7 @@ function PowerSeries({
     );
 }
 
-function PlayerPowerCard({ day, labels, cpd, ...chart }: PowerCardProps) {
+function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     const [view, setView] = useLocalStorage<PowerView>(
         `${STORAGE_PREFIX}:player:view`,
         "generation",
@@ -516,10 +519,10 @@ function PlayerPowerCard({ day, labels, cpd, ...chart }: PowerCardProps) {
     );
     const rows = useMemo(
         () =>
-            day && labels.me !== null
-                ? playerPowerRows(day, labels.me, view)
+            week && labels.me !== null
+                ? playerPowerRows(week, labels.me, view)
                 : [],
-        [day, labels.me, view],
+        [week, labels.me, view],
     );
 
     return (
@@ -561,7 +564,7 @@ function PlayerPowerCard({ day, labels, cpd, ...chart }: PowerCardProps) {
     );
 }
 
-function NetworkPowerCard({ day, labels, cpd, ...chart }: PowerCardProps) {
+function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     const [view, setView] = useLocalStorage<PowerView>(
         `${STORAGE_PREFIX}:network:view`,
         "generation",
@@ -579,8 +582,8 @@ function NetworkPowerCard({ day, labels, cpd, ...chart }: PowerCardProps) {
         `${STORAGE_PREFIX}:network:hidden`,
     );
     const rows = useMemo(
-        () => (day ? networkPowerRows(day, view, grouping) : []),
-        [day, view, grouping],
+        () => (week ? networkPowerRows(week, view, grouping) : []),
+        [week, view, grouping],
     );
     const what = view === "generation" ? "generation" : "consumption";
 
@@ -642,10 +645,10 @@ const PRICE_CONFIG: EChartsTimeSeriesConfig = {
 };
 
 function PriceCard({
-    day,
+    week,
     ...chart
-}: ChartProps & { day: PeriodDay | undefined }) {
-    const rows = useMemo(() => (day ? priceRows(day) : []), [day]);
+}: ChartProps & { week: PeriodWeek | undefined }) {
+    const rows = useMemo(() => (week ? priceRows(week) : []), [week]);
     return (
         <ChartCard
             icon={TrendingUp}
@@ -675,10 +678,7 @@ function MeritOrderCard({
     );
     const cpd = period.clearings_per_day;
     const title: ReactNode = (
-        <>
-            Merit order at {timeOfDay(point, cpd)}
-            {period.days.length > 1 && `, day ${Math.floor(point / cpd) + 1}`}
-        </>
+        <>Merit order on {pointTime(point, period.days, cpd)}</>
     );
 
     return (

@@ -1,7 +1,7 @@
 /**
  * The scrubber of a Trading period's review (#1007): it picks the settlement
  * point the merit order shows, and the charts mark. It steps through one
- * simulated day at a time, one settlement point per step, and can play through
+ * simulated week at a time, one settlement point per step, and can play through
  * them on its own.
  *
  * Each viewer scrubs at their own pace. Pausing stops on the point shown, so
@@ -17,7 +17,7 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { Slider } from "@/components/ui/slider";
-import { timeOfDay } from "@/lib/workshop-review";
+import { pointTime } from "@/lib/workshop-review";
 
 /** How many times faster than the base pace playing can go. */
 const SPEEDS = ["1", "2", "4"] as const;
@@ -27,12 +27,14 @@ type Speed = (typeof SPEEDS)[number];
 const SECONDS_PER_DAY_AT_BASE_PACE = 24;
 
 interface PeriodScrubberProps {
-    /** The period's point the day starts at. */
+    /** The period's point the week starts at. */
     first: number;
-    /** The points in the day. */
+    /** The points in the week. */
     count: number;
     /** The last point that can be shown, such as the one the grid went down at. */
     last: number;
+    /** The day of the year of each of the period's simulated days. */
+    days: readonly number[];
     clearingsPerDay: number;
     point: number;
     onPointChange: (point: number) => void;
@@ -42,6 +44,7 @@ export function PeriodScrubber({
     first,
     count,
     last,
+    days,
     clearingsPerDay,
     point,
     onPointChange,
@@ -50,7 +53,7 @@ export function PeriodScrubber({
     const [playing, setPlaying] = useState(false);
     const [speed, setSpeed] = useState<Speed>("1");
 
-    // Playing moves on one point at a time, and stops on the day's last.
+    // Playing moves on one point at a time, and stops on the week's last.
     useEffect(() => {
         if (!playing || point >= end) return;
         const delay =
@@ -70,7 +73,7 @@ export function PeriodScrubber({
     };
 
     const togglePlaying = () => {
-        // Playing from the day's end starts it again.
+        // Playing from the week's end starts it again.
         if (!playing && point >= end) onPointChange(first);
         setPlaying(!playing);
     };
@@ -107,8 +110,8 @@ export function PeriodScrubber({
                     <SkipForward />
                 </Button>
             </div>
-            <span className="w-12 font-mono text-sm tabular-nums">
-                {timeOfDay(point, clearingsPerDay)}
+            <span className="w-28 font-mono text-sm tabular-nums">
+                {pointTime(point, days, clearingsPerDay)}
             </span>
             <Slider
                 className="min-w-40 flex-1"

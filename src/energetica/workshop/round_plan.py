@@ -12,7 +12,7 @@ A plan's levers are the Round's format (:mod:`~energetica.workshop.round_format`
 change made early lasts. A change names only the levers it sets (:class:`LeverChanges`), and those that differ
 from the Round's carry, each on its own: the trading format, the clearings per day, the storage availability, the
 fuel procurement and the carbon tax vote. A lever the change leaves out stays as it is in every Round. A change that
-would leave the Round or a later one invalid, such as every storage type in a Round with a representative day, is
+would leave the Round or a later one invalid, such as every storage type in a Round with a representative week, is
 refused.
 
 A plan's events are the vignettes (:mod:`~energetica.workshop.events`) the facilitator planned for the Round: a

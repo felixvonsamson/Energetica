@@ -23,7 +23,7 @@ from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import EventStatus, RoundLevers
-from energetica.workshop.seasons import Season
+from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.votes import Ballot
@@ -71,8 +71,11 @@ class WorkshopPhaseExtendIn(BaseModel):
 class WorkshopSettlementOut(BaseModel):
     """How far the simulation of the current Trading period has got (#1004)."""
 
-    days_done: int = Field(description="Days of the season simulated so far")
-    days_total: int = Field(description="Days the simulation covers: 1 for a representative day, 91 for a full season")
+    days_done: int = Field(description="Days cleared so far")
+    days_total: int = Field(
+        description="Days the simulation clears: 14 for a representative week, which is cleared twice for its "
+        "cyclic start, and 91 for a full season"
+    )
 
     @classmethod
     def from_progress(cls, progress: SettlementProgress) -> WorkshopSettlementOut:
@@ -361,14 +364,18 @@ class WorkshopPlansOut(BaseModel):
 
 
 class WorkshopPeriodOut(BaseModel):
-    """What a settled Trading period's review needs before it loads any day (#1007)."""
+    """What a settled Trading period's review needs before it loads any week (#1007, #1198)."""
 
     round: int
     season: Season
     clearings_per_day: int = Field(description="Settlement points in each simulated day")
     days: list[int] = Field(
-        description="The day of the year of each simulated day, in order: one for a representative day, 91 for a "
-        "full season. Days are asked for by their position in this list"
+        description="The day of the year of each simulated day, in order: 7 for a representative week, 91 for a "
+        "full season"
+    )
+    weeks: int = Field(
+        description="How many weeks the simulated days make: 1 for a representative week, 13 for a full season. "
+        "Weeks are asked for by their position, from 0"
     )
     blackout_at: int | None = Field(
         description="The settlement point the grid went down at, counted from the period's first, or null if it "
@@ -382,12 +389,13 @@ class WorkshopPeriodOut(BaseModel):
             season=record.season,
             clearings_per_day=record.clearings_per_day,
             days=list(record.days),
+            weeks=len(record.days) // WEEK_DAYS,
             blackout_at=record.blackout_at,
         )
 
 
 class WorkshopPoolSeriesOut(BaseModel):
-    """One player's facilities of one type over a simulated day, in W at each settlement point."""
+    """One player's facilities of one type over a simulated week, in W at each settlement point."""
 
     player_id: int
     facility: FacilityId
@@ -397,21 +405,22 @@ class WorkshopPoolSeriesOut(BaseModel):
 
 
 class WorkshopTierSeriesOut(BaseModel):
-    """One demand tier over a simulated day."""
+    """One demand tier over a simulated week."""
 
     tier: str = Field(description="The tier's label, such as must_serve")
     served: list[float] = Field(description="What it bought at each settlement point, in W")
 
 
-class WorkshopPeriodDayOut(BaseModel):
-    """One simulated day of a settled Trading period, at every settlement point (#1007).
+class WorkshopPeriodWeekOut(BaseModel):
+    """One simulated week of a settled Trading period, at every settlement point (#1007, #1198).
 
     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
     """
 
-    day: int = Field(description="The day's position in the period's days")
-    first_point: int = Field(description="The period's settlement point the day starts at")
+    week: int = Field(description="The week's position in the period's weeks, from 0")
+    days: list[int] = Field(description="The day of the year of each of the week's days, in order")
+    first_point: int = Field(description="The period's settlement point the week starts at")
     price: list[float | None] = Field(
         description="The price each point settled at, per MWh. Null where the grid was down: unbounded at the "
         "blackout itself, and missing after it"
@@ -421,11 +430,12 @@ class WorkshopPeriodDayOut(BaseModel):
     tiers: list[WorkshopTierSeriesOut]
 
     @classmethod
-    def from_record(cls, record: TradingPeriodRecord, day: int) -> WorkshopPeriodDayOut:
-        start = day * record.clearings_per_day
-        points = slice(start, start + record.clearings_per_day)
+    def from_record(cls, record: TradingPeriodRecord, week: int) -> WorkshopPeriodWeekOut:
+        start = week * WEEK_DAYS * record.clearings_per_day
+        points = slice(start, start + WEEK_DAYS * record.clearings_per_day)
         return cls(
-            day=day,
+            week=week,
+            days=list(record.days[week * WEEK_DAYS : (week + 1) * WEEK_DAYS]),
             first_point=start,
             price=_finite_or_none(record.price[points].tolist()),
             quantity=_finite_or_none(record.quantity[points].tolist()),

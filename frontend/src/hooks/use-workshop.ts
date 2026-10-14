@@ -603,8 +603,9 @@ export function useWorkshopRecap(round: number) {
 }
 
 /**
- * A settled Trading period's simulated days and settlement points. Fails with a
- * 404 until the period is settled, and is read again when the session changes.
+ * A settled Trading period's simulated days, weeks and settlement points. Fails
+ * with a 404 until the period is settled, and is read again when the session
+ * changes.
  */
 export function useWorkshopPeriod(round: number, season: Season) {
     return useQuery({
@@ -615,18 +616,18 @@ export function useWorkshopPeriod(round: number, season: Season) {
 }
 
 /**
- * Every settlement point of one simulated day of a settled Trading period.
- * While another day loads, the last one stays on screen.
+ * Every settlement point of one simulated week of a settled Trading period.
+ * While another week loads, the last one stays on screen.
  */
-export function useWorkshopPeriodDay(
+export function useWorkshopPeriodWeek(
     round: number,
     season: Season,
-    day: number,
+    week: number,
     { enabled = true } = {},
 ) {
     return useQuery({
-        queryKey: queryKeys.workshop.periodDay(round, season, day),
-        queryFn: () => workshopApi.getPeriodDay(round, season, day),
+        queryKey: queryKeys.workshop.periodWeek(round, season, week),
+        queryFn: () => workshopApi.getPeriodWeek(round, season, week),
         enabled,
         staleTime: Infinity,
         placeholderData: keepPreviousData,
