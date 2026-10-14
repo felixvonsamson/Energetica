@@ -29,6 +29,20 @@ if TYPE_CHECKING:
 # game-balance tuning, deferred along with every other Workshop magnitude in #992.
 WORKSHOP_STARTING_BUDGET = 1_000_000.0
 
+# The least a player starts a Round with (#1016): half the Round-1 starting budget.
+WORKSHOP_CASH_FLOOR = WORKSHOP_STARTING_BUDGET / 2
+
+
+def round_start_money(money: float, *, after_blackout: bool) -> float:
+    """The cash a player holding ``money`` starts the next Round with (#1016).
+
+    Cash carries forward, but a player below the floor is topped up to exactly it. After a blackout, every
+    player starts again from the Round-1 starting budget instead, however much they held.
+    """
+    if after_blackout:
+        return WORKSHOP_STARTING_BUDGET
+    return max(money, WORKSHOP_CASH_FLOOR)
+
 
 # `eq=False` keeps equality and hashing by identity. Field-wise equality would recurse, since the
 # network holds each player and each player holds the network.
