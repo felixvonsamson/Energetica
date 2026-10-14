@@ -238,7 +238,8 @@ _Avoid_: revenue, gross proceeds, net.
 Cash carries forward from Round to Round. As a new Round starts, a player holding less than half the
 Round-1 starting budget is topped up to exactly half. After a blackout, every player's cash is reset to
 the full starting budget instead, however much they held. Facilities stay as they are, and the
-blacked-out Round still counts toward their lifetimes. Players are not told about either.
+blacked-out Round still counts toward their lifetimes. The Recap's blackout report tells players about the
+reset; the top-up is silent.
 
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the

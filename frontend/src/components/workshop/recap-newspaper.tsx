@@ -220,6 +220,8 @@ function LightsOut({ recap }: { recap: WorkshopRecap }) {
                 and went down.
                 {recap.blackout !== "winter" &&
                     " The rest of the year was called off."}
+                {recap.year_ahead &&
+                    " Every producer starts next year with its cash restored to the original budget."}
             </p>
         </section>
     );
