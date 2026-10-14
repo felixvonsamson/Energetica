@@ -1,7 +1,7 @@
 # A representative week with borrowed weather stands for each season
 
-**Status:** accepted, pending the evaluation in #1197
-**Date:** 2026-10-14
+**Status:** accepted. The evaluation in #1197 passed, after demand scaling was added (decision 4).
+**Date:** 2026-10-14, amended the same day after #1197
 **Supersedes:** the representative day (#1003): the middle day of the season, scaled ×91.
 **Decided in:** #1164. **Applied by:** #1197 (evaluation), #1198 (engine), #1199 (review page),
 #1200 (Recap), with #1201 (demand curve) and #1202 (battery) alongside.
@@ -23,16 +23,18 @@ windy hours that push prices down. Three matched days fixed the bias.
 
 A Trading period is simulated as one week of the season, scaled ×13.
 
-1. **The week is the middle week of the season, every Round.** Its demand, the sun's position and the
-   seasonal and daily wind factors are its own.
+1. **The week is the middle week of the season, every Round.** The sun's position, the seasonal and daily
+   wind factors and the shape of its demand are its own.
 2. **Wind and solar borrow only their weather** from a 7-day run elsewhere in the season: the noise term
    for wind, the clear-sky index (cloud cover) for solar. Each picks its own run, independently, among
    the season's 7-day runs, starting on any day.
 3. **Each picks the run whose weather, placed on the middle week, gives the average output closest to the
    season's real average output.** Matching on output, not on the raw weather, accounts for the
    nonlinear power curves.
-4. **Demand is not rescaled.** The middle week's demand is off the season's by up to 7%, the same every
-   Round, which is accepted.
+4. **Demand is scaled to the season's average.** Every clearing's demand is multiplied by the season's
+   average demand divided by the week's, so the week keeps its shape from hour to hour and day to day.
+   Without scaling, the middle week's demand is off its season's by −6% to +5.5%, the same every Round,
+   and the evaluation showed that this offset moves profit by much more (see below).
 5. **Storage uses a cyclic start.** The week is cleared once, then again from the charge the first pass
    ended with, and the second pass is kept. Nothing carries over between periods, and the jump in charge
    between periods is not priced.
@@ -63,10 +65,31 @@ real size.
 - **Sort solar days into seven groups by cloudiness and take one from each.** Rejected as more complex
   than this use needs.
 - **The seven single days closest to the average.** Rejected for the same bias as one matched day.
-- **Rescale the week's demand to the season's.** Rejected: the error is small and the same every Round.
+- **Keep the week's own demand, unscaled.** This was the first decision, and #1197 rejected it: see the
+  evaluation below.
 - **Carry storage charge from the last period, scaled ×13.** Rejected: a battery bought empty would
   appear to buy a full charge 13 times. Pricing the jump between periods once was rejected as an extra
   balance-sheet line for an error of about 1%.
+
+## Evaluation (#1197)
+
+The evaluation reran Max's setup on 64 seeds × 4 seasons, with a 4-hour battery, against simulating every
+day of the season. The full tables are in `prototypes/rep_day_1164/README.md`. Ranges cover every fleet
+except gas and coal, whose true profit is close to zero.
+
+| Method | Profit bias | Error per season | Pairs ranked right |
+| --- | --- | --- | --- |
+| Middle day | −2 to +7% | 52–62% | 86% |
+| Three matched days | −1 to +6% | 6–14% | 99% |
+| Best 7-day run, whole | −2 to +4% | 10–16% | 98% |
+| Representative week, own demand | +3 to +5% | 12–19% | 99% |
+| Representative week, scaled demand | −0.3 to +2.1% | 4–14% | 99% |
+
+With its own demand, the representative week missed the bar on bias (+5.2% for solar and CCGT) and on
+error per season (18–19% for the wind fleets). The cause was the fixed demand offset: a winter week with
+5.5% more demand than its season overstated the wind-and-peakers fleet's profit by 27%, and an autumn week
+with 6% less understated it by 14%. Scaling the week's demand to the season's removes the offset and clears
+the bar, with a lower error per season than three matched days for every fleet.
 
 ## Consequences
 
@@ -82,6 +105,6 @@ real size.
   at the same time. The weather generator has no link between wind and clouds, so nothing real is lost.
 - The rule that the "every storage type" availability needs the full-season format is unchanged by
   this decision.
-- If the evaluation in #1197 shows the representative week missing the agreed bar (bias within ±5%,
-  error per season no worse than three matched days, at least 99% of pairs ranked right), this decision
-  is reopened before any implementation.
+- The demand players see in the review is the scaled demand, which differs from the curve's value for
+  those dates by a few percent. Once weekends land (#1201), the scaling factor is computed from the new
+  curve, and the evaluation should be rerun to confirm the result holds.
