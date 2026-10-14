@@ -187,11 +187,18 @@ jobs:
           from energetica.freeplay.database.map.hex_tile import HexTile
           from energetica.freeplay.database.engine_data.emission_data import EmissionData
           from energetica.freeplay.game_engine import _DATA_DIR as FREEPLAY_DATA_DIR
-          from energetica.sim.national_demand import _DATA_DIR as SIM_DATA_DIR
+          from energetica.freeplay.national_demand import national_demand_curve as freeplay_demand_curve
+          from energetica.workshop.demand_block import _DATA_DIR as WORKSHOP_DATA_DIR
+          from energetica.workshop.demand_block import national_demand_curve as workshop_demand_curve
 
           expected = {
-              FREEPLAY_DATA_DIR: {"daily_quiz_questions.csv", "map.csv"},
-              SIM_DATA_DIR: {"national_demand_intraday.pck", "national_demand_seasonal.pck"},
+              FREEPLAY_DATA_DIR: {
+                  "daily_quiz_questions.csv",
+                  "map.csv",
+                  "national_demand_intraday.pck",
+                  "national_demand_seasonal.pck",
+              },
+              WORKSHOP_DATA_DIR: {"national_demand_year_15min.pck"},
           }
           missing = sorted(
               str(data_dir / name)
@@ -199,6 +206,9 @@ jobs:
               for name in names - {p.name for p in data_dir.iterdir()}
           )
           assert not missing, f"package data missing from the wheel: {missing}"
+          # Both demand curves load from the installed package, not only sit in it.
+          freeplay_demand_curve()
+          workshop_demand_curve()
           print(f"energetica {energetica.__version__} from {energetica.__file__}")
           print(f"data files present: {sorted(name for names in expected.values() for name in names)}")
           PY
