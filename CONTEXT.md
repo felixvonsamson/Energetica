@@ -245,8 +245,9 @@ _Avoid_: recap (the Recap is the narrative page between Rounds), income statemen
 **Carbon tax** (#1015):
 The tax a passed **vote** puts in force, settled in every Trading period from that Round on. Each player pays a
 fixed price per kg of CO₂ their facilities emitted generating in the period. In a Round's first Trading period, they
-also pay on the CO₂ emitted building what they bought in its Investment phase. Everything paid is pooled and shared
-out equally among the players settled in the period: the **shared payback**. It is left out of operating profit.
+also pay on the CO₂ emitted building what they bought in its Investment phase. Everything paid makes up the
+period's takings, shared out equally among the players settled in the period: the **shared payback** (`carbon_tax_share`
+in the code). It is left out of operating profit, and the Round's **net profit** takes it off.
 _Avoid_: emissions tax, carbon price.
 
 **Fuel procurement** (#1009, #1190):

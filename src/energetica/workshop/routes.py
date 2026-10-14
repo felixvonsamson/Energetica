@@ -531,8 +531,9 @@ def get_locked_prices(player: Player) -> list[LockedPrices]:
 
 def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelOut:
     needs = session.fuel_needs(player, session.current_round())
-    # Only the last settled period counts: a player with nothing operating in it has no result for it, and their
-    # last one is from further back.
+    # Only the last settled period counts. A player with nothing operating in it usually has no result for it, so
+    # their last one is from further back. If they got a share of a carbon tax, their result for it has no
+    # facilities, so no fuel ran out.
     last = player.trading_results[-1] if player.trading_results else None
     run_out = set()
     if last is not None and TradingPeriod(round=last.round, season=last.season) == session.settled_period:

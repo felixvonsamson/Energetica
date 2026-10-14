@@ -70,6 +70,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, NamedTuple
 from pydantic import BaseModel, Field
 
 from energetica.workshop.atomic_file import write_atomically
+from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
 from energetica.workshop.events import (
     FiredEvent,
@@ -128,7 +129,6 @@ from energetica.workshop.unlocks import (
     round_end_unlocks,
     unlock_threshold,
 )
-from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
 from energetica.workshop.weather import AverageOutput, representative_weather, season_output
 
@@ -1411,7 +1411,7 @@ class WorkshopSession:
         traded = {player.account_id: outcome.results.get(player.account_id) for player in players}
         results = settle_carbon_tax(
             {
-                player: result and result.model_copy(update={"revenue_tax_rate": tax_rate})
+                player: None if result is None else result.model_copy(update={"revenue_tax_rate": tax_rate})
                 for player, result in traded.items()
             },
             {
@@ -1457,7 +1457,7 @@ class WorkshopSession:
             player.stored_energy = outcome.stored_energy[player.account_id]
             if player.account_id in paid:
                 result, player.fuel_stock = paid[player.account_id]
-                player.money += result.net - result.carbon_tax
+                player.money += result.operating_profit - result.carbon_tax
                 player.trading_results.append(result)
         self.settled_period = period
         try:

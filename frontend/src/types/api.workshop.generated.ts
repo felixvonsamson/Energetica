@@ -1080,6 +1080,7 @@ export interface components {
             construction_emissions: number;
             /**
              * Construction Carbon Tax
+             * @description The carbon tax on construction_emissions, charged in the Round's first season
              * @default 0
              */
             construction_carbon_tax: number;
@@ -1091,6 +1092,7 @@ export interface components {
             taxed_emissions: number;
             /**
              * Emitted Carbon Tax
+             * @description The carbon tax on taxed_emissions
              * @default 0
              */
             emitted_carbon_tax: number;
@@ -1102,7 +1104,7 @@ export interface components {
             carbon_tax_rate: number;
             /**
              * Carbon Tax Share
-             * @description The player's share of the carbon tax every player paid
+             * @description The player's share of the carbon tax takings
              * @default 0
              */
             carbon_tax_share: number;

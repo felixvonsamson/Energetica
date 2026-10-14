@@ -696,7 +696,7 @@ def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
 
         [result] = app.state.workshop_session.player(alice).trading_results
         assert (result.round, result.season) == (1, "spring")
-        assert client.get(SELECTION_URL).json()["money"] == pytest.approx(910_000.0 + result.net)
+        assert client.get(SELECTION_URL).json()["money"] == pytest.approx(910_000.0 + result.operating_profit)
         assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
@@ -1009,8 +1009,8 @@ def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_p
         ("skipped", False),
         ("skipped", False),
     ]
-    assert after["total"]["operating_income"] == pytest.approx(result.net)
-    assert after["net_profit"] == pytest.approx(result.net - 90_000.0)
+    assert after["total"]["operating_income"] == pytest.approx(result.operating_profit)
+    assert after["net_profit"] == pytest.approx(result.operating_profit - 90_000.0)
 
 
 def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(session_path: Path) -> None:

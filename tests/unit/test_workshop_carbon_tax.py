@@ -1,4 +1,4 @@
-"""The carbon tax (#1015): each Trading period, the CO₂ every settled player emitted is taxed, and the pool is shared
+"""The carbon tax (#1015): each Trading period, the CO₂ every settled player emitted is taxed, and the takings are shared
 out equally among them.
 """
 
@@ -63,10 +63,10 @@ def test_each_player_pays_on_what_they_emitted_and_gets_an_equal_share_of_the_po
         season="spring",
     )
 
-    pool = (1_000.0 + 200.0) * 0.5
+    takings = (1_000.0 + 200.0) * 0.5
     assert settled[1].emitted_carbon_tax == pytest.approx(500.0)
     assert settled[2].emitted_carbon_tax == pytest.approx(100.0)
-    assert [settled[player].carbon_tax_share for player in (1, 2, 3)] == pytest.approx([pool / 3] * 3)
+    assert [settled[player].carbon_tax_share for player in (1, 2, 3)] == pytest.approx([takings / 3] * 3)
     assert sum(result.carbon_tax for result in settled.values()) == pytest.approx(0.0)
 
 

@@ -365,9 +365,9 @@ export interface WaterfallStep {
  * The waterfall from market income down to a period's result: operating income
  * for a season, and net profit for the Round, which also takes off its
  * investments. Once a carbon tax is in force, it comes after operating income,
- * as what was paid and the share that came back, and a season then ends on its
- * result after it. Each change runs from the running total; a subtotal is drawn
- * from zero and resets it.
+ * as one step: what was paid minus the share that came back. A season then ends
+ * on its result after it. Each change runs from the running total; a subtotal
+ * is drawn from zero and resets it.
  */
 export function waterfallSteps(
     period: PeriodSheet,
@@ -396,13 +396,7 @@ export function waterfallSteps(
     change("Fuel cost", -period.fuel_total);
     subtotal("Operating income", period.operating_income);
     const carbonTax = period.carbon_tax_rate > 0;
-    if (carbonTax) {
-        change(
-            "Carbon tax",
-            -(period.construction_carbon_tax + period.emitted_carbon_tax),
-        );
-        change("Shared payback", period.carbon_tax_share);
-    }
+    if (carbonTax) change("Carbon tax", -period.carbon_tax);
     if (round) {
         change("Investments", -round.investment_total);
         subtotal("Net profit", round.net_profit);

@@ -11,6 +11,7 @@ import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
+from energetica.workshop.carbon_tax import construction_emissions
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.session import (
@@ -23,7 +24,6 @@ from energetica.workshop.session import (
     TradingPeriod,
     WorkshopSession,
 )
-from energetica.workshop.carbon_tax import construction_emissions
 from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
@@ -308,7 +308,7 @@ def test_a_passed_carbon_tax_is_settled_each_trading_period_and_shared_out(path:
         result = results[player.account_id]
         assert result.carbon_tax_rate == CARBON_TAX_RATE
         assert result.construction_emissions == pytest.approx(construction_emissions(player.purchases, 1))
-        assert player.money - before[player.account_id] == pytest.approx(result.net - result.carbon_tax)
+        assert player.money - before[player.account_id] == pytest.approx(result.operating_profit - result.carbon_tax)
     assert results[3].construction_emissions > results[1].construction_emissions
     # Everything paid comes back, shared out equally.
     assert sum(result.carbon_tax for result in results.values()) == pytest.approx(0.0, abs=1e-6)

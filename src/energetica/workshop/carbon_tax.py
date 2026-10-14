@@ -3,9 +3,9 @@ period from that Round on, alongside the period's revenue and costs.
 
 Each player settled in the period pays :data:`~energetica.workshop.votes.CARBON_TAX_RATE` on each kg of CO₂ their
 facilities emitted generating in it. In a Round's first Trading period, they also pay on the CO₂ emitted building the
-facilities they bought in the Round's Investment phase. Everything paid goes into one pool, which is shared out
-equally among the players settled in the period, so a player who emitted less than average gets back more than they
-paid.
+facilities they bought in the Round's Investment phase. Everything the players pay makes up the period's takings,
+which are shared out equally among the players settled in the period. So a player who emitted less than average gets
+back more than they paid.
 
 The tax is not part of the operating profit (:mod:`~energetica.workshop.operating_profit`): neither what a player pays
 nor what they get back counts toward it.
@@ -45,24 +45,26 @@ def settle_carbon_tax(
     round_number: int,
     season: Season,
 ) -> dict[int, TradingResult]:
-    """Each settled player's result for a Trading period with the carbon tax settled on it, by player id.
+    """Settle the carbon tax of one Trading period, and return each player's result with it, by player id.
 
-    ``results`` holds every player settled in the period, with None for one who had nothing operating, and
-    ``construction`` the CO₂ each one is taxed on for building, in kg. At a ``rate`` of zero, the results come back as
-    they are. Otherwise a player with nothing operating gets an empty result to hold their share, unless the pool is
-    empty. A player left without a result is left out.
+    ``results`` has an entry for every player settled in the period. It is None for a player who had nothing
+    operating. ``construction`` is the CO₂, in kg, each player is taxed on for building.
+
+    A player who had nothing operating still gets their share of the takings. To hold it, they get a result with no
+    facilities. When there is nothing to share, because the tax is not in force or nobody emitted anything, they get
+    no result and are left out of the returned dict.
     """
     present = {player: result for player, result in results.items() if result is not None}
     if rate == 0 or not results:
         return present
     taxed = {
-        player: (result or TradingResult(round=round_number, season=season, facilities={})).model_copy(
-            update={"carbon_tax_rate": rate, "construction_emissions": construction.get(player, 0.0)}
-        )
+        player: (
+            result if result is not None else TradingResult(round=round_number, season=season, facilities={})
+        ).model_copy(update={"carbon_tax_rate": rate, "construction_emissions": construction.get(player, 0.0)})
         for player, result in results.items()
     }
-    pool = sum(result.construction_carbon_tax + result.emitted_carbon_tax for result in taxed.values())
-    if pool == 0:
+    takings = sum(result.carbon_tax_paid for result in taxed.values())
+    if takings == 0:
         return {player: result for player, result in taxed.items() if player in present}
-    share = pool / len(taxed)
+    share = takings / len(taxed)
     return {player: result.model_copy(update={"carbon_tax_share": share}) for player, result in taxed.items()}

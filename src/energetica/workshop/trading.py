@@ -195,7 +195,7 @@ class TradingResult(BaseModel):
         "carbon tax charges in the Round's first Trading period. Zero in any other period",
     )
     carbon_tax_share: float = Field(
-        default=0.0, ge=0, description="The player's equal share of the carbon tax every player paid in the period"
+        default=0.0, ge=0, description="The player's equal share of the carbon tax takings of the period"
     )
 
     @property
@@ -214,8 +214,10 @@ class TradingResult(BaseModel):
         return sum(purchase.cost for purchase in self.fuel)
 
     @property
-    def net(self) -> float:
-        """What the period added to the player's money before the carbon tax: its operating profit."""
+    def operating_profit(self) -> float:
+        """What the period earned before the carbon tax: the facilities' income less their costs, the revenue tax
+        and fuel. The player's money changes by this minus :attr:`carbon_tax`.
+        """
         return sum(performance.net for performance in self.facilities.values()) - self.revenue_tax - self.fuel_cost
 
     @property
@@ -234,11 +236,16 @@ class TradingResult(BaseModel):
         return self.emissions * self.carbon_tax_rate
 
     @property
+    def carbon_tax_paid(self) -> float:
+        """What the player paid in carbon tax in the period, on construction and on generation (#1015)."""
+        return self.construction_carbon_tax + self.emitted_carbon_tax
+
+    @property
     def carbon_tax(self) -> float:
-        """What the carbon tax took off the player's money in the period, after their share of it came back. Below
-        zero for a player who got back more than they paid.
+        """The carbon tax the player paid in the period minus the share they got back. Below zero for a player who
+        got back more than they paid.
         """
-        return self.construction_carbon_tax + self.emitted_carbon_tax - self.carbon_tax_share
+        return self.carbon_tax_paid - self.carbon_tax_share
 
     @property
     def fuels_run_out(self) -> set[Fuel]:

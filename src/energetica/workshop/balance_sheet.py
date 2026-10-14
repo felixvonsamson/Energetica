@@ -15,7 +15,7 @@ income, above fuel.
 
 The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
 emitted building the Round's investments, charged in its first season, the tax on the CO₂ emitted generating, and
-the player's share of the pool coming back. The Round's net profit takes it off along with the investments.
+the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
 """
 
 from __future__ import annotations
@@ -92,19 +92,21 @@ class PeriodSheet(BaseModel):
     fuel: list[FuelLine] = Field(default=[], description="One line per fuel paid for, in the order of the fuels")
     fuel_total: float = 0.0
     operating_income: float = Field(description="Market income minus dumping cost, O&M, revenue tax and fuel")
-    # Default to none for a sheet without a carbon tax.
+    # Default to zero for a sheet without a carbon tax.
     construction_emissions: float = Field(
         default=0.0, description="The CO₂ emitted building the Round's investments that the carbon tax charged, in kg"
     )
-    construction_carbon_tax: float = 0.0
+    construction_carbon_tax: float = Field(
+        default=0.0, description="The carbon tax on construction_emissions, charged in the Round's first season"
+    )
     taxed_emissions: float = Field(
         default=0.0, description="The CO₂ emitted generating in the seasons the carbon tax was in force, in kg"
     )
-    emitted_carbon_tax: float = 0.0
+    emitted_carbon_tax: float = Field(default=0.0, description="The carbon tax on taxed_emissions")
     carbon_tax_rate: float = Field(
         default=0.0, description="What the carbon tax charged per kg of CO₂, or zero if it was not in force"
     )
-    carbon_tax_share: float = Field(default=0.0, description="The player's share of the carbon tax every player paid")
+    carbon_tax_share: float = Field(default=0.0, description="The player's share of the carbon tax takings")
     carbon_tax: float = Field(
         default=0.0,
         description="The carbon tax paid on construction and generation, minus the share that came back. Below zero "

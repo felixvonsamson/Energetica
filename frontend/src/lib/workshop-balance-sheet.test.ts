@@ -296,10 +296,9 @@ describe("waterfallSteps", () => {
 
     it("takes a season on to its result after the carbon tax", () => {
         const steps = waterfallSteps(CARBON);
-        expect(steps.slice(-4)).toEqual([
+        expect(steps.slice(-3)).toEqual([
             expect.objectContaining({ label: "Operating income", to: 370_440 }),
-            expect.objectContaining({ label: "Carbon tax", value: -4_500 }),
-            expect.objectContaining({ label: "Shared payback", value: 3_000 }),
+            expect.objectContaining({ label: "Carbon tax", value: -1_500 }),
             expect.objectContaining({
                 label: "Season result",
                 kind: "subtotal",
@@ -313,9 +312,8 @@ describe("waterfallSteps", () => {
             investment_total: 90_000,
             net_profit: 370_440 - 1_500 - 90_000,
         });
-        expect(steps.slice(-4).map((s) => s.label)).toEqual([
+        expect(steps.slice(-3).map((s) => s.label)).toEqual([
             "Carbon tax",
-            "Shared payback",
             "Investments",
             "Net profit",
         ]);
