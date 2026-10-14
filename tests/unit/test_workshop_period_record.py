@@ -28,7 +28,7 @@ _AMPLITUDE = 10e6
 
 GAS = FacilityId.GAS_BURNER  # 11 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 3.2 GWh, 69% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 285 MWh, 69% efficient
 
 
 def _bidder(

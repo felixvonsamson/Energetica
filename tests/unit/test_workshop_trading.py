@@ -42,7 +42,8 @@ GAS = FacilityId.GAS_BURNER  # 11 MW
 COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 54 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
 OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 130 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 3.2 GWh, 69% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 285 MWh, 69% efficient
+SOLID_STATE = FacilityId.SOLID_STATE_BATTERIES  # 107 MW, 570 MWh, 79% efficient
 REACTOR = FacilityId.NUCLEAR_REACTOR  # one Round to build
 
 _BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
@@ -166,11 +167,11 @@ def test_a_renewable_produces_what_the_weather_gives_it() -> None:
 
 
 def test_storage_discharges_what_it_sells_and_keeps_the_rest() -> None:
-    # The full batteries offer at 0 and clear the 16.5 MW willing to pay at least 0. Their buy price
-    # sits at the floor, below the clearing price, so they never charge.
-    full = _BATTERY_CAPACITY
+    # The two full batteries offer at 0 and clear the 16.5 MW willing to pay at least 0. Their buy price
+    # sits at the floor, below the clearing price, so they never charge. Two hold enough to last the day.
+    full = 2 * _BATTERY_CAPACITY
     outcome = _simulate(
-        _bidder(BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full})
+        _bidder(BATTERIES, BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full})
     )
 
     batteries = outcome.results[1].facilities[BATTERIES]
@@ -180,15 +181,36 @@ def test_storage_discharges_what_it_sells_and_keeps_the_rest() -> None:
 
 
 def test_storage_charges_what_it_buys_and_stores_it_for_the_next_period() -> None:
-    # 130 MW of wind at -25 floods the market, which clears at -25. The empty batteries bid 100 for their
-    # whole 86 MW, so they charge at full power all day, and are paid for it.
-    outcome = _simulate(_bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0}, buy={BATTERIES: 100.0}))
+    # 130 MW of wind at -25 floods the market, which clears at -25. The batteries bid 100 for their whole
+    # 86 MW and have room for exactly three hours of it, so they charge at full power for three hours,
+    # and are paid for it.
+    room = 86e6 * 3 * math.sqrt(_BATTERY_EFFICIENCY)
+    outcome = _simulate(
+        _bidder(
+            OFFSHORE_WIND,
+            BATTERIES,
+            sell={OFFSHORE_WIND: -25.0},
+            buy={BATTERIES: 100.0},
+            stored_energy={BATTERIES: _BATTERY_CAPACITY - room},
+        )
+    )
 
     batteries = outcome.results[1].facilities[BATTERIES]
-    assert batteries.bought == pytest.approx(86e6 * _HOURS * SEASON_DAYS)
-    assert batteries.purchase_cost == pytest.approx(_mwh_value(86, -25))
-    stored = 86e6 * _HOURS * math.sqrt(_BATTERY_EFFICIENCY)
-    assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(stored)}
+    assert batteries.bought == pytest.approx(86e6 * 3 * SEASON_DAYS)
+    assert batteries.purchase_cost == pytest.approx(86 * 3 * -25 * SEASON_DAYS)
+    assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(_BATTERY_CAPACITY)}
+
+
+@pytest.mark.parametrize(("facility", "hours"), [(BATTERIES, 4), (SOLID_STATE, 6)])
+def test_an_empty_battery_fills_after_hours_at_full_power(facility: FacilityId, hours: int) -> None:
+    # Batteries shift energy within a day (#1202): lithium-ion holds at most four hours of charging at
+    # full power, solid-state at most six.
+    outcome = _simulate(_bidder(OFFSHORE_WIND, facility, sell={OFFSHORE_WIND: -25.0}, buy={facility: 100.0}))
+
+    power = CATALOG[facility].base_power_generation
+    hours_charging = outcome.results[1].facilities[facility].bought / SEASON_DAYS / power
+    assert hours - 1 < hours_charging <= hours
+    assert outcome.stored_energy[1] == {facility: pytest.approx(CATALOG[facility].base_storage_capacity)}
 
 
 def test_storage_never_holds_more_than_its_capacity() -> None:

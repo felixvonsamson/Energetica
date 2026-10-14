@@ -229,14 +229,16 @@ _FACILITIES = [
         price=123_000, power=38_000_000, construction_lag=0, lifetime=4, om_per_round=20_000, om_fixed_share=1.0,
         construction_pollution=1_260_000, pollution=0, ramping_time=0, fuel=None,
     ),
+    # Batteries shift energy within a day (#1202). Charging at full power stores power × √efficiency, so
+    # lithium-ion fills in at most four hours and solid-state in at most six.
     _storage(
         FacilityId.LITHIUM_ION_BATTERIES, "Lithium-ion batteries", FacilityCategory.BATTERIES,
-        price=660_000, power=86_000_000, capacity=3_200_000_000, efficiency=0.69, lifetime=1, om_per_round=8_000,
+        price=660_000, power=86_000_000, capacity=285_000_000, efficiency=0.69, lifetime=1, om_per_round=8_000,
         construction_pollution=8_000_000, ramping_time=180,
     ),
     _storage(
         FacilityId.SOLID_STATE_BATTERIES, "Solid-state batteries", FacilityCategory.BATTERIES,
-        price=1_000_000, power=107_000_000, capacity=5_000_000_000, efficiency=0.79, lifetime=1, om_per_round=9_000,
+        price=1_000_000, power=107_000_000, capacity=570_000_000, efficiency=0.79, lifetime=1, om_per_round=9_000,
         construction_pollution=6_000_000, ramping_time=180,
     ),
     _storage(
