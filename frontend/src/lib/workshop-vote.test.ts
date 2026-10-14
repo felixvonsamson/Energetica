@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ApiSchema } from "@/types/api-helpers";
 
-import { resultToAnnounce } from "./workshop-vote";
+import { resultToAnnounce, withBallot } from "./workshop-vote";
 
 type WorkshopVote = ApiSchema<"WorkshopVoteOut">;
 
@@ -49,5 +49,32 @@ describe("resultToAnnounce", () => {
         expect(resultToAnnounce({ kind: "recap", round: 2 }, vote({}), 1)).toBe(
             false,
         );
+    });
+});
+
+describe("withBallot", () => {
+    const open = vote({ passed: null, ballot: null });
+
+    it("takes the ballot from the answer to a ballot cast", () => {
+        expect(withBallot(open, vote({ passed: null, ballot: "yes" }))).toEqual(
+            { ...open, ballot: "yes" },
+        );
+    });
+
+    it("keeps a counted result when the answer arrives after it", () => {
+        const counted = vote({ passed: true, ballot: null });
+        const late = vote({ passed: null, ballot: "no" });
+        expect(withBallot(counted, late)).toBe(counted);
+    });
+
+    it("keeps a later Round's vote", () => {
+        const next = vote({ round: 3, passed: null });
+        expect(withBallot(next, vote({ ballot: "yes", passed: null }))).toBe(
+            next,
+        );
+    });
+
+    it("leaves a vote not read yet unread", () => {
+        expect(withBallot(undefined, open)).toBeUndefined();
     });
 });

@@ -25,6 +25,7 @@ import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
 import { phaseDeadline } from "@/lib/workshop-countdown";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
+import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
@@ -400,15 +401,26 @@ export function useWorkshopVote() {
 
 /**
  * Cast the visitor's ballot. Ballots are sent one at a time, so an older one
- * never lands after a newer one, and each answer replaces the cached vote.
+ * never lands after a newer one. Only the ballot is taken from each answer
+ * ({@link withBallot}): an answer that arrives after the vote was counted must
+ * not hide the result. The vote is then read again, which also replaces any
+ * read that started before the ballot was cast.
  */
 export function useCastBallot() {
     return useMutation({
         mutationFn: workshopApi.castBallot,
         scope: { id: "workshop-ballot" },
-        onSuccess: (vote) => {
-            queryClient.setQueryData(queryKeys.workshop.vote, vote);
+        onSuccess: (answer) => {
+            queryClient.setQueryData(
+                queryKeys.workshop.vote,
+                (current: ApiSchema<"WorkshopVoteOut"> | undefined) =>
+                    withBallot(current, answer),
+            );
         },
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.vote,
+            }),
         onError: (error) => {
             toast.error(resolveErrorMessage(error));
             // The page's view of the session or the vote is out of date.

@@ -28,6 +28,22 @@ export function resultToAnnounce(
     );
 }
 
+/**
+ * The cached vote `current` with the ballot from `answer`, the server's answer
+ * to a ballot cast. Only the ballot is taken, and only while `current` is the
+ * same Round's vote and still open: the answer can arrive after the vote was
+ * counted and read again, and must not hide the result.
+ */
+export function withBallot(
+    current: WorkshopVote | undefined,
+    answer: WorkshopVote,
+): WorkshopVote | undefined {
+    if (current?.round !== answer.round || current.passed !== null) {
+        return current;
+    }
+    return { ...current, ballot: answer.ballot };
+}
+
 /** The tax per tonne of CO₂, from its rate per kg. */
 export function taxPerTonne(taxRate: number): number {
     return taxRate * 1000;
