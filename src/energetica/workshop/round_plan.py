@@ -6,12 +6,14 @@ facilitator then edits the copies. A plan is **locked** once players can rely on
 starts, and Round N+1's when Recap N opens, since the Recap tells players what is coming. The session works out
 which Rounds are locked from where it is, and refuses to change a locked plan.
 
-A plan's levers are the Round's format (:mod:`~energetica.workshop.round_format`) and its fuel procurement
-(:mod:`~energetica.workshop.fuel`). Changing a lever in one Round also changes it in every later Round, so a
+A plan's levers are the Round's format (:mod:`~energetica.workshop.round_format`), its fuel procurement
+(:mod:`~energetica.workshop.fuel`), and whether players vote on a carbon tax in it
+(:mod:`~energetica.workshop.votes`). Changing a lever in one Round also changes it in every later Round, so a
 change made early lasts. A change names only the levers it sets (:class:`LeverChanges`), and those that differ
-from the Round's carry, each on its own: the trading format, the clearings per day, the storage availability and
-the fuel procurement. A lever the change leaves out stays as it is in every Round. A change that would leave the
-Round or a later one invalid, such as every storage type in a Round with a representative day, is refused.
+from the Round's carry, each on its own: the trading format, the clearings per day, the storage availability, the
+fuel procurement and the carbon tax vote. A lever the change leaves out stays as it is in every Round. A change that
+would leave the Round or a later one invalid, such as every storage type in a Round with a representative day, is
+refused.
 
 A plan's events are the vignettes (:mod:`~energetica.workshop.events`) the facilitator planned for the Round: a
 Round event fires when its Investment phase opens, and a seasonal event when the Trading period of its season
@@ -48,6 +50,11 @@ class RoundLevers(BaseModel):
 
     round_format: RoundFormat = Field(default_factory=RoundFormat)
     fuel_procurement: FuelProcurement = Field(default="automatic", description="How players get fuel in the Round")
+    carbon_tax_vote: bool = Field(
+        default=False,
+        description="Whether players vote on a carbon tax in the Round's Investment phase. Once a vote closes, the "
+        "lever turns off in the later Rounds, and once a carbon tax has passed, it cannot be turned on again",
+    )
 
 
 #: The levers the workshop recommends for each Round, in order. A shorter session uses the start of the list, and a
@@ -86,6 +93,7 @@ class LeverChanges(BaseModel):
     clearings_per_day: ClearingsPerDay | None = None
     storage: StorageAvailability | None = None
     fuel_procurement: FuelProcurement | None = None
+    carbon_tax_vote: bool | None = None
 
 
 class InvalidLeversError(Exception):
@@ -103,12 +111,19 @@ def plans_from(default: Sequence[RoundLevers], *, round_count: int) -> list[Roun
 
 def _flat(levers: RoundLevers) -> dict[str, object]:
     """Each lever on its own, by name."""
-    return {**levers.round_format.model_dump(), "fuel_procurement": levers.fuel_procurement}
+    return {
+        **levers.round_format.model_dump(),
+        "fuel_procurement": levers.fuel_procurement,
+        "carbon_tax_vote": levers.carbon_tax_vote,
+    }
 
 
 def _from_flat(flat: dict[str, object]) -> RoundLevers:
     fuel_procurement = flat.pop("fuel_procurement")
-    return RoundLevers.model_validate({"round_format": flat, "fuel_procurement": fuel_procurement})
+    carbon_tax_vote = flat.pop("carbon_tax_vote")
+    return RoundLevers.model_validate(
+        {"round_format": flat, "fuel_procurement": fuel_procurement, "carbon_tax_vote": carbon_tax_vote}
+    )
 
 
 def with_levers(plans: Sequence[RoundPlan], round_number: int, changes: LeverChanges) -> list[RoundPlan]:

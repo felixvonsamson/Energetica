@@ -11,7 +11,8 @@
  * the page stays mounted, so the player keeps their place.
  *
  * While a Trading period is being simulated, a bar under the timeline shows how
- * far it has got (#1155).
+ * far it has got (#1155). The result of a carbon tax vote is announced in a
+ * dialog over whatever page is open (#1014).
  *
  * Pages share a content column 1400px wide at most, or 1600px for a page marked
  * `wide`.
@@ -20,6 +21,7 @@
 import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 
 import { Toaster } from "@/components/ui/sonner";
+import { VoteResultDialog } from "@/components/workshop/carbon-tax-vote";
 import { PricePanel } from "@/components/workshop/price-panel";
 import { SettlementProgress } from "@/components/workshop/settlement-progress";
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
@@ -80,6 +82,7 @@ function WorkshopLayout() {
                     <PricePanel onClose={() => setPricePanelOpen(false)} />
                 )}
             </div>
+            <VoteResultDialog />
             <Toaster
                 position="top-center"
                 richColors

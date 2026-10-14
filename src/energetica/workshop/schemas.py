@@ -26,6 +26,7 @@ from energetica.workshop.round_plan import EventStatus, RoundLevers
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
 from energetica.workshop.unlocks import Unlock
+from energetica.workshop.votes import Ballot
 
 
 class WorkshopPlayerOut(BaseModel):
@@ -101,6 +102,10 @@ class WorkshopSessionOut(BaseModel):
     blackouts: list[TradingPeriod] = Field(
         description="Every Trading period the grid went down in, in order. Each one ended its Round, so the "
         "Round's later Trading periods were skipped"
+    )
+    carbon_tax_since: int | None = Field(
+        description="The Round whose vote put the carbon tax in force, for the rest of the session, or null if no "
+        "vote has passed"
     )
 
 
@@ -216,6 +221,28 @@ class WorkshopFuelOrderIn(BaseModel):
     """How much of one fuel to buy, in kg."""
 
     quantity: float = Field(ge=0, allow_inf_nan=False, description="In kg. Cut down to fit the stockpile limit")
+
+
+class WorkshopBallotIn(BaseModel):
+    """A player's ballot in the carbon tax vote (#1014)."""
+
+    ballot: Ballot
+
+
+class WorkshopVoteOut(BaseModel):
+    """The current Round's carbon tax vote (#1014). Never says how anyone voted but the caller, nor how many did."""
+
+    round: int
+    held: bool = Field(description="Whether the Round holds a vote, cast while its Investment phase is open")
+    tax_rate: float = Field(description="What the proposed tax charges per kg of CO₂ emitted")
+    ballot: Ballot | None = Field(
+        description="The caller's ballot while the vote is open, or null if they have not cast one. Always null "
+        "for the facilitator"
+    )
+    passed: bool | None = Field(
+        description="Whether the vote passed, once the Investment phase is over. Null until then, and in a Round "
+        "that holds no vote"
+    )
 
 
 def _finite_or_none(values: Iterable[float]) -> list[float | None]:

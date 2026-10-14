@@ -19,6 +19,7 @@ const SESSION: WorkshopSession = {
     },
     settlement: { days_done: 3, days_total: 91 },
     blackouts: [],
+    carbon_tax_since: null,
 };
 
 describe("withSettlementProgress", () => {

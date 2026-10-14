@@ -353,7 +353,8 @@ export interface paths {
          * @description Change some of a Round's levers, and tell every open page. A lever left out of the body stays as it is. Each
          *     lever that changed also changes in every later Round. A locked Round cannot change, and a change that would
          *     leave the Round or a later one invalid is refused, naming that Round. Every storage type needs the full-season
-         *     format.
+         *     format. A carbon tax vote cannot be planned for Round 1, which no Recap announces, nor once a carbon tax has
+         *     passed.
          */
         patch: operations["change_round_levers_api_v1_workshop_plans__round_number__levers_patch"];
         trace?: never;
@@ -698,6 +699,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Vote
+         * @description The current Round's carbon tax vote: whether it holds one, the caller's ballot, and once the Investment phase
+         *     is over, whether it passed.
+         */
+        get: operations["get_vote_api_v1_workshop_vote_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/vote/ballot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cast Ballot
+         * @description Cast the calling player's ballot in the current Round's vote, in place of any they cast before. Only while the
+         *     Investment phase is open, in a Round that holds a vote.
+         */
+        put: operations["cast_ballot_api_v1_workshop_vote_ballot_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -894,6 +937,8 @@ export interface components {
             storage?: ("off" | "batteries" | "all") | null;
             /** Fuel Procurement */
             fuel_procurement?: ("automatic" | "manual") | null;
+            /** Carbon Tax Vote */
+            carbon_tax_vote?: boolean | null;
         };
         /**
          * LockedPrices
@@ -1176,6 +1221,17 @@ export interface components {
             base_name: string | null;
         };
         /**
+         * RecapVote
+         * @description A carbon tax vote the coming Round holds in its Investment phase.
+         */
+        RecapVote: {
+            /**
+             * Tax Rate
+             * @description What the proposed tax charges per kg of CO₂ emitted
+             */
+            tax_rate: number;
+        };
+        /**
          * RoomFigures
          * @description The whole room's figures for one Round.
          */
@@ -1273,6 +1329,12 @@ export interface components {
              * @enum {string}
              */
             fuel_procurement: "automatic" | "manual";
+            /**
+             * Carbon Tax Vote
+             * @description Whether players vote on a carbon tax in the Round's Investment phase. Once a vote closes, the lever turns off in the later Rounds, and once a carbon tax has passed, it cannot be turned on again
+             * @default false
+             */
+            carbon_tax_vote: boolean;
         };
         /**
          * RunOut
@@ -1363,6 +1425,17 @@ export interface components {
              * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator/moderator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
              */
             membership: ("player" | "facilitator") | null;
+        };
+        /**
+         * WorkshopBallotIn
+         * @description A player's ballot in the carbon tax vote (#1014).
+         */
+        WorkshopBallotIn: {
+            /**
+             * Ballot
+             * @enum {string}
+             */
+            ballot: "yes" | "no";
         };
         /**
          * WorkshopEntryOut
@@ -2019,6 +2092,11 @@ export interface components {
              * @description Every Trading period the grid went down in, in order. Each one ended its Round, so the Round's later Trading periods were skipped
              */
             blackouts: components["schemas"]["TradingPeriod"][];
+            /**
+             * Carbon Tax Since
+             * @description The Round whose vote put the carbon tax in force, for the rest of the session, or null if no vote has passed
+             */
+            carbon_tax_since: number | null;
         };
         /**
          * WorkshopSettlementOut
@@ -2102,6 +2180,34 @@ export interface components {
             unlocks: components["schemas"]["Unlock"][];
         };
         /**
+         * WorkshopVoteOut
+         * @description The current Round's carbon tax vote (#1014). Never says how anyone voted but the caller, nor how many did.
+         */
+        WorkshopVoteOut: {
+            /** Round */
+            round: number;
+            /**
+             * Held
+             * @description Whether the Round holds a vote, cast while its Investment phase is open
+             */
+            held: boolean;
+            /**
+             * Tax Rate
+             * @description What the proposed tax charges per kg of CO₂ emitted
+             */
+            tax_rate: number;
+            /**
+             * Ballot
+             * @description The caller's ballot while the vote is open, or null if they have not cast one. Always null for the facilitator
+             */
+            ballot: ("yes" | "no") | null;
+            /**
+             * Passed
+             * @description Whether the vote passed, once the Investment phase is over. Null until then, and in a Round that holds no vote
+             */
+            passed: boolean | null;
+        };
+        /**
          * YearAhead
          * @description What the coming Round holds.
          */
@@ -2122,12 +2228,14 @@ export interface components {
             forecasts: components["schemas"]["RecapForecast"][];
             /** @description Null if the market never cleared this Round */
             demand: components["schemas"]["DemandOutlook"] | null;
+            /** @description The vote the Round holds, or null if it holds none */
+            carbon_tax_vote: components["schemas"]["RecapVote"] | null;
         };
         /**
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED";
     };
     responses: never;
     parameters: never;
@@ -3091,6 +3199,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopRecap"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_vote_api_v1_workshop_vote_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopVoteOut"];
+                };
+            };
+        };
+    };
+    cast_ballot_api_v1_workshop_vote_ballot_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopBallotIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopVoteOut"];
                 };
             };
             /** @description Validation Error */

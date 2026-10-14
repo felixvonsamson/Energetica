@@ -64,6 +64,15 @@ def test_only_the_changed_lever_carries() -> None:
     assert changed[2].levers == RoundLevers(round_format=RoundFormat(clearings_per_day=288), fuel_procurement="manual")
 
 
+def test_the_carbon_tax_vote_carries_on_its_own() -> None:
+    plans = _plans(RoundLevers(), RoundLevers(), RoundLevers(fuel_procurement="manual"))
+
+    changed = with_levers(plans, 2, LeverChanges(carbon_tax_vote=True))
+
+    assert [plan.levers.carbon_tax_vote for plan in changed] == [False, True, True]
+    assert changed[2].levers.fuel_procurement == "manual"
+
+
 def test_each_part_of_the_round_format_carries_on_its_own() -> None:
     plans = _plans(
         RoundLevers(),

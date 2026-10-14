@@ -163,7 +163,8 @@ so it is set per Round and **locked** a Round ahead. Every storage type needs th
 later Round switches back, storage already built keeps running, but no more of it can be bought.
 
 **Round plan** (#1190):
-One Round's levers (its **round format** and **fuel procurement**) and the **events** planned for it.
+One Round's levers (its **round format**, **fuel procurement** and whether it holds a carbon tax **vote**)
+and the **events** planned for it.
 The session holds one per Round. The facilitator can edit any Round's plan until it is **locked**.
 Changing a lever in one Round also changes it in every later Round: only the levers that changed carry,
 each on its own, and a change that would leave a later Round invalid is refused. Events never carry. The
@@ -274,11 +275,23 @@ The Recap forecasts next Round's peak as this one moved by the demand shifts tha
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
 strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its
 headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout, and
-the room's figures. **The Year Ahead** tells what Round N+1 holds: its unlocks, its Round events with their
-exact effect, the change in peak demand, and its seasonal events as **forecasts**. The last Round has a
-"Final Edition" instead. Everyone in the Run reads the same Recap, and only once it has opened. Not to be
-confused with a persistent-world run's recap (ADR-0005), which is a final table of players.
+the room's figures. **The Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if
+it holds one, its Round events with their exact effect, the change in peak demand, and its seasonal events
+as **forecasts**. The last Round has a "Final Edition" instead. Everyone in the Run reads the same Recap,
+and only once it has opened. Not to be confused with a persistent-world run's recap (ADR-0005), which is a
+final table of players.
 _Avoid_: summary, report.
+
+**Vote** (#1014):
+Players deciding together, with a yes or no ballot, whether a carbon tax applies. The facilitator proposes
+it by turning on a Round's carbon tax vote lever, and the Recap before that Round announces it, so Round 1
+holds no vote. Players vote
+while the Round's Investment phase is open, and can change their ballot until it closes. The vote passes
+with more yes than no among the ballots cast; a tie or no ballot at all fails. Nobody sees the tally, not
+even the facilitator: everyone sees only the result, announced when the Round's first Trading period opens.
+A carbon tax that passes stays for the rest of the session. Once a vote closes, its lever turns off in the
+later Rounds, so a failed tax can be proposed again.
+_Avoid_: poll, referendum.
 
 **Revenue tax** (#1012):
 The share of every player's sale revenue a climate disaster (a drought, wildfire, hurricane or flood)

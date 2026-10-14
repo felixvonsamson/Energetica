@@ -1,6 +1,6 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009, #1011, #1012, #1190). Served only by a Workshop Run's backend.
+ * #1009, #1011, #1012, #1014, #1190). Served only by a Workshop Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -153,6 +153,22 @@ export const workshopApi = {
         ),
 
     /**
+     * Change some of a Round's levers (#1190). Each lever that changed also
+     * changes in every later Round. Facilitator only. Returns every Round's
+     * plan after the change.
+     */
+    changeLevers: ({
+        round,
+        changes,
+    }: {
+        round: number;
+        changes: ApiSchema<"LeverChanges">;
+    }) =>
+        apiClient.patch<
+            ApiResponse<"/api/v1/workshop/plans/{round_number}/levers", "patch">
+        >(`/workshop/plans/${round}/levers`, changes),
+
+    /**
      * Plan an event for a Round, and for a seasonal event a season, in place of
      * the one of its category planned for the same boundary (#1190).
      */
@@ -233,6 +249,26 @@ export const workshopApi = {
         apiClient.get<
             ApiResponse<"/api/v1/workshop/rounds/{round_number}/recap", "get">
         >(`/workshop/rounds/${round}/recap`),
+
+    /**
+     * The current Round's carbon tax vote (#1014): whether it holds one, the
+     * visitor's ballot, and once the Investment phase is over, whether it
+     * passed.
+     */
+    getVote: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/vote", "get">>(
+            "/workshop/vote",
+        ),
+
+    /**
+     * Cast the visitor's ballot in the current Round's vote, in place of any
+     * they cast before. Players only, while the Investment phase is open.
+     */
+    castBallot: (ballot: ApiSchema<"WorkshopBallotIn">["ballot"]) =>
+        apiClient.put<ApiResponse<"/api/v1/workshop/vote/ballot", "put">>(
+            "/workshop/vote/ballot",
+            { ballot },
+        ),
 
     /** A settled Trading period's simulated days and settlement points. */
     getPeriod: (round: number, season: Season) =>

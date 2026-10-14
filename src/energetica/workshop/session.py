@@ -49,6 +49,10 @@ An event planned for a Round (#1012, :mod:`~energetica.workshop.events`) fires w
 opens, and one planned for a season when that season's Trading period opens. The session keeps every event that
 fired, and works out their effects from that list: the demand block's amplitude when a period is simulated, the
 revenue tax when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
+
+A Round whose plan turns on the carbon tax vote holds one in its Investment phase (#1014,
+:mod:`~energetica.workshop.votes`). Players cast their ballots while the phase is open, and the vote is counted when
+the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
 """
 
 from __future__ import annotations
@@ -125,6 +129,7 @@ from energetica.workshop.unlocks import (
     round_end_unlocks,
     unlock_threshold,
 )
+from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -250,6 +255,18 @@ class RoundLockedError(Exception):
 
 class NoEventsInRoundOneError(Exception):
     """Raised when planning an event for Round 1, which holds none: no Recap comes before it to tell of it (#1190)."""
+
+
+class NoVoteError(Exception):
+    """Raised when casting a ballot in a Round that holds no vote (#1014)."""
+
+
+class NoVoteInRoundOneError(Exception):
+    """Raised when proposing a vote for Round 1: no Recap comes before it to announce the vote (#1014)."""
+
+
+class CarbonTaxPassedError(Exception):
+    """Raised when proposing a carbon tax once one has passed: it is in force for good (#1014)."""
 
 
 class RecapNotOpenError(Exception):
@@ -435,6 +452,9 @@ class _SavedSession(BaseModel):
     fired_events: list[FiredEvent]
     # Empty for a session saved before peak demand was kept (#1013).
     peak_demand: dict[int, float] = {}
+    # Empty for a session saved before votes (#1014).
+    ballots: dict[int, Ballot] = {}
+    vote_outcomes: list[VoteOutcome] = []
 
 
 class WorkshopSession:
@@ -463,6 +483,8 @@ class WorkshopSession:
         unlocks: list[Unlock] | None = None,
         fired_events: list[FiredEvent] | None = None,
         peak_demand: dict[int, float] | None = None,
+        ballots: dict[int, Ballot] | None = None,
+        vote_outcomes: list[VoteOutcome] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -504,6 +526,10 @@ class WorkshopSession:
         # Each Round's peak demand, in W: the most the market cleared at one settlement point of its Trading periods,
         # overwritten whenever a period clears more (#1013). A Round no period has cleared in is left out.
         self.peak_demand = {} if peak_demand is None else peak_demand
+        # Each player's ballot in the vote in progress, by account id (#1014). Emptied when the vote is counted.
+        self.ballots: dict[int, Ballot] = {} if ballots is None else ballots
+        # Every vote's outcome, in order (#1014).
+        self.vote_outcomes = [] if vote_outcomes is None else vote_outcomes
         # The records read most recently, newest last. A full season's record takes about half a second to
         # read and a hundred megabytes to hold, so a few are kept for the pages reviewing them.
         self._loaded_records: dict[TradingPeriod, TradingPeriodRecord] = {}
@@ -579,6 +605,8 @@ class WorkshopSession:
             unlocks=saved.unlocks,
             fired_events=saved.fired_events,
             peak_demand=saved.peak_demand,
+            ballots=saved.ballots,
+            vote_outcomes=saved.vote_outcomes,
             clock=clock,
         )
 
@@ -718,7 +746,8 @@ class WorkshopSession:
         selection still waiting, so none is lost if the moderator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
         retires every facility whose lifetime has ended. Opening a Trading period sets the season's fuel prices
-        and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012).
+        and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
+        Investment phase counts its vote, if it held one (#1014).
         Opening a Recap locks the next Round's plan (#1190). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
@@ -743,6 +772,7 @@ class WorkshopSession:
             try:
                 if isinstance(self.checkpoint, Investment):
                     undos.append(self._apply_purchases(self.checkpoint.round)[1])
+                    undos.append(self._count_vote(self.checkpoint.round))
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
                 undos.append(self._fire_events(checkpoint))
@@ -1065,6 +1095,7 @@ class WorkshopSession:
                 purchases=[purchase for player in players for purchase in player.purchases],
                 results=[result for player in players for result in player.trading_results],
                 peak_demand=self.peak_demand.get(round_number),
+                vote_outcomes=self.vote_outcomes,
             )
 
     def plans_view(self) -> PlansView:
@@ -1093,10 +1124,17 @@ class WorkshopSession:
 
         Raises :class:`NoSuchRoundError` if the session has no such Round, :class:`RoundLockedError` if its plan is
         locked, and :class:`~energetica.workshop.round_plan.InvalidLeversError` if the change would leave the Round or
-        a later one invalid. A refused change changes nothing.
+        a later one invalid. A carbon tax vote cannot be proposed for Round 1, which raises
+        :class:`NoVoteInRoundOneError`, nor once a carbon tax has passed, which raises :class:`CarbonTaxPassedError`.
+        A refused change changes nothing.
         """
         with self._lock:
             self._check_editable(round_number)
+            if changes.carbon_tax_vote:
+                if round_number == 1:
+                    raise NoVoteInRoundOneError("Round 1 holds no vote")
+                if carbon_tax_since(self.vote_outcomes) is not None:
+                    raise CarbonTaxPassedError("a carbon tax has passed already")
             return self._set_plans(with_levers(self.plans, round_number, changes))
 
     def plan_event(self, round_number: int, planned: PlannedEvent) -> bool:
@@ -1173,6 +1211,73 @@ class WorkshopSession:
 
         def undo() -> None:
             self.fired_events = before
+
+        return undo
+
+    def vote_held(self, round_number: int | None = None) -> bool:
+        """Whether Round ``round_number``, by default the current one, holds a carbon tax vote (#1014)."""
+        if round_number is None:
+            round_number = self.current_round()
+        return vote_held(
+            lever=self.plans[round_number - 1].levers.carbon_tax_vote,
+            round_number=round_number,
+            outcomes=self.vote_outcomes,
+        )
+
+    def carbon_tax_since(self) -> int | None:
+        """The Round whose vote put the carbon tax in force, or None if none has passed (#1014)."""
+        return carbon_tax_since(self.vote_outcomes)
+
+    def vote_passed(self, round_number: int) -> bool | None:
+        """Whether Round ``round_number``'s vote passed, or None if the Round has no counted vote."""
+        return next((outcome.passed for outcome in self.vote_outcomes if outcome.round == round_number), None)
+
+    def ballot(self, account_id: int) -> Ballot | None:
+        """The player's ballot in the vote in progress, or None if they have not cast one."""
+        return self.ballots.get(account_id)
+
+    def cast_ballot(self, account_id: int, ballot: Ballot) -> None:
+        """Cast the player's ``ballot`` in the current Round's vote, in place of any they cast before. Only while the
+        Investment phase is open.
+
+        Raises :class:`InvestmentClosedError` if it is not, and :class:`NoVoteError` if the Round holds no vote.
+        """
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            if not self.vote_held():
+                raise NoVoteError("this Round holds no vote")
+            before = self.ballots
+            self.ballots = {**before, account_id: ballot}
+            try:
+                self._save(self.checkpoint, self.phase_timer)
+            except BaseException:
+                # Undo the change, so the session matches the file.
+                self.ballots = before
+                raise
+
+    def _count_vote(self, round_number: int) -> Callable[[], None]:
+        """Count Round ``round_number``'s vote, if it held one, without saving. Returns what undoes it.
+
+        The outcome is kept and the ballots dropped. The lever then turns off in every later Round, whatever the
+        outcome and whether it was carried there or turned on there: it starts a vote, and this one is over. Those
+        Rounds are not locked yet, since the next Recap has not opened. The caller holds the lock.
+        """
+        if not self.vote_held(round_number):
+            return lambda: None
+        ballots, outcomes, plans = self.ballots, self.vote_outcomes, self.plans
+        self.vote_outcomes = [*outcomes, VoteOutcome(round=round_number, passed=passes(ballots.values()))]
+        self.ballots = {}
+        self.plans = [
+            *plans[:round_number],
+            *(
+                plan.model_copy(update={"levers": plan.levers.model_copy(update={"carbon_tax_vote": False})})
+                for plan in plans[round_number:]
+            ),
+        ]
+
+        def undo() -> None:
+            self.ballots, self.vote_outcomes, self.plans = ballots, outcomes, plans
 
         return undo
 
@@ -1451,5 +1556,7 @@ class WorkshopSession:
             plans=self.plans,
             fired_events=self.fired_events,
             peak_demand=self.peak_demand,
+            ballots=self.ballots,
+            vote_outcomes=self.vote_outcomes,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

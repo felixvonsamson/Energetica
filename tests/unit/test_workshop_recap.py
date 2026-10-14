@@ -60,6 +60,7 @@ def _recap(round_number: int = 1, **overrides: object):  # noqa: ANN202
         "purchases": [],
         "results": [],
         "peak_demand": PEAK,
+        "vote_outcomes": [],
     }
     arguments.update(overrides)
     return recap(round_number, **arguments)
