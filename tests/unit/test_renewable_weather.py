@@ -20,7 +20,14 @@ import pytest
 
 from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
-from energetica.sim.renewables import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
+from energetica.sim.renewables import (
+    SOLAR_FULL_POWER_IRRADIANCE,
+    calculate_river_speed,
+    calculate_solar_irradiance,
+    calculate_wind_speed,
+    wind_calendar_factor,
+    wind_speed_noise,
+)
 
 DAY = 86_400.0
 #: Relative tolerance for values that pass through the single-precision Perlin noise.
@@ -88,3 +95,21 @@ def test_solar_irradiance(position: tuple[float, float], seconds: float, seed: i
 @pytest.mark.parametrize(("seconds", "speed"), RIVER)
 def test_river_flow_speed(seconds: float, speed: float) -> None:
     assert calculate_river_speed(seconds, engine.days_per_year) == pytest.approx(speed, rel=1e-12)
+
+
+def test_wind_can_borrow_the_weather_of_another_time_but_keeps_its_own_calendar() -> None:
+    calendar, weather = DAY * 100 + 30_000, DAY * 300 + 30_000
+    borrowed = calculate_wind_speed((0.0, 0.0), calendar, 7, 72, weather_seconds=weather)
+
+    assert borrowed == pytest.approx(wind_speed_noise((0.0, 0.0), weather, 7) * wind_calendar_factor(calendar, 72))
+    assert borrowed != pytest.approx(calculate_wind_speed((0.0, 0.0), calendar, 7, 72))
+    assert borrowed != pytest.approx(calculate_wind_speed((0.0, 0.0), weather, 7, 72))
+
+
+def test_solar_can_borrow_the_clouds_of_another_time_but_keeps_the_suns_position() -> None:
+    calendar, weather = DAY * 100 + 30_000, DAY * 300 + 30_000
+    irradiance, clear_sky, csi = calculate_solar_irradiance((0.0, 0.0), calendar, 7, 72, weather_seconds=weather)
+
+    assert clear_sky == calculate_solar_irradiance((0.0, 0.0), calendar, 7, 72)[1]
+    assert csi == calculate_solar_irradiance((0.0, 0.0), weather, 7, 72)[2]
+    assert irradiance == pytest.approx(min(SOLAR_FULL_POWER_IRRADIANCE, csi * clear_sky))

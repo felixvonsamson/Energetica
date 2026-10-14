@@ -1,10 +1,12 @@
-"""The Trading-period engine (#1003, #1004).
+"""The Trading-period engine (#1003, #1004, #1198).
 
 When a Trading period's price-setting window closes, the market clears through the days of its season.
 The Round's format (:mod:`~energetica.workshop.round_format`) says which days:
 
-- in representative-day mode, the middle day of the season stands for all of it, and its result is
-  scaled ×91 to become the period's real total (#992 §2);
+- in representative-week mode, the middle week of the season stands for all of it, and its result is
+  scaled ×13 to become the period's real total (ADR-0008). Wind and solar borrow their weather from elsewhere
+  in the season (:mod:`~energetica.workshop.weather`), and every clearing's demand is scaled by the season's
+  average demand over the week's, so the week keeps its shape and its average matches the season's;
 - in full-season mode, all 91 days of the season are cleared one after the other and added up, with no
   scaling. Storage carries its charge from one day to the next.
 
@@ -27,22 +29,23 @@ fuel when it settles the period (#1009).
 
 A player's fuel stock caps what their facilities burning it can offer (#1010), through
 :func:`~energetica.sim.dispatch.fuel_power_limit`, so a player who bought too little fuel simply generates less.
-The stock drains as it is burned, at the grain the period is simulated at: a representative day gets its
-season's stock divided by the same ×91 its result is scaled by, and a full season burns it day by day. Facility
+The stock drains as it is burned, at the grain the period is simulated at: a representative week gets its
+season's stock divided by the same ×13 its result is scaled by, and a full season burns it day by day. Facility
 types burning the same fuel share the stock much as in the persistent world: at each clearing, each in turn
 reserves the fuel its offer could burn, and the next ones offer only what is left. Here the cheapest offer goes
 first, so fuel held for an offer that does not sell is never fuel a cheaper one could have sold. A bidder with no
 fuel limit, as under automatic procurement, never runs short. A facility type has run out of fuel if, at some
 clearing, its offer was cut short while the market cleared at or above its price, so it could have sold more.
 
-The weather is ``sim.renewables`` at one fixed position, since Workshop has no map, with a random seed
-per Run. Only the market settlement is scaled. O&M is already one Trading period's share, and stored
-energy is what the storage really holds at the end of the period.
+Storage in representative-week mode uses a cyclic start: the week is cleared once from empty, then again from the
+charge the first pass ended with, and only the second pass counts. Nothing carries over from the period before,
+and the jump in charge between periods is not priced. Only the market settlement is scaled. O&M is already one
+Trading period's share, and stored energy is what the storage really holds at the end of the period.
 
 A clearing where the must-serve demand tier goes unserved is a blackout: the grid goes down, and the
 simulation stops there (#1005). That clearing and every one after it, to the end of the simulated days,
-produce, sell and buy nothing, and storage keeps the energy it held. In representative-day mode the part
-of the day before the blackout is still scaled ×91. What a blackout does to the session is the session's
+produce, sell and buy nothing, and storage keeps the energy it held. In representative-week mode the part
+of the week before the blackout is still scaled ×13. What a blackout does to the session is the session's
 job; here it is only reported.
 
 Besides each player's result, the engine keeps a :class:`~energetica.workshop.period_record.TradingPeriodRecord`
@@ -74,48 +77,19 @@ from energetica.sim.market import (
     place_must_run_ask,
 )
 from energetica.sim.national_demand import DemandCurve
-from energetica.sim.renewable_curves import RIVER_FLOW_SPEED_SEASONAL
-from energetica.sim.renewables import (
-    calculate_river_speed,
-    calculate_solar_irradiance,
-    calculate_wind_speed,
-    hydro_power_fraction,
-    solar_power_fraction,
-    wind_power_fraction,
-)
 from energetica.sim.settlement import MIN_SETTLED_QUANTITY, SaleSettlement, settle_clearing
-from energetica.workshop.demand_block import DAYS_PER_YEAR, DEMAND_TIERS, SettlementPeriod, build_demand_block
+from energetica.workshop.demand_block import DEMAND_TIERS, SettlementPeriod, build_demand_block, nominal_demand
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
 from energetica.workshop.prices import DUMP_COST, PriceSheet, is_storage
 from energetica.workshop.round_format import RoundFormat
-from energetica.workshop.seasons import SEASONS, Season
+from energetica.workshop.seasons import SEASON_DAYS, SEASONS, Season, representative_week, season_days
+from energetica.workshop.weather import Shares, Weather
 
 SECONDS_PER_HOUR = 3_600
 SECONDS_PER_DAY = 86_400
-
-#: How many days a season has: 13 weeks, a quarter of Workshop's 364-day year.
-SEASON_DAYS = DAYS_PER_YEAR // len(SEASONS)
-
-#: The day of the year, counted from 0 on 1 January, that spring starts on: 1 March, in the same calendar
-#: as the demand curve. The other seasons follow it.
-SPRING_START = 59
-
-
-def season_days(season: Season) -> list[int]:
-    """The days of the year in ``season``, in order. Winter runs over the end of the year."""
-    start = SPRING_START + SEASONS.index(season) * SEASON_DAYS
-    return [(start + day) % DAYS_PER_YEAR for day in range(SEASON_DAYS)]
-
-
-#: The day of the year that each season's Trading period simulates in representative-day mode: the middle
-#: of the season.
-REPRESENTATIVE_DAYS: dict[Season, int] = {season: season_days(season)[SEASON_DAYS // 2] for season in SEASONS}
-
-#: Where every facility stands for the weather, since Workshop has no map.
-WEATHER_POSITION = (0.0, 0.0)
 
 #: The categories whose output follows the weather and is offered as must-run power.
 RENEWABLE_CATEGORIES = frozenset(
@@ -131,33 +105,6 @@ _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
 # rounding once the stock is spread over the clearings.
 _SHORT_TOLERANCE = 1e-9
 
-Weather = Callable[[FacilityId, float], float]
-"""The share of its power a renewable facility produces at a time, in seconds from 1 January, from 0 to 1."""
-
-
-def representative_weather(seed: int) -> Weather:
-    """The weather of ``sim.renewables`` at :data:`WEATHER_POSITION`, for a Run whose random seed is ``seed``.
-
-    The river table covers a year of its own length, so hydro reads it at the same share of the year.
-    """
-    river_year = len(RIVER_FLOW_SPEED_SEASONAL)
-
-    def weather(facility: FacilityId, seconds: float) -> float:
-        match CATALOG[facility].category:
-            case FacilityCategory.WIND:
-                share = wind_power_fraction(calculate_wind_speed(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR))
-            case FacilityCategory.PV | FacilityCategory.CSP:
-                irradiance = calculate_solar_irradiance(WEATHER_POSITION, seconds, seed, DAYS_PER_YEAR)[0]
-                share = solar_power_fraction(irradiance)
-            case FacilityCategory.HYDRO:
-                share = hydro_power_fraction(calculate_river_speed(seconds * river_year / DAYS_PER_YEAR, river_year))
-            case _:
-                raise ValueError(f"{facility} does not follow the weather")
-        # ``sim.renewables`` computes with numpy, so its results are numpy floats. Saved results need plain ones.
-        return float(share)
-
-    return weather
-
 
 @dataclass(frozen=True, slots=True)
 class Bidder:
@@ -167,6 +114,8 @@ class Bidder:
     owned_facilities: Sequence[OwnedFacility]
     prices: PriceSheet
     stored_energy: Mapping[FacilityId, float]
+    """What the player's storage holds when the period starts, in Wh. A representative week starts from its
+    cyclic charge instead."""
     fuel: Mapping[Fuel, float] | None = None
     """The fuel the player can burn over the period, in kg, or None if fuel never runs short, as under automatic
     procurement. A fuel left out has none."""
@@ -450,9 +399,10 @@ def _unramped(resource_limit: float, power: float) -> float:
     return max_output(resource_limit, 0.0, math.inf, power)
 
 
-def _pools(bidder: Bidder, round_number: int, scale: float) -> list[_Pool]:
+def _pools(bidder: Bidder, round_number: int, scale: float, *, empty: bool = False) -> list[_Pool]:
     """One pool per facility type ``bidder`` has operating in ``round_number``, sharing the bidder's fuel. Each
-    simulated day stands for ``scale`` days, so the days get the fuel divided by it.
+    simulated day stands for ``scale`` days, so the days get the fuel divided by it. Storage starts with what the
+    bidder's holds, or with nothing if ``empty``.
     """
     operating: dict[FacilityId, list[OwnedFacility]] = {}
     for owned in bidder.owned_facilities:
@@ -468,7 +418,7 @@ def _pools(bidder: Bidder, round_number: int, scale: float) -> list[_Pool]:
             owned=owned,
             sell_price=bidder.prices.sell[facility],
             buy_price=bidder.prices.buy[facility] if is_storage(facility) else None,
-            stored_energy=bidder.stored_energy.get(facility, 0.0),
+            stored_energy=0.0 if empty else bidder.stored_energy.get(facility, 0.0),
             tank=tank,
         )
         for facility, owned in operating.items()
@@ -514,7 +464,133 @@ def simulated_days(season: Season, round_format: RoundFormat) -> list[int]:
     """The days of the year a Trading period in ``season`` clears, in order, under ``round_format``."""
     if round_format.trading_format == "full_season":
         return season_days(season)
-    return [REPRESENTATIVE_DAYS[season]]
+    return representative_week(season)
+
+
+def cleared_day_count(season: Season, round_format: RoundFormat) -> int:
+    """How many days the engine clears for a Trading period in ``season`` under ``round_format``: a representative
+    week is cleared twice, for its cyclic start.
+    """
+    days = len(simulated_days(season, round_format))
+    return days if round_format.trading_format == "full_season" else 2 * days
+
+
+def demand_scale(season: Season, round_format: RoundFormat, curve: DemandCurve) -> float:
+    """What every clearing's demand is multiplied by in a Trading period in ``season``: the season's average demand
+    divided by the representative week's, both at the Round's clearings per day. One in full-season mode.
+    """
+    if round_format.trading_format == "full_season":
+        return 1.0
+
+    def average(days: Sequence[int]) -> float:
+        clearings = round_format.clearings_per_day
+        demands = [
+            nominal_demand(1.0, curve, SettlementPeriod(day, clearing, clearings))
+            for day in days
+            for clearing in range(clearings)
+        ]
+        return sum(demands) / len(demands)
+
+    return average(season_days(season)) / average(simulated_days(season, round_format))
+
+
+@dataclass(slots=True)
+class _Clearings:
+    """What the market did at each settlement point of the simulated days."""
+
+    price: np.ndarray
+    quantity: np.ndarray
+    offered: np.ndarray
+    served: np.ndarray
+    blackout_at: int | None = None
+    # The most the market has cleared at one settlement point so far, overwritten whenever a clearing clears more.
+    peak_demand: float | None = None
+
+
+def _clear_days(
+    pools: Mapping[tuple[int, str], _Pool],
+    lines: Sequence[BidLine],
+    days: Sequence[int],
+    *,
+    clearings_per_day: int,
+    amplitude: float,
+    curve: DemandCurve,
+    shares: Shares,
+    on_day_cleared: Callable[[], None],
+    stop_at_blackout: bool = True,
+) -> _Clearings:
+    """Clear ``days`` one after the other, recording what each of ``pools`` does at each clearing. ``lines`` are
+    the bid lines the pools and the demand block place, and ``on_day_cleared`` is called after each day.
+
+    A blackout stops the clearing there, unless ``stop_at_blackout`` is False: then that clearing settles nothing
+    and the next ones clear as usual. ``blackout_at`` is the first.
+    """
+    seconds_per_tick = SECONDS_PER_DAY / clearings_per_day
+    tanks = {id(pool.tank): pool.tank for pool in pools.values() if pool.tank is not None}.values()
+    # The order pools reserve fuel in at each clearing: the cheapest offer first.
+    fuel_pools = sorted((pool for pool in pools.values() if pool.burns_limited_fuel), key=lambda pool: pool.sell_price)
+    renewables = {pool.facility for pool in pools.values() if pool.renewable}
+    line_index: dict[tuple[Side, int, str], int] = {
+        (line.side, line.player_id, line.facility): index for index, line in enumerate(lines)
+    }
+    point_count = len(days) * clearings_per_day
+    cleared = _Clearings(
+        price=np.full(point_count, math.nan),
+        quantity=np.full(point_count, math.nan),
+        offered=np.zeros((len(lines), point_count)),
+        served=np.zeros((len(DEMAND_TIERS), point_count)),
+    )
+    tier_index = {tier.player_id: index for index, tier in enumerate(DEMAND_TIERS)}
+
+    for day_number, day in enumerate(days):
+        for clearing in range(clearings_per_day):
+            point = day_number * clearings_per_day + clearing
+            if cleared.blackout_at is not None and stop_at_blackout:
+                _record_nothing(pools.values(), seconds_per_tick)
+                continue
+            market = init_market()
+            seconds = day * SECONDS_PER_DAY + clearing * seconds_per_tick
+            # Every facility stands at the same position, so each type's weather is worked out once.
+            weather = {facility: shares(facility, seconds) for facility in renewables}
+            for tank in tanks:
+                tank.reserved.clear()
+            for pool in fuel_pools:
+                pool.reserve_fuel(seconds_per_tick)
+            for pool in pools.values():
+                pool.place(market, weather.get(pool.facility, 0.0), seconds_per_tick)
+            demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
+            demands = market["demands"] + demand_block
+            sides: tuple[tuple[Side, list[MarketEntry]], ...] = (("offer", market["capacities"]), ("demand", demands))
+            for side, entries in sides:
+                for entry in entries:
+                    cleared.offered[line_index[(side, entry.player_id, entry.facility)], point] = entry.capacity
+            result = clear_market(market["capacities"], demands)
+            cleared.price[point], cleared.quantity[point] = result.price, result.quantity
+            _note_fuel_run_out(fuel_pools, result)
+            if _is_blackout(result):
+                if cleared.blackout_at is None:
+                    cleared.blackout_at = point
+                _record_nothing(pools.values(), seconds_per_tick)
+                continue
+            if cleared.peak_demand is None or result.quantity > cleared.peak_demand:
+                cleared.peak_demand = result.quantity
+            if not math.isfinite(result.price):
+                result = dataclasses.replace(result, price=SCARCITY_PRICE)
+                cleared.price[point] = SCARCITY_PRICE
+            settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
+            sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
+            for key, pool in pools.items():
+                pool.record(sales.get(key), seconds_per_tick)
+            for purchase in settlement.purchases:
+                pool = pools.get((purchase.player_id, purchase.facility))
+                if pool is not None:
+                    pool.record_purchase(purchase.power_bought, purchase.cost, seconds_per_tick)
+                elif purchase.player_id in tier_index:
+                    cleared.served[tier_index[purchase.player_id], point] = purchase.power_bought
+            for pool in pools.values():
+                pool.end_clearing()
+        on_day_cleared()
+    return cleared
 
 
 def simulate_trading_period(
@@ -531,87 +607,56 @@ def simulate_trading_period(
     """Clear the days of ``season`` that ``round_format`` simulates, and add them up into the Trading period.
 
     ``amplitude`` and ``curve`` shape the demand block, and ``weather`` gives the renewables' output.
-    ``on_day_done``, if given, is called with how many days are done after each one.
+    ``on_day_done``, if given, is called after each day cleared with how many are done, out of
+    :func:`cleared_day_count`.
     """
     clearings_per_day = round_format.clearings_per_day
     seconds_per_tick = SECONDS_PER_DAY / clearings_per_day
     days = simulated_days(season, round_format)
-    # A representative day stands for the whole season. Full-season days are all literal.
+    full_season = round_format.trading_format == "full_season"
+    # A representative week stands for the whole season. Full-season days are all literal.
     scale = SEASON_DAYS / len(days)
-    pools = {
-        (pool.player_id, pool.facility.value): pool
-        for bidder in bidders
-        for pool in _pools(bidder, round_number, scale)
-    }
-    tanks = {id(pool.tank): pool.tank for pool in pools.values() if pool.tank is not None}.values()
-    # The order pools reserve fuel in at each clearing: the cheapest offer first.
-    fuel_pools = sorted((pool for pool in pools.values() if pool.burns_limited_fuel), key=lambda pool: pool.sell_price)
-    renewables = {pool.facility for pool in pools.values() if pool.renewable}
-    blackout = False
-    blackout_at: int | None = None
-    # The most the market has cleared at one settlement point so far, overwritten whenever a clearing clears more.
-    peak_demand: float | None = None
+    season_weather = weather.season(season)
+    scaled_amplitude = amplitude * demand_scale(season, round_format, curve)
+    days_done = 0
 
-    lines = _bid_lines(pools.values())
-    line_index: dict[tuple[Side, int, str], int] = {
-        (line.side, line.player_id, line.facility): index for index, line in enumerate(lines)
-    }
-    point_count = len(days) * clearings_per_day
-    prices = np.full(point_count, math.nan)
-    quantities = np.full(point_count, math.nan)
-    offered = np.zeros((len(lines), point_count))
-    tier_index = {tier.player_id: index for index, tier in enumerate(DEMAND_TIERS)}
-    served = np.zeros((len(DEMAND_TIERS), point_count))
-
-    for days_done, day in enumerate(days, start=1):
-        for clearing in range(clearings_per_day):
-            point = (days_done - 1) * clearings_per_day + clearing
-            if blackout:
-                _record_nothing(pools.values(), seconds_per_tick)
-                continue
-            market = init_market()
-            seconds = day * SECONDS_PER_DAY + clearing * seconds_per_tick
-            # Every facility stands at the same position, so each type's weather is worked out once.
-            shares = {facility: weather(facility, seconds) for facility in renewables}
-            for tank in tanks:
-                tank.reserved.clear()
-            for pool in fuel_pools:
-                pool.reserve_fuel(seconds_per_tick)
-            for pool in pools.values():
-                pool.place(market, shares.get(pool.facility, 0.0), seconds_per_tick)
-            demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
-            demands = market["demands"] + demand_block
-            sides: tuple[tuple[Side, list[MarketEntry]], ...] = (("offer", market["capacities"]), ("demand", demands))
-            for side, entries in sides:
-                for entry in entries:
-                    offered[line_index[(side, entry.player_id, entry.facility)], point] = entry.capacity
-            result = clear_market(market["capacities"], demands)
-            prices[point], quantities[point] = result.price, result.quantity
-            _note_fuel_run_out(fuel_pools, result)
-            if _is_blackout(result):
-                blackout = True
-                blackout_at = point
-                _record_nothing(pools.values(), seconds_per_tick)
-                continue
-            if peak_demand is None or result.quantity > peak_demand:
-                peak_demand = result.quantity
-            if not math.isfinite(result.price):
-                result = dataclasses.replace(result, price=SCARCITY_PRICE)
-                prices[point] = SCARCITY_PRICE
-            settlement = settle_clearing(result, seconds_per_tick, DUMP_COST)
-            sales = {(sale.player_id, sale.facility): sale for sale in settlement.sales}
-            for key, pool in pools.items():
-                pool.record(sales.get(key), seconds_per_tick)
-            for purchase in settlement.purchases:
-                pool = pools.get((purchase.player_id, purchase.facility))
-                if pool is not None:
-                    pool.record_purchase(purchase.power_bought, purchase.cost, seconds_per_tick)
-                elif purchase.player_id in tier_index:
-                    served[tier_index[purchase.player_id], point] = purchase.power_bought
-            for pool in pools.values():
-                pool.end_clearing()
+    def on_day_cleared() -> None:
+        nonlocal days_done
+        days_done += 1
         if on_day_done is not None:
             on_day_done(days_done)
+
+    def clear(pools: dict[tuple[int, str], _Pool], *, stop_at_blackout: bool = True) -> _Clearings:
+        return _clear_days(
+            pools,
+            lines,
+            days,
+            clearings_per_day=clearings_per_day,
+            amplitude=scaled_amplitude,
+            curve=curve,
+            shares=season_weather.shares if full_season else season_weather.week,
+            on_day_cleared=on_day_cleared,
+            stop_at_blackout=stop_at_blackout,
+        )
+
+    def build_pools(*, empty: bool = False) -> dict[tuple[int, str], _Pool]:
+        return {
+            (pool.player_id, pool.facility.value): pool
+            for bidder in bidders
+            for pool in _pools(bidder, round_number, scale, empty=empty)
+        }
+
+    pools = build_pools(empty=not full_season)
+    lines = _bid_lines(pools.values())
+    if not full_season:
+        # The cyclic start: clear the week once from empty, then again from the charge it ended with. A blackout in
+        # the first pass, which starts with nothing stored, does not stop it finding that charge.
+        clear(pools, stop_at_blackout=False)
+        warmed = {key: pool.stored_energy for key, pool in pools.items()}
+        pools = build_pools()
+        for key, pool in pools.items():
+            pool.stored_energy = warmed[key]
+    cleared = clear(pools)
 
     performances: dict[int, dict[FacilityId, FacilityPerformance]] = {}
     for pool in pools.values():
@@ -630,6 +675,8 @@ def simulate_trading_period(
         energy = {**bidder.stored_energy, **ended}
         stored_energy[bidder.player_id] = {facility: amount for facility, amount in energy.items() if amount > 0}
 
+    point_count = len(days) * clearings_per_day
+
     def series(values: Callable[[_Pool], list[float]]) -> np.ndarray:
         return np.array([values(pool) for pool in pools.values()], dtype=np.float64).reshape(len(pools), point_count)
 
@@ -638,19 +685,24 @@ def simulate_trading_period(
         season=season,
         clearings_per_day=clearings_per_day,
         days=tuple(days),
-        blackout_at=blackout_at,
-        price=prices,
-        quantity=quantities,
+        blackout_at=cleared.blackout_at,
+        price=cleared.price,
+        quantity=cleared.quantity,
         pools=tuple(pools),
         generation=series(lambda pool: pool.production),
         dumped=series(lambda pool: pool.dumped_power),
         charged=series(lambda pool: pool.charged_power),
         stored=series(lambda pool: pool.stored_series),
         tiers=tuple(tier.label for tier in DEMAND_TIERS),
-        served=served,
+        served=cleared.served,
         lines=tuple(lines),
-        offered=offered,
+        offered=cleared.offered,
+        average_output=season_weather.average_output,
     )
     return TradingOutcome(
-        results=results, stored_energy=stored_energy, blackout=blackout, record=record, peak_demand=peak_demand
+        results=results,
+        stored_energy=stored_energy,
+        blackout=cleared.blackout_at is not None,
+        record=record,
+        peak_demand=cleared.peak_demand,
     )

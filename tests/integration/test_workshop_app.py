@@ -1039,7 +1039,7 @@ def _round_formats(client: TestClient) -> list[dict]:
 def test_the_facilitator_reads_and_changes_a_rounds_levers(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
-    default = {"trading_format": "representative_day", "clearings_per_day": 24, "storage": "batteries"}
+    default = {"trading_format": "representative_week", "clearings_per_day": 24, "storage": "batteries"}
     round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
 
     assert _round_formats(client) == [default] * 3
@@ -1073,7 +1073,7 @@ def test_a_change_that_would_leave_a_later_round_invalid_is_refused(session_path
     client.patch(LEVERS_URL.format(round=3), json=_levers(storage="all"))
     before = client.get(PLANS_URL).json()
 
-    response = client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="representative_day"))
+    response = client.patch(LEVERS_URL.format(round=2), json=_levers(trading_format="representative_week"))
 
     assert response.status_code == 400
     assert response.json() == {"game_exception_type": "WORKSHOP_LEVERS_INVALID", "kwargs": {"round": 3}}
@@ -1228,7 +1228,7 @@ def test_the_session_shows_the_simulation_running_and_cannot_advance_meanwhile(
         while client.get(SESSION_URL).json()["settlement"] is None and time.monotonic() < deadline:
             time.sleep(0.01)
 
-        assert client.get(SESSION_URL).json()["settlement"] == {"days_done": 1, "days_total": 1}
+        assert client.get(SESSION_URL).json()["settlement"] == {"days_done": 1, "days_total": 14}
         response = client.post(ADVANCE_URL)
         assert response.status_code == 400
         assert response.json()["game_exception_type"] == "WORKSHOP_SETTLEMENT_RUNNING"
@@ -1337,12 +1337,15 @@ def test_a_running_simulation_tells_every_open_page_how_far_it_has_got(
 
         # Starting the run re-reads the session. Each day after that only sends the progress.
         packets = _poll_until(client, facilitator_sid, "settlement_progress")
-        assert packets[-1] == ["settlement_progress", {"days_done": 1, "days_total": 1}]
+        assert packets[-1] == ["settlement_progress", {"days_done": 1, "days_total": 14}]
         assert packets[:-1] and all(packet == invalidate for packet in packets[:-1])
 
         release.set()
-        # Finishing the run re-reads the session, which then has the period's results.
-        assert _poll_until(client, facilitator_sid, "invalidate") == [invalidate]
+        # Finishing the run re-reads the session, which then has the period's results. The days cleared after the
+        # release may send their progress first.
+        packets = _poll_until(client, facilitator_sid, "invalidate")
+        assert packets[-1] == invalidate
+        assert all(packet[0] == "settlement_progress" for packet in packets[:-1])
 
 
 def test_extending_tells_every_open_page_to_reread_the_session(session_path: Path) -> None:
@@ -1402,14 +1405,14 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
     for account in (alice, facilitator):
         authenticate(client, account)
         period = client.get(PERIOD_URL).json()
-        assert (period["clearings_per_day"], len(period["days"])) == (24, 1)
+        assert (period["clearings_per_day"], len(period["days"]), period["weeks"]) == (24, 7, 1)
 
-        day = client.get(f"{PERIOD_URL}/days/0").json()
-        assert (day["first_point"], len(day["price"])) == (0, 24)
-        [pool] = day["pools"]
+        week = client.get(f"{PERIOD_URL}/weeks/0").json()
+        assert (week["first_point"], week["days"], len(week["price"])) == (0, period["days"], 7 * 24)
+        [pool] = week["pools"]
         assert (pool["player_id"], pool["facility"]) == (alice, "gas_burner")
-        assert len(pool["generation"]) == 24
-        assert [tier["tier"] for tier in day["tiers"]][0] == "must_serve"
+        assert len(pool["generation"]) == 7 * 24
+        assert [tier["tier"] for tier in week["tiers"]][0] == "must_serve"
 
         order = client.get(f"{PERIOD_URL}/points/0/merit-order").json()
         assert order["offers"]["player_id"] == [alice]
@@ -1419,14 +1422,14 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
         assert order["demands"]["price"][0] is None
 
 
-def test_a_period_has_only_the_days_and_points_it_simulated(session_path: Path, clock: _Clock) -> None:
+def test_a_period_has_only_the_weeks_and_points_it_simulated(session_path: Path, clock: _Clock) -> None:
     client, facilitator, alice = _trading(session_path, clock)
     authenticate(client, facilitator)
     _advance(client)
     authenticate(client, alice)
 
-    assert client.get(f"{PERIOD_URL}/days/1").status_code == 404
-    assert client.get(f"{PERIOD_URL}/points/24/merit-order").status_code == 404
+    assert client.get(f"{PERIOD_URL}/weeks/1").status_code == 404
+    assert client.get(f"{PERIOD_URL}/points/{7 * 24}/merit-order").status_code == 404
     assert client.get("/api/v1/workshop/periods/1/summer").status_code == 404
 
 

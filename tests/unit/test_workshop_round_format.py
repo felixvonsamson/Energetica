@@ -8,18 +8,18 @@ from pydantic import ValidationError
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
 
 
-def test_a_round_starts_as_one_representative_day_cleared_hourly_with_batteries_only() -> None:
-    assert RoundFormat() == RoundFormat(trading_format="representative_day", clearings_per_day=24, storage="batteries")
+def test_a_round_starts_as_one_representative_week_cleared_hourly_with_batteries_only() -> None:
+    assert RoundFormat() == RoundFormat(trading_format="representative_week", clearings_per_day=24, storage="batteries")
 
 
 @pytest.mark.parametrize("storage", ["off", "batteries"])
-def test_a_representative_day_round_allows_batteries_or_no_storage(storage: StorageAvailability) -> None:
-    assert RoundFormat(trading_format="representative_day", storage=storage).storage == storage
+def test_a_representative_week_round_allows_batteries_or_no_storage(storage: StorageAvailability) -> None:
+    assert RoundFormat(trading_format="representative_week", storage=storage).storage == storage
 
 
-def test_a_representative_day_round_cannot_allow_every_storage_type() -> None:
+def test_a_representative_week_round_cannot_allow_every_storage_type() -> None:
     with pytest.raises(ValidationError):
-        RoundFormat(trading_format="representative_day", storage="all")
+        RoundFormat(trading_format="representative_week", storage="all")
 
 
 @pytest.mark.parametrize("storage", ["off", "batteries", "all"])
@@ -28,7 +28,7 @@ def test_a_full_season_round_allows_any_storage(storage: StorageAvailability) ->
 
 
 @pytest.mark.parametrize("clearings_per_day", [24, 96, 288])
-@pytest.mark.parametrize("trading_format", ["representative_day", "full_season"])
+@pytest.mark.parametrize("trading_format", ["representative_week", "full_season"])
 def test_the_clearing_frequency_is_independent_of_the_format(
     clearings_per_day: ClearingsPerDay, trading_format: TradingFormat
 ) -> None:

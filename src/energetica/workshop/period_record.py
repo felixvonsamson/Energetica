@@ -8,7 +8,7 @@ coarser resolutions.
 
 A settlement point is one clearing of one simulated day. Points are numbered in time order from 0, so
 point ``day * clearings_per_day + clearing`` is clearing ``clearing`` of the ``day``-th simulated day.
-Power is in W and stored energy in Wh, as the market sees them: a representative day is not scaled to the
+Power is in W and stored energy in Wh, as the market sees them: a representative week is not scaled to the
 season here.
 
 **Time series.** For each pool (one player's operating facilities of one type), at each point:
@@ -33,6 +33,8 @@ its merit order shows why. Its price is ``math.inf`` when supply is exhausted, o
 no supply offers. Its series are zero apart from ``stored``, which holds steady. Points after it never
 cleared: their price and quantity are NaN, they have no merit order, and storage still holds steady.
 
+**Weather.** ``average_output`` keeps the season's real average wind and solar output, for the Recap (#1200).
+
 A record is saved to its own compressed NumPy file, apart from the session file, since a full season's
 record can take megabytes.
 """
@@ -51,6 +53,7 @@ import numpy.typing as npt
 from energetica.sim.market import Fill, MarketEntry, merit_order, order_columns
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.seasons import Season
+from energetica.workshop.weather import AverageOutput
 
 Side = Literal["offer", "demand"]
 Array = npt.NDArray[np.float64]
@@ -111,6 +114,8 @@ class TradingPeriodRecord:
     lines: tuple[BidLine, ...]
     """Every bid line, in the order they were placed: the rows of ``offered``."""
     offered: Array
+    average_output: AverageOutput | None = None
+    """The season's real average wind and solar output. None for a record saved before it was kept (#1198)."""
 
     @property
     def point_count(self) -> int:
@@ -147,6 +152,9 @@ class TradingPeriodRecord:
             "pools": [list(pool) for pool in self.pools],
             "tiers": list(self.tiers),
             "lines": [[line.side, line.player_id, line.facility, line.must_run] for line in self.lines],
+            "average_output": None
+            if self.average_output is None
+            else {"wind": self.average_output.wind, "solar": self.average_output.solar},
         }
         buffer = io.BytesIO()
         np.savez_compressed(
@@ -190,4 +198,7 @@ class TradingPeriodRecord:
                     for (side, player_id, facility, must_run), price in zip(meta["lines"], line_prices, strict=True)
                 ),
                 offered=data["offered"],
+                average_output=None
+                if (average := meta.get("average_output")) is None
+                else AverageOutput(wind=average["wind"], solar=average["solar"]),
             )

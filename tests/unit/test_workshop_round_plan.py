@@ -111,7 +111,7 @@ def test_a_change_that_would_make_a_later_round_invalid_is_refused_and_names_tha
     )
     # A representative day would reach Round 3, which allows every storage type.
     with pytest.raises(InvalidLeversError) as refused:
-        with_levers(plans, 2, LeverChanges(trading_format="representative_day"))
+        with_levers(plans, 2, LeverChanges(trading_format="representative_week"))
     assert refused.value.round_number == 3
 
 

@@ -21,10 +21,15 @@ from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.prices import DEFAULT_PRICES, PriceSheet
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
-from energetica.workshop.trading import SEASON_DAYS, Bidder, TradingOutcome, Weather, simulate_trading_period
+from energetica.workshop.seasons import SEASON_DAYS
+from energetica.workshop.trading import Bidder, TradingOutcome, simulate_trading_period
+from energetica.workshop.weather import Shares
+
+from ._weather_helpers import FixedWeather
 
 _FLAT = DemandCurve(intraday=(1.0,), seasonal=(1.0,))
 _AMPLITUDE = 10e6
+_WEEK_HOURS = 7 * 24
 
 GAS = FacilityId.GAS_BURNER  # 11 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
@@ -48,9 +53,9 @@ def _bidder(
 
 def _simulate(
     *bidders: Bidder,
-    weather: Weather = lambda _facility, _seconds: 1.0,
+    weather: Shares = lambda _facility, _seconds: 1.0,
     clearings_per_day: ClearingsPerDay = 24,
-    trading_format: TradingFormat = "representative_day",
+    trading_format: TradingFormat = "representative_week",
 ) -> TradingOutcome:
     return simulate_trading_period(
         list(bidders),
@@ -59,7 +64,7 @@ def _simulate(
         round_format=RoundFormat(trading_format=trading_format, clearings_per_day=clearings_per_day),
         amplitude=_AMPLITUDE,
         curve=_FLAT,
-        weather=weather,
+        weather=FixedWeather(weather),
     )
 
 
@@ -72,13 +77,13 @@ def _sunny_mornings(seconds: float) -> float:
     return 1.0 if seconds % 86_400 < 12 * 3_600 else 0.1
 
 
-def test_a_representative_day_has_one_point_per_clearing() -> None:
+def test_a_representative_week_has_one_point_per_clearing() -> None:
     record = _simulate(_bidder(GAS), clearings_per_day=96).record
 
-    assert record.point_count == 96
+    assert record.point_count == 7 * 96
     assert record.clearings_per_day == 96
-    assert len(record.days) == 1
-    assert record.generation.shape == (1, 96)
+    assert len(record.days) == 7
+    assert record.generation.shape == (1, 7 * 96)
     assert record.blackout_at is None
 
 
@@ -95,7 +100,7 @@ def test_the_series_add_up_to_the_players_result() -> None:
         weather=lambda _facility, seconds: _sunny_mornings(seconds),
     )
     record = outcome.record
-    hours_scaled = SEASON_DAYS  # each clearing is one hour of the representative day, scaled to the season
+    hours_scaled = SEASON_DAYS // 7  # each clearing is one hour of the representative week, scaled to the season
 
     for facility, performance in outcome.results[1].facilities.items():
         row = _row(record, 1, facility)
@@ -108,15 +113,16 @@ def test_the_series_add_up_to_the_players_result() -> None:
 
 def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None:
     # The batteries bid above every tier but must-serve, so they buy the 3 MW of wind left over once the
-    # 8 MW must-serve demand is met, every hour. They ask too much to ever sell.
-    outcome = _simulate(_bidder(WIND, BATTERIES, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}))
+    # 8 MW must-serve demand is met, every hour. They ask too much to ever sell. The week that counts starts from
+    # what the first pass, for the cyclic start, stored. Three batteries have room for both passes.
+    outcome = _simulate(_bidder(WIND, *[BATTERIES] * 3, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}))
     record = outcome.record
     row = _row(record, 1, BATTERIES)
     # What is bought reaches the store at the square root of the round-trip efficiency.
     stored_per_hour = 3e6 * (CATALOG[BATTERIES].base_efficiency or 0.0) ** 0.5
 
-    assert record.charged[row] == pytest.approx(np.full(24, 3e6))
-    assert record.stored[row] == pytest.approx(stored_per_hour * np.arange(1, 25))
+    assert record.charged[row] == pytest.approx(np.full(_WEEK_HOURS, 3e6))
+    assert record.stored[row] == pytest.approx(stored_per_hour * np.arange(_WEEK_HOURS + 1, 2 * _WEEK_HOURS + 1))
     assert record.stored[row, -1] == pytest.approx(outcome.stored_energy[1][BATTERIES])
     # A facility that stores nothing holds nothing.
     assert not record.stored[_row(record, 1, WIND)].any()
@@ -128,7 +134,7 @@ def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
     # Gas sells 11 MW to the tiers bidding above 50: 8 MW must-serve, 1 MW, 1.5 MW, and 0.5 MW of the next.
     assert record.served.sum(axis=0) == pytest.approx(record.quantity)
     assert record.served[:, 0] == pytest.approx([8e6, 1e6, 1.5e6, 0.5e6, 0, 0])
-    assert record.price == pytest.approx(np.full(24, 120.0))
+    assert record.price == pytest.approx(np.full(_WEEK_HOURS, 120.0))
 
 
 def test_each_merit_order_clears_again_at_the_recorded_price_and_quantity() -> None:
@@ -193,7 +199,7 @@ def test_a_point_outside_the_period_has_no_merit_order() -> None:
     record = _simulate(_bidder(GAS)).record
 
     with pytest.raises(IndexError):
-        record.merit_order(24)
+        record.merit_order(_WEEK_HOURS)
 
 
 def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
@@ -206,7 +212,8 @@ def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
     record.save(path)
     loaded = TradingPeriodRecord.load(path)
 
-    for name in ("round", "season", "clearings_per_day", "days", "blackout_at", "pools", "tiers", "lines"):
+    names = ("round", "season", "clearings_per_day", "days", "blackout_at", "pools", "tiers", "lines", "average_output")
+    for name in names:
         assert getattr(loaded, name) == getattr(record, name)
     for name in ("price", "quantity", "generation", "dumped", "charged", "stored", "served", "offered"):
         np.testing.assert_array_equal(getattr(loaded, name), getattr(record, name))

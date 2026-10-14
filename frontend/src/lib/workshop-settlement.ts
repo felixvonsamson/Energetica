@@ -1,6 +1,6 @@
 /**
  * How far the simulation of a Trading period has got (#1155). The server sends
- * the progress after each simulated day, and the page puts it into its cached
+ * the progress after each day cleared, and the page puts it into its cached
  * session rather than re-reading the whole session.
  */
 
@@ -20,14 +20,17 @@ export function withSettlementProgress(
     return session && { ...session, settlement: progress };
 }
 
-/** Whether `progress` is a representative-day run, which has no days to count. */
-export function isRepresentativeDay(progress: SettlementProgress): boolean {
-    return progress.days_total === 1;
-}
+type TradingFormat = ApiSchema<"RoundFormat">["trading_format"];
 
-/** What the bar says while the simulation runs. */
-export function settlementLabel(progress: SettlementProgress): string {
-    if (isRepresentativeDay(progress))
-        return "Simulating the representative day";
+/**
+ * What the bar says while the simulation runs. A representative week is cleared
+ * twice, for its storage's cyclic start, so its days are not counted.
+ */
+export function settlementLabel(
+    progress: SettlementProgress,
+    tradingFormat: TradingFormat,
+): string {
+    if (tradingFormat === "representative_week")
+        return "Simulating the representative week";
     return `Simulating the season: day ${progress.days_done} of ${progress.days_total}`;
 }
