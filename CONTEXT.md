@@ -191,9 +191,9 @@ _Avoid_: sample day, typical day.
 
 **Representative week** (#1164, ADR-0008):
 The seven simulated days that stand for a whole Trading period, replacing the **representative day**:
-the middle week of its season, scaled ×13. Its demand, sun position and seasonal wind are its own, but
-its wind and solar weather are **borrowed** from the 7-day runs of the season whose output comes closest
-to the season's real average. **Stored energy** starts each week at its **cyclic start** and does not
+the middle week of its season, scaled ×13. Its sun position and seasonal wind are its own, and so is the
+shape of its demand, scaled so that its average matches the season's. Its wind and solar weather are
+**borrowed** from the 7-day runs of the season whose output comes closest to the season's real average. **Stored energy** starts each week at its **cyclic start** and does not
 carry over between periods.
 _Avoid_: sample week, typical week.
 
