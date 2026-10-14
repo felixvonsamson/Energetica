@@ -10,7 +10,7 @@
  * sees the tally, only the result.
  */
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { Money } from "@/components/ui";
 import { Switch } from "@/components/ui/switch";
@@ -21,18 +21,28 @@ import {
     useWorkshopSession,
     useWorkshopVote,
 } from "@/hooks/use-workshop";
+import { carriedNote, carriedRounds } from "@/lib/workshop-console";
 import { taxPerTonne } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
 
+type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
 type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;
 
-export function RoundVotes({ plan }: { plan: RoundPlan }) {
+export function RoundVotes({
+    plans,
+    plan,
+}: {
+    plans: WorkshopPlans;
+    plan: RoundPlan;
+}) {
     const { data: session } = useWorkshopSession();
     const { data: vote } = useWorkshopVote();
     const { mutate: changeLevers } = useChangeLevers();
     const pending = usePlanChangePending();
     const passedIn = session?.carbon_tax_since ?? null;
     const proposed = plan.levers.carbon_tax_vote;
+    // The note left by the last change, when it carried to later Rounds.
+    const [carried, setCarried] = useState<string | null>(null);
 
     return (
         <ul className="divide-y divide-border">
@@ -67,12 +77,24 @@ export function RoundVotes({ plan }: { plan: RoundPlan }) {
                     pending ||
                     (passedIn !== null && !proposed)
                 }
-                onChange={(checked) =>
-                    changeLevers({
-                        round: plan.round,
-                        changes: { carbon_tax_vote: checked },
-                    })
-                }
+                note={carried}
+                onChange={(checked) => {
+                    setCarried(null);
+                    changeLevers(
+                        {
+                            round: plan.round,
+                            changes: { carbon_tax_vote: checked },
+                        },
+                        {
+                            onSuccess: (after) =>
+                                setCarried(
+                                    carriedNote(
+                                        carriedRounds(plans, after, plan.round),
+                                    ),
+                                ),
+                        },
+                    );
+                }}
             />
         </ul>
     );
@@ -84,6 +106,7 @@ function Proposal({
     description,
     checked,
     disabled,
+    note,
     onChange,
 }: {
     id: string;
@@ -91,6 +114,7 @@ function Proposal({
     description: ReactNode;
     checked: boolean;
     disabled: boolean;
+    note: string | null;
     onChange: (checked: boolean) => void;
 }) {
     return (
@@ -102,6 +126,11 @@ function Proposal({
                 <TypographyMuted className="text-xs">
                     {description}
                 </TypographyMuted>
+                {note && (
+                    <p className="text-xs font-medium" role="status">
+                        {note}
+                    </p>
+                )}
             </div>
             <Switch
                 id={id}

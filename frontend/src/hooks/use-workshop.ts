@@ -21,9 +21,11 @@ import { toast } from "sonner";
 import { workshopApi } from "@/lib/api/workshop";
 import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import {
+    formatLeverChangeError,
+    resolveErrorMessage,
+} from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
-import { leverChangeError } from "@/lib/workshop-console";
 import { phaseDeadline } from "@/lib/workshop-countdown";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
@@ -386,7 +388,7 @@ export function useUnplanEvent() {
  * (#1018).
  */
 export function useChangeLevers() {
-    return usePlanChange(workshopApi.changeLevers, leverChangeError);
+    return usePlanChange(workshopApi.changeLevers, formatLeverChangeError);
 }
 
 /**

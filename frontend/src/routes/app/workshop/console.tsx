@@ -57,12 +57,12 @@ function ConsolePage() {
     return (
         <div className="space-y-6">
             <TypographyH2>Console</TypographyH2>
-            <div className="grid gap-6 lg:grid-cols-2">
-                <AccessCard />
-                <PhaseTimersCard />
-            </div>
+            <AccessCard />
             <RoundPlansCard />
-            <TechnologyUnlocksCard />
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                <PhaseTimersCard />
+                <TechnologyUnlocksCard />
+            </div>
         </div>
     );
 }
@@ -126,9 +126,9 @@ function RoundTabs({
     plans: WorkshopPlans;
     events: WorkshopEvents;
 }) {
-    const [chosen, setChosen] = useState<number | null>(null);
+    const [pickedRound, setPickedRound] = useState<number | null>(null);
     const plan =
-        plans.rounds.find((candidate) => candidate.round === chosen) ??
+        plans.rounds.find((candidate) => candidate.round === pickedRound) ??
         plans.rounds.find(
             (candidate) => candidate.round === consoleRound(plans),
         );
@@ -138,7 +138,7 @@ function RoundTabs({
         <div className="space-y-6">
             <Tabs
                 value={`${plan.round}`}
-                onValueChange={(value) => setChosen(Number(value))}
+                onValueChange={(value) => setPickedRound(Number(value))}
             >
                 <TabsList className="flex h-auto w-full flex-wrap justify-start sm:w-fit">
                     {plans.rounds.map((candidate) => (
@@ -166,6 +166,23 @@ function RoundTabs({
     );
 }
 
+/**
+ * When the Round's plan locked, or when it will. Round 1 has no Recap before
+ * it.
+ */
+function lockStatus(plan: RoundPlan): string {
+    const carries = "A lever change also applies to every later Round.";
+    if (plan.round === 1) {
+        return plan.locked
+            ? "Round 1 locked when the session started."
+            : `Round 1 locks when the session starts. ${carries}`;
+    }
+    const recap = `Recap ${plan.round - 1}`;
+    return plan.locked
+        ? `Round ${plan.round} locked when ${recap} opened: players have been told what it holds.`
+        : `Round ${plan.round} locks when ${recap} opens. ${carries}`;
+}
+
 function RoundPlanView({
     plans,
     plan,
@@ -177,13 +194,7 @@ function RoundPlanView({
 }) {
     return (
         <div className="space-y-8">
-            <TypographyMuted>
-                {plan.locked
-                    ? plan.round === 1
-                        ? "Round 1 locked when the session started."
-                        : `Round ${plan.round} locked when Recap ${plan.round - 1} opened: players have been told what it holds.`
-                    : `Round ${plan.round} locks when Recap ${plan.round - 1} opens. A lever change also applies to every later Round.`}
-            </TypographyMuted>
+            <TypographyMuted>{lockStatus(plan)}</TypographyMuted>
             <section className="space-y-3">
                 <h3 className="text-lg font-semibold">Levers</h3>
                 <RoundLevers plans={plans} plan={plan} />
@@ -194,7 +205,7 @@ function RoundPlanView({
             </section>
             <section className="space-y-3">
                 <h3 className="text-lg font-semibold">Votes</h3>
-                <RoundVotes plan={plan} />
+                <RoundVotes plans={plans} plan={plan} />
             </section>
         </div>
     );

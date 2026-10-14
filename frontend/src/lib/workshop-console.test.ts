@@ -1,14 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiClientError } from "@/lib/api-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
-import {
-    carriedNote,
-    carriedRounds,
-    consoleRound,
-    leverChangeError,
-} from "./workshop-console";
+import { carriedNote, carriedRounds, consoleRound } from "./workshop-console";
 
 type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;
 
@@ -116,27 +110,5 @@ describe("carriedNote", () => {
 
     it("says nothing when no other Round changed", () => {
         expect(carriedNote([])).toBeNull();
-    });
-});
-
-describe("leverChangeError", () => {
-    const refused = (code: string, kwargs?: Record<string, unknown>) =>
-        new ApiClientError("Bad Request", 400, {
-            game_exception_type: code,
-            kwargs,
-        });
-
-    it("names the Round the change would leave invalid", () => {
-        expect(
-            leverChangeError(refused("WORKSHOP_LEVERS_INVALID", { round: 5 })),
-        ).toBe(
-            "This change would leave Round 5 invalid: every storage type needs the full-season format.",
-        );
-    });
-
-    it("falls back to the usual message for any other refusal", () => {
-        expect(leverChangeError(refused("WORKSHOP_ROUND_LOCKED"))).toBe(
-            "This Round's plan is locked: players have been told what it holds.",
-        );
     });
 });

@@ -16,6 +16,7 @@
 import { Check, Star } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
@@ -269,9 +270,11 @@ function EventTile({
             </span>
             <span className="flex flex-wrap gap-1">
                 {choices.map((choice) => (
-                    <button
+                    <Button
                         key={choice.key}
                         type="button"
+                        size="sm"
+                        variant={choice.picked ? "default" : "outline"}
                         aria-pressed={choice.picked}
                         disabled={busy}
                         onClick={() => toggle(choice.planned)}
@@ -282,12 +285,7 @@ function EventTile({
                                   ? "Click again to drop it"
                                   : undefined
                         }
-                        className={cn(
-                            "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors disabled:opacity-50",
-                            choice.picked
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border hover:bg-muted",
-                        )}
+                        className="h-7 px-2 text-xs"
                     >
                         {choice.picked && (
                             <Check className="size-3" aria-hidden />
@@ -299,7 +297,7 @@ function EventTile({
                             />
                         )}
                         {choice.label}
-                    </button>
+                    </Button>
                 ))}
             </span>
         </li>

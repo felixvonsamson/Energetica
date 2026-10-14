@@ -225,3 +225,23 @@ export function formatCancelProjectError(error: unknown): string {
     }
     return resolveErrorMessage(error);
 }
+
+/**
+ * Format a refused change to a Workshop Round's levers (#1018). A change that
+ * would leave a Round invalid names that Round, which may be a later one the
+ * change carries to.
+ */
+export function formatLeverChangeError(error: unknown): string {
+    if (
+        error instanceof ApiClientError &&
+        isGameError(error.detail) &&
+        error.detail.game_exception_type === "WORKSHOP_LEVERS_INVALID" &&
+        typeof error.detail.kwargs?.round === "number"
+    ) {
+        return GAME_ERROR_MESSAGES.WORKSHOP_LEVERS_INVALID.replace(
+            "a Round",
+            `Round ${error.detail.kwargs.round}`,
+        );
+    }
+    return resolveErrorMessage(error);
+}

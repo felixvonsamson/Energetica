@@ -1,10 +1,8 @@
 /**
  * What the facilitator's lever console (#1018) shows: which Round it opens on,
- * which later Rounds a lever change carried to, and why a change was refused.
+ * and which later Rounds a lever change carried to.
  */
 
-import { ApiClientError, isGameError } from "@/lib/api-client";
-import { resolveErrorMessage } from "@/lib/game-messages";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
@@ -73,20 +71,4 @@ export function carriedNote(rounds: number[]): string | null {
         start === end ? `${start}` : `${start}–${end}`,
     );
     return `Also applied to Rounds ${parts.join(", ")}.`;
-}
-
-/**
- * Why a lever change was refused. A change that would leave a Round invalid
- * names that Round, which may be a later one the change carries to.
- */
-export function leverChangeError(error: unknown): string {
-    if (
-        error instanceof ApiClientError &&
-        isGameError(error.detail) &&
-        error.detail.game_exception_type === "WORKSHOP_LEVERS_INVALID" &&
-        typeof error.detail.kwargs?.round === "number"
-    ) {
-        return `This change would leave Round ${error.detail.kwargs.round} invalid: every storage type needs the full-season format.`;
-    }
-    return resolveErrorMessage(error);
 }

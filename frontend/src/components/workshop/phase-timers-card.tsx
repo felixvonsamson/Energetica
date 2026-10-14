@@ -58,22 +58,24 @@ export function PhaseTimersCard() {
     );
 }
 
+/** Whether `minutes` is a timer the server accepts: a whole number, at least 1. */
+function isValidTimer(minutes: number): boolean {
+    return Number.isInteger(minutes) && minutes >= 1;
+}
+
 function TimersForm({ timers }: { timers: PhaseTimers }) {
     const { mutate: setTimers, isPending } = useSetTimers();
-    const [draft, setDraft] = useState<Record<keyof PhaseTimers, string>>({
-        investment_minutes: `${timers.investment_minutes}`,
-        price_setting_minutes: `${timers.price_setting_minutes}`,
-    });
-    const parsed = {
-        investment_minutes: Number(draft.investment_minutes),
-        price_setting_minutes: Number(draft.price_setting_minutes),
-    };
-    const valid = Object.values(parsed).every(
-        (minutes) => Number.isInteger(minutes) && minutes >= 1,
+    const [draft, setDraft] = useState(
+        () =>
+            Object.fromEntries(
+                FIELDS.map(({ key }) => [key, `${timers[key]}`]),
+            ) as Record<keyof PhaseTimers, string>,
     );
-    const changed =
-        parsed.investment_minutes !== timers.investment_minutes ||
-        parsed.price_setting_minutes !== timers.price_setting_minutes;
+    const parsed = Object.fromEntries(
+        FIELDS.map(({ key }) => [key, Number(draft[key])]),
+    ) as PhaseTimers;
+    const valid = FIELDS.every(({ key }) => isValidTimer(parsed[key]));
+    const changed = FIELDS.some(({ key }) => parsed[key] !== timers[key]);
 
     return (
         <form
@@ -86,39 +88,49 @@ function TimersForm({ timers }: { timers: PhaseTimers }) {
                 });
             }}
         >
-            {FIELDS.map((field) => (
-                <div
-                    key={field.key}
-                    className="flex items-center justify-between gap-4"
-                >
-                    <Label htmlFor={`timer-${field.key}`}>{field.label}</Label>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            id={`timer-${field.key}`}
-                            type="number"
-                            inputMode="numeric"
-                            min={1}
-                            step={1}
-                            value={draft[field.key]}
-                            onChange={(event) =>
-                                setDraft({
-                                    ...draft,
-                                    [field.key]: event.target.value,
-                                })
-                            }
-                            className="w-20 text-right"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                            min
-                        </span>
+            {FIELDS.map((field) => {
+                const id = `timer-${field.key}`;
+                const invalid = !isValidTimer(parsed[field.key]);
+                return (
+                    <div key={field.key} className="space-y-1">
+                        <div className="flex items-center justify-between gap-4">
+                            <Label htmlFor={id}>{field.label}</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id={id}
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={1}
+                                    step={1}
+                                    value={draft[field.key]}
+                                    aria-invalid={invalid}
+                                    aria-describedby={
+                                        invalid ? `${id}-error` : undefined
+                                    }
+                                    onChange={(event) =>
+                                        setDraft({
+                                            ...draft,
+                                            [field.key]: event.target.value,
+                                        })
+                                    }
+                                    className="w-20 text-right"
+                                />
+                                <span className="text-sm text-muted-foreground">
+                                    min
+                                </span>
+                            </div>
+                        </div>
+                        {invalid && (
+                            <p
+                                id={`${id}-error`}
+                                className="text-right text-xs text-destructive"
+                            >
+                                A whole number of minutes, at least 1.
+                            </p>
+                        )}
                     </div>
-                </div>
-            ))}
-            {!valid && (
-                <p className="text-xs text-destructive">
-                    Each timer is a whole number of minutes, at least 1.
-                </p>
-            )}
+                );
+            })}
             <Button
                 type="submit"
                 size="sm"

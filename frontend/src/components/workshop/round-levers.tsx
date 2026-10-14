@@ -123,7 +123,7 @@ const GROUPS: { title: string; levers: LeverDefinition[] }[] = [
 ];
 
 /** The note left by the last change, under the lever it changed. */
-interface Note {
+interface CarriedNote {
     lever: Lever;
     text: string;
 }
@@ -137,7 +137,7 @@ export function RoundLevers({
 }) {
     const { mutate: changeLevers } = useChangeLevers();
     const pending = usePlanChangePending();
-    const [note, setNote] = useState<Note | null>(null);
+    const [note, setNote] = useState<CarriedNote | null>(null);
 
     const change = (definition: LeverDefinition, value: string) => {
         setNote(null);
