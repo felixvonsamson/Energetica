@@ -251,6 +251,15 @@ export const workshopApi = {
         >(`/workshop/rounds/${round}/recap`),
 
     /**
+     * Every player's final score, highest first (#1017). Refused until the
+     * session is over.
+     */
+    getScoreboard: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/scoreboard", "get">>(
+            "/workshop/scoreboard",
+        ),
+
+    /**
      * The current Round's carbon tax vote (#1014): whether it holds one, the
      * visitor's ballot, and once the Investment phase is over, whether it
      * passed.

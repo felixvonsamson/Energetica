@@ -241,6 +241,16 @@ the full starting budget instead, however much they held. Facilities stay as the
 blacked-out Round still counts toward their lifetimes. The Recap's blackout report tells players about the
 reset; the top-up is silent.
 
+**Final score** and **residual value** (#1017):
+A player's final score is their operating profit over the whole session, plus the cash they hold at the
+end, plus the residual value of the facilities they still own. A facility's residual value is its catalog
+price times the share of its lifetime left once the session is over, counting only the Rounds after the
+last one. A facility still under construction keeps its whole lifetime, so it pays back its full price.
+The energy a storage facility holds is worth nothing. No top-up or reset applies after the last Round, so
+final cash is the cash as it stands. Once the session is over, the **scoreboard** ranks every player by
+final score, and everyone in the Run sees it.
+_Avoid_: leaderboard, salvage value.
+
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the
 Round. Market income, dumping cost, O&M, any revenue tax and fuel cost add up to the season's operating income.

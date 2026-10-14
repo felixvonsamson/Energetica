@@ -33,7 +33,7 @@ function WorkshopHome() {
             </div>
         );
     }
-    const page = checkpointPage(session.checkpoint, session.round_count);
+    const page = checkpointPage(session.checkpoint);
     if (page) return <Navigate {...page} replace />;
     return (
         <WorkshopPlaceholder title="Welcome to the Workshop">

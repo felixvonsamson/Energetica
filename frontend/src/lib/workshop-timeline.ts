@@ -151,21 +151,32 @@ export function recapPage(round: number) {
     } as const;
 }
 
+/** The scoreboard, shown once the session is over (#1017). */
+export function scoreboardPage() {
+    return { to: "/app/workshop/scoreboard" } as const;
+}
+
 /** A link to one node's page, ready to spread into a `<Link>`. */
 export type WorkshopPage =
     | ReturnType<typeof roundPage>
     | ReturnType<typeof tradingPeriodPage>
-    | ReturnType<typeof recapPage>;
+    | ReturnType<typeof recapPage>
+    | ReturnType<typeof scoreboardPage>;
+
+/**
+ * Where the scoreboard stands: it is the session's last node, and opens once
+ * the session is over.
+ */
+export function scoreboardStatus(checkpoint: Checkpoint): NodeStatus {
+    return checkpoint.kind === "finished" ? "current" : "future";
+}
 
 /**
  * The page for where the session is now, or `null` before it starts, when no
  * page has anything to show. During an Investment phase it is the Round's
- * overview, and once the session is over it is the last Recap.
+ * overview, and once the session is over it is the scoreboard.
  */
-export function checkpointPage(
-    checkpoint: Checkpoint,
-    roundCount: number,
-): WorkshopPage | null {
+export function checkpointPage(checkpoint: Checkpoint): WorkshopPage | null {
     switch (checkpoint.kind) {
         case "not_started":
             return null;
@@ -176,7 +187,7 @@ export function checkpointPage(
         case "recap":
             return recapPage(checkpoint.round);
         case "finished":
-            return recapPage(roundCount);
+            return scoreboardPage();
         default:
             throw checkpoint satisfies never;
     }

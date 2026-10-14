@@ -20,6 +20,7 @@ import { Route as AppWorkshopIndexRouteImport } from './routes/app/workshop/inde
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
+import { Route as AppWorkshopScoreboardRouteImport } from './routes/app/workshop/scoreboard'
 import { Route as AppWorkshopFacilitiesRouteImport } from './routes/app/workshop/facilities'
 import { Route as AppWorkshopConsoleRouteImport } from './routes/app/workshop/console'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
@@ -106,6 +107,11 @@ const AppFacilitatorIndexRoute = AppFacilitatorIndexRouteImport.update({
   id: '/app/facilitator/',
   path: '/app/facilitator/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppWorkshopScoreboardRoute = AppWorkshopScoreboardRouteImport.update({
+  id: '/scoreboard',
+  path: '/scoreboard',
+  getParentRoute: () => AppWorkshopRouteRoute,
 } as any)
 const AppWorkshopFacilitiesRoute = AppWorkshopFacilitiesRouteImport.update({
   id: '/facilities',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/app/wiki/$slug': typeof AppWikiSlugRoute
   '/app/workshop/console': typeof AppWorkshopConsoleRoute
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
+  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -349,6 +356,7 @@ export interface FileRoutesByTo {
   '/app/wiki/$slug': typeof AppWikiSlugRoute
   '/app/workshop/console': typeof AppWorkshopConsoleRoute
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
+  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/app/wiki/$slug': typeof AppWikiSlugRoute
   '/app/workshop/console': typeof AppWorkshopConsoleRoute
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
+  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/app/wiki/$slug'
     | '/app/workshop/console'
     | '/app/workshop/facilities'
+    | '/app/workshop/scoreboard'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -483,6 +493,7 @@ export interface FileRouteTypes {
     | '/app/wiki/$slug'
     | '/app/workshop/console'
     | '/app/workshop/facilities'
+    | '/app/workshop/scoreboard'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -527,6 +538,7 @@ export interface FileRouteTypes {
     | '/app/wiki/$slug'
     | '/app/workshop/console'
     | '/app/workshop/facilities'
+    | '/app/workshop/scoreboard'
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
@@ -652,6 +664,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/facilitator'
       preLoaderRoute: typeof AppFacilitatorIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/workshop/scoreboard': {
+      id: '/app/workshop/scoreboard'
+      path: '/scoreboard'
+      fullPath: '/app/workshop/scoreboard'
+      preLoaderRoute: typeof AppWorkshopScoreboardRouteImport
+      parentRoute: typeof AppWorkshopRouteRoute
     }
     '/app/workshop/facilities': {
       id: '/app/workshop/facilities'
@@ -876,6 +895,7 @@ declare module '@tanstack/react-router' {
 interface AppWorkshopRouteRouteChildren {
   AppWorkshopConsoleRoute: typeof AppWorkshopConsoleRoute
   AppWorkshopFacilitiesRoute: typeof AppWorkshopFacilitiesRoute
+  AppWorkshopScoreboardRoute: typeof AppWorkshopScoreboardRoute
   AppWorkshopIndexRoute: typeof AppWorkshopIndexRoute
   AppWorkshopRecapRoundRoute: typeof AppWorkshopRecapRoundRoute
   AppWorkshopRoundRoundSeasonRoute: typeof AppWorkshopRoundRoundSeasonRoute
@@ -885,6 +905,7 @@ interface AppWorkshopRouteRouteChildren {
 const AppWorkshopRouteRouteChildren: AppWorkshopRouteRouteChildren = {
   AppWorkshopConsoleRoute: AppWorkshopConsoleRoute,
   AppWorkshopFacilitiesRoute: AppWorkshopFacilitiesRoute,
+  AppWorkshopScoreboardRoute: AppWorkshopScoreboardRoute,
   AppWorkshopIndexRoute: AppWorkshopIndexRoute,
   AppWorkshopRecapRoundRoute: AppWorkshopRecapRoundRoute,
   AppWorkshopRoundRoundSeasonRoute: AppWorkshopRoundRoundSeasonRoute,

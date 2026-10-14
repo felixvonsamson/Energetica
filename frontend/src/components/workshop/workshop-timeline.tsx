@@ -1,7 +1,7 @@
 /**
  * The Workshop timeline (#995), across the top of every Workshop page: each
- * Round with its four Trading periods beneath it, and a Recap node between one
- * Round and the next.
+ * Round with its four Trading periods beneath it, a Recap node between one
+ * Round and the next, and the scoreboard at the end (#1017).
  *
  * The session's current node is highlighted. Nodes it has already passed link
  * to their pages, as does the current one. Future nodes are grayed out and do
@@ -17,7 +17,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, ScrollText, ZapOff } from "lucide-react";
+import { ChevronRight, ScrollText, Trophy, ZapOff } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
@@ -28,6 +28,8 @@ import {
     recapPage,
     type SeasonStatus,
     roundPage,
+    scoreboardPage,
+    scoreboardStatus,
     SEASON_LABELS,
     type TimelineRound,
     tradingPeriodPage,
@@ -64,11 +66,18 @@ export function WorkshopTimeline({
                         <ScrollText className="size-4" />
                         <span className="text-xs">Recap</span>
                     </TimelineNode>
-                    {round.round < roundCount && (
-                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                    )}
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </Fragment>
             ))}
+            <TimelineNode
+                status={scoreboardStatus(checkpoint)}
+                page={scoreboardPage()}
+                title="Final scores"
+                className="flex-col gap-1 px-2"
+            >
+                <Trophy className="size-4" />
+                <span className="text-xs">Scores</span>
+            </TimelineNode>
         </nav>
     );
 }

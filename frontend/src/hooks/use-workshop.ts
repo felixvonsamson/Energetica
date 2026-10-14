@@ -603,6 +603,19 @@ export function useWorkshopRecap(round: number) {
 }
 
 /**
+ * Every player's final score, highest first (#1017). Refused until the session
+ * is over, and read again whenever the session changes, so it appears as soon
+ * as it ends.
+ */
+export function useWorkshopScoreboard() {
+    return useQuery({
+        queryKey: queryKeys.workshop.scoreboard,
+        queryFn: workshopApi.getScoreboard,
+        retry: false,
+    });
+}
+
+/**
  * A settled Trading period's simulated days, weeks and settlement points. Fails
  * with a 404 until the period is settled, and is read again when the session
  * changes.
