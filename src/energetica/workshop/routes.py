@@ -391,16 +391,28 @@ def get_fleet(
 
 
 def _selection_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopSelectionOut:
-    return WorkshopSelectionOut(
-        facilities=list(player.selection),
-        total_cost=player.selection_cost(session.facility_prices()),
-        money=player.money,
-        stored_energy_at_risk=energy_at_risk(
+    # Only warn once a full-season Round has been played. Full-season mode stays on once it is on, and before it
+    # the stored energy matters little: a representative week starts from its cyclic charge, and batteries
+    # hold little energy anyway.
+    previous_round = session.current_round() - 1
+    after_full_season = (
+        previous_round >= 1 and session.plans[previous_round - 1].levers.round_format.trading_format == "full_season"
+    )
+    stored_energy_at_risk = (
+        energy_at_risk(
             player.stored_energy,
             player.owned_facilities,
             player.selection,
             current_round=session.current_round(),
-        ),
+        )
+        if after_full_season
+        else {}
+    )
+    return WorkshopSelectionOut(
+        facilities=list(player.selection),
+        total_cost=player.selection_cost(session.facility_prices()),
+        money=player.money,
+        stored_energy_at_risk=stored_energy_at_risk,
     )
 
 

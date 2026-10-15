@@ -2191,7 +2191,7 @@ export interface components {
             money: number;
             /**
              * Stored Energy At Risk
-             * @description For each storage type, the stored energy in Wh that neither the player's facilities of that type nor the selection can hold. It is lost when the Investment phase closes, unless more of that type is selected. A type with nothing at risk is left out
+             * @description For each storage type, the stored energy in Wh that neither the player's facilities of that type nor the selection can hold. It is lost when the Investment phase closes, unless more of that type is selected. A type with nothing at risk is left out. Always empty unless the previous Round was played in full-season mode
              */
             stored_energy_at_risk: {
                 [key: string]: number;
