@@ -1,8 +1,8 @@
-"""A Workshop Run's session: the moderator-paced state machine and the state it carries (#994).
+"""A Workshop Run's session: the facilitator-paced state machine and the state it carries (#994).
 
 A session runs a configured number of Rounds. Each Round has one Investment phase, then four Trading
 periods (spring, summer, autumn, winter), then a Recap. Each of those is a **checkpoint**: the
-session sits at one until the moderator advances it, however long that takes. There is no timeout
+session sits at one until the facilitator advances it, however long that takes. There is no timeout
 and no separate pause. The session also has a checkpoint before Round 1, while players
 arrive, and one after the last Recap, when the session is over.
 
@@ -10,7 +10,7 @@ arrive, and one after the last Recap, when the session is over.
 
 The Investment phase and each Trading period's price-setting window also get a countdown, a
 :class:`~energetica.workshop.phase_timer.PhaseTimer` (#996). It tells players how long they have, and
-the moderator can extend it. Running out of time closes the window but does not advance the session.
+the facilitator can extend it. Running out of time closes the window but does not advance the session.
 Players change their prices only while a price-setting window is open (#1002). Once it closes, the
 Trading period is settled (#1003): its prices are recorded, and the engine in
 :mod:`~energetica.workshop.trading` clears the days the Round's format simulates and pays each player.
@@ -35,7 +35,7 @@ Workshop's own persistence. It shares nothing with the persistent world's model 
 (#1049), and the file follows the shape of the session rather than of any persistent-world object.
 
 Each Round has its own plan (#1190, :mod:`~energetica.workshop.round_plan`): its format, its fuel procurement and
-its events. The moderator edits any Round whose plan is not locked yet. Round 1's plan locks when the session starts,
+its events. The facilitator edits any Round whose plan is not locked yet. Round 1's plan locks when the session starts,
 and Round N+1's when Recap N opens, so the Recap can tell players what is coming. Which Rounds are locked follows from
 the checkpoint, so it is not saved. The phase timers are not part of any plan: they apply to the next phase that
 opens.
@@ -142,7 +142,7 @@ if TYPE_CHECKING:
     from energetica.identity.instance_config import InstanceConfig
     from energetica.workshop.player import WorkshopPlayer
 
-# How many Rounds a session runs unless the moderator chooses otherwise (#992). A placeholder, like
+# How many Rounds a session runs unless the facilitator chooses otherwise (#992). A placeholder, like
 # every other Workshop magnitude.
 DEFAULT_ROUND_COUNT = 3
 
@@ -343,7 +343,7 @@ def recap_open(checkpoint: Checkpoint, round_number: int) -> bool:
 
 
 class PhaseTimers(BaseModel):
-    """How long each timed phase is open when it starts (#986). The moderator changes them at any time, and a change
+    """How long each timed phase is open when it starts (#986). The facilitator changes them at any time, and a change
     applies to the next phase that opens. They belong to the session, not to any Round's plan.
     """
 
@@ -753,7 +753,7 @@ class WorkshopSession:
         then, advancing does nothing more.
 
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys any
-        selection still waiting, so none is lost if the moderator advances before the purchase at the
+        selection still waiting, so none is lost if the facilitator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
         retires every facility whose lifetime has ended, and tops up any player below the cash floor, or resets
         everyone's cash after a blackout (#1016). Opening a Trading period sets the season's fuel prices
@@ -1193,7 +1193,7 @@ class WorkshopSession:
 
         Raises :class:`NoSuchRoundError` if the session has no such Round, :class:`RoundLockedError` if its plan is
         locked, :class:`NoEventsInRoundOneError` for Round 1, and
-        :class:`~energetica.workshop.events.InvalidPickError` if the pick is not one the moderator can make, or
+        :class:`~energetica.workshop.events.InvalidPickError` if the pick is not one the facilitator can make, or
         lacks the season a seasonal event needs.
         """
         with self._lock:

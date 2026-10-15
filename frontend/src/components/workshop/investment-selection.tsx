@@ -11,10 +11,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef } from "react";
 
 import { Money } from "@/components/ui/money";
 import { FacilityCard } from "@/components/workshop/facility-card";
+import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
@@ -50,7 +51,7 @@ export function InvestmentSelection({
     const byId = new Map(facilities.map((facility) => [facility.id, facility]));
     const count = selection.facilities.length;
     const rowRef = useRef<HTMLDivElement>(null);
-    const rowWidth = useWidth(rowRef);
+    const { width: rowWidth } = useContainerDimensions(rowRef);
 
     return (
         <section className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -149,19 +150,4 @@ function overlapMargin(count: number, rowWidth: number): number {
 function copyNumber(selection: FacilityId[], index: number): number {
     return selection.slice(0, index).filter((id) => id === selection[index])
         .length;
-}
-
-/** The element's width, kept up to date as it resizes. */
-function useWidth(ref: React.RefObject<HTMLElement | null>): number {
-    const [width, setWidth] = useState(0);
-    useLayoutEffect(() => {
-        const element = ref.current;
-        if (!element) return;
-        const observer = new ResizeObserver(() =>
-            setWidth(element.clientWidth),
-        );
-        observer.observe(element);
-        return () => observer.disconnect();
-    }, [ref]);
-    return width;
 }

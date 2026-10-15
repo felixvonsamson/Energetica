@@ -1,7 +1,7 @@
-"""Workshop's events (#1012, #992 §3–§4): the vignettes the moderator picks, and what they do once they fire.
+"""Workshop's events (#1012, #992 §3–§4): the vignettes the facilitator picks, and what they do once they fire.
 
 Each event is a named vignette from a fixed catalog (#978) in one of three categories: climate, price shock or
-geopolitics, and demand shift. The moderator picks a vignette and one of its severities, and plans it for a Round
+geopolitics, and demand shift. The facilitator picks a vignette and one of its severities, and plans it for a Round
 (:mod:`~energetica.workshop.round_plan`, #1190). At its boundary, the start of the Round or of one of its Trading
 periods, it fires, and the session keeps a :class:`FiredEvent` so the Recap can tell its headline (#1013).
 
@@ -21,13 +21,13 @@ What a fired event does depends on its effect kind:
   Trading period and then eases back.
 
 A magnitude is always the factor the target gets multiplied by: a 3% tax is ``0.97``, not ``0.03``. The
-moderator never sees an event's headline before it fires, so the Recap surprises them too. Every magnitude is a
+facilitator never sees an event's headline before it fires, so the Recap surprises them too. Every magnitude is a
 placeholder until the game-balance pass (#1145).
 
 The Recap before a Round tells players what the Round holds (#1188). A round-wide event is told with its exact effect.
 A seasonal event, one that fires with a Trading period, is told only as a vague forecast that never gives a figure.
 Its wording grows more certain with severity: "could" for minor, "likely" for moderate, "almost certainly" for major,
-and a call to prepare for catastrophic. The moderator never sees a forecast before the Recap either.
+and a call to prepare for catastrophic. The facilitator never sees a forecast before the Recap either.
 """
 
 from __future__ import annotations
@@ -70,7 +70,7 @@ class EventEffect(BaseModel):
     target: tuple[FacilityCategory | Fuel, ...] = Field(
         default=(),
         description="The facility categories or fuel it moves. Empty for an effect on demand or revenue, which has "
-        "only one target, and for a fuel shock whose fuel the moderator picks",
+        "only one target, and for a fuel shock whose fuel the facilitator picks",
     )
 
 
@@ -83,7 +83,7 @@ class WorkshopEvent(BaseModel):
     category: EventCategory
     boundary_type: BoundaryType
     direction: Direction
-    name: str = Field(description="The moderator's label for it. Never the headline")
+    name: str = Field(description="The facilitator's label for it. Never the headline")
     effect: EventEffect
     severities: tuple[Severity, ...]
     magnitude: dict[Severity, float] = Field(description="The factor the target is multiplied by, per severity")
@@ -91,7 +91,7 @@ class WorkshopEvent(BaseModel):
     forecasts: dict[Severity, str] | None = Field(
         default=None,
         description="For a seasonal event, the vague forecast the Recap before its Round tells, per severity. It "
-        "takes the season as {season} and, if the moderator picks the fuel, the fuel as {fuel}. None for a "
+        "takes the season as {season} and, if the facilitator picks the fuel, the fuel as {fuel}. None for a "
         "round-wide event, which the Recap tells with its exact effect",
     )
 
@@ -112,19 +112,19 @@ class WorkshopEvent(BaseModel):
 
     @property
     def fuel_chosen(self) -> bool:
-        """Whether the moderator picks the fuel it moves."""
+        """Whether the facilitator picks the fuel it moves."""
         return self.effect.kind == "fuel_price_multiplier" and not self.effect.target
 
 
 class EventPick(BaseModel):
-    """A vignette and severity the moderator picked: what is planned for a Round (#1190)."""
+    """A vignette and severity the facilitator picked: what is planned for a Round (#1190)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     event: str = Field(description="The event's id")
     severity: Severity
     fuel: Fuel | None = Field(
-        default=None, description="The fuel it moves, for an event whose fuel the moderator picks"
+        default=None, description="The fuel it moves, for an event whose fuel the facilitator picks"
     )
 
 
@@ -135,7 +135,7 @@ class FiredEvent(BaseModel):
 
     event: str = Field(description="The event's id")
     severity: Severity
-    fuel: Fuel | None = Field(description="The fuel the moderator picked for it, if it took one")
+    fuel: Fuel | None = Field(description="The fuel the facilitator picked for it, if it took one")
     round: int = Field(description="The Round it fired in")
     season: Season | None = Field(
         description="The Trading period it fired at, or null for an event that fired at the start of the Round"
@@ -143,7 +143,7 @@ class FiredEvent(BaseModel):
     # The effect it applied, kept so that a later change to the catalog leaves an event that already fired as it was.
     kind: EffectKind
     target: tuple[FacilityCategory | Fuel, ...] = Field(
-        description="What it moved: the event's target, or the fuel the moderator picked"
+        description="What it moved: the event's target, or the fuel the facilitator picked"
     )
     magnitude: float = Field(description="The factor it applied")
 
@@ -278,7 +278,7 @@ def _demand_shift(event_id: str, name: str, magnitude: float, headline: str) -> 
 
 _WIND, _PV, _BATTERIES = FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.BATTERIES
 
-#: Every event the moderator can pick, by id, in the order the console lists them. The content of #978's catalog.
+#: Every event the facilitator can pick, by id, in the order the console lists them. The content of #978's catalog.
 EVENTS: dict[str, WorkshopEvent] = {
     event.id: event
     for event in [
@@ -653,7 +653,7 @@ def slot(event: WorkshopEvent) -> tuple[EventCategory, BoundaryType]:
 
 
 def validate_pick(pick: EventPick) -> WorkshopEvent:
-    """The event ``pick`` names, or :class:`InvalidPickError` if the pick is not one the moderator can make."""
+    """The event ``pick`` names, or :class:`InvalidPickError` if the pick is not one the facilitator can make."""
     event = EVENTS.get(pick.event)
     if event is None:
         raise InvalidPickError(f"there is no event {pick.event!r}")

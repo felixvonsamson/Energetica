@@ -25,15 +25,17 @@ There are exactly three principals plus ordinary users.
   separate per-instance "user" object — see [Role model](#the-role-model).
 - **Facilitator** — the single elevated, in-product role. Its power comes from its
   *capabilities*, not from its title. In a Workshop-Mode instance the facilitator is the
-  person the participants call the "moderator" — same role, context-specific word.
+  person at the console. The **moderator** is the person in the room who speaks to the
+  players. One person can do both, but they don't have to. The moderator is not a
+  principal: it needs no account and no capability.
 - **Sysadmin** — someone with a shell on the server (SSH + root, or the `deploy` user).
   This is an **out-of-band operator, not a product role**. It is not a value of
   `UserRole` and cannot be conferred through the platform. Today the sysadmins are the
   developers (Felix, Max); "developer" is not a synonym for the role, just who holds it
   now.
 
-"Admin" and "moderator" are retired as principal names. Admin is renamed to facilitator;
-moderator is the facilitator's Workshop word, not a separate role.
+"Admin" and "moderator" are retired as principal names. Admin is renamed to facilitator.
+In a Workshop, "moderator" names the person leading the room, not a role in the product.
 
 ### The role model
 
@@ -241,7 +243,7 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
   authority capability. Only the *manual* facilitator pause/resume is a capability here.
 - **Diegetic sanctions** — market-collective embargoes/votes ([#773](https://github.com/felixvonsamson/Energetica/issues/773)),
   and the in-fiction Workshop policy votes — are game design, owned elsewhere.
-- **The Workshop moderator's powers** (round count, phase timers, scenario overrides,
+- **The Workshop facilitator's powers** (round count, phase timers, scenario overrides,
   vote events) are *placed* here as facilitator, workshop-format, but their design is
   owned by [Workshop Mode (#880)](https://github.com/felixvonsamson/Energetica/issues/880).
 - **Building the surfaces** — the lobby dashboard, the in-instance spectator view, the

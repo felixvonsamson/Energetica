@@ -372,7 +372,7 @@ echo "  ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --
 echo
 echo "A workshop Run is already private. For any other private or unadvertised instance, edit the policy before first login:"
 echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
-echo "Then grant access to moderators via the following script:"
+echo "Then grant access to facilitators via the following script:"
 echo "  cd /var/www/energetica-lobby && ./scripts/grant-facilitator.py --username <username> --slug $INSTANCE"
 echo "Then grow its player roster (facilitator UI, or from the shell, from the lobby directory):"
 echo "  cd /var/www/energetica-lobby && ./scripts/whitelist-run.py $INSTANCE add <username> [<username> ...]"

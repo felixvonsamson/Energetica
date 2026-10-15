@@ -43,7 +43,7 @@ FULL_SEASON = RoundFormat(trading_format="full_season", storage="all")
 
 
 class _Clock:
-    """A clock that never moves: every window stays open until the moderator closes it."""
+    """A clock that never moves: every window stays open until the facilitator closes it."""
 
     def __init__(self) -> None:
         self.now = datetime(2026, 10, 4, 9, 0, tzinfo=timezone.utc)
@@ -74,7 +74,7 @@ def _keep_the_lights_on(session: WorkshopSession) -> None:
 
 
 def _to_next(session: WorkshopSession, kind: type) -> None:
-    """Advance as the moderator does, settling each Trading period, until the session is at the next ``kind``."""
+    """Advance as the facilitator does, settling each Trading period, until the session is at the next ``kind``."""
     start = session.checkpoint
     while True:
         if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:

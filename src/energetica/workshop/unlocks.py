@@ -9,7 +9,7 @@ the first Round the storage lever allows every type. The session keeps each
 :class:`Unlock`, so the Recap can announce it.
 
 Storage follows the Round's storage lever (#1004): none, batteries only, or every type. Hydrogen storage
-and pumped hydro are offered only with every type, which needs the full-season format. If the moderator
+and pumped hydro are offered only with every type, which needs the full-season format. If the facilitator
 switches back, players keep the ones they built, but cannot buy more.
 """
 

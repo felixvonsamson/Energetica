@@ -3,9 +3,9 @@
  * stands relative to the session's current checkpoint.
  *
  * The session runs `not_started → [investment → 4 trading_period → recap] ×
- * Rounds → finished` and only the moderator moves it along (#994). Each node on
- * the timeline is `past` (already reached, so its page has something to show),
- * `current`, or `future`, and each has its own page.
+ * Rounds → finished` and only the facilitator moves it along (#994). Each node
+ * on the timeline is `past` (already reached, so its page has something to
+ * show), `current`, or `future`, and each has its own page.
  *
  * A blackout ends its Round (#1005): the Trading periods after it in that Round
  * never run, so they are `skipped` and have no page.

@@ -13,7 +13,7 @@ class Viewer(BaseModel):
     username: str
     membership: Literal["player", "facilitator"] | None = Field(
         description="'player' if the visitor is already a member, 'facilitator' if they hold a "
-        "facilitator/moderator grant covering this instance (and so can't also join it as a player, "
+        "facilitator grant covering this instance (and so can't also join it as a player, "
         "per ADR-0004), or `null` if they haven't joined yet."
     )
 

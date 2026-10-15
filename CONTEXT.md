@@ -134,6 +134,17 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
 
 ### Language
 
+**Facilitator**:
+The person at the console: they advance the session, plan each Round, pick events and extend
+phases. It is the instance's one elevated role (`docs/architecture/roles.md`). A facilitator has an
+account but no player, so they never play.
+_Avoid_: moderator, for this role.
+
+**Moderator**:
+The person in the room who speaks to the players and leads the session out loud. One person can
+be both the moderator and the facilitator, but it can also be two people. The moderator is not a
+role in the product: nothing in the code checks for it.
+
 **Facility type pool**:
 All of a player's facilities of one type, simulated as a single facility whose power (and, for
 storage, capacity) is scaled by how many there are. Individual facilities have no output or charge
@@ -211,7 +222,7 @@ added up, with no scaling. **Stored energy** carries from one day to the next.
 **Settling a Trading period** (#1003, #1004):
 What happens once a Trading period's price-setting window closes: each player's prices are locked,
 the days the **round format** calls for are simulated in the background, and each player is paid its
-result. The moderator can close the window early by advancing, as with the Investment phase, but the
+result. The facilitator can close the window early by advancing, as with the Investment phase, but the
 session only leaves the period once it is settled, and cannot advance while the simulation runs. A
 period is settled once.
 

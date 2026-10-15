@@ -4380,7 +4380,7 @@ export interface components {
             username: string;
             /**
              * Membership
-             * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator/moderator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
+             * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
              */
             membership: ("player" | "facilitator") | null;
         };

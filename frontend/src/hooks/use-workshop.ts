@@ -1,11 +1,11 @@
 /**
  * Hooks for a Workshop Run (#995): entering it, following the session as the
- * moderator advances it, reading the facility catalog and fleet (#998), picking
- * facilities to buy in the Investment phase (#999), setting prices in a Trading
- * period's price-setting window (#1002), reviewing a settled Trading period
- * (#1007), voting on a carbon tax (#1014), and following technology unlocks and
- * planning each Round's levers, events and phase timers as the facilitator
- * (#1011, #1012, #1018, #1190).
+ * facilitator advances it, reading the facility catalog and fleet (#998),
+ * picking facilities to buy in the Investment phase (#999), setting prices in a
+ * Trading period's price-setting window (#1002), reviewing a settled Trading
+ * period (#1007), voting on a carbon tax (#1014), and following technology
+ * unlocks and planning each Round's levers, events and phase timers as the
+ * facilitator (#1011, #1012, #1018, #1190).
  */
 
 import {

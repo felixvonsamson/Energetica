@@ -1,8 +1,8 @@
 """The countdown on a Workshop phase (#996): how long players have left to invest or to set prices.
 
-A phase opens with the duration the moderator configured, and the moderator can give the room more
+A phase opens with the duration the facilitator configured, and the facilitator can give the room more
 time with "+N minutes" while it runs, or end it early by advancing: the phase then closes as if its
-time had run out (#1004). Either way the session stays where it is: only the moderator's next advance
+time had run out (#1004). Either way the session stays where it is: only the facilitator's next advance
 moves it on (#994).
 
 :class:`PhaseTimer` is plain data with no clock of its own. Callers pass the current time in, so the
