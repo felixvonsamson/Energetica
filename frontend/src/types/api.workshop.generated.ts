@@ -239,7 +239,7 @@ export interface paths {
         /**
          * Extend Phase
          * @description Give the running phase more time, and tell every open page. A phase whose time is up cannot be
-         *     reopened, and no phase can be ended early.
+         *     reopened. To end a phase early, the facilitator advances the session instead.
          */
         post: operations["extend_phase_api_v1_workshop_session_phase_extend_post"];
         delete?: never;

@@ -13,6 +13,7 @@ from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
     FUEL_USE,
+    MAX_SEASON_CHANGE,
     MAX_STEP,
     STOCKPILE_SEASONS,
     FuelPrice,
@@ -95,6 +96,15 @@ def test_prices_stay_close_to_the_catalog_price_over_a_long_session() -> None:
     for period_index in range(200):
         price = next_fuel_price(Fuel.GAS, price, seed=3, period_index=period_index)
         assert abs(price.drift - 1.0) <= 2 * MAX_STEP
+
+
+def test_a_season_never_moves_a_price_by_more_than_the_cap() -> None:
+    for seed in range(20):
+        price = None
+        for period_index in range(40):
+            price = next_fuel_price(Fuel.COAL, price, seed=seed, period_index=period_index)
+            if price.change is not None:
+                assert abs(price.change) <= MAX_SEASON_CHANGE + 1e-9
 
 
 def test_the_change_is_against_last_seasons_price() -> None:
