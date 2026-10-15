@@ -3,8 +3,9 @@
 Fuel is priced and bought once per Trading period. Each fuel has a catalog price, and its actual price
 changes every season in two ways:
 
-- a small random step, from the Run's seed, that also drifts back toward the catalog price, so prices
-  wander but never far;
+- a random step, from the Run's seed, that also drifts back toward the catalog price, so prices swing
+  from season to season but never wander far. Fuel prices are volatile, so a season can move a price by up
+  to :data:`MAX_SEASON_CHANGE`;
 - a price shock, a large move the facilitator picks (#1012). It lands in full for one season and then eases
   back, closing half of what is left each season.
 
@@ -60,7 +61,10 @@ CATALOG_FUEL_PRICES: dict[Fuel, float] = {
 }
 
 #: The most a season's random step moves a price, as a share of its catalog price.
-MAX_STEP = 0.08
+MAX_STEP = 0.25
+#: The most the random step and the drift back together move a price in one season, as a share of last
+#: season's price. Shocks come on top of this.
+MAX_SEASON_CHANGE = 0.25
 #: The share of its distance from the catalog price that a price keeps each season, before its random step.
 REVERSION = 0.5
 #: The share of a shock that is left the season after. Half eases off each season.
@@ -130,6 +134,7 @@ def next_fuel_price(
     step = random.Random(f"{seed}:{fuel}:{period_index}").uniform(-MAX_STEP, MAX_STEP)
     drift_before = previous.drift if previous is not None else 1.0
     drift = 1 + (drift_before - 1) * REVERSION + step
+    drift = min(max(drift, drift_before * (1 - MAX_SEASON_CHANGE)), drift_before * (1 + MAX_SEASON_CHANGE))
     if shock is None:
         eased = 1 + ((previous.shock if previous is not None else 1.0) - 1) * SHOCK_EASING
         shock = 1.0 if abs(eased - 1) < SHOCK_GONE else eased

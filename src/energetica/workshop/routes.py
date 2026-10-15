@@ -180,7 +180,7 @@ async def extend_phase(
     extension: WorkshopPhaseExtendIn,
 ) -> WorkshopSessionOut:
     """Give the running phase more time, and tell every open page. A phase whose time is up cannot be
-    reopened, and no phase can be ended early.
+    reopened. To end a phase early, the facilitator advances the session instead.
     """
     await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
     await invalidate_session(request.app)

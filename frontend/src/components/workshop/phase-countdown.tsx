@@ -1,7 +1,7 @@
 /**
  * The countdown on the running phase (#996), labeled by the decision it is for,
  * e.g. "Set prices — 2:14". The facilitator also gets "+N min" buttons to give
- * the room more time. No one can end a phase early.
+ * the room more time. Ending a phase early is the advance button's job.
  */
 
 import { Timer } from "lucide-react";
