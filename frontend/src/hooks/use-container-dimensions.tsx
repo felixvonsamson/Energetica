@@ -1,33 +1,36 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect } from "react";
 
+/**
+ * The size of the element `containerRef` is attached to, kept up to date as it
+ * resizes. It is measured before the first paint, so it is only 0 while the
+ * element is not mounted.
+ */
 export function useContainerDimensions(
-    containerRef: React.RefObject<HTMLDivElement | null>,
+    containerRef: React.RefObject<HTMLElement | null>,
 ): { width: number; height: number } {
-    // https://gist.github.com/morajabi/523d7a642d8c0a2f71fcfa0d8b3d2846
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const updateDimensions = useCallback(() => {
         if (containerRef.current) {
             const { width, height } =
                 containerRef.current.getBoundingClientRect();
-            setDimensions({ width, height });
+            setDimensions((previous) =>
+                previous.width === width && previous.height === height
+                    ? previous
+                    : { width, height },
+            );
         }
     }, [containerRef]);
-    const useEffectInEvent = (
-        event: "resize" | "scroll",
-        useCapture?: boolean,
-    ) => {
-        useEffect(() => {
-            // Initial measurement
-            updateDimensions();
-            // Update on window resize
-            window.addEventListener(event, updateDimensions, useCapture);
-            return () =>
-                window.removeEventListener(event, updateDimensions, useCapture);
-        }, [event, useCapture]);
-    };
 
-    useEffectInEvent("resize");
-    useEffectInEvent("scroll", true);
+    // A ResizeObserver reports any change to the element's size, whether the
+    // window resized or the layout around the element changed.
+    useLayoutEffect(() => {
+        const element = containerRef.current;
+        if (!element) return;
+        updateDimensions();
+        const observer = new ResizeObserver(updateDimensions);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [containerRef, updateDimensions]);
 
     // HMR: Update dimensions when this module hot-reloads during development
     // Use double requestAnimationFrame to ensure CSS changes are fully applied

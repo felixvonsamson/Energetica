@@ -15,16 +15,11 @@
  */
 
 import { ZapOff } from "lucide-react";
-import {
-    type CSSProperties,
-    type ReactNode,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { CoinIcon } from "@/components/ui/coin-icon";
+import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { cn } from "@/lib/utils";
 import {
@@ -342,22 +337,6 @@ interface Column {
 const ALL_SEASONS_DETAILED_WIDTH = 1300;
 const SELECTED_SEASON_DETAILED_WIDTH = 860;
 
-/** The width of the element `ref` is attached to, kept up to date. */
-function useWidth<T extends HTMLElement>() {
-    const ref = useRef<T>(null);
-    const [width, setWidth] = useState<number | null>(null);
-    useEffect(() => {
-        const element = ref.current;
-        if (!element) return;
-        const observer = new ResizeObserver(([entry]) => {
-            if (entry) setWidth(entry.contentRect.width);
-        });
-        observer.observe(element);
-        return () => observer.disconnect();
-    }, []);
-    return [ref, width] as const;
-}
-
 function columns(
     expanded: (season: Season) => boolean,
     detailed: boolean,
@@ -436,8 +415,9 @@ function Ledger({
     detailed: boolean;
     period: Period;
 }) {
-    const [ref, width] = useWidth<HTMLDivElement>();
-    const fits = (needed: number) => width === null || width >= needed;
+    const ref = useRef<HTMLDivElement>(null);
+    const { width } = useContainerDimensions(ref);
+    const fits = (needed: number) => width >= needed;
     const unit = detailed && fits(SELECTED_SEASON_DETAILED_WIDTH);
     const expanded = (season: Season) =>
         unit && (fits(ALL_SEASONS_DETAILED_WIDTH) || season === period);
