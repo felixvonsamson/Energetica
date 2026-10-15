@@ -1,6 +1,7 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009, #1011, #1012, #1014, #1190). Served only by a Workshop Run's backend.
+ * #1009, #1011, #1012, #1014, #1018, #1190). Served only by a Workshop Run's
+ * backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -39,6 +40,25 @@ export const workshopApi = {
         apiClient.post<
             ApiResponse<"/api/v1/workshop/session/phase/extend", "post">
         >("/workshop/session/phase/extend", { minutes }),
+
+    /**
+     * How long each timed phase is open when it starts (#996). Facilitator
+     * only.
+     */
+    getTimers: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/timers", "get">>(
+            "/workshop/timers",
+        ),
+
+    /**
+     * Replace the phase timers (#1018). They apply to the next phase that
+     * opens. Facilitator only. Returns the timers after the change.
+     */
+    setTimers: (timers: ApiSchema<"PhaseTimers">) =>
+        apiClient.put<ApiResponse<"/api/v1/workshop/timers", "put">>(
+            "/workshop/timers",
+            timers,
+        ),
 
     /**
      * Where the session is: its checkpoint, its phase countdown, Round count

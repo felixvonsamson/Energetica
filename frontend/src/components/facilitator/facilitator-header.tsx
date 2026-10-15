@@ -1,6 +1,7 @@
 /**
  * Shared shell for the facilitator surfaces (#1020 join link, #1022 roster):
- * the topbar plus a small nav between the two pages.
+ * the topbar plus a small nav between the two pages. In a Workshop Run, the
+ * topbar also links back to the facilitator's console (#1018).
  *
  * Deliberately doesn't use `GameLayout`/`AppSidebar` — those assume a settled
  * player (capability flags, money, workers), none of which a facilitator
@@ -8,10 +9,12 @@
  */
 
 import { Link, useLocation } from "@tanstack/react-router";
+import { SlidersHorizontal } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useRunMode } from "@/hooks/use-run-mode";
 import { lobbyHref } from "@/lib/instances";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +25,7 @@ const NAV_LINKS = [
 
 export function FacilitatorHeader() {
     const location = useLocation();
+    const { data: runMode } = useRunMode();
 
     return (
         <header className="shrink-0 flex flex-col border-b border-border-brand bg-topbar">
@@ -34,6 +38,14 @@ export function FacilitatorHeader() {
                 </Link>
                 <div className="flex items-center gap-2">
                     <ThemeToggle variant="icon-only" />
+                    {runMode === "workshop" && (
+                        <Button variant="outline" asChild>
+                            <Link to="/app/workshop/console">
+                                <SlidersHorizontal className="size-4" />
+                                Console
+                            </Link>
+                        </Button>
+                    )}
                     <Button variant="outline" asChild>
                         <a href={lobbyHref("/")}>Back to lobby</a>
                     </Button>

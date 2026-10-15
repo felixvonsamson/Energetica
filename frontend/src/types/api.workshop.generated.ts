@@ -1415,7 +1415,14 @@ export interface components {
          * @description The levers of one Round, fixed for the whole Round.
          */
         RoundLevers: {
-            round_format?: components["schemas"]["RoundFormat"];
+            /**
+             * @default {
+             *       "trading_format": "representative_week",
+             *       "clearings_per_day": 24,
+             *       "storage": "batteries"
+             *     }
+             */
+            round_format: components["schemas"]["RoundFormat"];
             /**
              * Fuel Procurement
              * @description How players get fuel in the Round

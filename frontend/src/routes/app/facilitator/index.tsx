@@ -51,6 +51,10 @@ export const Route = createFileRoute("/app/facilitator/")({
     component: FacilitatorPage,
     staticData: {
         title: "Facilitator",
+        // Shown in a Workshop Run too, where the console links here (#1018). Without it, the
+        // Workshop's route guard sends every page that is not a Workshop page back to the Workshop
+        // home. The backend refuses anyone but the facilitator.
+        runMode: "any",
         routeConfig: { requiredRole: "facilitator" },
         infoDialog: { contents: <FacilitatorHelp /> },
     },

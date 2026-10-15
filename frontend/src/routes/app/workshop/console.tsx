@@ -1,12 +1,17 @@
 /**
- * The facilitator's console: for now, how far each technology is from unlocking
- * its upgrade (#1011), the events to pick (#1012), and the Rounds that put a
- * carbon tax to the vote (#1014). The full lever console (#1018) builds on this
- * page. Facilitator only: players never see how close an unlock is, so they are
- * sent back to the Workshop home.
+ * The facilitator's console (#1018): one screen to plan the session and run it.
+ * Each Round has a tab with its levers, its events and its votes, which the
+ * facilitator changes until the Recap before the Round locks them. The console
+ * opens on the earliest Round that can still change. Outside the tabs sit what
+ * belongs to the whole session: the links to the join link and roster, the
+ * phase timers, and how far each technology is from unlocking its upgrade
+ * (#1011). Facilitator only: players learn of a Round only at the Recap, so
+ * they are sent back to the Workshop home.
  */
 
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
+import { useState } from "react";
 
 import {
     Card,
@@ -15,20 +20,33 @@ import {
     CardTitle,
     Money,
 } from "@/components/ui";
+import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
-import { EventsCard } from "@/components/workshop/events-card";
-import { VotesCard } from "@/components/workshop/votes-card";
-import { useWorkshopEntry, useWorkshopUnlocks } from "@/hooks/use-workshop";
+import { PhaseTimersCard } from "@/components/workshop/phase-timers-card";
+import { RoundEvents } from "@/components/workshop/round-events";
+import { RoundLevers } from "@/components/workshop/round-levers";
+import { RoundVotes } from "@/components/workshop/round-votes";
+import {
+    useWorkshopEntry,
+    useWorkshopEvents,
+    useWorkshopPlans,
+    useWorkshopUnlocks,
+} from "@/hooks/use-workshop";
+import { consoleRound } from "@/lib/workshop-console";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopUnlocks = ApiSchema<"WorkshopUnlocksOut">;
 type TechnologyProgress = ApiSchema<"WorkshopTechnologyProgressOut">;
+type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
+type WorkshopEvents = ApiSchema<"WorkshopEventsOut">;
+type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;
 
 export const Route = createFileRoute("/app/workshop/console")({
     component: ConsolePage,
-    staticData: { title: "Console", runMode: "workshop" },
+    staticData: { title: "Console", runMode: "workshop", wide: true },
 });
 
 function ConsolePage() {
@@ -39,9 +57,156 @@ function ConsolePage() {
     return (
         <div className="space-y-6">
             <TypographyH2>Console</TypographyH2>
-            <EventsCard />
-            <VotesCard />
-            <TechnologyUnlocksCard />
+            <AccessCard />
+            <RoundPlansCard />
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                <PhaseTimersCard />
+                <TechnologyUnlocksCard />
+            </div>
+        </div>
+    );
+}
+
+function AccessCard() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Access</CardTitle>
+                <TypographyMuted>
+                    Who can enter this Run: share the join link or its QR code,
+                    open or close it, and add or remove players on the roster.
+                </TypographyMuted>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                    <Link to="/app/facilitator">Join link & QR code</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                    <Link to="/app/facilitator/roster">Roster</Link>
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+function RoundPlansCard() {
+    const plans = useWorkshopPlans();
+    const events = useWorkshopEvents();
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Round plans</CardTitle>
+                <TypographyMuted>
+                    Each Round's levers, events and votes take effect in that
+                    Round. You can change a Round until the Recap before it
+                    tells players what it holds. Round 1 locks when the session
+                    starts.
+                </TypographyMuted>
+            </CardHeader>
+            <CardContent>
+                {plans.isError || events.isError ? (
+                    <TypographyMuted>
+                        The Round plans could not be loaded.
+                    </TypographyMuted>
+                ) : plans.data && events.data ? (
+                    <RoundTabs plans={plans.data} events={events.data} />
+                ) : (
+                    <Loading />
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function RoundTabs({
+    plans,
+    events,
+}: {
+    plans: WorkshopPlans;
+    events: WorkshopEvents;
+}) {
+    const [pickedRound, setPickedRound] = useState<number | null>(null);
+    const plan =
+        plans.rounds.find((candidate) => candidate.round === pickedRound) ??
+        plans.rounds.find(
+            (candidate) => candidate.round === consoleRound(plans),
+        );
+    if (!plan) return null;
+
+    return (
+        <div className="space-y-6">
+            <Tabs
+                value={`${plan.round}`}
+                onValueChange={(value) => setPickedRound(Number(value))}
+            >
+                <TabsList className="flex h-auto w-full flex-wrap justify-start sm:w-fit">
+                    {plans.rounds.map((candidate) => (
+                        <TabsTrigger
+                            key={candidate.round}
+                            value={`${candidate.round}`}
+                            className="flex-none"
+                        >
+                            {candidate.locked && (
+                                <Lock className="size-3" aria-label="locked" />
+                            )}
+                            Round {candidate.round}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+            </Tabs>
+            {/* Keyed by Round, so a note left by a change stays with the Round it was made in. */}
+            <RoundPlanView
+                key={plan.round}
+                plans={plans}
+                plan={plan}
+                events={events}
+            />
+        </div>
+    );
+}
+
+/**
+ * When the Round's plan locked, or when it will. Round 1 has no Recap before
+ * it.
+ */
+function lockStatus(plan: RoundPlan): string {
+    const carries = "A lever change also applies to every later Round.";
+    if (plan.round === 1) {
+        return plan.locked
+            ? "Round 1 locked when the session started."
+            : `Round 1 locks when the session starts. ${carries}`;
+    }
+    const recap = `Recap ${plan.round - 1}`;
+    return plan.locked
+        ? `Round ${plan.round} locked when ${recap} opened: players have been told what it holds.`
+        : `Round ${plan.round} locks when ${recap} opens. ${carries}`;
+}
+
+function RoundPlanView({
+    plans,
+    plan,
+    events,
+}: {
+    plans: WorkshopPlans;
+    plan: RoundPlan;
+    events: WorkshopEvents;
+}) {
+    return (
+        <div className="space-y-8">
+            <TypographyMuted>{lockStatus(plan)}</TypographyMuted>
+            <section className="space-y-3">
+                <h3 className="text-lg font-semibold">Levers</h3>
+                <RoundLevers plans={plans} plan={plan} />
+            </section>
+            <section className="space-y-3">
+                <h3 className="text-lg font-semibold">Events & Storytelling</h3>
+                <RoundEvents events={events} plan={plan} />
+            </section>
+            <section className="space-y-3">
+                <h3 className="text-lg font-semibold">Votes</h3>
+                <RoundVotes plans={plans} plan={plan} />
+            </section>
         </div>
     );
 }
@@ -50,7 +215,7 @@ function TechnologyUnlocksCard() {
     const { data: unlocks, isError } = useWorkshopUnlocks();
 
     return (
-        <Card className="max-w-2xl">
+        <Card>
             <CardHeader>
                 <CardTitle>Technology unlocks</CardTitle>
                 <TypographyMuted>

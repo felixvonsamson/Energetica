@@ -6,6 +6,7 @@ import {
     advanceAction,
     checkpointLabel,
     checkpointPage,
+    homePage,
     isSeason,
     latestRecapRound,
     scoreboardStatus,
@@ -166,6 +167,33 @@ describe("checkpointPage", () => {
         expect(checkpointPage({ kind: "finished" })).toEqual({
             to: "/app/workshop/scoreboard",
         });
+    });
+});
+
+describe("homePage", () => {
+    it("sends a player to the page for where the session is now", () => {
+        expect(homePage({ kind: "investment", round: 2 }, "player")).toEqual({
+            to: "/app/workshop/round/$round",
+            params: { round: "2" },
+        });
+    });
+
+    it("sends the facilitator to the console during an Investment phase, since the Round overview is for players", () => {
+        expect(
+            homePage({ kind: "investment", round: 2 }, "facilitator"),
+        ).toEqual({ to: "/app/workshop/console" });
+    });
+
+    it("sends the facilitator to the page for any other checkpoint", () => {
+        expect(homePage({ kind: "recap", round: 1 }, "facilitator")).toEqual({
+            to: "/app/workshop/recap/$round",
+            params: { round: "1" },
+        });
+    });
+
+    it("has no page for anyone before the session starts", () => {
+        expect(homePage({ kind: "not_started" }, "facilitator")).toBeNull();
+        expect(homePage({ kind: "not_started" }, "player")).toBeNull();
     });
 });
 

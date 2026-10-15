@@ -48,7 +48,9 @@ class RoundLevers(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    round_format: RoundFormat = Field(default_factory=RoundFormat)
+    # A default instance rather than a factory, so the schema states the default and the generated
+    # types do not mark the format optional. The format is frozen, so sharing the instance is safe.
+    round_format: RoundFormat = RoundFormat()
     fuel_procurement: FuelProcurement = Field(default="automatic", description="How players get fuel in the Round")
     carbon_tax_vote: bool = Field(
         default=False,

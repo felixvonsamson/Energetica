@@ -193,6 +193,27 @@ export function checkpointPage(checkpoint: Checkpoint): WorkshopPage | null {
     }
 }
 
+/** The facilitator's console (#1011, #1018). */
+export function consolePage() {
+    return { to: "/app/workshop/console" } as const;
+}
+
+/**
+ * Where the Workshop home sends the visitor: the page for where the session is
+ * now. The Round overview is for players only, so during an Investment phase
+ * the facilitator goes to their console instead. Sending them to the overview
+ * would bounce them back to the home, and round again without end.
+ */
+export function homePage(
+    checkpoint: Checkpoint,
+    role: ApiSchema<"WorkshopEntryOut">["role"],
+): WorkshopPage | ReturnType<typeof consolePage> | null {
+    if (role === "facilitator" && checkpoint.kind === "investment") {
+        return consolePage();
+    }
+    return checkpointPage(checkpoint);
+}
+
 /** The phase the session is in, as the top bar shows it. */
 export function checkpointLabel(checkpoint: Checkpoint): string {
     switch (checkpoint.kind) {
