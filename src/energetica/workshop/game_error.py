@@ -1,8 +1,10 @@
-"""Workshop's own error codes."""
+"""Workshop's own error codes, and the base of its errors."""
 
 from __future__ import annotations
 
-from energetica.kernel.game_error import ErrorCode
+from typing import Any, ClassVar
+
+from energetica.kernel.game_error import ErrorCode, GameError
 
 
 class WorkshopErrorCode(ErrorCode):
@@ -26,3 +28,22 @@ class WorkshopErrorCode(ErrorCode):
     WORKSHOP_NO_VOTE = "WORKSHOP_NO_VOTE"
     WORKSHOP_NO_VOTE_IN_ROUND_ONE = "WORKSHOP_NO_VOTE_IN_ROUND_ONE"
     WORKSHOP_CARBON_TAX_PASSED = "WORKSHOP_CARBON_TAX_PASSED"
+    WORKSHOP_NO_SUCH_ROUND = "WORKSHOP_NO_SUCH_ROUND"
+    WORKSHOP_INVALID_PICK = "WORKSHOP_INVALID_PICK"
+    WORKSHOP_INVALID_FUEL_QUANTITY = "WORKSHOP_INVALID_FUEL_QUANTITY"
+    WORKSHOP_NO_PERIOD_RECORD = "WORKSHOP_NO_PERIOD_RECORD"
+    WORKSHOP_NO_SUCH_WEEK = "WORKSHOP_NO_SUCH_WEEK"
+    WORKSHOP_NO_SUCH_POINT = "WORKSHOP_NO_SUCH_POINT"
+    WORKSHOP_GRID_DOWN = "WORKSHOP_GRID_DOWN"
+
+
+class WorkshopError(GameError):
+    """A Workshop rule that refuses a request. Each subclass names its :attr:`code`, so a route lets the error
+    through and the error envelope sends the code. The message is for logs and tests: players see the code's text.
+    """
+
+    code: ClassVar[WorkshopErrorCode]
+
+    def __init__(self, message: str = "", **kwargs: Any) -> None:
+        super().__init__(self.code, **kwargs)
+        self.args = (message or self.code,)

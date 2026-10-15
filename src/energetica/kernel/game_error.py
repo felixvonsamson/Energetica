@@ -7,11 +7,15 @@ These include game-level for API response like "not enough money".
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import Any, ClassVar
 
 
 class GameError(Exception):
     """Define the exception class for the game engine."""
+
+    #: The HTTP status the error envelope answers with. A subclass can change it, such as to 404 for
+    #: something that does not exist.
+    status_code: ClassVar[int] = 400
 
     def __init__(self, exception_type: ErrorCode, **kwargs: Any):
         self.exception_type = exception_type

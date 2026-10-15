@@ -26,9 +26,8 @@ from fastapi.concurrency import run_in_threadpool
 from energetica.identity.accounts import Account
 from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
-from energetica.kernel.game_error import GameError
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
-from energetica.workshop.events import EVENTS, InvalidPickError, suggested_severity
+from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.final_score import FinalScore
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
@@ -38,7 +37,7 @@ from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.recap import WorkshopRecap
-from energetica.workshop.round_plan import InvalidLeversError, LeverChanges, PlannedEvent
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent
 from energetica.workshop.schemas import (
     WorkshopBallotIn,
     WorkshopEntryOut,
@@ -72,28 +71,8 @@ from energetica.workshop.schemas import (
 )
 from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import (
-    CarbonTaxPassedError,
-    FacilityNotOfferedError,
-    FuelNotBurnedError,
-    FuelNotManualError,
-    InvalidFuelQuantityError,
-    InvestmentClosedError,
-    NoEventsInRoundOneError,
-    NoPhaseRunningError,
     NoSuchRoundError,
-    NoVoteError,
-    NoVoteInRoundOneError,
-    NotEnoughMoneyError,
-    NotSelectedError,
-    NotStorageError,
     PhaseTimers,
-    PriceBelowFloorError,
-    PriceSettingClosedError,
-    RecapNotOpenError,
-    RoundLockedError,
-    SessionFinishedError,
-    SessionNotFinishedError,
-    SettlementRunningError,
     TradingPeriod,
     WorkshopSession,
 )
@@ -186,12 +165,7 @@ async def advance_session(
     Advancing again moves on, once a Trading period is settled. While it is being simulated, advancing is
     refused.
     """
-    try:
-        await run_in_threadpool(session.advance)
-    except SessionFinishedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_SESSION_FINISHED) from exc
-    except SettlementRunningError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_SETTLEMENT_RUNNING) from exc
+    await run_in_threadpool(session.advance)
     # A window the advance closed is simulated now rather than at the next check.
     check_phases_now(request)
     await invalidate_session(request.app)
@@ -208,10 +182,7 @@ async def extend_phase(
     """Give the running phase more time, and tell every open page. A phase whose time is up cannot be
     reopened, and no phase can be ended early.
     """
-    try:
-        await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
-    except NoPhaseRunningError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NO_PHASE_RUNNING) from exc
+    await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
     await invalidate_session(request.app)
     return _session_out(session)
 
@@ -343,18 +314,7 @@ async def change_round_levers(
     format. A carbon tax vote cannot be planned for Round 1, which no Recap announces, nor once a carbon tax has
     passed.
     """
-    try:
-        changed = await run_in_threadpool(session.set_levers, round_number, changes)
-    except NoSuchRoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except RoundLockedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
-    except InvalidLeversError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_LEVERS_INVALID, round=exc.round_number) from exc
-    except NoVoteInRoundOneError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NO_VOTE_IN_ROUND_ONE) from exc
-    except CarbonTaxPassedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_CARBON_TAX_PASSED) from exc
+    changed = await run_in_threadpool(session.set_levers, round_number, changes)
     if changed:
         await invalidate_session(request.app)
     return _plans_out(session)
@@ -371,16 +331,7 @@ async def plan_event(
     """Plan an event for a Round, and for a seasonal event a season. It takes the place of any event of the same
     category planned for the same boundary. A locked Round cannot change, and Round 1 holds no events.
     """
-    try:
-        changed = await run_in_threadpool(session.plan_event, round_number, planned)
-    except NoSuchRoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except RoundLockedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
-    except NoEventsInRoundOneError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NO_EVENTS_IN_ROUND_ONE) from exc
-    except InvalidPickError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    changed = await run_in_threadpool(session.plan_event, round_number, planned)
     if changed:
         await invalidate_session(request.app)
     return _plans_out(session)
@@ -398,12 +349,7 @@ async def unplan_event(
     """Drop an event planned for a Round's ``season``, or for the Round if no season is given. Dropping one that is
     not planned changes nothing. A locked Round cannot change.
     """
-    try:
-        changed = await run_in_threadpool(session.unplan_event, round_number, event_id, season)
-    except NoSuchRoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except RoundLockedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_ROUND_LOCKED) from exc
+    changed = await run_in_threadpool(session.unplan_event, round_number, event_id, season)
     if changed:
         await invalidate_session(request.app)
     return _plans_out(session)
@@ -470,14 +416,7 @@ async def add_to_selection(player: Player, session: Session, pick: WorkshopSelec
     """Add one facility to the calling player's selection. Only while the Investment phase is open, and
     only if the player can pay for the whole selection.
     """
-    try:
-        await run_in_threadpool(session.select, player.account_id, pick.facility)
-    except InvestmentClosedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
-    except FacilityNotOfferedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_FACILITY_NOT_OFFERED) from exc
-    except NotEnoughMoneyError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY) from exc
+    await run_in_threadpool(session.select, player.account_id, pick.facility)
     return _selection_out(player, session)
 
 
@@ -486,12 +425,7 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
     """Take one copy of ``facility`` out of the calling player's selection. Only while the Investment
     phase is open.
     """
-    try:
-        await run_in_threadpool(session.deselect, player.account_id, facility)
-    except InvestmentClosedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
-    except NotSelectedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_SELECTED) from exc
+    await run_in_threadpool(session.deselect, player.account_id, facility)
     return _selection_out(player, session)
 
 
@@ -513,14 +447,7 @@ async def set_price(
     """Set the calling player's ``side`` price for ``facility``: what it sells at, or for storage, what
     it buys at to charge. Only while a Trading period's price-setting window is open.
     """
-    try:
-        await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
-    except PriceSettingClosedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_SETTING_CLOSED) from exc
-    except PriceBelowFloorError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_BELOW_FLOOR) from exc
-    except NotStorageError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NOT_STORAGE) from exc
+    await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
     return _prices_out(player)
 
 
@@ -579,17 +506,7 @@ async def set_fuel_order(player: Player, session: Session, fuel: Fuel, order: Wo
     procurement, while the window is open, and for a fuel their operating facilities burn. A quantity that would
     take their stock over the stockpile limit is cut down to fit.
     """
-    try:
-        await run_in_threadpool(session.set_fuel_order, player.account_id, fuel, order.quantity)
-    except PriceSettingClosedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_PRICE_SETTING_CLOSED) from exc
-    except FuelNotManualError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_FUEL_NOT_MANUAL) from exc
-    except FuelNotBurnedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_FUEL_NOT_BURNED) from exc
-    except InvalidFuelQuantityError as exc:
-        # The request model already refuses such a quantity, so this only guards the session's own check.
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    await run_in_threadpool(session.set_fuel_order, player.account_id, fuel, order.quantity)
     return _fuel_out(player, session)
 
 
@@ -597,7 +514,7 @@ def _period_record(session: WorkshopSession, round_number: int, season: Season) 
     """The record of the period, or 404 if it has none: not settled yet, or settled before records were kept."""
     record = session.period_record(TradingPeriod(round=round_number, season=season))
     if record is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This Trading period has no record")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_PERIOD_RECORD)
     return record
 
 
@@ -624,7 +541,7 @@ def get_period_week(
     """
     record = _period_record(session, round_number, season)
     if not 0 <= week < len(record.days) // WEEK_DAYS:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period did not simulate this week")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_SUCH_WEEK)
     return WorkshopPeriodWeekOut.from_record(record, week)
 
 
@@ -642,10 +559,10 @@ def get_merit_order(
     """
     record = _period_record(session, round_number, season)
     if not 0 <= point < record.point_count:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The period has no such settlement point")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_SUCH_POINT)
     order = record.merit_order(point)
     if order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The grid was down at this point")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_GRID_DOWN)
     return WorkshopMeritOrderOut.from_merit_order(order)
 
 
@@ -655,7 +572,7 @@ def get_balance_sheet(player: Player, session: Session, round_number: int) -> Ba
     investments and net profit so far.
     """
     if not 1 <= round_number <= session.round_count:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The session has no such Round")
+        raise NoSuchRoundError(f"the session has no Round {round_number}")
     settled = session.settled_period
     return balance_sheet(
         round_number,
@@ -673,12 +590,7 @@ def get_recap(
     """The Recap that closes a Round: what happened in it, and what the next Round holds. The same for everyone in
     the Run, and refused until it opens, so that no headline is told before.
     """
-    try:
-        return session.recap(round_number)
-    except NoSuchRoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except RecapNotOpenError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN) from exc
+    return session.recap(round_number)
 
 
 @router.get("/scoreboard")
@@ -686,10 +598,7 @@ def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], sessio
     """Every player's final score, highest first, with what it adds up from. The same for everyone in the Run, and
     refused until the session is over.
     """
-    try:
-        return session.scoreboard()
-    except SessionNotFinishedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_SESSION_NOT_FINISHED) from exc
+    return session.scoreboard()
 
 
 def _vote_out(session: WorkshopSession, account_id: int) -> WorkshopVoteOut:
@@ -718,10 +627,5 @@ async def cast_ballot(player: Player, session: Session, ballot: WorkshopBallotIn
     """Cast the calling player's ballot in the current Round's vote, in place of any they cast before. Only while the
     Investment phase is open, in a Round that holds a vote.
     """
-    try:
-        await run_in_threadpool(session.cast_ballot, player.account_id, ballot.ballot)
-    except InvestmentClosedError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED) from exc
-    except NoVoteError as exc:
-        raise GameError(WorkshopErrorCode.WORKSHOP_NO_VOTE) from exc
+    await run_in_threadpool(session.cast_ballot, player.account_id, ballot.ballot)
     return _vote_out(session, player.account_id)

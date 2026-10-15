@@ -79,6 +79,15 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "Round 1 holds no vote: no Recap comes before it to announce one.",
     WORKSHOP_CARBON_TAX_PASSED:
         "A carbon tax has already passed, so it cannot be put to a vote again.",
+    WORKSHOP_NO_SUCH_ROUND: "The session has no such Round.",
+    WORKSHOP_INVALID_PICK:
+        "This event can't be planned like this: check its severity, season and fuel.",
+    WORKSHOP_INVALID_FUEL_QUANTITY: "Enter a quantity of fuel of 0 or more.",
+    WORKSHOP_NO_PERIOD_RECORD: "This Trading period has no record to review.",
+    WORKSHOP_NO_SUCH_WEEK: "This Trading period did not simulate that week.",
+    WORKSHOP_NO_SUCH_POINT: "This Trading period has no such settlement point.",
+    WORKSHOP_GRID_DOWN:
+        "The grid was down at this point, so the market did not clear.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
