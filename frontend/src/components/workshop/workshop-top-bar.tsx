@@ -2,14 +2,14 @@
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
  * is in it, and the countdown on the running phase (#996). The facilitator also
  * gets the buttons that advance the session and extend the phase, a link to
- * their console (#1011), and a button that opens the latest Recap over the page
- * (#1013). A player gets a link to the facility page (#998) and the button that
- * opens the price-setting panel (#1002), which shows a clock badge while the
- * price-setting window is open. Once a carbon tax passes, everyone sees a badge
- * saying so for the rest of the session (#1014).
+ * their console (#1011) on every other page, and a button that opens the latest
+ * Recap over the page (#1013). A player gets a link to the facility page (#998)
+ * and the button that opens the price-setting panel (#1002), which shows a
+ * clock badge while the price-setting window is open. Once a carbon tax passes,
+ * everyone sees a badge saying so for the rest of the session (#1014).
  */
 
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
     ChevronRight,
     Clock,
@@ -53,6 +53,7 @@ export function WorkshopTopBar({
     const { data: entry } = useWorkshopEntry();
     const checkpoint = session?.checkpoint;
     const isFacilitator = entry?.role === "facilitator";
+    const onConsole = useLocation().pathname === "/app/workshop/console";
     const recapRound = session
         ? latestRecapRound(session.checkpoint, session.round_count)
         : null;
@@ -90,7 +91,8 @@ export function WorkshopTopBar({
                         onClick={onTogglePricePanel}
                     />
                 )}
-                {isFacilitator && (
+                {/* Hidden on the console itself, where it would lead nowhere. */}
+                {isFacilitator && !onConsole && (
                     <Button variant="ghost" size="sm" asChild>
                         <Link to="/app/workshop/console">
                             <SlidersHorizontal className="size-4" />
