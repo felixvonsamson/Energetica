@@ -63,7 +63,8 @@ function sold(pool: Pool): number[] {
     return pool.generation.map((value, i) => value - (pool.dumped[i] ?? 0));
 }
 
-function isStorage(pool: Pool): boolean {
+/** Whether the pool charged at any point this week. */
+function hasCharged(pool: Pool): boolean {
     return pool.charged.some((value) => value > 0);
 }
 
@@ -81,7 +82,7 @@ export function playerPowerRows(
         } else {
             addSeries(rows, EXPORTS, sold(pool));
             addSeries(rows, DUMPING, pool.dumped);
-            if (isStorage(pool)) addSeries(rows, pool.facility, pool.charged);
+            if (hasCharged(pool)) addSeries(rows, pool.facility, pool.charged);
         }
     }
     return rows;
@@ -111,7 +112,7 @@ export function networkPowerRows(
     }
     for (const pool of week.pools) {
         if (grouping === "type") {
-            if (isStorage(pool)) addSeries(rows, pool.facility, pool.charged);
+            if (hasCharged(pool)) addSeries(rows, pool.facility, pool.charged);
             addSeries(rows, DUMPING, pool.dumped);
         } else {
             const key = String(pool.player_id);
