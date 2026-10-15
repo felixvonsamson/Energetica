@@ -2,6 +2,8 @@
 
 Server maintains real-time bidirectional communication with clients via Socket.IO. Game data changes frequently (every tick, player actions), so push updates are essential.
 
+Most of this page describes freeplay Runs. A Workshop Run has its own, smaller Socket.IO server, described in [Workshop Runs](#workshop-runs).
+
 **See also:** [Data Fetching](/docs/frontend/data-fetching.md) - TanStack Query, API client, mutation patterns
 
 ## Connection Requirements
@@ -244,7 +246,7 @@ player.invalidate_queries(["facilities", "all"])
 
 ## Frontend Socket Listeners
 
-**All SocketIO listeners are centralized in `GameTickContext`** - no per-component listeners needed.
+**In a freeplay Run, all SocketIO listeners are centralized in `GameTickContext`** - no per-component listeners needed.
 
 ```ts
 // frontend/src/contexts/game-tick-context.tsx
@@ -262,8 +264,24 @@ useSocketEvent("invalidate", (data) => {
 **Why centralized:**
 
 - Listeners run globally (even when specific components unmounted)
-- All socket logic in one place
+- All of freeplay's socket logic in one place
 - Prevents stale data from missed events
+
+### Workshop Runs
+
+A Workshop Run does not use `SocketProvider` or `GameTickContext`. Its server is in
+`src/energetica/workshop/realtime.py`, and the frontend connects in `useWorkshopSocket`
+(`frontend/src/hooks/use-workshop.ts`), which the Workshop's root layout calls once. That hook
+opens its own socket and holds all of the Workshop's listeners:
+
+- `invalidate`: re-read the queries the message names, as in freeplay. The server sends it to
+  every open page when the facilitator changes the session.
+- `settlement_progress`: update the simulation progress in the cached session, while a Trading
+  period is being simulated.
+- `connect`: re-read the session, since nothing is sent for changes made while the socket was down.
+
+Players and the facilitator both connect. Everything the server sends goes to every page, so it
+keeps nothing per connection.
 
 ## Common Use Cases
 
