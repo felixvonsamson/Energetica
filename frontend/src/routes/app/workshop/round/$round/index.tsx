@@ -3,8 +3,8 @@
  * filling in as each of its Trading periods is settled. It is where players
  * land in the Investment phase, so in a Round that holds a carbon tax vote, the
  * ballot shows above the sheet while the phase is open (#1014). Players only: a
- * facilitator moderates rather than plays, so is sent back to the Workshop
- * home.
+ * facilitator runs the session rather than plays, so is sent back to the
+ * Workshop home.
  */
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";

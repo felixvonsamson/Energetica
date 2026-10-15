@@ -39,7 +39,7 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
 GAS = FacilityId.GAS_BURNER
 COAL = FacilityId.COAL_BURNER
 
-# Price shocks the moderator picks (#1012): gas ×1.5, and coal ×0.85.
+# Price shocks the facilitator picks (#1012): gas ×1.5, and coal ×0.85.
 # Planned for Round 2's summer: Round 1 holds no events.
 GAS_SHOCK = PlannedEvent(event="geo.gas_pipeline_disruption", severity="base", season="summer")
 COAL_SHOCK = PlannedEvent(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL, season="summer")
@@ -114,7 +114,7 @@ def _whole_tonnes(kg: float) -> float:
 # --- the lever and the prices -----------------------------------------------------------------------
 
 
-def test_fuel_procurement_is_automatic_unless_the_moderator_turns_on_manual() -> None:
+def test_fuel_procurement_is_automatic_unless_the_facilitator_turns_on_manual() -> None:
     assert RoundLevers().fuel_procurement == "automatic"
 
 

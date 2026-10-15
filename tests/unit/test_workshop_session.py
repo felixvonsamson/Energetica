@@ -1,4 +1,4 @@
-"""Unit tests for a Workshop Run's session state (#994): the moderator-paced state machine that runs
+"""Unit tests for a Workshop Run's session state (#994): the facilitator-paced state machine that runs
 Round → Investment → four Trading periods → Recap, and the saved copy that lets it survive a restart.
 """
 
@@ -95,7 +95,7 @@ def _settle(session: WorkshopSession) -> bool:
 
 
 def _advance(session: WorkshopSession) -> Checkpoint:
-    """Move on to the next checkpoint as the moderator does: advance once to close a window that is still
+    """Move on to the next checkpoint as the facilitator does: advance once to close a window that is still
     open, wait for a Trading period to be settled, and advance again.
     """
     if session.phase_timer is not None and session.phase_timer.is_active(session.clock()):
@@ -151,7 +151,7 @@ def path(tmp_path: Path) -> Path:
     return tmp_path / "workshop_session.json"
 
 
-def test_a_new_session_waits_for_the_moderator_before_round_one(path: Path) -> None:
+def test_a_new_session_waits_for_the_facilitator_before_round_one(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     assert session.checkpoint == NotStarted()
@@ -373,7 +373,7 @@ def test_running_out_of_time_does_not_advance_the_session(path: Path, clock: _Cl
     assert not session.phase_timer.is_active(clock.now)
 
 
-def test_the_moderator_extends_the_running_phase(path: Path, clock: _Clock) -> None:
+def test_the_facilitator_extends_the_running_phase(path: Path, clock: _Clock) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     _advance(session)
     clock.tick(minutes=7)
@@ -1375,7 +1375,7 @@ def test_a_session_starts_with_representative_weeks_hourly_clearings_and_batteri
     assert session.current_format() == RoundFormat()
 
 
-def test_the_moderator_changes_the_levers_and_they_survive_a_restart(path: Path) -> None:
+def test_the_facilitator_changes_the_levers_and_they_survive_a_restart(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
     levers = RoundLevers(round_format=RoundFormat(trading_format="full_season", clearings_per_day=96))
 

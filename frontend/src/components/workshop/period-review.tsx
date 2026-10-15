@@ -2,8 +2,8 @@
  * A settled Trading period's review (#1007). Everyone explores the finished
  * period on the persistent world's charts:
  *
- * - The player's own power, generation or consumption (not for the moderator, who
- *   has no fleet);
+ * - The player's own power, generation or consumption (not for the facilitator,
+ *   who has no fleet);
  * - The whole market's power, by facility type or by player;
  * - The market price;
  * - The merit order at one settlement point, picked with the scrubber, which the
@@ -200,7 +200,7 @@ export function PeriodReview({
                     <LockedPricesTab round={round} season={season} />
                 ) : (
                     <TypographyMuted>
-                        The moderator sets no prices.
+                        The facilitator sets no prices.
                     </TypographyMuted>
                 )}
             </TabsContent>

@@ -277,7 +277,7 @@ function AlreadyFacilitatorCard({ instanceName }: { instanceName: string }) {
             <CardContent>
                 <Button asChild className="w-full" size="lg">
                     <Link to="/app/facilitator">
-                        Back to moderator dashboard
+                        Back to facilitator dashboard
                     </Link>
                 </Button>
             </CardContent>

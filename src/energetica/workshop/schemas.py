@@ -42,7 +42,7 @@ class WorkshopEntryOut(BaseModel):
 
     role: Literal["player", "facilitator"]
     player: WorkshopPlayerOut | None = Field(
-        description="The account's player, or null for a facilitator, who moderates and does not play"
+        description="The account's player, or null for a facilitator, who runs the session and does not play"
     )
 
 

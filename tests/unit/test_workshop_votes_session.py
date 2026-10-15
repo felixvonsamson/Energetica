@@ -68,7 +68,7 @@ def _keep_the_lights_on(session: WorkshopSession) -> None:
 
 
 def _to_next(session: WorkshopSession, kind: type) -> None:
-    """Advance as the moderator does, settling each Trading period, until the session is at the next ``kind``."""
+    """Advance as the facilitator does, settling each Trading period, until the session is at the next ``kind``."""
     start = session.checkpoint
     while True:
         if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
@@ -82,7 +82,7 @@ def _to_next(session: WorkshopSession, kind: type) -> None:
 
 
 def _close_investment(session: WorkshopSession) -> None:
-    """Close the Investment phase and move on to the first Trading period, as the moderator's two advances do."""
+    """Close the Investment phase and move on to the first Trading period, as the facilitator's two advances do."""
     session.advance()
     session.advance()
     assert isinstance(session.checkpoint, TradingPeriod)

@@ -172,7 +172,7 @@ export interface paths {
         /**
          * Enter
          * @description Enter the Run. A player is placed into its shared Network the first time and gets the same
-         *     player every time after. A facilitator moderates rather than plays, so is placed nowhere.
+         *     player every time after. A facilitator runs the session rather than plays, so is placed nowhere.
          */
         post: operations["enter_api_v1_workshop_enter_post"];
         delete?: never;
@@ -1168,7 +1168,7 @@ export interface components {
         };
         /**
          * PhaseTimers
-         * @description How long each timed phase is open when it starts (#986). The moderator changes them at any time, and a change
+         * @description How long each timed phase is open when it starts (#986). The facilitator changes them at any time, and a change
          *     applies to the next phase that opens. They belong to the session, not to any Round's plan.
          */
         PhaseTimers: {
@@ -1198,7 +1198,7 @@ export interface components {
              * @enum {string}
              */
             severity: "base" | "minor" | "moderate" | "major" | "catastrophic";
-            /** @description The fuel it moves, for an event whose fuel the moderator picks */
+            /** @description The fuel it moves, for an event whose fuel the facilitator picks */
             fuel?: components["schemas"]["Fuel"] | null;
             /**
              * Season
@@ -1545,7 +1545,7 @@ export interface components {
             username: string;
             /**
              * Membership
-             * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator/moderator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
+             * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
              */
             membership: ("player" | "facilitator") | null;
         };
@@ -1570,7 +1570,7 @@ export interface components {
              * @enum {string}
              */
             role: "player" | "facilitator";
-            /** @description The account's player, or null for a facilitator, who moderates and does not play */
+            /** @description The account's player, or null for a facilitator, who runs the session and does not play */
             player: components["schemas"]["WorkshopPlayerOut"] | null;
         };
         /**

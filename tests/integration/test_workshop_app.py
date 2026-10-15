@@ -299,7 +299,7 @@ def test_a_player_cannot_advance_the_session(session_path: Path) -> None:
     assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("not_started")
 
 
-def test_the_moderator_advances_an_empty_round_to_recap_and_into_round_two(session_path: Path) -> None:
+def test_the_facilitator_advances_an_empty_round_to_recap_and_into_round_two(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
 

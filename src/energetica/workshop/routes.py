@@ -155,7 +155,7 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
 @router.post("/enter")
 def enter(account: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> WorkshopEntryOut:
     """Enter the Run. A player is placed into its shared Network the first time and gets the same
-    player every time after. A facilitator moderates rather than plays, so is placed nowhere.
+    player every time after. A facilitator runs the session rather than plays, so is placed nowhere.
     """
     if get_role(account.account_id) == "facilitator":
         return WorkshopEntryOut(role="facilitator", player=None)

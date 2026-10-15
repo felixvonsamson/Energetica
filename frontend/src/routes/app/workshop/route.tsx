@@ -49,7 +49,7 @@ function WorkshopLayout() {
         "workshop-price-panel-open",
         false,
     );
-    // A facilitator moderates rather than plays, so has no prices.
+    // A facilitator runs the session rather than plays, so has no prices.
     const showPricePanel = pricePanelOpen && entry?.role === "player";
 
     return (

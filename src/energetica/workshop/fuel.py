@@ -5,10 +5,10 @@ changes every season in two ways:
 
 - a small random step, from the Run's seed, that also drifts back toward the catalog price, so prices
   wander but never far;
-- a price shock, a large move the moderator picks (#1012). It lands in full for one season and then eases
+- a price shock, a large move the facilitator picks (#1012). It lands in full for one season and then eases
   back, closing half of what is left each season.
 
-When the moderator turns on manual procurement, a player buys each fuel their operating facilities burn in
+When the facilitator turns on manual procurement, a player buys each fuel their operating facilities burn in
 the price-setting window, next to their prices. The quantity starts at a default: the first time, enough
 to run every facility burning the fuel at full output for the whole season (its **season need**), and after
 that, what the player bought last time. A player's stock of a fuel may not go above

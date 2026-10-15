@@ -31,7 +31,7 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
 
 
 class _Clock:
-    """A clock that never moves: every window stays open until the moderator closes it."""
+    """A clock that never moves: every window stays open until the facilitator closes it."""
 
     def __call__(self) -> datetime:
         return datetime(2026, 10, 4, 9, 0, tzinfo=timezone.utc)
@@ -52,7 +52,7 @@ def _session(path: Path) -> WorkshopSession:
 
 
 def _to_recap(session: WorkshopSession) -> None:
-    """Advance as the moderator does, settling each Trading period, until the session is at a Recap."""
+    """Advance as the facilitator does, settling each Trading period, until the session is at a Recap."""
     while not isinstance(session.checkpoint, Recap):
         if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
             session.advance()

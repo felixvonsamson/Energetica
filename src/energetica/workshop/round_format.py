@@ -11,7 +11,7 @@ Three levers make up a Round's format:
   full-season mode. With one representative week per season, seasonal storage could charge cheaply in the
   spring week and sell in the summer week with none of the real time in between, which is an exploit.
 
-Each Round has its own format, part of its plan (:mod:`~energetica.workshop.round_plan`, #1190). The moderator
+Each Round has its own format, part of its plan (:mod:`~energetica.workshop.round_plan`, #1190). The facilitator
 changes it until the plan locks, a Round ahead.
 """
 

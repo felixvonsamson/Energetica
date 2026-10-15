@@ -1,5 +1,5 @@
 """Unit tests for Workshop's phase timer (#996): how much time a phase has left, given its configured
-duration, the time since it opened and the moderator's "+N minutes" extensions.
+duration, the time since it opened and the facilitator's "+N minutes" extensions.
 """
 
 from __future__ import annotations

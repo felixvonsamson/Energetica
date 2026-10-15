@@ -7,8 +7,8 @@
  * that nothing holds gets a warning under its price tag, until the selection
  * holds it (#1001). In a Round that holds a carbon tax vote, the player votes
  * above the selection while the phase is open (#1014). Players only: a
- * facilitator moderates rather than plays, so is sent back to the Workshop
- * home.
+ * facilitator runs the session rather than plays, so is sent back to the
+ * Workshop home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
  * stats. Each grid cell is a two-row subgrid: the card is centred in the first

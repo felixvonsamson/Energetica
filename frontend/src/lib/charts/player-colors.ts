@@ -3,7 +3,7 @@
  *
  * The current player gets one reserved color. Every other player gets a shade
  * between two theme colors, so the others read as one group and the current
- * player stands out. A moderator, who has no player, sees only the shades.
+ * player stands out. A facilitator, who has no player, sees only the shades.
  *
  * Shades are handed out by each player's position among all players sorted by
  * id, not by which players a chart happens to show, so a player keeps the same

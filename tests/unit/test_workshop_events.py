@@ -222,7 +222,7 @@ def test_only_climate_vignettes_get_a_suggestion() -> None:
     assert suggested_severity(EVENTS["demand.recession"], emissions=0, players=1) is None
 
 
-def test_a_fuel_shock_moves_its_target_or_the_fuel_the_moderator_picked() -> None:
+def test_a_fuel_shock_moves_its_target_or_the_fuel_the_facilitator_picked() -> None:
     fired = [
         _fired("geo.gas_pipeline_disruption", round_number=1, season="summer"),
         FiredEvent.of(
