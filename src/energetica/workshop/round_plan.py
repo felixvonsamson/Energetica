@@ -39,6 +39,7 @@ from energetica.workshop.events import (
     validate_pick,
 )
 from energetica.workshop.fuel import FuelProcurement
+from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
 from energetica.workshop.seasons import SEASONS, Season
 
@@ -98,11 +99,13 @@ class LeverChanges(BaseModel):
     carbon_tax_vote: bool | None = None
 
 
-class InvalidLeversError(Exception):
+class InvalidLeversError(WorkshopError):
     """Raised when a lever change would leave a Round invalid: the Round changed, or a later one it carries to."""
 
+    code = WorkshopErrorCode.WORKSHOP_LEVERS_INVALID
+
     def __init__(self, round_number: int) -> None:
-        super().__init__(f"the change would leave Round {round_number} invalid")
+        super().__init__(f"the change would leave Round {round_number} invalid", round=round_number)
         self.round_number = round_number
 
 

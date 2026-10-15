@@ -1021,7 +1021,9 @@ def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(ses
 
     authenticate(client, alice)
     assert client.get(BALANCE_SHEET_URL.format(round=1)).status_code == 200
-    assert client.get(BALANCE_SHEET_URL.format(round=0)).status_code == 404
+    response = client.get(BALANCE_SHEET_URL.format(round=0))
+    assert response.status_code == 404
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
     assert client.get(BALANCE_SHEET_URL.format(round=99)).status_code == 404
     authenticate(client, facilitator)
     assert client.get(BALANCE_SHEET_URL.format(round=1)).status_code == 403
@@ -1084,7 +1086,9 @@ def test_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> N
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.patch(LEVERS_URL.format(round=4), json=_levers()).status_code == 404
+    response = client.patch(LEVERS_URL.format(round=4), json=_levers())
+    assert response.status_code == 404
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
 
 
 def test_the_facilitator_reads_and_changes_the_timers(session_path: Path) -> None:
@@ -1398,7 +1402,9 @@ PERIOD_URL = "/api/v1/workshop/periods/1/spring"
 def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path: Path, clock: _Clock) -> None:
     client, facilitator, alice = _trading(session_path, clock)
     client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
-    assert client.get(PERIOD_URL).status_code == 404
+    response = client.get(PERIOD_URL)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "WORKSHOP_NO_PERIOD_RECORD"
     authenticate(client, facilitator)
     _advance(client)
 
@@ -1428,8 +1434,12 @@ def test_a_period_has_only_the_weeks_and_points_it_simulated(session_path: Path,
     _advance(client)
     authenticate(client, alice)
 
-    assert client.get(f"{PERIOD_URL}/weeks/1").status_code == 404
-    assert client.get(f"{PERIOD_URL}/points/{7 * 24}/merit-order").status_code == 404
+    response = client.get(f"{PERIOD_URL}/weeks/1")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "WORKSHOP_NO_SUCH_WEEK"
+    response = client.get(f"{PERIOD_URL}/points/{7 * 24}/merit-order")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "WORKSHOP_NO_SUCH_POINT"
     assert client.get("/api/v1/workshop/periods/1/summer").status_code == 404
 
 
@@ -1587,7 +1597,9 @@ def test_a_pick_the_catalog_does_not_allow_is_rejected(session_path: Path, pick:
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.put(PLANNED_EVENTS_URL.format(round=2), json=pick).status_code == 422
+    response = client.put(PLANNED_EVENTS_URL.format(round=2), json=pick)
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_INVALID_PICK"
     assert client.get(PLANS_URL).json()["rounds"][1]["events"] == []
 
 
@@ -1687,7 +1699,9 @@ def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path:
     client = _client(session_path)
     _facilitator(client)
 
-    assert client.get(RECAP_URL.format(round=9)).status_code == 404
+    response = client.get(RECAP_URL.format(round=9))
+    assert response.status_code == 404
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
 
 
 # --- the scoreboard (#1017) -----------------------------------------------------------------

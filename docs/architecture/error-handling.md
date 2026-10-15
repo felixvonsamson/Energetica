@@ -41,6 +41,10 @@ This creates a closed loop:
 
 When adding a new backend error: add it to the enum of the layer or app that raises it, run `generate-types`, then add the corresponding entry to `GAME_ERROR_MESSAGES`. The compiler will tell you if you miss either step.
 
+A `GameError` is answered with a 400 unless its class sets another `status_code`, such as 404 for something that does not exist. The body is the same either way.
+
+Workshop's errors subclass `WorkshopError` (`energetica/workshop/game_error.py`), a `GameError` whose subclasses each name their code, such as `RoundLockedError` with `WORKSHOP_ROUND_LOCKED`. The session raises them with a message for logs and tests, and routes let them through: the error envelope sends the code, so a route needs no `except` clause to convert them.
+
 Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.) are included in these enums even though they don't go through the `GameError` handler — the enums serve as the registry of all error codes.
 
 `tests/integration/test_error_envelope_contract.py` pins which enums each app's schema gets, and fails if a Workshop code reaches the kernel or another app's schema.

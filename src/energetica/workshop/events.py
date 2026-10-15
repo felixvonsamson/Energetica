@@ -38,6 +38,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
+from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.seasons import Season
 
 EventCategory = Literal["climate", "price_shock_geopolitical", "demand_shift", "tech_unlock", "vote"]
@@ -163,8 +164,10 @@ class FiredEvent(BaseModel):
         )
 
 
-class InvalidPickError(Exception):
+class InvalidPickError(WorkshopError):
     """Raised for a pick naming no event, a severity the event does not have, or a wrong fuel."""
+
+    code = WorkshopErrorCode.WORKSHOP_INVALID_PICK
 
 
 def _event(

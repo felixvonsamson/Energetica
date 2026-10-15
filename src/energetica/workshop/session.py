@@ -83,6 +83,7 @@ from energetica.workshop.events import (
     revenue_tax_rate,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
+from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.final_score import FinalScore, scoreboard
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
@@ -203,88 +204,131 @@ class Finished(BaseModel):
 Checkpoint = Annotated[NotStarted | Investment | TradingPeriod | Recap | Finished, Field(discriminator="kind")]
 
 
-class SessionFinishedError(Exception):
+class SessionFinishedError(WorkshopError):
     """Raised when advancing a session that is already :class:`Finished`."""
 
+    code = WorkshopErrorCode.WORKSHOP_SESSION_FINISHED
 
-class InvestmentClosedError(Exception):
+
+class InvestmentClosedError(WorkshopError):
     """Raised when changing a selection while no Investment phase is open (#999)."""
 
+    code = WorkshopErrorCode.WORKSHOP_INVESTMENT_CLOSED
 
-class FacilityNotOfferedError(Exception):
+
+class FacilityNotOfferedError(WorkshopError):
     """Raised when selecting a facility the session does not offer yet (#999)."""
 
+    code = WorkshopErrorCode.WORKSHOP_FACILITY_NOT_OFFERED
 
-class NotEnoughMoneyError(Exception):
+
+class NotEnoughMoneyError(WorkshopError):
     """Raised when a selection would cost more than the player has (#999)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY
 
-class NotSelectedError(Exception):
+
+class NotSelectedError(WorkshopError):
     """Raised when removing a facility that is not in the player's selection (#999)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NOT_SELECTED
 
-class NoPhaseRunningError(Exception):
+
+class NoPhaseRunningError(WorkshopError):
     """Raised when extending a phase while none is open: the checkpoint is not timed, or its time is up."""
 
+    code = WorkshopErrorCode.WORKSHOP_NO_PHASE_RUNNING
 
-class PriceSettingClosedError(Exception):
+
+class PriceSettingClosedError(WorkshopError):
     """Raised when changing a price while no price-setting window is open (#1002)."""
 
+    code = WorkshopErrorCode.WORKSHOP_PRICE_SETTING_CLOSED
 
-class PriceBelowFloorError(Exception):
+
+class PriceBelowFloorError(WorkshopError):
     """Raised when a price is below Workshop's price floor, or is not a finite number (#1002)."""
 
+    code = WorkshopErrorCode.WORKSHOP_PRICE_BELOW_FLOOR
 
-class NotStorageError(Exception):
+
+class NotStorageError(WorkshopError):
     """Raised when setting a buy price for a facility that is not storage (#1002)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NOT_STORAGE
 
-class FuelNotManualError(Exception):
+
+class FuelNotManualError(WorkshopError):
     """Raised when ordering fuel while fuel procurement is automatic (#1009)."""
 
+    code = WorkshopErrorCode.WORKSHOP_FUEL_NOT_MANUAL
 
-class FuelNotBurnedError(Exception):
+
+class FuelNotBurnedError(WorkshopError):
     """Raised when ordering a fuel none of the player's operating facilities burn (#1009)."""
 
+    code = WorkshopErrorCode.WORKSHOP_FUEL_NOT_BURNED
 
-class InvalidFuelQuantityError(Exception):
+
+class InvalidFuelQuantityError(WorkshopError):
     """Raised when a fuel order is negative or not a finite number (#1009)."""
 
+    code = WorkshopErrorCode.WORKSHOP_INVALID_FUEL_QUANTITY
 
-class NoSuchRoundError(Exception):
+
+class NoSuchRoundError(WorkshopError):
     """Raised when editing the plan of a Round the session does not have (#1190)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NO_SUCH_ROUND
+    status_code = 404
 
-class RoundLockedError(Exception):
+
+class RoundLockedError(WorkshopError):
     """Raised when editing the plan of a Round that is locked (#1190)."""
 
+    code = WorkshopErrorCode.WORKSHOP_ROUND_LOCKED
 
-class NoEventsInRoundOneError(Exception):
+
+class NoEventsInRoundOneError(WorkshopError):
     """Raised when planning an event for Round 1, which holds none: no Recap comes before it to tell of it (#1190)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NO_EVENTS_IN_ROUND_ONE
 
-class NoVoteError(Exception):
+
+class NoVoteError(WorkshopError):
     """Raised when casting a ballot in a Round that holds no vote (#1014)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NO_VOTE
 
-class NoVoteInRoundOneError(Exception):
+
+class NoVoteInRoundOneError(WorkshopError):
     """Raised when proposing a vote for Round 1: no Recap comes before it to announce the vote (#1014)."""
 
+    code = WorkshopErrorCode.WORKSHOP_NO_VOTE_IN_ROUND_ONE
 
-class CarbonTaxPassedError(Exception):
+
+class CarbonTaxPassedError(WorkshopError):
     """Raised when proposing a carbon tax once one has passed: it is in force for good (#1014)."""
 
+    code = WorkshopErrorCode.WORKSHOP_CARBON_TAX_PASSED
 
-class RecapNotOpenError(Exception):
+
+class RecapNotOpenError(WorkshopError):
     """Raised when reading the Recap of a Round whose Recap has not opened yet (#1013)."""
 
+    code = WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN
 
-class SessionNotFinishedError(Exception):
+
+class SessionNotFinishedError(WorkshopError):
     """Raised when reading the scoreboard before the session is over (#1017)."""
 
+    code = WorkshopErrorCode.WORKSHOP_SESSION_NOT_FINISHED
 
-class SettlementRunningError(Exception):
+
+class SettlementRunningError(WorkshopError):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
+
+    code = WorkshopErrorCode.WORKSHOP_SETTLEMENT_RUNNING
 
 
 class SettlementCancelledError(Exception):

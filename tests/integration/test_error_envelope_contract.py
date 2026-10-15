@@ -1,7 +1,7 @@
 """Contract test: every app serialises errors identically, and returns only its own error codes.
 
 Two exception handlers produce every non-``HTTPException`` error the frontend sees — one for
-``GameError`` (400) and one for ``RequestValidationError`` (422). Each app installs them with
+``GameError`` (400, or the status its class sets) and one for ``RequestValidationError`` (422). Each app installs them with
 ``install_error_handlers``. The generated-types freshness check structurally cannot see them,
 because both envelopes are hand-built ``JSONResponse`` bodies rather than declared response models,
 so neither reaches the OpenAPI schema.
@@ -43,6 +43,7 @@ _GENERATOR = Path(__file__).resolve().parents[2] / "scripts" / "generate_openapi
 
 GAME_ERROR_PATH = "/probe/game-error"
 OWN_CODE_PATH = "/probe/own-code"
+NOT_FOUND_PATH = "/probe/not-found"
 VALIDATION_PATH = "/probe/validation-error"
 
 # The codes each app can return, pinned here so that moving a code between enums, or giving an app
@@ -65,6 +66,10 @@ class _ProbeBody(BaseModel):
     count: int
 
 
+class _NotFoundError(GameError):
+    status_code = 404
+
+
 def _add_probe_routes(app: FastAPI, own_code: ErrorCode) -> None:
     """Attach one route per envelope shape, a ``GameError`` raiser and a schema that will not
     validate, and a route raising ``own_code``.
@@ -77,6 +82,10 @@ def _add_probe_routes(app: FastAPI, own_code: ErrorCode) -> None:
     @app.get(OWN_CODE_PATH)
     def _raise_own_code() -> None:
         raise GameError(own_code)
+
+    @app.get(NOT_FOUND_PATH)
+    def _raise_not_found() -> None:
+        raise _NotFoundError(SharedErrorCode.USER_NOT_FOUND)
 
     @app.post(VALIDATION_PATH)
     def _validate(body: _ProbeBody) -> None:
@@ -116,11 +125,20 @@ every_app = pytest.mark.parametrize("app_name", CLIENT_FACTORIES)
 
 @every_app
 def test_game_error_envelope(app_name: str) -> None:
-    """A ``GameError`` is always a 400 carrying the code and its kwargs, and nothing else."""
+    """A ``GameError`` is a 400 carrying the code and its kwargs, and nothing else."""
     response = CLIENT_FACTORIES[app_name]().get(GAME_ERROR_PATH)
 
     assert response.status_code == 400
     assert response.json() == {"game_exception_type": "INSTANCE_ACCESS_DENIED", "kwargs": {"slug": "probe-run"}}
+
+
+@every_app
+def test_a_game_error_class_can_set_its_status(app_name: str) -> None:
+    """A ``GameError`` subclass can answer with another status, such as 404, in the same envelope."""
+    response = CLIENT_FACTORIES[app_name]().get(NOT_FOUND_PATH)
+
+    assert response.status_code == 404
+    assert response.json() == {"game_exception_type": "USER_NOT_FOUND", "kwargs": {}}
 
 
 @every_app

@@ -1,7 +1,7 @@
 """The error envelope: the JSON shape every error response takes, and the handlers that produce it.
 
 The frontend decodes errors in one format, whichever app sent them. A :class:`GameError` becomes a
-``400`` whose body is a :class:`GameErrorOut`. A request that fails schema validation becomes a
+``400``, or the status its class sets, whose body is a :class:`GameErrorOut`. A request that fails schema validation becomes a
 ``422`` whose body lists the validation errors under ``detail`` and marks itself with
 ``meta.error_type == "request_validation_error"``. Each app calls :func:`install_error_handlers`
 rather than defining its own handlers, so the format has one definition and a new app, such as
@@ -51,6 +51,6 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(GameError)
     def game_error_handler(request: Request, exc: GameError) -> JSONResponse:
-        """Turn a GameError raised anywhere in a route into a 400 carrying its type and kwargs."""
+        """Turn a GameError raised anywhere in a route into a response carrying its type and kwargs."""
         content = GameErrorOut.from_game_error(exc)
-        return JSONResponse(content=content.model_dump(by_alias=True), status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse(content=content.model_dump(by_alias=True), status_code=exc.status_code)
