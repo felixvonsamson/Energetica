@@ -34,7 +34,7 @@ from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
-from energetica.workshop.session import TradingPeriod, WorkshopSession
+from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 from energetica.workshop.votes import CARBON_TAX_RATE
 
@@ -550,16 +550,27 @@ def test_a_player_removes_a_facility_from_their_selection(session_path: Path, cl
     assert response.json()["facilities"] == []
 
 
-def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
+def _investing_after(session_path: Path, clock: _Clock, trading_format: str) -> tuple[FastAPI, TestClient, int]:
+    """An app in Round 2's Investment phase after a Round 1 played in ``trading_format``, with Alice entered,
+    signed in, and holding 2,000,000 and 500,000,000 Wh of battery energy her facilities cannot hold.
+
+    Returns the app, the client, and Alice's account id.
+    """
     app, client, _, [alice] = _investing(
-        session_path, clock, "alice", levers=LeverChanges(trading_format="full_season")
+        session_path, clock, "alice", levers=LeverChanges(trading_format=trading_format)
     )
-    authenticate(client, alice)
-    # Handed to the player directly: energy left over from batteries that just retired, and the money
-    # for two new ones.
-    player = app.state.workshop_session.player(alice)
+    # Set directly: playing a full-season Round through is slow.
+    session: WorkshopSession = app.state.workshop_session
+    session.checkpoint = Investment(round=2)
+    player = session.player(alice)
     player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0
     player.money = 2_000_000.0
+    authenticate(client, alice)
+    return app, client, alice
+
+
+def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
+    _, client, _ = _investing_after(session_path, clock, "full_season")
 
     assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 500_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
@@ -568,12 +579,17 @@ def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_
     assert response.json()["stored_energy_at_risk"] == {}
 
 
-def test_the_selection_puts_no_stored_energy_at_risk_before_a_representative_week(
+def test_the_selection_puts_no_stored_energy_at_risk_after_a_representative_week(
     session_path: Path, clock: _Clock
 ) -> None:
-    # A representative week starts from its cyclic charge, not from what storage carried over.
+    _, client, _ = _investing_after(session_path, clock, "representative_week")
+
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {}
+
+
+def test_the_selection_puts_no_stored_energy_at_risk_in_round_1(session_path: Path, clock: _Clock) -> None:
     app, client, _, [alice] = _investing(
-        session_path, clock, "alice", levers=LeverChanges(trading_format="representative_week")
+        session_path, clock, "alice", levers=LeverChanges(trading_format="full_season")
     )
     authenticate(client, alice)
     app.state.workshop_session.player(alice).stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0

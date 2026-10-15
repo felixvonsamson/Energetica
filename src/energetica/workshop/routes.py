@@ -391,8 +391,13 @@ def get_fleet(
 
 
 def _selection_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopSelectionOut:
-    # Only a full-season Trading period starts from the charge storage carries over. A representative week
-    # starts from its cyclic charge, so energy lost before it changes nothing.
+    # Only warn once a full-season Round has been played. Full-season mode stays on once it is on, and before it
+    # the stored energy matters little: a representative week starts from its cyclic charge, and batteries
+    # hold little energy anyway.
+    previous_round = session.current_round() - 1
+    after_full_season = (
+        previous_round >= 1 and session.plans[previous_round - 1].levers.round_format.trading_format == "full_season"
+    )
     stored_energy_at_risk = (
         energy_at_risk(
             player.stored_energy,
@@ -400,7 +405,7 @@ def _selection_out(player: WorkshopPlayer, session: WorkshopSession) -> Workshop
             player.selection,
             current_round=session.current_round(),
         )
-        if session.current_format().trading_format == "full_season"
+        if after_full_season
         else {}
     )
     return WorkshopSelectionOut(
