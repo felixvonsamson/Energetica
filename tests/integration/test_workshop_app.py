@@ -551,7 +551,9 @@ def test_a_player_removes_a_facility_from_their_selection(session_path: Path, cl
 
 
 def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
-    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    app, client, _, [alice] = _investing(
+        session_path, clock, "alice", levers=LeverChanges(trading_format="full_season")
+    )
     authenticate(client, alice)
     # Handed to the player directly: energy left over from batteries that just retired, and the money
     # for two new ones.
@@ -564,6 +566,19 @@ def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_
     assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 200_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
     assert response.json()["stored_energy_at_risk"] == {}
+
+
+def test_the_selection_puts_no_stored_energy_at_risk_before_a_representative_week(
+    session_path: Path, clock: _Clock
+) -> None:
+    # A representative week starts from its cyclic charge, not from what storage carried over.
+    app, client, _, [alice] = _investing(
+        session_path, clock, "alice", levers=LeverChanges(trading_format="representative_week")
+    )
+    authenticate(client, alice)
+    app.state.workshop_session.player(alice).stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0
+
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {}
 
 
 @pytest.mark.parametrize(
