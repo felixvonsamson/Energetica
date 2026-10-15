@@ -34,6 +34,7 @@ from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
+from energetica.workshop.round_format import TradingFormat
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 from energetica.workshop.votes import CARBON_TAX_RATE
@@ -550,7 +551,9 @@ def test_a_player_removes_a_facility_from_their_selection(session_path: Path, cl
     assert response.json()["facilities"] == []
 
 
-def _investing_after(session_path: Path, clock: _Clock, trading_format: str) -> tuple[FastAPI, TestClient, int]:
+def _investing_after(
+    session_path: Path, clock: _Clock, trading_format: TradingFormat
+) -> tuple[FastAPI, TestClient, int]:
     """An app in Round 2's Investment phase after a Round 1 played in ``trading_format``, with Alice entered,
     signed in, and holding 2,000,000 and 500,000,000 Wh of battery energy her facilities cannot hold.
 
@@ -563,6 +566,7 @@ def _investing_after(session_path: Path, clock: _Clock, trading_format: str) -> 
     session: WorkshopSession = app.state.workshop_session
     session.checkpoint = Investment(round=2)
     player = session.player(alice)
+    assert player is not None
     player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0
     player.money = 2_000_000.0
     authenticate(client, alice)
