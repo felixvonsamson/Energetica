@@ -1,0 +1,17 @@
+{
+  "levers": {
+    "2": {"trading_format": "full_season", "fuel_procurement": "manual", "carbon_tax_vote": true},
+    "3": {"trading_format": "full_season", "storage": "all", "carbon_tax_vote": false}
+  },
+  "events": {
+    "2": [
+      {"event": "demand.data_center_boom", "severity": "base"},
+      {"event": "climate.cold_snap", "severity": "major", "season": "winter"},
+      {"event": "geo.gas_pipeline_disruption", "severity": "base", "season": "winter"}
+    ],
+    "3": [
+      {"event": "geo.pv_megafactory", "severity": "base"},
+      {"event": "climate.drought", "severity": "moderate", "season": "summer"}
+    ]
+  }
+}
