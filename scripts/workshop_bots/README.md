@@ -15,7 +15,7 @@ past Trading periods, and nothing else.
 | `greenie`  | Idealist. Wind, water and sun only. Gives power away in Round 1, then asks 40. Adds batteries in Round 2 and pumped hydro once allowed. Votes for the tax. |
 | `trader`   | Speculator. Gas peakers and a battery. Tries several markups and keeps the best. Buys less fuel when its price rises. In a season the Recap warned about, he raises his prices and buys no fuel at all. |
 | `nuke`     | Planner. Gas and dams in Round 1, a reactor in Round 2 that runs from Round 3, priced just above fuel cost. |
-| `gambler`  | Copycat. Guesses in Round 1, then buys whatever earned most per euro. Erratic prices, sometimes wild ones (1,500 or 3,000). Forgets his fuel order half the time. Votes at random. |
+| `gambler`  | Copycat. Guesses in Round 1, then buys whatever earned most per euro, among what he can still buy. Erratic prices, sometimes wild ones (1,500 or 3,000). Forgets his fuel order half the time. Votes at random. |
 
 Each bot writes its reasoning to the log, for example `trader: R2 winter: the Recap warned about this season:
 buys no gas, betting that scarcity pays`.

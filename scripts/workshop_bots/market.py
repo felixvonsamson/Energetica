@@ -6,6 +6,7 @@ settlement point's price, the demand served, and every player's output per facil
 
 from __future__ import annotations
 
+import math
 import statistics
 from dataclasses import dataclass, field
 from typing import Any
@@ -181,6 +182,15 @@ class Ctx:
             if not owned["under_construction"] and owned["rounds_left"] > 0:
                 counts[owned["facility"]] = counts.get(owned["facility"], 0) + 1
         return counts
+
+    def room_for(self, facility: str) -> float:
+        """How many more of ``facility`` the bot may own under the facility's limit, such as 3 of each dam (#1223).
+        Infinite if it has no limit.
+        """
+        limit = self.offered[facility].get("max_owned") if facility in self.offered else None
+        if limit is None:
+            return math.inf
+        return max(0, limit - sum(1 for owned in self.fleet if owned["facility"] == facility))
 
     def power(self, facility: str) -> float:
         return self.offered[facility]["base_power_generation"] if facility in self.offered else POWER[facility]

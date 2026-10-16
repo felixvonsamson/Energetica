@@ -50,7 +50,9 @@ class Strategy:
 
 
 def shopping(ctx: Ctx, wishes: list[tuple[str | None, int]], budget: float) -> list[str]:
-    """Pick from ``wishes``, (facility, count) in order of preference, skipping what is not for sale or too dear."""
+    """Pick from ``wishes``, (facility, count) in order of preference, skipping what is not for sale, too dear or
+    over its limit.
+    """
     picks: list[str] = []
     left = budget
     for facility, count in wishes:
@@ -58,7 +60,7 @@ def shopping(ctx: Ctx, wishes: list[tuple[str | None, int]], budget: float) -> l
         if item is None:
             continue
         for _ in range(count):
-            if item["price"] > left:
+            if item["price"] > left or picks.count(item["id"]) >= ctx.room_for(item["id"]):
                 break
             picks.append(item["id"])
             left -= item["price"]
@@ -277,9 +279,9 @@ class Nuke(Strategy):
 
 
 class Gambler(Strategy):
-    """Copycat. Guesses in Round 1, then buys whatever earned most per euro in the last Round. Follows the crowd's
-    price with random swings, and now and then types something wild. Forgets his fuel order half the time. Votes
-    at random.
+    """Copycat. Guesses in Round 1, then buys whatever earned most per euro in the last Round, among what he can still
+    buy. Follows the crowd's price with random swings, and now and then types something wild. Forgets his fuel order
+    half the time. Votes at random.
     """
 
     name = "gambler"
@@ -294,7 +296,11 @@ class Gambler(Strategy):
         for view in ctx.history[-4:]:
             for facility, value in view.income_by_facility().items():
                 earned[facility] = earned.get(facility, 0.0) + value
-        per_euro = {f: value / ctx.offered[f]["price"] for f, value in earned.items() if f in ctx.offered}
+        per_euro = {
+            f: value / ctx.offered[f]["price"]
+            for f, value in earned.items()
+            if f in ctx.offered and ctx.room_for(f) > 0
+        }
         if not per_euro:
             return []
         winner = max(per_euro, key=per_euro.__getitem__)
