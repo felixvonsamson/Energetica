@@ -872,10 +872,15 @@ export interface components {
              */
             operating_profit: number;
             /**
-             * Cash
-             * @description The cash the player holds at the end
+             * Investments
+             * @description What the player paid for every facility they bought
              */
-            cash: number;
+            investments: number;
+            /**
+             * Carbon Tax
+             * @description The carbon tax the player paid over the session, less their shared payback
+             */
+            carbon_tax: number;
             /**
              * Residual Value
              * @description What the facilities they still own are worth
@@ -883,7 +888,7 @@ export interface components {
             residual_value: number;
             /**
              * Score
-             * @description operating_profit + cash + residual_value
+             * @description operating_profit - investments - carbon_tax + residual_value
              */
             score: number;
         };

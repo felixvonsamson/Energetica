@@ -52,6 +52,7 @@ from energetica.workshop.demand_block import (
     nominal_demand,
     round_one_amplitude,
 )
+from energetica.workshop.final_score import final_score
 from energetica.workshop.fleet import om_owed
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.seasons import representative_week
@@ -1610,6 +1611,18 @@ def test_a_player_in_debt_is_topped_up_to_the_floor(path: Path) -> None:
     assert session.network.members[1].money == FLOOR
 
 
+def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    alice = session.network.members[1]
+    alice.money = -300_000.0
+    before = final_score(alice, round_count=session.round_count)
+
+    _advance(session)
+
+    assert alice.money == FLOOR
+    assert final_score(alice, round_count=session.round_count) == before
+
+
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
     session = _at_round_one_recap(path)
     session.network.members[1].money = FLOOR + 1.0
@@ -1685,6 +1698,17 @@ def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path,
     assert session.checkpoint == Investment(round=2)
     assert session.network.members[1].money == WORKSHOP_STARTING_BUDGET
     assert session.network.members[2].money == WORKSHOP_STARTING_BUDGET
+
+
+def test_a_blackout_reset_leaves_every_final_score_unchanged(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    players = list(session.network.players())
+    before = [final_score(player, round_count=session.round_count) for player in players]
+
+    _advance(session)
+
+    assert [player.money for player in players] == [WORKSHOP_STARTING_BUDGET] * len(players)
+    assert [final_score(player, round_count=session.round_count) for player in players] == before
 
 
 def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:
