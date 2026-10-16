@@ -1,7 +1,7 @@
 {
   "levers": {
     "2": {"trading_format": "full_season", "fuel_procurement": "manual", "carbon_tax_vote": true},
-    "3": {"trading_format": "full_season", "storage": "all", "carbon_tax_vote": false}
+    "3": {"trading_format": "full_season", "storage": "all", "fuel_procurement": "automatic", "carbon_tax_vote": false}
   },
   "events": {
     "2": [

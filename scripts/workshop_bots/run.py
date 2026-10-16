@@ -93,6 +93,7 @@ class Bot:
             procurement=fuel["procurement"],
             history=history.until(session),
             recap=recap,
+            loan=self.api.get("/loan"),
             memory=self.memory,
         )
 
@@ -128,6 +129,10 @@ class Bot:
             if ballot:
                 self.api.cast_ballot(ballot)
                 log(f"{self.name} votes {ballot}")
+        if ctx.loan["available"] and self.strategy.wants_loan(ctx):
+            self.api.send("POST", "/loan")
+            ctx.money += ctx.loan["amount"]
+            log(f"{self.name} takes the {ctx.loan['amount'] / 1e6:.0f}M loan")
         picked: list[str] = []
         for facility in self.strategy.invest(ctx):
             try:
@@ -187,8 +192,9 @@ def make_bots(names: list[str], seed: int, *, live: bool) -> list[Bot]:
 
 
 def balance_summary(bots: list[Bot], round_count: int) -> None:
-    """Each bot's operating income per season, in millions."""
+    """Each bot's operating income per season and its cash now, in millions."""
     for bot in bots:
+        cash = bot.api.get("/selection")["money"]
         rounds = []
         for round_number in range(1, round_count + 1):
             try:
@@ -199,7 +205,17 @@ def balance_summary(bots: list[Bot], round_count: int) -> None:
                 f"{s['sheet']['operating_income'] / 1e6:7.1f}" if s["sheet"] else "      -" for s in sheet["seasons"]
             ]
             rounds.append(f"R{round_number}" + "".join(cells))
-        log(f"{bot.name:9s} " + " |".join(rounds))
+        log(f"{bot.name:9s} " + " |".join(rounds) + f" | cash {cash / 1e6:.1f}")
+
+
+def scoreboard(api: Api) -> None:
+    """The final scores and what they are made of, in millions."""
+    log("player     score = operating profit - investments - carbon tax + residual value")
+    for score in api.get("/scoreboard"):
+        parts = (
+            score[key] / 1e6 for key in ("score", "operating_profit", "investments", "carbon_tax", "residual_value")
+        )
+        log(f"{score['username']:9s} " + "".join(f"{part:10.1f}" for part in parts))
 
 
 # --- commands --------------------------------------------------------------------------------------------------
@@ -242,8 +258,7 @@ def live(args: argparse.Namespace) -> None:
                 balance_summary(bots, session["round_count"])
             last_kind = checkpoint
         if checkpoint["kind"] == "finished":
-            for score in bots[0].api.get("/scoreboard"):
-                log(f"{score['username']:9s} score {score['score'] / 1e6:10.1f}M")
+            scoreboard(bots[0].api)
             return
         for bot in bots:
             thread = threads.get(bot.name)
@@ -283,8 +298,7 @@ def headless(args: argparse.Namespace) -> None:
                 facilitator.advance()
             if checkpoint["kind"] == "recap":
                 balance_summary(bots, session["round_count"])
-    for score in facilitator.get("/scoreboard"):
-        log(f"{score['username']:9s} score {score['score'] / 1e6:10.1f}M")
+    scoreboard(facilitator)
 
 
 def main() -> None:
