@@ -10,9 +10,10 @@ changes every season in two ways:
   back, closing half of what is left each season.
 
 When the facilitator turns on manual procurement, a player buys each fuel their operating facilities burn in
-the price-setting window, next to their prices. The quantity starts at a default: the first time, enough
-to run every facility burning the fuel at full output for the whole season (its **season need**), and after
-that, what the player bought last time. A player's stock of a fuel may not go above
+the price-setting window, next to their prices. The quantity starts at a default: the first time,
+:data:`DEFAULT_ORDER_SHARE` of what every facility burning the fuel would burn at full output for the whole
+season (its **season need**), since facilities rarely run that much and leftover fuel is worth nothing at the
+end. After that, it starts at what the player bought last time. A player's stock of a fuel may not go above
 :data:`STOCKPILE_SEASONS` times its season need, so an order is capped to fit. Unused fuel carries over.
 
 Fuel is paid for when the Trading period is settled, at that season's price. With automatic procurement,
@@ -74,6 +75,8 @@ SHOCK_GONE = 0.01
 
 #: How many seasons at full output a player's stock of a fuel may hold.
 STOCKPILE_SEASONS = 3
+#: The share of its season need that a player's first order of a fuel defaults to (#1224).
+DEFAULT_ORDER_SHARE = 0.5
 
 FuelProcurement = Literal["automatic", "manual"]
 """How players get fuel: billed for what they burned, or buying it themselves in each price-setting window."""
@@ -181,19 +184,19 @@ def capped_order(quantity: float, *, stock: float, need: float) -> float:
 def default_orders(
     previous: Mapping[Fuel, float], *, needs: Mapping[Fuel, float], stocks: Mapping[Fuel, float]
 ) -> dict[Fuel, float]:
-    """The quantity of each fuel in ``needs`` a price-setting window starts with: the ``previous`` quantity, or the
-    season need for a fuel that has none, capped by the stockpile limit. A fuel not in ``needs`` is dropped.
+    """The quantity of each fuel in ``needs`` a price-setting window starts with: the ``previous`` quantity, or
+    :data:`DEFAULT_ORDER_SHARE` of the season need for a fuel that has none, capped by the stockpile limit. A fuel
+    not in ``needs`` is dropped.
 
-    A season need of coal or gas is rounded up to whole tonnes, so the player reads a round number. Uranium is
-    bought by the kg, so its need is kept as it is.
+    A first order of coal or gas is rounded up to whole tonnes, so the player reads a round number. Uranium is
+    bought by the kg, so its first order is kept as it is.
     """
     return {
-        fuel: capped_order(
-            previous.get(
-                fuel, need if fuel == Fuel.URANIUM else float(math.ceil(need / _KG_PER_TONNE) * _KG_PER_TONNE)
-            ),
-            stock=stocks.get(fuel, 0.0),
-            need=need,
-        )
+        fuel: capped_order(previous.get(fuel, _first_order(fuel, need)), stock=stocks.get(fuel, 0.0), need=need)
         for fuel, need in needs.items()
     }
+
+
+def _first_order(fuel: Fuel, need: float) -> float:
+    quantity = DEFAULT_ORDER_SHARE * need
+    return quantity if fuel == Fuel.URANIUM else float(math.ceil(quantity / _KG_PER_TONNE) * _KG_PER_TONNE)
