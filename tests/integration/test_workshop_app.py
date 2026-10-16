@@ -887,7 +887,7 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "stock": 0.0,
                 "season_need": pytest.approx(need),
                 "stockpile_limit": pytest.approx(3 * need),
-                "order": math.ceil(need / 1_000) * 1_000.0,
+                "order": math.ceil(need / 2 / 1_000) * 1_000.0,
                 "ran_out": False,
             }
         ],
