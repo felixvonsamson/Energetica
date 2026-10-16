@@ -228,6 +228,12 @@ class NotEnoughMoneyError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY
 
 
+class FacilityLimitReachedError(WorkshopError):
+    """Raised when selecting a facility the player already has as many of as it allows (#1223)."""
+
+    code = WorkshopErrorCode.WORKSHOP_FACILITY_LIMIT_REACHED
+
+
 class NotSelectedError(WorkshopError):
     """Raised when removing a facility that is not in the player's selection (#999)."""
 
@@ -874,6 +880,8 @@ class WorkshopSession:
             if facility not in {offered.id for offered in self.offered_facilities()}:
                 raise FacilityNotOfferedError(f"{facility} is not offered")
             player = self.network.members[account_id]
+            if player.at_limit(facility):
+                raise FacilityLimitReachedError(f"the player already has as many {facility} as allowed")
             if player.selection_cost(self.facility_prices()) + self.facility_price(facility) > player.money:
                 raise NotEnoughMoneyError("the selection would cost more than the player has")
             self._set_selection(player, [*player.selection, facility])

@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from energetica.workshop.facilities import FacilityId, Fuel
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 from energetica.workshop.trading import Bidder, TradingResult
@@ -95,6 +95,17 @@ class WorkshopPlayer:
     def selection_cost(self, prices: Mapping[FacilityId, float]) -> float:
         """What the selection costs to buy, in full, at this Round's ``prices``."""
         return sum(prices[facility] for facility in self.selection)
+
+    def at_limit(self, facility: FacilityId) -> bool:
+        """Whether the player can select no more of ``facility``, because the ones they own (built or under
+        construction) and the ones in their selection already reach its ``max_owned`` (#1223). Retired ones
+        are no longer owned, so they do not count.
+        """
+        max_owned = CATALOG[facility].max_owned
+        if max_owned is None:
+            return False
+        owned = sum(1 for owned in self.owned_facilities if owned.facility == facility)
+        return owned + self.selection.count(facility) >= max_owned
 
     def bidder(self) -> Bidder:
         """What the Trading-period engine needs to know about this player (#1003)."""

@@ -23,6 +23,7 @@ from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
+    FacilityLimitReachedError,
     FacilityNotOfferedError,
     Finished,
     Investment,
@@ -54,7 +55,8 @@ from energetica.workshop.demand_block import (
     round_one_amplitude,
 )
 from energetica.workshop.final_score import final_score
-from energetica.workshop.fleet import om_owed
+from energetica.workshop.fleet import lifetime_left, om_owed
+from energetica.workshop.unlocks import Unlock
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.seasons import representative_week
 from energetica.workshop.trading import Bidder, TradingOutcome, demand_scale, simulate_trading_period
@@ -498,6 +500,92 @@ def test_a_selection_can_spend_every_last_coin(path: Path, clock: _Clock) -> Non
     session.select(1, FacilityId.GAS_BURNER)
 
     assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.GAS_BURNER]
+
+
+# --- the dam limit (#1223) ------------------------------------------------------------------
+
+SMALL_DAM = FacilityId.SMALL_WATER_DAM
+LARGE_DAM = FacilityId.LARGE_WATER_DAM
+
+
+def test_a_player_can_select_at_most_three_of_each_dam(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock, money=10_000_000.0)
+    session.unlocks.append(Unlock(facility=LARGE_DAM, round=1, trigger="investment_threshold"))
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+        session.select(1, LARGE_DAM)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, LARGE_DAM)
+
+    assert session.network.members[1].selection == [SMALL_DAM, LARGE_DAM] * 3
+
+
+def test_only_dams_are_limited() -> None:
+    limited = {facility.id: facility.max_owned for facility in CATALOG.values() if facility.max_owned is not None}
+
+    assert limited == {SMALL_DAM: 3, LARGE_DAM: 3}
+
+
+def test_a_facility_without_a_limit_can_be_selected_any_number_of_times(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock, money=10_000_000.0)
+
+    for _ in range(4):
+        session.select(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER] * 4
+
+
+def test_removing_a_selected_dam_frees_its_place(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+
+    session.deselect(1, SMALL_DAM)
+    session.select(1, SMALL_DAM)
+
+    assert session.network.members[1].selection == [SMALL_DAM] * 3
+
+
+def test_dams_already_owned_count_towards_the_limit(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.network.members[1].owned_facilities.extend([OwnedFacility(facility=SMALL_DAM, built_round=1)] * 2)
+    session.select(1, SMALL_DAM)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+
+def test_dams_under_construction_count_towards_the_limit(path: Path, clock: _Clock) -> None:
+    # Dams have no construction lag, so one built in a later Round stands in for one still under construction.
+    session = _investing(path, clock)
+    under_construction = OwnedFacility(facility=SMALL_DAM, built_round=2)
+    assert lifetime_left(under_construction, current_round=1).under_construction
+    session.network.members[1].owned_facilities.extend([under_construction] * 3)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+
+def test_a_dam_can_be_bought_again_once_one_retires(path: Path, clock: _Clock) -> None:
+    # A small dam works for 8 Rounds, so one built in Round -6 works in Round 1 and retires as Round 2 starts.
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    alice = session.join(_account(1, "alice"))
+    alice.owned_facilities.extend([OwnedFacility(facility=SMALL_DAM, built_round=-6)] * 3)
+    _advance(session)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+    while session.checkpoint != Investment(round=2):
+        _advance(session)
+
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+    assert alice.owned_facilities == []
 
 
 def test_a_facility_the_session_does_not_offer_cannot_be_selected(path: Path, clock: _Clock) -> None:
