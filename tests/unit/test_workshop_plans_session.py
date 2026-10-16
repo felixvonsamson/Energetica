@@ -39,6 +39,9 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
+# These tests play several Rounds with a small fleet, so grown demand would black them out (#1226).
+pytestmark = pytest.mark.usefixtures("no_demand_growth")
+
 FULL_SEASON = RoundFormat(trading_format="full_season", storage="all")
 
 

@@ -9,7 +9,8 @@ The Recap that closes Round N has two sections, kept strictly apart:
 - **The Year Ahead** tells what Round N+1 holds. Its plan locks when Recap N opens (#1190), so what the Recap tells
   holds. Round events are told with their headline and exact effect, and seasonal events only as a forecast with
   no figures (#1189). The facilities that unlock for Round N+1 are announced here, the first place players learn
-  of them (#1011). The last Round has no Year Ahead.
+  of them (#1011). So is how much demand grows into Round N+1 (#1226), as a percentage without the formula behind
+  it. The last Round has no Year Ahead.
 
 Everyone in the Run reads the same Recap, the facilitator included, and only once it has opened: a headline is
 never told before. Vote outcomes are not told here, since they are announced live (#1014), but a carbon tax vote
@@ -106,11 +107,12 @@ class SeasonWeatherReport(BaseModel):
 
 
 class DemandOutlook(BaseModel):
-    """How peak demand moves from this Round to the next, through the Round events that last."""
+    """How peak demand moves from this Round to the next, through demand growth and the Round events that last."""
 
     peak_this_round: float = Field(description="The most the market cleared at one settlement point this Round, in W")
     peak_next_round: float = Field(
-        description="This Round's peak moved by the demand shifts that start next Round, in W: a forecast"
+        description="This Round's peak grown by next Round's demand growth and moved by the demand shifts that start"
+        " next Round, in W: a forecast"
     )
 
 
@@ -127,6 +129,9 @@ class YearAhead(BaseModel):
     unlocks: list[RecapUnlock]
     stories: list[RecapStory] = Field(description="The Round events planned for it, which fire when it opens")
     forecasts: list[RecapForecast] = Field(description="Its seasonal events, in season order")
+    demand_growth: float = Field(
+        description="The factor demand grows by from this Round to the next before any event, 1.35 for 35% (#1226)"
+    )
     demand: DemandOutlook | None = Field(description="Null if the market never cleared this Round")
     carbon_tax_vote: RecapVote | None = Field(description="The vote the Round holds, or null if it holds none")
 
@@ -242,6 +247,7 @@ def _year_ahead(
     unlocks: Sequence[Unlock],
     peak_demand: float | None,
     vote_outcomes: Sequence[VoteOutcome],
+    demand_growth: float,
 ) -> YearAhead:
     # The plan is locked, so its events fire as planned: told as if they had.
     planned_events = [planned for planned in plan.events if planned.event in EVENTS]
@@ -258,12 +264,13 @@ def _year_ahead(
     if peak_demand is not None:
         # The peak measured this Round already holds every shift before it, so only next Round's new ones move it.
         shift = round_demand_factor([*fired, *coming], next_round) / round_demand_factor(fired, next_round - 1)
-        demand = DemandOutlook(peak_this_round=peak_demand, peak_next_round=peak_demand * shift)
+        demand = DemandOutlook(peak_this_round=peak_demand, peak_next_round=peak_demand * demand_growth * shift)
     return YearAhead(
         round=next_round,
         unlocks=[_unlock(unlock) for unlock in unlocks if unlock.round == next_round],
         stories=_stories(event for event in coming if event.season is None),
         forecasts=forecasts,
+        demand_growth=demand_growth,
         demand=demand,
         carbon_tax_vote=RecapVote(tax_rate=CARBON_TAX_RATE)
         if vote_held(lever=plan.levers.carbon_tax_vote, round_number=next_round, outcomes=vote_outcomes)
@@ -284,6 +291,7 @@ def recap(
     peak_demand: float | None,
     vote_outcomes: Sequence[VoteOutcome],
     weather: Mapping[Season, AverageOutput],
+    demand_growth: float,
 ) -> WorkshopRecap:
     """The Recap that closes Round ``round_number`` of ``round_count``.
 
@@ -291,7 +299,7 @@ def recap(
     blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
     ``peak_demand`` the most the market cleared at one settlement point in the Round, or None if it never cleared.
     ``vote_outcomes`` holds every vote's outcome so far, and ``weather`` the real average wind and solar output of
-    each season the Round played.
+    each season the Round played. ``demand_growth`` is the factor demand grows by into the next Round (#1226).
     """
     blackout: Season | None = next(
         (season for blackout_round, season in blackouts if blackout_round == round_number), None
@@ -312,5 +320,6 @@ def recap(
             unlocks=unlocks,
             peak_demand=peak_demand,
             vote_outcomes=vote_outcomes,
+            demand_growth=demand_growth,
         ),
     )

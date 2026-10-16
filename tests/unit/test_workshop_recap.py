@@ -63,6 +63,7 @@ def _recap(round_number: int = 1, **overrides: object):  # noqa: ANN202
         "peak_demand": PEAK,
         "vote_outcomes": [],
         "weather": {},
+        "demand_growth": 1.0,
     }
     arguments.update(overrides)
     return recap(round_number, **arguments)
@@ -230,6 +231,15 @@ def test_the_demand_forecast_scales_this_rounds_measured_peak_by_next_rounds_dem
     # The peak measured this Round already holds the shifts that came before it.
     assert year_ahead.demand.peak_this_round == PEAK
     assert year_ahead.demand.peak_next_round == pytest.approx(PEAK * 0.90)
+
+
+def test_the_year_ahead_tells_next_rounds_demand_growth_and_its_forecast_holds_it() -> None:
+    plans = _plans([], [PlannedEvent(event="demand.recession", severity="base")])
+    year_ahead = _recap(1, plans=plans, demand_growth=1.35).year_ahead
+    assert year_ahead is not None
+    assert year_ahead.demand_growth == pytest.approx(1.35)
+    assert year_ahead.demand is not None
+    assert year_ahead.demand.peak_next_round == pytest.approx(PEAK * 1.35 * 0.90)
 
 
 def test_there_is_no_demand_forecast_when_the_market_never_cleared() -> None:

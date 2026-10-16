@@ -8,6 +8,9 @@
  * player's selection (#999), and the tag gives a little bounce. While the phase
  * is closed, the tag does not flip: clicking it shakes it and says to wait for
  * the next one.
+ *
+ * A facility a player can own only a few of, such as a dam (#1223), shows how
+ * many they have out of the limit, and its back is disabled at the limit.
  */
 
 import { useAnimate } from "framer-motion";
@@ -60,6 +63,9 @@ export function FacilityPriceTag({
     const [scope, animate] = useAnimate<HTMLDivElement>();
     // A tag turned over just as the phase closed turns back.
     const flipped = turned && investmentOpen;
+    // Owned ones count whether built or under construction, and selected ones too.
+    const limit = facility.max_owned;
+    const atLimit = limit !== null && owned + selected >= limit;
 
     function handleFrontClick() {
         if (investmentOpen) {
@@ -142,11 +148,19 @@ export function FacilityPriceTag({
                                 )}
                             </span>
                         </span>
+                        {limit !== null && (
+                            <span
+                                className="mt-0.5 text-[10px] font-bold"
+                                title="The most you can own at once, counting those in your selection"
+                            >
+                                {owned + selected} of {limit}
+                            </span>
+                        )}
                     </button>
                     <button
                         type="button"
                         onClick={handleAdd}
-                        disabled={!affordable || adding}
+                        disabled={!affordable || atLimit || adding}
                         inert={!flipped}
                         className={cn(
                             FACE,
@@ -157,10 +171,14 @@ export function FacilityPriceTag({
                         <span
                             className={cn(
                                 "text-sm font-extrabold",
-                                !affordable && "opacity-50",
+                                (!affordable || atLimit) && "opacity-50",
                             )}
                         >
-                            {affordable ? "Click to add" : "Not enough money"}
+                            {atLimit
+                                ? "Limit reached"
+                                : affordable
+                                  ? "Click to add"
+                                  : "Not enough money"}
                         </span>
                         <span className="mt-0.5 text-[10px] whitespace-nowrap">
                             {countsLabel(owned, selected)}
