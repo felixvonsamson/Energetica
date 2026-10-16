@@ -796,7 +796,7 @@ export interface components {
         };
         /**
          * DemandOutlook
-         * @description How peak demand moves from this Round to the next, through the Round events that last.
+         * @description How peak demand moves from this Round to the next, through demand growth and the Round events that last.
          */
         DemandOutlook: {
             /**
@@ -806,7 +806,7 @@ export interface components {
             peak_this_round: number;
             /**
              * Peak Next Round
-             * @description This Round's peak moved by the demand shifts that start next Round, in W: a forecast
+             * @description This Round's peak grown by next Round's demand growth and moved by the demand shifts that start next Round, in W: a forecast
              */
             peak_next_round: number;
         };
@@ -2386,6 +2386,11 @@ export interface components {
              * @description Its seasonal events, in season order
              */
             forecasts: components["schemas"]["RecapForecast"][];
+            /**
+             * Demand Growth
+             * @description The factor demand grows by from this Round to the next before any event, 1.35 for 35% (#1226)
+             */
+            demand_growth: number;
             /** @description Null if the market never cleared this Round */
             demand: components["schemas"]["DemandOutlook"] | null;
             /** @description The vote the Round holds, or null if it holds none */

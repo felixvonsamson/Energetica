@@ -20,9 +20,9 @@ how a blackout is detected (an unmet must-serve tier), and are never shown to pl
 number. In that case the clearing price is ``math.inf``, the must-serve bid, so the Trading-period
 engine settles nothing from that clearing on (#1005).
 
-``amplitude`` is a free per-Round number. This module only knows its Round-1 baseline. How it moves
-in later Rounds is open: the demand-shift events are specified, but the "player progression"
-channel the spec mentions never got a formula (#992, Further Notes).
+``amplitude`` is a free per-Round number. This module only knows its Round-1 baseline. In later Rounds,
+natural demand growth moves it (:mod:`~energetica.workshop.demand_growth`, #1226), and the demand-shift
+events move it on top of that (#1012).
 """
 
 from __future__ import annotations

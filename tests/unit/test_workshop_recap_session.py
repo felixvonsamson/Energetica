@@ -70,6 +70,8 @@ def test_a_recap_cannot_be_read_before_it_opens(tmp_path: Path) -> None:
         session.recap(3)
 
 
+# Grown demand would black out Round 2.
+@pytest.mark.usefixtures("no_demand_growth")
 def test_the_recap_reports_the_round_just_played_and_the_one_coming(tmp_path: Path) -> None:
     session = _session(tmp_path / "session.json")
     session.plan_event(2, PlannedEvent(event="demand.ev_tipping_point", severity="base"))
@@ -83,7 +85,10 @@ def test_the_recap_reports_the_round_just_played_and_the_one_coming(tmp_path: Pa
     assert [story.event for story in recap.year_ahead.stories] == ["demand.ev_tipping_point"]
     assert [forecast.season for forecast in recap.year_ahead.forecasts] == ["summer"]
     assert recap.year_ahead.demand is not None
-    assert recap.year_ahead.demand.peak_next_round == pytest.approx(recap.year_ahead.demand.peak_this_round * 1.12)
+    assert recap.year_ahead.demand_growth == pytest.approx(session.demand_growth[2])
+    assert recap.year_ahead.demand.peak_next_round == pytest.approx(
+        recap.year_ahead.demand.peak_this_round * session.demand_growth[2] * 1.12
+    )
     session.advance()  # Round 2's Investment phase
     _to_recap(session)
     recap = session.recap(2)
