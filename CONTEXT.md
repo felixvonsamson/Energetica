@@ -254,7 +254,7 @@ reset; the top-up is silent.
 
 **Final score** and **residual value** (#1017, #1222):
 A player's final score is their operating profit over the whole session, minus their **investments** (what
-they paid for every facility they bought, price shocks included), minus the carbon tax they paid less
+they paid for every facility they bought, price shocks included, plus the cost of any **loan**), minus the carbon tax they paid less
 their shared payback, plus the residual value of the facilities they still own. Cash is not part of it, so the
 floor top-up and the blackout reset never change a score. A facility's residual value is its catalog
 price times the share of its lifetime left once the session is over, counting only the Rounds after the
@@ -263,11 +263,21 @@ The energy a storage facility holds is worth nothing. Once the session is over, 
 every player by final score, and everyone in the Run sees it.
 _Avoid_: leaderboard, salvage value.
 
+**Loan** (#1225):
+Money a player borrows to invest more than their cash allows: 1M, once per session, taken in an open
+Investment phase in any Round but the last. It is added to their cash straight away, and they can cancel it
+until the phase closes, as long as their selection still fits without it. It is paid back in two payments of
+600k, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
+taken when the session ends. The final score counts the 200k it costs as an investment with no residual
+value, whatever the floor top-up or the blackout reset do to the payments.
+_Avoid_: credit, debt (a player's cash can go negative without a loan).
+
 **Balance sheet** (#1008):
 A player's statement for one Round, shown on the Round overview: a column per season and one for the
 Round. Market income, dumping cost, O&M, any revenue tax and fuel cost add up to the season's operating income.
 Any **carbon tax** comes below it; the Round column then takes off the Round's investments to give its **net
-profit**. A season fills in once it is settled.
+profit**. A season fills in once it is settled. A **loan** and its payments show in a financing section
+below net profit, apart from it.
 Market income already has the cost of the energy storage bought to charge taken off.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
 

@@ -2466,7 +2466,7 @@ export interface paths {
         /**
          * Get Balance Sheet
          * @description The calling player's balance sheet for a Round: what each settled season earned and cost, and the Round's
-         *     investments and net profit so far.
+         *     investments and net profit so far, and the loan and its payments.
          */
         get: operations["get_balance_sheet_api_v1_workshop_rounds__round_number__balance_sheet_get"];
         put?: never;
@@ -2556,6 +2556,36 @@ export interface paths {
         put: operations["cast_ballot_api_v1_workshop_vote_ballot_put"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/loan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Loan
+         * @description The calling player's loan: its terms, whether they can take it now, and once taken, its payments.
+         */
+        get: operations["get_loan_api_v1_workshop_loan_get"];
+        put?: never;
+        /**
+         * Take Loan
+         * @description Take the loan, adding its amount to the calling player's cash straight away. Only while the Investment phase is
+         *     open, in any Round but the last, and once per session.
+         */
+        post: operations["take_loan_api_v1_workshop_loan_post"];
+        /**
+         * Cancel Loan
+         * @description Cancel the loan the calling player took in this Investment phase. Only while it is open, and only if their
+         *     selection still fits their cash without the loan.
+         */
+        delete: operations["cancel_loan_api_v1_workshop_loan_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5184,6 +5214,13 @@ export interface components {
              * @description The Round's operating income so far minus its carbon tax so far and its investments
              */
             net_profit: number;
+            /**
+             * Financing
+             * @description The loan coming in this Round, and the payments taken at its start or at the session end. Not part of net profit
+             */
+            financing: components["schemas"]["FinancingLine"][];
+            /** Financing Total */
+            financing_total: number;
         };
         /**
          * DemandOutlook
@@ -5229,7 +5266,7 @@ export interface components {
             operating_profit: number;
             /**
              * Investments
-             * @description What the player paid for every facility they bought
+             * @description What the player paid for every facility they bought, plus the cost of their loan if they took one
              */
             investments: number;
             /**
@@ -5247,6 +5284,37 @@ export interface components {
              * @description operating_profit - investments - carbon_tax + residual_value
              */
             score: number;
+        };
+        /**
+         * FinancingLine
+         * @description The loan coming in, or one of its payments going out (#1225).
+         */
+        FinancingLine: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "loan" | "loan_payment";
+            /**
+             * Amount
+             * @description Above zero for the loan coming in, below zero for a payment
+             */
+            amount: number;
+            /**
+             * Payment
+             * @description Which payment it is, from 1, or None for the loan itself
+             */
+            payment: number | null;
+            /**
+             * Payment Count
+             * @description How many payments pay the loan back
+             */
+            payment_count: number;
+            /**
+             * At Session End
+             * @description Whether the payment was taken when the session ended
+             */
+            at_session_end: boolean;
         };
         /**
          * Finished
@@ -6094,6 +6162,59 @@ export interface components {
             fuels: components["schemas"]["WorkshopFuelLineOut"][];
         };
         /**
+         * WorkshopLoanOut
+         * @description The calling player's loan (#1225): its terms, and once taken, its payments.
+         */
+        WorkshopLoanOut: {
+            /**
+             * Amount
+             * @description What the loan adds to the player's cash
+             */
+            amount: number;
+            /**
+             * Payment
+             * @description What each payment takes back
+             */
+            payment: number;
+            /** Payment Count */
+            payment_count: number;
+            /**
+             * Available
+             * @description Whether the player can take the loan in this Round's Investment phase while it is open: they have not taken it, and this is not the last Round
+             */
+            available: boolean;
+            /**
+             * Taken Round
+             * @description The Round the player took the loan in, or null if they have not
+             */
+            taken_round: number | null;
+            /**
+             * Cancellable
+             * @description Whether the player took the loan in this Investment phase, so they can cancel it while it is open
+             */
+            cancellable: boolean;
+            /**
+             * Payments
+             * @description Every payment, in order. Empty until the loan is taken
+             */
+            payments: components["schemas"]["WorkshopLoanPaymentOut"][];
+        };
+        /**
+         * WorkshopLoanPaymentOut
+         * @description One payment that pays the loan back (#1225).
+         */
+        WorkshopLoanPaymentOut: {
+            /**
+             * Round
+             * @description The Round whose start takes it, or null if it is taken when the session ends
+             */
+            round: number | null;
+            /** Amount */
+            amount: number;
+            /** Paid */
+            paid: boolean;
+        };
+        /**
          * WorkshopMemberOut
          * @description A player in the Run, as everyone in it sees them.
          */
@@ -6659,7 +6780,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL";
     };
     responses: never;
     parameters: never;
@@ -10279,6 +10400,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_loan_api_v1_workshop_loan_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopLoanOut"];
+                };
+            };
+        };
+    };
+    take_loan_api_v1_workshop_loan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopLoanOut"];
+                };
+            };
+        };
+    };
+    cancel_loan_api_v1_workshop_loan_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopLoanOut"];
                 };
             };
         };

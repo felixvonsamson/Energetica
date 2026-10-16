@@ -234,6 +234,55 @@ function useSelectionChange(
     });
 }
 
+/**
+ * The visitor's loan (#1225): its terms, whether they can take it now, and once
+ * taken, its payments. Players only.
+ */
+export function useWorkshopLoan({ enabled = true } = {}) {
+    return useQuery({
+        queryKey: queryKeys.workshop.loan,
+        queryFn: workshopApi.getLoan,
+        enabled,
+    });
+}
+
+/** Take the loan. */
+export function useTakeLoan() {
+    return useLoanChange(workshopApi.takeLoan);
+}
+
+/** Cancel the loan taken in this Investment phase. */
+export function useCancelLoan() {
+    return useLoanChange(workshopApi.cancelLoan);
+}
+
+/**
+ * Taking or cancelling the loan. Never retried: a retry after a lost response
+ * would be refused. Both change the visitor's cash, which the selection shows,
+ * so the selection is read again too.
+ */
+function useLoanChange(change: () => Promise<ApiSchema<"WorkshopLoanOut">>) {
+    return useMutation({
+        mutationFn: change,
+        retry: false,
+        scope: { id: "workshop-loan" },
+        onSuccess: (loan) => {
+            queryClient.setQueryData(queryKeys.workshop.loan, loan);
+        },
+        onSettled: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.selection,
+            }),
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+            // The page's view of the session or the loan is out of date.
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        },
+    });
+}
+
 /** The prices the visitor offers their facilities' power at. Players only. */
 export function useWorkshopPrices() {
     return useQuery({

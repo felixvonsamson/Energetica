@@ -642,6 +642,83 @@ def test_a_facilitator_has_no_selection(session_path: Path, clock: _Clock) -> No
     assert client.post(SELECTION_URL, json={"facility": "gas_burner"}).status_code == 403
 
 
+# --- the loan (#1225) ----------------------------------------------------------------------------
+
+LOAN_URL = "/api/v1/workshop/loan"
+
+
+def test_a_player_takes_the_loan_and_cancels_it(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    assert client.get(LOAN_URL).json() == {
+        "amount": 1_000_000.0,
+        "payment": 600_000.0,
+        "payment_count": 2,
+        "available": True,
+        "taken_round": None,
+        "cancellable": False,
+        "payments": [],
+    }
+
+    taken = client.post(LOAN_URL)
+
+    assert taken.status_code == 200
+    assert taken.json()["available"] is False
+    assert taken.json()["taken_round"] == 1
+    assert taken.json()["cancellable"] is True
+    assert taken.json()["payments"] == [
+        {"round": 2, "amount": 600_000.0, "paid": False},
+        {"round": 3, "amount": 600_000.0, "paid": False},
+    ]
+    assert client.get(SELECTION_URL).json()["money"] == 2_000_000.0
+
+    cancelled = client.delete(LOAN_URL)
+
+    assert cancelled.status_code == 200
+    assert cancelled.json()["taken_round"] is None
+    assert client.get(SELECTION_URL).json()["money"] == 1_000_000.0
+
+
+@pytest.mark.parametrize(
+    ("request_loan", "error"),
+    [
+        (lambda client: client.post(LOAN_URL), "WORKSHOP_LOAN_TAKEN"),
+        (lambda client: client.delete(LOAN_URL), "WORKSHOP_NOT_ENOUGH_MONEY"),
+    ],
+    ids=["taken twice", "cancel needed"],
+)
+def test_a_loan_change_the_rules_forbid_is_an_error(
+    session_path: Path, clock: _Clock, request_loan: Callable[[TestClient], Response], error: str
+) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(LOAN_URL)
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
+
+    response = request_loan(client)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == error
+
+
+def test_cancelling_without_a_loan_is_an_error(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+
+    response = client.delete(LOAN_URL)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_LOAN"
+
+
+def test_a_facilitator_has_no_loan(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock)
+
+    assert client.get(LOAN_URL).status_code == 403
+    assert client.post(LOAN_URL).status_code == 403
+
+
 def test_players_buy_their_own_selections_when_the_facilitator_advances(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, [alice, bob] = _investing(session_path, clock, "alice", "bob")
     authenticate(client, alice)

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, Purchase
+from energetica.workshop.loan import Loan
 from energetica.workshop.prices import DEFAULT_PRICES, LockedPrices, PriceSheet
 from energetica.workshop.trading import Bidder, TradingResult
 
@@ -91,6 +92,9 @@ class WorkshopPlayer:
     # How each completed Trading period went, oldest first (#1003). A period in which the player had
     # nothing operating has no result.
     trading_results: list[TradingResult] = field(default_factory=list)
+
+    # The loan the player took, or None if they have not taken one (#1225).
+    loan: Loan | None = None
 
     def selection_cost(self, prices: Mapping[FacilityId, float]) -> float:
         """What the selection costs to buy, in full, at this Round's ``prices``."""

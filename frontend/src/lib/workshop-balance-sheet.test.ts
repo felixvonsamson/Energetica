@@ -4,6 +4,7 @@ import {
     type BalanceSheet,
     type PeriodSheet,
     balanceSheetRows,
+    financingLabel,
     formatAmount,
     formatRate,
     formatFuelVolume,
@@ -104,6 +105,8 @@ const SHEET: BalanceSheet = {
     ],
     investment_total: 90_000,
     net_profit: 280_440,
+    financing: [],
+    financing_total: 0,
 };
 
 describe("formats", () => {
@@ -355,5 +358,56 @@ describe("initialPeriod", () => {
     it("opens a past Round on the Round", () => {
         expect(initialPeriod(settledUpTo(4), 2)).toBe("round");
         expect(initialPeriod(settledUpTo(4), null)).toBe("round");
+    });
+});
+
+describe("financing", () => {
+    const withLoan: BalanceSheet = {
+        ...SHEET,
+        financing: [
+            {
+                kind: "loan",
+                amount: 1_000_000,
+                payment: null,
+                payment_count: 2,
+                at_session_end: false,
+            },
+            {
+                kind: "loan_payment",
+                amount: -600_000,
+                payment: 2,
+                payment_count: 2,
+                at_session_end: true,
+            },
+        ],
+        financing_total: 400_000,
+    };
+
+    it("shows the loan below net profit, in the Round only", () => {
+        const ids = balanceSheetRows(withLoan).map((r) => r.id);
+        expect(ids.slice(ids.indexOf("net"))).toEqual([
+            "net",
+            "financing",
+            "financing-0",
+            "financing-1",
+        ]);
+        const financing = balanceSheetRows(withLoan).find(
+            (r) => r.id === "financing",
+        )!;
+        expect(financing.roundAmount).toBe(400_000);
+        expect(financing.cell(SPRING).amount).toBeNull();
+    });
+
+    it("names the loan and each payment", () => {
+        expect(withLoan.financing.map(financingLabel)).toEqual([
+            "Loan",
+            "Loan payment 2 of 2 (session end)",
+        ]);
+    });
+
+    it("has no financing rows without a loan", () => {
+        expect(balanceSheetRows(SHEET).some((r) => r.id === "financing")).toBe(
+            false,
+        );
     });
 });

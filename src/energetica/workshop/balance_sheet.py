@@ -16,6 +16,11 @@ income, above fuel.
 The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
 emitted building the Round's investments, charged in its first season, the tax on the CO₂ emitted generating, and
 the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
+
+The loan (#1225) is shown in its own financing section, below net profit and apart from it, since borrowing money
+is not a profit. The sheet of the Round the loan was taken in shows the money coming in, and the sheet of each Round
+whose start took a payment shows that payment. A payment taken when the session ends shows on the last Round's sheet.
+Over the session the financing lines add up to minus the loan's cost, which the final score counts as an investment.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, Loan, payment_round
 from energetica.workshop.fuel import FUEL_NAMES
 from energetica.workshop.operating_profit import period_operating_profit, round_operating_profit
 from energetica.workshop.seasons import SEASONS, Season
@@ -139,6 +145,18 @@ class InvestmentLine(BaseModel):
     cost: float
 
 
+class FinancingLine(BaseModel):
+    """The loan coming in, or one of its payments going out (#1225)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: Literal["loan", "loan_payment"]
+    amount: float = Field(description="Above zero for the loan coming in, below zero for a payment")
+    payment: int | None = Field(description="Which payment it is, from 1, or None for the loan itself")
+    payment_count: int = Field(description="How many payments pay the loan back")
+    at_session_end: bool = Field(description="Whether the payment was taken when the session ended")
+
+
 class BalanceSheet(BaseModel):
     """A player's balance sheet for one Round."""
 
@@ -152,6 +170,11 @@ class BalanceSheet(BaseModel):
     net_profit: float = Field(
         description="The Round's operating income so far minus its carbon tax so far and its investments"
     )
+    financing: list[FinancingLine] = Field(
+        description="The loan coming in this Round, and the payments taken at its start or at the session end. Not "
+        "part of net profit"
+    )
+    financing_total: float
 
 
 def _position(round_number: int, season: Season) -> tuple[int, int]:
@@ -265,6 +288,34 @@ def investments(purchases: Iterable[Purchase], round_number: int) -> list[Invest
     return sorted(lines.values(), key=lambda line: _catalog_order(line.facility))
 
 
+def financing(loan: Loan | None, round_number: int, *, round_count: int) -> list[FinancingLine]:
+    """The financing lines of Round ``round_number``'s sheet, in a session of ``round_count`` Rounds: the loan if it
+    was taken in it, then each payment made that belongs to it.
+    """
+    if loan is None:
+        return []
+    lines = []
+    if loan.round == round_number:
+        lines.append(
+            FinancingLine(
+                kind="loan", amount=LOAN_AMOUNT, payment=None, payment_count=LOAN_PAYMENTS, at_session_end=False
+            )
+        )
+    for index in range(loan.payments_made):
+        due = payment_round(loan, index)
+        if min(due, round_count) == round_number:
+            lines.append(
+                FinancingLine(
+                    kind="loan_payment",
+                    amount=-LOAN_PAYMENT,
+                    payment=index + 1,
+                    payment_count=LOAN_PAYMENTS,
+                    at_session_end=due > round_count,
+                )
+            )
+    return lines
+
+
 def balance_sheet(
     round_number: int,
     *,
@@ -272,10 +323,12 @@ def balance_sheet(
     purchases: Iterable[Purchase],
     settled: tuple[int, Season] | None,
     blackouts: Sequence[tuple[int, Season]],
+    loan: Loan | None = None,
+    round_count: int,
 ) -> BalanceSheet:
-    """A player's balance sheet for Round ``round_number``, from their Trading-period ``results`` and
-    ``purchases``. ``settled`` is the last Trading period settled, and ``blackouts`` the periods the grid went
-    down in.
+    """A player's balance sheet for Round ``round_number`` of ``round_count``, from their Trading-period ``results``,
+    ``purchases`` and ``loan``. ``settled`` is the last Trading period settled, and ``blackouts`` the periods the
+    grid went down in.
 
     A settled season in which the player had nothing operating has no result, and shows zero throughout.
     """
@@ -295,6 +348,7 @@ def balance_sheet(
     any_settled = any(season.status == "settled" for season in seasons)
     lines = investments(purchases, round_number)
     investment_total = sum(line.cost for line in lines)
+    financing_lines = financing(loan, round_number, round_count=round_count)
     return BalanceSheet(
         round=round_number,
         seasons=seasons,
@@ -304,4 +358,6 @@ def balance_sheet(
         net_profit=round_operating_profit(results, round_number)
         - sum(result.carbon_tax for result in round_results)
         - investment_total,
+        financing=financing_lines,
+        financing_total=sum(line.amount for line in financing_lines),
     )
