@@ -54,9 +54,10 @@ def test_solar_comes_to_about_40_per_mwh() -> None:
         assert 35 <= _lcoe(facility) <= 45, facility
 
 
-def test_wind_comes_to_50_to_55_per_mwh() -> None:
-    for facility in (FacilityId.ONSHORE_WIND_TURBINE, FacilityId.OFFSHORE_WIND_TURBINE):
-        assert 50 <= _lcoe(facility) <= 55, facility
+def test_onshore_wind_comes_to_50_to_55_per_mwh_and_offshore_to_at_least_a_quarter_less() -> None:
+    onshore = _lcoe(FacilityId.ONSHORE_WIND_TURBINE)
+    assert 50 <= onshore <= 55
+    assert _lcoe(FacilityId.OFFSHORE_WIND_TURBINE) <= 0.75 * onshore
 
 
 def test_fossil_plants_come_to_40_to_70_per_mwh_without_the_carbon_tax() -> None:
@@ -83,21 +84,24 @@ def test_small_dams_can_reach_the_large_dam_unlock() -> None:
     assert players * small_dam.max_owned * small_dam.base_price >= unlock_threshold(players)
 
 
-def test_o_and_m_per_mw_goes_nuclear_coal_wind_gas() -> None:
+def test_o_and_m_per_mw_goes_nuclear_coal_gas_wind() -> None:
+    # #1227 first put wind between coal and gas. Cutting wind's O&M to bring its LCOE down put it below gas.
     nuclear = _om_per_mw(FacilityId.NUCLEAR_REACTOR)
     coal = _om_per_mw(FacilityId.COAL_BURNER)
-    wind = _om_per_mw(FacilityId.ONSHORE_WIND_TURBINE)
     gas = _om_per_mw(FacilityId.GAS_BURNER)
-    assert nuclear > coal > wind > gas
+    wind = _om_per_mw(FacilityId.ONSHORE_WIND_TURBINE)
+    assert nuclear > coal > gas > wind
 
 
-def test_pv_and_hydro_have_a_low_o_and_m_per_mw() -> None:
-    lowest_other = min(
-        _om_per_mw(facility)
-        for facility in (FacilityId.NUCLEAR_REACTOR, FacilityId.COAL_BURNER, FacilityId.ONSHORE_WIND_TURBINE)
-    )
-    for facility in (FacilityId.PV_SOLAR, FacilityId.SMALL_WATER_DAM, FacilityId.LARGE_WATER_DAM):
-        assert _om_per_mw(facility) < lowest_other
+def test_pv_has_the_lowest_o_and_m_per_mw_and_hydro_less_than_nuclear_and_coal() -> None:
+    others = [
+        facility.id
+        for facility in CATALOG.values()
+        if facility.base_storage_capacity is None and facility.category != FacilityCategory.PV
+    ]
+    assert _om_per_mw(FacilityId.PV_SOLAR) < min(_om_per_mw(facility) for facility in others)
+    for facility in (FacilityId.SMALL_WATER_DAM, FacilityId.LARGE_WATER_DAM):
+        assert _om_per_mw(facility) < min(_om_per_mw(FacilityId.NUCLEAR_REACTOR), _om_per_mw(FacilityId.COAL_BURNER))
 
 
 def test_an_upgrade_has_a_little_less_o_and_m_per_mw_than_its_base_tier() -> None:

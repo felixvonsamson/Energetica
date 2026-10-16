@@ -32,7 +32,7 @@ _AMPLITUDE = 50e6
 _WEEK_HOURS = 7 * 24
 
 GAS = FacilityId.GAS_BURNER  # 50 MW
-WIND = FacilityId.ONSHORE_WIND_TURBINE  # 40 MW
+WIND = FacilityId.ONSHORE_WIND_TURBINE  # 50 MW
 BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 30 MW, 100 MWh, 69% efficient
 
 
@@ -112,13 +112,13 @@ def test_the_series_add_up_to_the_players_result() -> None:
 
 
 def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None:
-    # Two turbines at 52.5% make 42 MW. The batteries bid above every tier but must-serve, so they buy the 2 MW of
+    # Two turbines at 42% make 42 MW. The batteries bid above every tier but must-serve, so they buy the 2 MW of
     # wind left over once the 40 MW must-serve demand is met, every hour. They ask too much to ever sell. The week
     # that counts starts from what the first pass, for the cyclic start, stored. Six batteries have room for both
     # passes.
     outcome = _simulate(
         _bidder(WIND, WIND, *[BATTERIES] * 6, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}),
-        weather=lambda facility, _seconds: 0.525 if facility == WIND else 1.0,
+        weather=lambda facility, _seconds: 0.42 if facility == WIND else 1.0,
     )
     record = outcome.record
     row = _row(record, 1, BATTERIES)
@@ -192,7 +192,7 @@ def test_a_blackout_keeps_the_merit_order_that_failed_and_nothing_after_it() -> 
     assert record.blackout_at == 12
     failed = record.merit_order(12)
     assert failed is not None
-    assert failed.offers["capacity"] == pytest.approx([8e6])
+    assert failed.offers["capacity"] == pytest.approx([10e6])
     assert record.merit_order(13) is None
     assert np.isnan(record.price[13:]).all()
     assert not record.generation[:, 12:].any()

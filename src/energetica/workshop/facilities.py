@@ -13,8 +13,8 @@ seconds, money in the game's currency. Lifetime and construction lag are counted
 The first recalibration (#1227) set every price, ``om_per_round``, power, storage capacity and generator
 lifetime, all rounded. The values aim at a levelized cost of electricity (LCOE, everything a facility
 costs over its lifetime divided by the energy it generates) of about 40 per MWh for solar, 50 to 55 for
-wind, 40 to 50 for hydro and 25 to 40 for nuclear; fossil plants come to 40 to 70 without the carbon tax
-and 90 to 135 with it. ``scripts/workshop_lcoe.py`` works these out. A nuclear reactor costs
+onshore wind and at least 25% less for offshore, 40 to 50 for hydro and 25 to 40 for nuclear. Fossil
+plants come to 40 to 70 without the carbon tax and 90 to 135 with it. ``scripts/workshop_lcoe.py`` works these out. A nuclear reactor costs
 more than the starting budget, so buying one in Round 1 takes the loan. O&M is about 10% to 20% of what
 a facility earns in the bot test sessions. The other values are copied from the persistent world or
 invented, and every value is still open to the game-balance pass (#1145).
@@ -175,24 +175,24 @@ def _storage(
 # Each player can own only a few of each dam (#1223), so hydro cannot cover a room's demand on its own.
 _MAX_DAMS = 3
 
-# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants, wind and CSP
-# 3, and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from the
+# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants and CSP 3, and
+# wind and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from the
 # persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable
 # facilities (#992).
 _FACILITIES = [
     _generator(
         FacilityId.ONSHORE_WIND_TURBINE, "Onshore wind turbine", FacilityCategory.WIND,
-        price=18_000_000, power=40_000_000, construction_lag=0, lifetime=3, om_per_round=2_500_000, om_fixed_share=1.0,
+        price=18_000_000, power=50_000_000, construction_lag=0, lifetime=2, om_per_round=1_500_000, om_fixed_share=1.0,
         construction_pollution=420_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.OFFSHORE_WIND_TURBINE, "Offshore wind turbine", FacilityCategory.WIND,
-        price=35_000_000, power=80_000_000, construction_lag=0, lifetime=3, om_per_round=4_500_000, om_fixed_share=1.0,
+        price=25_000_000, power=100_000_000, construction_lag=0, lifetime=2, om_per_round=2_000_000, om_fixed_share=1.0,
         construction_pollution=4_900_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.COAL_BURNER, "Coal burner", FacilityCategory.CONVENTIONAL,
-        price=9_000_000, power=60_000_000, construction_lag=0, lifetime=3, om_per_round=4_250_000, om_fixed_share=0.2,
+        price=9_000_000, power=60_000_000, construction_lag=0, lifetime=3, om_per_round=4_500_000, om_fixed_share=0.2,
         construction_pollution=1_100_000, pollution=1_664, ramping_time=7_200, fuel=Fuel.COAL,
     ),
     _generator(
@@ -202,7 +202,7 @@ _FACILITIES = [
     ),
     _generator(
         FacilityId.GAS_BURNER, "Gas burner", FacilityCategory.CONVENTIONAL,
-        price=8_000_000, power=50_000_000, construction_lag=0, lifetime=3, om_per_round=2_250_000, om_fixed_share=0.2,
+        price=8_000_000, power=50_000_000, construction_lag=0, lifetime=3, om_per_round=2_500_000, om_fixed_share=0.2,
         construction_pollution=657_000, pollution=1_006, ramping_time=480, fuel=Fuel.GAS,
     ),
     _generator(
