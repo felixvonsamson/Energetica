@@ -176,11 +176,17 @@ class WorkshopPriceIn(BaseModel):
     )
 
 
+class WorkshopPriceRangeOut(BaseModel):
+    """The prices a player can set, per MWh, both bounds included."""
+
+    floor: float = Field(description="The lowest price a player can set, per MWh")
+    ceiling: float = Field(description="The highest price a player can set, per MWh")
+
+
 class WorkshopPricesOut(PriceSheet):
     """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
 
-    price_floor: float = Field(description="The lowest price a player can set, per MWh")
-    price_ceiling: float = Field(description="The highest price a player can set, per MWh")
+    price_range: WorkshopPriceRangeOut
 
 
 class WorkshopFuelLineOut(BaseModel):

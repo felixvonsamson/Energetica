@@ -2091,6 +2091,22 @@ export interface components {
             price: number;
         };
         /**
+         * WorkshopPriceRangeOut
+         * @description The prices a player can set, per MWh, both bounds included.
+         */
+        WorkshopPriceRangeOut: {
+            /**
+             * Floor
+             * @description The lowest price a player can set, per MWh
+             */
+            floor: number;
+            /**
+             * Ceiling
+             * @description The highest price a player can set, per MWh
+             */
+            ceiling: number;
+        };
+        /**
          * WorkshopPricesOut
          * @description The calling player's prices, per MWh (#1002). Every facility type has one, owned or not.
          */
@@ -2109,16 +2125,7 @@ export interface components {
             buy: {
                 [key: string]: number;
             };
-            /**
-             * Price Floor
-             * @description The lowest price a player can set, per MWh
-             */
-            price_floor: number;
-            /**
-             * Price Ceiling
-             * @description The highest price a player can set, per MWh
-             */
-            price_ceiling: number;
+            price_range: components["schemas"]["WorkshopPriceRangeOut"];
         };
         /**
          * WorkshopRecap

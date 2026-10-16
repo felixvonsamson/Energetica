@@ -59,6 +59,7 @@ from energetica.workshop.schemas import (
     WorkshopPlansOut,
     WorkshopPlayerOut,
     WorkshopPriceIn,
+    WorkshopPriceRangeOut,
     WorkshopPricesOut,
     WorkshopRoundPlanOut,
     WorkshopSelectionIn,
@@ -443,7 +444,9 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
 
 def _prices_out(player: WorkshopPlayer) -> WorkshopPricesOut:
     return WorkshopPricesOut(
-        sell=player.prices.sell, buy=player.prices.buy, price_floor=PRICE_FLOOR, price_ceiling=PRICE_CEILING
+        sell=player.prices.sell,
+        buy=player.prices.buy,
+        price_range=WorkshopPriceRangeOut(floor=PRICE_FLOOR, ceiling=PRICE_CEILING),
     )
 
 

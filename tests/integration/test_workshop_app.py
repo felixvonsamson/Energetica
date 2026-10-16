@@ -766,7 +766,7 @@ def test_a_player_reads_their_prices_and_the_price_range(session_path: Path, clo
 
     assert response.status_code == 200
     body = response.json()
-    assert (body["price_floor"], body["price_ceiling"]) == (-25.0, 1000.0)
+    assert body["price_range"] == {"floor": -25.0, "ceiling": 1000.0}
     assert body["sell"]["gas_burner"] == 500.0
     assert body["buy"] == {
         "lithium_ion_batteries": 425.0,

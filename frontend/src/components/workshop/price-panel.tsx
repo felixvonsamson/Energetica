@@ -38,6 +38,7 @@ import {
 } from "@/lib/workshop-facilities";
 import {
     installedCapacity,
+    type InvalidPriceReason,
     parsePrice,
     pricedFacilities,
     type PriceRange,
@@ -142,12 +143,12 @@ function PriceList({
             </p>
         );
     }
-    const range = { floor: prices.price_floor, ceiling: prices.price_ceiling };
+    const range = prices.price_range;
     return (
         <>
             <p className="mb-3 text-[13px] text-fg-subtle">
-                Prices go from {formatMoney(range.floor, true)} to{" "}
-                {formatMoney(range.ceiling, true)} per MWh.
+                Prices go from {formatPrice(range.floor)} to{" "}
+                {formatPrice(range.ceiling)} per MWh.
             </p>
             <ul className="flex flex-col gap-3">
                 {facilities.map((facility) => (
@@ -351,15 +352,28 @@ function PriceField({
             </div>
             {!parsed.ok && (
                 <p className="pl-[60px] text-[13px] text-destructive">
-                    {parsed.reason === "empty"
-                        ? "Enter a price."
-                        : parsed.reason === "below_floor"
-                          ? `The lowest price is ${formatMoney(range.floor, true)}.`
-                          : parsed.reason === "above_ceiling"
-                            ? `The highest price is ${formatMoney(range.ceiling, true)}.`
-                            : "Enter a number."}
+                    {invalidPriceMessage(parsed.reason, range)}
                 </p>
             )}
         </div>
     );
+}
+
+/** A price as the panel writes it, such as "1'000". */
+function formatPrice(price: number): string {
+    return formatMoney(price, true);
+}
+
+/** What a field says when it does not hold a price the player can set. */
+function invalidPriceMessage(
+    reason: InvalidPriceReason,
+    range: PriceRange,
+): string {
+    const messages: Record<InvalidPriceReason, string> = {
+        empty: "Enter a price.",
+        invalid: "Enter a number.",
+        below_floor: `The lowest price is ${formatPrice(range.floor)}.`,
+        above_ceiling: `The highest price is ${formatPrice(range.ceiling)}.`,
+    };
+    return messages[reason];
 }
