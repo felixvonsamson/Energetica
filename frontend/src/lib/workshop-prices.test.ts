@@ -39,29 +39,39 @@ describe("pricedFacilities", () => {
 });
 
 describe("parsePrice", () => {
-    it("reads a number at or above the floor", () => {
-        expect(parsePrice("42.5", -25)).toEqual({ ok: true, price: 42.5 });
-        expect(parsePrice(" -25 ", -25)).toEqual({ ok: true, price: -25 });
+    const range = { floor: -25, ceiling: 1000 };
+
+    it("reads a number between the floor and the ceiling", () => {
+        expect(parsePrice("42.5", range)).toEqual({ ok: true, price: 42.5 });
+        expect(parsePrice(" -25 ", range)).toEqual({ ok: true, price: -25 });
+        expect(parsePrice("1000", range)).toEqual({ ok: true, price: 1000 });
     });
 
     it("refuses an empty field", () => {
-        expect(parsePrice("", -25)).toEqual({ ok: false, reason: "empty" });
-        expect(parsePrice("  ", -25)).toEqual({ ok: false, reason: "empty" });
+        expect(parsePrice("", range)).toEqual({ ok: false, reason: "empty" });
+        expect(parsePrice("  ", range)).toEqual({ ok: false, reason: "empty" });
     });
 
     it("refuses a price below the floor", () => {
-        expect(parsePrice("-25.01", -25)).toEqual({
+        expect(parsePrice("-25.01", range)).toEqual({
             ok: false,
             reason: "below_floor",
         });
     });
 
+    it("refuses a price above the ceiling", () => {
+        expect(parsePrice("1000.01", range)).toEqual({
+            ok: false,
+            reason: "above_ceiling",
+        });
+    });
+
     it("refuses text that is not a number", () => {
-        expect(parsePrice("abc", -25)).toEqual({
+        expect(parsePrice("abc", range)).toEqual({
             ok: false,
             reason: "invalid",
         });
-        expect(parsePrice("1e999", -25)).toEqual({
+        expect(parsePrice("1e999", range)).toEqual({
             ok: false,
             reason: "invalid",
         });

@@ -34,7 +34,7 @@ from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
-from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent
@@ -442,7 +442,9 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
 
 
 def _prices_out(player: WorkshopPlayer) -> WorkshopPricesOut:
-    return WorkshopPricesOut(sell=player.prices.sell, buy=player.prices.buy, price_floor=PRICE_FLOOR)
+    return WorkshopPricesOut(
+        sell=player.prices.sell, buy=player.prices.buy, price_floor=PRICE_FLOOR, price_ceiling=PRICE_CEILING
+    )
 
 
 @router.get("/prices")
