@@ -140,6 +140,8 @@ export const queryKeys = {
         // as each of the Round's Trading periods is settled.
         balanceSheet: (round: number) =>
             ["workshop", "session", "balance-sheet", round] as const,
+        // Every Round's balance sheet, to read them all again when the loan changes (#1225).
+        balanceSheets: ["workshop", "session", "balance-sheet"] as const,
         // The Recap that closes a Round (#1013). Under the session's key, so it is read
         // again once the Recap opens.
         recap: (round: number) =>

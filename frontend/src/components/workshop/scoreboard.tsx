@@ -1,11 +1,11 @@
 /**
  * The scoreboard (#1017, #1222): every player ranked by final score, once the
  * session is over. Each row shows what the score adds up from: operating profit
- * over the whole session, minus what the player paid for facilities and in
- * carbon tax, plus the residual value of the facilities still owned. The two
- * costs are shown as negative amounts, so the four columns add up to the score.
- * Everyone in the Run sees the same table, and a player's own row is
- * highlighted.
+ * over the whole session, minus what the player paid for facilities and any
+ * loan (#1225) and in carbon tax, plus the residual value of the facilities
+ * still owned. The two costs are shown as negative amounts, so the four columns
+ * add up to the score. Everyone in the Run sees the same table, and a player's
+ * own row is highlighted.
  */
 
 import { Trophy } from "lucide-react";
@@ -63,9 +63,10 @@ export function Scoreboard() {
                 <TypographyMuted>
                     Score = operating profit − investments − carbon tax +
                     residual value. Investments is what you paid for every
-                    facility you bought. A facility&apos;s residual value is its
-                    price times the share of its lifetime it has left. Cash is
-                    not part of the score.
+                    facility you bought, plus what the loan cost if you took it.
+                    A facility&apos;s residual value is its price times the
+                    share of its lifetime it has left. Cash is not part of the
+                    score.
                 </TypographyMuted>
             </div>
             <div className="overflow-x-auto">

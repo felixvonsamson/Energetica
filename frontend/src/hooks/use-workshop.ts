@@ -259,7 +259,7 @@ export function useCancelLoan() {
 /**
  * Taking or cancelling the loan. Never retried: a retry after a lost response
  * would be refused. Both change the visitor's cash, which the selection shows,
- * so the selection is read again too.
+ * and the loan lines on the balance sheet, so both are read again too.
  */
 function useLoanChange(change: () => Promise<ApiSchema<"WorkshopLoanOut">>) {
     return useMutation({
@@ -270,9 +270,14 @@ function useLoanChange(change: () => Promise<ApiSchema<"WorkshopLoanOut">>) {
             queryClient.setQueryData(queryKeys.workshop.loan, loan);
         },
         onSettled: () =>
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.workshop.selection,
-            }),
+            Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.workshop.selection,
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.workshop.balanceSheets,
+                }),
+            ]),
         onError: (error) => {
             toast.error(resolveErrorMessage(error));
             // The page's view of the session or the loan is out of date.
