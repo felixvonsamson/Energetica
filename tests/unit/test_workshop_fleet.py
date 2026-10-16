@@ -15,26 +15,26 @@ from energetica.workshop.fleet import (
     om_owed,
 )
 
-# An onshore wind turbine has no construction lag and lasts 2 Rounds. A nuclear reactor takes one
+# An onshore wind turbine has no construction lag and lasts 3 Rounds. A nuclear reactor takes one
 # Round to build and lasts 6 (#975, #1227).
 
 
 def test_a_facility_works_from_the_round_it_is_built_in() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert lifetime_left(wind, current_round=2) == (2, False)
+    assert lifetime_left(wind, current_round=2) == (3, False)
 
 
 def test_each_round_that_passes_uses_up_one_round_of_lifetime() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert lifetime_left(wind, current_round=3) == (1, False)
+    assert lifetime_left(wind, current_round=3) == (2, False)
 
 
 def test_a_facility_past_its_lifetime_has_none_left() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert lifetime_left(wind, current_round=4) == (0, False)
+    assert lifetime_left(wind, current_round=5) == (0, False)
 
 
 def test_a_facility_under_construction_keeps_its_whole_lifetime() -> None:
@@ -68,13 +68,13 @@ def test_a_facility_operates_from_its_first_working_round_through_its_last() -> 
 def test_a_facility_past_its_lifetime_is_not_operating() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert not is_operating(wind, current_round=4)
+    assert not is_operating(wind, current_round=5)
 
 
 # --- capacity factor and the O&M a facility owes in a Trading period (#1000) ----------------
 
 # A nuclear reactor's maximum output is 100 MW, and its O&M is at most 13,000,000 a Round, half of it fixed.
-# An onshore wind turbine's O&M is at most 2,000,000 a Round, all of it fixed. A Round has four Trading
+# An onshore wind turbine's O&M is at most 2,500,000 a Round, all of it fixed. A Round has four Trading
 # periods, so each period owes a quarter of that.
 
 
@@ -122,10 +122,10 @@ def test_an_operating_facility_owes_a_quarter_of_its_fixed_share_plus_the_rest_s
 def test_a_facility_with_only_fixed_om_owes_it_all_even_when_idle() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert om_owed(wind, current_round=3, production=[0.0, 0.0]) == 500_000
+    assert om_owed(wind, current_round=3, production=[0.0, 0.0]) == 625_000
 
 
 def test_a_facility_past_its_lifetime_owes_no_om() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert om_owed(wind, current_round=4, production=[0.0, 0.0]) == 0.0
+    assert om_owed(wind, current_round=5, production=[0.0, 0.0]) == 0.0

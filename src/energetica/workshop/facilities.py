@@ -10,9 +10,11 @@ of a facility but of the session, so it lives in :mod:`energetica.workshop.unloc
 Units follow the persistent world: power in W, energy in Wh, emissions in kg, time in in-game
 seconds, money in the game's currency. Lifetime and construction lag are counted in Rounds.
 
-The first recalibration (#1227) set every price, ``om_per_round``, power and storage capacity, and the
-lifetime of hydro and nuclear, all rounded. Prices follow a fixed order of build cost per MW per Round
-of lifetime, from the modern coal plant, cheapest, to the onshore wind turbine. A nuclear reactor costs
+The first recalibration (#1227) set every price, ``om_per_round``, power, storage capacity and generator
+lifetime, all rounded. The values aim at a levelized cost of electricity (LCOE, everything a facility
+costs over its lifetime divided by the energy it generates) of about 40 per MWh for solar, 50 to 55 for
+wind, 40 to 50 for hydro and 25 to 40 for nuclear; fossil plants come to 40 to 70 without the carbon tax
+and 90 to 135 with it. ``scripts/workshop_lcoe.py`` works these out. A nuclear reactor costs
 more than the starting budget, so buying one in Round 1 takes the loan. O&M is about 10% to 20% of what
 a facility earns in the bot test sessions. The other values are copied from the persistent world or
 invented, and every value is still open to the game-balance pass (#1145).
@@ -173,39 +175,39 @@ def _storage(
 # Each player can own only a few of each dam (#1223), so hydro cannot cover a room's demand on its own.
 _MAX_DAMS = 3
 
-# Lifetimes and construction lags are the #975 table, except hydro and nuclear, which last 6 Rounds
-# instead of 8 since #1227. The fixed shares of O&M start from the
+# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants, wind and CSP
+# 3, and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from the
 # persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable
 # facilities (#992).
 _FACILITIES = [
     _generator(
         FacilityId.ONSHORE_WIND_TURBINE, "Onshore wind turbine", FacilityCategory.WIND,
-        price=18_000_000, power=30_000_000, construction_lag=0, lifetime=2, om_per_round=2_000_000, om_fixed_share=1.0,
+        price=18_000_000, power=40_000_000, construction_lag=0, lifetime=3, om_per_round=2_500_000, om_fixed_share=1.0,
         construction_pollution=420_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.OFFSHORE_WIND_TURBINE, "Offshore wind turbine", FacilityCategory.WIND,
-        price=35_000_000, power=70_000_000, construction_lag=0, lifetime=2, om_per_round=4_000_000, om_fixed_share=1.0,
+        price=35_000_000, power=80_000_000, construction_lag=0, lifetime=3, om_per_round=4_500_000, om_fixed_share=1.0,
         construction_pollution=4_900_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.COAL_BURNER, "Coal burner", FacilityCategory.CONVENTIONAL,
-        price=9_000_000, power=60_000_000, construction_lag=0, lifetime=4, om_per_round=5_000_000, om_fixed_share=0.2,
+        price=9_000_000, power=60_000_000, construction_lag=0, lifetime=3, om_per_round=4_250_000, om_fixed_share=0.2,
         construction_pollution=1_100_000, pollution=1_664, ramping_time=7_200, fuel=Fuel.COAL,
     ),
     _generator(
         FacilityId.MODERN_COAL_PLANT, "Modern coal power plant", FacilityCategory.CONVENTIONAL,
-        price=13_000_000, power=100_000_000, construction_lag=0, lifetime=4, om_per_round=7_500_000, om_fixed_share=0.2,
+        price=13_000_000, power=100_000_000, construction_lag=0, lifetime=3, om_per_round=6_500_000, om_fixed_share=0.2,
         construction_pollution=2_500_000, pollution=1_100, ramping_time=5_400, fuel=Fuel.COAL,
     ),
     _generator(
         FacilityId.GAS_BURNER, "Gas burner", FacilityCategory.CONVENTIONAL,
-        price=8_000_000, power=50_000_000, construction_lag=0, lifetime=4, om_per_round=3_000_000, om_fixed_share=0.2,
+        price=8_000_000, power=50_000_000, construction_lag=0, lifetime=3, om_per_round=2_250_000, om_fixed_share=0.2,
         construction_pollution=657_000, pollution=1_006, ramping_time=480, fuel=Fuel.GAS,
     ),
     _generator(
         FacilityId.COMBINED_CYCLE, "Combined cycle", FacilityCategory.CONVENTIONAL,
-        price=11_000_000, power=80_000_000, construction_lag=0, lifetime=4, om_per_round=4_500_000, om_fixed_share=0.2,
+        price=11_000_000, power=80_000_000, construction_lag=0, lifetime=3, om_per_round=3_500_000, om_fixed_share=0.2,
         construction_pollution=1_500_000, pollution=797, ramping_time=4_500, fuel=Fuel.GAS,
     ),
     _generator(
@@ -232,17 +234,17 @@ _FACILITIES = [
     ),
     _generator(
         FacilityId.PV_SOLAR, "PV solar", FacilityCategory.PV,
-        price=5_000_000, power=25_000_000, construction_lag=0, lifetime=1, om_per_round=450_000, om_fixed_share=1.0,
+        price=5_000_000, power=60_000_000, construction_lag=0, lifetime=2, om_per_round=100_000, om_fixed_share=1.0,
         construction_pollution=12_000_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.MULTI_LAYER_PV, "Multi-layer PV", FacilityCategory.PV,
-        price=7_500_000, power=45_000_000, construction_lag=0, lifetime=1, om_per_round=700_000, om_fixed_share=1.0,
+        price=7_500_000, power=100_000_000, construction_lag=0, lifetime=2, om_per_round=150_000, om_fixed_share=1.0,
         construction_pollution=14_000_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.CSP_SOLAR, "Concentrated solar power", FacilityCategory.CSP,
-        price=5_000_000, power=35_000_000, construction_lag=0, lifetime=4, om_per_round=700_000, om_fixed_share=1.0,
+        price=5_000_000, power=45_000_000, construction_lag=0, lifetime=3, om_per_round=250_000, om_fixed_share=1.0,
         construction_pollution=1_260_000, pollution=0, ramping_time=0, fuel=None,
     ),
     # Batteries shift energy within a day (#1202): lithium-ion holds about three hours at full power and

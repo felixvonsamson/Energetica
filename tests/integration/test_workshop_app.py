@@ -456,7 +456,7 @@ def test_the_fleet_shows_how_long_each_owned_facility_has_left(session_path: Pat
     )
 
     assert client.get(FLEET_URL).json() == [
-        {"facility": "onshore_wind_turbine", "built_round": 1, "rounds_left": 2, "under_construction": False},
+        {"facility": "onshore_wind_turbine", "built_round": 1, "rounds_left": 3, "under_construction": False},
         {"facility": "nuclear_reactor", "built_round": 1, "rounds_left": 6, "under_construction": True},
     ]
 

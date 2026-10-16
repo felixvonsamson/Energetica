@@ -2,33 +2,38 @@
 
 from __future__ import annotations
 
-from energetica.workshop.facilities import CATALOG, FacilityId, WorkshopFacility
+import statistics
+
+from energetica.workshop.demand_block import DAYS_PER_YEAR
+from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, FUEL_USE
 from energetica.workshop.loan import LOAN_AMOUNT
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
+from energetica.workshop.seasons import SEASONS
 from energetica.workshop.unlocks import UPGRADES, unlock_threshold
 from energetica.workshop.votes import CARBON_TAX_RATE
+from energetica.workshop.weather import NORMAL_OUTPUT
 
-# From cheapest to most expensive per MW per Round of lifetime.
-COST_ORDER = [
-    FacilityId.MODERN_COAL_PLANT,
-    FacilityId.COMBINED_CYCLE,
-    FacilityId.CSP_SOLAR,
-    FacilityId.COAL_BURNER,
-    FacilityId.GAS_BURNER,
-    FacilityId.NUCLEAR_REACTOR_GEN4,
-    FacilityId.NUCLEAR_REACTOR,
-    FacilityId.LARGE_WATER_DAM,
-    FacilityId.MULTI_LAYER_PV,
-    FacilityId.SMALL_WATER_DAM,
-    FacilityId.PV_SOLAR,
-    FacilityId.OFFSHORE_WIND_TURBINE,
-    FacilityId.ONSHORE_WIND_TURBINE,
-]
+HOURS_PER_ROUND = DAYS_PER_YEAR * 24
 
 
-def _cost_per_mw_round(facility: WorkshopFacility) -> float:
-    return facility.base_price / (facility.base_power_generation / 1e6) / facility.lifetime_rounds
+def _lcoe(facility_id: FacilityId) -> float:
+    """Lifetime cost per MWh without the carbon tax: wind and solar at their normal output, the rest at full output.
+    ``scripts/workshop_lcoe.py`` works out the same, with hydro and the tax too.
+    """
+    facility = CATALOG[facility_id]
+    match facility.category:
+        case FacilityCategory.WIND:
+            capacity_factor = statistics.fmean(NORMAL_OUTPUT[season].wind for season in SEASONS)
+        case FacilityCategory.PV | FacilityCategory.CSP:
+            capacity_factor = statistics.fmean(NORMAL_OUTPUT[season].solar for season in SEASONS)
+        case _:
+            capacity_factor = 1.0
+    rounds = facility.lifetime_rounds
+    mwh = facility.base_power_generation / 1e6 * HOURS_PER_ROUND * capacity_factor * rounds
+    om_share = facility.om_fixed_share + (1 - facility.om_fixed_share) * capacity_factor
+    fuel = FUEL_USE[facility_id] * CATALOG_FUEL_PRICES[facility.fuel_type] if facility.fuel_type else 0.0
+    return (facility.base_price + facility.om_per_round * om_share * rounds) / mwh + fuel
 
 
 def _om_per_mw(facility_id: FacilityId) -> float:
@@ -44,15 +49,26 @@ def _running_cost(facility: FacilityId, *, carbon_tax: bool) -> float:
     return FUEL_USE[facility] * CATALOG_FUEL_PRICES[fuel_type] + tax
 
 
-def test_generators_follow_the_cost_order() -> None:
-    costs = [_cost_per_mw_round(CATALOG[facility]) for facility in COST_ORDER]
-    assert costs == sorted(costs)
-    assert len(set(costs)) == len(costs)
+def test_solar_comes_to_about_40_per_mwh() -> None:
+    for facility in (FacilityId.PV_SOLAR, FacilityId.MULTI_LAYER_PV, FacilityId.CSP_SOLAR):
+        assert 35 <= _lcoe(facility) <= 45, facility
 
 
-def test_the_cost_order_covers_every_generator() -> None:
-    generators = {facility.id for facility in CATALOG.values() if facility.base_storage_capacity is None}
-    assert set(COST_ORDER) == generators
+def test_wind_comes_to_50_to_55_per_mwh() -> None:
+    for facility in (FacilityId.ONSHORE_WIND_TURBINE, FacilityId.OFFSHORE_WIND_TURBINE):
+        assert 50 <= _lcoe(facility) <= 55, facility
+
+
+def test_fossil_plants_come_to_40_to_70_per_mwh_without_the_carbon_tax() -> None:
+    for facility in CATALOG.values():
+        if facility.fuel_type in (Fuel.COAL, Fuel.GAS):
+            assert 40 <= _lcoe(facility.id) <= 70, facility.id
+
+
+def test_an_upgrade_costs_less_per_mwh_than_its_base_tier() -> None:
+    for base, upgrade in UPGRADES.items():
+        if CATALOG[base].base_storage_capacity is None:
+            assert _lcoe(upgrade) < _lcoe(base), upgrade
 
 
 def test_a_nuclear_reactor_needs_the_loan_in_round_one() -> None:
