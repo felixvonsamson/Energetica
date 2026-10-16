@@ -30,7 +30,7 @@ from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.facilities import FacilityId, Fuel
-from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
@@ -1760,10 +1760,12 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
         assert _advance(client).status_code == 200
     session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
-    for account_id, money in ((alice, 400_000.0), (bob, 700_000.0)):
+    # Cash plays no part in the score, so the richer player still ranks below the one who invested less.
+    for account_id, money, investment in ((alice, 900_000.0, 400_000.0), (bob, 100_000.0, 100_000.0)):
         player = session.player(account_id)
         assert player is not None
         player.money = money
+        player.purchases = [Purchase(facility=FacilityId.GAS_BURNER, round=1, price=investment)]
     facilitator_view = client.get(SCOREBOARD_URL)
     authenticate(client, alice)
     player_view = client.get(SCOREBOARD_URL)
@@ -1771,8 +1773,12 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
     assert player_view.status_code == 200
     assert player_view.json() == facilitator_view.json()
     board = player_view.json()
-    assert [(row["username"], row["cash"]) for row in board] == [("bob", 700_000.0), ("alice", 400_000.0)]
-    assert all(row["score"] == row["operating_profit"] + row["cash"] + row["residual_value"] for row in board)
+    assert [(row["username"], row["investments"]) for row in board] == [("bob", 100_000.0), ("alice", 400_000.0)]
+    assert all(
+        row["score"]
+        == pytest.approx(row["operating_profit"] - row["investments"] - row["carbon_tax"] + row["residual_value"])
+        for row in board
+    )
 
 
 # --- the carbon tax vote (#1014) ------------------------------------------------------------
