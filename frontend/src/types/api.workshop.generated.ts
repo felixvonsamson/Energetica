@@ -872,10 +872,15 @@ export interface components {
              */
             operating_profit: number;
             /**
-             * Cash
-             * @description The cash the player holds at the end
+             * Investments
+             * @description What the player paid for every facility they bought
              */
-            cash: number;
+            investments: number;
+            /**
+             * Carbon Tax
+             * @description The carbon tax the player paid over the session, less their shared payback
+             */
+            carbon_tax: number;
             /**
              * Residual Value
              * @description What the facilities they still own are worth
@@ -883,7 +888,7 @@ export interface components {
             residual_value: number;
             /**
              * Score
-             * @description operating_profit + cash + residual_value
+             * @description operating_profit - investments - carbon_tax + residual_value
              */
             score: number;
         };
@@ -2091,9 +2096,25 @@ export interface components {
         WorkshopPriceIn: {
             /**
              * Price
-             * @description The price per MWh. It has no ceiling, but cannot go below -25.0
+             * @description The price per MWh, from -25.0 to 1000.0, both included
              */
             price: number;
+        };
+        /**
+         * WorkshopPriceRangeOut
+         * @description The prices a player can set, per MWh, both bounds included.
+         */
+        WorkshopPriceRangeOut: {
+            /**
+             * Floor
+             * @description The lowest price a player can set, per MWh
+             */
+            floor: number;
+            /**
+             * Ceiling
+             * @description The highest price a player can set, per MWh
+             */
+            ceiling: number;
         };
         /**
          * WorkshopPricesOut
@@ -2114,11 +2135,7 @@ export interface components {
             buy: {
                 [key: string]: number;
             };
-            /**
-             * Price Floor
-             * @description The lowest price a player can set, per MWh
-             */
-            price_floor: number;
+            price_range: components["schemas"]["WorkshopPriceRangeOut"];
         };
         /**
          * WorkshopRecap
@@ -2378,7 +2395,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN";
     };
     responses: never;
     parameters: never;

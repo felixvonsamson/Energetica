@@ -10,6 +10,9 @@ type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
 type FacilityId = ApiSchema<"FacilityId">;
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
+/** The lowest and highest prices a player can set, per MWh, both included. */
+export type PriceRange = ApiSchema<"WorkshopPriceRangeOut">;
+
 /**
  * The facility types the player has operating, each once, in the order first
  * bought. Only these produce power in the Trading period, so only these need a
@@ -58,19 +61,24 @@ export function installedCapacity(
     };
 }
 
+/** Why a field does not hold a price the player can set. */
+export type InvalidPriceReason =
+    | "empty"
+    | "invalid"
+    | "below_floor"
+    | "above_ceiling";
+
 export type ParsedPrice =
     | { ok: true; price: number }
-    | { ok: false; reason: "empty" | "invalid" | "below_floor" };
+    | { ok: false; reason: InvalidPriceReason };
 
-/**
- * Read a price typed into a field. A field must hold a price at or above
- * `floor`.
- */
-export function parsePrice(text: string, floor: number): ParsedPrice {
+/** Read a price typed into a field. A field must hold a price within `range`. */
+export function parsePrice(text: string, range: PriceRange): ParsedPrice {
     const trimmed = text.trim();
     if (trimmed === "") return { ok: false, reason: "empty" };
     const price = Number(trimmed);
     if (!Number.isFinite(price)) return { ok: false, reason: "invalid" };
-    if (price < floor) return { ok: false, reason: "below_floor" };
+    if (price < range.floor) return { ok: false, reason: "below_floor" };
+    if (price > range.ceiling) return { ok: false, reason: "above_ceiling" };
     return { ok: true, price };
 }

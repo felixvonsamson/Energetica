@@ -16,7 +16,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
-from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
+from energetica.workshop.prices import DEFAULT_PRICES, PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import LeverChanges, RoundLevers
 from energetica.workshop.seasons import Season
@@ -33,6 +33,7 @@ from energetica.workshop.session import (
     NotSelectedError,
     NotStarted,
     NotStorageError,
+    PriceAboveCeilingError,
     PriceBelowFloorError,
     PriceSettingClosedError,
     Recap,
@@ -53,6 +54,7 @@ from energetica.workshop.demand_block import (
     nominal_demand,
     round_one_amplitude,
 )
+from energetica.workshop.final_score import final_score
 from energetica.workshop.fleet import lifetime_left, om_owed
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
@@ -962,12 +964,18 @@ def test_a_price_can_go_down_to_the_floor_but_not_below(path: Path, clock: _Cloc
     assert session.network.members[1].prices.sell[GAS] == PRICE_FLOOR
 
 
-def test_a_price_has_no_ceiling(path: Path, clock: _Clock) -> None:
+@pytest.mark.parametrize(("facility", "side"), [(GAS, "sell"), (BATTERIES, "buy")], ids=["sell", "storage buy"])
+def test_a_price_can_go_up_to_the_ceiling_but_not_above(
+    path: Path, clock: _Clock, facility: FacilityId, side: PriceSide
+) -> None:
     session = _trading(path, clock)
 
-    session.set_price(1, GAS, "sell", 1e12)
+    session.set_price(1, facility, side, PRICE_CEILING)
+    with pytest.raises(PriceAboveCeilingError):
+        session.set_price(1, facility, side, PRICE_CEILING + 0.01)
 
-    assert session.network.members[1].prices.sell[GAS] == 1e12
+    prices = session.network.members[1].prices
+    assert (prices.sell if side == "sell" else prices.buy)[facility] == PRICE_CEILING
 
 
 def test_a_facility_that_is_not_storage_has_no_buy_price(path: Path, clock: _Clock) -> None:
@@ -1698,6 +1706,18 @@ def test_a_player_in_debt_is_topped_up_to_the_floor(path: Path) -> None:
     assert session.network.members[1].money == FLOOR
 
 
+def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    alice = session.network.members[1]
+    alice.money = -300_000.0
+    before = final_score(alice, round_count=session.round_count)
+
+    _advance(session)
+
+    assert alice.money == FLOOR
+    assert final_score(alice, round_count=session.round_count) == before
+
+
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
     session = _at_round_one_recap(path)
     session.network.members[1].money = FLOOR + 1.0
@@ -1773,6 +1793,17 @@ def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path,
     assert session.checkpoint == Investment(round=2)
     assert session.network.members[1].money == WORKSHOP_STARTING_BUDGET
     assert session.network.members[2].money == WORKSHOP_STARTING_BUDGET
+
+
+def test_a_blackout_reset_leaves_every_final_score_unchanged(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    players = list(session.network.players())
+    before = [final_score(player, round_count=session.round_count) for player in players]
+
+    _advance(session)
+
+    assert [player.money for player in players] == [WORKSHOP_STARTING_BUDGET] * len(players)
+    assert [final_score(player, round_count=session.round_count) for player in players] == before
 
 
 def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:

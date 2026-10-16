@@ -6,11 +6,23 @@ import pytest
 from pydantic import ValidationError
 
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PRICE_FLOOR, PriceSheet, is_storage
+from energetica.workshop.prices import (
+    DEFAULT_PRICES,
+    DUMP_COST,
+    PRICE_CEILING,
+    PRICE_FLOOR,
+    SCARCITY_PRICE,
+    PriceSheet,
+    is_storage,
+)
 
 
 def test_the_price_floor_is_minus_the_dump_cost() -> None:
     assert (DUMP_COST, PRICE_FLOOR) == (25.0, -25.0)
+
+
+def test_the_price_ceiling_is_the_scarcity_price() -> None:
+    assert (SCARCITY_PRICE, PRICE_CEILING) == (1000.0, 1000.0)
 
 
 def test_every_facility_type_has_a_default_sell_price() -> None:
@@ -23,6 +35,10 @@ def test_every_storage_type_and_only_storage_has_a_default_buy_price() -> None:
 
 def test_no_default_price_is_below_the_floor() -> None:
     assert min([*DEFAULT_PRICES.sell.values(), *DEFAULT_PRICES.buy.values()]) >= PRICE_FLOOR
+
+
+def test_no_default_price_is_above_the_ceiling() -> None:
+    assert max([*DEFAULT_PRICES.sell.values(), *DEFAULT_PRICES.buy.values()]) <= PRICE_CEILING
 
 
 def test_a_facility_that_is_not_storage_cannot_have_a_buy_price() -> None:

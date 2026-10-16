@@ -20,11 +20,10 @@ from energetica.workshop.demand_block import DAYS_PER_YEAR, DemandCurve, Settlem
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
-from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, PriceSheet
+from energetica.workshop.prices import DEFAULT_PRICES, DUMP_COST, SCARCITY_PRICE, PriceSheet
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.seasons import SEASON_DAYS, SEASONS, representative_week, season_days
 from energetica.workshop.trading import (
-    SCARCITY_PRICE,
     Bidder,
     TradingOutcome,
     cleared_day_count,

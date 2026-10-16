@@ -101,7 +101,7 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.player import round_start_money
-from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
@@ -256,6 +256,12 @@ class PriceBelowFloorError(WorkshopError):
     """Raised when a price is below Workshop's price floor, or is not a finite number (#1002)."""
 
     code = WorkshopErrorCode.WORKSHOP_PRICE_BELOW_FLOOR
+
+
+class PriceAboveCeilingError(WorkshopError):
+    """Raised when a price is above Workshop's price ceiling (#1221)."""
+
+    code = WorkshopErrorCode.WORKSHOP_PRICE_ABOVE_CEILING
 
 
 class NotStorageError(WorkshopError):
@@ -1104,13 +1110,16 @@ class WorkshopSession:
         """Set the price the player offers ``facility``'s power at, per MWh: its ``"sell"`` price, or for
         storage its ``"buy"`` price too. Only while the price-setting window is open.
 
-        A price has no ceiling, but cannot go below :data:`~energetica.workshop.prices.PRICE_FLOOR`.
+        A price must lie between :data:`~energetica.workshop.prices.PRICE_FLOOR` and
+        :data:`~energetica.workshop.prices.PRICE_CEILING`, both included.
         """
         with self._lock:
             if not self.price_setting_open():
                 raise PriceSettingClosedError("the price-setting window is not open")
             if not (math.isfinite(price) and price >= PRICE_FLOOR):
                 raise PriceBelowFloorError(f"{price} is not a price of at least {PRICE_FLOOR}")
+            if price > PRICE_CEILING:
+                raise PriceAboveCeilingError(f"{price} is above the price ceiling of {PRICE_CEILING}")
             if side == "buy" and not is_storage(facility):
                 raise NotStorageError(f"{facility} is not storage, so it does not buy")
             player = self.network.members[account_id]
