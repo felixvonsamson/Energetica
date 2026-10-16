@@ -36,6 +36,9 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
+# These tests play several Rounds with a small fleet, so grown demand would black them out (#1226).
+pytestmark = pytest.mark.usefixtures("no_demand_growth")
+
 GAS = FacilityId.GAS_BURNER
 COAL = FacilityId.COAL_BURNER
 
@@ -106,9 +109,16 @@ def _need(session: WorkshopSession, fuel: Fuel = Fuel.GAS) -> float:
     return season_need(fuel, session.network.members[1].owned_facilities, current_round=1)
 
 
-def _whole_tonnes(kg: float) -> float:
-    """``kg`` rounded up to whole tonnes, as a default order of coal or gas is."""
-    return math.ceil(kg / 1_000) * 1_000.0
+def _buy_a_season(session: WorkshopSession) -> None:
+    """Have Alice order a full season of gas, so the default (half a season) does not run out and end the Round
+    early in a blackout. Later windows repeat the order.
+    """
+    session.set_fuel_order(1, Fuel.GAS, _need(session))
+
+
+def _first_default(kg: float) -> float:
+    """Half of the season need ``kg``, rounded up to whole tonnes, as a first default order of coal or gas is."""
+    return math.ceil(kg / 2 / 1_000) * 1_000.0
 
 
 # --- the lever and the prices -----------------------------------------------------------------------
@@ -127,6 +137,7 @@ def test_no_fuel_has_a_price_before_the_first_trading_period(path: Path) -> None
 
 def test_every_fuel_gets_a_new_price_each_trading_period(path: Path) -> None:
     session = _trading(path)
+    _buy_a_season(session)
     spring = dict(session.fuel_prices)
 
     _close_and_settle(session)
@@ -139,6 +150,7 @@ def test_every_fuel_gets_a_new_price_each_trading_period(path: Path) -> None:
 
 def test_a_planned_shock_lands_at_its_trading_period_only(path: Path) -> None:
     session = _trading(path)
+    _buy_a_season(session)
     session.plan_event(2, GAS_SHOCK)
 
     _to_round_two_spring(session)
@@ -158,10 +170,10 @@ def test_a_planned_shock_lands_at_its_trading_period_only(path: Path) -> None:
 # --- ordering -----------------------------------------------------------------------------------
 
 
-def test_the_first_window_orders_a_season_at_full_output(path: Path) -> None:
+def test_the_first_window_orders_half_a_season_at_full_output(path: Path) -> None:
     session = _trading(path, facilities=(GAS, GAS))
 
-    assert session.network.members[1].fuel_order == {Fuel.GAS: _whole_tonnes(_need(session))}
+    assert session.network.members[1].fuel_order == {Fuel.GAS: _first_default(_need(session))}
 
 
 def test_automatic_procurement_orders_nothing(path: Path) -> None:
@@ -399,6 +411,7 @@ def test_fuel_survives_a_restart(path: Path) -> None:
 
 def test_a_failed_save_leaves_the_prices_as_they_were(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _trading(path)
+    _buy_a_season(session)
     session.plan_event(2, GAS_SHOCK)
     _to_round_two_spring(session)
     _close_and_settle(session)
@@ -421,6 +434,6 @@ def test_each_fuel_the_fleet_burns_gets_its_own_default(path: Path) -> None:
     alice = session.network.members[1]
     assert OwnedFacility(facility=FacilityId.COAL_BURNER, built_round=1) in alice.owned_facilities
     assert alice.fuel_order == {
-        Fuel.GAS: _whole_tonnes(_need(session)),
-        Fuel.COAL: _whole_tonnes(_need(session, Fuel.COAL)),
+        Fuel.GAS: _first_default(_need(session)),
+        Fuel.COAL: _first_default(_need(session, Fuel.COAL)),
     }

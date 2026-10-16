@@ -5,6 +5,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
+import { LoanReminder } from "@/components/workshop/loan-offer";
 import { RecapForRound } from "@/components/workshop/recap-view";
 
 export const Route = createFileRoute("/app/workshop/recap/$round")({
@@ -24,5 +25,12 @@ function RecapPage() {
                 {recap}
             </div>
         );
-    return <div className="pb-16">{recap}</div>;
+    // The projector window above is the room's, so only this page reminds a
+    // player of their loan payment (#1225).
+    return (
+        <div className="pb-16">
+            <LoanReminder round={Number(round)} />
+            {recap}
+        </div>
+    );
 }

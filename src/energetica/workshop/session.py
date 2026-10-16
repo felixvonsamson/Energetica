@@ -50,10 +50,18 @@ opens, and one planned for a season when that season's Trading period opens. The
 fired, and works out their effects from that list: the demand block's amplitude when a period is simulated, the
 revenue tax when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
 
+Demand also grows from Round to Round (#1226, :mod:`~energetica.workshop.demand_growth`). When Recap N opens, the
+session works out Round N+1's growth factor from the room's average operating profit per player in Round N, and keeps
+it. A Round's amplitude is Round 1's times every factor up to it, before the events move it.
+
 A Round whose plan turns on the carbon tax vote holds one in its Investment phase (#1014,
 :mod:`~energetica.workshop.votes`). Players cast their ballots while the phase is open, and the vote is counted when
 the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
 Once a vote passes, each Trading period settles the carbon tax (#1015, :mod:`~energetica.workshop.carbon_tax`).
+
+Each player can take one loan per session in an Investment phase, and cancel it until the phase closes (#1225,
+:mod:`~energetica.workshop.loan`). Its payments are taken as the Rounds after it start, and any still owed when the
+session finishes.
 
 Once the session is :class:`Finished`, it ranks the players by their final score (#1017,
 :mod:`~energetica.workshop.final_score`).
@@ -75,6 +83,7 @@ from pydantic import BaseModel, Field
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
+from energetica.workshop.demand_growth import growth_factor, growth_through
 from energetica.workshop.events import (
     FiredEvent,
     demand_factor,
@@ -97,11 +106,12 @@ from energetica.workshop.fuel import (
     season_need,
 )
 from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lifetime_left
+from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, Loan, payments_due
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.player import round_start_money
-from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
@@ -228,6 +238,12 @@ class NotEnoughMoneyError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_NOT_ENOUGH_MONEY
 
 
+class FacilityLimitReachedError(WorkshopError):
+    """Raised when selecting a facility the player already has as many of as it allows (#1223)."""
+
+    code = WorkshopErrorCode.WORKSHOP_FACILITY_LIMIT_REACHED
+
+
 class NotSelectedError(WorkshopError):
     """Raised when removing a facility that is not in the player's selection (#999)."""
 
@@ -250,6 +266,12 @@ class PriceBelowFloorError(WorkshopError):
     """Raised when a price is below Workshop's price floor, or is not a finite number (#1002)."""
 
     code = WorkshopErrorCode.WORKSHOP_PRICE_BELOW_FLOOR
+
+
+class PriceAboveCeilingError(WorkshopError):
+    """Raised when a price is above Workshop's price ceiling (#1221)."""
+
+    code = WorkshopErrorCode.WORKSHOP_PRICE_ABOVE_CEILING
 
 
 class NotStorageError(WorkshopError):
@@ -329,6 +351,30 @@ class SettlementRunningError(WorkshopError):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
     code = WorkshopErrorCode.WORKSHOP_SETTLEMENT_RUNNING
+
+
+class LoanLastRoundError(WorkshopError):
+    """Raised when taking the loan in the last Round, which leaves no Round to pay it back in (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_LAST_ROUND
+
+
+class LoanTakenError(WorkshopError):
+    """Raised when taking the loan a second time (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_TAKEN
+
+
+class NoLoanError(WorkshopError):
+    """Raised when cancelling the loan of a player who has not taken it (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_NO_LOAN
+
+
+class LoanFinalError(WorkshopError):
+    """Raised when cancelling a loan taken in an earlier Investment phase, which is final (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_FINAL
 
 
 class SettlementCancelledError(Exception):
@@ -430,7 +476,7 @@ class SettlementJob:
     demand_amplitude: float
     """The amplitude the period is simulated with, after the events that move it."""
     base_demand_amplitude: float
-    """The session's amplitude before any event, kept once the period is settled."""
+    """The session's Round-1 amplitude, before any growth or event, kept once the period is settled."""
     weather_seed: int
     # Set to stop the simulation after the day it is on.
     cancelled: threading.Event = field(default_factory=threading.Event)
@@ -483,6 +529,8 @@ class _SavedPlayer(BaseModel):
     trading_results: list[TradingResult]
     fuel_stock: dict[Fuel, float]
     fuel_order: dict[Fuel, float]
+    # None for a session saved before loans (#1225).
+    loan: Loan | None = None
 
 
 class _SavedSession(BaseModel):
@@ -509,6 +557,7 @@ class _SavedSession(BaseModel):
     # Empty for a session saved before votes (#1014).
     ballots: dict[int, Ballot] = {}
     vote_outcomes: list[VoteOutcome] = []
+    demand_growth: dict[int, float]
 
 
 class WorkshopSession:
@@ -539,6 +588,7 @@ class WorkshopSession:
         peak_demand: dict[int, float] | None = None,
         ballots: dict[int, Ballot] | None = None,
         vote_outcomes: list[VoteOutcome] | None = None,
+        demand_growth: dict[int, float] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -560,9 +610,11 @@ class WorkshopSession:
         self.phase_timer = phase_timer
         # The random seed of the Run's weather, which the renewables' output follows (#1003).
         self.weather_seed = random.randrange(WEATHER_SEEDS) if weather_seed is None else weather_seed
-        # The demand block's amplitude before any event, in W. Set from the headcount when the first Trading
-        # period settles, and kept for the rest of the session. Events move it from there (#1012).
+        # The demand block's Round-1 amplitude, in W. Set from the headcount when the first Trading period settles,
+        # and kept for the rest of the session. Demand growth (#1226) and events (#1012) move it from there.
         self.demand_amplitude = demand_amplitude
+        # Each Round's demand growth factor, by Round, from Round 2 on. Set when the Recap before it opens (#1226).
+        self.demand_growth = {} if demand_growth is None else demand_growth
         # The last Trading period settled, so that none is settled twice.
         self.settled_period = settled_period
         # Every Trading period the grid went down in, in order (#1005).
@@ -641,6 +693,7 @@ class WorkshopSession:
                 trading_results=player.trading_results,
                 fuel_stock=player.fuel_stock,
                 fuel_order=player.fuel_order,
+                loan=player.loan,
             )
         return cls(
             network=network,
@@ -661,6 +714,7 @@ class WorkshopSession:
             peak_demand=saved.peak_demand,
             ballots=saved.ballots,
             vote_outcomes=saved.vote_outcomes,
+            demand_growth=saved.demand_growth,
             clock=clock,
         )
 
@@ -800,10 +854,11 @@ class WorkshopSession:
         selection still waiting, so none is lost if the facilitator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
         retires every facility whose lifetime has ended, and tops up any player below the cash floor, or resets
-        everyone's cash after a blackout (#1016). Opening a Trading period sets the season's fuel prices
+        everyone's cash after a blackout (#1016). Before that, it takes any loan payment due (#1225), and finishing
+        the session takes any still owed. Opening a Trading period sets the season's fuel prices
         and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
         Investment phase counts its vote, if it held one (#1014).
-        Opening a Recap locks the next Round's plan (#1190). Raises
+        Opening a Recap locks the next Round's plan (#1190) and works out how much demand grows into it (#1226). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -831,6 +886,10 @@ class WorkshopSession:
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
                     undos.append(self._apply_round_start_money(checkpoint.round))
+                elif isinstance(checkpoint, Finished):
+                    undos.append(self._apply_loan_payments(self.round_count + 1))
+                if isinstance(checkpoint, Recap):
+                    undos.append(self._grow_demand(checkpoint.round))
                 undos.append(self._fire_events(checkpoint))
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
@@ -868,6 +927,8 @@ class WorkshopSession:
             if facility not in {offered.id for offered in self.offered_facilities()}:
                 raise FacilityNotOfferedError(f"{facility} is not offered")
             player = self.network.members[account_id]
+            if player.at_limit(facility):
+                raise FacilityLimitReachedError(f"the player already has as many {facility} as allowed")
             if player.selection_cost(self.facility_prices()) + self.facility_price(facility) > player.money:
                 raise NotEnoughMoneyError("the selection would cost more than the player has")
             self._set_selection(player, [*player.selection, facility])
@@ -883,6 +944,51 @@ class WorkshopSession:
             selection = list(player.selection)
             del selection[len(selection) - 1 - selection[::-1].index(facility)]
             self._set_selection(player, selection)
+
+    def take_loan(self, account_id: int) -> None:
+        """Lend the player :data:`~energetica.workshop.loan.LOAN_AMOUNT`, added to their cash straight away (#1225).
+
+        Only while the Investment phase is open, in any Round but the last, and once per session.
+        """
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            round_number = self.current_round()
+            if round_number >= self.round_count:
+                raise LoanLastRoundError("no Round is left to pay the loan back in")
+            player = self.network.members[account_id]
+            if player.loan is not None:
+                raise LoanTakenError("the player has already taken the loan")
+            self._set_loan(player, Loan(round=round_number), player.money + LOAN_AMOUNT)
+
+    def cancel_loan(self, account_id: int) -> None:
+        """Take back the loan the player took in this Investment phase (#1225).
+
+        Only while the phase is open, and only if the player's selection still fits their cash without the loan.
+        """
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            player = self.network.members[account_id]
+            if player.loan is None:
+                raise NoLoanError("the player has not taken the loan")
+            if player.loan.round != self.current_round():
+                raise LoanFinalError("the loan was taken in an earlier Investment phase")
+            money = player.money - LOAN_AMOUNT
+            if player.selection_cost(self.facility_prices()) > money:
+                raise NotEnoughMoneyError("the selection would cost more than the player has without the loan")
+            self._set_loan(player, None, money)
+
+    def _set_loan(self, player: WorkshopPlayer, loan: Loan | None, money: float) -> None:
+        """Give ``player`` the loan ``loan`` and the cash ``money``, and save them. The caller holds the lock."""
+        before = player.loan, player.money
+        player.loan, player.money = loan, money
+        try:
+            self._save(self.checkpoint, self.phase_timer)
+        except BaseException:
+            # Undo the change, so the session matches the file.
+            player.loan, player.money = before
+            raise
 
     def _set_selection(self, player: WorkshopPlayer, selection: list[FacilityId]) -> None:
         """Give ``player`` the selection ``selection`` and save it. The caller holds the lock."""
@@ -1031,12 +1137,13 @@ class WorkshopSession:
     def _apply_round_start_money(self, round_number: int) -> Callable[[], None]:
         """Set every player's cash for the start of Round ``round_number``, without saving. Returns what undoes it.
 
-        A player below the floor is topped up to it, and a blackout in the Round before resets everyone to the
-        starting budget (#1016). Round 1 starts from the starting budget every player joined with, so it is left
-        alone. The caller holds the lock.
+        Any loan payment due is taken first (#1225). Then a player below the floor is topped up to it, and a
+        blackout in the Round before resets everyone to the starting budget (#1016). Round 1 starts from the starting
+        budget every player joined with, so it is left alone. The caller holds the lock.
         """
         if round_number == 1:
             return lambda: None
+        undo_payments = self._apply_loan_payments(round_number)
         after_blackout = any(period.round == round_number - 1 for period in self.blackouts)
         before = {player: player.money for player in self.network.players()}
         for player, money in before.items():
@@ -1045,6 +1152,51 @@ class WorkshopSession:
         def undo() -> None:
             for player, money in before.items():
                 player.money = money
+            undo_payments()
+
+        return undo
+
+    def _apply_loan_payments(self, round_number: int) -> Callable[[], None]:
+        """Take every loan payment due by the start of Round ``round_number``, without saving (#1225). A Round after
+        the last takes those due when the session ends. Returns what undoes it. The caller holds the lock.
+        """
+        before = {player: (player.money, player.loan) for player in self.network.players()}
+        for player in before:
+            if player.loan is None:
+                continue
+            due = payments_due(player.loan, round_number=round_number)
+            if due:
+                player.money -= due * LOAN_PAYMENT
+                player.loan = player.loan.model_copy(update={"payments_made": player.loan.payments_made + due})
+
+        def undo() -> None:
+            for player, (money, loan) in before.items():
+                player.money, player.loan = money, loan
+
+        return undo
+
+    def _grow_demand(self, round_number: int) -> Callable[[], None]:
+        """Work out how much demand grows from Round ``round_number`` to the next, without saving (#1226). Returns
+        what undoes it.
+
+        The factor follows the room's average operating profit per player in the Round, counting every player in the
+        session now. A Round that ended in a blackout counts the profit it made up to it. The last Round has no next
+        one, so it is left alone. The caller holds the lock.
+        """
+        players = self.network.players()
+        if round_number >= self.round_count or not players:
+            return lambda: None
+        profit = sum(
+            result.operating_profit
+            for player in players
+            for result in player.trading_results
+            if result.round == round_number
+        )
+        before = self.demand_growth
+        self.demand_growth = {**before, round_number + 1: growth_factor(profit / len(players))}
+
+        def undo() -> None:
+            self.demand_growth = before
 
         return undo
 
@@ -1096,13 +1248,16 @@ class WorkshopSession:
         """Set the price the player offers ``facility``'s power at, per MWh: its ``"sell"`` price, or for
         storage its ``"buy"`` price too. Only while the price-setting window is open.
 
-        A price has no ceiling, but cannot go below :data:`~energetica.workshop.prices.PRICE_FLOOR`.
+        A price must lie between :data:`~energetica.workshop.prices.PRICE_FLOOR` and
+        :data:`~energetica.workshop.prices.PRICE_CEILING`, both included.
         """
         with self._lock:
             if not self.price_setting_open():
                 raise PriceSettingClosedError("the price-setting window is not open")
             if not (math.isfinite(price) and price >= PRICE_FLOOR):
                 raise PriceBelowFloorError(f"{price} is not a price of at least {PRICE_FLOOR}")
+            if price > PRICE_CEILING:
+                raise PriceAboveCeilingError(f"{price} is above the price ceiling of {PRICE_CEILING}")
             if side == "buy" and not is_storage(facility):
                 raise NotStorageError(f"{facility} is not storage, so it does not buy")
             player = self.network.members[account_id]
@@ -1181,6 +1336,7 @@ class WorkshopSession:
                 peak_demand=self.peak_demand.get(round_number),
                 vote_outcomes=self.vote_outcomes,
                 weather=weather,
+                demand_growth=self.demand_growth.get(round_number + 1, 1.0),
             )
 
     def scoreboard(self) -> list[FinalScore]:
@@ -1393,8 +1549,8 @@ class WorkshopSession:
         Returns ``None`` while the window is open, outside a Trading period, while the period is being
         simulated, and once it is settled. Otherwise the period counts as being simulated until
         :meth:`finish_settlement` or :meth:`abandon_settlement`. The first Trading period also fixes the
-        demand block's amplitude from the headcount, once it is settled. The events that fired move the amplitude
-        the period is simulated with (#1012).
+        demand block's amplitude from the headcount, once it is settled. Demand growth (#1226) and the events that
+        fired (#1012) move the amplitude the period is simulated with.
         """
         with self._lock:
             period = self.checkpoint
@@ -1424,7 +1580,9 @@ class WorkshopSession:
                     for player in players
                 ],
                 round_format=round_format,
-                demand_amplitude=base_amplitude * demand_factor(self.fired_events, period.round, period.season),
+                demand_amplitude=base_amplitude
+                * growth_through(self.demand_growth, period.round)
+                * demand_factor(self.fired_events, period.round, period.season),
                 base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
             )
@@ -1654,6 +1812,7 @@ class WorkshopSession:
                     trading_results=player.trading_results,
                     fuel_stock=player.fuel_stock,
                     fuel_order=player.fuel_order,
+                    loan=player.loan,
                 )
                 for player in self.network.players()
             ],
@@ -1669,5 +1828,6 @@ class WorkshopSession:
             peak_demand=self.peak_demand,
             ballots=self.ballots,
             vote_outcomes=self.vote_outcomes,
+            demand_growth=self.demand_growth,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

@@ -160,13 +160,13 @@ def test_ample_supply_serves_every_tier() -> None:
 
 
 def test_supply_priced_out_of_flexible_tiers() -> None:
-    """Supply at €200/MWh serves must-serve, low and medium flex, and nothing cheaper."""
+    """Supply at €120/MWh serves must-serve, low and medium flex, and nothing cheaper."""
     block = build_demand_block(1000, _FLAT, _NOON)
 
-    clearing = clear_market([_offer(5000, 200)], block)
+    clearing = clear_market([_offer(5000, 120)], block)
 
     assert clearing.quantity == pytest.approx(1050)  # 800 + 100 + 150
-    assert clearing.price == 200  # demand drops from €240 to €120 across the offer, so the offer sets the price
+    assert clearing.price == 120  # demand drops from €140 to €80 across the offer, so the offer sets the price
     assert clearing.unserved == pytest.approx(600)
     assert _tier_fill(clearing, "must_serve").unmet == 0
     assert _tier_fill(clearing, "medium_flex").unmet == 0

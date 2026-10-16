@@ -57,10 +57,13 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_FACILITY_NOT_OFFERED: "This facility isn't available yet.",
     WORKSHOP_NOT_ENOUGH_MONEY:
         "You don't have enough money to add this to your selection.",
+    WORKSHOP_FACILITY_LIMIT_REACHED:
+        "You already have as many of these as you can own at once.",
     WORKSHOP_NOT_SELECTED: "This facility isn't in your selection.",
     WORKSHOP_PRICE_SETTING_CLOSED:
         "Prices are locked. Wait for the next Trading period.",
     WORKSHOP_PRICE_BELOW_FLOOR: "This price is below the price floor.",
+    WORKSHOP_PRICE_ABOVE_CEILING: "This price is above the price ceiling.",
     WORKSHOP_NOT_STORAGE: "Only storage has a buy price.",
     WORKSHOP_FUEL_NOT_MANUAL: "Fuel is bought for you this season.",
     WORKSHOP_FUEL_NOT_BURNED: "None of your facilities burn this fuel.",
@@ -88,6 +91,12 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_NO_SUCH_POINT: "This Trading period has no such settlement point.",
     WORKSHOP_GRID_DOWN:
         "The grid was down at this point, so the market did not clear.",
+    WORKSHOP_LOAN_LAST_ROUND:
+        "The loan can't be taken in the last Round: no Round is left to pay it back.",
+    WORKSHOP_LOAN_TAKEN: "You have already taken the loan.",
+    WORKSHOP_NO_LOAN: "You haven't taken the loan.",
+    WORKSHOP_LOAN_FINAL:
+        "The loan is final once the Investment phase it was taken in has closed.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

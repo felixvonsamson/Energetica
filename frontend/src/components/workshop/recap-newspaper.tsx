@@ -9,12 +9,12 @@
  *   out" report if the grid went down, every event that fired as an article
  *   ending in a line of plain numbers, the room's figures, and each season's
  *   weather against a normal season's (#1200).
- * - "The Year Ahead" tells what the next Round holds: each facility that unlocks,
- *   with a black-and-white photo, a carbon tax vote if the Round holds one
- *   (#1014), the Round's events with their exact effect, the change in peak
- *   demand, and a seasonal outlook that only hints at the seasonal events, with
- *   no figures. After the last Round, a "Final Edition" banner takes its
- *   place.
+ * - "The Year Ahead" tells what the next Round holds: how much demand grows
+ *   (#1226), each facility that unlocks, with a black-and-white photo, a carbon
+ *   tax vote if the Round holds one (#1014), the Round's events with their
+ *   exact effect, the change in peak demand, and a seasonal outlook that only
+ *   hints at the seasonal events, with no figures. After the last Round, a
+ *   "Final Edition" banner takes its place.
  *
  * Players and the facilitator read the same page.
  */
@@ -122,12 +122,6 @@ export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
 }
 
 function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
-    const nothing =
-        yearAhead.stories.length === 0 &&
-        yearAhead.forecasts.length === 0 &&
-        yearAhead.unlocks.length === 0 &&
-        yearAhead.carbon_tax_vote === null;
-
     return (
         <>
             <SectionBanner
@@ -136,6 +130,10 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
             />
             <div className="grid gap-8 lg:grid-cols-[1fr_17rem]">
                 <div className="space-y-6">
+                    <GrowthArticle
+                        growth={yearAhead.demand_growth}
+                        round={yearAhead.round}
+                    />
                     {yearAhead.unlocks.map((unlock, i) => (
                         <UnlockArticle
                             key={unlock.facility}
@@ -158,11 +156,6 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
                                 <Article key={story.event} story={story} />
                             ))}
                         </div>
-                    )}
-                    {nothing && (
-                        <p className="py-6 text-center text-lg italic">
-                            Analysts expect a year much like the last.
-                        </p>
                     )}
                 </div>
                 <aside className="space-y-6 lg:border-l lg:border-neutral-900 lg:pl-6">
@@ -331,6 +324,31 @@ function UnlockArticle({
                     {unlock.name} is on sale from Round {round}
                 </p>
             </div>
+        </section>
+    );
+}
+
+/**
+ * How much demand grows into the next Round, before any event (#1226). Told
+ * without the formula behind it.
+ */
+function GrowthArticle({ growth, round }: { growth: number; round: number }) {
+    const percent = Math.round((growth - 1) * 100);
+    return (
+        <section className="border-t border-neutral-900 pt-5 first:border-t-0 first:pt-0">
+            <Kicker>Economy · Round {round}</Kicker>
+            <h3
+                className={`mt-1 text-3xl leading-[1.05] font-black ${HEADLINE}`}
+            >
+                {percent === 0
+                    ? "Demand is expected to hold steady next year"
+                    : `Demand is expected to ${percent > 0 ? "grow" : "fall"} ${Math.abs(percent)}% next year`}
+            </h3>
+            <p className="mt-2 text-justify leading-relaxed">
+                As the economy changes, so does the country's appetite for
+                electricity. Analysts have revised their forecasts for the year
+                ahead. Any events of the year come on top.
+            </p>
         </section>
     );
 }

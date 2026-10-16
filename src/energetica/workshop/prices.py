@@ -24,6 +24,12 @@ from energetica.workshop.seasons import Season
 DUMP_COST = 25.0
 #: The lowest price a player can set, per MWh. Below it, dumping would cost less than selling.
 PRICE_FLOOR = -DUMP_COST
+#: The price per MWh a clearing settles at when supply exactly meets must-serve demand, which would
+#: otherwise clear at the unbounded must-serve bid.
+SCARCITY_PRICE = 1000.0
+#: The highest price a player can set, per MWh. Without it, one player offering at a huge price could set
+#: the clearing price for everyone (#1221).
+PRICE_CEILING = SCARCITY_PRICE
 
 PriceSide = Literal["sell", "buy"]
 
@@ -71,36 +77,33 @@ class LockedPrices(BaseModel):
     prices: PriceSheet = Field(description="The prices of the facility types the player had operating")
 
 
-# Controllable and storage facilities start at the persistent world's default prices, restated
-# because Workshop does not import it. Facilities with no persistent-world counterpart get invented
-# prices: the modern coal plant a little below the coal burner, and pumped hydro halfway between the
-# persistent world's small and large pumped hydro. Renewables have no default there, since the
-# persistent world always offers them at its floor of -5, so Workshop sets its own. All are
-# placeholders until the game-balance pass (#1145).
+# Every facility type's default prices were set by the first recalibration (#1227), around power prices of
+# about 100 per MWh, without the carbon tax. Coal and gas plants sell at about 1.7 times their fuel cost,
+# nuclear and renewables low, and storage sells at about 150 and buys at about 60, less for the long-term types.
 _DEFAULT_SELL = {
-    FacilityId.ONSHORE_WIND_TURBINE: 135.0,
-    FacilityId.OFFSHORE_WIND_TURBINE: 120.0,
-    FacilityId.COAL_BURNER: 600.0,
-    FacilityId.MODERN_COAL_PLANT: 550.0,
-    FacilityId.GAS_BURNER: 500.0,
-    FacilityId.COMBINED_CYCLE: 450.0,
+    FacilityId.ONSHORE_WIND_TURBINE: 30.0,
+    FacilityId.OFFSHORE_WIND_TURBINE: 25.0,
+    FacilityId.COAL_BURNER: 65.0,
+    FacilityId.MODERN_COAL_PLANT: 50.0,
+    FacilityId.GAS_BURNER: 90.0,
+    FacilityId.COMBINED_CYCLE: 70.0,
     FacilityId.SMALL_WATER_DAM: 45.0,
     FacilityId.LARGE_WATER_DAM: 40.0,
-    FacilityId.NUCLEAR_REACTOR: 275.0,
-    FacilityId.NUCLEAR_REACTOR_GEN4: 375.0,
+    FacilityId.NUCLEAR_REACTOR: 25.0,
+    FacilityId.NUCLEAR_REACTOR_GEN4: 20.0,
     FacilityId.PV_SOLAR: 30.0,
     FacilityId.MULTI_LAYER_PV: 25.0,
-    FacilityId.CSP_SOLAR: 80.0,
-    FacilityId.LITHIUM_ION_BATTERIES: 940.0,
-    FacilityId.SOLID_STATE_BATTERIES: 900.0,
-    FacilityId.HYDROGEN_STORAGE: 880.0,
-    FacilityId.PUMPED_HYDRO: 785.0,
+    FacilityId.CSP_SOLAR: 40.0,
+    FacilityId.LITHIUM_ION_BATTERIES: 150.0,
+    FacilityId.SOLID_STATE_BATTERIES: 145.0,
+    FacilityId.HYDROGEN_STORAGE: 140.0,
+    FacilityId.PUMPED_HYDRO: 130.0,
 }
 _DEFAULT_BUY = {
-    FacilityId.LITHIUM_ION_BATTERIES: 425.0,
-    FacilityId.SOLID_STATE_BATTERIES: 420.0,
-    FacilityId.HYDROGEN_STORAGE: 230.0,
-    FacilityId.PUMPED_HYDRO: 205.0,
+    FacilityId.LITHIUM_ION_BATTERIES: 60.0,
+    FacilityId.SOLID_STATE_BATTERIES: 60.0,
+    FacilityId.HYDROGEN_STORAGE: 35.0,
+    FacilityId.PUMPED_HYDRO: 30.0,
 }
 
 DEFAULT_PRICES = PriceSheet(sell=_DEFAULT_SELL, buy=_DEFAULT_BUY)

@@ -299,6 +299,34 @@ export const workshopApi = {
             { ballot },
         ),
 
+    /**
+     * The visitor's loan (#1225): its terms, whether they can take it now, and
+     * once taken, its payments. Players only.
+     */
+    getLoan: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/loan", "get">>(
+            "/workshop/loan",
+        ),
+
+    /**
+     * Take the loan, adding its amount to the visitor's cash straight away.
+     * Only while the Investment phase is open, in any Round but the last, and
+     * once per session.
+     */
+    takeLoan: () =>
+        apiClient.post<ApiResponse<"/api/v1/workshop/loan", "post">>(
+            "/workshop/loan",
+        ),
+
+    /**
+     * Cancel the loan taken in this Investment phase. Only while it is open,
+     * and only if the selection still fits the visitor's cash without it.
+     */
+    cancelLoan: () =>
+        apiClient.delete<ApiResponse<"/api/v1/workshop/loan", "delete">>(
+            "/workshop/loan",
+        ),
+
     /** A settled Trading period's simulated days, weeks and settlement points. */
     getPeriod: (round: number, season: Season) =>
         apiClient.get<

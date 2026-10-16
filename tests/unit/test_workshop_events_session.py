@@ -26,6 +26,9 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
+# These tests play several Rounds with a small fleet, so grown demand would black them out (#1226).
+pytestmark = pytest.mark.usefixtures("no_demand_growth")
+
 PLAYERS = 2
 BASE_AMPLITUDE = PER_PLAYER_BASE_AMPLITUDE * PLAYERS
 COAL_BURNERS = 3
@@ -53,7 +56,7 @@ def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
     for account_id in range(1, PLAYERS + 1):
         account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
-        session.join(account).money = 10_000_000.0
+        session.join(account).money = 1_000_000_000.0
     session.advance()
     for account_id in range(1, PLAYERS + 1):
         for _ in range(COAL_BURNERS):

@@ -16,13 +16,14 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
-from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
+from energetica.workshop.prices import DEFAULT_PRICES, PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import LeverChanges, RoundLevers
 from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
+    FacilityLimitReachedError,
     FacilityNotOfferedError,
     Finished,
     Investment,
@@ -32,6 +33,7 @@ from energetica.workshop.session import (
     NotSelectedError,
     NotStarted,
     NotStorageError,
+    PriceAboveCeilingError,
     PriceBelowFloorError,
     PriceSettingClosedError,
     Recap,
@@ -52,7 +54,9 @@ from energetica.workshop.demand_block import (
     nominal_demand,
     round_one_amplitude,
 )
-from energetica.workshop.fleet import om_owed
+from energetica.workshop.final_score import final_score
+from energetica.workshop.fleet import lifetime_left, om_owed
+from energetica.workshop.unlocks import Unlock
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.seasons import representative_week
 from energetica.workshop.trading import Bidder, TradingOutcome, demand_scale, simulate_trading_period
@@ -231,7 +235,7 @@ def test_players_survive_a_restart(path: Path) -> None:
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
 
     players = reopened.network.players()
-    assert [(p.account_id, p.username, p.money) for p in players] == [(1, "alice", 123.0), (2, "bob", 1_000_000.0)]
+    assert [(p.account_id, p.username, p.money) for p in players] == [(1, "alice", 123.0), (2, "bob", 50_000_000.0)]
     assert all(player.network is reopened.network for player in players)
 
 
@@ -438,7 +442,7 @@ def test_a_failed_save_leaves_the_phase_unextended(path: Path, clock: _Clock, mo
 # --- the investment selection (#999) --------------------------------------------------------
 
 
-def _investing(path: Path, clock: _Clock, *, money: float = 1_000_000.0) -> WorkshopSession:
+def _investing(path: Path, clock: _Clock, *, money: float = 200_000_000.0) -> WorkshopSession:
     """A session in Round 1's Investment phase, with Alice (account 1) holding ``money``."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     session.join(_account(1, "alice")).money = money
@@ -455,7 +459,7 @@ def test_a_player_selects_facilities_during_the_investment_window_without_paying
 
     alice = session.network.members[1]
     assert alice.selection == [FacilityId.GAS_BURNER, FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM]
-    assert alice.money == 1_000_000.0
+    assert alice.money == 200_000_000.0
     assert alice.owned_facilities == []
 
 
@@ -478,8 +482,8 @@ def test_selecting_before_the_session_starts_is_rejected(path: Path, clock: _Clo
 
 
 def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: _Clock) -> None:
-    # A gas burner costs 90,000 and a small water dam 65,000.
-    session = _investing(path, clock, money=180_000.0)
+    # A gas burner costs 8,000,000 and a small water dam 45,000,000.
+    session = _investing(path, clock, money=60_000_000.0)
     session.select(1, FacilityId.GAS_BURNER)
     session.select(1, FacilityId.SMALL_WATER_DAM)
 
@@ -490,12 +494,99 @@ def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: 
 
 
 def test_a_selection_can_spend_every_last_coin(path: Path, clock: _Clock) -> None:
-    session = _investing(path, clock, money=180_000.0)
+    session = _investing(path, clock, money=16_000_000.0)
 
     session.select(1, FacilityId.GAS_BURNER)
     session.select(1, FacilityId.GAS_BURNER)
 
     assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.GAS_BURNER]
+
+
+# --- the dam limit (#1223) ------------------------------------------------------------------
+
+SMALL_DAM = FacilityId.SMALL_WATER_DAM
+LARGE_DAM = FacilityId.LARGE_WATER_DAM
+
+
+def test_a_player_can_select_at_most_three_of_each_dam(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock, money=500_000_000.0)
+    session.unlocks.append(Unlock(facility=LARGE_DAM, round=1, trigger="investment_threshold"))
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+        session.select(1, LARGE_DAM)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, LARGE_DAM)
+
+    assert session.network.members[1].selection == [SMALL_DAM, LARGE_DAM] * 3
+
+
+def test_only_dams_are_limited() -> None:
+    limited = {facility.id: facility.max_owned for facility in CATALOG.values() if facility.max_owned is not None}
+
+    assert limited == {SMALL_DAM: 3, LARGE_DAM: 3}
+
+
+def test_a_facility_without_a_limit_can_be_selected_any_number_of_times(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock, money=500_000_000.0)
+
+    for _ in range(4):
+        session.select(1, FacilityId.GAS_BURNER)
+
+    assert session.network.members[1].selection == [FacilityId.GAS_BURNER] * 4
+
+
+def test_removing_a_selected_dam_frees_its_place(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+
+    session.deselect(1, SMALL_DAM)
+    session.select(1, SMALL_DAM)
+
+    assert session.network.members[1].selection == [SMALL_DAM] * 3
+
+
+def test_dams_already_owned_count_towards_the_limit(path: Path, clock: _Clock) -> None:
+    session = _investing(path, clock)
+    session.network.members[1].owned_facilities.extend([OwnedFacility(facility=SMALL_DAM, built_round=1)] * 2)
+    session.select(1, SMALL_DAM)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+
+def test_dams_under_construction_count_towards_the_limit(path: Path, clock: _Clock) -> None:
+    # Dams have no construction lag, so one built in a later Round stands in for one still under construction.
+    session = _investing(path, clock)
+    under_construction = OwnedFacility(facility=SMALL_DAM, built_round=2)
+    assert lifetime_left(under_construction, current_round=1).under_construction
+    session.network.members[1].owned_facilities.extend([under_construction] * 3)
+
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+
+def test_a_dam_can_be_bought_again_once_one_retires(path: Path, clock: _Clock) -> None:
+    # A small dam works for 6 Rounds, so one built in Round -4 works in Round 1 and retires as Round 2 starts.
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    alice = session.join(_account(1, "alice"))
+    alice.owned_facilities.extend([OwnedFacility(facility=SMALL_DAM, built_round=-4)] * 3)
+    _advance(session)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+    while session.checkpoint != Investment(round=2):
+        _advance(session)
+    alice.money = 500_000_000.0
+
+    for _ in range(3):
+        session.select(1, SMALL_DAM)
+    with pytest.raises(FacilityLimitReachedError):
+        session.select(1, SMALL_DAM)
+
+    assert alice.owned_facilities == []
 
 
 def test_a_facility_the_session_does_not_offer_cannot_be_selected(path: Path, clock: _Clock) -> None:
@@ -535,7 +626,7 @@ def test_removing_after_the_investment_timer_runs_out_is_rejected(path: Path, cl
 
 def test_every_players_selection_is_bought_once_the_investment_timer_runs_out(path: Path, clock: _Clock) -> None:
     session = _investing(path, clock)
-    session.join(_account(2, "bob")).money = 100_000.0
+    session.join(_account(2, "bob")).money = 50_000_000.0
     session.select(1, FacilityId.GAS_BURNER)
     session.select(1, FacilityId.NUCLEAR_REACTOR)
     session.select(2, FacilityId.SMALL_WATER_DAM)
@@ -548,9 +639,9 @@ def test_every_players_selection_is_bought_once_the_investment_timer_runs_out(pa
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1),
         OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
     ]
-    assert alice.money == 1_000_000.0 - 90_000 - 840_000
+    assert alice.money == 200_000_000.0 - 8_000_000 - 80_000_000
     assert bob.owned_facilities == [OwnedFacility(facility=FacilityId.SMALL_WATER_DAM, built_round=1)]
-    assert bob.money == 100_000.0 - 65_000
+    assert bob.money == 50_000_000.0 - 45_000_000
     assert alice.selection == bob.selection == []
 
 
@@ -573,7 +664,7 @@ def test_buying_twice_charges_once(path: Path, clock: _Clock) -> None:
 
     assert session.buy_selections() is False
 
-    assert session.network.members[1].money == 1_000_000.0 - 90_000
+    assert session.network.members[1].money == 200_000_000.0 - 8_000_000
     assert len(session.network.members[1].owned_facilities) == 1
 
 
@@ -600,7 +691,7 @@ def test_advancing_out_of_the_investment_phase_buys_any_selection_left(path: Pat
 
     alice = session.network.members[1]
     assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]
-    assert alice.money == 1_000_000.0 - 90_000
+    assert alice.money == 200_000_000.0 - 8_000_000
     assert alice.selection == []
 
 
@@ -625,7 +716,7 @@ def test_a_purchase_survives_a_restart(path: Path, clock: _Clock) -> None:
 
     alice = reopened.network.members[1]
     assert alice.owned_facilities == [OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1)]
-    assert alice.money == 1_000_000.0 - 90_000
+    assert alice.money == 200_000_000.0 - 8_000_000
     assert alice.selection == []
 
 
@@ -638,7 +729,7 @@ def test_each_purchase_is_kept_with_its_round_and_price_and_survives_a_restart(p
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
 
-    gas = Purchase(facility=FacilityId.GAS_BURNER, round=1, price=90_000)
+    gas = Purchase(facility=FacilityId.GAS_BURNER, round=1, price=8_000_000)
     assert reopened.network.members[1].purchases == [gas, gas]
 
 
@@ -665,7 +756,7 @@ def test_a_failed_save_undoes_the_purchase(path: Path, clock: _Clock, monkeypatc
         session.buy_selections()
 
     alice = session.network.members[1]
-    assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
+    assert (alice.money, alice.owned_facilities, alice.selection) == (200_000_000.0, [], [FacilityId.GAS_BURNER])
 
 
 def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
@@ -692,34 +783,34 @@ def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
     for kept in (session, WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)):
         alice = kept.network.members[1]
         assert kept.checkpoint == Investment(round=1)
-        assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
+        assert (alice.money, alice.owned_facilities, alice.selection) == (200_000_000.0, [], [FacilityId.GAS_BURNER])
 
 
 # --- automatic retirement (#1000) -----------------------------------------------------------
 
-# An onshore wind turbine built in Round 1 works in Rounds 1 and 2. A nuclear reactor built in Round 1
-# works from Round 2 to Round 9.
-WIND = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1)
+# A PV solar farm built in Round 1 works in Rounds 1 and 2. A nuclear reactor built in Round 1 works
+# from Round 2 to Round 7.
+SOLAR = OwnedFacility(facility=FacilityId.PV_SOLAR, built_round=1)
 REACTOR = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1)
 
 
-def _owning_wind_and_reactor(path: Path) -> WorkshopSession:
-    """A session at Round 2's Recap, with Alice (account 1) owning ``WIND`` and ``REACTOR``."""
+def _owning_solar_and_reactor(path: Path) -> WorkshopSession:
+    """A session at Round 2's Recap, with Alice (account 1) owning ``SOLAR`` and ``REACTOR``."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    session.join(_account(1, "alice")).owned_facilities.extend([WIND, REACTOR])
+    session.join(_account(1, "alice")).owned_facilities.extend([SOLAR, REACTOR])
     while session.checkpoint != Recap(round=2):
         _advance(session)
     return session
 
 
 def test_a_facility_stays_on_the_roster_through_its_last_round(path: Path) -> None:
-    session = _owning_wind_and_reactor(path)
+    session = _owning_solar_and_reactor(path)
 
-    assert session.network.members[1].owned_facilities == [WIND, REACTOR]
+    assert session.network.members[1].owned_facilities == [SOLAR, REACTOR]
 
 
 def test_a_facility_retires_by_itself_the_round_after_its_lifetime_ends(path: Path) -> None:
-    session = _owning_wind_and_reactor(path)
+    session = _owning_solar_and_reactor(path)
 
     _advance(session)
 
@@ -728,7 +819,7 @@ def test_a_facility_retires_by_itself_the_round_after_its_lifetime_ends(path: Pa
 
 
 def test_a_retirement_survives_a_restart(path: Path) -> None:
-    session = _owning_wind_and_reactor(path)
+    session = _owning_solar_and_reactor(path)
     _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
@@ -737,14 +828,14 @@ def test_a_retirement_survives_a_restart(path: Path) -> None:
 
 
 def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    session = _owning_wind_and_reactor(path)
+    session = _owning_solar_and_reactor(path)
     monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
 
     assert session.checkpoint == Recap(round=2)
-    assert session.network.members[1].owned_facilities == [WIND, REACTOR]
+    assert session.network.members[1].owned_facilities == [SOLAR, REACTOR]
 
 
 # --- storage reinvest-or-lose (#1001) -------------------------------------------------------
@@ -874,12 +965,18 @@ def test_a_price_can_go_down_to_the_floor_but_not_below(path: Path, clock: _Cloc
     assert session.network.members[1].prices.sell[GAS] == PRICE_FLOOR
 
 
-def test_a_price_has_no_ceiling(path: Path, clock: _Clock) -> None:
+@pytest.mark.parametrize(("facility", "side"), [(GAS, "sell"), (BATTERIES, "buy")], ids=["sell", "storage buy"])
+def test_a_price_can_go_up_to_the_ceiling_but_not_above(
+    path: Path, clock: _Clock, facility: FacilityId, side: PriceSide
+) -> None:
     session = _trading(path, clock)
 
-    session.set_price(1, GAS, "sell", 1e12)
+    session.set_price(1, facility, side, PRICE_CEILING)
+    with pytest.raises(PriceAboveCeilingError):
+        session.set_price(1, facility, side, PRICE_CEILING + 0.01)
 
-    assert session.network.members[1].prices.sell[GAS] == 1e12
+    prices = session.network.members[1].prices
+    assert (prices.sell if side == "sell" else prices.buy)[facility] == PRICE_CEILING
 
 
 def test_a_facility_that_is_not_storage_has_no_buy_price(path: Path, clock: _Clock) -> None:
@@ -930,7 +1027,7 @@ def test_the_prices_of_a_completed_period_are_kept_for_the_types_the_player_had_
         LockedPrices(
             round=1,
             season="spring",
-            prices=PriceSheet(sell={GAS: 80.0, BATTERIES: 940.0}, buy={BATTERIES: 425.0}),
+            prices=PriceSheet(sell={GAS: 80.0, BATTERIES: 150.0}, buy={BATTERIES: 60.0}),
         )
     ]
 
@@ -944,7 +1041,7 @@ def test_the_next_window_starts_from_the_last_periods_prices(path: Path, clock: 
     _advance(session)
 
     [spring, summer] = session.network.members[1].locked_prices
-    assert (spring.season, spring.prices.sell) == ("spring", {GAS: 80.0, BATTERIES: 940.0})
+    assert (spring.season, spring.prices.sell) == ("spring", {GAS: 80.0, BATTERIES: 150.0})
     assert (summer.season, summer.prices.sell) == ("summer", {GAS: 80.0, BATTERIES: 700.0})
 
 
@@ -998,6 +1095,7 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
 # --- the Trading-period engine (#1003) ------------------------------------------------------
 
 FLEET = [
+    OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
     OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
     OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
     OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1),
@@ -1303,11 +1401,11 @@ def test_a_cancelled_simulation_stops_and_changes_nothing(path: Path, clock: _Cl
 
 
 def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Path, clock: _Clock) -> None:
-    # Two combined cycles (108 MW) asking 100 meet every tier of demand willing to pay at least 100: 125% of
-    # nominal demand, which never exceeds 96 MW for one player. Above them the next tier pays only 24, so
-    # every hourly clearing sells 1.25 x nominal demand at 100.
+    # Four combined cycles (320 MW) asking 100 meet every tier of demand willing to pay at least 100: 105% of
+    # nominal demand, which stays under 180 MW for one player in spring. Above them the next tier pays only 80, so
+    # every hourly clearing sells 1.05 x nominal demand at 100.
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
-    plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 2
+    plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 4
     session.join(_account(1, "alice")).owned_facilities.extend(plants)
     _advance(session)
     _advance(session)
@@ -1322,7 +1420,7 @@ def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Pa
         "spring", RoundFormat(), curve
     )
     hourly = [
-        1.25 * nominal_demand(amplitude, curve, SettlementPeriod(day, hour, 24))
+        1.05 * nominal_demand(amplitude, curve, SettlementPeriod(day, hour, 24))
         for day in representative_week("spring")
         for hour in range(24)
     ]
@@ -1331,7 +1429,7 @@ def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Pa
     plant = result.facilities[FacilityId.COMBINED_CYCLE]
     assert plant.sold == pytest.approx(sum(hourly) * 13)
     assert plant.revenue == pytest.approx(sum(hourly) / 1e6 * 100 * 13)
-    om = 2 * om_owed(plants[0], current_round=1, production=[output / 2 for output in hourly])
+    om = 4 * om_owed(plants[0], current_round=1, production=[output / 4 for output in hourly])
     assert plant.om == pytest.approx(om)
     # Fuel procurement is automatic, so the plants' fuel is paid for too (#1009).
     assert alice.money == pytest.approx(WORKSHOP_STARTING_BUDGET + plant.revenue - om - result.fuel_cost)
@@ -1593,7 +1691,7 @@ def _at_round_one_recap(path: Path) -> WorkshopSession:
 
 def test_a_player_below_the_floor_is_topped_up_to_exactly_it_as_the_round_starts(path: Path) -> None:
     session = _at_round_one_recap(path)
-    session.network.members[1].money = 120_000.0
+    session.network.members[1].money = 6_000_000.0
 
     _advance(session)
 
@@ -1603,27 +1701,39 @@ def test_a_player_below_the_floor_is_topped_up_to_exactly_it_as_the_round_starts
 
 def test_a_player_in_debt_is_topped_up_to_the_floor(path: Path) -> None:
     session = _at_round_one_recap(path)
-    session.network.members[1].money = -300_000.0
+    session.network.members[1].money = -15_000_000.0
 
     _advance(session)
 
     assert session.network.members[1].money == FLOOR
 
 
+def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
+    session = _at_round_one_recap(path)
+    alice = session.network.members[1]
+    alice.money = -15_000_000.0
+    before = final_score(alice, round_count=session.round_count)
+
+    _advance(session)
+
+    assert alice.money == FLOOR
+    assert final_score(alice, round_count=session.round_count) == before
+
+
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
     session = _at_round_one_recap(path)
     session.network.members[1].money = FLOOR + 1.0
-    session.network.members[2].money = 3_000_000.0
+    session.network.members[2].money = 150_000_000.0
 
     _advance(session)
 
     assert session.network.members[1].money == FLOOR + 1.0
-    assert session.network.members[2].money == 3_000_000.0
+    assert session.network.members[2].money == 150_000_000.0
 
 
 def test_a_top_up_survives_a_restart(path: Path) -> None:
     session = _at_round_one_recap(path)
-    session.network.members[1].money = 120_000.0
+    session.network.members[1].money = 6_000_000.0
     _advance(session)
 
     reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
@@ -1633,30 +1743,30 @@ def test_a_top_up_survives_a_restart(path: Path) -> None:
 
 def test_an_advance_that_fails_to_save_tops_up_nobody(path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     session = _at_round_one_recap(path)
-    session.network.members[1].money = 120_000.0
+    session.network.members[1].money = 6_000_000.0
     monkeypatch.setattr(session_module, "write_atomically", _failing_write)
 
     with pytest.raises(OSError):
         _advance(session)
 
     assert session.checkpoint == Recap(round=1)
-    assert session.network.members[1].money == 120_000.0
+    assert session.network.members[1].money == 6_000_000.0
 
 
 def test_round_one_starts_with_the_cash_each_player_holds(path: Path) -> None:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path)
-    session.join(_account(1, "alice")).money = 120_000.0
+    session.join(_account(1, "alice")).money = 6_000_000.0
 
     _advance(session)
 
     assert session.checkpoint == Investment(round=1)
-    assert session.network.members[1].money == 120_000.0
+    assert session.network.members[1].money == 6_000_000.0
 
 
 def test_no_top_up_happens_inside_a_round(path: Path) -> None:
     session = _at_round_one_recap(path)
     _advance(session)
-    session.network.members[1].money = 120_000.0
+    session.network.members[1].money = 6_000_000.0
 
     _advance(session)
 
@@ -1678,7 +1788,7 @@ def _round_starting_after_a_blackout(path: Path, clock: _Clock, *, alice: float,
 
 
 def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path, clock: _Clock) -> None:
-    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
 
     _advance(session)
 
@@ -1687,8 +1797,19 @@ def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path,
     assert session.network.members[2].money == WORKSHOP_STARTING_BUDGET
 
 
+def test_a_blackout_reset_leaves_every_final_score_unchanged(path: Path, clock: _Clock) -> None:
+    session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
+    players = list(session.network.players())
+    before = [final_score(player, round_count=session.round_count) for player in players]
+
+    _advance(session)
+
+    assert [player.money for player in players] == [WORKSHOP_STARTING_BUDGET] * len(players)
+    assert [final_score(player, round_count=session.round_count) for player in players] == before
+
+
 def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:
-    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
     session.network.members[1].owned_facilities.append(REACTOR)
 
     _advance(session)
@@ -1697,7 +1818,7 @@ def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clo
 
 
 def test_a_blacked_out_round_counts_toward_every_facilitys_lifetime(path: Path, clock: _Clock) -> None:
-    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
     # Batteries built in Round 1 last that Round only, though the blackout cut it short.
     session.network.members[1].owned_facilities.append(OwnedFacility(facility=BATTERIES, built_round=1))
 
@@ -1707,14 +1828,14 @@ def test_a_blacked_out_round_counts_toward_every_facilitys_lifetime(path: Path, 
 
 
 def test_only_the_round_after_a_blackout_is_reset(path: Path, clock: _Clock) -> None:
-    session = _round_starting_after_a_blackout(path, clock, alice=120_000.0, bob=3_000_000.0)
+    session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
     _advance(session)
     for player in session.network.players():
         player.owned_facilities.extend(FLEET)
     while session.checkpoint != Recap(round=2):
         _advance(session)
-    session.network.members[2].money = 3_000_000.0
+    session.network.members[2].money = 150_000_000.0
 
     _advance(session)
 
-    assert session.network.members[2].money == 3_000_000.0
+    assert session.network.members[2].money == 150_000_000.0

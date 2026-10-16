@@ -30,7 +30,7 @@ from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.facilities import FacilityId, Fuel
-from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
@@ -179,7 +179,7 @@ def test_a_player_entering_is_placed_into_the_shared_network(session_path: Path)
     assert response.status_code == 200
     assert response.json() == {
         "role": "player",
-        "player": {"account_id": account_id, "username": "alice", "money": 1_000_000.0},
+        "player": {"account_id": account_id, "username": "alice", "money": 50_000_000.0},
     }
     assert [player["username"] for player in client.get(SESSION_URL).json()["players"]] == ["alice"]
 
@@ -457,7 +457,7 @@ def test_the_fleet_shows_how_long_each_owned_facility_has_left(session_path: Pat
 
     assert client.get(FLEET_URL).json() == [
         {"facility": "onshore_wind_turbine", "built_round": 1, "rounds_left": 2, "under_construction": False},
-        {"facility": "nuclear_reactor", "built_round": 1, "rounds_left": 8, "under_construction": True},
+        {"facility": "nuclear_reactor", "built_round": 1, "rounds_left": 6, "under_construction": True},
     ]
 
 
@@ -495,7 +495,7 @@ class _Clock:
 def _investing(
     session_path: Path, clock: _Clock, *usernames: str, levers: LeverChanges | None = None
 ) -> tuple[FastAPI, TestClient, int, list[int]]:
-    """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 1,000,000. Round 1 runs
+    """An app in Round 1's Investment phase, with each of ``usernames`` entered and holding 50,000,000. Round 1 runs
     with ``levers``, by default those of the default plan.
 
     Returns the app, a client left signed in as the facilitator, and the facilitator's and players'
@@ -507,7 +507,7 @@ def _investing(
     for username in usernames:
         account_ids.append(_player(client, username))
         client.post(ENTER_URL)
-        app.state.workshop_session.player(account_ids[-1]).money = 1_000_000.0
+        app.state.workshop_session.player(account_ids[-1]).money = 50_000_000.0
     facilitator = _facilitator(client)
     if levers is not None:
         # Set as a default plan would: the facilitator cannot propose a vote for Round 1.
@@ -527,13 +527,13 @@ def test_a_player_selects_facilities_to_buy_when_the_investment_phase_closes(ses
     authenticate(client, alice)
 
     client.post(SELECTION_URL, json={"facility": "gas_burner"})
-    response = client.post(SELECTION_URL, json={"facility": "small_water_dam"})
+    response = client.post(SELECTION_URL, json={"facility": "coal_burner"})
 
     assert response.status_code == 200
     assert response.json() == {
-        "facilities": ["gas_burner", "small_water_dam"],
-        "total_cost": 155_000.0,
-        "money": 1_000_000.0,
+        "facilities": ["gas_burner", "coal_burner"],
+        "total_cost": 17_000_000.0,
+        "money": 50_000_000.0,
         "stored_energy_at_risk": {},
     }
     assert client.get(SELECTION_URL).json() == response.json()
@@ -567,8 +567,8 @@ def _investing_after(
     session.checkpoint = Investment(round=2)
     player = session.player(alice)
     assert player is not None
-    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 500_000_000.0
-    player.money = 2_000_000.0
+    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 150_000_000.0
+    player.money = 100_000_000.0
     authenticate(client, alice)
     return app, client, alice
 
@@ -576,9 +576,9 @@ def _investing_after(
 def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
     _, client, _ = _investing_after(session_path, clock, "full_season")
 
-    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 500_000_000.0}
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 150_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
-    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 200_000_000.0}
+    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 50_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
     assert response.json()["stored_energy_at_risk"] == {}
 
@@ -615,8 +615,9 @@ def test_a_selection_change_the_rules_forbid_is_an_error(
 ) -> None:
     app, client, _, [alice] = _investing(session_path, clock, "alice")
     authenticate(client, alice)
+    app.state.workshop_session.player(alice).money = 100_000_000.0
     client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
-    app.state.workshop_session.player(alice).money = 900_000.0
+    app.state.workshop_session.player(alice).money = 90_000_000.0
 
     response = request_selection(client)
 
@@ -642,12 +643,87 @@ def test_a_facilitator_has_no_selection(session_path: Path, clock: _Clock) -> No
     assert client.post(SELECTION_URL, json={"facility": "gas_burner"}).status_code == 403
 
 
+# --- the loan (#1225) ----------------------------------------------------------------------------
+
+LOAN_URL = "/api/v1/workshop/loan"
+
+
+def test_a_player_takes_the_loan_and_cancels_it(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    assert client.get(LOAN_URL).json() == {
+        "amount": 50_000_000.0,
+        "payment": 30_000_000.0,
+        "payment_count": 2,
+        "available": True,
+        "taken_round": None,
+        "cancellable": False,
+        "payments": [],
+    }
+
+    taken = client.post(LOAN_URL)
+
+    assert taken.status_code == 200
+    assert taken.json()["available"] is False
+    assert taken.json()["taken_round"] == 1
+    assert taken.json()["cancellable"] is True
+    assert taken.json()["payments"] == [
+        {"round": 2, "amount": 30_000_000.0, "paid": False},
+        {"round": 3, "amount": 30_000_000.0, "paid": False},
+    ]
+    assert client.get(SELECTION_URL).json()["money"] == 100_000_000.0
+
+    cancelled = client.delete(LOAN_URL)
+
+    assert cancelled.status_code == 200
+    assert cancelled.json()["taken_round"] is None
+    assert client.get(SELECTION_URL).json()["money"] == 50_000_000.0
+
+
+@pytest.mark.parametrize(
+    ("request_loan", "error"),
+    [
+        (lambda client: client.post(LOAN_URL), "WORKSHOP_LOAN_TAKEN"),
+        (lambda client: client.delete(LOAN_URL), "WORKSHOP_NOT_ENOUGH_MONEY"),
+    ],
+    ids=["taken twice", "cancel needed"],
+)
+def test_a_loan_change_the_rules_forbid_is_an_error(
+    session_path: Path, clock: _Clock, request_loan: Callable[[TestClient], Response], error: str
+) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    client.post(LOAN_URL)
+    client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
+
+    response = request_loan(client)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == error
+
+
+def test_cancelling_without_a_loan_is_an_error(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+
+    response = client.delete(LOAN_URL)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_LOAN"
+
+
+def test_a_facilitator_has_no_loan(session_path: Path, clock: _Clock) -> None:
+    _, client, _, _ = _investing(session_path, clock)
+
+    assert client.get(LOAN_URL).status_code == 403
+    assert client.post(LOAN_URL).status_code == 403
+
+
 def test_players_buy_their_own_selections_when_the_facilitator_advances(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, [alice, bob] = _investing(session_path, clock, "alice", "bob")
     authenticate(client, alice)
     client.post(SELECTION_URL, json={"facility": "gas_burner"})
     authenticate(client, bob)
-    client.post(SELECTION_URL, json={"facility": "small_water_dam"})
     client.post(SELECTION_URL, json={"facility": "small_water_dam"})
     clock.tick(minutes=8)
 
@@ -659,12 +735,12 @@ def test_players_buy_their_own_selections_when_the_facilitator_advances(session_
     assert client.get(SELECTION_URL).json() == {
         "facilities": [],
         "total_cost": 0.0,
-        "money": 910_000.0,
+        "money": 42_000_000.0,
         "stored_energy_at_risk": {},
     }
     authenticate(client, bob)
-    assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam", "small_water_dam"]
-    assert client.get(SELECTION_URL).json()["money"] == 870_000.0
+    assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam"]
+    assert client.get(SELECTION_URL).json()["money"] == 5_000_000.0
 
 
 def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(
@@ -731,7 +807,7 @@ def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
 
         [result] = app.state.workshop_session.player(alice).trading_results
         assert (result.round, result.season) == (1, "spring")
-        assert client.get(SELECTION_URL).json()["money"] == pytest.approx(910_000.0 + result.operating_profit)
+        assert client.get(SELECTION_URL).json()["money"] == pytest.approx(42_000_000.0 + result.operating_profit)
         assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
@@ -759,20 +835,20 @@ def _trading(session_path: Path, clock: _Clock) -> tuple[TestClient, int, int]:
     return client, facilitator, alice
 
 
-def test_a_player_reads_their_prices_and_the_price_floor(session_path: Path, clock: _Clock) -> None:
+def test_a_player_reads_their_prices_and_the_price_range(session_path: Path, clock: _Clock) -> None:
     client, _, _ = _trading(session_path, clock)
 
     response = client.get(PRICES_URL)
 
     assert response.status_code == 200
     body = response.json()
-    assert body["price_floor"] == -25.0
-    assert body["sell"]["gas_burner"] == 500.0
+    assert body["price_range"] == {"floor": -25.0, "ceiling": 1000.0}
+    assert body["sell"]["gas_burner"] == 90.0
     assert body["buy"] == {
-        "lithium_ion_batteries": 425.0,
-        "solid_state_batteries": 420.0,
-        "hydrogen_storage": 230.0,
-        "pumped_hydro": 205.0,
+        "lithium_ion_batteries": 60.0,
+        "solid_state_batteries": 60.0,
+        "hydrogen_storage": 35.0,
+        "pumped_hydro": 30.0,
     }
 
 
@@ -792,9 +868,10 @@ def test_a_player_sets_a_price_while_the_window_is_open(session_path: Path, cloc
     ("url", "price", "error"),
     [
         (f"{PRICES_URL}/gas_burner/sell", -25.01, "WORKSHOP_PRICE_BELOW_FLOOR"),
+        (f"{PRICES_URL}/gas_burner/sell", 1000.01, "WORKSHOP_PRICE_ABOVE_CEILING"),
         (f"{PRICES_URL}/gas_burner/buy", 10.0, "WORKSHOP_NOT_STORAGE"),
     ],
-    ids=["below the floor", "buy price for a facility that is not storage"],
+    ids=["below the floor", "above the ceiling", "buy price for a facility that is not storage"],
 )
 def test_a_price_the_rules_forbid_is_an_error(
     session_path: Path, clock: _Clock, url: str, price: float, error: str
@@ -887,7 +964,7 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "stock": 0.0,
                 "season_need": pytest.approx(need),
                 "stockpile_limit": pytest.approx(3 * need),
-                "order": math.ceil(need / 1_000) * 1_000.0,
+                "order": math.ceil(need / 2 / 1_000) * 1_000.0,
                 "ran_out": False,
             }
         ],
@@ -1028,8 +1105,8 @@ def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_p
     before = client.get(BALANCE_SHEET_URL.format(round=1)).json()
     assert [season["status"] for season in before["seasons"]] == ["upcoming"] * 4
     assert before["total"] is None
-    assert before["investments"] == [{"facility": "gas_burner", "name": "Gas burner", "count": 1, "cost": 90_000.0}]
-    assert before["net_profit"] == pytest.approx(-90_000.0)
+    assert before["investments"] == [{"facility": "gas_burner", "name": "Gas burner", "count": 1, "cost": 8_000_000.0}]
+    assert before["net_profit"] == pytest.approx(-8_000_000.0)
 
     authenticate(client, facilitator)
     _advance(client)
@@ -1045,7 +1122,7 @@ def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_p
         ("skipped", False),
     ]
     assert after["total"]["operating_income"] == pytest.approx(result.operating_profit)
-    assert after["net_profit"] == pytest.approx(result.operating_profit - 90_000.0)
+    assert after["net_profit"] == pytest.approx(result.operating_profit - 8_000_000.0)
 
 
 def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(session_path: Path) -> None:
@@ -1504,8 +1581,8 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 
     assert response.status_code == 200
     body = response.json()
-    # Half of two starting budgets of 1,000,000.
-    assert body["threshold"] == 1_000_000.0
+    # Half of two starting budgets of 50,000,000.
+    assert body["threshold"] == 50_000_000.0
     assert body["csp_unlock_round"] == 3
     assert body["unlocks"] == []
     technologies = {technology["base"]: technology for technology in body["technologies"]}
@@ -1514,7 +1591,7 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
         "base_name": "Gas burner",
         "upgrade": "combined_cycle",
         "upgrade_name": "Combined cycle",
-        "invested": 90_000.0,
+        "invested": 8_000_000.0,
         "unlocked_round": None,
     }
     assert technologies["coal_burner"]["invested"] == 0.0
@@ -1524,7 +1601,8 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 def test_the_progress_shows_the_round_an_upgrade_unlocked_from(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
     authenticate(client, alice)
-    # 840,000, past the threshold of half one starting budget.
+    # 80,000,000, past the threshold of half one starting budget, and bought with the loan.
+    client.post(LOAN_URL)
     client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
     authenticate(client, facilitator)
     while client.get(SESSION_URL).json()["checkpoint"]["kind"] != "recap":
@@ -1759,10 +1837,12 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
         assert _advance(client).status_code == 200
     session: WorkshopSession = client.app.state.workshop_session  # type: ignore[attr-defined]
-    for account_id, money in ((alice, 400_000.0), (bob, 700_000.0)):
+    # Cash plays no part in the score, so the richer player still ranks below the one who invested less.
+    for account_id, money, investment in ((alice, 900_000.0, 400_000.0), (bob, 100_000.0, 100_000.0)):
         player = session.player(account_id)
         assert player is not None
         player.money = money
+        player.purchases = [Purchase(facility=FacilityId.GAS_BURNER, round=1, price=investment)]
     facilitator_view = client.get(SCOREBOARD_URL)
     authenticate(client, alice)
     player_view = client.get(SCOREBOARD_URL)
@@ -1770,8 +1850,12 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
     assert player_view.status_code == 200
     assert player_view.json() == facilitator_view.json()
     board = player_view.json()
-    assert [(row["username"], row["cash"]) for row in board] == [("bob", 700_000.0), ("alice", 400_000.0)]
-    assert all(row["score"] == row["operating_profit"] + row["cash"] + row["residual_value"] for row in board)
+    assert [(row["username"], row["investments"]) for row in board] == [("bob", 100_000.0), ("alice", 400_000.0)]
+    assert all(
+        row["score"]
+        == pytest.approx(row["operating_profit"] - row["investments"] - row["carbon_tax"] + row["residual_value"])
+        for row in board
+    )
 
 
 # --- the carbon tax vote (#1014) ------------------------------------------------------------

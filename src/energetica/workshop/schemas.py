@@ -20,7 +20,7 @@ from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
-from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import EventStatus, RoundLevers
 from energetica.workshop.seasons import WEEK_DAYS, Season
@@ -171,14 +171,22 @@ class WorkshopPriceIn(BaseModel):
     """A new price for one facility type, per MWh."""
 
     price: float = Field(
-        allow_inf_nan=False, description=f"The price per MWh. It has no ceiling, but cannot go below {PRICE_FLOOR}"
+        allow_inf_nan=False,
+        description=f"The price per MWh, from {PRICE_FLOOR} to {PRICE_CEILING}, both included",
     )
+
+
+class WorkshopPriceRangeOut(BaseModel):
+    """The prices a player can set, per MWh, both bounds included."""
+
+    floor: float = Field(description="The lowest price a player can set, per MWh")
+    ceiling: float = Field(description="The highest price a player can set, per MWh")
 
 
 class WorkshopPricesOut(PriceSheet):
     """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
 
-    price_floor: float = Field(description="The lowest price a player can set, per MWh")
+    price_range: WorkshopPriceRangeOut
 
 
 class WorkshopFuelLineOut(BaseModel):
@@ -231,6 +239,33 @@ class WorkshopBallotIn(BaseModel):
     """A player's ballot in the carbon tax vote (#1014)."""
 
     ballot: Ballot
+
+
+class WorkshopLoanPaymentOut(BaseModel):
+    """One payment that pays the loan back (#1225)."""
+
+    round: int | None = Field(
+        description="The Round whose start takes it, or null if it is taken when the session ends"
+    )
+    amount: float
+    paid: bool
+
+
+class WorkshopLoanOut(BaseModel):
+    """The calling player's loan (#1225): its terms, and once taken, its payments."""
+
+    amount: float = Field(description="What the loan adds to the player's cash")
+    payment: float = Field(description="What each payment takes back")
+    payment_count: int
+    available: bool = Field(
+        description="Whether the player can take the loan in this Round's Investment phase while it is open: they "
+        "have not taken it, and this is not the last Round"
+    )
+    taken_round: int | None = Field(description="The Round the player took the loan in, or null if they have not")
+    cancellable: bool = Field(
+        description="Whether the player took the loan in this Investment phase, so they can cancel it while it is open"
+    )
+    payments: list[WorkshopLoanPaymentOut] = Field(description="Every payment, in order. Empty until the loan is taken")
 
 
 class WorkshopVoteOut(BaseModel):
