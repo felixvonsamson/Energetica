@@ -50,6 +50,10 @@ opens, and one planned for a season when that season's Trading period opens. The
 fired, and works out their effects from that list: the demand block's amplitude when a period is simulated, the
 revenue tax when it is settled, the facility prices of the Round, and fuel shocks when a period opens.
 
+Demand also grows from Round to Round (#1226, :mod:`~energetica.workshop.demand_growth`). When Recap N opens, the
+session works out Round N+1's growth factor from the room's average operating profit per player in Round N, and keeps
+it. A Round's amplitude is Round 1's times every factor up to it, before the events move it.
+
 A Round whose plan turns on the carbon tax vote holds one in its Investment phase (#1014,
 :mod:`~energetica.workshop.votes`). Players cast their ballots while the phase is open, and the vote is counted when
 the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
@@ -75,6 +79,7 @@ from pydantic import BaseModel, Field
 from energetica.workshop.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
+from energetica.workshop.demand_growth import growth_factor, growth_through
 from energetica.workshop.events import (
     FiredEvent,
     demand_factor,
@@ -442,7 +447,7 @@ class SettlementJob:
     demand_amplitude: float
     """The amplitude the period is simulated with, after the events that move it."""
     base_demand_amplitude: float
-    """The session's amplitude before any event, kept once the period is settled."""
+    """The session's Round-1 amplitude, before any growth or event, kept once the period is settled."""
     weather_seed: int
     # Set to stop the simulation after the day it is on.
     cancelled: threading.Event = field(default_factory=threading.Event)
@@ -521,6 +526,7 @@ class _SavedSession(BaseModel):
     # Empty for a session saved before votes (#1014).
     ballots: dict[int, Ballot] = {}
     vote_outcomes: list[VoteOutcome] = []
+    demand_growth: dict[int, float]
 
 
 class WorkshopSession:
@@ -551,6 +557,7 @@ class WorkshopSession:
         peak_demand: dict[int, float] | None = None,
         ballots: dict[int, Ballot] | None = None,
         vote_outcomes: list[VoteOutcome] | None = None,
+        demand_growth: dict[int, float] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -572,9 +579,11 @@ class WorkshopSession:
         self.phase_timer = phase_timer
         # The random seed of the Run's weather, which the renewables' output follows (#1003).
         self.weather_seed = random.randrange(WEATHER_SEEDS) if weather_seed is None else weather_seed
-        # The demand block's amplitude before any event, in W. Set from the headcount when the first Trading
-        # period settles, and kept for the rest of the session. Events move it from there (#1012).
+        # The demand block's Round-1 amplitude, in W. Set from the headcount when the first Trading period settles,
+        # and kept for the rest of the session. Demand growth (#1226) and events (#1012) move it from there.
         self.demand_amplitude = demand_amplitude
+        # Each Round's demand growth factor, by Round, from Round 2 on. Set when the Recap before it opens (#1226).
+        self.demand_growth = {} if demand_growth is None else demand_growth
         # The last Trading period settled, so that none is settled twice.
         self.settled_period = settled_period
         # Every Trading period the grid went down in, in order (#1005).
@@ -673,6 +682,7 @@ class WorkshopSession:
             peak_demand=saved.peak_demand,
             ballots=saved.ballots,
             vote_outcomes=saved.vote_outcomes,
+            demand_growth=saved.demand_growth,
             clock=clock,
         )
 
@@ -815,7 +825,7 @@ class WorkshopSession:
         everyone's cash after a blackout (#1016). Opening a Trading period sets the season's fuel prices
         and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
         Investment phase counts its vote, if it held one (#1014).
-        Opening a Recap locks the next Round's plan (#1190). Raises
+        Opening a Recap locks the next Round's plan (#1190) and works out how much demand grows into it (#1226). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -843,6 +853,8 @@ class WorkshopSession:
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
                     undos.append(self._apply_round_start_money(checkpoint.round))
+                if isinstance(checkpoint, Recap):
+                    undos.append(self._grow_demand(checkpoint.round))
                 undos.append(self._fire_events(checkpoint))
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
@@ -1062,6 +1074,31 @@ class WorkshopSession:
 
         return undo
 
+    def _grow_demand(self, round_number: int) -> Callable[[], None]:
+        """Work out how much demand grows from Round ``round_number`` to the next, without saving (#1226). Returns
+        what undoes it.
+
+        The factor follows the room's average operating profit per player in the Round, counting every player in the
+        session now. A Round that ended in a blackout counts the profit it made up to it. The last Round has no next
+        one, so it is left alone. The caller holds the lock.
+        """
+        players = self.network.players()
+        if round_number >= self.round_count or not players:
+            return lambda: None
+        profit = sum(
+            result.operating_profit
+            for player in players
+            for result in player.trading_results
+            if result.round == round_number
+        )
+        before = self.demand_growth
+        self.demand_growth = {**before, round_number + 1: growth_factor(profit / len(players))}
+
+        def undo() -> None:
+            self.demand_growth = before
+
+        return undo
+
     def _open_fuel_market(self, period: TradingPeriod) -> Callable[[], None]:
         """Set each fuel's price for ``period``, and under manual procurement start each player's fuel order from its
         default, without saving. Returns what undoes it.
@@ -1198,6 +1235,7 @@ class WorkshopSession:
                 peak_demand=self.peak_demand.get(round_number),
                 vote_outcomes=self.vote_outcomes,
                 weather=weather,
+                demand_growth=self.demand_growth.get(round_number + 1, 1.0),
             )
 
     def scoreboard(self) -> list[FinalScore]:
@@ -1410,8 +1448,8 @@ class WorkshopSession:
         Returns ``None`` while the window is open, outside a Trading period, while the period is being
         simulated, and once it is settled. Otherwise the period counts as being simulated until
         :meth:`finish_settlement` or :meth:`abandon_settlement`. The first Trading period also fixes the
-        demand block's amplitude from the headcount, once it is settled. The events that fired move the amplitude
-        the period is simulated with (#1012).
+        demand block's amplitude from the headcount, once it is settled. Demand growth (#1226) and the events that
+        fired (#1012) move the amplitude the period is simulated with.
         """
         with self._lock:
             period = self.checkpoint
@@ -1441,7 +1479,9 @@ class WorkshopSession:
                     for player in players
                 ],
                 round_format=round_format,
-                demand_amplitude=base_amplitude * demand_factor(self.fired_events, period.round, period.season),
+                demand_amplitude=base_amplitude
+                * growth_through(self.demand_growth, period.round)
+                * demand_factor(self.fired_events, period.round, period.season),
                 base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
             )
@@ -1686,5 +1726,6 @@ class WorkshopSession:
             peak_demand=self.peak_demand,
             ballots=self.ballots,
             vote_outcomes=self.vote_outcomes,
+            demand_growth=self.demand_growth,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

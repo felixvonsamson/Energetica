@@ -324,7 +324,17 @@ _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 **Peak demand** (#1013):
 The most the market cleared at one **settlement point** in a Round, kept as the Round's Trading periods settle:
 a clearing that clears more than the peak so far replaces it. A clearing the grid went down at does not count.
-The Recap forecasts next Round's peak as this one moved by the demand shifts that start next Round.
+The Recap forecasts next Round's peak as this one grown by **demand growth** and moved by the demand shifts that
+start next Round.
+
+**Demand growth** (#1226):
+How much demand grows from one Round to the next, before any event. Each Round after the first has a growth
+factor, and its demand is the Round before's times that factor, so demand grows exponentially. The factor for
+Round N+1 is worked out when Recap N opens, from the room's average operating profit per player in Round N: the
+more the room earned, the faster demand grows, within a floor and a cap. A Round that ended in a blackout counts
+the profit it made up to it. The Recap announces the growth as a percentage, without the formula. The demand
+shifts of events multiply on top of it.
+_Avoid_: player progression, demand trend.
 
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
@@ -332,7 +342,8 @@ strictly apart. **The Year in Review** tells what happened in Round N: each even
 headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout,
 the room's figures, and how each season's wind and sunshine compared with a normal season (#1200). **The
 Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if it holds one, its Round
-events with their exact effect, the change in peak demand, and its seasonal events as **forecasts**. The
+events with their exact effect, the **demand growth** and the change in peak demand, and its seasonal events as
+**forecasts**. The
 last Round has a "Final Edition" instead. Everyone in the Run reads the same Recap, and only once it has
 opened. Not to be confused with a persistent-world run's recap (ADR-0005), which is a final table of
 players.

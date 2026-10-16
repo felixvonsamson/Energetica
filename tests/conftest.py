@@ -61,3 +61,13 @@ def _isolated_accounts_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> It
     # Drop the per-path schema-bootstrap cache so a later test reusing a path can't hit a
     # silent "no such table" from skipped schema creation.
     _reset_initialised_paths()
+
+
+@pytest.fixture
+def no_demand_growth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep Workshop demand flat from Round to Round (#1226).
+
+    For session tests that play several Rounds with a small fleet and are not about demand: grown demand would
+    black them out.
+    """
+    monkeypatch.setattr("energetica.workshop.session.growth_factor", lambda average_profit: 1.0)
