@@ -57,6 +57,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_FACILITY_NOT_OFFERED: "This facility isn't available yet.",
     WORKSHOP_NOT_ENOUGH_MONEY:
         "You don't have enough money to add this to your selection.",
+    WORKSHOP_FACILITY_LIMIT_REACHED:
+        "You already have as many of these as you can own at once.",
     WORKSHOP_NOT_SELECTED: "This facility isn't in your selection.",
     WORKSHOP_PRICE_SETTING_CLOSED:
         "Prices are locked. Wait for the next Trading period.",

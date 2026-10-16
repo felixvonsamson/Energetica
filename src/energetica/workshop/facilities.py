@@ -90,6 +90,10 @@ class WorkshopFacility(BaseModel):
     base_pollution: float = Field(description="CO₂ emitted per MWh generated, in kg")
     ramping_time: float = Field(description="In-game seconds to go from no output to full output")
     fuel_type: Fuel | None = Field(description="The fuel it burns, or null if it burns none")
+    max_owned: int | None = Field(
+        description="The most a player can own at once, counting those under construction and those in their "
+        "selection. Null if there is no limit",
+    )
 
 
 def _generator(
@@ -107,6 +111,7 @@ def _generator(
     pollution: float,
     ramping_time: float,
     fuel: Fuel | None,
+    max_owned: int | None = None,
 ) -> WorkshopFacility:
     return WorkshopFacility(
         id=id,
@@ -124,6 +129,7 @@ def _generator(
         base_pollution=pollution,
         ramping_time=ramping_time,
         fuel_type=fuel,
+        max_owned=max_owned,
     )
 
 
@@ -157,8 +163,12 @@ def _storage(
         base_pollution=0,
         ramping_time=ramping_time,
         fuel_type=None,
+        max_owned=None,
     )
 
+
+# Dams are the cheapest power per euro, so each player can own only a few of each (#1223).
+_MAX_DAMS = 3
 
 # Lifetimes and construction lags are the #975 table. The fixed shares of O&M start from the
 # persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable
@@ -198,11 +208,13 @@ _FACILITIES = [
         FacilityId.SMALL_WATER_DAM, "Small water dam", FacilityCategory.HYDRO,
         price=65_000, power=14_000_000, construction_lag=0, lifetime=8, om_per_round=4_000, om_fixed_share=1.0,
         construction_pollution=876_000, pollution=0, ramping_time=0, fuel=None,
+        max_owned=_MAX_DAMS,
     ),
     _generator(
         FacilityId.LARGE_WATER_DAM, "Large water dam", FacilityCategory.HYDRO,
         price=520_000, power=210_000_000, construction_lag=0, lifetime=8, om_per_round=25_000, om_fixed_share=1.0,
         construction_pollution=8_760_000, pollution=0, ramping_time=0, fuel=None,
+        max_owned=_MAX_DAMS,
     ),
     _generator(
         FacilityId.NUCLEAR_REACTOR, "Nuclear reactor", FacilityCategory.NUCLEAR,
