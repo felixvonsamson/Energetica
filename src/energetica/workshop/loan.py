@@ -17,11 +17,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# What the loan adds to a player's cash. A placeholder, like every other Workshop magnitude.
-LOAN_AMOUNT = 1_000_000.0
+# What the loan adds to a player's cash: the starting budget, as set by the first recalibration (#1227).
+LOAN_AMOUNT = 50_000_000.0
 
 # What each payment takes back, and how many there are.
-LOAN_PAYMENT = 600_000.0
+LOAN_PAYMENT = 30_000_000.0
 LOAN_PAYMENTS = 2
 
 # What the loan costs over the session: the payments, less what it brought in.

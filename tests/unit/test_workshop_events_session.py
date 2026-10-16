@@ -56,7 +56,7 @@ def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
     for account_id in range(1, PLAYERS + 1):
         account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
-        session.join(account).money = 10_000_000.0
+        session.join(account).money = 1_000_000_000.0
     session.advance()
     for account_id in range(1, PLAYERS + 1):
         for _ in range(COAL_BURNERS):

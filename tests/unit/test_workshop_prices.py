@@ -51,13 +51,13 @@ def test_setting_one_price_leaves_the_others() -> None:
 
     assert prices.buy[FacilityId.LITHIUM_ION_BATTERIES] == 12.5
     assert prices.sell == DEFAULT_PRICES.sell
-    assert DEFAULT_PRICES.buy[FacilityId.LITHIUM_ION_BATTERIES] == 425.0
+    assert DEFAULT_PRICES.buy[FacilityId.LITHIUM_ION_BATTERIES] == 60.0
 
 
 def test_prices_narrow_to_some_facility_types() -> None:
     prices = DEFAULT_PRICES.only({FacilityId.GAS_BURNER, FacilityId.LITHIUM_ION_BATTERIES})
 
     assert prices == PriceSheet(
-        sell={FacilityId.GAS_BURNER: 500.0, FacilityId.LITHIUM_ION_BATTERIES: 940.0},
-        buy={FacilityId.LITHIUM_ION_BATTERIES: 425.0},
+        sell={FacilityId.GAS_BURNER: 90.0, FacilityId.LITHIUM_ION_BATTERIES: 150.0},
+        buy={FacilityId.LITHIUM_ION_BATTERIES: 60.0},
     )

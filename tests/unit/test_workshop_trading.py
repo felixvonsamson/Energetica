@@ -5,8 +5,8 @@ In representative-week mode, the middle week of the season is cleared through ``
 are cleared and added up. These tests use a flat demand curve and steady weather, so every
 clearing of the week is the same and each figure can be worked out by hand.
 
-With a flat curve and an amplitude of 10 MW, the demand block bids 8 MW at any price (must-serve), then
-1 MW up to 480, 1.5 MW up to 240, 2 MW up to 120, 2 MW up to 24 and 2 MW up to 5.
+With a flat curve and an amplitude of 50 MW, the demand block bids 40 MW at any price (must-serve), then
+5 MW up to 250, 7.5 MW up to 140, 10 MW up to 80, 10 MW up to 40 and 10 MW up to 10.
 """
 
 from __future__ import annotations
@@ -35,15 +35,15 @@ from energetica.workshop.weather import AverageOutput
 from ._weather_helpers import FixedWeather, steady
 
 _FLAT = DemandCurve((1.0,) * DAYS_PER_YEAR)
-_AMPLITUDE = 10e6
+_AMPLITUDE = 50e6
 _HOURS = 24
 _WEEKS = SEASON_DAYS // 7
 
-GAS = FacilityId.GAS_BURNER  # 11 MW
-COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 54 MW
-WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
-OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 130 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 300 MWh, 69% efficient
+GAS = FacilityId.GAS_BURNER  # 50 MW
+COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 80 MW
+WIND = FacilityId.ONSHORE_WIND_TURBINE  # 50 MW
+OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 100 MW
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 30 MW, 100 MWh, 69% efficient
 REACTOR = FacilityId.NUCLEAR_REACTOR  # one Round to build
 
 _BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
@@ -100,12 +100,12 @@ def test_a_season_is_thirteen_weeks_and_a_year_four_seasons() -> None:
 
 
 def test_a_controllable_facility_sells_at_the_clearing_price_and_the_week_is_scaled_to_the_season() -> None:
-    # 11 MW at 100 runs out before demand willing to pay 120 does, so the market clears 11 MW at 120.
+    # 50 MW at 100 runs out before demand willing to pay 140 does, so the market clears 50 MW at 140.
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
 
     gas = outcome.results[1].facilities[GAS]
-    assert gas.revenue == pytest.approx(_mwh_value(11, 120))
-    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert gas.revenue == pytest.approx(_mwh_value(50, 140))
+    assert gas.generation == pytest.approx(50e6 * _HOURS * SEASON_DAYS)
     assert gas.sold == pytest.approx(gas.generation)
     assert gas.dumped == 0
     assert gas.capacity_factor == pytest.approx(1.0)
@@ -113,22 +113,22 @@ def test_a_controllable_facility_sells_at_the_clearing_price_and_the_week_is_sca
 
 
 def test_a_controllable_facility_produces_only_what_it_sells() -> None:
-    # At 200 the 11 MW gas burner meets demand only up to the 120 tier: 10.5 MW at 200.
+    # At 200 the 50 MW gas burner meets demand only up to the 250 tier: 45 MW at 200.
     outcome = _simulate(_bidder(GAS, sell={GAS: 200.0}))
 
     gas = outcome.results[1].facilities[GAS]
-    assert gas.revenue == pytest.approx(_mwh_value(10.5, 200))
-    assert gas.generation == pytest.approx(10.5e6 * _HOURS * SEASON_DAYS)
+    assert gas.revenue == pytest.approx(_mwh_value(45, 200))
+    assert gas.generation == pytest.approx(45e6 * _HOURS * SEASON_DAYS)
     assert gas.dumped == 0
-    assert gas.capacity_factor == pytest.approx(10.5 / 11)
+    assert gas.capacity_factor == pytest.approx(45 / 50)
 
 
 def test_each_facility_type_is_offered_at_its_own_price() -> None:
-    # The cheaper combined cycle alone meets the 14.5 MW of demand willing to pay at least its 20.
+    # The cheaper combined cycle alone meets the 72.5 MW of demand willing to pay at least its 20.
     outcome = _simulate(_bidder(GAS, COMBINED_CYCLE, sell={GAS: 30.0, COMBINED_CYCLE: 20.0}))
 
     facilities = outcome.results[1].facilities
-    assert facilities[COMBINED_CYCLE].sold == pytest.approx(14.5e6 * _HOURS * SEASON_DAYS)
+    assert facilities[COMBINED_CYCLE].sold == pytest.approx(72.5e6 * _HOURS * SEASON_DAYS)
     assert facilities[GAS].sold == 0
     assert facilities[GAS].capacity_factor == 0
 
@@ -137,19 +137,19 @@ def test_several_facilities_of_a_type_are_offered_together() -> None:
     outcome = _simulate(_bidder(GAS, GAS, sell={GAS: 0.0}))
 
     gas = outcome.results[1].facilities[GAS]
-    assert gas.sold == pytest.approx(16.5e6 * _HOURS * SEASON_DAYS)
-    assert gas.capacity_factor == pytest.approx(16.5 / 22)
+    assert gas.sold == pytest.approx(82.5e6 * _HOURS * SEASON_DAYS)
+    assert gas.capacity_factor == pytest.approx(82.5 / 100)
 
 
 def test_a_renewable_produces_its_whole_output_and_dumps_what_does_not_sell() -> None:
-    # The gas burner clears the market at 120. The wind turbine asks 500, so none of its 11 MW sells.
+    # The gas burner clears the market at 140. The wind turbine asks 500, so none of its 50 MW sells.
     outcome = _simulate(_bidder(GAS, WIND, sell={GAS: 100.0, WIND: 500.0}))
 
     wind = outcome.results[1].facilities[WIND]
     assert wind.sold == 0
-    assert wind.dumped == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert wind.dumped == pytest.approx(50e6 * _HOURS * SEASON_DAYS)
     assert wind.generation == wind.dumped
-    assert wind.dump_cost == pytest.approx(_mwh_value(11, DUMP_COST))
+    assert wind.dump_cost == pytest.approx(_mwh_value(50, DUMP_COST))
     assert wind.capacity_factor == pytest.approx(1.0)
 
 
@@ -157,33 +157,33 @@ def test_a_renewable_produces_what_the_weather_gives_it() -> None:
     outcome = _simulate(_bidder(GAS, WIND, sell={GAS: 100.0, WIND: 500.0}), share=0.4)
 
     wind = outcome.results[1].facilities[WIND]
-    assert wind.generation == pytest.approx(0.4 * 11e6 * _HOURS * SEASON_DAYS)
+    assert wind.generation == pytest.approx(0.4 * 50e6 * _HOURS * SEASON_DAYS)
     assert wind.capacity_factor == pytest.approx(0.4)
 
 
 def test_storage_discharges_what_it_sells_and_keeps_the_rest() -> None:
-    # The full batteries offer at 0 and clear the 16.5 MW willing to pay at least 0. Their buy price
-    # sits at the floor, below the clearing price, so they never charge.
-    full = _BATTERY_CAPACITY
+    # Two full batteries offer at 0 and discharge at their full 60 MW, short of the 82.5 MW willing to pay at
+    # least 0. Their buy price sits at the floor, below the clearing price, so they never charge.
+    full = 2 * _BATTERY_CAPACITY
     outcome = _simulate(
-        _bidder(BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full}),
+        _bidder(BATTERIES, BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full}),
         trading_format="full_season",
     )
 
-    assert outcome.record.generation[0, 0] == pytest.approx(16.5e6)
-    drawn = 16.5e6 / math.sqrt(_BATTERY_EFFICIENCY)
+    assert outcome.record.generation[0, 0] == pytest.approx(60e6)
+    drawn = 60e6 / math.sqrt(_BATTERY_EFFICIENCY)
     assert outcome.record.stored[0, 0] == pytest.approx(full - drawn)
 
 
 def test_storage_charges_what_it_buys_and_stores_it_for_the_next_period() -> None:
-    # 130 MW of wind at -25 floods the market, which clears at -25. The empty batteries bid 100 for their
-    # whole 86 MW, so they charge at full power, and are paid for it.
+    # 140 MW of wind at -25 floods the market, which clears at -25. The empty batteries bid 100 for their
+    # whole 30 MW, so they charge at full power, and are paid for it.
     outcome = _simulate(
-        _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0}, buy={BATTERIES: 100.0}),
+        _bidder(OFFSHORE_WIND, OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0}, buy={BATTERIES: 100.0}),
         trading_format="full_season",
     )
 
-    assert outcome.record.charged[1, 0] == pytest.approx(86e6)
+    assert outcome.record.charged[1, 0] == pytest.approx(30e6)
     assert outcome.results[1].facilities[BATTERIES].purchase_cost < 0
     assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(_BATTERY_CAPACITY)}
 
@@ -200,7 +200,7 @@ def test_nothing_stored_carries_over_into_a_representative_week() -> None:
 
 
 def test_a_representative_week_starts_from_the_charge_its_first_pass_ended_with() -> None:
-    # The batteries charge at full power from the cheap wind and never discharge, since they ask 500. 86 MW fills
+    # The batteries charge from the cheap wind and never discharge, since they ask 500. That fills
     # them in a few hours, so the first pass ends full, and the week that counts starts full and buys nothing.
     bidder = _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0, BATTERIES: 500.0}, buy={BATTERIES: 100.0})
 
@@ -240,7 +240,7 @@ def test_om_is_one_trading_periods_share_and_not_scaled() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 200.0}))
 
     owned = OwnedFacility(facility=GAS, built_round=1)
-    expected = om_owed(owned, current_round=1, production=[10.5e6] * 24)
+    expected = om_owed(owned, current_round=1, production=[45e6] * 24)
     assert outcome.results[1].facilities[GAS].om == pytest.approx(expected)
 
 
@@ -267,14 +267,14 @@ def test_emissions_follow_generation() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
 
     assert outcome.results[1].facilities[GAS].emissions == pytest.approx(
-        CATALOG[GAS].base_pollution * 11 * _HOURS * SEASON_DAYS
+        CATALOG[GAS].base_pollution * 50 * _HOURS * SEASON_DAYS
     )
 
 
 def test_fuel_burned_follows_generation() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
 
-    assert outcome.results[1].facilities[GAS].fuel_burned == pytest.approx(FUEL_USE[GAS] * 11 * _HOURS * SEASON_DAYS)
+    assert outcome.results[1].facilities[GAS].fuel_burned == pytest.approx(FUEL_USE[GAS] * 50 * _HOURS * SEASON_DAYS)
 
 
 def test_a_facility_that_burns_nothing_burns_no_fuel() -> None:
@@ -303,14 +303,14 @@ def test_a_results_fuel_comes_off_what_it_added_to_the_players_money() -> None:
 
 
 # Fuel stock (#1010). A gas burner at full output burns this much gas over one simulated day.
-_GAS_PER_DAY = FUEL_USE[GAS] * 11 * _HOURS
+_GAS_PER_DAY = FUEL_USE[GAS] * 50 * _HOURS
 
 
 def test_fuel_never_runs_short_when_the_bidder_has_no_fuel_limit() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}))
 
     gas = outcome.results[1].facilities[GAS]
-    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert gas.generation == pytest.approx(50e6 * _HOURS * SEASON_DAYS)
     assert not gas.ran_out_of_fuel
 
 
@@ -318,7 +318,7 @@ def test_enough_fuel_does_not_hold_back_output() -> None:
     outcome = _simulate(_bidder(GAS, sell={GAS: 100.0}, fuel={Fuel.GAS: _GAS_PER_DAY * SEASON_DAYS}))
 
     gas = outcome.results[1].facilities[GAS]
-    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert gas.generation == pytest.approx(50e6 * _HOURS * SEASON_DAYS)
     assert not gas.ran_out_of_fuel
 
 
@@ -331,7 +331,7 @@ def test_a_representative_week_burns_its_share_of_the_stock_and_then_stops() -> 
 
     gas = outcome.results[1].facilities[GAS]
     assert gas.fuel_burned == pytest.approx(stock)
-    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS / 2)
+    assert gas.generation == pytest.approx(50e6 * _HOURS * SEASON_DAYS / 2)
     assert gas.ran_out_of_fuel
 
 
@@ -342,10 +342,10 @@ def test_a_full_season_burns_the_stock_day_by_day_and_then_stops() -> None:
 
     gas = outcome.results[1].facilities[GAS]
     assert gas.fuel_burned == pytest.approx(stock)
-    assert gas.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS / 2)
+    assert gas.generation == pytest.approx(50e6 * _HOURS * SEASON_DAYS / 2)
     assert gas.ran_out_of_fuel
     generation = outcome.record.generation[0]
-    assert generation[0] == pytest.approx(11e6)
+    assert generation[0] == pytest.approx(50e6)
     assert generation[-1] == 0.0
 
 
@@ -361,7 +361,7 @@ def test_no_fuel_means_no_output() -> None:
 def test_facility_types_burning_the_same_fuel_never_burn_more_than_the_stock() -> None:
     # One hour of a gas burner's gas, shared with a combined cycle. Whichever offers first reserves what it
     # could burn, so the other cannot offer the same gas.
-    stock = FUEL_USE[GAS] * 11 * SEASON_DAYS
+    stock = FUEL_USE[GAS] * 50 * SEASON_DAYS
     bidder = _bidder(GAS, COMBINED_CYCLE, sell={GAS: 10.0, COMBINED_CYCLE: 10.0}, fuel={Fuel.GAS: stock})
 
     outcome = _simulate(bidder)
@@ -404,10 +404,10 @@ def test_a_result_names_the_fuels_that_ran_out() -> None:
 
 
 def test_a_facility_that_burns_no_fuel_is_not_limited_by_the_stock() -> None:
-    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}, fuel={}))
+    outcome = _simulate(_bidder(WIND, WIND, sell={WIND: 0.0}, fuel={}))
 
     wind = outcome.results[1].facilities[WIND]
-    assert wind.generation == pytest.approx(11e6 * _HOURS * SEASON_DAYS)
+    assert wind.generation == pytest.approx(100e6 * _HOURS * SEASON_DAYS)
     assert not wind.ran_out_of_fuel
 
 
@@ -425,9 +425,9 @@ def test_players_compete_on_one_market() -> None:
 
     outcome = _simulate(alice, bob)
 
-    # Demand willing to pay at least 100 is 12.5 MW. Bob sells 11, Alice the remaining 1.5, all at 100.
-    assert outcome.results[2].facilities[GAS].revenue == pytest.approx(_mwh_value(11, 100))
-    assert outcome.results[1].facilities[GAS].revenue == pytest.approx(_mwh_value(1.5, 100))
+    # Demand willing to pay at least 100 is 52.5 MW. Bob sells 50, Alice the remaining 2.5, all at 100.
+    assert outcome.results[2].facilities[GAS].revenue == pytest.approx(_mwh_value(50, 100))
+    assert outcome.results[1].facilities[GAS].revenue == pytest.approx(_mwh_value(2.5, 100))
 
 
 def _calm_from_hour(hour: int, share: float) -> FixedWeather:
@@ -436,9 +436,9 @@ def _calm_from_hour(hour: int, share: float) -> FixedWeather:
 
 
 def test_unserved_must_serve_demand_is_a_blackout_and_nothing_is_produced_from_then_on() -> None:
-    # 8 MW of demand must be served. The 11 MW wind turbine sells all its output at 120 until noon on the
-    # week's first day, then the wind drops to 30%, and its 3.3 MW cannot meet must-serve demand. The grid goes
-    # down at noon.
+    # 40 MW of demand must be served. The 50 MW wind turbine sells all its output at 140 until noon on the week's
+    # first day, then the wind drops to 30%, and its 15 MW cannot meet must-serve demand. The grid goes down at
+    # noon.
     outcome = simulate_trading_period(
         [_bidder(WIND, sell={WIND: 0.0})],
         round_number=1,
@@ -451,14 +451,14 @@ def test_unserved_must_serve_demand_is_a_blackout_and_nothing_is_produced_from_t
 
     assert outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(11 * 12 * 120 * _WEEKS)
-    assert wind.generation == wind.sold == pytest.approx(11e6 * 12 * _WEEKS)
+    assert wind.revenue == pytest.approx(50 * 12 * 140 * _WEEKS)
+    assert wind.generation == wind.sold == pytest.approx(50e6 * 12 * _WEEKS)
     assert wind.dumped == 0
     assert wind.capacity_factor == pytest.approx(12 / (7 * 24))
 
 
 def test_a_blackout_at_the_first_clearing_leaves_storage_as_it_was() -> None:
-    # The wind's 3.3 MW cannot meet the 8 MW must-serve demand, and the empty batteries hold nothing.
+    # The wind's 15 MW cannot meet the 40 MW must-serve demand, and the empty batteries hold nothing.
     outcome = _simulate(
         _bidder(WIND, BATTERIES, sell={WIND: 0.0}, buy={BATTERIES: 1_000.0}, stored_energy={BATTERIES: 1.0}),
         share=0.3,
@@ -495,20 +495,20 @@ def test_a_blackout_ends_a_full_season_on_the_day_it_happens() -> None:
 
     assert outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(11 * 60 * 120)
+    assert wind.revenue == pytest.approx(50 * 60 * 140)
     assert wind.capacity_factor == pytest.approx(60 / (24 * SEASON_DAYS))
     # The days after the blackout are skipped, and still count as done.
     assert reported == list(range(1, SEASON_DAYS + 1))
 
 
 def test_supply_exactly_meeting_must_serve_demand_is_no_blackout_and_settles_at_the_scarcity_price() -> None:
-    # Wind at 8/11 of its 11 MW gives exactly the 8 MW of must-serve demand, so the market clears at the
-    # unbounded must-serve bid without leaving any of it unserved.
-    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=8 / 11)
+    # Wind at 40% of two turbines' 100 MW gives exactly the 40 MW of must-serve demand, so the market clears at
+    # the unbounded must-serve bid without leaving any of it unserved.
+    outcome = _simulate(_bidder(WIND, WIND, sell={WIND: 0.0}), share=0.4)
 
     assert not outcome.blackout
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(_mwh_value(8, SCARCITY_PRICE))
+    assert wind.revenue == pytest.approx(_mwh_value(40, SCARCITY_PRICE))
 
 
 def test_a_player_with_nothing_operating_gets_no_result() -> None:
@@ -563,7 +563,7 @@ def test_a_full_season_clears_every_day_of_the_season() -> None:
         return 1.0
 
     simulate_trading_period(
-        [_bidder(WIND, sell={WIND: 0.0})],
+        [_bidder(WIND, WIND, sell={WIND: 0.0})],
         round_number=1,
         season="winter",
         round_format=RoundFormat(trading_format="full_season"),
@@ -577,8 +577,8 @@ def test_a_full_season_clears_every_day_of_the_season() -> None:
 
 
 def test_storage_keeps_its_charge_from_one_day_to_the_next_in_a_full_season() -> None:
-    # The empty batteries charge at full power from the cheap wind and never discharge, since they ask 500.
-    # 86 MW fills them in a few hours, so over the season they buy their capacity and no more.
+    # The empty batteries charge from the cheap wind and never discharge, since they ask 500. That fills them
+    # in a few hours, so over the season they buy their capacity and no more.
     bidder = _bidder(OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0, BATTERIES: 500.0}, buy={BATTERIES: 100.0})
 
     outcome = _simulate(bidder, trading_format="full_season")
@@ -658,7 +658,7 @@ def _times_cleared(trading_format: TradingFormat) -> tuple[set[int], dict[str, i
         return shares
 
     simulate_trading_period(
-        [_bidder(WIND, sell={WIND: 0.0})],
+        [_bidder(WIND, WIND, sell={WIND: 0.0})],
         round_number=1,
         season="summer",
         round_format=RoundFormat(trading_format=trading_format),
@@ -710,11 +710,11 @@ def test_a_full_seasons_demand_is_not_scaled() -> None:
 
 
 def test_a_representative_week_sells_what_the_whole_season_would_with_steady_supply() -> None:
-    # The 54 MW combined cycle covers every tier willing to pay at least 0, whatever the demand, so what it sells
+    # Three 80 MW combined cycles cover every tier willing to pay at least 0, whatever the demand, so what they sell
     # is a fixed share of demand. Scaled to the season's average, the week sells what the season does.
     def sold(trading_format: TradingFormat) -> float:
         outcome = simulate_trading_period(
-            [_bidder(COMBINED_CYCLE, sell={COMBINED_CYCLE: 0.0})],
+            [_bidder(COMBINED_CYCLE, COMBINED_CYCLE, COMBINED_CYCLE, sell={COMBINED_CYCLE: 0.0})],
             round_number=1,
             season="spring",
             round_format=RoundFormat(trading_format=trading_format),
@@ -743,11 +743,11 @@ def test_the_record_keeps_the_seasons_average_output() -> None:
 
 
 def test_a_blackout_in_the_first_pass_does_not_stop_it_finding_the_cyclic_charge() -> None:
-    # Calm for the first four hours of each day: the 11 MW wind gives 3.3 MW, short of the 8 MW must-serve demand,
-    # and the batteries must make up the rest from what they bought by day. The first pass starts empty, so it
+    # Calm for the first four hours of each day: the three 30 MW turbines give 27 MW, short of the 40 MW must-serve
+    # demand, and the batteries must make up the rest from what they bought by day. The first pass starts empty, so it
     # goes down at its first clearing, but it keeps clearing to find the charge the week cycles through.
     # They ask more than they bid, so they never buy back their own power.
-    bidder = _bidder(WIND, BATTERIES, sell={WIND: 0.0, BATTERIES: 600.0}, buy={BATTERIES: 500.0})
+    bidder = _bidder(WIND, WIND, WIND, BATTERIES, sell={WIND: 0.0, BATTERIES: 600.0}, buy={BATTERIES: 500.0})
 
     outcome = simulate_trading_period(
         [bidder],

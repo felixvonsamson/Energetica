@@ -264,11 +264,11 @@ every player by final score, and everyone in the Run sees it.
 _Avoid_: leaderboard, salvage value.
 
 **Loan** (#1225):
-Money a player borrows to invest more than their cash allows: 1M, once per session, taken in an open
+Money a player borrows to invest more than their cash allows: 50M, once per session, taken in an open
 Investment phase in any Round but the last. It is added to their cash straight away, and they can cancel it
 until the phase closes, as long as their selection still fits without it. It is paid back in two payments of
-600k, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
-taken when the session ends. The final score counts the 200k it costs as an investment with no residual
+30M, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
+taken when the session ends. The final score counts the 10M it costs as an investment with no residual
 value, whatever the floor top-up or the blackout reset do to the payments.
 _Avoid_: credit, debt (a player's cash can go negative without a loan).
 

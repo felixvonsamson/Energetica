@@ -14,8 +14,8 @@ from energetica.workshop.player import WorkshopPlayer, round_start_money
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.trading import FacilityPerformance, TradingResult
 
-GAS = FacilityId.GAS_BURNER  # lifetime 4, no construction lag
-NUCLEAR = FacilityId.NUCLEAR_REACTOR  # lifetime 8, construction lag 1
+GAS = FacilityId.GAS_BURNER  # lifetime 3, no construction lag
+NUCLEAR = FacilityId.NUCLEAR_REACTOR  # lifetime 6, construction lag 1
 BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # lifetime 1
 ROUNDS = 5
 
@@ -69,14 +69,14 @@ def _result(
 
 
 def test_a_facility_is_worth_its_price_times_the_share_of_its_lifetime_left_after_the_session() -> None:
-    # Built in Round 4, it works Rounds 4 to 7, so after a 5-Round session it has Rounds 6 and 7 left.
+    # Built in Round 4, it works Rounds 4 to 6, so after a 5-Round session it has Round 6 left.
     owned = OwnedFacility(facility=GAS, built_round=4)
 
-    assert residual_value(owned, round_count=ROUNDS) == pytest.approx(CATALOG[GAS].base_price * 2 / 4)
+    assert residual_value(owned, round_count=ROUNDS) == pytest.approx(CATALOG[GAS].base_price / 3)
 
 
 def test_a_facility_whose_life_ends_with_the_last_round_is_worth_nothing() -> None:
-    assert residual_value(OwnedFacility(facility=GAS, built_round=2), round_count=ROUNDS) == 0.0
+    assert residual_value(OwnedFacility(facility=GAS, built_round=3), round_count=ROUNDS) == 0.0
     assert residual_value(OwnedFacility(facility=BATTERIES, built_round=ROUNDS), round_count=ROUNDS) == 0.0
 
 
@@ -116,7 +116,7 @@ def test_the_score_is_operating_profit_less_investments_and_carbon_tax_plus_resi
 
     score = final_score(alice, round_count=ROUNDS)
 
-    residual = CATALOG[GAS].base_price / 2 + CATALOG[NUCLEAR].base_price
+    residual = CATALOG[GAS].base_price / 3 + CATALOG[NUCLEAR].base_price
     assert score.operating_profit == pytest.approx(75_000.0)
     assert score.investments == pytest.approx(275_000.0)
     assert score.carbon_tax == pytest.approx(1_000.0 * 2.0 - 500.0)

@@ -10,9 +10,14 @@ of a facility but of the session, so it lives in :mod:`energetica.workshop.unloc
 Units follow the persistent world: power in W, energy in Wh, emissions in kg, time in in-game
 seconds, money in the game's currency. Lifetime and construction lag are counted in Rounds.
 
-Every value is a placeholder until the game-balance pass (#1145). Most are copied from the
-persistent world. The modern coal power plant, Multi-layer PV and the unsplit pumped hydro have no
-persistent-world counterpart, so their values are invented, as is every ``om_per_round``.
+The first recalibration (#1227) set every price, ``om_per_round``, power, storage capacity and generator
+lifetime, all rounded. The values aim at a levelized cost of electricity (LCOE, everything a facility
+costs over its lifetime divided by the energy it generates) of about 40 per MWh for solar, 50 to 55 for
+onshore wind and at least 25% less for offshore, 40 to 50 for hydro and 25 to 40 for nuclear. Fossil
+plants come to 40 to 70 without the carbon tax and 90 to 135 with it. ``scripts/workshop_lcoe.py`` works these out. A nuclear reactor costs
+more than the starting budget, so buying one in Round 1 takes the loan. O&M is about 10% to 20% of what
+a facility earns in the bot test sessions. The other values are copied from the persistent world or
+invented, and every value is still open to the game-balance pass (#1145).
 """
 
 from __future__ import annotations
@@ -167,101 +172,102 @@ def _storage(
     )
 
 
-# Dams are the cheapest power per euro, so each player can own only a few of each (#1223).
+# Each player can own only a few of each dam (#1223), so hydro cannot cover a room's demand on its own.
 _MAX_DAMS = 3
 
-# Lifetimes and construction lags are the #975 table. The fixed shares of O&M start from the
+# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants and CSP 3, and
+# wind and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from the
 # persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable
 # facilities (#992).
 _FACILITIES = [
     _generator(
         FacilityId.ONSHORE_WIND_TURBINE, "Onshore wind turbine", FacilityCategory.WIND,
-        price=270_000, power=11_000_000, construction_lag=0, lifetime=2, om_per_round=15_000, om_fixed_share=1.0,
+        price=18_000_000, power=50_000_000, construction_lag=0, lifetime=2, om_per_round=1_500_000, om_fixed_share=1.0,
         construction_pollution=420_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.OFFSHORE_WIND_TURBINE, "Offshore wind turbine", FacilityCategory.WIND,
-        price=2_000_000, power=130_000_000, construction_lag=0, lifetime=2, om_per_round=120_000, om_fixed_share=1.0,
+        price=25_000_000, power=100_000_000, construction_lag=0, lifetime=2, om_per_round=2_000_000, om_fixed_share=1.0,
         construction_pollution=4_900_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.COAL_BURNER, "Coal burner", FacilityCategory.CONVENTIONAL,
-        price=105_000, power=21_000_000, construction_lag=0, lifetime=4, om_per_round=18_000, om_fixed_share=0.2,
+        price=9_000_000, power=60_000_000, construction_lag=0, lifetime=3, om_per_round=4_500_000, om_fixed_share=0.2,
         construction_pollution=1_100_000, pollution=1_664, ramping_time=7_200, fuel=Fuel.COAL,
     ),
     _generator(
         FacilityId.MODERN_COAL_PLANT, "Modern coal power plant", FacilityCategory.CONVENTIONAL,
-        price=260_000, power=60_000_000, construction_lag=0, lifetime=4, om_per_round=35_000, om_fixed_share=0.2,
+        price=13_000_000, power=100_000_000, construction_lag=0, lifetime=3, om_per_round=6_500_000, om_fixed_share=0.2,
         construction_pollution=2_500_000, pollution=1_100, ramping_time=5_400, fuel=Fuel.COAL,
     ),
     _generator(
         FacilityId.GAS_BURNER, "Gas burner", FacilityCategory.CONVENTIONAL,
-        price=90_000, power=11_000_000, construction_lag=0, lifetime=4, om_per_round=16_000, om_fixed_share=0.2,
+        price=8_000_000, power=50_000_000, construction_lag=0, lifetime=3, om_per_round=2_500_000, om_fixed_share=0.2,
         construction_pollution=657_000, pollution=1_006, ramping_time=480, fuel=Fuel.GAS,
     ),
     _generator(
         FacilityId.COMBINED_CYCLE, "Combined cycle", FacilityCategory.CONVENTIONAL,
-        price=310_000, power=54_000_000, construction_lag=0, lifetime=4, om_per_round=30_000, om_fixed_share=0.2,
+        price=11_000_000, power=80_000_000, construction_lag=0, lifetime=3, om_per_round=3_500_000, om_fixed_share=0.2,
         construction_pollution=1_500_000, pollution=797, ramping_time=4_500, fuel=Fuel.GAS,
     ),
     _generator(
         FacilityId.SMALL_WATER_DAM, "Small water dam", FacilityCategory.HYDRO,
-        price=65_000, power=14_000_000, construction_lag=0, lifetime=8, om_per_round=4_000, om_fixed_share=1.0,
-        construction_pollution=876_000, pollution=0, ramping_time=0, fuel=None,
+        price=45_000_000, power=40_000_000, construction_lag=0, lifetime=6, om_per_round=2_000_000, om_fixed_share=1.0,
+        construction_pollution=1_500_000, pollution=0, ramping_time=0, fuel=None,
         max_owned=_MAX_DAMS,
     ),
     _generator(
         FacilityId.LARGE_WATER_DAM, "Large water dam", FacilityCategory.HYDRO,
-        price=520_000, power=210_000_000, construction_lag=0, lifetime=8, om_per_round=25_000, om_fixed_share=1.0,
-        construction_pollution=8_760_000, pollution=0, ramping_time=0, fuel=None,
+        price=110_000_000, power=120_000_000, construction_lag=0, lifetime=6, om_per_round=5_000_000, om_fixed_share=1.0,
+        construction_pollution=8_000_000, pollution=0, ramping_time=0, fuel=None,
         max_owned=_MAX_DAMS,
     ),
     _generator(
         FacilityId.NUCLEAR_REACTOR, "Nuclear reactor", FacilityCategory.NUCLEAR,
-        price=840_000, power=167_000_000, construction_lag=1, lifetime=8, om_per_round=110_000, om_fixed_share=0.5,
+        price=80_000_000, power=100_000_000, construction_lag=1, lifetime=6, om_per_round=13_000_000, om_fixed_share=0.5,
         construction_pollution=6_800_000, pollution=2, ramping_time=46_800, fuel=Fuel.URANIUM,
     ),
     _generator(
         FacilityId.NUCLEAR_REACTOR_GEN4, "Gen-IV nuclear reactor", FacilityCategory.NUCLEAR,
-        price=1_800_000, power=335_000_000, construction_lag=1, lifetime=8, om_per_round=200_000, om_fixed_share=0.5,
+        price=130_000_000, power=190_000_000, construction_lag=1, lifetime=6, om_per_round=23_000_000, om_fixed_share=0.5,
         construction_pollution=12_000_000, pollution=3, ramping_time=30_000, fuel=Fuel.URANIUM,
     ),
     _generator(
         FacilityId.PV_SOLAR, "PV solar", FacilityCategory.PV,
-        price=900_000, power=59_000_000, construction_lag=0, lifetime=1, om_per_round=25_000, om_fixed_share=1.0,
+        price=5_000_000, power=60_000_000, construction_lag=0, lifetime=2, om_per_round=100_000, om_fixed_share=1.0,
         construction_pollution=12_000_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.MULTI_LAYER_PV, "Multi-layer PV", FacilityCategory.PV,
-        price=1_200_000, power=95_000_000, construction_lag=0, lifetime=1, om_per_round=30_000, om_fixed_share=1.0,
+        price=7_500_000, power=100_000_000, construction_lag=0, lifetime=2, om_per_round=150_000, om_fixed_share=1.0,
         construction_pollution=14_000_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
         FacilityId.CSP_SOLAR, "Concentrated solar power", FacilityCategory.CSP,
-        price=123_000, power=38_000_000, construction_lag=0, lifetime=4, om_per_round=20_000, om_fixed_share=1.0,
+        price=5_000_000, power=45_000_000, construction_lag=0, lifetime=3, om_per_round=250_000, om_fixed_share=1.0,
         construction_pollution=1_260_000, pollution=0, ramping_time=0, fuel=None,
     ),
-    # Batteries shift energy within a day (#1202): lithium-ion holds about four hours at full power and
-    # solid-state about six.
+    # Batteries shift energy within a day (#1202): lithium-ion holds about three hours at full power and
+    # solid-state five.
     _storage(
         FacilityId.LITHIUM_ION_BATTERIES, "Lithium-ion batteries", FacilityCategory.BATTERIES,
-        price=660_000, power=86_000_000, capacity=300_000_000, efficiency=0.69, lifetime=1, om_per_round=8_000,
+        price=3_000_000, power=30_000_000, capacity=100_000_000, efficiency=0.69, lifetime=1, om_per_round=150_000,
         construction_pollution=8_000_000, ramping_time=180,
     ),
     _storage(
         FacilityId.SOLID_STATE_BATTERIES, "Solid-state batteries", FacilityCategory.BATTERIES,
-        price=1_000_000, power=107_000_000, capacity=600_000_000, efficiency=0.79, lifetime=1, om_per_round=9_000,
+        price=6_000_000, power=50_000_000, capacity=250_000_000, efficiency=0.79, lifetime=1, om_per_round=250_000,
         construction_pollution=6_000_000, ramping_time=180,
     ),
     _storage(
         FacilityId.HYDROGEN_STORAGE, "Hydrogen storage", FacilityCategory.HYDROGEN_STORAGE,
-        price=420_000, power=90_000_000, capacity=30_000_000_000, efficiency=0.33, lifetime=3, om_per_round=20_000,
+        price=10_000_000, power=20_000_000, capacity=5_000_000_000, efficiency=0.33, lifetime=3, om_per_round=400_000,
         construction_pollution=2_400_000, ramping_time=480,
     ),
     # Between the persistent world's small and large pumped hydro, which Workshop does not split.
     _storage(
         FacilityId.PUMPED_HYDRO, "Pumped hydro", FacilityCategory.PUMPED_HYDRO,
-        price=120_000, power=60_000_000, capacity=4_000_000_000, efficiency=0.78, lifetime=6, om_per_round=10_000,
+        price=30_000_000, power=60_000_000, capacity=4_000_000_000, efficiency=0.78, lifetime=6, om_per_round=1_000_000,
         construction_pollution=1_200_000, ramping_time=720,
     ),
 ]  # fmt: skip

@@ -22,9 +22,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-#: What the carbon tax charges per kg of CO₂ emitted. Shown on the ballot. A placeholder until the game-balance pass
-#: (#1145): about a quarter of a coal burner's default price per MWh, and a fifth of a gas burner's.
-CARBON_TAX_RATE = 0.1
+#: What the carbon tax charges per kg of CO₂ emitted. Shown on the ballot. Set by the first recalibration (#1227):
+#: about 83 per MWh on a coal burner and 50 on a gas burner, enough to make gas cheaper to run than coal.
+CARBON_TAX_RATE = 0.05
 
 Ballot = Literal["yes", "no"]
 

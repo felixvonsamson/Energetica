@@ -56,7 +56,7 @@ def _session(path: Path, *, round_count: int = 3, players: int = 3, clock: _Cloc
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=clock or _Clock())
     for account_id in range(1, players + 1):
         account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
-        session.join(account).money = 10_000_000.0
+        session.join(account).money = 1_000_000_000.0
     return session
 
 

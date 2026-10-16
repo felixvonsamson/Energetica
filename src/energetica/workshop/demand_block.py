@@ -39,9 +39,9 @@ from energetica.sim.market import MarketEntry
 #: Workshop's seasonal cycle is a year of 364 days, so each season is exactly 13 weeks (#1004).
 DAYS_PER_YEAR = 364
 
-#: The nominal demand each player brings to the session's Round-1 amplitude, in W. A placeholder until the
-#: game-balance pass (#1145).
-PER_PLAYER_BASE_AMPLITUDE = 50e6
+#: The nominal demand each player brings to the session's Round-1 amplitude, in W. Set by the first recalibration
+#: (#1227), so a player needs a few facilities to cover their share.
+PER_PLAYER_BASE_AMPLITUDE = 150e6
 
 
 _DATA_DIR = Path(__file__).parent / "data"
@@ -58,14 +58,14 @@ class DemandTier:
 
 
 #: The tier structure (six tiers, these shares, this price order) is locked by the spec. The €/MWh
-#: figures below must-serve are placeholders until game-balance tuning.
+#: figures below must-serve were set by the first recalibration (#1227), around power prices of about 100.
 DEMAND_TIERS: tuple[DemandTier, ...] = (
     DemandTier("must_serve", 0.80, math.inf, -1),
-    DemandTier("low_flex", 0.10, 480, -2),
-    DemandTier("medium_flex", 0.15, 240, -3),
-    DemandTier("high_flex", 0.20, 120, -4),
-    DemandTier("very_high_flex", 0.20, 24, -5),
-    DemandTier("opportunistic", 0.20, 5, -6),
+    DemandTier("low_flex", 0.10, 250, -2),
+    DemandTier("medium_flex", 0.15, 140, -3),
+    DemandTier("high_flex", 0.20, 80, -4),
+    DemandTier("very_high_flex", 0.20, 40, -5),
+    DemandTier("opportunistic", 0.20, 10, -6),
 )
 
 

@@ -249,8 +249,8 @@ for user in prof alice bob; do
 done
 ```
 
-**c. Give the players more money, if you need it.** A player starts with 1,000,000 (a placeholder
-until the game-balance pass), which is enough for the plants in step d. To test with more, edit the
+**c. Give the players more money, if you need it.** A player starts with 50,000,000, which is enough
+for the plants in step d. To test with more, edit the
 saved session, since there is no API for money. **Stop the app backend first**: a running backend
 saves over the file on its next change and undoes the edit.
 
@@ -262,7 +262,7 @@ from pathlib import Path
 path = Path("instance/workshop_session.json")
 session = json.loads(path.read_text())
 for player in session["players"]:
-    player["money"] = 10_000_000.0
+    player["money"] = 500_000_000.0
 path.write_text(json.dumps(session, indent=2))
 EOF
 # Start it again, and wait until it answers:
@@ -272,8 +272,8 @@ until curl -sf localhost:8000/healthz >/dev/null; do sleep 0.5; done
 **d. Start Round 1 and buy plants.** Only what `GET /api/v1/workshop/facilities` lists is for sale:
 upgrade tiers such as the combined cycle appear only once unlocked, and a nuclear reactor takes a Round
 to build. Buy enough capacity for the market, or the first Trading period ends in a blackout, which
-ends the Round. Demand is about 50 MW per player, most of which must be served, so give each player
-around 70 MW or more. Three coal burners (21 MW each) and a gas burner (11 MW) do:
+ends the Round. Demand is about 150 MW per player, most of which must be served, so give each player
+around 200 MW or more. Three coal burners (60 MW each) and a gas burner (50 MW) do:
 
 ```bash
 curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # opens the Investment phase
