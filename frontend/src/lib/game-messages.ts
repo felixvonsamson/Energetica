@@ -91,6 +91,12 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_NO_SUCH_POINT: "This Trading period has no such settlement point.",
     WORKSHOP_GRID_DOWN:
         "The grid was down at this point, so the market did not clear.",
+    WORKSHOP_LOAN_LAST_ROUND:
+        "The loan can't be taken in the last Round: no Round is left to pay it back.",
+    WORKSHOP_LOAN_TAKEN: "You have already taken the loan.",
+    WORKSHOP_NO_LOAN: "You haven't taken the loan.",
+    WORKSHOP_LOAN_FINAL:
+        "The loan is final once the Investment phase it was taken in has closed.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

@@ -14,6 +14,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 export type BalanceSheet = ApiSchema<"BalanceSheet">;
 export type PeriodSheet = ApiSchema<"PeriodSheet">;
 export type SeasonSheet = ApiSchema<"SeasonSheet">;
+export type FinancingLine = ApiSchema<"FinancingLine">;
 
 const WH_PER_MWH = 1_000_000;
 
@@ -329,7 +330,38 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             roundAmount: sheet.net_profit,
         },
     );
+    // The loan and its payments (#1225), below net profit and apart from it:
+    // borrowing money is not a profit.
+    if (sheet.financing.length > 0) {
+        rows.push(
+            {
+                id: "financing",
+                label: "Financing",
+                level: 0,
+                kind: "line",
+                cell: () => empty,
+                roundAmount: sheet.financing_total,
+            },
+            ...sheet.financing.map(
+                (line, index): Row => ({
+                    id: `financing-${index}`,
+                    label: financingLabel(line),
+                    level: 1,
+                    kind: "line",
+                    cell: () => empty,
+                    roundAmount: line.amount,
+                }),
+            ),
+        );
+    }
     return rows;
+}
+
+/** "Loan", or "Loan payment 1 of 2", noting a payment taken at the session end. */
+export function financingLabel(line: FinancingLine): string {
+    if (line.kind === "loan") return "Loan";
+    const label = `Loan payment ${line.payment} of ${line.payment_count}`;
+    return line.at_session_end ? `${label} (session end)` : label;
 }
 
 // --- Waterfall ------------------------------------------------------------

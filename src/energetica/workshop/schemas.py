@@ -241,6 +241,33 @@ class WorkshopBallotIn(BaseModel):
     ballot: Ballot
 
 
+class WorkshopLoanPaymentOut(BaseModel):
+    """One payment that pays the loan back (#1225)."""
+
+    round: int | None = Field(
+        description="The Round whose start takes it, or null if it is taken when the session ends"
+    )
+    amount: float
+    paid: bool
+
+
+class WorkshopLoanOut(BaseModel):
+    """The calling player's loan (#1225): its terms, and once taken, its payments."""
+
+    amount: float = Field(description="What the loan adds to the player's cash")
+    payment: float = Field(description="What each payment takes back")
+    payment_count: int
+    available: bool = Field(
+        description="Whether the player can take the loan in this Round's Investment phase while it is open: they "
+        "have not taken it, and this is not the last Round"
+    )
+    taken_round: int | None = Field(description="The Round the player took the loan in, or null if they have not")
+    cancellable: bool = Field(
+        description="Whether the player took the loan in this Investment phase, so they can cancel it while it is open"
+    )
+    payments: list[WorkshopLoanPaymentOut] = Field(description="Every payment, in order. Empty until the loan is taken")
+
+
 class WorkshopVoteOut(BaseModel):
     """The current Round's carbon tax vote (#1014). Never says how anyone voted but the caller, nor how many did."""
 

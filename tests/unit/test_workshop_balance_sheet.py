@@ -93,7 +93,7 @@ def test_o_and_m_has_a_line_per_facility_type_in_catalog_order_with_its_fixed_an
 
 
 def test_the_round_total_adds_up_its_seasons_and_matches_the_operating_profit_accumulator() -> None:
-    sheet = balance_sheet(1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[])
+    sheet = balance_sheet(1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[], round_count=3)
 
     assert sheet.total is not None
     assert sheet.total.sale_revenue == pytest.approx(200_000.0)
@@ -133,7 +133,7 @@ def test_the_round_totals_fuel_at_its_average_price() -> None:
     assert line.quantity == pytest.approx(40_000.0)
     assert line.cost == pytest.approx(5_000.0 + 21_000.0)
     assert line.quantity * line.price == pytest.approx(line.cost)
-    sheet = balance_sheet(1, results=[spring, summer], purchases=[], settled=(1, "summer"), blackouts=[])
+    sheet = balance_sheet(1, results=[spring, summer], purchases=[], settled=(1, "summer"), blackouts=[], round_count=3)
     assert sheet.total is not None
     assert sheet.total.operating_income == pytest.approx(round_operating_profit([spring, summer], 1))
 
@@ -152,7 +152,7 @@ def test_a_climate_events_revenue_tax_comes_off_the_operating_income() -> None:
 def test_the_round_totals_the_revenue_tax_over_the_seasons_it_taxed() -> None:
     spring = SPRING.model_copy(update={"revenue_tax_rate": 0.07})
 
-    sheet = balance_sheet(1, results=[spring, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[])
+    sheet = balance_sheet(1, results=[spring, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[], round_count=3)
 
     assert sheet.total is not None
     assert sheet.total.revenue_tax == pytest.approx(9_800.0)
@@ -169,7 +169,7 @@ def test_a_season_with_no_fuel_has_no_fuel_lines() -> None:
 
 
 def test_seasons_fill_in_as_they_are_settled() -> None:
-    sheet = balance_sheet(1, results=[SPRING], purchases=[], settled=(1, "spring"), blackouts=[])
+    sheet = balance_sheet(1, results=[SPRING], purchases=[], settled=(1, "spring"), blackouts=[], round_count=3)
 
     assert [season.status for season in sheet.seasons] == ["settled", "upcoming", "upcoming", "upcoming"]
     assert sheet.seasons[0].sheet == period_sheet([SPRING])
@@ -177,14 +177,14 @@ def test_seasons_fill_in_as_they_are_settled() -> None:
 
 
 def test_nothing_is_settled_before_the_rounds_first_trading_period() -> None:
-    sheet = balance_sheet(2, results=[SPRING], purchases=[], settled=(1, "winter"), blackouts=[])
+    sheet = balance_sheet(2, results=[SPRING], purchases=[], settled=(1, "winter"), blackouts=[], round_count=3)
 
     assert all(season.status == "upcoming" for season in sheet.seasons)
     assert sheet.total is None
 
 
 def test_a_settled_season_with_nothing_operating_shows_zero() -> None:
-    sheet = balance_sheet(1, results=[], purchases=[], settled=(1, "spring"), blackouts=[])
+    sheet = balance_sheet(1, results=[], purchases=[], settled=(1, "spring"), blackouts=[], round_count=3)
 
     spring = sheet.seasons[0].sheet
     assert spring is not None
@@ -192,7 +192,9 @@ def test_a_settled_season_with_nothing_operating_shows_zero() -> None:
 
 
 def test_a_blackout_marks_its_season_and_skips_the_rest_of_the_round() -> None:
-    sheet = balance_sheet(1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[(1, "summer")])
+    sheet = balance_sheet(
+        1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[(1, "summer")], round_count=3
+    )
 
     assert [season.status for season in sheet.seasons] == ["settled", "settled", "skipped", "skipped"]
     assert [season.blackout for season in sheet.seasons] == [False, True, False, False]
@@ -210,7 +212,7 @@ def test_investments_are_the_rounds_purchases_by_type_and_come_off_the_net_profi
         Purchase(facility=WIND, round=2, price=270_000.0),
     ]
 
-    sheet = balance_sheet(1, results=[SPRING], purchases=purchases, settled=(1, "spring"), blackouts=[])
+    sheet = balance_sheet(1, results=[SPRING], purchases=purchases, settled=(1, "spring"), blackouts=[], round_count=3)
 
     assert [(line.facility, line.count, line.cost) for line in sheet.investments] == [
         (GAS, 2, 180_000.0),
@@ -223,7 +225,7 @@ def test_investments_are_the_rounds_purchases_by_type_and_come_off_the_net_profi
 def test_before_any_season_is_settled_the_net_profit_is_minus_the_investments() -> None:
     purchases = [Purchase(facility=GAS, round=1, price=90_000.0)]
 
-    sheet = balance_sheet(1, results=[], purchases=purchases, settled=None, blackouts=[])
+    sheet = balance_sheet(1, results=[], purchases=purchases, settled=None, blackouts=[], round_count=3)
 
     assert sheet.net_profit == pytest.approx(-90_000.0)
 
@@ -262,7 +264,9 @@ def test_the_round_totals_the_carbon_tax_and_takes_it_off_the_net_profit() -> No
     summer = _taxed(1, "summer", emissions=10_000.0, construction=0.0, share=800.0)
     purchases = [Purchase(facility=GAS, round=1, price=90_000.0)]
 
-    sheet = balance_sheet(1, results=[spring, summer], purchases=purchases, settled=(1, "summer"), blackouts=[])
+    sheet = balance_sheet(
+        1, results=[spring, summer], purchases=purchases, settled=(1, "summer"), blackouts=[], round_count=3
+    )
 
     assert sheet.total is not None
     assert sheet.total.construction_carbon_tax == pytest.approx(500.0)

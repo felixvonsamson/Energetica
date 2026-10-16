@@ -11,7 +11,8 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run, but only once the session is over.
+The scoreboard (#1017) is open to everyone in the Run, but only once the session is over. A player's loan (#1225) is
+theirs alone.
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.final_score import FinalScore
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
+from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSide
@@ -48,6 +50,8 @@ from energetica.workshop.schemas import (
     WorkshopFuelLineOut,
     WorkshopFuelOrderIn,
     WorkshopFuelOut,
+    WorkshopLoanOut,
+    WorkshopLoanPaymentOut,
     WorkshopMemberOut,
     WorkshopMeritOrderOut,
     WorkshopOwnedFacilityOut,
@@ -72,6 +76,7 @@ from energetica.workshop.schemas import (
 )
 from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import (
+    Investment,
     NoSuchRoundError,
     PhaseTimers,
     TradingPeriod,
@@ -586,7 +591,7 @@ def get_merit_order(
 @router.get("/rounds/{round_number}/balance-sheet")
 def get_balance_sheet(player: Player, session: Session, round_number: int) -> BalanceSheet:
     """The calling player's balance sheet for a Round: what each settled season earned and cost, and the Round's
-    investments and net profit so far.
+    investments and net profit so far, and the loan and its payments.
     """
     if not 1 <= round_number <= session.round_count:
         raise NoSuchRoundError(f"the session has no Round {round_number}")
@@ -597,6 +602,8 @@ def get_balance_sheet(player: Player, session: Session, round_number: int) -> Ba
         purchases=player.purchases,
         settled=(settled.round, settled.season) if settled is not None else None,
         blackouts=[(period.round, period.season) for period in session.blackouts],
+        loan=player.loan,
+        round_count=session.round_count,
     )
 
 
@@ -646,3 +653,52 @@ async def cast_ballot(player: Player, session: Session, ballot: WorkshopBallotIn
     """
     await run_in_threadpool(session.cast_ballot, player.account_id, ballot.ballot)
     return _vote_out(session, player.account_id)
+
+
+def _loan_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopLoanOut:
+    loan, round_number = player.loan, session.current_round()
+    payments = []
+    if loan is not None:
+        for index in range(LOAN_PAYMENTS):
+            due = payment_round(loan, index)
+            payments.append(
+                WorkshopLoanPaymentOut(
+                    round=due if due <= session.round_count else None,
+                    amount=LOAN_PAYMENT,
+                    paid=index < loan.payments_made,
+                )
+            )
+    return WorkshopLoanOut(
+        amount=LOAN_AMOUNT,
+        payment=LOAN_PAYMENT,
+        payment_count=LOAN_PAYMENTS,
+        available=loan is None and round_number < session.round_count,
+        taken_round=None if loan is None else loan.round,
+        cancellable=loan is not None and isinstance(session.checkpoint, Investment) and loan.round == round_number,
+        payments=payments,
+    )
+
+
+@router.get("/loan")
+def get_loan(player: Player, session: Session) -> WorkshopLoanOut:
+    """The calling player's loan: its terms, whether they can take it now, and once taken, its payments."""
+    return _loan_out(player, session)
+
+
+# Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.post("/loan")
+async def take_loan(player: Player, session: Session) -> WorkshopLoanOut:
+    """Take the loan, adding its amount to the calling player's cash straight away. Only while the Investment phase is
+    open, in any Round but the last, and once per session.
+    """
+    await run_in_threadpool(session.take_loan, player.account_id)
+    return _loan_out(player, session)
+
+
+@router.delete("/loan")
+async def cancel_loan(player: Player, session: Session) -> WorkshopLoanOut:
+    """Cancel the loan the calling player took in this Investment phase. Only while it is open, and only if their
+    selection still fits their cash without the loan.
+    """
+    await run_in_threadpool(session.cancel_loan, player.account_id)
+    return _loan_out(player, session)

@@ -126,6 +126,9 @@ export const queryKeys = {
         timers: ["workshop", "session", "timers"] as const,
         // Also under the session's key: the Investment phase closing counts the vote (#1014).
         vote: ["workshop", "session", "vote"] as const,
+        // Also under the session's key: a Round starting takes a payment, and the Investment phase
+        // closing makes the loan final (#1225).
+        loan: ["workshop", "session", "loan"] as const,
         // Also under the session's key: settling a Trading period adds one.
         lockedPrices: ["workshop", "session", "prices", "locked"] as const,
         // A Trading period's review (#1007). The summary sits under the session's key, so a
@@ -137,6 +140,8 @@ export const queryKeys = {
         // as each of the Round's Trading periods is settled.
         balanceSheet: (round: number) =>
             ["workshop", "session", "balance-sheet", round] as const,
+        // Every Round's balance sheet, to read them all again when the loan changes (#1225).
+        balanceSheets: ["workshop", "session", "balance-sheet"] as const,
         // The Recap that closes a Round (#1013). Under the session's key, so it is read
         // again once the Recap opens.
         recap: (round: number) =>

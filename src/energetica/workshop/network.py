@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from energetica.identity.accounts import Account
     from energetica.workshop.facilities import FacilityId, Fuel
     from energetica.workshop.fleet import OwnedFacility, Purchase
+    from energetica.workshop.loan import Loan
     from energetica.workshop.prices import LockedPrices, PriceSheet
     from energetica.workshop.trading import TradingResult
 
@@ -71,6 +72,7 @@ class WorkshopNetwork:
         trading_results: list[TradingResult],
         fuel_stock: dict[Fuel, float],
         fuel_order: dict[Fuel, float],
+        loan: Loan | None,
     ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
@@ -91,6 +93,7 @@ class WorkshopNetwork:
                 trading_results=trading_results,
                 fuel_stock=fuel_stock,
                 fuel_order=fuel_order,
+                loan=loan,
             )
             self.members[account_id] = player
             return player

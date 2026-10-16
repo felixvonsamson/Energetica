@@ -59,6 +59,10 @@ A Round whose plan turns on the carbon tax vote holds one in its Investment phas
 the session leaves it. The session keeps each vote's outcome and the ballots of the vote in progress, never a tally.
 Once a vote passes, each Trading period settles the carbon tax (#1015, :mod:`~energetica.workshop.carbon_tax`).
 
+Each player can take one loan per session in an Investment phase, and cancel it until the phase closes (#1225,
+:mod:`~energetica.workshop.loan`). Its payments are taken as the Rounds after it start, and any still owed when the
+session finishes.
+
 Once the session is :class:`Finished`, it ranks the players by their final score (#1017,
 :mod:`~energetica.workshop.final_score`).
 """
@@ -102,6 +106,7 @@ from energetica.workshop.fuel import (
     season_need,
 )
 from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lifetime_left
+from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, Loan, payments_due
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
@@ -348,6 +353,30 @@ class SettlementRunningError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_SETTLEMENT_RUNNING
 
 
+class LoanLastRoundError(WorkshopError):
+    """Raised when taking the loan in the last Round, which leaves no Round to pay it back in (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_LAST_ROUND
+
+
+class LoanTakenError(WorkshopError):
+    """Raised when taking the loan a second time (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_TAKEN
+
+
+class NoLoanError(WorkshopError):
+    """Raised when cancelling the loan of a player who has not taken it (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_NO_LOAN
+
+
+class LoanFinalError(WorkshopError):
+    """Raised when cancelling a loan taken in an earlier Investment phase, which is final (#1225)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_FINAL
+
+
 class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
@@ -500,6 +529,8 @@ class _SavedPlayer(BaseModel):
     trading_results: list[TradingResult]
     fuel_stock: dict[Fuel, float]
     fuel_order: dict[Fuel, float]
+    # None for a session saved before loans (#1225).
+    loan: Loan | None = None
 
 
 class _SavedSession(BaseModel):
@@ -662,6 +693,7 @@ class WorkshopSession:
                 trading_results=player.trading_results,
                 fuel_stock=player.fuel_stock,
                 fuel_order=player.fuel_order,
+                loan=player.loan,
             )
         return cls(
             network=network,
@@ -822,7 +854,8 @@ class WorkshopSession:
         selection still waiting, so none is lost if the facilitator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
         retires every facility whose lifetime has ended, and tops up any player below the cash floor, or resets
-        everyone's cash after a blackout (#1016). Opening a Trading period sets the season's fuel prices
+        everyone's cash after a blackout (#1016). Before that, it takes any loan payment due (#1225), and finishing
+        the session takes any still owed. Opening a Trading period sets the season's fuel prices
         and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
         Investment phase counts its vote, if it held one (#1014).
         Opening a Recap locks the next Round's plan (#1190) and works out how much demand grows into it (#1226). Raises
@@ -853,6 +886,8 @@ class WorkshopSession:
                 elif isinstance(checkpoint, Investment):
                     undos.append(self._apply_retirement(checkpoint.round)[1])
                     undos.append(self._apply_round_start_money(checkpoint.round))
+                elif isinstance(checkpoint, Finished):
+                    undos.append(self._apply_loan_payments(self.round_count + 1))
                 if isinstance(checkpoint, Recap):
                     undos.append(self._grow_demand(checkpoint.round))
                 undos.append(self._fire_events(checkpoint))
@@ -909,6 +944,51 @@ class WorkshopSession:
             selection = list(player.selection)
             del selection[len(selection) - 1 - selection[::-1].index(facility)]
             self._set_selection(player, selection)
+
+    def take_loan(self, account_id: int) -> None:
+        """Lend the player :data:`~energetica.workshop.loan.LOAN_AMOUNT`, added to their cash straight away (#1225).
+
+        Only while the Investment phase is open, in any Round but the last, and once per session.
+        """
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            round_number = self.current_round()
+            if round_number >= self.round_count:
+                raise LoanLastRoundError("no Round is left to pay the loan back in")
+            player = self.network.members[account_id]
+            if player.loan is not None:
+                raise LoanTakenError("the player has already taken the loan")
+            self._set_loan(player, Loan(round=round_number), player.money + LOAN_AMOUNT)
+
+    def cancel_loan(self, account_id: int) -> None:
+        """Take back the loan the player took in this Investment phase (#1225).
+
+        Only while the phase is open, and only if the player's selection still fits their cash without the loan.
+        """
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            player = self.network.members[account_id]
+            if player.loan is None:
+                raise NoLoanError("the player has not taken the loan")
+            if player.loan.round != self.current_round():
+                raise LoanFinalError("the loan was taken in an earlier Investment phase")
+            money = player.money - LOAN_AMOUNT
+            if player.selection_cost(self.facility_prices()) > money:
+                raise NotEnoughMoneyError("the selection would cost more than the player has without the loan")
+            self._set_loan(player, None, money)
+
+    def _set_loan(self, player: WorkshopPlayer, loan: Loan | None, money: float) -> None:
+        """Give ``player`` the loan ``loan`` and the cash ``money``, and save them. The caller holds the lock."""
+        before = player.loan, player.money
+        player.loan, player.money = loan, money
+        try:
+            self._save(self.checkpoint, self.phase_timer)
+        except BaseException:
+            # Undo the change, so the session matches the file.
+            player.loan, player.money = before
+            raise
 
     def _set_selection(self, player: WorkshopPlayer, selection: list[FacilityId]) -> None:
         """Give ``player`` the selection ``selection`` and save it. The caller holds the lock."""
@@ -1057,12 +1137,13 @@ class WorkshopSession:
     def _apply_round_start_money(self, round_number: int) -> Callable[[], None]:
         """Set every player's cash for the start of Round ``round_number``, without saving. Returns what undoes it.
 
-        A player below the floor is topped up to it, and a blackout in the Round before resets everyone to the
-        starting budget (#1016). Round 1 starts from the starting budget every player joined with, so it is left
-        alone. The caller holds the lock.
+        Any loan payment due is taken first (#1225). Then a player below the floor is topped up to it, and a
+        blackout in the Round before resets everyone to the starting budget (#1016). Round 1 starts from the starting
+        budget every player joined with, so it is left alone. The caller holds the lock.
         """
         if round_number == 1:
             return lambda: None
+        undo_payments = self._apply_loan_payments(round_number)
         after_blackout = any(period.round == round_number - 1 for period in self.blackouts)
         before = {player: player.money for player in self.network.players()}
         for player, money in before.items():
@@ -1071,6 +1152,26 @@ class WorkshopSession:
         def undo() -> None:
             for player, money in before.items():
                 player.money = money
+            undo_payments()
+
+        return undo
+
+    def _apply_loan_payments(self, round_number: int) -> Callable[[], None]:
+        """Take every loan payment due by the start of Round ``round_number``, without saving (#1225). A Round after
+        the last takes those due when the session ends. Returns what undoes it. The caller holds the lock.
+        """
+        before = {player: (player.money, player.loan) for player in self.network.players()}
+        for player in before:
+            if player.loan is None:
+                continue
+            due = payments_due(player.loan, round_number=round_number)
+            if due:
+                player.money -= due * LOAN_PAYMENT
+                player.loan = player.loan.model_copy(update={"payments_made": player.loan.payments_made + due})
+
+        def undo() -> None:
+            for player, (money, loan) in before.items():
+                player.money, player.loan = money, loan
 
         return undo
 
@@ -1711,6 +1812,7 @@ class WorkshopSession:
                     trading_results=player.trading_results,
                     fuel_stock=player.fuel_stock,
                     fuel_order=player.fuel_order,
+                    loan=player.loan,
                 )
                 for player in self.network.players()
             ],
