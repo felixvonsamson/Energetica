@@ -43,7 +43,7 @@ def _session(path: Path) -> WorkshopSession:
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=2, clock=_Clock())
     account = Account(account_id=1, username="p1", pwhash="hash", email=None, created_at="")
-    session.join(account).money = 10_000_000.0
+    session.join(account).money = 1_000_000_000.0
     session.advance()
     for _ in range(3):
         session.select(1, FacilityId.COAL_BURNER)

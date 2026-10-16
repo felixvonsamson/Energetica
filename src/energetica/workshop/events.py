@@ -640,13 +640,14 @@ EVENTS: dict[str, WorkshopEvent] = {
 }
 
 #: The CO₂ per player, in kg, from which a climate event's suggested severity is at least each graded severity.
-#: Emissions count both building facilities and running them. A placeholder until the game-balance pass (#1145):
-#: one coal burner running half the time for a Round emits about 150,000,000 kg.
+#: Emissions count both building facilities and running them. Scaled with demand by the first recalibration (#1227)
+#: and still open to the game-balance pass (#1145): one coal burner running half the time for a Round emits about
+#: 440,000,000 kg.
 CLIMATE_SEVERITY_THRESHOLDS: dict[Severity, float] = {
     "minor": 0.0,
-    "moderate": 100_000_000.0,
-    "major": 300_000_000.0,
-    "catastrophic": 600_000_000.0,
+    "moderate": 300_000_000.0,
+    "major": 900_000_000.0,
+    "catastrophic": 1_800_000_000.0,
 }
 
 

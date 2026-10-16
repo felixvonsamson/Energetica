@@ -26,9 +26,9 @@ from energetica.workshop.trading import Bidder, TradingResult
 if TYPE_CHECKING:
     from energetica.workshop.network import WorkshopNetwork
 
-# A Workshop player's Round-1 starting budget (#992 §8/§9). A placeholder: the real figure is
-# game-balance tuning, deferred along with every other Workshop magnitude in #992.
-WORKSHOP_STARTING_BUDGET = 1_000_000.0
+# A Workshop player's Round-1 starting budget (#992 §8/§9). Set by the first recalibration (#1227), so that
+# a Round's income is a few times the budget.
+WORKSHOP_STARTING_BUDGET = 50_000_000.0
 
 # The least a player starts a Round with (#1016): half the Round-1 starting budget.
 WORKSHOP_CASH_FLOOR = WORKSHOP_STARTING_BUDGET / 2

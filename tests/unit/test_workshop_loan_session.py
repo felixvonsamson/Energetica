@@ -44,6 +44,8 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
 FLEET = [
     OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
     OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
+    OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
+    OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1),
     OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=1),
 ]
 
@@ -175,8 +177,7 @@ def test_cancelling_takes_the_money_back(path: Path, clock: _Clock) -> None:
 def test_cancelling_is_refused_if_the_selection_needs_the_loan(path: Path, clock: _Clock) -> None:
     session = _session(path, clock)
     session.take_loan(1)
-    # Two reactors cost more than the starting budget.
-    session.select(1, FacilityId.NUCLEAR_REACTOR)
+    # A reactor costs more than the starting budget.
     session.select(1, FacilityId.NUCLEAR_REACTOR)
 
     with pytest.raises(NotEnoughMoneyError):
@@ -241,22 +242,22 @@ def test_a_round_one_loan_is_paid_back_as_rounds_two_and_three_start(path: Path,
     alice = _alice(session)
     session.take_loan(1)
     _to_next(session, Recap)
-    alice.money = 2_000_000.0
+    alice.money = 100_000_000.0
 
     _to_next(session, Investment)
-    assert alice.money == 2_000_000.0 - LOAN_PAYMENT
+    assert alice.money == 100_000_000.0 - LOAN_PAYMENT
     assert alice.loan == Loan(round=1, payments_made=1)
 
     _to_next(session, Recap)
-    alice.money = 2_000_000.0
+    alice.money = 100_000_000.0
     _to_next(session, Investment)
-    assert alice.money == 2_000_000.0 - LOAN_PAYMENT
+    assert alice.money == 100_000_000.0 - LOAN_PAYMENT
     assert alice.loan == Loan(round=1, payments_made=2)
 
     _to_next(session, Recap)
-    alice.money = 2_000_000.0
+    alice.money = 100_000_000.0
     _to_next(session, Finished)
-    assert alice.money == 2_000_000.0
+    assert alice.money == 100_000_000.0
 
 
 def test_a_loan_in_the_second_to_last_round_is_paid_at_the_last_round_and_the_session_end(
@@ -267,16 +268,16 @@ def test_a_loan_in_the_second_to_last_round_is_paid_at_the_last_round_and_the_se
     _to_next(session, Investment)
     session.take_loan(1)
     _to_next(session, Recap)
-    alice.money = 2_000_000.0
+    alice.money = 100_000_000.0
 
     _to_next(session, Investment)
     assert session.checkpoint == Investment(round=3)
-    assert alice.money == 2_000_000.0 - LOAN_PAYMENT
+    assert alice.money == 100_000_000.0 - LOAN_PAYMENT
 
     _to_next(session, Recap)
-    alice.money = 2_000_000.0
+    alice.money = 100_000_000.0
     _to_next(session, Finished)
-    assert alice.money == 2_000_000.0 - LOAN_PAYMENT
+    assert alice.money == 100_000_000.0 - LOAN_PAYMENT
     assert alice.loan == Loan(round=2, payments_made=2)
 
 
@@ -284,7 +285,7 @@ def test_a_payment_is_taken_before_the_cash_floor(path: Path, clock: _Clock) -> 
     session = _session(path, clock)
     session.take_loan(1)
     _to_next(session, Recap)
-    _alice(session).money = WORKSHOP_CASH_FLOOR + 100_000.0
+    _alice(session).money = WORKSHOP_CASH_FLOOR + 5_000_000.0
 
     _to_next(session, Investment)
 
@@ -298,11 +299,11 @@ def test_a_payment_at_the_session_end_can_take_cash_below_zero(path: Path, clock
     session.take_loan(1)
     _to_next(session, Investment)
     _to_next(session, Recap)
-    alice.money = 100_000.0
+    alice.money = 5_000_000.0
 
     _to_next(session, Finished)
 
-    assert alice.money == 100_000.0 - LOAN_PAYMENT
+    assert alice.money == 5_000_000.0 - LOAN_PAYMENT
 
 
 # --- the score ----------------------------------------------------------------------------------
@@ -316,7 +317,7 @@ def test_the_loan_counts_as_an_investment_of_its_cost(path: Path, clock: _Clock)
     session.take_loan(1)
     after = final_score(alice, round_count=session.round_count)
 
-    assert LOAN_COST == 200_000.0
+    assert LOAN_COST == 10_000_000.0
     assert after.investments == before.investments + LOAN_COST
     assert after.score == before.score - LOAN_COST
 

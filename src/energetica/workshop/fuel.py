@@ -19,8 +19,8 @@ end. After that, it starts at what the player bought last time. A player's stock
 Fuel is paid for when the Trading period is settled, at that season's price. With automatic procurement,
 players pay for what their facilities burned, less what their stock covered.
 
-Quantities are in kg and prices per kg. Every value here is a placeholder until the game-balance pass
-(#1145).
+Quantities are in kg and prices per kg. The catalog prices were set by the first recalibration (#1227), and
+every value here is still open to the game-balance pass (#1145).
 """
 
 from __future__ import annotations
@@ -53,12 +53,12 @@ FUEL_USE: dict[FacilityId, float] = {
 FUEL_NAMES: dict[Fuel, str] = {Fuel.COAL: "Coal", Fuel.GAS: "Gas", Fuel.URANIUM: "Uranium"}
 
 #: Each fuel's price per kg before any seasonal move or shock. The persistent world has no fixed fuel prices,
-#: since players trade fuel there, so these are invented: about half of what the facilities burning the fuel
-#: sell their power for by default.
+#: since players trade fuel there, so these are invented (#1227). Power then sells for about 100 per MWh. Gas costs
+#: more per MWh than coal, but less once the carbon tax is on, since gas emits less CO₂.
 CATALOG_FUEL_PRICES: dict[Fuel, float] = {
-    Fuel.COAL: 0.45,
-    Fuel.GAS: 0.7,
-    Fuel.URANIUM: 1_000.0,
+    Fuel.COAL: 0.06,
+    Fuel.GAS: 0.16,
+    Fuel.URANIUM: 250.0,
 }
 
 #: The most a season's random step moves a price, as a share of its catalog price.

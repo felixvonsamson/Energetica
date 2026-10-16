@@ -19,10 +19,10 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 
-#: The growth of a room right on target. These four constants are placeholders until the balance pass (#1227).
+#: The growth of a room right on target. These four constants were checked by the first recalibration (#1227).
 BASE_GROWTH = 0.3
-#: The average operating profit per player in a Round that counts as being on target.
-TARGET_ROUND_PROFIT = 3e6
+#: The average operating profit per player in a Round that counts as being on target: three starting budgets.
+TARGET_ROUND_PROFIT = 150e6
 #: The least a room's performance counts for, so a room that earns little, or loses money, still grows a little.
 MIN_PERFORMANCE = 0.3
 #: The most a room's performance counts for.

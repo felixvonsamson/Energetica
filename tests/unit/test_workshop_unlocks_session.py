@@ -31,9 +31,9 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
-# With two players, the threshold is one starting budget: 1,000,000. One nuclear reactor costs 840,000, so two
-# cross it and one does not.
-PLAYERS = 2
+# With four players, the threshold is two starting budgets: 100,000,000. One nuclear reactor costs 80,000,000, so
+# two cross it and one does not.
+PLAYERS = 4
 
 
 class _Clock:
@@ -52,11 +52,11 @@ def path(tmp_path: Path) -> Path:
 
 
 def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
-    """A session in Round 1's Investment phase, with two players who each hold plenty of money."""
+    """A session in Round 1's Investment phase, with ``PLAYERS`` players who each hold plenty of money."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
     for account_id in range(1, PLAYERS + 1):
         account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
-        session.join(account).money = 10_000_000.0
+        session.join(account).money = 1_000_000_000.0
     session.advance()
     return session
 
@@ -108,6 +108,8 @@ def test_spend_carries_over_from_round_to_round(path: Path) -> None:
     session = _session(path)
     session.select(1, FacilityId.NUCLEAR_REACTOR)
     _to_next(session, Investment)
+    # Round 1 blacked out, which reset everyone's cash to the starting budget.
+    session.network.members[2].money = 1_000_000_000.0
     session.select(2, FacilityId.NUCLEAR_REACTOR)
 
     _to_next(session, Investment)

@@ -2,8 +2,8 @@
 
 The engine keeps, beside each player's result, the time series and the merit order of each settlement
 point it cleared. These tests use a flat demand curve and steady weather, as the engine's tests do. With
-an amplitude of 10 MW, the demand block bids 8 MW at any price (must-serve), then 1 MW up to 480, 1.5 MW
-up to 240, 2 MW up to 120, 2 MW up to 24 and 2 MW up to 5.
+an amplitude of 50 MW, the demand block bids 40 MW at any price (must-serve), then 5 MW up to 250, 7.5 MW
+up to 140, 10 MW up to 80, 10 MW up to 40 and 10 MW up to 10.
 """
 
 from __future__ import annotations
@@ -28,12 +28,12 @@ from energetica.workshop.weather import Shares
 from ._weather_helpers import FixedWeather
 
 _FLAT = DemandCurve((1.0,) * DAYS_PER_YEAR)
-_AMPLITUDE = 10e6
+_AMPLITUDE = 50e6
 _WEEK_HOURS = 7 * 24
 
-GAS = FacilityId.GAS_BURNER  # 11 MW
-WIND = FacilityId.ONSHORE_WIND_TURBINE  # 11 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 86 MW, 300 MWh, 69% efficient
+GAS = FacilityId.GAS_BURNER  # 50 MW
+WIND = FacilityId.ONSHORE_WIND_TURBINE  # 30 MW
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 30 MW, 100 MWh, 69% efficient
 
 
 def _bidder(
@@ -112,16 +112,20 @@ def test_the_series_add_up_to_the_players_result() -> None:
 
 
 def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None:
-    # The batteries bid above every tier but must-serve, so they buy the 3 MW of wind left over once the
-    # 8 MW must-serve demand is met, every hour. They ask too much to ever sell. The week that counts starts from
-    # what the first pass, for the cyclic start, stored. Three batteries have room for both passes.
-    outcome = _simulate(_bidder(WIND, *[BATTERIES] * 3, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}))
+    # Two turbines at 70% make 42 MW. The batteries bid above every tier but must-serve, so they buy the 2 MW of
+    # wind left over once the 40 MW must-serve demand is met, every hour. They ask too much to ever sell. The week
+    # that counts starts from what the first pass, for the cyclic start, stored. Six batteries have room for both
+    # passes.
+    outcome = _simulate(
+        _bidder(WIND, WIND, *[BATTERIES] * 6, sell={WIND: 0.0, BATTERIES: 1_000.0}, buy={BATTERIES: 500.0}),
+        weather=lambda facility, _seconds: 0.7 if facility == WIND else 1.0,
+    )
     record = outcome.record
     row = _row(record, 1, BATTERIES)
     # What is bought reaches the store at the square root of the round-trip efficiency.
-    stored_per_hour = 3e6 * (CATALOG[BATTERIES].base_efficiency or 0.0) ** 0.5
+    stored_per_hour = 2e6 * (CATALOG[BATTERIES].base_efficiency or 0.0) ** 0.5
 
-    assert record.charged[row] == pytest.approx(np.full(_WEEK_HOURS, 3e6))
+    assert record.charged[row] == pytest.approx(np.full(_WEEK_HOURS, 2e6))
     assert record.stored[row] == pytest.approx(stored_per_hour * np.arange(_WEEK_HOURS + 1, 2 * _WEEK_HOURS + 1))
     assert record.stored[row, -1] == pytest.approx(outcome.stored_energy[1][BATTERIES])
     # A facility that stores nothing holds nothing.
@@ -131,10 +135,10 @@ def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None
 def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
     record = _simulate(_bidder(GAS, sell={GAS: 50.0})).record
 
-    # Gas sells 11 MW to the tiers bidding above 50: 8 MW must-serve, 1 MW, 1.5 MW, and 0.5 MW of the next.
+    # Gas sells 50 MW to the tiers bidding above 50: 40 MW must-serve, 5 MW, and 5 MW of the next.
     assert record.served.sum(axis=0) == pytest.approx(record.quantity)
-    assert record.served[:, 0] == pytest.approx([8e6, 1e6, 1.5e6, 0.5e6, 0, 0])
-    assert record.price == pytest.approx(np.full(_WEEK_HOURS, 120.0))
+    assert record.served[:, 0] == pytest.approx([40e6, 5e6, 5e6, 0, 0, 0])
+    assert record.price == pytest.approx(np.full(_WEEK_HOURS, 140.0))
 
 
 def test_each_merit_order_clears_again_at_the_recorded_price_and_quantity() -> None:
@@ -170,9 +174,9 @@ def test_a_merit_order_keeps_the_bids_that_did_not_sell() -> None:
     assert order is not None
     assert order.offers["player_id"] == [1, 2]
     assert order.offers["price"] == [50.0, 600.0]
-    assert order.offers["capacity"] == pytest.approx([11e6, 11e6])
-    assert order.offers["cumul_capacities"] == pytest.approx([11e6, 22e6])
-    assert order.offers["cleared"] == pytest.approx([11e6, 0.0])
+    assert order.offers["capacity"] == pytest.approx([50e6, 50e6])
+    assert order.offers["cumul_capacities"] == pytest.approx([50e6, 100e6])
+    assert order.offers["cleared"] == pytest.approx([50e6, 0.0])
     # Every demand tier bids, the must-serve one at an unbounded price.
     assert order.demands["facility"][0] == "must_serve"
     assert order.demands["price"][0] == math.inf
@@ -180,15 +184,15 @@ def test_a_merit_order_keeps_the_bids_that_did_not_sell() -> None:
 
 
 def test_a_blackout_keeps_the_merit_order_that_failed_and_nothing_after_it() -> None:
-    # The wind cannot meet the 8 MW must-serve demand once it drops at noon.
+    # The wind cannot meet the 40 MW must-serve demand once it drops at noon.
     record = _simulate(
-        _bidder(WIND, sell={WIND: 0.0}), weather=lambda _facility, seconds: _sunny_mornings(seconds)
+        _bidder(WIND, WIND, sell={WIND: 0.0}), weather=lambda _facility, seconds: _sunny_mornings(seconds)
     ).record
 
     assert record.blackout_at == 12
     failed = record.merit_order(12)
     assert failed is not None
-    assert failed.offers["capacity"] == pytest.approx([1.1e6])
+    assert failed.offers["capacity"] == pytest.approx([6e6])
     assert record.merit_order(13) is None
     assert np.isnan(record.price[13:]).all()
     assert not record.generation[:, 12:].any()
