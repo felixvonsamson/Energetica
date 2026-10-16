@@ -24,6 +24,12 @@ from energetica.workshop.seasons import Season
 DUMP_COST = 25.0
 #: The lowest price a player can set, per MWh. Below it, dumping would cost less than selling.
 PRICE_FLOOR = -DUMP_COST
+#: The price per MWh a clearing settles at when supply exactly meets must-serve demand, which would
+#: otherwise clear at the unbounded must-serve bid.
+SCARCITY_PRICE = 1000.0
+#: The highest price a player can set, per MWh. Without it, one player offering at a huge price could set
+#: the clearing price for everyone (#1221).
+PRICE_CEILING = SCARCITY_PRICE
 
 PriceSide = Literal["sell", "buy"]
 

@@ -759,14 +759,14 @@ def _trading(session_path: Path, clock: _Clock) -> tuple[TestClient, int, int]:
     return client, facilitator, alice
 
 
-def test_a_player_reads_their_prices_and_the_price_floor(session_path: Path, clock: _Clock) -> None:
+def test_a_player_reads_their_prices_and_the_price_range(session_path: Path, clock: _Clock) -> None:
     client, _, _ = _trading(session_path, clock)
 
     response = client.get(PRICES_URL)
 
     assert response.status_code == 200
     body = response.json()
-    assert body["price_floor"] == -25.0
+    assert body["price_range"] == {"floor": -25.0, "ceiling": 1000.0}
     assert body["sell"]["gas_burner"] == 500.0
     assert body["buy"] == {
         "lithium_ion_batteries": 425.0,
@@ -792,9 +792,10 @@ def test_a_player_sets_a_price_while_the_window_is_open(session_path: Path, cloc
     ("url", "price", "error"),
     [
         (f"{PRICES_URL}/gas_burner/sell", -25.01, "WORKSHOP_PRICE_BELOW_FLOOR"),
+        (f"{PRICES_URL}/gas_burner/sell", 1000.01, "WORKSHOP_PRICE_ABOVE_CEILING"),
         (f"{PRICES_URL}/gas_burner/buy", 10.0, "WORKSHOP_NOT_STORAGE"),
     ],
-    ids=["below the floor", "buy price for a facility that is not storage"],
+    ids=["below the floor", "above the ceiling", "buy price for a facility that is not storage"],
 )
 def test_a_price_the_rules_forbid_is_an_error(
     session_path: Path, clock: _Clock, url: str, price: float, error: str

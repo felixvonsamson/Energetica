@@ -52,7 +52,7 @@ Besides each player's result, the engine keeps a :class:`~energetica.workshop.pe
 of every settlement point it cleared, for the period's review.
 
 A clearing where supply exactly meets must-serve demand is no blackout, but it clears at the must-serve
-bid, ``math.inf``, so it settles at :data:`SCARCITY_PRICE` instead.
+bid, ``math.inf``, so it settles at :data:`~energetica.workshop.prices.SCARCITY_PRICE` instead.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
 from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operating, om_owed
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
-from energetica.workshop.prices import DUMP_COST, PriceSheet, is_storage
+from energetica.workshop.prices import DUMP_COST, SCARCITY_PRICE, PriceSheet, is_storage
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.seasons import SEASON_DAYS, SEASONS, Season, representative_week, season_days
 from energetica.workshop.weather import Shares, Weather
@@ -100,10 +100,6 @@ SECONDS_PER_DAY = 86_400
 RENEWABLE_CATEGORIES = frozenset(
     {FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.CSP, FacilityCategory.HYDRO}
 )
-
-#: The price per MWh a clearing settles at when supply exactly meets must-serve demand, which would
-#: otherwise clear at the unbounded must-serve bid.
-SCARCITY_PRICE = 1000.0
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
 # How far below full power a fuel-limited offer may be, as a share, and still count as full: what is left of

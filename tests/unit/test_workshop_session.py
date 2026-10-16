@@ -16,7 +16,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
-from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet
+from energetica.workshop.prices import DEFAULT_PRICES, PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import LeverChanges, RoundLevers
 from energetica.workshop.seasons import Season
@@ -32,6 +32,7 @@ from energetica.workshop.session import (
     NotSelectedError,
     NotStarted,
     NotStorageError,
+    PriceAboveCeilingError,
     PriceBelowFloorError,
     PriceSettingClosedError,
     Recap,
@@ -874,12 +875,18 @@ def test_a_price_can_go_down_to_the_floor_but_not_below(path: Path, clock: _Cloc
     assert session.network.members[1].prices.sell[GAS] == PRICE_FLOOR
 
 
-def test_a_price_has_no_ceiling(path: Path, clock: _Clock) -> None:
+@pytest.mark.parametrize(("facility", "side"), [(GAS, "sell"), (BATTERIES, "buy")], ids=["sell", "storage buy"])
+def test_a_price_can_go_up_to_the_ceiling_but_not_above(
+    path: Path, clock: _Clock, facility: FacilityId, side: PriceSide
+) -> None:
     session = _trading(path, clock)
 
-    session.set_price(1, GAS, "sell", 1e12)
+    session.set_price(1, facility, side, PRICE_CEILING)
+    with pytest.raises(PriceAboveCeilingError):
+        session.set_price(1, facility, side, PRICE_CEILING + 0.01)
 
-    assert session.network.members[1].prices.sell[GAS] == 1e12
+    prices = session.network.members[1].prices
+    assert (prices.sell if side == "sell" else prices.buy)[facility] == PRICE_CEILING
 
 
 def test_a_facility_that_is_not_storage_has_no_buy_price(path: Path, clock: _Clock) -> None:

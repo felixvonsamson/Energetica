@@ -20,7 +20,7 @@ from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
-from energetica.workshop.prices import PRICE_FLOOR, PriceSheet
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import EventStatus, RoundLevers
 from energetica.workshop.seasons import WEEK_DAYS, Season
@@ -171,14 +171,22 @@ class WorkshopPriceIn(BaseModel):
     """A new price for one facility type, per MWh."""
 
     price: float = Field(
-        allow_inf_nan=False, description=f"The price per MWh. It has no ceiling, but cannot go below {PRICE_FLOOR}"
+        allow_inf_nan=False,
+        description=f"The price per MWh, from {PRICE_FLOOR} to {PRICE_CEILING}, both included",
     )
+
+
+class WorkshopPriceRangeOut(BaseModel):
+    """The prices a player can set, per MWh, both bounds included."""
+
+    floor: float = Field(description="The lowest price a player can set, per MWh")
+    ceiling: float = Field(description="The highest price a player can set, per MWh")
 
 
 class WorkshopPricesOut(PriceSheet):
     """The calling player's prices, per MWh (#1002). Every facility type has one, owned or not."""
 
-    price_floor: float = Field(description="The lowest price a player can set, per MWh")
+    price_range: WorkshopPriceRangeOut
 
 
 class WorkshopFuelLineOut(BaseModel):

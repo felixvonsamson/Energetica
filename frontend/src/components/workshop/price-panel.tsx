@@ -11,7 +11,8 @@
  *
  * Prices can be changed while a Trading period's price-setting window is open,
  * and are locked when its countdown ends. A field cannot be left empty or set
- * below the price floor: it goes back to the last price when it loses focus.
+ * outside the price range, from the price floor to the price ceiling: it goes
+ * back to the last price when it loses focus.
  */
 
 import { AlertTriangle, X, Zap } from "lucide-react";
@@ -30,15 +31,17 @@ import {
     useWorkshopPrices,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import { formatEnergy, formatPower } from "@/lib/format-utils";
+import { formatEnergy, formatMoney, formatPower } from "@/lib/format-utils";
 import {
     workshopFacilityColor,
     workshopFacilityImages,
 } from "@/lib/workshop-facilities";
 import {
     installedCapacity,
+    type InvalidPriceReason,
     parsePrice,
     pricedFacilities,
+    type PriceRange,
 } from "@/lib/workshop-prices";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -140,19 +143,27 @@ function PriceList({
             </p>
         );
     }
+    const range = prices.price_range;
     return (
-        <ul className="flex flex-col gap-3">
-            {facilities.map((facility) => (
-                <PriceRow
-                    key={facility}
-                    facility={facility}
-                    details={catalog.get(facility)}
-                    fleet={fleet}
-                    prices={prices}
-                    open={open}
-                />
-            ))}
-        </ul>
+        <>
+            <p className="mb-3 text-[13px] text-fg-subtle">
+                Prices go from {formatPrice(range.floor)} to{" "}
+                {formatPrice(range.ceiling)} per MWh.
+            </p>
+            <ul className="flex flex-col gap-3">
+                {facilities.map((facility) => (
+                    <PriceRow
+                        key={facility}
+                        facility={facility}
+                        details={catalog.get(facility)}
+                        fleet={fleet}
+                        prices={prices}
+                        range={range}
+                        open={open}
+                    />
+                ))}
+            </ul>
+        </>
     );
 }
 
@@ -161,6 +172,7 @@ function PriceRow({
     details,
     fleet,
     prices,
+    range,
     open,
 }: {
     facility: FacilityId;
@@ -168,6 +180,7 @@ function PriceRow({
     details: WorkshopFacility | undefined;
     fleet: OwnedFacility[];
     prices: WorkshopPrices;
+    range: PriceRange;
     open: boolean;
 }) {
     const sell = prices.sell[facility];
@@ -210,7 +223,7 @@ function PriceRow({
                     side="sell"
                     label={buy === undefined ? "Price" : "Sell at"}
                     saved={sell}
-                    floor={prices.price_floor}
+                    range={range}
                     disabled={!open}
                 />
                 {buy !== undefined && (
@@ -220,7 +233,7 @@ function PriceRow({
                             side="buy"
                             label="Buy at"
                             saved={buy}
-                            floor={prices.price_floor}
+                            range={range}
                             disabled={!open}
                         />
                         {sell < buy && (
@@ -265,7 +278,7 @@ function PriceField({
     side,
     label,
     saved,
-    floor,
+    range,
     disabled,
 }: {
     facility: FacilityId;
@@ -273,7 +286,7 @@ function PriceField({
     label: string;
     /** The price as the server last had it, or as last sent. */
     saved: number;
-    floor: number;
+    range: PriceRange;
     disabled: boolean;
 }) {
     const id = useId();
@@ -286,11 +299,11 @@ function PriceField({
     // price after the window closed.
     useEffect(() => () => clearTimeout(sendTimer.current), []);
     const text = disabled || draft === null ? String(saved) : draft;
-    const parsed = parsePrice(text, floor);
+    const parsed = parsePrice(text, range);
 
     function send(typed: string) {
         clearTimeout(sendTimer.current);
-        const result = parsePrice(typed, floor);
+        const result = parsePrice(typed, range);
         if (result.ok && result.price !== saved) setPrice.mutate(result.price);
     }
 
@@ -339,13 +352,28 @@ function PriceField({
             </div>
             {!parsed.ok && (
                 <p className="pl-[60px] text-[13px] text-destructive">
-                    {parsed.reason === "empty"
-                        ? "Enter a price."
-                        : parsed.reason === "below_floor"
-                          ? `The lowest price is ${floor}.`
-                          : "Enter a number."}
+                    {invalidPriceMessage(parsed.reason, range)}
                 </p>
             )}
         </div>
     );
+}
+
+/** A price as the panel writes it, such as "1'000". */
+function formatPrice(price: number): string {
+    return formatMoney(price, true);
+}
+
+/** What a field says when it does not hold a price the player can set. */
+function invalidPriceMessage(
+    reason: InvalidPriceReason,
+    range: PriceRange,
+): string {
+    const messages: Record<InvalidPriceReason, string> = {
+        empty: "Enter a price.",
+        invalid: "Enter a number.",
+        below_floor: `The lowest price is ${formatPrice(range.floor)}.`,
+        above_ceiling: `The highest price is ${formatPrice(range.ceiling)}.`,
+    };
+    return messages[reason];
 }

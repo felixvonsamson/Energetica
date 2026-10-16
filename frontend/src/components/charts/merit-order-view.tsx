@@ -218,7 +218,7 @@ interface TooltipState {
     block: OrderBlock;
 }
 
-const PRICE_CAP = 2000;
+const PRICE_CAP = 1200;
 
 function MeritOrderViewInner({
     data: marketData,
