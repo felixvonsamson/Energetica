@@ -2533,6 +2533,11 @@ export interface components {
             demand: components["schemas"]["DemandOutlook"] | null;
             /** @description The vote the Round holds, or null if it holds none */
             carbon_tax_vote: components["schemas"]["RecapVote"] | null;
+            /**
+             * Manual Fuel Procurement Starts
+             * @description Whether players start buying their own fuel in the Round, after a Round of automatic procurement
+             */
+            manual_fuel_procurement_starts: boolean;
         };
         /**
          * ErrorCode

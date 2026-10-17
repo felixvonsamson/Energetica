@@ -18,19 +18,20 @@ export const Route = createFileRoute("/app/workshop/recap/$round")({
 function RecapPage() {
     const { round } = Route.useParams();
     const search = Route.useSearch();
-    const recap = <RecapForRound round={Number(round)} />;
     if (search.window)
         return (
             <div className="fixed inset-0 z-50 overflow-auto bg-background p-4 md:p-8">
-                {recap}
+                <RecapForRound round={Number(round)} />
             </div>
         );
     // The projector window above is the room's, so only this page reminds a
     // player of their loan payment (#1225).
     return (
         <div className="pb-16">
-            <LoanReminder round={Number(round)} />
-            {recap}
+            <RecapForRound
+                round={Number(round)}
+                note={<LoanReminder round={Number(round)} />}
+            />
         </div>
     );
 }
