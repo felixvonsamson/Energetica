@@ -183,10 +183,12 @@ export function CarbonTaxBadge({
     return (
         <span
             title={`Passed in Round ${passedInRound}. It stays until the end of the game.`}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm font-medium"
+            aria-label="Carbon tax: active"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-1 text-sm font-medium xl:px-3"
         >
             <Landmark className="size-4" />
-            Carbon tax: active
+            {/* On a narrower screen, the icon alone, so the top bar fits. */}
+            <span className="hidden xl:inline">Carbon tax: active</span>
         </span>
     );
 }
