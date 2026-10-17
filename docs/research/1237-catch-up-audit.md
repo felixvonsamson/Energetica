@@ -7,14 +7,14 @@ component from its old commit up to `main` at `b913be2a`. It also records how th
 
 ## Starting point
 
-| Component | Deployed commit | Behind `main` | State |
-|---|---|---|---|
-| landing | not stamped | unknown | live |
-| lobby | `2b69b9524` (Sep 26) | 267 commits | live |
-| volta | `2b69b9524` | 267 | live, public, `freeze_at` Nov 1, `ended_at` Nov 7 |
-| energie-und-klima-hs2026 | `2b69b9524` | 267 | live, private, no end date |
-| energy-now | `04211b45b` (Oct 9) | 118 | live, private |
-| neue-energiewirtschaft-hs2026 | `2b69b9524` | 267 | **stopped and disabled since Sep 26 08:19 UTC** |
+| Component                     | Deployed commit      | Behind `main` | State                                             |
+| ----------------------------- | -------------------- | ------------- | ------------------------------------------------- |
+| landing                       | not stamped          | unknown       | live                                              |
+| lobby                         | `2b69b9524` (Sep 26) | 267 commits   | live                                              |
+| volta                         | `2b69b9524`          | 267           | live, public, `freeze_at` Nov 1, `ended_at` Nov 7 |
+| energie-und-klima-hs2026      | `2b69b9524`          | 267           | live, private, no end date                        |
+| energy-now                    | `04211b45b` (Oct 9)  | 118           | live, private                                     |
+| neue-energiewirtschaft-hs2026 | `2b69b9524`          | 267           | **stopped and disabled since Sep 26 08:19 UTC**   |
 
 The range `2b69b9524..b913be2a` holds 70 merged PRs. About 45 of them touch only Workshop code.
 energy-now's `04211b45b` already contained 34 of the 70.
@@ -108,13 +108,13 @@ The `.pre-main` copies are kept as the rollback point until "Decide what a rollb
 
 ## Final state
 
-| Component | Backend | Frontend | Compared with `main` |
-|---|---|---|---|
-| lobby | `b913be2a1` | `b913be2a1` | up to date |
-| energie-und-klima-hs2026 | `b913be2a1` | `b913be2a1` | up to date |
-| energy-now | `b913be2a1` | `b913be2a1` | up to date |
-| neue-energiewirtschaft-hs2026 | `b913be2a1` | `b913be2a1` | up to date |
-| volta | `b913be2a1` | `b913be2a1` | up to date |
+| Component                     | Backend     | Frontend    | Compared with `main` |
+| ----------------------------- | ----------- | ----------- | -------------------- |
+| lobby                         | `b913be2a1` | `b913be2a1` | up to date           |
+| energie-und-klima-hs2026      | `b913be2a1` | `b913be2a1` | up to date           |
+| energy-now                    | `b913be2a1` | `b913be2a1` | up to date           |
+| neue-energiewirtschaft-hs2026 | `b913be2a1` | `b913be2a1` | up to date           |
+| volta                         | `b913be2a1` | `b913be2a1` | up to date           |
 
 The landing was deployed from `b913be2a` but has no version stamp yet. "Stamp the deployed version
 on dist-landing" (#1243) adds one.
