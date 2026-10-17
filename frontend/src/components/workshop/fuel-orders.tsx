@@ -191,9 +191,14 @@ function OrderField({
     // As in the price fields, a pending send goes with the field when it
     // unmounts at the window's opening or closing.
     useEffect(() => () => clearTimeout(sendTimer.current), []);
-    const text = disabled || draft === null ? tonnesFieldText(order) : draft;
+    const typing = !disabled && draft !== null;
+    const text = typing ? draft : tonnesFieldText(order);
     const parsed = parseTonnes(text);
-    const over = parsed.ok && isOverStockpile(parsed.kg, line);
+    // Only a typed quantity is checked against the stockpile limit. The server
+    // cut the saved order down to fit when it was set, and once the period is
+    // settled the order has joined the stock, so checking it again would cut it
+    // down a second time.
+    const over = typing && parsed.ok && isOverStockpile(parsed.kg, line);
 
     function send(typed: string) {
         clearTimeout(sendTimer.current);
@@ -259,7 +264,11 @@ function OrderField({
                     <p className="flex items-center gap-1 pl-[60px] text-[13px] text-fg-subtle">
                         Costs
                         <span className="font-mono font-medium text-fg-base">
-                            {formatMoney(orderCost(parsed.kg, line))}
+                            {formatMoney(
+                                typing
+                                    ? orderCost(parsed.kg, line)
+                                    : order * line.price,
+                            )}
                         </span>
                         <CoinIcon className="size-3" />
                     </p>
