@@ -1,5 +1,5 @@
 #!.venv/bin/python
-"""Fill a local Workshop session with five bot players. See README.md beside this file.
+"""Fill a Workshop session with five bot players. See README.md beside this file.
 
 .venv/bin/python scripts/workshop_bots/run.py setup                       # once: accounts and roster
 .venv/bin/python scripts/workshop_bots/run.py live --plan blackout        # bots play while you facilitate
@@ -19,8 +19,9 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
-from api import Api, ApiError, Facilitator
+from api import Api, ApiError, Facilitator, LoginError
 from market import SEASONS, Ctx, PeriodView, read_period
 from strategies import PERSONAS, STAND_IN, Prices, Strategy
 
@@ -29,6 +30,8 @@ PLANS = HERE / "plans"
 SLUG = os.environ.get("ENERGETICA_INSTANCE_SLUG", "workshop-demo")
 # Run from the repo root, like the local-development docs.
 ACCOUNTS_DB = os.environ.get("ENERGETICA_ACCOUNTS_DB_PATH", ".energetica-dev/accounts.db")
+
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 _print_lock = threading.Lock()
 
@@ -223,6 +226,18 @@ def scoreboard(api: Api) -> None:
 
 def setup(args: argparse.Namespace) -> None:
     """Create the facilitator, bot and player accounts, and put them on the Run's roster."""
+    remote = [
+        f"{variable}={url}"
+        for variable in ("ENERGETICA_LOBBY_URL", "ENERGETICA_APP_URL")
+        if (url := os.environ.get(variable)) and urlparse(url).hostname not in LOCAL_HOSTS
+    ]
+    if remote:
+        sys.exit(
+            f"setup only works on a local Run, but {' and '.join(remote)}. It writes into a local accounts.db and "
+            "gives every account the password <name>1234, including the facilitator. On a deployed Run, an operator "
+            "creates the accounts on the server with random passwords; pass those to the bots with "
+            "ENERGETICA_BOT_PASSWORDS."
+        )
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = ACCOUNTS_DB
     from energetica.identity import accounts  # noqa: PLC0415 - only this command needs the backend
     from energetica.kernel.session import generate_password_hash  # noqa: PLC0415
@@ -240,11 +255,22 @@ def setup(args: argparse.Namespace) -> None:
 
 def live(args: argparse.Namespace) -> None:
     """Enter the bots and play every checkpoint as the facilitator reaches it, until the session is over."""
+    plan = load_plan(args.plan)
+    facilitator = None
+    if plan is not None:
+        # Log in first, so a missing facilitator password stops the script before any bot enters the Run.
+        try:
+            facilitator = Facilitator(args.facilitator)
+        except LoginError as error:
+            sys.exit(
+                f"cannot log in as the facilitator {args.facilitator} to apply the plan: {error}. Either provide its "
+                "password (in ENERGETICA_BOT_PASSWORDS or ENERGETICA_FACILITATOR_PASSWORD), or drop --plan and set "
+                "the levers on the console."
+            )
     bots = make_bots(args.bots.split(","), args.seed, live=True)
     log(f"bots entered: {', '.join(bot.name for bot in bots)}")
-    plan = load_plan(args.plan)
-    if plan is not None:
-        Facilitator(args.facilitator).apply_plan(plan)
+    if plan is not None and facilitator is not None:
+        facilitator.apply_plan(plan)
         log(f"applied the {args.plan} plan; check it on the console before you start")
     history = History(bots[0].api)
     threads: dict[str, threading.Thread] = {}
@@ -321,6 +347,8 @@ def main() -> None:
     }
     try:
         commands_by_name[args.command](args)
+    except LoginError as error:
+        sys.exit(str(error))
     except KeyboardInterrupt:
         sys.exit(130)
 

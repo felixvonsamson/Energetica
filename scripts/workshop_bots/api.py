@@ -1,9 +1,11 @@
-"""A small client for the Workshop API, logged in through the local lobby like a browser."""
+"""A small client for the Workshop API, logged in through the lobby like a browser."""
 
 from __future__ import annotations
 
+import json
 import os
 import time
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -12,20 +14,59 @@ APP_URL = os.environ.get("ENERGETICA_APP_URL", "http://localhost:8000") + "/api/
 LOBBY_URL = os.environ.get("ENERGETICA_LOBBY_URL", "http://localhost:8001") + "/api/v1"
 
 
+# A JSON file {"<username>": "<password>", ...} for accounts that do not use the local default password.
+PASSWORDS_FILE = os.environ.get("ENERGETICA_BOT_PASSWORDS")
+
+
 class ApiError(Exception):
     """A request the backend refused."""
 
 
+class LoginError(ApiError):
+    """An account the script has no password for, or whose login the lobby refused."""
+
+
+def _passwords() -> dict[str, str] | None:
+    if PASSWORDS_FILE is None:
+        return None
+    try:
+        return json.loads(Path(PASSWORDS_FILE).read_text())
+    except (OSError, ValueError) as error:
+        raise LoginError(f"cannot read the passwords file {PASSWORDS_FILE}: {error}") from error
+
+
+def password_for(username: str) -> str:
+    """The account's password from ENERGETICA_BOT_PASSWORDS if set, else the local default ``<username>1234``."""
+    passwords = _passwords()
+    if passwords is None:
+        return f"{username}1234"
+    if username not in passwords:
+        raise LoginError(f"no password for {username} in {PASSWORDS_FILE}")
+    return passwords[username]
+
+
+def facilitator_password_for(username: str) -> str:
+    """Like ``password_for``, but ENERGETICA_FACILITATOR_PASSWORD fills in when the file lacks the facilitator."""
+    passwords = _passwords()
+    if passwords is not None and username in passwords:
+        return passwords[username]
+    if "ENERGETICA_FACILITATOR_PASSWORD" in os.environ:
+        return os.environ["ENERGETICA_FACILITATOR_PASSWORD"]
+    return password_for(username)
+
+
 class Api:
-    """One account's session. Bot accounts use ``<username>1234`` as their password."""
+    """One account's session. Without ENERGETICA_BOT_PASSWORDS, accounts use ``<username>1234`` as their password."""
 
     def __init__(self, username: str, password: str | None = None):
         self.username = username
         self.client = httpx.Client(base_url=APP_URL, timeout=60)
         login = self.client.post(
-            f"{LOBBY_URL}/auth/login", json={"username": username, "password": password or f"{username}1234"}
+            f"{LOBBY_URL}/auth/login",
+            json={"username": username, "password": password if password is not None else password_for(username)},
         )
-        login.raise_for_status()
+        if login.status_code >= 400:
+            raise LoginError(f"the lobby refused the login of {username}: {login.status_code} {login.text[:200]}")
         self.entry: dict[str, Any] = self.client.post("/workshop/enter").json()
 
     @property
@@ -61,6 +102,9 @@ class Api:
 
 class Facilitator(Api):
     """The facilitator's session, for applying a plan and, in headless runs, advancing the session."""
+
+    def __init__(self, username: str):
+        super().__init__(username, facilitator_password_for(username))
 
     def checkpoint(self) -> dict[str, Any]:
         return self.get("/session")["checkpoint"]
