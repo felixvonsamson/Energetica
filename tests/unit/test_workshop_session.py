@@ -43,6 +43,7 @@ from energetica.workshop.session import (
     SettlementRunningError,
     TradingPeriod,
     WorkshopSession,
+    completed_rounds,
     next_checkpoint,
 )
 from energetica.workshop import session as session_module
@@ -54,7 +55,7 @@ from energetica.workshop.demand_block import (
     nominal_demand,
     round_one_amplitude,
 )
-from energetica.workshop.final_score import final_score
+from energetica.workshop.final_score import final_score, scoreboard
 from energetica.workshop.fleet import lifetime_left, om_owed
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
@@ -1712,12 +1713,12 @@ def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
     session = _at_round_one_recap(path)
     alice = session.network.members[1]
     alice.money = -15_000_000.0
-    before = final_score(alice, round_count=session.round_count)
+    before = final_score(alice, completed_rounds=session.round_count)
 
     _advance(session)
 
     assert alice.money == FLOOR
-    assert final_score(alice, round_count=session.round_count) == before
+    assert final_score(alice, completed_rounds=session.round_count) == before
 
 
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
@@ -1800,12 +1801,12 @@ def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path,
 def test_a_blackout_reset_leaves_every_final_score_unchanged(path: Path, clock: _Clock) -> None:
     session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
     players = list(session.network.players())
-    before = [final_score(player, round_count=session.round_count) for player in players]
+    before = [final_score(player, completed_rounds=session.round_count) for player in players]
 
     _advance(session)
 
     assert [player.money for player in players] == [WORKSHOP_STARTING_BUDGET] * len(players)
-    assert [final_score(player, round_count=session.round_count) for player in players] == before
+    assert [final_score(player, completed_rounds=session.round_count) for player in players] == before
 
 
 def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:
@@ -1839,3 +1840,41 @@ def test_only_the_round_after_a_blackout_is_reset(path: Path, clock: _Clock) -> 
     _advance(session)
 
     assert session.network.members[2].money == 150_000_000.0
+
+
+# --- the scoreboard all game (#1250) -------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("checkpoint", "completed"),
+    [
+        (NotStarted(), 0),
+        (Investment(round=1), 0),
+        (TradingPeriod(round=1, season="winter"), 0),
+        (Recap(round=1), 1),
+        (Investment(round=2), 1),
+        (Recap(round=3), 3),
+        (Finished(), 3),
+    ],
+)
+def test_a_round_is_completed_once_its_recap_opens(checkpoint: Checkpoint, completed: int) -> None:
+    assert completed_rounds(checkpoint, round_count=3) == completed
+
+
+def test_the_scoreboard_counts_the_rounds_completed_so_far(path: Path) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path)
+    for account_id, username in [(1, "alice"), (2, "bob")]:
+        session.join(_account(account_id, username)).owned_facilities.extend(FLEET)
+    players = session.network.players()
+
+    assert session.scoreboard() == scoreboard(players, completed_rounds=0)
+
+    while session.checkpoint != TradingPeriod(round=2, season="summer"):
+        _advance(session)
+    # Round 2's spring is settled, but the Round is not completed, so it is not counted yet.
+    assert session.scoreboard() == scoreboard(players, completed_rounds=1)
+    assert session.scoreboard() != scoreboard(players, completed_rounds=2)
+
+    while not isinstance(session.checkpoint, Finished):
+        _advance(session)
+    assert session.scoreboard() == scoreboard(players, completed_rounds=session.round_count)

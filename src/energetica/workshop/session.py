@@ -63,8 +63,9 @@ Each player can take one loan per session in an Investment phase, and cancel it 
 :mod:`~energetica.workshop.loan`). Its payments are taken as the Rounds after it start, and any still owed when the
 session finishes.
 
-Once the session is :class:`Finished`, it ranks the players by their final score (#1017,
-:mod:`~energetica.workshop.final_score`).
+The session ranks the players by their score all game (#1017, #1250, :mod:`~energetica.workshop.final_score`). It
+counts the Rounds completed so far, so it changes as each Recap opens, and is final once the session is
+:class:`Finished`.
 """
 
 from __future__ import annotations
@@ -341,12 +342,6 @@ class RecapNotOpenError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_RECAP_NOT_OPEN
 
 
-class SessionNotFinishedError(WorkshopError):
-    """Raised when reading the scoreboard before the session is over (#1017)."""
-
-    code = WorkshopErrorCode.WORKSHOP_SESSION_NOT_FINISHED
-
-
 class SettlementRunningError(WorkshopError):
     """Raised when advancing while the Trading period is being simulated (#1004)."""
 
@@ -430,6 +425,19 @@ def recap_open(checkpoint: Checkpoint, round_number: int) -> bool:
             return current >= round_number
         case Finished():
             return True
+
+
+def completed_rounds(checkpoint: Checkpoint, *, round_count: int) -> int:
+    """How many Rounds are completed at ``checkpoint``: a Round is once its Recap opens (#1250)."""
+    match checkpoint:
+        case NotStarted():
+            return 0
+        case Investment(round=current) | TradingPeriod(round=current):
+            return current - 1
+        case Recap(round=current):
+            return current
+        case Finished():
+            return round_count
 
 
 class PhaseTimers(BaseModel):
@@ -1340,13 +1348,12 @@ class WorkshopSession:
             )
 
     def scoreboard(self) -> list[FinalScore]:
-        """Every player's final score, highest first (#1017). Raises :class:`SessionNotFinishedError` until the
-        session is :class:`Finished`, since the score is only final then.
+        """Every player's score after the Rounds completed so far, highest first (#1017, #1250). Final once the
+        session is :class:`Finished`.
         """
         with self._lock:
-            if not isinstance(self.checkpoint, Finished):
-                raise SessionNotFinishedError("the session is not over yet")
-            return scoreboard(self.network.players(), round_count=self.round_count)
+            completed = completed_rounds(self.checkpoint, round_count=self.round_count)
+            return scoreboard(self.network.players(), completed_rounds=completed)
 
     def plans_view(self) -> PlansView:
         """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts

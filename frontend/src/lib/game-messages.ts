@@ -75,8 +75,6 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "This change would leave a Round invalid: every storage type needs the full-season format.",
     WORKSHOP_NO_EVENTS_IN_ROUND_ONE: "Round 1 holds no events.",
     WORKSHOP_RECAP_NOT_OPEN: "This Round's Recap has not opened yet.",
-    WORKSHOP_SESSION_NOT_FINISHED:
-        "The scoreboard opens once the session is over.",
     WORKSHOP_NO_VOTE: "This Round holds no vote.",
     WORKSHOP_NO_VOTE_IN_ROUND_ONE:
         "Round 1 holds no vote: no Recap comes before it to announce one.",

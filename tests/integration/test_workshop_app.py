@@ -1817,21 +1817,22 @@ def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path:
     assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
 
 
-# --- the scoreboard (#1017) -----------------------------------------------------------------
+# --- the scoreboard (#1017, #1250) ---------------------------------------------------------
 
 SCOREBOARD_URL = "/api/v1/workshop/scoreboard"
 
 
-def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(session_path: Path) -> None:
+def test_everyone_reads_the_scoreboard_all_game(session_path: Path) -> None:
     client = _client(session_path)
     alice = _player(client, "alice")
     client.post(ENTER_URL)
     bob = _player(client, "bob")
     client.post(ENTER_URL)
 
+    # Before any Round is completed, nobody has scored anything yet.
     early = client.get(SCOREBOARD_URL)
-    assert early.status_code == 400
-    assert early.json()["game_exception_type"] == "WORKSHOP_SESSION_NOT_FINISHED"
+    assert early.status_code == 200
+    assert [row["score"] for row in early.json()] == [0.0, 0.0]
 
     facilitator = _facilitator(client)
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):

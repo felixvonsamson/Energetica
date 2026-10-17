@@ -6,7 +6,10 @@
  * The session's current node is highlighted. Nodes it has already passed link
  * to their pages, as does the current one. Future nodes are grayed out and do
  * not link, because nothing has happened in them yet. The page being viewed is
- * underlined.
+ * underlined. Among the seasons, the one being viewed is filled in pine and the
+ * current one, when it is not being viewed, in a darker sand (#1250).
+ *
+ * The scoreboard is open all game (#1250), so its node always links.
  *
  * The season the grid went down in is labeled "Blackout". The seasons after it
  * in that Round never run, so they are crossed out and do not link (#1005).
@@ -72,7 +75,7 @@ export function WorkshopTimeline({
             <TimelineNode
                 status={scoreboardStatus(checkpoint)}
                 page={scoreboardPage()}
-                title="Final scores"
+                title="Scores"
                 className="flex-col gap-1 px-2"
             >
                 <Trophy className="size-4" />
@@ -114,14 +117,13 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                                       : name
                             }
                             className={cn(
-                                "rounded-full border px-1.5 py-1 text-xs xl:px-2.5",
-                                status === "current"
-                                    ? "border-brand bg-brand text-brand-fg"
-                                    : "border-border",
+                                "rounded-full border border-border px-1.5 py-1 text-xs xl:px-2.5",
                                 blackout &&
-                                    status !== "current" &&
                                     "border-destructive text-destructive",
+                                status === "current" &&
+                                    "border-bone-600 bg-bone-300 text-foreground dark:bg-bone-800",
                                 status === "skipped" && "line-through",
+                                "data-[status=active]:border-brand data-[status=active]:bg-brand data-[status=active]:text-brand-fg",
                             )}
                         >
                             <Icon className="size-3.5" />

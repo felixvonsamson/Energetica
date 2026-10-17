@@ -11,8 +11,7 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run, but only once the session is over. A player's loan (#1225) is
-theirs alone.
+The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone.
 """
 
 from __future__ import annotations
@@ -619,8 +618,8 @@ def get_recap(
 
 @router.get("/scoreboard")
 def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> list[FinalScore]:
-    """Every player's final score, highest first, with what it adds up from. The same for everyone in the Run, and
-    refused until the session is over.
+    """Every player's score after the Rounds completed so far, highest first, with what it adds up from. The same
+    for everyone in the Run. Final once the session is over.
     """
     return session.scoreboard()
 
