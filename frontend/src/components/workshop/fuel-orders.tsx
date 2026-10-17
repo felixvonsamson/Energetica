@@ -246,15 +246,6 @@ function OrderField({
                     </span>
                 </div>
             </div>
-            {parsed.ok && (
-                <p className="flex items-center gap-1 pl-[60px] text-[13px] text-fg-subtle">
-                    Costs
-                    <span className="font-mono font-medium text-fg-base">
-                        {formatMoney(orderCost(parsed.kg, line))}
-                    </span>
-                    <CoinIcon className="size-3" />
-                </p>
-            )}
             {!parsed.ok ? (
                 <p className="pl-[60px] text-[13px] text-destructive">
                     {parsed.reason === "empty"
@@ -264,12 +255,21 @@ function OrderField({
                           : "Enter a number."}
                 </p>
             ) : (
-                (over || capped) && (
-                    <p className="pl-[60px] text-[13px] text-warning">
-                        The stockpile is limited to {stockpileSeasons(line)}{" "}
-                        times the 100% needs.
+                <>
+                    <p className="flex items-center gap-1 pl-[60px] text-[13px] text-fg-subtle">
+                        Costs
+                        <span className="font-mono font-medium text-fg-base">
+                            {formatMoney(orderCost(parsed.kg, line))}
+                        </span>
+                        <CoinIcon className="size-3" />
                     </p>
-                )
+                    {(over || capped) && (
+                        <p className="pl-[60px] text-[13px] text-warning">
+                            The stockpile is limited to {stockpileSeasons(line)}{" "}
+                            times the 100% needs.
+                        </p>
+                    )}
+                </>
             )}
         </div>
     );

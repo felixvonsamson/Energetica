@@ -79,6 +79,16 @@ export function formatPriceChange(change: number | null): string | null {
 }
 
 /**
+ * How much the player can still order before the stock reaches the stockpile
+ * limit, in kg. The server cuts a larger order down to this.
+ */
+function stockpileRoom(
+    line: Pick<FuelLine, "stock" | "stockpile_limit">,
+): number {
+    return Math.max(0, line.stockpile_limit - line.stock);
+}
+
+/**
  * Whether ordering `kg` would take the stock over the stockpile limit, so the
  * server cuts the order down.
  */
@@ -86,7 +96,7 @@ export function isOverStockpile(
     kg: number,
     line: Pick<FuelLine, "stock" | "stockpile_limit">,
 ): boolean {
-    return kg > 0 && kg > line.stockpile_limit - line.stock;
+    return kg > 0 && kg > stockpileRoom(line);
 }
 
 /**
@@ -98,6 +108,5 @@ export function orderCost(
     kg: number,
     line: Pick<FuelLine, "price" | "stock" | "stockpile_limit">,
 ): number {
-    const room = Math.max(0, line.stockpile_limit - line.stock);
-    return Math.min(kg, room) * line.price;
+    return Math.min(kg, stockpileRoom(line)) * line.price;
 }
