@@ -2,6 +2,7 @@
 
 import socket
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -9,10 +10,12 @@ from energetica.freeplay.app import create_app
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="abstract Unix sockets exist only on Linux")
-def test_create_app_starts_while_another_run_is_starting() -> None:
+def test_create_app_starts_while_another_run_is_starting(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # create_app used to bind the host-global abstract socket "\0energetica" as a startup lock, so
     # a second Run starting at the same moment crashed with "Address already in use". Hold that
     # name here, as another Run's startup would, and check that this app still starts.
+    # create_app(rm_instance=True) deletes ./instance, so run it in a scratch directory.
+    monkeypatch.chdir(tmp_path)
     other_run = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     try:
         other_run.bind("\0energetica")
