@@ -121,7 +121,7 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                                 blackout &&
                                     "border-destructive text-destructive",
                                 status === "current" &&
-                                    "not-data-[status=active]:border-bone-600 not-data-[status=active]:bg-bone-300 not-data-[status=active]:text-foreground dark:not-data-[status=active]:bg-bone-800",
+                                    "not-data-[status=active]:border-border-highlight not-data-[status=active]:bg-surface-highlight not-data-[status=active]:text-fg-base",
                                 status === "skipped" && "line-through",
                                 "data-[status=active]:border-brand data-[status=active]:bg-brand data-[status=active]:text-brand-fg",
                             )}
