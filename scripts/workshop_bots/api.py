@@ -82,7 +82,9 @@ class Api:
         """
         try:
             return self.client.request(method, url, **kwargs)
-        except (httpx.RemoteProtocolError, httpx.ConnectError, httpx.ReadError):
+        # Not ReadError: that can break off a response the backend already acted on, and sending a purchase or an
+        # advance again would repeat it.
+        except (httpx.RemoteProtocolError, httpx.ConnectError):
             return self.client.request(method, url, **kwargs)
 
     @property
