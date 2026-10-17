@@ -30,9 +30,12 @@ def _passwords() -> dict[str, str] | None:
     if PASSWORDS_FILE is None:
         return None
     try:
-        return json.loads(Path(PASSWORDS_FILE).read_text())
+        passwords = json.loads(Path(PASSWORDS_FILE).read_text())
     except (OSError, ValueError) as error:
         raise LoginError(f"cannot read the passwords file {PASSWORDS_FILE}: {error}") from error
+    if not isinstance(passwords, dict) or not all(isinstance(value, str) for value in passwords.values()):
+        raise LoginError(f"the passwords file {PASSWORDS_FILE} must be a JSON object of username to password strings")
+    return passwords
 
 
 def password_for(username: str) -> str:
