@@ -499,6 +499,8 @@ class PlansView(NamedTuple):
     """Rounds 1 to this one are locked."""
     statuses: list[list[tuple[PlannedEvent, EventStatus]]]
     """Each Round's planned events, each with whether it fired, was skipped, or is still to come."""
+    fired: list[FiredEvent]
+    """Every event that fired in the session, in order."""
 
 
 class UnlockProgress(NamedTuple):
@@ -1366,7 +1368,7 @@ class WorkshopSession:
                 ]
                 for round_number, plan in enumerate(self.plans, start=1)
             ]
-            return PlansView(list(self.plans), self.locked_rounds(), statuses)
+            return PlansView(list(self.plans), self.locked_rounds(), statuses, list(self.fired_events))
 
     def set_levers(self, round_number: int, changes: LeverChanges) -> bool:
         """Apply ``changes`` to Round ``round_number``'s levers, and carry each lever that changed to every later

@@ -35,6 +35,7 @@ from energetica.workshop.events import (
     FiredEvent,
     InvalidPickError,
     WorkshopEvent,
+    effect_line,
     slot,
     validate_pick,
 )
@@ -190,6 +191,30 @@ def still_valid(planned: PlannedEvent) -> bool:
     return True
 
 
+def _fired_as(planned: PlannedEvent, round_number: int, fired: Iterable[FiredEvent]) -> FiredEvent | None:
+    """The event in ``fired`` that ``planned``, planned for Round ``round_number``, fired as, if it fired."""
+    return next(
+        (
+            event
+            for event in fired
+            if (event.event, event.round, event.season) == (planned.event, round_number, planned.season)
+        ),
+        None,
+    )
+
+
+def planned_effect_line(planned: PlannedEvent, round_number: int, *, fired: Iterable[FiredEvent]) -> str | None:
+    """What ``planned``, planned for Round ``round_number``, does, as the Recap prints it. ``fired`` is every event
+    that fired in the session. An event that fired states the effect it applied, and one still to come the effect
+    the catalog gives it now, or None if the catalog no longer allows it.
+    """
+    if (event := _fired_as(planned, round_number, fired)) is not None:
+        return effect_line(event)
+    if not still_valid(planned):
+        return None
+    return effect_line(FiredEvent.of(planned, round_number=round_number, season=planned.season))
+
+
 def event_status(
     planned: PlannedEvent, round_number: int, *, fired: Iterable[FiredEvent], blackout: Season | None
 ) -> EventStatus:
@@ -198,9 +223,7 @@ def event_status(
     ``fired`` is every event that fired in the session, and ``blackout`` the season of the Round's blackout, if
     the grid went down in it. An event planned for a season after the blackout is skipped.
     """
-    if any(
-        (event.event, event.round, event.season) == (planned.event, round_number, planned.season) for event in fired
-    ):
+    if _fired_as(planned, round_number, fired) is not None:
         return "fired"
     if blackout is not None and planned.season is not None and SEASONS.index(planned.season) > SEASONS.index(blackout):
         return "skipped"

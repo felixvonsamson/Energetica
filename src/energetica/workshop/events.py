@@ -21,7 +21,8 @@ What a fired event does depends on its effect kind:
   Trading period and then eases back.
 
 A magnitude is always the factor the target gets multiplied by: a 3% tax is ``0.97``, not ``0.03``. The
-facilitator never sees an event's headline before it fires, so the Recap surprises them too. Every magnitude is a
+facilitator never sees an event's headline before it fires, so the Recap surprises them too, but the console shows
+them each event's effect in plain numbers (:func:`effect_summary`, #1253). Every magnitude is a
 placeholder until the game-balance pass (#1145).
 
 The Recap before a Round tells players what the Round holds (#1188). A round-wide event is told with its exact effect.
@@ -718,28 +719,73 @@ def _names(targets: Iterable[FacilityCategory | Fuel]) -> str:
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
+def _line(
+    event_id: str,
+    kind: EffectKind,
+    target: tuple[FacilityCategory | Fuel, ...],
+    magnitude: float,
+    *,
+    seasonal: bool,
+    round_number: int | None,
+    season: Season | None,
+) -> str:
+    """What an effect does, in one short line of plain numbers. It names ``round_number`` and ``season``, or says
+    "this Round" and "this season" where either is None.
+    """
+    for_season = f"for the {season}" if season else "this season"
+    in_season = f"in {season}" if season else "this season"
+    in_round = f"in Round {round_number}" if round_number else "this Round"
+    from_round = f"from Round {round_number} on" if round_number else "from this Round on"
+    sales_lost = f"{season} sales lost" if season else "sales lost this season"
+    match kind:
+        case "demand_amplitude_shift" if seasonal:
+            line = f"demand {_signed_percent(magnitude)} {for_season}"
+        case "demand_amplitude_shift":
+            line = f"demand {_signed_percent(magnitude)} {from_round}"
+        case "revenue_tax":
+            line = f"{_percent(magnitude)} of every player's {sales_lost}"
+        case "facility_capex_multiplier":
+            line = f"{_names(target)} cost {_percent(magnitude)} {_more_or_less(magnitude)} {in_round}"
+        case "fuel_price_multiplier":
+            fuel = _names(target) if target else "the chosen fuel"
+            line = f"{fuel} costs {_percent(magnitude)} {_more_or_less(magnitude)} {in_season}, then eases back"
+        case _:
+            raise ValueError(f"{event_id} has no effect line for {kind}")
+    return line[0].upper() + line[1:]
+
+
+def effect_summary(event: WorkshopEvent, severity: Severity) -> str:
+    """What ``event`` does at ``severity``, in one short line of plain numbers, for the console to show next to it
+    while the facilitator picks (#1253). It speaks of the Round and season the event is planned for as "this Round"
+    and "this season".
+
+    For example "Demand +18% this season" or "Wind turbines cost 35% more this Round".
+    """
+    return _line(
+        event.id,
+        event.effect.kind,
+        event.effect.target,
+        event.magnitude[severity],
+        seasonal=event.boundary_type == "trading_period",
+        round_number=None,
+        season=None,
+    )
+
+
 def effect_line(event: FiredEvent) -> str:
     """What ``event`` does, in one short line of plain numbers, for the Recap to print under its headline (#1013).
 
     For example "Demand +18% for the summer" or "Wind turbines cost 35% more in Round 3".
     """
-    magnitude, season = event.magnitude, event.season
-    match event.kind:
-        case "demand_amplitude_shift" if season is not None:
-            line = f"demand {_signed_percent(magnitude)} for the {season}"
-        case "demand_amplitude_shift":
-            line = f"demand {_signed_percent(magnitude)} from Round {event.round} on"
-        case "revenue_tax":
-            line = f"{_percent(magnitude)} of every player's {season} sales lost"
-        case "facility_capex_multiplier":
-            line = (
-                f"{_names(event.target)} cost {_percent(magnitude)} {_more_or_less(magnitude)} in Round {event.round}"
-            )
-        case "fuel_price_multiplier":
-            line = f"{_names(event.target)} costs {_percent(magnitude)} {_more_or_less(magnitude)} in {season}, then eases back"
-        case _:
-            raise ValueError(f"{event.event} has no effect line for {event.kind}")
-    return line[0].upper() + line[1:]
+    return _line(
+        event.event,
+        event.kind,
+        event.target,
+        event.magnitude,
+        seasonal=event.season is not None,
+        round_number=event.round,
+        season=event.season,
+    )
 
 
 def _product(factors: Iterable[float]) -> float:
