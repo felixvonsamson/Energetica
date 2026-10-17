@@ -10,7 +10,7 @@
  * Two sinks are covered:
  *
  * 1. `dangerouslySetInnerHTML` — a JSX-level sink, so it is only scanned in
- *    `frontend/src`. Each occurrence is pinned to a (file, __html-expression)
+ *    `frontend/src` and each package's `src`. Each occurrence is pinned to a (file, __html-expression)
  *    allowlist entry, consumed 1:1: a second sink — even one that reuses the
  *    same expression text in a different scope — needs its own reviewable
  *    entry, so a refactor cannot silently ride an existing approval.
@@ -18,9 +18,10 @@
  *    plugins are wired in `frontend/vite.config*.ts` (never in `src`), so a
  *    `src`-only scan would miss it entirely. It is forbidden outright at two
  *    layers: (a) it must not be a declared dependency (or npm-aliased
- *    dependency) in `frontend/package.json` — no package present, nothing to
+ *    dependency) in `frontend/package.json` or any workspace package's
+ *    manifest — no package present, nothing to
  *    import; (b) it must not be imported as a module specifier anywhere in
- *    `frontend/src` or the build configs.
+ *    `frontend/src`, the packages' `src` or the build configs.
  *
  * Known boundary: this is a text-and-manifest guard, one defence-in-depth layer
  * — not a hermetic sandbox. It does not resolve the dependency graph, so a
@@ -45,7 +46,14 @@ import { fileURLToPath } from "url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FRONTEND_ROOT = join(REPO_ROOT, "frontend");
-const SCAN_ROOT = join(FRONTEND_ROOT, "src");
+// The app's sources and every shared workspace package's sources.
+const PACKAGES_ROOT = join(FRONTEND_ROOT, "packages");
+const SCAN_ROOTS = [
+    join(FRONTEND_ROOT, "src"),
+    ...readdirSync(PACKAGES_ROOT)
+        .map((name) => join(PACKAGES_ROOT, name, "src"))
+        .filter((dir) => existsSync(dir)),
+];
 
 /**
  * Every currently-permitted `dangerouslySetInnerHTML` sink.
@@ -135,7 +143,7 @@ function extractHtmlExpr(source: string, from: number): string | undefined {
 const findings: Finding[] = [];
 
 // `dangerouslySetInnerHTML` is a JSX sink: scan application sources only.
-for (const absFile of collectSources(SCAN_ROOT)) {
+for (const absFile of SCAN_ROOTS.flatMap(collectSources)) {
     const file = relative(REPO_ROOT, absFile);
     const source = readFileSync(absFile, "utf8");
 
@@ -165,7 +173,7 @@ const rawSpecifierRe = new RegExp(
     "g",
 );
 const rawScanFiles = [
-    ...collectSources(SCAN_ROOT),
+    ...SCAN_ROOTS.flatMap(collectSources),
     ...collectTopLevel(FRONTEND_ROOT),
 ];
 for (const absFile of rawScanFiles) {
@@ -185,8 +193,13 @@ for (const absFile of rawScanFiles) {
 // present as a (possibly npm-aliased) dependency. Scan the manifest's keys AND
 // values so `"anything": "npm:rehype-raw@^7"` is caught too.
 const depViolations: string[] = [];
-const pkgPath = join(FRONTEND_ROOT, "package.json");
-if (existsSync(pkgPath)) {
+const manifests = [
+    join(FRONTEND_ROOT, "package.json"),
+    ...readdirSync(PACKAGES_ROOT).map((name) =>
+        join(PACKAGES_ROOT, name, "package.json"),
+    ),
+];
+for (const pkgPath of manifests.filter((p) => existsSync(p))) {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<
         string,
         unknown
@@ -208,7 +221,7 @@ if (existsSync(pkgPath)) {
                 String(version).includes(RAW_MD_PACKAGE)
             ) {
                 depViolations.push(
-                    `frontend/package.json  ${section}["${name}"] pulls in ${RAW_MD_PACKAGE}`,
+                    `${relative(REPO_ROOT, pkgPath)}  ${section}["${name}"] pulls in ${RAW_MD_PACKAGE}`,
                 );
             }
         }

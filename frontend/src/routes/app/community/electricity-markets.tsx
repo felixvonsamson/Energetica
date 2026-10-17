@@ -13,17 +13,18 @@ import { MarketDetailDialog } from "@/components/electricity-markets/market-deta
 import { MarketItem } from "@/components/electricity-markets/market-item";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
-    Button,
-    Card,
-    CardHeader,
-    CardTitle,
-    CatalogGrid,
-} from "@/components/ui";
-import { CardAction, CardContent } from "@/components/ui/card";
-import {
     useElectricityMarket,
     useElectricityMarkets,
 } from "@/hooks/use-electricity-markets";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardAction,
+    CardContent,
+} from "@energetica/ui/components/card";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
 
 type ElectricityMarketsSearch = {
     market?: number;

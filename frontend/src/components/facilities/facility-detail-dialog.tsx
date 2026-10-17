@@ -3,27 +3,23 @@ import { ExternalLink, GitCompareArrows } from "lucide-react";
 import { ReactNode, useMemo } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import {
-    FacilityName,
-    FacilityIcon,
-    Money,
-    CardContent,
-    AssetName,
-} from "@/components/ui";
-import { Button } from "@/components/ui/button";
+import { FacilityName, FacilityIcon, AssetName } from "@/components/ui";
+import { useLastDefined } from "@/hooks/use-last-defined";
+import { useQueueProject, useTechnologiesCatalog } from "@/hooks/use-projects";
+import { assetImages } from "@/lib/assets/asset-images";
+import { getTechnologyRoute } from "@/lib/facility-routes";
+import { ProjectType, Requirement } from "@/types/projects";
+import { Button } from "@energetica/ui/components/button";
+import { CardContent } from "@energetica/ui/components/card";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { TypographyH2 } from "@/components/ui/typography";
-import { useLastDefined } from "@/hooks/use-last-defined";
-import { useQueueProject, useTechnologiesCatalog } from "@/hooks/use-projects";
-import { assetImages } from "@/lib/assets/asset-images";
-import { getTechnologyRoute } from "@/lib/facility-routes";
-import { ProjectType, Requirement } from "@/types/projects";
+} from "@energetica/ui/components/dialog";
+import { Money } from "@energetica/ui/components/money";
+import { TypographyH2 } from "@energetica/ui/components/typography";
 
 interface FacilityDetailDialogProps<T> {
     isOpen: boolean;

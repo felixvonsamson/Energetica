@@ -4,14 +4,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { PageCard, CardContent, Money } from "@/components/ui";
 import { PlayerName } from "@/components/ui/player-name";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { usePlayerMap } from "@/hooks/use-players";
-import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
+import {
+    formatPower,
+    formatEnergy,
+    formatMass,
+} from "@energetica/core/format-utils";
+import { PageCard, CardContent } from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 function LeaderboardsHelp() {
     return (

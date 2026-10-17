@@ -17,18 +17,14 @@ import {
     FacilityComparisonDialog,
 } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    CashFlow,
-    Duration,
-    DualDuration,
-    CatalogGrid,
-    Money,
-    Button,
-} from "@/components/ui";
+import { CashFlow, Duration, DualDuration } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { usePowerFacilitiesCatalog, useProjects } from "@/hooks/use-projects";
-import { formatPower, formatMass } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
+import { formatPower, formatMass } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
+import { Money } from "@energetica/ui/components/money";
 
 function PowerFacilitiesHelp() {
     return (

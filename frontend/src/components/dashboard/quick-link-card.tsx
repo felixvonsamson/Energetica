@@ -1,8 +1,11 @@
 import { Link, LinkProps } from "@tanstack/react-router";
 import { type LucideIcon } from "lucide-react";
 
-import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
+import {
+    TypographyH2,
+    TypographyLarge,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface QuickLinkCardProps {
     to: LinkProps["to"];

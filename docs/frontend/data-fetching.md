@@ -55,7 +55,7 @@ Pre-configured query client with sensible defaults for Energetica's game mechani
 
 ### Configuration
 
-The query client (`lib/query-client.ts`) is configured with:
+Each app creates its query client with `createQueryClient` from `@energetica/core/query-client`. The combined app does this in `lib/query-client.ts`, which also holds its query keys. The factory sets these defaults:
 
 ```ts
 {
@@ -69,10 +69,20 @@ The query client (`lib/query-client.ts`) is configured with:
         networkMode: "online",            // Only fetch when online
     },
     mutations: {
-        retry: 1,                         // Retry mutations cautiously
+        retry: false,                     // Never retried unless the mutation opts in
         networkMode: "online",
     }
 }
+```
+
+Mutations are not retried by default. If a write reached the server but its response was lost, a retry would apply it twice. A mutation that is safe to repeat, such as one that sets a value outright, opts in on its own `useMutation` call:
+
+```ts
+useMutation({
+    mutationFn: settingsApi.updateSettings,
+    // Safe to repeat: it sets the value outright.
+    retry: 1,
+});
 ```
 
 ### Basic Usage
@@ -118,7 +128,7 @@ Type-safe HTTP wrapper with automatic error handling.
 ### Methods
 
 ```ts
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@energetica/core/api-client";
 
 // GET request
 const data = await apiClient.get<ResponseType>("/endpoint");
@@ -572,7 +582,7 @@ export class ApiClientError extends Error {
 ### Type Guards
 
 ```ts
-import { isHttpError, isGameError, isValidationError } from "@/lib/api-client";
+import { isHttpError, isGameError, isValidationError } from "@energetica/core/api-client";
 
 function handleError(error: unknown) {
     if (error instanceof ApiClientError) {

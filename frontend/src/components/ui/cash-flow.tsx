@@ -6,10 +6,13 @@
  * rates.
  */
 
-import { Money } from "@/components/ui/money";
 import { useGameEngine } from "@/hooks/use-game";
-import { amountPerTickToCashFlowRate, getUnitSuffix } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
+import {
+    amountPerTickToCashFlowRate,
+    getUnitSuffix,
+} from "@energetica/core/format-utils";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface CashFlowProps {
     /** Cash flow in money per tick (source of truth) */

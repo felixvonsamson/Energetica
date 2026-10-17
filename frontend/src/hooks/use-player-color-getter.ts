@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { useTheme } from "@/contexts/theme-context";
 import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import { resolveCSSVar } from "@/lib/charts/color-utils";
 import { playerColorGetter } from "@/lib/charts/player-colors";
+import { useTheme } from "@energetica/ui/contexts/theme-context";
 
 /**
  * Hook that returns each player's theme-aware chart color: the current player

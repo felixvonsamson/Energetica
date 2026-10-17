@@ -4,7 +4,10 @@ import {
     EChartsTimeSeries,
     EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
-import { formatConcentration, formatEmissions } from "@/lib/format-utils";
+import {
+    formatConcentration,
+    formatEmissions,
+} from "@energetica/core/format-utils";
 
 // CO2 Chart Component
 interface CO2ChartProps {

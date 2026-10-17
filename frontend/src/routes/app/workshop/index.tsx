@@ -6,11 +6,11 @@
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
-import { InfoBanner } from "@/components/ui";
-import { Spinner } from "@/components/ui/spinner";
 import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { useWorkshopEntry, useWorkshopSession } from "@/hooks/use-workshop";
 import { homePage } from "@/lib/workshop-timeline";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 export const Route = createFileRoute("/app/workshop/")({
     component: WorkshopHome,

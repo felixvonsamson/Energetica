@@ -10,12 +10,15 @@
 
 import { Trophy } from "lucide-react";
 
-import { Money } from "@/components/ui/money";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
-import { ApiClientError, isGameError } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
+import { ApiClientError, isGameError } from "@energetica/core/api-client";
+import { Money } from "@energetica/ui/components/money";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    TypographyH1,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 const COLUMNS = [
     { key: "operating_profit", label: "Operating profit", sign: 1 },

@@ -1,7 +1,7 @@
 /** Shared utilities and constants for map resource visualization and heatmaps. */
 
-import { Theme } from "@/contexts/theme-context";
-import { formatMass } from "@/lib/format-utils";
+import { formatMass } from "@energetica/core/format-utils";
+import { Theme } from "@energetica/ui/contexts/theme-context";
 
 export type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 

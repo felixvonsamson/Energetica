@@ -8,15 +8,20 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyMuted } from "@/components/ui/typography";
 import { useSetTimers, useWorkshopTimers } from "@/hooks/use-workshop";
 import { resolveErrorMessage } from "@/lib/game-messages";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 type PhaseTimers = ApiSchema<"PhaseTimers">;
 

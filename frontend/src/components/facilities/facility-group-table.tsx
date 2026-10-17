@@ -5,20 +5,16 @@
 
 import { useState, ReactNode, Fragment } from "react";
 
-import {
-    Money,
-    CashFlow,
-    FacilityName,
-    InfoBanner,
-    Duration,
-} from "@/components/ui";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CashFlow, FacilityName, Duration } from "@/components/ui";
 import {
     useUpgradeFacility,
     useUpgradeAllOfType,
     useDismantleFacility,
     useDismantleAllOfType,
 } from "@/hooks/use-facilities";
+import { ConfirmDialog } from "@energetica/ui/components/confirm-dialog";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Money } from "@energetica/ui/components/money";
 
 interface FacilityBase {
     id: number;

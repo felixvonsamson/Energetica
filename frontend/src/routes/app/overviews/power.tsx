@@ -9,19 +9,19 @@ import {
     type PowerChartViewMode,
 } from "@/components/charts/power-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { CardContent, PageCard } from "@/components/ui";
-import { ChartCard } from "@/components/ui/chart-card";
-import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
+import { CardContent, PageCard } from "@energetica/ui/components/card";
+import { ChartCard } from "@energetica/ui/components/chart-card";
+import { Label } from "@energetica/ui/components/label";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,

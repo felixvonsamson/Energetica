@@ -10,8 +10,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
-import { Spinner } from "@/components/ui/spinner";
 import { useLobbyLogout } from "@/hooks/use-lobby";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 function LogoutPage() {
     const navigate = useNavigate();

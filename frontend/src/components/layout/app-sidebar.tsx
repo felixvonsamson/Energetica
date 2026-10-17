@@ -8,11 +8,21 @@ import { ChevronRight } from "lucide-react";
 import { type RefObject } from "react";
 
 import Logo from "@/assets/icon.svg?react";
+import { useCapabilities } from "@/hooks/use-capabilities";
+import { useUnreadChatsCount } from "@/hooks/use-chats";
+import { useRouteUnlocked } from "@/hooks/use-route-static-data";
+import { useSidebarMenuState } from "@/hooks/use-sidebar-menu-state";
+import {
+    navConfigFooter,
+    navConfig,
+    type NavGroupConfig,
+    type NavLinkConfig,
+} from "@/lib/nav-config";
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@energetica/ui/components/collapsible";
 import {
     Sidebar,
     SidebarContent,
@@ -27,23 +37,13 @@ import {
     SidebarMenuBadge,
     SidebarMenuSubItem,
     SidebarMenuSubButton,
-} from "@/components/ui/sidebar";
+} from "@energetica/ui/components/sidebar";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useCapabilities } from "@/hooks/use-capabilities";
-import { useUnreadChatsCount } from "@/hooks/use-chats";
-import { useRouteUnlocked } from "@/hooks/use-route-static-data";
-import { useSidebarMenuState } from "@/hooks/use-sidebar-menu-state";
-import {
-    navConfigFooter,
-    navConfig,
-    type NavGroupConfig,
-    type NavLinkConfig,
-} from "@/lib/nav-config";
-import { cn } from "@/lib/utils";
+} from "@energetica/ui/components/tooltip";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface AppSidebarProps {
     bgLogoRef: RefObject<HTMLDivElement | null>;

@@ -11,13 +11,13 @@
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { pointTime } from "@/lib/workshop-review";
+import { Button } from "@energetica/ui/components/button";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { Slider } from "@/components/ui/slider";
-import { pointTime } from "@/lib/workshop-review";
+} from "@energetica/ui/components/segmented-picker";
+import { Slider } from "@energetica/ui/components/slider";
 
 /** How many times faster than the base pace playing can go. */
 const SPEEDS = ["1", "2", "4"] as const;

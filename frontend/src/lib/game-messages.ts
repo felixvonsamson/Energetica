@@ -11,9 +11,9 @@
  * defined here so all copy lives in one place.
  */
 
-import { ApiClientError, isGameError } from "@/lib/api-client";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import type { ApiSchema } from "@/types/api-helpers";
+import { ApiClientError, isGameError } from "@energetica/core/api-client";
 
 export type ErrorCode = ApiSchema<"ErrorCode">;
 

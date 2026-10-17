@@ -7,8 +7,11 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/sonner";
+import {
+    SidebarInset,
+    SidebarProvider,
+} from "@energetica/ui/components/sidebar";
+import { Toaster } from "@energetica/ui/components/sonner";
 
 interface GameLayoutProps {
     children: ReactNode;

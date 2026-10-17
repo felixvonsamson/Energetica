@@ -79,7 +79,7 @@ className = "bg-bone text-bone-text"; // Always #e5d9b6 with black text
 ## Conditional Classes with clsx
 
 ```ts
-import { cn } from "@/lib/utils";
+import { cn } from "@energetica/ui/lib/utils";
 
 <button
     className={cn(

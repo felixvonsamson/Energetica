@@ -10,15 +10,20 @@
 
 import { useState } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { TypographyMuted } from "@/components/ui/typography";
 import { useChangeLevers, usePlanChangePending } from "@/hooks/use-workshop";
 import { carriedNote, carriedRounds } from "@/lib/workshop-console";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
 type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;

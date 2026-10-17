@@ -13,11 +13,11 @@ import {
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useFacilities } from "@/hooks/use-facilities";
-import { formatEnergy } from "@/lib/format-utils";
+import { formatEnergy } from "@energetica/core/format-utils";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
 interface StorageChartProps {
     chartData: Array<Record<string, unknown>>;

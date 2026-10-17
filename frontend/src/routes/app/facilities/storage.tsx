@@ -16,16 +16,13 @@ import {
     FacilityComparisonDialog,
 } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    CashFlow,
-    Duration,
-    CatalogGrid,
-    Money,
-    Button,
-} from "@/components/ui";
+import { CashFlow, Duration } from "@/components/ui";
 import { useStorageFacilitiesCatalog, useProjects } from "@/hooks/use-projects";
-import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
+import { formatPower, formatEnergy } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
+import { Money } from "@energetica/ui/components/money";
 
 function StorageFacilitiesHelp() {
     return (

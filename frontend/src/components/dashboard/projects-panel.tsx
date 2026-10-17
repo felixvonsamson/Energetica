@@ -12,8 +12,8 @@ import { type LucideIcon } from "lucide-react";
 
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { ProjectList } from "@/components/dashboard/progress-lists";
-import { Button } from "@/components/ui/button";
 import { ProjectCategory } from "@/types/projects";
+import { Button } from "@energetica/ui/components/button";
 
 interface ProjectsPanelProps {
     projectCategory: ProjectCategory;

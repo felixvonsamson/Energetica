@@ -32,15 +32,6 @@ import {
     PowerChart,
     type PowerChartViewMode,
 } from "@/components/charts/power-chart";
-import { ChartCard } from "@/components/ui/chart-card";
-import { Label } from "@/components/ui/label";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TypographyMuted } from "@/components/ui/typography";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
@@ -56,8 +47,6 @@ import {
     useWorkshopPeriodWeek,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import { ApiClientError } from "@/lib/api-client";
-import { formatMoney } from "@/lib/format-utils";
 import {
     CONSUMERS,
     type ChartRow,
@@ -79,6 +68,22 @@ import {
     reviewableWeeks,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
+import { ApiClientError } from "@energetica/core/api-client";
+import { formatMoney } from "@energetica/core/format-utils";
+import { ChartCard } from "@energetica/ui/components/chart-card";
+import { Label } from "@energetica/ui/components/label";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@energetica/ui/components/tabs";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 type Season = ApiSchema<"TradingPeriod">["season"];
 type Period = ApiSchema<"WorkshopPeriodOut">;

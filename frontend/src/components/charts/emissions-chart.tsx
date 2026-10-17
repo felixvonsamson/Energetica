@@ -6,12 +6,12 @@ import {
 } from "@/components/charts/echarts-time-series";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
-import { Label } from "@/components/ui/label";
 import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatEmissions, formatMassRate } from "@/lib/format-utils";
+import { formatEmissions, formatMassRate } from "@energetica/core/format-utils";
+import { Label } from "@energetica/ui/components/label";
 
 // Emissions Chart Component
 interface EmissionsChartProps {

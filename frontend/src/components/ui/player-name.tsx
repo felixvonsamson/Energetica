@@ -1,8 +1,8 @@
 import { Circle } from "lucide-react";
 
 import { usePlayer } from "@/hooks/use-players";
-import { cn } from "@/lib/utils";
 import type { Player } from "@/types/players";
+import { cn } from "@energetica/ui/lib/utils";
 
 type ActivityStatus = "active" | "away" | "inactive";
 

@@ -10,16 +10,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Bookmark, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographySmall } from "@/components/ui/typography";
 import {
     useNotifications,
     useDeleteNotification,
@@ -31,11 +21,21 @@ import {
     getNotificationCategory,
     getNotificationContent,
 } from "@/lib/notification-config";
-import { cn } from "@/lib/utils";
 import {
     INBOX_CATEGORY_LABELS,
     type InboxCategory,
 } from "@/types/notifications";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographySmall } from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 const CATEGORIES = Object.keys(INBOX_CATEGORY_LABELS) as InboxCategory[];
 

@@ -12,8 +12,8 @@
  * `authApi` makes it impossible to call a retired endpoint from a run.
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiRequestBody, ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export type MyRunsResponse = ApiResponse<"/api/v1/lobby/my-runs", "get">;
 export type MyRun = MyRunsResponse["runs"][number];

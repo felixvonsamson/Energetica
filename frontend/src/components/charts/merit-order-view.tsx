@@ -41,15 +41,15 @@ import {
     type ReactNode,
 } from "react";
 
-import { CoinIcon } from "@/components/ui/coin-icon";
-import { Label } from "@/components/ui/label";
+import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
+import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
+import { formatMoney, formatPower } from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { Label } from "@energetica/ui/components/label";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
-import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
-import { formatMoney, formatPower } from "@/lib/format-utils";
+} from "@energetica/ui/components/segmented-picker";
 
 echarts.use([
     ELineChart,

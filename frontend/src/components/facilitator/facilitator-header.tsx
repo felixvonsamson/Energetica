@@ -12,11 +12,11 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useRunMode } from "@/hooks/use-run-mode";
 import { lobbyHref } from "@/lib/instances";
-import { cn } from "@/lib/utils";
+import { Button } from "@energetica/ui/components/button";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { cn } from "@energetica/ui/lib/utils";
 
 const NAV_LINKS = [
     { to: "/app/facilitator", label: "Join link" },

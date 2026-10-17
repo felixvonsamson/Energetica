@@ -5,7 +5,7 @@
 
 import { Info, AlertTriangle } from "lucide-react";
 
-import { formatMass } from "@/lib/format-utils";
+import { formatMass } from "@energetica/core/format-utils";
 
 interface ResourceStockIndicatorsProps {
     facilityName: string;

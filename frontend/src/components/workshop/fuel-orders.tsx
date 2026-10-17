@@ -17,11 +17,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { CoinIcon } from "@/components/ui/coin-icon";
-import { Input } from "@/components/ui/input";
 import { useSetFuelOrder } from "@/hooks/use-workshop";
-import { formatMass, formatMoney } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import {
     KG_PER_TONNE,
     formatPriceChange,
@@ -33,6 +29,10 @@ import {
     workshopFuelImages,
 } from "@/lib/workshop-fuel";
 import type { ApiSchema } from "@/types/api-helpers";
+import { formatMass, formatMoney } from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { Input } from "@energetica/ui/components/input";
+import { cn } from "@energetica/ui/lib/utils";
 
 type FuelLine = ApiSchema<"WorkshopFuelLineOut">;
 

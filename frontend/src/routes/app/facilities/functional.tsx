@@ -13,17 +13,18 @@ import {
 } from "@/components/dashboard/projects-panel";
 import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Money, CatalogGrid } from "@/components/ui";
 import {
     useFunctionalFacilitiesCatalog,
     useProjects,
 } from "@/hooks/use-projects";
+import type { ApiSchema } from "@/types/api-helpers";
 import {
     formatUpgradePower,
     formatUpgradeMass,
     formatUpgradeMassRate,
-} from "@/lib/format-utils";
-import type { ApiSchema } from "@/types/api-helpers";
+} from "@energetica/core/format-utils";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
+import { Money } from "@energetica/ui/components/money";
 
 function FunctionalFacilitiesHelp() {
     return (

@@ -4,7 +4,7 @@ import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@energetica/ui/components/tooltip";
 
 /**
  * Tooltip wrapper for time displays. Shows a label and a "Learn more" link to

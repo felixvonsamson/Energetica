@@ -13,10 +13,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useRef } from "react";
 
-import { Money } from "@/components/ui/money";
 import { FacilityCard } from "@/components/workshop/facility-card";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Money } from "@energetica/ui/components/money";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;

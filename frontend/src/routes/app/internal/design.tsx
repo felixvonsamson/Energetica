@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Construction, Factory, FlaskConical, Inbox, Zap } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@energetica/ui/components/button";
 import {
     Card,
     CardContent,
@@ -9,19 +9,19 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Money } from "@/components/ui/money";
-import { ProgressBar } from "@/components/ui/progress-bar";
-import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Switch } from "@/components/ui/switch";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+} from "@energetica/ui/components/card";
+import { EmptyState } from "@energetica/ui/components/empty-state";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Money } from "@energetica/ui/components/money";
+import { ProgressBar } from "@energetica/ui/components/progress-bar";
+import { Separator } from "@energetica/ui/components/separator";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { StatusBadge } from "@energetica/ui/components/status-badge";
+import { Switch } from "@energetica/ui/components/switch";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import {
     DataValue,
     TypographyBrand,
@@ -35,7 +35,7 @@ import {
     TypographyMuted,
     TypographyP,
     TypographySmall,
-} from "@/components/ui/typography";
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/internal/design")({
     component: DesignPage,

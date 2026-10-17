@@ -1,18 +1,17 @@
 import { Lock } from "lucide-react";
 
+import { TechnologyIcon, AssetName } from "@/components/ui";
+import { assetImages } from "@/lib/assets/asset-images";
+import { ProjectType } from "@/types/projects";
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle,
-    TechnologyIcon,
-    AssetName,
-    Money,
-} from "@/components/ui";
-import { CardDescription } from "@/components/ui/card";
-import { assetImages } from "@/lib/assets/asset-images";
-import { cn } from "@/lib/utils";
-import { ProjectType } from "@/types/projects";
+    CardDescription,
+} from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface TechnologyItemProps {
     technologyName: ProjectType;

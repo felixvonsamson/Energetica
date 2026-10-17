@@ -1,8 +1,11 @@
 import { type ReactNode } from "react";
 
 import { MdxContent } from "@/components/mdx-content";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WikiSidebarPublic } from "@/components/wiki/wiki-sidebar-public";
+import {
+    SidebarInset,
+    SidebarProvider,
+} from "@energetica/ui/components/sidebar";
 
 interface WikiLayoutPublicProps {
     children: ReactNode;

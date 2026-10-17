@@ -13,7 +13,7 @@ All colors support both **light mode** and **dark mode**, with automatic switchi
 
 ## How It Works
 
-### CSS Variables (`frontend/src/styles/global.css`)
+### CSS Variables (`frontend/packages/ui/src/styles/global.css`)
 
 All asset colors are defined as CSS variables in both light and dark modes:
 
@@ -53,7 +53,7 @@ const colorVar = `--asset-color-${facility.toLowerCase().replace(/_/g, "-")}`;
 
 ## Adjusting Colors
 
-To modify a color, edit `frontend/src/styles/global.css`:
+To modify a color, edit `frontend/packages/ui/src/styles/global.css`:
 
 ```css
 /* Change PV Solar color */
@@ -86,6 +86,6 @@ const chartColor = getComputedStyle(document.documentElement)
 
 ## Related Files
 
-- `frontend/src/styles/global.css` - Color definitions (lines 63-181)
+- `frontend/packages/ui/src/styles/global.css` - Color definitions (lines 63-181)
 - `frontend/src/routes/app/profile.tsx` - Example usage in gauges (lines 152-374)
 - `energetica/static/energetica.css` - Legacy source (lines 65-200)

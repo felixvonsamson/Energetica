@@ -3,8 +3,6 @@
 import { memo, useMemo, useState } from "react";
 
 import { MeritOrderView } from "@/components/charts/merit-order-view";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useMarketData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
@@ -13,7 +11,9 @@ import { useGameTick } from "@/hooks/use-game-tick";
 import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
 import { getAssetLongName } from "@/lib/assets/asset-names";
-import { formatDuration } from "@/lib/format-utils";
+import { formatDuration } from "@energetica/core/format-utils";
+import { Label } from "@energetica/ui/components/label";
+import { Slider } from "@energetica/ui/components/slider";
 
 export type {
     ActiveMode,

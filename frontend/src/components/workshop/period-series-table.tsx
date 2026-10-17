@@ -7,8 +7,8 @@
 import type { ReactNode } from "react";
 
 import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import { formatEnergy } from "@/lib/format-utils";
 import { type ChartRow, seriesEnergy } from "@/lib/workshop-review";
+import { formatEnergy } from "@energetica/core/format-utils";
 
 interface PeriodSeriesTableProps {
     rows: ChartRow[];

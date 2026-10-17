@@ -1,7 +1,7 @@
 /** Browser notifications API calls. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const browserNotificationsApi = {
     /** Get the VAPID public key for push notifications. */

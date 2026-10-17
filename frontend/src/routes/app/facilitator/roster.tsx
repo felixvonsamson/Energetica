@@ -8,24 +8,27 @@ import { useEffect, useState } from "react";
 
 import { FacilitatorHeader } from "@/components/facilitator/facilitator-header";
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    InfoBanner,
-} from "@/components/ui";
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
-import {
     useAddToRoster,
     useFacilitatorRoster,
     useRemoveFromRoster,
     useRosterCandidates,
 } from "@/hooks/use-facilitator-roster";
 import { getUserFriendlyError } from "@/lib/error-utils";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { ConfirmDialog } from "@energetica/ui/components/confirm-dialog";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 function RosterHelp() {
     return (

@@ -4,11 +4,11 @@ import {
     EChartsTimeSeries,
     EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
-import { CoinIcon } from "@/components/ui/coin-icon";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
-import { formatMoney } from "@/lib/format-utils";
 import { ResolutionOption } from "@/types/charts";
+import { formatMoney } from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
 
 function formatMarketPriceValue(value: number): ReactNode {
     return (

@@ -12,16 +12,6 @@
 import { Check, Landmark } from "lucide-react";
 import { useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Money } from "@/components/ui/money";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
     useCastBallot,
@@ -31,6 +21,16 @@ import {
 } from "@/hooks/use-workshop";
 import { resultToAnnounce, taxPerTonne } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { Money } from "@energetica/ui/components/money";
 
 type Ballot = ApiSchema<"WorkshopBallotIn">["ballot"];
 

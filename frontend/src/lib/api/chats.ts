@@ -1,7 +1,7 @@
 /** Chats-related API calls. Handles chat and messaging functionality. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const chatsApi = {
     /** Get the list of chats for the current user. */

@@ -98,7 +98,7 @@ or a denied account sends the visitor to the lobby. Routes declare which Run mod
 
 -   TODO: explain and fill in details in [routing.md](../frontend/routing.md)
 
-**API client:** `frontend/src/lib/api-client.ts`
+**API client:** `frontend/packages/core/src/api-client.ts`
 
 -   Automatically includes cookies with all requests (`credentials: "include"`)
 

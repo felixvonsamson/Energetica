@@ -6,7 +6,6 @@ import {
 } from "@/lib/achievement-config";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
-import { formatMass, formatMoney } from "@/lib/format-utils";
 import type { AppRoute } from "@/types/notification-routes";
 import type {
     InboxCategory,
@@ -15,6 +14,7 @@ import type {
     NotificationType,
     PushCategory,
 } from "@/types/notifications";
+import { formatMass, formatMoney } from "@energetica/core/format-utils";
 
 type AppPath = AppRoute | `${AppRoute}?${string}`;
 

@@ -16,17 +16,17 @@ import type {
     ConsumptionStatus,
 } from "@/components/power-priorities/types";
 import { AssetName } from "@/components/ui/asset-name";
-import { Button } from "@/components/ui/button";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
     useUpdateElectricityPrices,
     useUpdatePowerPriorityBump,
 } from "@/hooks/use-power-priorities";
-import { formatPower } from "@/lib/format-utils";
 import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
-import { cn } from "@/lib/utils";
+import { formatPower } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface PriorityItemProps {
     item: PowerPriorityItem;

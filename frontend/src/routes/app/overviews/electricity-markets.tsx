@@ -25,23 +25,7 @@ import {
 import { MarketPriceChart } from "@/components/charts/market-price-chart";
 import { MeritOrderChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Button,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Money,
-    PageCard,
-} from "@/components/ui";
-import { CardAction } from "@/components/ui/card";
-import { ChartCard } from "@/components/ui/chart-card";
-import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { Switch } from "@/components/ui/switch";
 import { useResolution } from "@/contexts/resolution-context";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
@@ -53,7 +37,23 @@ import {
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
-import { formatPower } from "@/lib/format-utils";
+import { formatPower } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import {
+    CardAction,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    PageCard,
+} from "@energetica/ui/components/card";
+import { ChartCard } from "@energetica/ui/components/chart-card";
+import { Label } from "@energetica/ui/components/label";
+import { Money } from "@energetica/ui/components/money";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { Switch } from "@energetica/ui/components/switch";
 
 interface MarketsSearchParams {
     marketId?: number;

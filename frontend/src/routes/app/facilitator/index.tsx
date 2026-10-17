@@ -14,25 +14,28 @@ import { useEffect, useState } from "react";
 import { FacilitatorHeader } from "@/components/facilitator/facilitator-header";
 import { JoinQrCode } from "@/components/facilitator/join-qr-code";
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    InfoBanner,
-} from "@/components/ui";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
-import {
     useFacilitatorAccess,
     useSetJoinOpen,
 } from "@/hooks/use-facilitator-access";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { buildJoinUrl } from "@/lib/facilitator";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Separator } from "@energetica/ui/components/separator";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { Switch } from "@energetica/ui/components/switch";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 function FacilitatorHelp() {
     return (

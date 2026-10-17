@@ -3,8 +3,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { JSX } from "react";
 
-import { TypographyH1, TypographyLead } from "@/components/ui/typography";
 import { WikiLayout } from "@/components/wiki/wiki-layout";
+import {
+    TypographyH1,
+    TypographyLead,
+} from "@energetica/ui/components/typography";
 
 // Eagerly import all MDX files (no lazy loading - all bundled together)
 // This adds ~50-100KB to the bundle but eliminates navigation delays

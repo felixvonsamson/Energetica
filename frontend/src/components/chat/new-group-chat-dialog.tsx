@@ -1,7 +1,12 @@
 import { X, Check } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { useChatList, useCreateGroupChat } from "@/hooks/use-chats";
+import { useFilteredPlayers } from "@/hooks/use-filtered-players";
+import { usePlayers } from "@/hooks/use-players";
+import type { Player, Chat } from "@/types/chats";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -10,17 +15,12 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/hooks/use-auth";
-import { useChatList, useCreateGroupChat } from "@/hooks/use-chats";
-import { useFilteredPlayers } from "@/hooks/use-filtered-players";
-import { usePlayers } from "@/hooks/use-players";
-import { cn } from "@/lib/utils";
-import type { Player, Chat } from "@/types/chats";
+} from "@energetica/ui/components/dialog";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface NewGroupChatDialogProps {
     isOpen: boolean;

@@ -20,8 +20,6 @@ import {
 } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CarbonTaxBadge } from "@/components/workshop/carbon-tax-vote";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { RecapButton } from "@/components/workshop/recap-view";
@@ -37,6 +35,8 @@ import {
     latestRecapRound,
 } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
 

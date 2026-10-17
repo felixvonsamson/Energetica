@@ -1,18 +1,17 @@
 import { Lock } from "lucide-react";
 
+import { FacilityIcon, FacilityName } from "@/components/ui";
+import { assetImages } from "@/lib/assets/asset-images";
+import { ProjectType } from "@/types/projects";
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle,
-    FacilityIcon,
-    FacilityName,
-    Money,
-} from "@/components/ui";
-import { CardDescription } from "@/components/ui/card";
-import { assetImages } from "@/lib/assets/asset-images";
-import { cn } from "@/lib/utils";
-import { ProjectType } from "@/types/projects";
+    CardDescription,
+} from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface FacilityItemProps {
     facilityName: ProjectType;

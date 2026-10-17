@@ -2,10 +2,10 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-import { TypographyH2 } from "@/components/ui/typography";
 import { PeriodReview } from "@/components/workshop/period-review";
 import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { isSeason, SEASON_LABELS } from "@/lib/workshop-timeline";
+import { TypographyH2 } from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/workshop/round/$round/$season")({
     component: TradingPeriodPage,

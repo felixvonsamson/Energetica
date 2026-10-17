@@ -2,11 +2,11 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { ThemeProvider } from "@/contexts/theme-context";
+import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
 
 import { routeTree } from "./routeTree.landing.gen";
 
-import "./styles/global.css";
+import "@energetica/ui/global.css";
 
 // The landing bundle does not augment the `Register` interface — the app bundle
 // owns that augmentation. Without a Register, TanStack Router's `to` props

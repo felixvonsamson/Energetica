@@ -125,7 +125,7 @@ const { data } = useQuery({
 **Learn by Example:**
 
 -   See `src/routes/app/dashboard.tsx` for best practices in action
--   Check `src/components/ui/` for reusable components
+-   Check `packages/ui/src/components/` for reusable components, and `src/components/ui/` for the game-specific ones
 
 **Reference:**
 

@@ -7,8 +7,6 @@ import {
 import { useEffect } from "react";
 
 import { AnnouncedScreen } from "@/components/lifecycle/announced-screen";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useGameEngine } from "@/hooks/use-game";
@@ -21,6 +19,8 @@ import {
     isAnnouncedTakeover,
     workshopRedirect,
 } from "@/lib/route-guard";
+import { Button } from "@energetica/ui/components/button";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },

@@ -21,7 +21,6 @@ import { ChevronRight, ScrollText, Trophy, ZapOff } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
-import { cn } from "@/lib/utils";
 import {
     type Checkpoint,
     type TradingPeriod,
@@ -36,6 +35,7 @@ import {
     type WorkshopPage,
     workshopTimeline,
 } from "@/lib/workshop-timeline";
+import { cn } from "@energetica/ui/lib/utils";
 
 export function WorkshopTimeline({
     checkpoint,

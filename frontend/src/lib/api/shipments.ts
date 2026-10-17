@@ -1,7 +1,7 @@
 /** Shipments-related API calls. Handles incoming resource shipments. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const shipmentsApi = {
     /** Get list of ongoing incoming shipments. */

@@ -1,5 +1,9 @@
-import { formatEnergy, formatMass, formatPower } from "@/lib/format-utils";
 import type { NotificationPayload } from "@/types/notifications";
+import {
+    formatEnergy,
+    formatMass,
+    formatPower,
+} from "@energetica/core/format-utils";
 
 // ---------------------------------------------------------------------------
 // Payload type aliases

@@ -2,8 +2,8 @@
  * Asset color system - Maps asset names to colors defined in global.css
  *
  * All asset colors are defined as CSS variables in
- * frontend/src/styles/global.css with automatic support for light and dark
- * modes.
+ * frontend/packages/ui/src/styles/global.css with automatic support for light
+ * and dark modes.
  *
  * This module extracts color values at runtime with caching for performance.
  */

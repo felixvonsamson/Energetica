@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyBrand } from "@/components/ui/typography";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 /**
  * Page chrome for app-bundle pages that live outside the authenticated game

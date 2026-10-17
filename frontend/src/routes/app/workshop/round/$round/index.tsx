@@ -9,8 +9,6 @@
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyMuted } from "@/components/ui/typography";
 import { BalanceSheetView } from "@/components/workshop/balance-sheet";
 import { CarbonTaxBallot } from "@/components/workshop/carbon-tax-vote";
 import {
@@ -18,7 +16,9 @@ import {
     useWorkshopEntry,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import { ApiClientError } from "@/lib/api-client";
+import { ApiClientError } from "@energetica/core/api-client";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/workshop/round/$round/")({
     component: RoundOverviewPage,

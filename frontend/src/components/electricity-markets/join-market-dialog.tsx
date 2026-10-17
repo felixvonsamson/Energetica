@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import {
+    useJoinElectricityMarket,
+    useElectricityMarkets,
+    useElectricityMarket,
+} from "@/hooks/use-electricity-markets";
+import { usePlayerMoney } from "@/hooks/use-player-money";
+import { useMyId } from "@/hooks/use-players";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -9,16 +16,9 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Spinner } from "@/components/ui/spinner";
-import {
-    useJoinElectricityMarket,
-    useElectricityMarkets,
-    useElectricityMarket,
-} from "@/hooks/use-electricity-markets";
-import { usePlayerMoney } from "@/hooks/use-player-money";
-import { useMyId } from "@/hooks/use-players";
+} from "@energetica/ui/components/dialog";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 interface JoinMarketDialogProps {
     isOpen: boolean;

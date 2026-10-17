@@ -36,6 +36,8 @@ const { data, error, isError } = usePlayerMoney();
 
 ### Query Client
 
+These defaults are set by `createQueryClient` in `frontend/packages/core/src/query-client.ts`.
+
 ```ts
 queries: {
     // Retry with exponential backoff: 1s, 2s, 4s

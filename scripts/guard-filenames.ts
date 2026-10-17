@@ -1,5 +1,5 @@
 /**
- * CI guard: every source file under `frontend/src` is named in kebab-case
+ * CI guard: every source file under `frontend/src` and `frontend/packages` is named in kebab-case
  * (#971, decided in #942).
  *
  * This guard pins reality rather than imposing a preference. All 321 tracked
@@ -32,7 +32,8 @@ import { basename, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SCAN_PREFIX = "frontend/src/";
+// The app's sources and every shared workspace package.
+const SCAN_PREFIXES = ["frontend/src/", "frontend/packages/"];
 
 /** Route trees where TanStack's file-based route syntax applies. */
 const ROUTE_TREES = [
@@ -58,9 +59,9 @@ const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const ROUTE_SEGMENT =
     /^(__root|_[a-z0-9]+(-[a-z0-9]+)*|\$[a-z0-9]*|[a-z0-9]+(-[a-z0-9]+)*)$/;
 
-/** Tracked `.ts` / `.tsx` files under `frontend/src`, repo-relative. */
+/** Tracked `.ts` / `.tsx` files under the scanned prefixes, repo-relative. */
 function trackedSources(): string[] {
-    const out = execFileSync("git", ["ls-files", SCAN_PREFIX], {
+    const out = execFileSync("git", ["ls-files", ...SCAN_PREFIXES], {
         cwd: REPO_ROOT,
         encoding: "utf8",
     });
@@ -110,7 +111,7 @@ function toKebab(stem: string): string {
 }
 
 if (violations.length === 0) {
-    console.log("✓ filename guard: all frontend/src sources are kebab-case.");
+    console.log("✓ filename guard: all frontend sources are kebab-case.");
     process.exit(0);
 }
 

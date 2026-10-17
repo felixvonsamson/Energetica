@@ -1,13 +1,13 @@
 import { BellOff } from "lucide-react";
 
 import { PlayerName } from "@/components/ui/player-name";
+import { useMyId, usePlayerMap } from "@/hooks/use-players";
+import type { Chat } from "@/types/chats";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useMyId, usePlayerMap } from "@/hooks/use-players";
-import type { Chat } from "@/types/chats";
+} from "@energetica/ui/components/tooltip";
 
 interface ChatListItemProps {
     chat: Chat;

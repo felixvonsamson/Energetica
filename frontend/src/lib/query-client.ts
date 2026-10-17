@@ -3,8 +3,9 @@
  *
  * ## What This File Does
  *
- * 1. **Query Client Setup**: Configures TanStack Query with sensible defaults for
- *    caching, retries, and error handling across the entire application.
+ * 1. **Query Client Setup**: Creates this app's query client from the shared
+ *    factory in `@energetica/core/query-client`, which sets the defaults for
+ *    caching and retries. Mutations are not retried unless they opt in.
  * 2. **Centralized Query Keys**: Defines ALL query keys used throughout the app in
  *    one place. This is critical because:
  *
@@ -41,51 +42,11 @@
  * file.
  */
 
-import { MutationCache, QueryClient } from "@tanstack/react-query";
-
 import { handleApiError } from "@/lib/error-utils";
+import { createQueryClient } from "@energetica/core/query-client";
 
-export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            // Cache data for 5 minutes by default
-            staleTime: 5 * 60 * 1000,
-            // Keep unused data in cache for 10 minutes
-            gcTime: 10 * 60 * 1000,
-            // Retry failed requests - important for mobile users with spotty connections
-            retry: (failureCount, error) => {
-                // Don't retry on 4xx errors (client errors)
-                if (error instanceof Error && "status" in error) {
-                    const status = (error as unknown as { status: number })
-                        .status;
-                    if (status >= 400 && status < 500) return false;
-                }
-                // Retry up to 3 times for network errors
-                return failureCount < 3;
-            },
-            // Exponential backoff for retries (better for mobile)
-            retryDelay: (attemptIndex) =>
-                Math.min(1000 * 2 ** attemptIndex, 30000),
-            // Refetch on window focus for important data
-            refetchOnWindowFocus: true,
-            // Refetch on mount if data is stale
-            refetchOnMount: true,
-            // Refetch when connection restored
-            refetchOnReconnect: true,
-            // Network mode: 'online' = only fetch when online, keep stale data when offline
-            networkMode: "online",
-        },
-        mutations: {
-            // Retry failed mutations once (cautious with mutations to avoid duplicates)
-            retry: 1,
-            // Network mode for mutations
-            networkMode: "online",
-        },
-    },
-    mutationCache: new MutationCache({
-        // fires for every mutation
-        onError: (error) => handleApiError(error),
-    }),
+export const queryClient = createQueryClient({
+    onMutationError: (error) => handleApiError(error),
 });
 
 /** Query keys for consistent cache management. Organized by domain/feature. */

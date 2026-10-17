@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -7,7 +7,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@energetica/ui/components/dialog";
 
 interface ChatDisclaimerDialogProps {
     isOpen: boolean;

@@ -4,13 +4,6 @@ import { createElement } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import {
-    TypographyH1,
-    TypographyH2,
-    TypographyH3,
-    TypographyLead,
-    TypographyMuted,
-} from "@/components/ui/typography";
-import {
     allAssetIcons,
     extractionFacilityIcons,
     functionalFacilityIcons,
@@ -20,7 +13,14 @@ import {
     storageFacilityIcons,
     technologyIcons,
 } from "@/lib/assets/asset-icons";
-import { cn } from "@/lib/utils";
+import {
+    TypographyH1,
+    TypographyH2,
+    TypographyH3,
+    TypographyLead,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 export const Route = createFileRoute("/app/internal/icons")({
     component: RouteComponent,

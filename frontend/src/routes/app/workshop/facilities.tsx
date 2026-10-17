@@ -19,13 +19,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Layers } from "lucide-react";
 
-import { EmptyState, InfoBanner } from "@/components/ui";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyH2 } from "@/components/ui/typography";
 import { CarbonTaxBallot } from "@/components/workshop/carbon-tax-vote";
 import { FacilityCard } from "@/components/workshop/facility-card";
 import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
@@ -44,6 +37,14 @@ import {
 } from "@/hooks/use-workshop";
 import { fleetStacks } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
+import { EmptyState } from "@energetica/ui/components/empty-state";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyH2 } from "@energetica/ui/components/typography";
 
 type Tab = "catalog" | "fleet";
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;

@@ -1,9 +1,9 @@
 /** API client for chart data endpoints. */
 
-import { apiClient } from "@/lib/api-client";
 import { ChartIdentifier } from "@/lib/charts/query-keys";
 import type { ApiResponse } from "@/types/api-helpers";
 import { Resolution, TickRange } from "@/types/charts";
+import { apiClient } from "@energetica/core/api-client";
 
 export const chartsApi = {
     /** Get chart data */

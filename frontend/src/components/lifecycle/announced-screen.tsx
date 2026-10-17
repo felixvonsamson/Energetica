@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from "react";
 
-import { TypographyBrand } from "@/components/ui/typography";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 /** A wall-clock duration split into whole days/hours/minutes/seconds. */
 function splitDuration(ms: number): {

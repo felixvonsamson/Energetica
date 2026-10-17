@@ -119,7 +119,7 @@ convention.
 
 **Automatic styling with prose:**
 
-The `prose` classes from `@tailwindcss/typography` automatically style all markdown elements. See `frontend/src/styles/global.css`.
+The `prose` classes from `@tailwindcss/typography` automatically style all markdown elements. See `frontend/packages/ui/src/styles/global.css`.
 
 **What prose handles:**
 
@@ -152,7 +152,7 @@ Override specific prose styles with utility classes:
 <article className="prose prose-lg dark:prose-invert prose-headings:text-pine">
 ```
 
-Or customize globally in `src/styles/global.css` in the prose CSS custom properties and element styles.
+Or customize globally in `frontend/packages/ui/src/styles/global.css` in the prose CSS custom properties and element styles.
 
 ## Setup
 
@@ -180,7 +180,7 @@ plugins: [
 ];
 ```
 
-**Tailwind v4 configuration (`src/styles/global.css`):**
+**Tailwind v4 configuration (`frontend/packages/ui/src/styles/global.css`):**
 
 The typography plugin is imported and configured with custom prose styles:
 
@@ -195,7 +195,7 @@ The typography plugin is imported and configured with custom prose styles:
 }
 ```
 
-See `src/styles/global.css` for full configuration.
+See `frontend/packages/ui/src/styles/global.css` for full configuration.
 
 **Additional resources:**
 

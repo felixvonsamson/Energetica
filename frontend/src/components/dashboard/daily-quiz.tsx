@@ -2,12 +2,15 @@ import { Link } from "@tanstack/react-router";
 import { Bell, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
 import { getPushPref, setPushPref } from "@/lib/push-notification-prefs";
-import { cn } from "@/lib/utils";
+import { Label } from "@energetica/ui/components/label";
+import { Switch } from "@energetica/ui/components/switch";
+import {
+    TypographyH2,
+    TypographyLarge,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 export function DailyQuizButton() {
     const { data } = useDailyQuiz();

@@ -4,8 +4,8 @@
  * backend.
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type Fuel = ApiSchema<"Fuel">;

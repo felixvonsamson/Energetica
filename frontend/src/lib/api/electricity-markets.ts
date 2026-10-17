@@ -1,7 +1,7 @@
 /** API client for electricity markets endpoints. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const electricityMarketsApi = {
     /** Get the list of existing electricity markets. */

@@ -1,16 +1,17 @@
 import { useMemo } from "react";
 
-import { FacilityName, FacilityIcon, Button } from "@/components/ui";
+import { FacilityName, FacilityIcon } from "@/components/ui";
+import { ProjectType } from "@/types/projects";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { ProjectType } from "@/types/projects";
+} from "@energetica/ui/components/dialog";
+import { Label } from "@energetica/ui/components/label";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface ComparisonSlot {
     selected: string | null;

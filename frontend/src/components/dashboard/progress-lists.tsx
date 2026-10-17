@@ -2,25 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
-import { Money, Duration } from "@/components/ui";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Duration } from "@/components/ui";
 import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
-import { Button } from "@/components/ui/button";
 import { CashFlow } from "@/components/ui/cash-flow";
 import { Countdown } from "@/components/ui/countdown";
-import { ProgressBar } from "@/components/ui/progress-bar";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { DataValue, TypographyP } from "@/components/ui/typography";
 import {
     useCancelProject,
     useDecreaseProjectPriority,
@@ -31,7 +16,6 @@ import {
 import { useShipments } from "@/hooks/use-shipments";
 import { useClimateEventRecoveries } from "@/hooks/use-weather";
 import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
-import { formatMass } from "@/lib/format-utils";
 import {
     useClimateEventRecoveryProgress,
     useProjectProgress,
@@ -41,6 +25,23 @@ import { useProjectQueue } from "@/lib/project-utils";
 import type { components } from "@/types/api.generated";
 import { Project, ProjectCategory, ProjectStatus } from "@/types/projects";
 import { Shipment } from "@/types/shipments";
+import { formatMass } from "@energetica/core/format-utils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@energetica/ui/components/alert-dialog";
+import { Button } from "@energetica/ui/components/button";
+import { Money } from "@energetica/ui/components/money";
+import { ProgressBar } from "@energetica/ui/components/progress-bar";
+import { StatusBadge } from "@energetica/ui/components/status-badge";
+import { DataValue, TypographyP } from "@energetica/ui/components/typography";
 
 type ClimateEventRecovery = components["schemas"]["ClimateEventRecoveryOut"];
 

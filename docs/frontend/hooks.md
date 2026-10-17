@@ -436,7 +436,7 @@ Organize API calls into modules in `src/lib/`:
 
 ```ts
 // src/lib/player-api.ts
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from "@energetica/core/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const playerApi = {

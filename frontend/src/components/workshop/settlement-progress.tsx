@@ -7,10 +7,10 @@
 
 import { useEffect, useState } from "react";
 
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { useWorkshopSession } from "@/hooks/use-workshop";
 import { settlementLabel } from "@/lib/workshop-settlement";
 import type { ApiSchema } from "@/types/api-helpers";
+import { ProgressBar } from "@energetica/ui/components/progress-bar";
 
 /**
  * How long a run must have been going on this page before the bar shows. A

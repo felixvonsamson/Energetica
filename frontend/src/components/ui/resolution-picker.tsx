@@ -1,13 +1,13 @@
 /** Resolution picker component for time series charts. */
 
 import { Duration } from "@/components/ui";
-import { Label } from "@/components/ui/label";
+import { useResolution } from "@/contexts/resolution-context";
+import { resolutions } from "@/types/charts";
+import { Label } from "@energetica/ui/components/label";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { useResolution } from "@/contexts/resolution-context";
-import { resolutions } from "@/types/charts";
+} from "@energetica/ui/components/segmented-picker";
 
 interface ResolutionPickerProps {
     currentTick: number | undefined;

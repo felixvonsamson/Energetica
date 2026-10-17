@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { TimeTooltip } from "@/components/ui/time-tooltip";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
-import { formatDurationDual } from "@/lib/format-utils";
 import { interpolateEffectiveTick } from "@/lib/progress-utils";
+import { formatDurationDual } from "@energetica/core/format-utils";
 
 export function Countdown({
     endTick,

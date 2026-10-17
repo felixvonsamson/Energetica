@@ -56,10 +56,17 @@ src/energetica/       # Python/FastAPI backend
 
 ## Frontend
 
+The frontend is a set of Bun workspaces rooted at `frontend/`. The combined app, the lobby and the landing page are built from `frontend/src/`. Code they share lives in workspace packages under `frontend/packages/`:
+
+- `@energetica/ui`: the customised shadcn components, the `cn` helper, the theme context and the global stylesheet.
+- `@energetica/core`: the API client, the formatting helpers and `createQueryClient`, the query client factory.
+
+Bun's isolated install layout means a package can only import the dependencies its own `package.json` declares. Dependency versions shared by several packages are pinned once, in the `catalog` of `frontend/package.json`, and referenced as `"catalog:"`. Lint rejects imports across these boundaries; `frontend/boundaries.test.ts` shows which.
+
 ```
 frontend/src/
 ├── components/
-│   ├── ui/              # Reusable UI primitives (Card, Button, Modal)
+│   ├── ui/              # Game-specific UI pieces (Duration, AssetIcon, PlayerName)
 │   ├── layout/          # Layout components (TopBar, Navigation, GameLayout)
 │   ├── <features>/      # Feature-specific components (Dashboard, Facilities)
 │   └── auth/            # Auth-related components for protected routes
@@ -67,9 +74,7 @@ frontend/src/
 │   └── use*.ts          # One hook per file, prefixed with 'use'
 ├── lib/                 # Utilities and configs
 │   ├── api/             # API client modules (*-api.ts files)
-│   ├── query-client.ts  # TanStack Query config
-│   ├── cn.ts            # Tailwind class name merging utility
-│   ├── format-utils.ts  # Number and value formatting utilities
+│   ├── query-client.ts  # This app's query client and query keys
 │   └── other utilities  # date-utils, hex-utils, etc.
 ├── contexts/            # React contexts
 ├── types/               # TypeScript types
@@ -81,7 +86,7 @@ frontend/src/
 
 The `@` path alias points to [`src/`](/frontend/src/). This is configured in [`tsconfig.json`](/frontend/tsconfig.json) and [`vite.config.ts`](/frontend/vite.config.ts).
 
-Use this alias instead of relative paths for all internal imports. This makes imports more readable and facilitates refactoring:
+Use this alias instead of relative paths for all internal imports. Shared packages are the exception: `@/` means the app's `src/`, so inside a package, use relative imports. This makes imports more readable and facilitates refactoring:
 
 ```tsx
 // Example usage, taken from dashboard.tsx

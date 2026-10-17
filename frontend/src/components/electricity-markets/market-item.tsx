@@ -1,9 +1,14 @@
 import { PlugZap, Check, Lock } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
-import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface MarketItemProps {
     market: ElectricityMarket;

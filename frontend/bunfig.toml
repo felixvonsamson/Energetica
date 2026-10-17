@@ -1,0 +1,5 @@
+# Each workspace package can only import the dependencies its own package.json
+# declares. Bun picks this layout by itself only for lockfiles created by Bun
+# 1.3 or later. Ours is older, so the layout is set here explicitly.
+[install]
+linker = "isolated"

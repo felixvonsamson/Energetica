@@ -21,22 +21,25 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import {
-    Button,
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    InfoBanner,
-} from "@/components/ui";
-import { Spinner } from "@/components/ui/spinner";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { useConfirmJoin, useJoinLink } from "@/hooks/use-join";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { lobbyLoginHref } from "@/lib/instances";
 import { rememberPendingJoinToken } from "@/lib/join";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 type Viewer = ApiSchema<"Viewer">;
 

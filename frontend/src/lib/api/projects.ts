@@ -3,8 +3,8 @@
  * management.
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const projectsApi = {
     /** Get list of ongoing construction and research projects. */

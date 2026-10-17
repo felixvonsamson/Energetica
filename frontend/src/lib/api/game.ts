@@ -1,7 +1,7 @@
 /** Game engine configuration API calls. */
 
-import { apiClient } from "@/lib/api-client";
 import type { GameEngineConfig } from "@/types/game";
+import { apiClient } from "@energetica/core/api-client";
 
 export const gameApi = {
     /** Get game engine configuration (clock time and simulation speed). */

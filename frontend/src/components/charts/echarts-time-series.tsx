@@ -58,8 +58,8 @@ import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
 } from "@/lib/charts/key-order";
-import { formatDuration } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
+import { formatDuration } from "@energetica/core/format-utils";
 
 // Register ECharts components once at module level (tree-shaking)
 echarts.use([

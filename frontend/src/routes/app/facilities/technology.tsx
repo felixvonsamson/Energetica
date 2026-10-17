@@ -16,8 +16,8 @@ import {
     TechnologyDetailDialog,
     TechnologyEffectsTable,
 } from "@/components/technologies";
-import { CatalogGrid } from "@/components/ui";
 import { useTechnologiesCatalog, useProjects } from "@/hooks/use-projects";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
 
 function TechnologiesHelp() {
     return (
