@@ -4,9 +4,7 @@ import asyncio
 import glob
 import logging
 import os
-import platform
 import shutil
-import socket
 import tarfile
 import uuid
 from contextlib import asynccontextmanager
@@ -68,11 +66,6 @@ def create_app(
     print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
-    # gets lock to avoid multiple instances
-    if platform.system() == "Linux":
-        lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        lock.bind("\0energetica")
-
     # Delete last checkpoint
     if rm_instance or simulate_file:
         if os.path.exists("instance/"):
