@@ -5,8 +5,8 @@
  *   Investment phase is open in a Round that holds a vote.
  * - {@link VoteResultDialog}: the result, announced to everyone once when the
  *   Round's first Trading period opens. Nobody ever sees the tally.
- * - {@link CarbonTaxBadge}: shown in the top bar from the moment a carbon tax
- *   passes to the end of the session.
+ * - {@link CarbonTaxNotice}: shown on the facility page from the moment a carbon
+ *   tax passes to the end of the session.
  */
 
 import { Check, Landmark } from "lucide-react";
@@ -173,20 +173,26 @@ export function VoteResultDialog() {
     );
 }
 
-/** "Carbon tax: active", from the Round its vote passed in. */
-export function CarbonTaxBadge({
-    passedInRound,
-}: {
-    passedInRound: number | null;
-}) {
-    if (passedInRound === null) return null;
+/**
+ * A callout on the facility page while a carbon tax is in force (#1247), so
+ * players see it where they choose what to build, from the Round its vote
+ * passed in to the end of the session.
+ */
+export function CarbonTaxNotice() {
+    const { data: session } = useWorkshopSession();
+    const { data: vote } = useWorkshopVote();
+    const since = session?.carbon_tax_since ?? null;
+    if (since === null || !vote) return null;
+
     return (
-        <span
-            title={`Passed in Round ${passedInRound}. It stays until the end of the game.`}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm font-medium"
-        >
-            <Landmark className="size-4" />
-            Carbon tax: active
-        </span>
+        <aside className="flex items-start gap-3 rounded-lg border border-brand/30 bg-brand/10 px-4 py-3 text-sm">
+            <Landmark className="mt-0.5 size-5 shrink-0 text-brand" />
+            <p>
+                <span className="font-semibold">Carbon tax in force.</span> You
+                pay <Money amount={taxPerTonne(vote.tax_rate)} /> per tonne of
+                CO₂ your facilities emit. It passed in Round {since} and stays
+                until the end of the game.
+            </p>
+        </aside>
     );
 }

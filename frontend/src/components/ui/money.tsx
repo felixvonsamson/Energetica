@@ -16,6 +16,11 @@ interface MoneyProps {
     amount: number | null;
     /** Whether to always show the full value without scaling (default: false) */
     long?: boolean;
+    /**
+     * Formats the value instead of the usual scaling, for a page with its own
+     * rule
+     */
+    format?: (amount: number) => string;
     /** Additional CSS classes */
     className?: string;
     /** Size of the coin icon */
@@ -37,14 +42,14 @@ interface MoneyProps {
  *     <TypographyH1><Money amount={50000} /></TypographyH1>
  *     <TypographyMuted><Money amount={100} /></TypographyMuted>
  */
-export function Money({ amount, long = false, className }: MoneyProps) {
+export function Money({ amount, long = false, format, className }: MoneyProps) {
     if (amount === null) return "-";
 
     return (
         <DataValue
             className={cn("inline-flex items-baseline gap-1", className)}
         >
-            {formatMoney(amount, long)}
+            {format ? format(amount) : formatMoney(amount, long)}
             <CoinIcon className={"w-[1em] h-[1em] translate-y-[0.15em]"} />
         </DataValue>
     );
