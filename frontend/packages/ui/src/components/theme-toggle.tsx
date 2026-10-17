@@ -1,8 +1,8 @@
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { forwardRef } from "react";
 
-import { useTheme } from "../contexts/theme-context";
-import { cn } from "../lib/utils";
+import { useTheme } from "#ui/contexts/theme-context";
+import { cn } from "#ui/lib/utils";
 
 import { Button } from "./button";
 

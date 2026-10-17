@@ -73,6 +73,24 @@ describe("frontend boundaries", () => {
         ).toContain("import/no-relative-packages");
     });
 
+    it("rejects a parent-relative import inside a shared package", async () => {
+        expect(
+            await violatedRules(
+                "packages/ui/src/components/example.tsx",
+                'import { cn } from "../lib/utils";\nexport const x = cn;\n',
+            ),
+        ).toContain("no-restricted-imports");
+    });
+
+    it("allows a shared package's own subpath imports", async () => {
+        expect(
+            await violatedRules(
+                "packages/ui/src/components/example.tsx",
+                'import { cn } from "#ui/lib/utils";\nexport const x = cn;\n',
+            ),
+        ).toEqual([]);
+    });
+
     // The shadcn CLI writes imports like this one into the files it adds.
     it("rejects a package importing itself by name", async () => {
         expect(

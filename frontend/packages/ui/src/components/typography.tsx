@@ -14,7 +14,7 @@
  * <TypographyMuted><DataValue>123</DataValue></TypographyMuted>
  */
 
-import { cn } from "../lib/utils";
+import { cn } from "#ui/lib/utils";
 
 interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
     children: React.ReactNode;

@@ -9,6 +9,13 @@
         "./lib/*": "./src/lib/*.ts",
         "./global.css": "./src/styles/global.css"
     },
+    "imports": {
+        "#ui/assets/*": "./src/assets/*",
+        "#ui/components/*": "./src/components/*.tsx",
+        "#ui/contexts/*": "./src/contexts/*.tsx",
+        "#ui/hooks/*": "./src/hooks/*.ts",
+        "#ui/lib/*": "./src/lib/*.ts"
+    },
     "scripts": {
         "typecheck": "tsc --noEmit"
     },

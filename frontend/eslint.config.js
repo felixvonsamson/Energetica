@@ -175,7 +175,9 @@ export default defineConfig([
             "import/no-restricted-paths": ["error", { zones: BUNDLE_ZONES }],
         },
     },
-    // Shared packages resolve their own files with relative imports. `@/` means
+    // Shared packages import their own files through their own subpath imports,
+    // such as `#ui/lib/utils`, declared under "imports" in the package's
+    // package.json. Same-folder `./` imports are fine, as in the apps. `@/` means
     // "this app's src", so inside a package it would silently point at whichever
     // app is compiling it. A package importing itself by name only resolves
     // through the root package's node_modules, which the apps will not share.
@@ -187,14 +189,16 @@ export default defineConfig([
                 {
                     patterns: [
                         {
+                            group: ["../*"],
+                            message: `Relative parent imports are not allowed. Use this package's #${name}/ subpath imports instead.`,
+                        },
+                        {
                             group: ["@/*"],
-                            message:
-                                "Shared packages cannot use the app-local @/ alias. Use a relative import inside the package, or import another package by name.",
+                            message: `Shared packages cannot use the app-local @/ alias. Use this package's #${name}/ subpath imports, or import another package by name.`,
                         },
                         {
                             group: [`@energetica/${name}`, `@energetica/${name}/*`],
-                            message:
-                                "Use a relative import for a file in the same package.",
+                            message: `Use this package's #${name}/ subpath imports for its own files.`,
                         },
                     ],
                 },

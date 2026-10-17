@@ -86,7 +86,7 @@ frontend/src/
 
 The `@` path alias points to [`src/`](/frontend/src/). This is configured in [`tsconfig.json`](/frontend/tsconfig.json) and [`vite.config.ts`](/frontend/vite.config.ts).
 
-Use this alias instead of relative paths for all internal imports. Shared packages are the exception: `@/` means the app's `src/`, so inside a package, use relative imports. This makes imports more readable and facilitates refactoring:
+Use this alias instead of relative paths for all internal imports. Shared packages cannot use `@/`, because it means the app's `src/`. Each package declares its own alias instead, as subpath imports under `"imports"` in its `package.json`: inside `@energetica/ui`, import `#ui/lib/utils`. This makes imports more readable and facilitates refactoring:
 
 ```tsx
 // Example usage, taken from dashboard.tsx

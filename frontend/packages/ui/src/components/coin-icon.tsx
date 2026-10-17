@@ -1,5 +1,5 @@
-import CoinSvg from "../assets/coin.svg?react";
-import { cn } from "../lib/utils";
+import CoinSvg from "#ui/assets/coin.svg?react";
+import { cn } from "#ui/lib/utils";
 
 interface CoinIconProps {
     className?: string;

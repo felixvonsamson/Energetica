@@ -7,7 +7,7 @@
 
 import { formatMoney } from "@energetica/core/format-utils";
 
-import { cn } from "../lib/utils";
+import { cn } from "#ui/lib/utils";
 
 import { CoinIcon } from "./coin-icon";
 import { DataValue } from "./typography";
