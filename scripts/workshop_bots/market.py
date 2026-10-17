@@ -267,6 +267,19 @@ class Ctx:
         """``share`` with a safety margin in a full-season Round, where fuel cannot be topped up for 13 weeks."""
         return max(share * 1.25, 0.6) if self.full_season else share
 
+    def storage_prices(self, facility: str, buy_quantile: float, sell_quantile: float) -> tuple[float, float]:
+        """Buy and sell prices for a storage facility at two quantiles of the last period's prices. The sell price is
+        at least what makes up for the energy lost in storage, so a flat market leaves the storage idle.
+        """
+        prices = sorted(self.last.finite_prices) if self.last else []
+        if not prices:
+            return 60.0, 150.0
+        buy = prices[int(buy_quantile * (len(prices) - 1))]
+        sell = prices[int(sell_quantile * (len(prices) - 1))]
+        efficiency = self.offered.get(facility, {}).get("base_efficiency") or 0.7
+        # One above the quantile, so the bid is not the marginal one at a price many points clear at.
+        return round(buy) + 1, round(max(sell, (buy + 1) / efficiency + 1))
+
     def blackout_last_round(self) -> bool:
         return any(view.blackout and view.round == self.round - 1 for view in self.history)
 

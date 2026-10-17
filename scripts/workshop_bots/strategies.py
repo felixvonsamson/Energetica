@@ -184,8 +184,7 @@ class Greenie(Strategy):
             if facility in RENEWABLE:
                 prices[(facility, "sell")] = level
             elif facility in STORAGE:
-                prices[(facility, "buy")] = round(0.6 * mean)
-                prices[(facility, "sell")] = round(1.4 * mean + 20)
+                prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.3, 0.7)
         return prices
 
     def ballot(self, ctx: Ctx) -> str:
@@ -251,8 +250,7 @@ class Trader(Strategy):
             if facility in FIRM:
                 prices[(facility, "sell")] = round(ctx.marginal_cost(facility) * markup)
             elif facility in STORAGE:
-                prices[(facility, "buy")] = round(0.8 * mean)
-                prices[(facility, "sell")] = round(1.5 * mean)
+                prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.25, 0.8)
         return prices
 
     def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
