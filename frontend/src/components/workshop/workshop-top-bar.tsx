@@ -5,8 +5,7 @@
  * their console (#1011) on every other page, and a button that opens the latest
  * Recap over the page (#1013). A player gets a link to the facility page (#998)
  * and the button that opens the price-setting panel (#1002), which shows a
- * clock badge while the price-setting window is open. Once a carbon tax passes,
- * everyone sees a badge saying so for the rest of the session (#1014).
+ * clock badge while the price-setting window is open.
  */
 
 import { Link, useLocation } from "@tanstack/react-router";
@@ -22,7 +21,6 @@ import {
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { CarbonTaxBadge } from "@/components/workshop/carbon-tax-vote";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { RecapButton } from "@/components/workshop/recap-view";
 import {
@@ -71,9 +69,6 @@ export function WorkshopTopBar({
                 <span className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
                     {checkpointLabel(checkpoint)}
                 </span>
-            )}
-            {session && (
-                <CarbonTaxBadge passedInRound={session.carbon_tax_since} />
             )}
             <PhaseCountdown isFacilitator={isFacilitator} />
             <div className="ml-auto flex items-center gap-3">

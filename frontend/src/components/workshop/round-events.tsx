@@ -6,8 +6,9 @@
  * tiles graded by severity. Clicking a tile plans it, in place of the
  * category's earlier pick for the slot, and clicking it again drops it. A
  * checkmark marks the pick, and a star the severity the session's CO₂ so far
- * suggests for a climate event. The facilitator never sees a headline, so the
- * Recap surprises them too.
+ * suggests for a climate event. Each tile states what the event does at each
+ * severity in plain numbers (#1253). The facilitator never sees a headline, so
+ * the Recap surprises them too.
  *
  * Round 1 holds no events. A locked Round lists what was planned, and which
  * events fired and which a blackout skipped.
@@ -268,6 +269,7 @@ function EventTile({
                     {event.direction === "negative" ? "▼" : "▲"}
                 </span>
             </span>
+            <EventSummaries event={event} />
             <span className="flex flex-wrap gap-1">
                 {choices.map((choice) => (
                     <Button
@@ -304,6 +306,33 @@ function EventTile({
     );
 }
 
+/**
+ * What the event does: one line for an event with a single severity, or one per
+ * severity, mildest first.
+ */
+function EventSummaries({ event }: { event: WorkshopEvent }) {
+    const [only, ...others] = event.severities;
+    if (only !== undefined && others.length === 0) {
+        return (
+            <TypographyMuted className="text-xs">
+                {event.summaries[only]}
+            </TypographyMuted>
+        );
+    }
+    return (
+        <ul className="space-y-0.5 text-xs text-muted-foreground">
+            {event.severities.map((severity) => (
+                <li key={severity}>
+                    <span className="font-medium">
+                        {SEVERITY_LABELS[severity]}:
+                    </span>{" "}
+                    {event.summaries[severity]}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 function LockedEvents({ plan }: { plan: RoundPlan }) {
     if (plan.events.length === 0) {
         return (
@@ -330,6 +359,12 @@ function LockedEvents({ plan }: { plan: RoundPlan }) {
                             ` (${SEVERITY_LABELS[event.severity].toLowerCase()})`}
                         {event.fuel && ` on ${FUEL_NAMES[event.fuel]}`}
                     </span>
+                    {/* A skipped event never took effect. */}
+                    {event.summary && event.status !== "skipped" && (
+                        <span className="text-xs text-muted-foreground">
+                            {event.summary}
+                        </span>
+                    )}
                     <span
                         className={cn(
                             "text-xs",

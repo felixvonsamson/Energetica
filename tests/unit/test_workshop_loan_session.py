@@ -23,6 +23,7 @@ from energetica.workshop.session import (
     InvestmentClosedError,
     LoanFinalError,
     LoanLastRoundError,
+    LoanNeededError,
     LoanTakenError,
     NoLoanError,
     NotEnoughMoneyError,
@@ -180,7 +181,7 @@ def test_cancelling_is_refused_if_the_selection_needs_the_loan(path: Path, clock
     # A reactor costs more than the starting budget.
     session.select(1, FacilityId.NUCLEAR_REACTOR)
 
-    with pytest.raises(NotEnoughMoneyError):
+    with pytest.raises(LoanNeededError):
         session.cancel_loan(1)
     assert _alice(session).loan == Loan(round=1)
 

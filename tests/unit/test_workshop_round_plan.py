@@ -13,6 +13,7 @@ from energetica.workshop.round_plan import (
     RoundLevers,
     RoundPlan,
     event_status,
+    planned_effect_line,
     plans_from,
     with_event,
     with_levers,
@@ -210,3 +211,24 @@ def test_an_event_planned_for_a_season_a_blackout_skipped_is_skipped() -> None:
     assert event_status(summer, 2, fired=[], blackout="summer") == "planned"
     assert event_status(spring, 2, fired=[_fired(spring, 2)], blackout="spring") == "fired"
     assert event_status(shift, 2, fired=[], blackout="spring") == "planned"
+
+
+def test_a_planned_event_states_its_effect_as_the_recap_will() -> None:
+    planned = PlannedEvent(event="climate.heatwave", severity="major", season="summer")
+    assert planned_effect_line(planned, 3, fired=[]) == "Demand +18% for the summer"
+    shift = PlannedEvent(event="demand.recession", severity="base")
+    assert planned_effect_line(shift, 3, fired=[]) == "Demand −10% from Round 3 on"
+
+
+def test_a_fired_event_states_the_effect_it_applied_not_the_catalogs() -> None:
+    planned = PlannedEvent(event="climate.heatwave", severity="major", season="summer")
+    fired = FiredEvent.of(planned, round_number=3, season="summer").model_copy(update={"magnitude": 1.25})
+    assert planned_effect_line(planned, 3, fired=[fired]) == "Demand +25% for the summer"
+    # It still has one once the catalog no longer allows it.
+    gone = PlannedEvent(event="climate.gone", severity="major", season="summer")
+    assert planned_effect_line(gone, 3, fired=[fired.model_copy(update={"event": "climate.gone"})])
+
+
+def test_a_planned_event_the_catalog_no_longer_allows_states_no_effect() -> None:
+    planned = PlannedEvent(event="climate.gone", severity="major", season="summer")
+    assert planned_effect_line(planned, 3, fired=[]) is None
