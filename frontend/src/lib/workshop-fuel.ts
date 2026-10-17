@@ -88,3 +88,16 @@ export function isOverStockpile(
 ): boolean {
     return kg > 0 && kg > line.stockpile_limit - line.stock;
 }
+
+/**
+ * What an order of `kg` costs, in coins: the quantity the server keeps once it
+ * cuts the order down to the stockpile limit, at the season's price. This is
+ * what the player pays when the Trading period is settled.
+ */
+export function orderCost(
+    kg: number,
+    line: Pick<FuelLine, "price" | "stock" | "stockpile_limit">,
+): number {
+    const room = Math.max(0, line.stockpile_limit - line.stock);
+    return Math.min(kg, room) * line.price;
+}
