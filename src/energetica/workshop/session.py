@@ -377,6 +377,12 @@ class LoanFinalError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_LOAN_FINAL
 
 
+class LoanNeededError(WorkshopError):
+    """Raised when cancelling the loan while the player's selection costs more than their cash without it (#1247)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LOAN_NEEDED
+
+
 class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
@@ -976,7 +982,7 @@ class WorkshopSession:
                 raise LoanFinalError("the loan was taken in an earlier Investment phase")
             money = player.money - LOAN_AMOUNT
             if player.selection_cost(self.facility_prices()) > money:
-                raise NotEnoughMoneyError("the selection would cost more than the player has without the loan")
+                raise LoanNeededError("the selection would cost more than the player has without the loan")
             self._set_loan(player, None, money)
 
     def _set_loan(self, player: WorkshopPlayer, loan: Loan | None, money: float) -> None:

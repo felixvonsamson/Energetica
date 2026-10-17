@@ -120,6 +120,9 @@ class WorkshopFacilityOut(WorkshopFacility):
         "longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown"
     )
     price: float = Field(description="What it costs in the current Round: base_price, moved by any price shock")
+    fuel_use: float | None = Field(
+        description="The fuel it burns per MWh it generates, in kg, or null for a facility that burns no fuel"
+    )
 
 
 class WorkshopSelectionIn(BaseModel):
