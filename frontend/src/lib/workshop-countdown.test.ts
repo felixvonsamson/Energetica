@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     formatCountdown,
+    isFinalMinute,
     phaseDeadline,
     phaseLabel,
 } from "./workshop-countdown";
@@ -44,5 +45,24 @@ describe("phaseDeadline", () => {
         expect(phaseDeadline({ remaining_seconds: 90.5 }, 1_000_000)).toBe(
             1_090_500,
         );
+    });
+});
+
+describe("isFinalMinute", () => {
+    it("is on once the countdown shows under a minute", () => {
+        expect(isFinalMinute(59_000)).toBe(true);
+        expect(isFinalMinute(1_000)).toBe(true);
+    });
+
+    it("is off while the countdown still shows a minute or more", () => {
+        expect(isFinalMinute(60_000)).toBe(false);
+        // Shown as 1:00, since a part-second rounds up.
+        expect(isFinalMinute(59_100)).toBe(false);
+        expect(isFinalMinute(480_000)).toBe(false);
+    });
+
+    it("is off once the time is up", () => {
+        expect(isFinalMinute(0)).toBe(false);
+        expect(isFinalMinute(-5_000)).toBe(false);
     });
 });

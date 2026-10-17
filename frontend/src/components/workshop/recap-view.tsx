@@ -77,9 +77,15 @@ export function RecapButton({ round }: { round: number }) {
 
     return (
         <>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+            <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Recap"
+                onClick={() => setOpen(true)}
+            >
                 <Newspaper className="size-4" />
-                Recap
+                {/* On a phone, the icon alone, so the top bar fits. */}
+                <span className="hidden md:inline">Recap</span>
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="flex h-[92vh] max-h-[92vh] w-[96vw] max-w-[96vw] flex-col sm:max-w-[96vw] md:max-w-[96vw] xl:max-w-[96vw]">
