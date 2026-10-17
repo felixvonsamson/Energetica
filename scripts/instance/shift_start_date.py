@@ -33,7 +33,8 @@ only works on Linux, and only when run as the same user as the service — e.g. 
 ``sudo -u energetica``, matching ``docs/backend/incident-recovery.md``); pass ``--force`` to
 override.
 
-Usage:
+Usage (run from the instance directory, e.g. /var/www/energetica-<slug>, where
+deploy-instance.sh puts this file at scripts/shift_start_date.py):
     python scripts/shift_start_date.py --pickle instance/engine_data.pck --days <N> [--dry-run]
     python scripts/shift_start_date.py --pickle instance/engine_data.pck --ticks <N> [--dry-run]
 

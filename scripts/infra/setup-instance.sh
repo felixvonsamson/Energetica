@@ -280,8 +280,12 @@ else
     # facilitator surface persists private-access changes here (#1019). Once the directory is
     # sticky, ownership is what permits that rename, so this is the permissions finally saying
     # out loud what was already true. install_rendered sets the 0640 with it: group (deploy,
-    # www-data) reads, root still edits by hand since root bypasses the mode, and
-    # instance_config.py re-asserts the same mode on every write it makes.
+    # www-data) reads, and instance_config.py re-asserts the same mode on every write it makes.
+    # Root does NOT edit it in place once the directory is 1770: fs.protected_regular=2 refuses
+    # root an O_CREAT open of an existing file another user owns in a sticky group-writable
+    # directory, so hand edits write as energetica (`runuser -u energetica -- tee`). The renames
+    # and chowns in this script are unaffected: that setting only governs opens, and the
+    # directory is 0700 (not sticky) while they run anyway.
     #
     # An admin who edits this file with an editor that saves by rename (vim's default
     # backupcopy, emacs) leaves it owned by whoever ran the editor, and the service can then no
