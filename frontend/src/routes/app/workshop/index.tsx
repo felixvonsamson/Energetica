@@ -39,15 +39,15 @@ function WorkshopHome() {
     }
     const page = homePage(session.checkpoint, entry.role);
     if (page) return <Navigate {...page} replace />;
+    const isPlayer = entry.role === "player";
     return (
         <div className="space-y-6">
             <WorkshopPlaceholder title="Welcome to the Workshop">
                 The session has not started yet. Round 1 opens when the
                 facilitator starts it.
-                {entry.role === "player" &&
-                    " Until then, here is how to get around."}
+                {isPlayer && " Until then, here is how to get around."}
             </WorkshopPlaceholder>
-            {entry.role === "player" && <WelcomeGuide />}
+            {isPlayer && <WelcomeGuide />}
         </div>
     );
 }

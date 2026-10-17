@@ -56,7 +56,7 @@ export function WelcomeGuide() {
                     <>
                         {/* A Round in its summer trading. On a phone it is
                             shrunk to fit, since the picture cannot scroll. */}
-                        <div className="max-w-full overflow-hidden rounded-lg border border-border-brand max-sm:[zoom:0.8]">
+                        <div className="max-w-full overflow-hidden rounded-lg border border-border-brand max-sm:[zoom:0.8] [&>nav]:border-b-0">
                             <WorkshopTimeline
                                 checkpoint={{
                                     kind: "trading_period",
@@ -76,9 +76,10 @@ export function WelcomeGuide() {
             >
                 The navigation bar under the top bar shows each Round and its
                 seasons. Click a Round or a season to see what happened in it,
-                and Scores to see the scoreboard. On a Round&apos;s pages, the
-                switch moves between a season&apos;s charts and the Round&apos;s
-                balance sheet.
+                and Scores to see the scoreboard. The season the session is in
+                is shaded, and the one you are looking at is filled in dark
+                green. On a Round&apos;s pages, the switch moves between a
+                season&apos;s charts and the Round&apos;s balance sheet.
             </GuideStep>
             <GuideStep
                 number={4}
@@ -131,7 +132,7 @@ function GuideStep({
 /** A strip styled like the top bar, so a control looks as it does there. */
 function TopBarPreview({ children }: { children: ReactNode }) {
     return (
-        <div className="flex h-(--topbar-height) items-center rounded-lg border border-border-brand bg-topbar px-6">
+        <div className="flex h-(--topbar-height) items-center rounded-lg border border-border-brand bg-topbar px-4">
             {children}
         </div>
     );
