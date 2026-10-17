@@ -39,7 +39,7 @@ from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.recap import WorkshopRecap
-from energetica.workshop.round_plan import LeverChanges, PlannedEvent
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
     WorkshopBallotIn,
     WorkshopEntryOut,
@@ -287,6 +287,7 @@ def _plans_out(session: WorkshopSession) -> WorkshopPlansOut:
                         severity=planned.severity,
                         fuel=planned.fuel,
                         season=planned.season,
+                        summary=planned_effect_line(planned, round_number, fired=view.fired),
                         status=status,
                     )
                     for planned, status in statuses

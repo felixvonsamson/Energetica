@@ -15,6 +15,7 @@ from energetica.workshop.events import (
     EventCategory,
     Severity,
     WorkshopEvent,
+    effect_summary,
 )
 from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
@@ -336,6 +337,11 @@ class WorkshopEventOut(BaseModel):
         description="For a climate event, the severity the session's CO₂ so far suggests. Null for any other"
     )
     fuel_chosen: bool = Field(description="Whether the facilitator picks the fuel it moves")
+    summaries: dict[Severity, str] = Field(
+        description="What it does at each of its severities, in one short line of plain numbers, such as "
+        '"Demand +18% this season". It speaks of the Round and season it is planned for as "this Round" and "this '
+        'season"'
+    )
 
     @classmethod
     def from_event(cls, event: WorkshopEvent, suggested_severity: Severity | None) -> WorkshopEventOut:
@@ -349,6 +355,7 @@ class WorkshopEventOut(BaseModel):
             severities=list(event.severities),
             suggested_severity=suggested_severity,
             fuel_chosen=event.fuel_chosen,
+            summaries={severity: effect_summary(event, severity) for severity in event.severities},
         )
 
 
@@ -379,6 +386,10 @@ class WorkshopPlannedEventOut(BaseModel):
     severity: Severity
     fuel: Fuel | None = Field(description="The fuel the facilitator picked for it, if it takes one")
     season: Season | None = Field(description="The season it fires at, or null if it fires with the Round")
+    summary: str | None = Field(
+        description='What it does, in one short line of plain numbers, such as "Demand +18% for the summer". '
+        "Null if the catalog no longer allows the pick"
+    )
     status: EventStatus = Field(
         description="planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season"
     )

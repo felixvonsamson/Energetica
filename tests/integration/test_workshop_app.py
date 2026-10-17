@@ -1691,6 +1691,11 @@ def test_the_facilitator_lists_the_events_without_their_headlines(session_path: 
         "severities": ["moderate", "major", "catastrophic"],
         "suggested_severity": "moderate",
         "fuel_chosen": False,
+        "summaries": {
+            "moderate": "3% of every player's sales lost this season",
+            "major": "7% of every player's sales lost this season",
+            "catastrophic": "15% of every player's sales lost this season",
+        },
     }
     assert "substation" not in json.dumps(body)
     assert (body["fired"], body["emissions"]) == ([], 0.0)
@@ -1737,7 +1742,12 @@ def test_the_facilitator_plans_and_drops_an_event(session_path: Path) -> None:
     planned = client.put(PLANNED_EVENTS_URL.format(round=2), json=shock)
     assert planned.status_code == 200
     assert planned.json()["rounds"][1]["events"] == [
-        {**shock, "name": "Diplomatic resolution ends a regional conflict", "status": "planned"}
+        {
+            **shock,
+            "name": "Diplomatic resolution ends a regional conflict",
+            "summary": "Coal costs 15% less in summer, then eases back",
+            "status": "planned",
+        }
     ]
 
     # Without a season, it names the Round-wide event, which is not planned.

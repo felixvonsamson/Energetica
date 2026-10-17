@@ -5957,6 +5957,13 @@ export interface components {
              * @description Whether the facilitator picks the fuel it moves
              */
             fuel_chosen: boolean;
+            /**
+             * Summaries
+             * @description What it does at each of its severities, in one short line of plain numbers, such as "Demand +18% this season". It speaks of the Round and season it is planned for as "this Round" and "this season"
+             */
+            summaries: {
+                [key: string]: string;
+            };
         };
         /**
          * WorkshopEventsOut
@@ -6433,6 +6440,11 @@ export interface components {
              * @description The season it fires at, or null if it fires with the Round
              */
             season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
+             * Summary
+             * @description What it does, in one short line of plain numbers, such as "Demand +18% for the summer". Null if the catalog no longer allows the pick
+             */
+            summary: string | null;
             /**
              * Status
              * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
