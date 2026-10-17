@@ -64,13 +64,26 @@ class Api:
     def __init__(self, username: str, password: str | None = None):
         self.username = username
         self.client = httpx.Client(base_url=APP_URL, timeout=60)
-        login = self.client.post(
+        login = self.request(
+            "POST",
             f"{LOBBY_URL}/auth/login",
             json={"username": username, "password": password if password is not None else password_for(username)},
         )
         if login.status_code >= 400:
             raise LoginError(f"the lobby refused the login of {username}: {login.status_code} {login.text[:200]}")
-        self.entry: dict[str, Any] = self.client.post("/workshop/enter").json()
+        self.entry: dict[str, Any] = self.request("POST", "/workshop/enter").json()
+
+    def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
+        """Send a request, and send it once more if the connection dropped before any response came back.
+
+        A deployed server's Apache closes an idle keep-alive connection after a few seconds, and any connection after
+        100 requests. httpx can reuse a connection just as Apache closes it, and the request then never reaches the
+        backend, so sending it again is safe.
+        """
+        try:
+            return self.client.request(method, url, **kwargs)
+        except (httpx.RemoteProtocolError, httpx.ConnectError, httpx.ReadError):
+            return self.client.request(method, url, **kwargs)
 
     @property
     def account_id(self) -> int | None:
@@ -78,13 +91,13 @@ class Api:
         return player["account_id"] if player else None
 
     def get(self, path: str) -> Any:
-        response = self.client.get("/workshop" + path)
+        response = self.request("GET", "/workshop" + path)
         if response.status_code >= 400:
             raise ApiError(f"GET {path}: {response.status_code} {response.text[:200]}")
         return response.json()
 
     def send(self, method: str, path: str, body: Any = None) -> Any:
-        response = self.client.request(method, "/workshop" + path, json=body)
+        response = self.request(method, "/workshop" + path, json=body)
         if response.status_code >= 400:
             raise ApiError(f"{method} {path}: {response.status_code} {response.text[:200]}")
         return response.json()
@@ -114,7 +127,7 @@ class Facilitator(Api):
 
     def advance(self) -> dict[str, Any] | None:
         """Advance once. None if the session refused, which it does while a period is being simulated."""
-        response = self.client.post("/workshop/session/advance")
+        response = self.request("POST", "/workshop/session/advance")
         return response.json() if response.status_code < 400 else None
 
     def advance_to_next_checkpoint(self, timeout: float = 600) -> dict[str, Any]:

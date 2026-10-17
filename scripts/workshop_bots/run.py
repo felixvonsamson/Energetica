@@ -214,7 +214,7 @@ def balance_summary(bots: list[Bot], round_count: int) -> None:
 def scoreboard(api: Api) -> None:
     """The final scores and what they are made of, in millions."""
     log("player     score = operating profit - investments - carbon tax + residual value")
-    for score in api.get("/scoreboard"):
+    for score in api.get("/scoreboard")["scores"]:
         parts = (
             score[key] / 1e6 for key in ("score", "operating_profit", "investments", "carbon_tax", "residual_value")
         )
