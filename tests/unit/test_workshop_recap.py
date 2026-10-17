@@ -167,6 +167,27 @@ def test_the_last_round_has_no_year_ahead() -> None:
     assert _recap(2).year_ahead is not None
 
 
+def _procurement_plans(*procurements: str) -> list[RoundPlan]:
+    return [RoundPlan(levers=RoundLevers(fuel_procurement=procurement)) for procurement in procurements]
+
+
+def test_the_year_ahead_says_when_fuel_procurement_turns_manual() -> None:
+    plans = _procurement_plans("automatic", "manual", "manual")
+    turns = _recap(1, plans=plans).year_ahead
+    stays = _recap(2, plans=plans).year_ahead
+    assert turns is not None and stays is not None
+    assert turns.manual_fuel_procurement_starts
+    assert not stays.manual_fuel_procurement_starts
+
+
+def test_the_year_ahead_says_nothing_of_fuel_while_procurement_stays_automatic() -> None:
+    plans = _procurement_plans("manual", "automatic", "automatic")
+    for round_number in (1, 2):
+        year_ahead = _recap(round_number, plans=plans).year_ahead
+        assert year_ahead is not None
+        assert not year_ahead.manual_fuel_procurement_starts
+
+
 def test_the_year_ahead_announces_what_unlocks_next_round() -> None:
     unlocks = [
         Unlock(facility=FacilityId.OFFSHORE_WIND_TURBINE, round=2, trigger="investment_threshold"),
