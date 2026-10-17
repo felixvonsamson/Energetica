@@ -4,14 +4,17 @@ import type { ApiSchema } from "@/types/api-helpers";
 
 import {
     advanceAction,
+    type Checkpoint,
     checkpointLabel,
     checkpointPage,
     homePage,
     isSeason,
     latestRecapRound,
+    latestSeason,
     scoreboardStatus,
     type SeasonStatus,
     type TimelineRound,
+    type TradingPeriod,
     workshopTimeline,
 } from "./workshop-timeline";
 
@@ -198,9 +201,49 @@ describe("homePage", () => {
 });
 
 describe("scoreboardStatus", () => {
-    it("is future until the session is finished, and current once it is", () => {
-        expect(scoreboardStatus({ kind: "recap", round: 3 })).toBe("future");
+    it("is open all game, and current once the session is finished", () => {
+        expect(scoreboardStatus({ kind: "not_started" })).toBe("past");
+        expect(scoreboardStatus({ kind: "recap", round: 3 })).toBe("past");
         expect(scoreboardStatus({ kind: "finished" })).toBe("current");
+    });
+});
+
+describe("latestSeason", () => {
+    function round(
+        checkpoint: Checkpoint,
+        blackouts: TradingPeriod[] = [],
+    ): TimelineRound {
+        const [first] = workshopTimeline(checkpoint, 2, blackouts);
+        if (!first) throw new Error("the session has no Round 1");
+        return first;
+    }
+
+    it("is the Trading period the session is in during the Round", () => {
+        expect(
+            latestSeason(
+                round({ kind: "trading_period", round: 1, season: "autumn" }),
+            ),
+        ).toBe("autumn");
+    });
+
+    it("is null while no Trading period of the Round has been reached", () => {
+        expect(latestSeason(round({ kind: "investment", round: 1 }))).toBe(
+            null,
+        );
+    });
+
+    it("is winter once the Round is over", () => {
+        expect(latestSeason(round({ kind: "recap", round: 1 }))).toBe("winter");
+    });
+
+    it("is the season of the blackout in a Round that ended early", () => {
+        expect(
+            latestSeason(
+                round({ kind: "recap", round: 1 }, [
+                    { kind: "trading_period", round: 1, season: "summer" },
+                ]),
+            ),
+        ).toBe("summer");
     });
 });
 
