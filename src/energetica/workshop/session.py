@@ -63,7 +63,7 @@ Each player can take one loan per session in an Investment phase, and cancel it 
 :mod:`~energetica.workshop.loan`). Its payments are taken as the Rounds after it start, and any still owed when the
 session finishes.
 
-The session ranks the players by their score all game (#1017, #1250, :mod:`~energetica.workshop.final_score`). It
+The session ranks the players by their score all game (#1017, #1250, :mod:`~energetica.workshop.score`). It
 counts the Rounds completed so far, so it changes as each Recap opens, and is final once the session is
 :class:`Finished`.
 """
@@ -94,7 +94,6 @@ from energetica.workshop.events import (
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
-from energetica.workshop.final_score import FinalScore, scoreboard
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
     FuelPrice,
@@ -128,6 +127,7 @@ from energetica.workshop.round_plan import (
     with_levers,
     without_event,
 )
+from energetica.workshop.score import Scoreboard, ranked
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
@@ -1347,13 +1347,17 @@ class WorkshopSession:
                 demand_growth=self.demand_growth.get(round_number + 1, 1.0),
             )
 
-    def scoreboard(self) -> list[FinalScore]:
+    def scoreboard(self) -> Scoreboard:
         """Every player's score after the Rounds completed so far, highest first (#1017, #1250). Final once the
         session is :class:`Finished`.
         """
         with self._lock:
             completed = completed_rounds(self.checkpoint, round_count=self.round_count)
-            return scoreboard(self.network.players(), completed_rounds=completed)
+            return Scoreboard(
+                completed_rounds=completed,
+                final=isinstance(self.checkpoint, Finished),
+                scores=ranked(self.network.players(), completed_rounds=completed),
+            )
 
     def plans_view(self) -> PlansView:
         """Every Round's plan, which are locked, and what became of each planned event, read in one step so its parts

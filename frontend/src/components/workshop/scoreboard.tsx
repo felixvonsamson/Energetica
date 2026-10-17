@@ -2,7 +2,9 @@
  * The scoreboard (#1017, #1222): every player ranked by score. It is open all
  * game (#1250) and counts the Rounds completed so far, so it changes as each
  * Recap opens, and the page follows without a reload because the scores are
- * cached under the session. Once the session is over, the scores are final.
+ * cached under the session. Once the session is over, the scores are final. The
+ * title says which Round the scores count up to, from the same response as the
+ * scores.
  *
  * Each row shows what the score adds up from: operating profit, minus what the
  * player paid for facilities and any loan (#1225) and in carbon tax, plus the
@@ -18,13 +20,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Money } from "@/components/ui/money";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
-import {
-    useWorkshopEntry,
-    useWorkshopScoreboard,
-    useWorkshopSession,
-} from "@/hooks/use-workshop";
+import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import { cn } from "@/lib/utils";
-import { latestRecapRound } from "@/lib/workshop-timeline";
+import type { ApiSchema } from "@/types/api-helpers";
 
 const COLUMNS = [
     { key: "operating_profit", label: "Operating profit", sign: 1 },
@@ -36,7 +34,6 @@ const COLUMNS = [
 export function Scoreboard() {
     const scoreboard = useWorkshopScoreboard();
     const { data: entry } = useWorkshopEntry();
-    const { data: session } = useWorkshopSession();
     const me = entry?.player?.account_id;
 
     if (scoreboard.isError) {
@@ -58,9 +55,9 @@ export function Scoreboard() {
             <div className="flex flex-col gap-1">
                 <TypographyH1 className="flex items-center gap-3">
                     <Trophy className="size-8 text-brand" />
-                    {session ? scoresTitle(session) : "Scores"}
+                    {scoresTitle(scoreboard.data)}
                 </TypographyH1>
-                {session && !session.next_checkpoint ? null : (
+                {scoreboard.data.final ? null : (
                     <TypographyMuted>
                         The scores count every Round completed so far, and
                         change as each Round&apos;s Recap opens.
@@ -91,7 +88,7 @@ export function Scoreboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {scoreboard.data.map((row, index) => (
+                        {scoreboard.data.scores.map((row, index) => (
                             <tr
                                 key={row.account_id}
                                 className={cn(
@@ -136,12 +133,10 @@ export function Scoreboard() {
     );
 }
 
-type Session = NonNullable<ReturnType<typeof useWorkshopSession>["data"]>;
-
-function scoresTitle(session: Session): string {
-    if (session.checkpoint.kind === "finished") return "Final scores";
-    const completed = latestRecapRound(session.checkpoint, session.round_count);
-    return completed === null ? "Scores" : `Scores after Round ${completed}`;
+function scoresTitle(scoreboard: ApiSchema<"Scoreboard">): string {
+    if (scoreboard.final) return "Final scores";
+    if (scoreboard.completed_rounds === 0) return "Scores";
+    return `Scores after Round ${scoreboard.completed_rounds}`;
 }
 
 const TERMS = [

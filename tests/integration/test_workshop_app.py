@@ -1832,7 +1832,9 @@ def test_everyone_reads_the_scoreboard_all_game(session_path: Path) -> None:
     # Before any Round is completed, nobody has scored anything yet.
     early = client.get(SCOREBOARD_URL)
     assert early.status_code == 200
-    assert [row["score"] for row in early.json()] == [0.0, 0.0]
+    assert early.json()["completed_rounds"] == 0
+    assert early.json()["final"] is False
+    assert [row["score"] for row in early.json()["scores"]] == [0.0, 0.0]
 
     facilitator = _facilitator(client)
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
@@ -1850,7 +1852,8 @@ def test_everyone_reads_the_scoreboard_all_game(session_path: Path) -> None:
 
     assert player_view.status_code == 200
     assert player_view.json() == facilitator_view.json()
-    board = player_view.json()
+    assert player_view.json()["final"] is True
+    board = player_view.json()["scores"]
     assert [(row["username"], row["investments"]) for row in board] == [("bob", 100_000.0), ("alice", 400_000.0)]
     assert all(
         row["score"]

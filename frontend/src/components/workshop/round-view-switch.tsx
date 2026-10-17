@@ -52,7 +52,11 @@ export function RoundViewSwitch({
     }
 
     return (
-        <SegmentedPicker value={view} onValueChange={onValueChange}>
+        <SegmentedPicker
+            value={view}
+            onValueChange={onValueChange}
+            activationMode="manual"
+        >
             <SegmentedPickerOption value="charts" disabled={!season}>
                 Charts
             </SegmentedPickerOption>

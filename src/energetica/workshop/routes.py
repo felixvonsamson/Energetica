@@ -29,7 +29,6 @@ from energetica.identity.web import get_facilitator, get_role, resolve_entry_acc
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
-from energetica.workshop.final_score import FinalScore
 from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
@@ -73,6 +72,7 @@ from energetica.workshop.schemas import (
     WorkshopUnlocksOut,
     WorkshopVoteOut,
 )
+from energetica.workshop.score import Scoreboard
 from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import (
     Investment,
@@ -617,7 +617,7 @@ def get_recap(
 
 
 @router.get("/scoreboard")
-def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> list[FinalScore]:
+def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> Scoreboard:
     """Every player's score after the Rounds completed so far, highest first, with what it adds up from. The same
     for everyone in the Run. Final once the session is over.
     """

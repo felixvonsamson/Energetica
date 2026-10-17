@@ -683,9 +683,9 @@ export function useWorkshopRecap(round: number) {
 }
 
 /**
- * Every player's final score, highest first (#1017). Refused until the session
- * is over, and read again whenever the session changes, so it appears as soon
- * as it ends.
+ * Every player's score after the Rounds completed so far, highest first (#1017,
+ * #1250). Read again whenever the session changes, so it follows each Recap as
+ * it opens.
  */
 export function useWorkshopScoreboard() {
     return useQuery({

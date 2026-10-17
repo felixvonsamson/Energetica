@@ -895,42 +895,6 @@ export interface components {
          */
         FacilityId: "onshore_wind_turbine" | "offshore_wind_turbine" | "coal_burner" | "modern_coal_plant" | "gas_burner" | "combined_cycle" | "small_water_dam" | "large_water_dam" | "nuclear_reactor" | "nuclear_reactor_gen4" | "pv_solar" | "multi_layer_pv" | "csp_solar" | "lithium_ion_batteries" | "solid_state_batteries" | "hydrogen_storage" | "pumped_hydro";
         /**
-         * FinalScore
-         * @description One player's score after the Rounds completed so far, and what it adds up from. Final once the session is
-         *     over.
-         */
-        FinalScore: {
-            /** Account Id */
-            account_id: number;
-            /** Username */
-            username: string;
-            /**
-             * Operating Profit
-             * @description Operating profit over the Rounds completed so far
-             */
-            operating_profit: number;
-            /**
-             * Investments
-             * @description What the player paid for every facility they bought, plus the cost of their loan if they took one
-             */
-            investments: number;
-            /**
-             * Carbon Tax
-             * @description The carbon tax the player paid, less their shared payback
-             */
-            carbon_tax: number;
-            /**
-             * Residual Value
-             * @description What the facilities they still own are worth
-             */
-            residual_value: number;
-            /**
-             * Score
-             * @description operating_profit - investments - carbon_tax + residual_value
-             */
-            score: number;
-        };
-        /**
          * FinancingLine
          * @description The loan coming in, or one of its payments going out (#1225).
          */
@@ -1522,6 +1486,59 @@ export interface components {
              * @enum {string}
              */
             mode: "freeplay" | "workshop";
+        };
+        /**
+         * Score
+         * @description One player's score after the Rounds completed so far, and what it adds up from.
+         */
+        Score: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
+            /**
+             * Operating Profit
+             * @description Operating profit over the Rounds completed so far
+             */
+            operating_profit: number;
+            /**
+             * Investments
+             * @description What the player paid for every facility they bought, plus the cost of their loan if they took one
+             */
+            investments: number;
+            /**
+             * Carbon Tax
+             * @description The carbon tax the player paid, less their shared payback
+             */
+            carbon_tax: number;
+            /**
+             * Residual Value
+             * @description What the facilities they still own are worth
+             */
+            residual_value: number;
+            /**
+             * Score
+             * @description operating_profit - investments - carbon_tax + residual_value
+             */
+            score: number;
+        };
+        /**
+         * Scoreboard
+         * @description Every player's score after the Rounds completed so far, highest first.
+         */
+        Scoreboard: {
+            /**
+             * Completed Rounds
+             * @description How many Rounds the scores count
+             */
+            completed_rounds: number;
+            /**
+             * Final
+             * @description Whether the session is over, so the scores are final
+             */
+            final: boolean;
+            /** Scores */
+            scores: components["schemas"]["Score"][];
         };
         /**
          * SeasonSheet
@@ -3514,7 +3531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FinalScore"][];
+                    "application/json": components["schemas"]["Scoreboard"];
                 };
             };
         };

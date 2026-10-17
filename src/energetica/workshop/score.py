@@ -41,10 +41,8 @@ from energetica.workshop.operating_profit import session_operating_profit
 from energetica.workshop.player import WorkshopPlayer
 
 
-class FinalScore(BaseModel):
-    """One player's score after the Rounds completed so far, and what it adds up from. Final once the session is
-    over.
-    """
+class Score(BaseModel):
+    """One player's score after the Rounds completed so far, and what it adds up from."""
 
     account_id: int
     username: str
@@ -64,7 +62,7 @@ def residual_value(owned: OwnedFacility, *, completed_rounds: int) -> float:
     return facility.base_price * left.rounds / facility.lifetime_rounds
 
 
-def final_score(player: WorkshopPlayer, *, completed_rounds: int) -> FinalScore:
+def score(player: WorkshopPlayer, *, completed_rounds: int) -> Score:
     """``player``'s score once ``completed_rounds`` Rounds are completed. Anything from a later Round is left out."""
     results = [result for result in player.trading_results if result.round <= completed_rounds]
     operating_profit = session_operating_profit(results)
@@ -76,7 +74,7 @@ def final_score(player: WorkshopPlayer, *, completed_rounds: int) -> FinalScore:
         for owned in player.owned_facilities
         if owned.built_round <= completed_rounds
     )
-    return FinalScore(
+    return Score(
         account_id=player.account_id,
         username=player.username,
         operating_profit=operating_profit,
@@ -87,9 +85,17 @@ def final_score(player: WorkshopPlayer, *, completed_rounds: int) -> FinalScore:
     )
 
 
-def scoreboard(players: Iterable[WorkshopPlayer], *, completed_rounds: int) -> list[FinalScore]:
+class Scoreboard(BaseModel):
+    """Every player's score after the Rounds completed so far, highest first."""
+
+    completed_rounds: int = Field(ge=0, description="How many Rounds the scores count")
+    final: bool = Field(description="Whether the session is over, so the scores are final")
+    scores: list[Score]
+
+
+def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int) -> list[Score]:
     """Every player's score once ``completed_rounds`` Rounds are completed, highest first. Players on the same score
     keep the order they joined in.
     """
-    scores = [final_score(player, completed_rounds=completed_rounds) for player in players]
-    return sorted(scores, key=lambda score: score.score, reverse=True)
+    scores = [score(player, completed_rounds=completed_rounds) for player in players]
+    return sorted(scores, key=lambda player_score: player_score.score, reverse=True)
