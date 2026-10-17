@@ -7,6 +7,7 @@ import pytest
 from energetica.workshop.events import EVENTS, FiredEvent, Severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.recap import recap
 from energetica.workshop.round_plan import PlannedEvent, RoundLevers, RoundPlan
 from energetica.workshop.seasons import Season
@@ -167,7 +168,7 @@ def test_the_last_round_has_no_year_ahead() -> None:
     assert _recap(2).year_ahead is not None
 
 
-def _procurement_plans(*procurements: str) -> list[RoundPlan]:
+def _procurement_plans(*procurements: FuelProcurement) -> list[RoundPlan]:
     return [RoundPlan(levers=RoundLevers(fuel_procurement=procurement)) for procurement in procurements]
 
 
