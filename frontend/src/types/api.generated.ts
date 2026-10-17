@@ -5957,6 +5957,13 @@ export interface components {
              * @description Whether the facilitator picks the fuel it moves
              */
             fuel_chosen: boolean;
+            /**
+             * Summaries
+             * @description What it does at each of its severities, in one short line of plain numbers, such as "Demand +18% this season". It speaks of the Round and season it is planned for as "this Round" and "this season"
+             */
+            summaries: {
+                [key: string]: string;
+            };
         };
         /**
          * WorkshopEventsOut
@@ -6060,6 +6067,11 @@ export interface components {
              * @description What it costs in the current Round: base_price, moved by any price shock
              */
             price: number;
+            /**
+             * Fuel Use
+             * @description The fuel it burns per MWh it generates, in kg, or null for a facility that burns no fuel
+             */
+            fuel_use: number | null;
         };
         /**
          * WorkshopFiredEventOut
@@ -6429,6 +6441,11 @@ export interface components {
              */
             season: ("spring" | "summer" | "autumn" | "winter") | null;
             /**
+             * Summary
+             * @description What it does, in one short line of plain numbers, such as "Demand +18% for the summer". Null if the catalog no longer allows the pick
+             */
+            summary: string | null;
+            /**
              * Status
              * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
              * @enum {string}
@@ -6785,12 +6802,17 @@ export interface components {
             demand: components["schemas"]["DemandOutlook"] | null;
             /** @description The vote the Round holds, or null if it holds none */
             carbon_tax_vote: components["schemas"]["RecapVote"] | null;
+            /**
+             * Manual Fuel Procurement Starts
+             * @description Whether players start buying their own fuel in the Round, after a Round of automatic procurement
+             */
+            manual_fuel_procurement_starts: boolean;
         };
         /**
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
     };
     responses: never;
     parameters: never;

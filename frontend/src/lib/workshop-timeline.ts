@@ -193,6 +193,11 @@ export function checkpointPage(checkpoint: Checkpoint): WorkshopPage | null {
     }
 }
 
+/** The facility catalog and the player's fleet (#998). */
+export function facilitiesPage() {
+    return { to: "/app/workshop/facilities" } as const;
+}
+
 /** The facilitator's console (#1011, #1018). */
 export function consolePage() {
     return { to: "/app/workshop/console" } as const;

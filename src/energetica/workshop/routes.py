@@ -31,7 +31,7 @@ from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.final_score import FinalScore
-from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS
+from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -39,7 +39,7 @@ from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.recap import WorkshopRecap
-from energetica.workshop.round_plan import LeverChanges, PlannedEvent
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
     WorkshopBallotIn,
     WorkshopEntryOut,
@@ -287,6 +287,7 @@ def _plans_out(session: WorkshopSession) -> WorkshopPlansOut:
                         severity=planned.severity,
                         fuel=planned.fuel,
                         season=planned.season,
+                        summary=planned_effect_line(planned, round_number, fired=view.fired),
                         status=status,
                     )
                     for planned, status in statuses
@@ -373,7 +374,10 @@ def get_facilities(
     owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
     return [
         WorkshopFacilityOut(
-            **facility.model_dump(), for_sale=facility.id in for_sale, price=session.facility_price(facility.id)
+            **facility.model_dump(),
+            for_sale=facility.id in for_sale,
+            price=session.facility_price(facility.id),
+            fuel_use=FUEL_USE.get(facility.id),
         )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned

@@ -134,6 +134,9 @@ class YearAhead(BaseModel):
     )
     demand: DemandOutlook | None = Field(description="Null if the market never cleared this Round")
     carbon_tax_vote: RecapVote | None = Field(description="The vote the Round holds, or null if it holds none")
+    manual_fuel_procurement_starts: bool = Field(
+        description="Whether players start buying their own fuel in the Round, after a Round of automatic procurement"
+    )
 
 
 class WorkshopRecap(BaseModel):
@@ -242,6 +245,7 @@ def _unlock(unlock: Unlock) -> RecapUnlock:
 def _year_ahead(
     next_round: int,
     *,
+    previous_plan: RoundPlan,
     plan: RoundPlan,
     fired: Sequence[FiredEvent],
     unlocks: Sequence[Unlock],
@@ -275,6 +279,8 @@ def _year_ahead(
         carbon_tax_vote=RecapVote(tax_rate=CARBON_TAX_RATE)
         if vote_held(lever=plan.levers.carbon_tax_vote, round_number=next_round, outcomes=vote_outcomes)
         else None,
+        manual_fuel_procurement_starts=previous_plan.levers.fuel_procurement == "automatic"
+        and plan.levers.fuel_procurement == "manual",
     )
 
 
@@ -315,6 +321,7 @@ def recap(
         if round_number >= round_count
         else _year_ahead(
             round_number + 1,
+            previous_plan=plans[round_number - 1],
             plan=plans[round_number],
             fired=[event for event in fired if event.round <= round_number],
             unlocks=unlocks,

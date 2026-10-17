@@ -6,9 +6,8 @@
  * console (#1011) on every other page, and a button that opens the latest Recap
  * over the page (#1013). A player gets a link to the facility page (#998) and
  * the button that opens the price-setting panel (#1002), which shows a clock
- * badge while the price-setting window is open. Once a carbon tax passes,
- * everyone sees a badge saying so for the rest of the session (#1014). The
- * account menu leads back to the lobby and logs out (#1249).
+ * badge while the price-setting window is open. The account menu leads back to
+ * the lobby and logs out (#1249).
  *
  * On a phone, the buttons on the right show only their icons, and the theme
  * toggle moves into the account menu, so the bar fits without scrolling.
@@ -39,7 +38,6 @@ import {
 import { Money } from "@/components/ui/money";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { TypographyBrand } from "@/components/ui/typography";
-import { CarbonTaxBadge } from "@/components/workshop/carbon-tax-vote";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { RecapButton } from "@/components/workshop/recap-view";
 import {
@@ -98,9 +96,6 @@ export function WorkshopTopBar({
                     <span className="hidden shrink-0 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand lg:inline">
                         {checkpointLabel(checkpoint)}
                     </span>
-                )}
-                {session && (
-                    <CarbonTaxBadge passedInRound={session.carbon_tax_since} />
                 )}
                 <PhaseCountdown isFacilitator={isFacilitator} />
             </div>
