@@ -1,13 +1,15 @@
 /**
  * The Workshop home (#995): sends the visitor to the page for where the session
  * is now, or the facilitator to their console during an Investment phase.
- * Before the session starts there is no such page yet, so it says so.
+ * Before the session starts there is no such page yet, so it says so, and a
+ * player gets a short guide to getting around the game (#1254).
  */
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 import { InfoBanner } from "@/components/ui";
 import { Spinner } from "@/components/ui/spinner";
+import { WelcomeGuide } from "@/components/workshop/welcome-guide";
 import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { useWorkshopEntry, useWorkshopSession } from "@/hooks/use-workshop";
 import { homePage } from "@/lib/workshop-timeline";
@@ -38,9 +40,14 @@ function WorkshopHome() {
     const page = homePage(session.checkpoint, entry.role);
     if (page) return <Navigate {...page} replace />;
     return (
-        <WorkshopPlaceholder title="Welcome to the Workshop">
-            The session has not started yet. Round 1 opens when the facilitator
-            starts it.
-        </WorkshopPlaceholder>
+        <div className="space-y-6">
+            <WorkshopPlaceholder title="Welcome to the Workshop">
+                The session has not started yet. Round 1 opens when the
+                facilitator starts it.
+                {entry.role === "player" &&
+                    " Until then, here is how to get around."}
+            </WorkshopPlaceholder>
+            {entry.role === "player" && <WelcomeGuide />}
+        </div>
     );
 }

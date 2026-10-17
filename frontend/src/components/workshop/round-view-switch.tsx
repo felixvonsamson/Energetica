@@ -52,12 +52,31 @@ export function RoundViewSwitch({
     }
 
     return (
+        <RoundViewPicker
+            view={view}
+            chartsDisabled={!season}
+            onValueChange={onValueChange}
+        />
+    );
+}
+
+/** The switch itself, without the navigation behind it. */
+export function RoundViewPicker({
+    view,
+    chartsDisabled = false,
+    onValueChange,
+}: {
+    view: RoundView;
+    chartsDisabled?: boolean;
+    onValueChange: (next: RoundView) => void;
+}) {
+    return (
         <SegmentedPicker
             value={view}
             onValueChange={onValueChange}
             activationMode="manual"
         >
-            <SegmentedPickerOption value="charts" disabled={!season}>
+            <SegmentedPickerOption value="charts" disabled={chartsDisabled}>
                 Charts
             </SegmentedPickerOption>
             <SegmentedPickerOption value="balance_sheet">

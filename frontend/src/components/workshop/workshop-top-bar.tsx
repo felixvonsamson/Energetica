@@ -80,18 +80,7 @@ export function WorkshopTopBar({
     return (
         <header className="flex h-(--topbar-height) shrink-0 items-center gap-2 border-b border-border-brand bg-topbar px-4 md:gap-3">
             <div className="flex shrink-0 items-center gap-3">
-                <Link
-                    to="/app/workshop"
-                    className="flex shrink-0 items-center gap-1.5"
-                >
-                    <Logo className="size-8 fill-foreground" />
-                    <span className="hidden items-baseline gap-2 xl:flex">
-                        <TypographyBrand className="text-2xl">
-                            Energetica
-                        </TypographyBrand>
-                        <span className="font-titles text-lg">Workshop</span>
-                    </span>
-                </Link>
+                <HomeLink />
                 {checkpoint && (
                     <span className="hidden shrink-0 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand lg:inline">
                         {checkpointLabel(checkpoint)}
@@ -103,19 +92,7 @@ export function WorkshopTopBar({
                 {isPlayer && <Cash />}
             </div>
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
-                {isPlayer && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        aria-label="Facilities"
-                    >
-                        <Link to="/app/workshop/facilities">
-                            <Factory className="size-4" />
-                            <span className="hidden md:inline">Facilities</span>
-                        </Link>
-                    </Button>
-                )}
+                {isPlayer && <FacilitiesButton />}
                 {isPlayer && (
                     <PricesButton
                         panelOpen={pricePanelOpen}
@@ -152,6 +129,33 @@ export function WorkshopTopBar({
                 )}
             </div>
         </header>
+    );
+}
+
+/** The logo, which leads to the Workshop home. */
+export function HomeLink() {
+    return (
+        <Link to="/app/workshop" className="flex shrink-0 items-center gap-1.5">
+            <Logo className="size-8 fill-foreground" />
+            <span className="hidden items-baseline gap-2 xl:flex">
+                <TypographyBrand className="text-2xl">
+                    Energetica
+                </TypographyBrand>
+                <span className="font-titles text-lg">Workshop</span>
+            </span>
+        </Link>
+    );
+}
+
+/** Leads a player to the facility page. */
+export function FacilitiesButton() {
+    return (
+        <Button variant="ghost" size="sm" asChild aria-label="Facilities">
+            <Link to="/app/workshop/facilities">
+                <Factory className="size-4" />
+                <span className="hidden md:inline">Facilities</span>
+            </Link>
+        </Button>
     );
 }
 
@@ -252,7 +256,7 @@ function AdvanceButton({ session }: { session: WorkshopSession }) {
 }
 
 /** Opens and closes the price-setting panel. */
-function PricesButton({
+export function PricesButton({
     panelOpen,
     onClick,
 }: {
