@@ -98,7 +98,7 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     WORKSHOP_LOAN_FINAL:
         "The loan is final once the Investment phase it was taken in has closed.",
     WORKSHOP_LOAN_NEEDED:
-        "Loan cannot be withdrawn. Remove facilities from your selection first.",
+        "The loan can't be cancelled: your selection needs it. Remove facilities from your selection first.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

@@ -17,8 +17,8 @@ interface MoneyProps {
     /** Whether to always show the full value without scaling (default: false) */
     long?: boolean;
     /**
-     * Formats the value instead of the usual scaling, for a page with its own
-     * rule
+     * Replaces the usual formatting, such as for the Workshop catalog's prices,
+     * which are always in millions
      */
     format?: (amount: number) => string;
     /** Additional CSS classes */

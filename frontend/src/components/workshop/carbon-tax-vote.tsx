@@ -182,16 +182,21 @@ export function CarbonTaxNotice() {
     const { data: session } = useWorkshopSession();
     const { data: vote } = useWorkshopVote();
     const since = session?.carbon_tax_since ?? null;
-    if (since === null || !vote) return null;
+    if (since === null) return null;
 
     return (
         <aside className="flex items-start gap-3 rounded-lg border border-brand/30 bg-brand/10 px-4 py-3 text-sm">
             <Landmark className="mt-0.5 size-5 shrink-0 text-brand" />
             <p>
-                <span className="font-semibold">Carbon tax in force.</span> You
-                pay <Money amount={taxPerTonne(vote.tax_rate)} /> per tonne of
-                CO₂ your facilities emit. It passed in Round {since} and stays
-                until the end of the game.
+                <span className="font-semibold">Carbon tax in force.</span>{" "}
+                {/* The rate comes with the vote, so it shows once that loads. */}
+                {vote && (
+                    <>
+                        You pay <Money amount={taxPerTonne(vote.tax_rate)} />{" "}
+                        per tonne of CO₂ your facilities emit.{" "}
+                    </>
+                )}
+                It passed in Round {since} and stays until the end of the game.
             </p>
         </aside>
     );

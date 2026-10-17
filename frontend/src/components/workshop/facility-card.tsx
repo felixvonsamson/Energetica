@@ -11,9 +11,9 @@ import {
     BatteryFull,
     Flame,
     Fuel,
-    Gauge,
     type LucideIcon,
     Percent,
+    Weight,
     Wrench,
     Zap,
 } from "lucide-react";
@@ -242,7 +242,7 @@ function facilityStats(facility: WorkshopFacility): Stat[] {
     if (facility.fuel_use !== null) {
         stats.push({
             label: "Fuel use",
-            icon: Gauge,
+            icon: Weight,
             value: formatFuelUse(facility.fuel_use),
         });
     }
