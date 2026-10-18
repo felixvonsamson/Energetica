@@ -133,7 +133,7 @@ export function WorkshopTopBar({
 }
 
 /** The logo, which leads to the Workshop home. */
-export function HomeLink() {
+function HomeLink() {
     return (
         <Link to="/app/workshop" className="flex shrink-0 items-center gap-1.5">
             <Logo className="size-8 fill-foreground" />

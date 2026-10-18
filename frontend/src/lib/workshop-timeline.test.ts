@@ -8,6 +8,7 @@ import {
     checkpointLabel,
     checkpointPage,
     homePage,
+    introStatus,
     isSeason,
     latestRecapRound,
     latestSeason,
@@ -135,8 +136,10 @@ describe("workshopTimeline", () => {
 });
 
 describe("checkpointPage", () => {
-    it("has no page before the session starts", () => {
-        expect(checkpointPage({ kind: "not_started" })).toBeNull();
+    it("is the intro before the session starts", () => {
+        expect(checkpointPage({ kind: "not_started" })).toEqual({
+            to: "/app/workshop/intro",
+        });
     });
 
     it("is the Round overview during the Round's Investment phase", () => {
@@ -194,9 +197,18 @@ describe("homePage", () => {
         });
     });
 
-    it("has no page for anyone before the session starts", () => {
-        expect(homePage({ kind: "not_started" }, "facilitator")).toBeNull();
-        expect(homePage({ kind: "not_started" }, "player")).toBeNull();
+    it("sends everyone to the intro before the session starts", () => {
+        const intro = { to: "/app/workshop/intro" };
+        expect(homePage({ kind: "not_started" }, "facilitator")).toEqual(intro);
+        expect(homePage({ kind: "not_started" }, "player")).toEqual(intro);
+    });
+});
+
+describe("introStatus", () => {
+    it("is current before the session starts, and open all game after", () => {
+        expect(introStatus({ kind: "not_started" })).toBe("current");
+        expect(introStatus({ kind: "investment", round: 1 })).toBe("past");
+        expect(introStatus({ kind: "finished" })).toBe("past");
     });
 });
 

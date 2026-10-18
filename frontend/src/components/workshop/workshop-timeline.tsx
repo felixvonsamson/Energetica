@@ -1,7 +1,7 @@
 /**
- * The Workshop timeline (#995), across the top of every Workshop page: each
- * Round with its four Trading periods beneath it, a Recap node between one
- * Round and the next, and the scoreboard at the end (#1017).
+ * The Workshop timeline (#995), across the top of every Workshop page: the
+ * intro (#1254), each Round with its four Trading periods beneath it, a Recap
+ * node between one Round and the next, and the scoreboard at the end (#1017).
  *
  * The session's current node is highlighted. Nodes it has already passed link
  * to their pages, as does the current one. Future nodes are grayed out and do
@@ -9,7 +9,8 @@
  * underlined. Among the seasons, the one being viewed is filled in pine and the
  * current one, when it is not being viewed, in a darker sand (#1250).
  *
- * The scoreboard is open all game (#1250), so its node always links.
+ * The intro and the scoreboard are open all game (#1250), so their nodes always
+ * link.
  *
  * The season the grid went down in is labeled "Blackout". The seasons after it
  * in that Round never run, so they are crossed out and do not link (#1005).
@@ -20,13 +21,21 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, ScrollText, Trophy, ZapOff } from "lucide-react";
+import {
+    BookOpen,
+    ChevronRight,
+    ScrollText,
+    Trophy,
+    ZapOff,
+} from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
 import { cn } from "@/lib/utils";
 import {
     type Checkpoint,
+    introPage,
+    introStatus,
     type TradingPeriod,
     recapPage,
     type SeasonStatus,
@@ -56,6 +65,16 @@ export function WorkshopTimeline({
             aria-label="Session timeline"
             className="flex shrink-0 items-center justify-center-safe gap-2 overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
         >
+            <TimelineNode
+                status={introStatus(checkpoint)}
+                page={introPage()}
+                title="Intro"
+                className="flex-col gap-1 px-2"
+            >
+                <BookOpen className="size-4" />
+                <span className="text-xs">Intro</span>
+            </TimelineNode>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             {rounds.map((round) => (
                 <Fragment key={round.round}>
                     <RoundBlock round={round} />

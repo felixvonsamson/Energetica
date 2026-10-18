@@ -1,8 +1,7 @@
 /**
- * A short guide to getting around the Workshop (#1254), on the welcome page a
- * player sees before the session starts. Each step shows the control it is
- * about, using the same component the game uses, so the player knows what to
- * look for on screen.
+ * A short guide to getting around the Workshop (#1254), on the intro page. Each
+ * step shows the control it is about, using the same component the game uses,
+ * so the player knows what to look for on screen.
  *
  * The controls are only pictures here: they sit in an `inert` container, so
  * they cannot be clicked or focused and are hidden from screen readers, which
@@ -16,7 +15,6 @@ import { RoundViewPicker } from "@/components/workshop/round-view-switch";
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import {
     FacilitiesButton,
-    HomeLink,
     PricesButton,
 } from "@/components/workshop/workshop-top-bar";
 
@@ -56,7 +54,7 @@ export function WelcomeGuide() {
                     <>
                         {/* A Round in its summer trading. On a phone it is
                             shrunk to fit, since the picture cannot scroll. */}
-                        <div className="max-w-full overflow-hidden rounded-lg border border-border-brand max-sm:[zoom:0.8] [&>nav]:border-b-0">
+                        <div className="max-w-full overflow-hidden rounded-lg border border-border-brand max-sm:[zoom:0.65] [&>nav]:border-b-0">
                             <WorkshopTimeline
                                 checkpoint={{
                                     kind: "trading_period",
@@ -76,22 +74,11 @@ export function WelcomeGuide() {
             >
                 The navigation bar under the top bar shows each Round and its
                 seasons. Click a Round or a season to see what happened in it,
-                and Scores to see the scoreboard. The season the session is in
-                is shaded, and the one you are looking at is filled in dark
-                green. On a Round&apos;s pages, the switch moves between a
-                season&apos;s charts and the Round&apos;s balance sheet.
-            </GuideStep>
-            <GuideStep
-                number={4}
-                title="Find your way back"
-                preview={
-                    <TopBarPreview>
-                        <HomeLink />
-                    </TopBarPreview>
-                }
-            >
-                The logo in the top-left takes you to the page for wherever the
-                session is now.
+                Scores to see the scoreboard, and Intro to come back to this
+                guide. The season the session is in is shaded, and the one you
+                are looking at is filled in dark green. On a Round&apos;s pages,
+                the switch moves between a season&apos;s charts and the
+                Round&apos;s balance sheet.
             </GuideStep>
         </ol>
     );
@@ -121,7 +108,7 @@ function GuideStep({
             </div>
             <div
                 inert
-                className="flex min-w-0 flex-col items-start gap-3 lg:w-1/2 lg:shrink-0 lg:items-center"
+                className="flex min-w-0 flex-col items-start gap-3 lg:w-3/5 lg:shrink-0 lg:items-center"
             >
                 {preview}
             </div>
