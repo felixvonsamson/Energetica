@@ -38,16 +38,16 @@
 import { execFileSync } from "child_process";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
-import { readdirSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
+
+import { frontendWorkspaces } from "./lib/frontend-workspaces";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // The sources of the combined app, of each app under apps/, and of every shared
 // package. An app's top-level files are build configs, not shipped code.
 const SCAN_PREFIXES = [
     "frontend/src/",
-    ...readdirSync(join(REPO_ROOT, "frontend/apps")).map(
-        (name) => `frontend/apps/${name}/src/`,
-    ),
+    ...frontendWorkspaces("apps").map((name) => `frontend/apps/${name}/src/`),
     "frontend/packages/",
 ];
 

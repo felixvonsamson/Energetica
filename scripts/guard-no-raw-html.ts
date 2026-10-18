@@ -44,11 +44,13 @@ import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { dirname, join, relative, resolve } from "path";
 import { fileURLToPath } from "url";
 
+import { frontendWorkspaces } from "./lib/frontend-workspaces";
+
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FRONTEND_ROOT = join(REPO_ROOT, "frontend");
 // Every workspace package: the apps under apps/ and the shared packages.
-const WORKSPACE_DIRS = ["apps", "packages"].flatMap((group) =>
-    readdirSync(join(FRONTEND_ROOT, group)).map((name) =>
+const WORKSPACE_DIRS = (["apps", "packages"] as const).flatMap((group) =>
+    frontendWorkspaces(group).map((name) =>
         join(FRONTEND_ROOT, group, name),
     ),
 );

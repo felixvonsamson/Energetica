@@ -37,8 +37,16 @@ const BUNDLE_ZONES = [
     },
 ];
 
-const APPS = fs.readdirSync(new URL("./apps", import.meta.url));
-const PACKAGES = fs.readdirSync(new URL("./packages", import.meta.url));
+// The workspace packages in a folder. Only folders with a package.json count,
+// so stray files such as macOS's .DS_Store are skipped.
+const workspaces = (group) =>
+    fs
+        .readdirSync(new URL(`./${group}`, import.meta.url))
+        .filter((name) =>
+            fs.existsSync(new URL(`./${group}/${name}/package.json`, import.meta.url)),
+        );
+const APPS = workspaces("apps");
+const PACKAGES = workspaces("packages");
 const TSCONFIGS = [
     "./tsconfig.json",
     "./tsconfig.lobby.json",

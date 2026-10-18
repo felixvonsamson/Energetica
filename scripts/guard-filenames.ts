@@ -28,12 +28,13 @@
  */
 
 import { execFileSync } from "child_process";
-import { readdirSync } from "fs";
 import { basename, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
+import { frontendWorkspaces } from "./lib/frontend-workspaces";
+
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const APPS = readdirSync(resolve(REPO_ROOT, "frontend/apps"));
+const APPS = frontendWorkspaces("apps");
 // The sources of the combined app, of each app under apps/, and of every shared
 // package. An app's top-level files are build configs, named by their tools.
 const SCAN_PREFIXES = [

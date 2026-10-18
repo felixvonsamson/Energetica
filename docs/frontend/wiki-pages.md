@@ -19,8 +19,11 @@ frontend/packages/content/src/
 │   └── map.mdx
 ├── assets/wiki/            # Figures
 ├── components/             # Components the pages import
+│   ├── content-link.tsx    # Every link in the content; see "Links" below
+│   ├── locked-link.tsx     # A game link that needs a capability
 │   ├── mdx-content.tsx     # Prose wrapper that every app renders pages inside
 │   └── wind-table.tsx      # Example: complex table component
+├── content-links.ts        # ContentHost, what a page needs from the app
 ├── wiki-pages.ts           # wikiPages: every page by slug
 └── vite-plugin.ts          # contentMdx(): the Vite plugin that compiles the MDX
 ```
@@ -108,12 +111,37 @@ import { WindTable } from "#content/components/wind-table";
 <WindTable />
 ```
 
-A component that depends on the app rendering the page cannot live in the package.
-`LockedLink` is one: in the game it checks the player's capabilities, and on the
-landing page nobody has unlocked anything. A page uses such a component without
-importing it, and each app passes its own version to the page through the
-`components` prop. `WikiComponents` in `wiki-pages.ts` lists them, so an app that
-forgets one fails to type-check.
+## Links
+
+The pages link to each other, to the game's pages and to the web, and what a link
+can do depends on the app rendering the page. The package asks the app through a
+port: an interface the package declares and each app implements. The port is
+`ContentHost` in `content-links.ts`:
+
+-   `wikiPagePath(slug)`: where a wiki page lives in this app, such as `/app/wiki/map`
+    in the game and `/wiki/map` on the landing page.
+-   `servesGame`: whether this app has the game's pages, the paths under `/app/`.
+-   `useHasCapability(capability)`: a hook saying whether the reader has unlocked a
+    capability, such as `has_network`.
+
+Every page takes its app's host as a required prop, `<Content host={contentHost} />`,
+so an app cannot render a page without one. Each app defines its host in
+`src/lib/content-host.ts`. The links inside a page read the host from React context,
+which the page provides, so no app provides that context itself.
+
+Write links the usual way and the package resolves them against the host:
+
+-   `[Map](./map.mdx#hydro)` goes to that wiki page in this app.
+-   `[Power facilities](/app/facilities/power)` goes to the game page where the app
+    serves the game. On the landing page it shows as text, marked as a page of the game.
+-   Anything else, such as an external URL or a `#heading`, is left as it is.
+
+Markdown links pass through `ContentLink` automatically. A link written as JSX does
+not, so write `<ContentLink href="...">` (imported from
+`#content/components/content-link`) rather than `<a href="...">`.
+
+A game page that needs a capability uses `LockedLink`, which the pages use without
+importing it. It shows as locked until the reader has the capability:
 
 ```mdx
 See the <LockedLink to="/app/facilities/power-priorities" capability="has_network">Power Priorities</LockedLink> page.

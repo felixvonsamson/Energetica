@@ -5,8 +5,8 @@ import {
 } from "@energetica/ui/components/typography";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { wikiComponents } from "@/components/wiki/wiki-components";
 import { WikiLayoutPublic } from "@/components/wiki/wiki-layout-public";
+import { contentHost } from "@/lib/content-host";
 
 export const Route = createFileRoute("/wiki/$slug")({
     component: WikiPage,
@@ -32,7 +32,7 @@ function WikiPage() {
 
     return (
         <WikiLayoutPublic>
-            <Content components={wikiComponents} />
+            <Content host={contentHost} />
         </WikiLayoutPublic>
     );
 }

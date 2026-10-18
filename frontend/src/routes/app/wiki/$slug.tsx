@@ -2,8 +2,8 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-import { wikiComponents } from "@/components/wiki/wiki-components";
 import { WikiLayout } from "@/components/wiki/wiki-layout";
+import { contentHost } from "@/lib/content-host";
 import { wikiPages } from "@energetica/content/wiki-pages";
 import {
     TypographyH1,
@@ -36,7 +36,7 @@ function WikiPage() {
 
     return (
         <WikiLayout>
-            <Content components={wikiComponents} />
+            <Content host={contentHost} />
         </WikiLayout>
     );
 }
