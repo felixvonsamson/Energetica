@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApiSchema } from "@/types/api-helpers";
 
 import {
+    adjacentSeasons,
     advanceAction,
     type Checkpoint,
     checkpointLabel,
@@ -13,6 +14,7 @@ import {
     latestRecapRound,
     latestSeason,
     scoreboardStatus,
+    type Season,
     type SeasonStatus,
     timelineLayout,
     type TimelineRound,
@@ -257,6 +259,88 @@ describe("latestSeason", () => {
                 ]),
             ),
         ).toBe("summer");
+    });
+});
+
+describe("adjacentSeasons", () => {
+    function adjacent(
+        checkpoint: Checkpoint,
+        round: number,
+        season: Season,
+        blackouts: TradingPeriod[] = [],
+    ) {
+        return adjacentSeasons(
+            workshopTimeline(checkpoint, 2, blackouts),
+            round,
+            season,
+        );
+    }
+
+    it("links the seasons before and after within a Round", () => {
+        expect(adjacent({ kind: "recap", round: 1 }, 1, "summer")).toEqual({
+            previous: { round: 1, season: "spring", blackout: false },
+            next: { round: 1, season: "autumn", blackout: false },
+        });
+    });
+
+    it("goes from winter to the next Round's spring, and back", () => {
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "winter").next).toEqual({
+            round: 2,
+            season: "spring",
+            blackout: false,
+        });
+        expect(adjacent(checkpoint, 2, "spring").previous).toEqual({
+            round: 1,
+            season: "winter",
+            blackout: false,
+        });
+    });
+
+    it("has nothing before the first Round's spring or after the last winter", () => {
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "spring").previous).toBe(null);
+        expect(adjacent(checkpoint, 2, "winter").next).toBe(null);
+    });
+
+    it("does not link a season the session has not reached", () => {
+        const checkpoint: Checkpoint = {
+            kind: "trading_period",
+            round: 1,
+            season: "summer",
+        };
+        expect(adjacent(checkpoint, 1, "summer").next).toBe(null);
+        expect(adjacent(checkpoint, 1, "spring").next).toEqual({
+            round: 1,
+            season: "summer",
+            blackout: false,
+        });
+    });
+
+    it("steps over the seasons a blackout skipped", () => {
+        const blackouts: TradingPeriod[] = [
+            { kind: "trading_period", round: 1, season: "summer" },
+        ];
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "summer", blackouts).next).toEqual({
+            round: 2,
+            season: "spring",
+            blackout: false,
+        });
+        expect(adjacent(checkpoint, 2, "spring", blackouts).previous).toEqual({
+            round: 1,
+            season: "summer",
+            blackout: true,
+        });
+    });
+
+    it("has nothing after a blackout while the next Round has not started", () => {
+        const blackouts: TradingPeriod[] = [
+            { kind: "trading_period", round: 1, season: "summer" },
+        ];
+        expect(
+            adjacent({ kind: "recap", round: 1 }, 1, "summer", blackouts).next,
+        ).toBe(null);
     });
 });
 
