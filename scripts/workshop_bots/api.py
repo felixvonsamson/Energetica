@@ -17,6 +17,9 @@ LOBBY_URL = os.environ.get("ENERGETICA_LOBBY_URL", "http://localhost:8001") + "/
 PRICE_FLOOR = -25.0
 PRICE_CEILING = 1000.0
 
+# The methods the bots send whose second copy changes nothing: each PUT and PATCH sets a value or replaces an event.
+SAFE_TO_REPEAT = {"GET", "PUT", "PATCH"}
+
 
 # A JSON file {"<username>": "<password>", ...} for accounts that do not use the local default password.
 PASSWORDS_FILE = os.environ.get("ENERGETICA_BOT_PASSWORDS")
@@ -67,7 +70,9 @@ class Api:
 
     def __init__(self, username: str, password: str | None = None):
         self.username = username
-        self.client = httpx.Client(base_url=APP_URL, timeout=60)
+        # Drop an idle connection before Apache's 5-second keep-alive timeout closes it, so a request that is not safe to
+        # repeat rarely goes out on a connection that is closing.
+        self.client = httpx.Client(base_url=APP_URL, timeout=60, limits=httpx.Limits(keepalive_expiry=3))
         login = self.request(
             "POST",
             f"{LOBBY_URL}/auth/login",
@@ -81,14 +86,17 @@ class Api:
         """Send a request, and send it once more if the connection dropped before any response came back.
 
         A deployed server's Apache closes an idle keep-alive connection after a few seconds, and any connection after
-        100 requests. httpx can reuse a connection just as Apache closes it, and the request then never reaches the
-        backend, so sending it again is safe.
+        100 requests. httpx can reuse a connection just as Apache closes it. A ConnectError means the request never
+        left, so it is always sent again. A RemoteProtocolError can also come after the backend acted, so only a
+        request that is safe to repeat is sent again: sending a purchase or an advance twice would repeat it.
         """
         try:
             return self.client.request(method, url, **kwargs)
-        # Not ReadError: that can break off a response the backend already acted on, and sending a purchase or an
-        # advance again would repeat it.
-        except (httpx.RemoteProtocolError, httpx.ConnectError):
+        except httpx.ConnectError:
+            return self.client.request(method, url, **kwargs)
+        except httpx.RemoteProtocolError:
+            if method not in SAFE_TO_REPEAT:
+                raise
             return self.client.request(method, url, **kwargs)
 
     @property

@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+import httpx
+
 from api import Api, ApiError, Facilitator, LoginError
 from market import SEASONS, Ctx, PeriodView, read_period
 from strategies import PERSONAS, STAND_IN, Prices, Strategy
@@ -122,6 +124,9 @@ class Bot:
         except ApiError as error:
             # Most often the facilitator closed the window before the bot was done.
             log(f"{self.name}: {error}")
+        except httpx.TransportError as error:
+            # A dropped connection on a request that is not safe to send again: the bot skips the rest of its turn.
+            log(f"{self.name}: lost the connection: {error!r}")
         self.show_notes()
 
     def invest(self, session: dict[str, Any], history: History) -> None:
