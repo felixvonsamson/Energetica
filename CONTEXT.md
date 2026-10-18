@@ -65,6 +65,16 @@ A single logged event. One of four discriminated types (`action_type`): `init_en
 (always log line 0), `tick`, `create_user`, `request`. The `request` type carries
 arbitrary user-controlled JSON payloads.
 
+#### Upgrading
+
+**Migration**:
+A step that converts stored data from the shape an older version of the code wrote into
+the shape the newer version expects, so the newer code can read it. There are two kinds.
+A **schema migration** changes the tables of a SQL database, such as `accounts.db`. A
+**state migration** changes a run's saved state, such as a freeplay **save** or a workshop
+session. A code change that reads the same data but simulates differently is not a
+migration: nothing needs converting.
+
 ### Relationships
 
 - A **checkpoint** contains exactly one **save** plus the rest of `instance/`.
