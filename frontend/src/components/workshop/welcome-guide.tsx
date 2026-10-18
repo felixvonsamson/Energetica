@@ -44,8 +44,8 @@ export function WelcomeGuide() {
                 }
             >
                 The Prices button opens the price panel beside the page. There
-                you set the price each facility sells at. It opens by itself
-                when a price-setting window starts.
+                you set the price each facility sells at during a price-setting
+                window.
             </GuideStep>
             <GuideStep
                 number={3}
