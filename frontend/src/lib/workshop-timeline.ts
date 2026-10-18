@@ -128,6 +128,44 @@ export function workshopTimeline(
     });
 }
 
+/** A Trading period on the timeline, as a link to it needs it. */
+export interface SeasonLink {
+    round: number;
+    season: Season;
+    blackout: boolean;
+}
+
+/**
+ * The Trading periods just before and after one, for the season page's previous
+ * and next buttons (#1273). Winter leads on to the next Round's spring. Seasons
+ * a blackout skipped have no page, so they are stepped over. Each side is
+ * `null` when there is no season there the session has reached.
+ */
+export function adjacentSeasons(
+    rounds: TimelineRound[],
+    round: number,
+    season: Season,
+): { previous: SeasonLink | null; next: SeasonLink | null } {
+    const seasons = rounds.flatMap((timelineRound) =>
+        timelineRound.seasons
+            .filter(({ status }) => status !== "skipped")
+            .map((entry) => ({ ...entry, round: timelineRound.round })),
+    );
+    const index = seasons.findIndex(
+        (entry) => entry.round === round && entry.season === season,
+    );
+    const linkAt = (at: number): SeasonLink | null => {
+        const entry = index < 0 ? undefined : seasons[at];
+        if (!entry || entry.status === "future") return null;
+        return {
+            round: entry.round,
+            season: entry.season,
+            blackout: entry.blackout,
+        };
+    };
+    return { previous: linkAt(index - 1), next: linkAt(index + 1) };
+}
+
 /** The page for a Round: its overview. */
 export function roundPage(round: number) {
     return {
