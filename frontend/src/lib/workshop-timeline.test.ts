@@ -14,6 +14,7 @@ import {
     latestSeason,
     scoreboardStatus,
     type SeasonStatus,
+    timelineLayout,
     type TimelineRound,
     type TradingPeriod,
     workshopTimeline,
@@ -390,5 +391,31 @@ describe("latestRecapRound", () => {
         ).toBe(1);
         expect(latestRecapRound({ kind: "recap", round: 2 }, 3)).toBe(2);
         expect(latestRecapRound({ kind: "finished" }, 3)).toBe(3);
+    });
+});
+
+describe("timelineLayout", () => {
+    const widths = { full: 1500, icons: 1200, compact: 1000 };
+
+    it("keeps the full layout when it fits", () => {
+        expect(timelineLayout(1500, widths)).toBe("full");
+    });
+
+    it("hides the season names first", () => {
+        expect(timelineLayout(1499, widths)).toBe("icons");
+        expect(timelineLayout(1200, widths)).toBe("icons");
+    });
+
+    it("then hides the arrows between phases", () => {
+        expect(timelineLayout(1199, widths)).toBe("compact");
+        expect(timelineLayout(1000, widths)).toBe("compact");
+    });
+
+    it("stays compact, and scrolls, when nothing fits", () => {
+        expect(timelineLayout(400, widths)).toBe("compact");
+    });
+
+    it("does not round a sub-pixel overflow away", () => {
+        expect(timelineLayout(1499.6, widths)).toBe("icons");
     });
 });

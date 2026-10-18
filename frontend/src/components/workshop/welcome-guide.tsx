@@ -52,8 +52,11 @@ export function WelcomeGuide() {
                 title="Move through the game"
                 preview={
                     <>
-                        {/* A Round in its summer trading. On a phone it is
-                            shrunk to fit, since the picture cannot scroll. */}
+                        {/* A Round in its summer trading, with the season names
+                            the guide talks about. The picture is sized by its
+                            content, so the layout is fixed rather than fitted.
+                            On a phone it is shrunk to fit, since the picture
+                            cannot scroll. */}
                         <div className="max-w-full overflow-hidden rounded-lg border border-border-brand max-sm:[zoom:0.65] [&>nav]:border-b-0">
                             <WorkshopTimeline
                                 checkpoint={{
@@ -63,6 +66,7 @@ export function WelcomeGuide() {
                                 }}
                                 roundCount={1}
                                 blackouts={[]}
+                                layout="full"
                             />
                         </div>
                         <RoundViewPicker

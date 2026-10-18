@@ -322,3 +322,25 @@ export function latestRecapRound(
             throw checkpoint satisfies never;
     }
 }
+
+/**
+ * How much the Workshop timeline shows (#1271), from most to least: season
+ * names and arrows, then season icons and arrows, then season icons alone.
+ */
+export const TIMELINE_LAYOUTS = ["full", "icons", "compact"] as const;
+export type TimelineLayout = (typeof TIMELINE_LAYOUTS)[number];
+
+/**
+ * The fullest layout whose width fits in `available` pixels. When none fits,
+ * the most compact one, which then scrolls. Widths are compared exactly, since
+ * even a fraction of a pixel too wide would show a scroll bar.
+ */
+export function timelineLayout(
+    available: number,
+    widths: Record<TimelineLayout, number>,
+): TimelineLayout {
+    return (
+        TIMELINE_LAYOUTS.find((layout) => widths[layout] <= available) ??
+        "compact"
+    );
+}
