@@ -65,7 +65,7 @@ process, not a separate component.
 ## Consequences
 
 - **The secret leaves the runs.** ADR-0002's A1 cookie still reaches every subdomain, but only the
-  accounts service can read it. A2 (#813) reduces to the redirect handshake plus one endpoint to
+  accounts service can validate it (the cookie is signed, not encrypted). A2 (#813) reduces to the redirect handshake plus one endpoint to
   redeem a ticket. The run keeps forwarding a cookie; the service checks that it was issued for that
   run.
 - **Each run's request path now depends on the service.** If the service is down, runs are down.
