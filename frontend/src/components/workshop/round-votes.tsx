@@ -12,9 +12,6 @@
 
 import { type ReactNode, useState } from "react";
 
-import { Money } from "@/components/ui";
-import { Switch } from "@/components/ui/switch";
-import { TypographyMuted } from "@/components/ui/typography";
 import {
     useChangeLevers,
     usePlanChangePending,
@@ -24,6 +21,9 @@ import {
 import { carriedNote, carriedRounds } from "@/lib/workshop-console";
 import { taxPerTonne } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Money } from "@energetica/ui/components/money";
+import { Switch } from "@energetica/ui/components/switch";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
 type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;

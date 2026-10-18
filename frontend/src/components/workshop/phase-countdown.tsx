@@ -9,9 +9,7 @@
 import { Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { useExtendPhase, useWorkshopSession } from "@/hooks/use-workshop";
-import { cn } from "@/lib/utils";
 import {
     formatCountdown,
     isFinalMinute,
@@ -19,6 +17,8 @@ import {
     phaseLabel,
     timeUpStatus,
 } from "@/lib/workshop-countdown";
+import { Button } from "@energetica/ui/components/button";
+import { cn } from "@energetica/ui/lib/utils";
 
 /** The extensions the facilitator can pick from, in minutes. */
 const EXTENSIONS = [1, 2, 5];

@@ -3,8 +3,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { Spinner } from "@/components/ui/spinner";
 import { lobbyHref } from "@/lib/instances";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 function LogoutComponent() {
     useEffect(() => {

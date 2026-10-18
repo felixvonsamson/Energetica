@@ -10,9 +10,9 @@ import { Plug, Zap } from "lucide-react";
 
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
-import { CardContent, PageCard } from "@/components/ui";
 import { usePowerPriorities } from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
+import { CardContent, PageCard } from "@energetica/ui/components/card";
 
 export function PriorityTable() {
     const { data: prioritiesData, isLoading, error } = usePowerPriorities();

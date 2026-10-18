@@ -1,7 +1,7 @@
 /** Daily Quiz API calls. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const dailyQuizApi = {
     /** Get today's daily quiz question. */

@@ -52,6 +52,8 @@ export function useUpdatePowerPriorityBump() {
 export function useUpdateElectricityPrices() {
     return useMutation({
         mutationFn: electricityMarketsApi.changePrices,
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         onError: (error) => {
             toast.error(resolveErrorMessage(error));
         },

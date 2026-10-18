@@ -7,8 +7,11 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
-import { TypographyH1, TypographyLead } from "@/components/ui/typography";
+} from "@energetica/ui/components/card";
+import {
+    TypographyH1,
+    TypographyLead,
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/internal/")({
     component: InternalIndexPage,

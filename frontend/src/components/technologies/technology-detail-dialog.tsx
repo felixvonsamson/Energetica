@@ -2,26 +2,28 @@ import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { TechnologyIcon, Money, CardContent, AssetName } from "@/components/ui";
-import { Button } from "@/components/ui/button";
+import { TechnologyIcon, AssetName } from "@/components/ui";
+import { useLastDefined } from "@/hooks/use-last-defined";
+import { useQueueProject } from "@/hooks/use-projects";
+import { assetImages } from "@/lib/assets/asset-images";
+import { getFacilityRoute } from "@/lib/facility-routes";
+import { ProjectType, Requirement } from "@/types/projects";
+import { Button } from "@energetica/ui/components/button";
+import { CardContent } from "@energetica/ui/components/card";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@energetica/ui/components/dialog";
+import { Money } from "@energetica/ui/components/money";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { TypographyH2 } from "@/components/ui/typography";
-import { useLastDefined } from "@/hooks/use-last-defined";
-import { useQueueProject } from "@/hooks/use-projects";
-import { assetImages } from "@/lib/assets/asset-images";
-import { getFacilityRoute } from "@/lib/facility-routes";
-import { ProjectType, Requirement } from "@/types/projects";
+} from "@energetica/ui/components/tooltip";
+import { TypographyH2 } from "@energetica/ui/components/typography";
 
 interface TechnologyDetailModalProps<T> {
     isOpen: boolean;

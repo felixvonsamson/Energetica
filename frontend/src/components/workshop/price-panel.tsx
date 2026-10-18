@@ -19,9 +19,6 @@
 import { AlertTriangle, X, Zap } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { CoinIcon } from "@/components/ui/coin-icon";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { FuelOrders } from "@/components/workshop/fuel-orders";
 import {
     usePriceSettingOpen,
@@ -32,7 +29,6 @@ import {
     useWorkshopPrices,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import { formatEnergy, formatMoney, formatPower } from "@/lib/format-utils";
 import {
     workshopFacilityColor,
     workshopFacilityImages,
@@ -45,6 +41,14 @@ import {
     type PriceRange,
 } from "@/lib/workshop-prices";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    formatEnergy,
+    formatMoney,
+    formatPower,
+} from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { Input } from "@energetica/ui/components/input";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;

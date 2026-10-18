@@ -40,15 +40,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyMuted } from "@/components/ui/typography";
 import { useJoinRun } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { derivePhase, type InstanceFragment } from "@/lib/instances";
 import { runAppHref, runFacilitatorHref } from "@/lib/lobby";
+import { Button } from "@energetica/ui/components/button";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 /** "March 2026" from an ISO timestamp, or null when unparseable. */
 function formatMonthYear(iso: string): string | null {

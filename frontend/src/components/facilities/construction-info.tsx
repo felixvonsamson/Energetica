@@ -6,8 +6,8 @@
 import { Clock, Zap, Cloud } from "lucide-react";
 
 import { DualDuration } from "@/components/ui";
-import { formatPower, formatMass } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
+import { formatPower, formatMass } from "@energetica/core/format-utils";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface ConstructionInfoProps {
     constructionTime: number;

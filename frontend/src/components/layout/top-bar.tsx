@@ -24,15 +24,24 @@ import Logo from "@/assets/simplified_logo.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { RunSwitcher } from "@/components/layout/run-switcher";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+import { useAuth } from "@/hooks/use-auth";
+import { useCapabilities } from "@/hooks/use-capabilities";
+import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { usePlayerMoney } from "@/hooks/use-player-money";
+import { usePlayerWorkers } from "@/hooks/use-player-workers";
+import { Money } from "@/types/money";
+import { Capabilities } from "@/types/players";
+import { Workers } from "@/types/workers";
+import { Button } from "@energetica/ui/components/button";
+import { ButtonGroup } from "@energetica/ui/components/button-group";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@energetica/ui/components/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,22 +49,13 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Money as MoneyComponent } from "@/components/ui/money";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyBrand } from "@/components/ui/typography";
-import { useAuth } from "@/hooks/use-auth";
-import { useCapabilities } from "@/hooks/use-capabilities";
-import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
-import { useOnlineStatus } from "@/hooks/use-online-status";
-import { usePlayerMoney } from "@/hooks/use-player-money";
-import { usePlayerWorkers } from "@/hooks/use-player-workers";
-import { cn } from "@/lib/utils";
-import { Money } from "@/types/money";
-import { Capabilities } from "@/types/players";
-import { Workers } from "@/types/workers";
+} from "@energetica/ui/components/dropdown-menu";
+import { Money as MoneyComponent } from "@energetica/ui/components/money";
+import { Separator } from "@energetica/ui/components/separator";
+import { SidebarTrigger } from "@energetica/ui/components/sidebar";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { TypographyBrand } from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 export function TopBar() {
     const { user } = useAuth();

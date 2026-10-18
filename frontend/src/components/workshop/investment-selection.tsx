@@ -15,12 +15,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useRef } from "react";
 
-import { Money } from "@/components/ui/money";
 import { cardFrame, FacilityCard } from "@/components/workshop/facility-card";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { workshopFacilityColor } from "@/lib/workshop-facilities";
 import { overlapMargin, selectionStacks } from "@/lib/workshop-selection";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Money } from "@energetica/ui/components/money";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;

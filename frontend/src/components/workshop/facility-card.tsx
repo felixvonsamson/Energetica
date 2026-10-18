@@ -20,9 +20,6 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Money } from "@/components/ui/money";
-import { formatEnergy, formatMass, formatPower } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import {
     formatFuelUse,
     isStorage,
@@ -31,6 +28,13 @@ import {
 } from "@/lib/workshop-facilities";
 import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    formatEnergy,
+    formatMass,
+    formatPower,
+} from "@energetica/core/format-utils";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 

@@ -25,10 +25,10 @@ import {
     type ReactNode,
 } from "react";
 
-import { Money } from "@/components/ui/money";
 import { useMarketData } from "@/hooks/use-charts";
 import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
-import { formatMoney, formatPower } from "@/lib/format-utils";
+import { formatMoney, formatPower } from "@energetica/core/format-utils";
+import { Money } from "@energetica/ui/components/money";
 
 echarts.use([
     ELineChart,

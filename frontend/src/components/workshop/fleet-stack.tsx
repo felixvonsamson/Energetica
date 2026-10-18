@@ -23,7 +23,6 @@ import {
     FacilityCard,
     LifetimePips,
 } from "@/components/workshop/facility-card";
-import { cn } from "@/lib/utils";
 import { workshopFacilityColor } from "@/lib/workshop-facilities";
 import {
     lifetimeRangeLabel,
@@ -31,6 +30,7 @@ import {
     type FleetStack as Stack,
 } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
+import { cn } from "@energetica/ui/lib/utils";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;

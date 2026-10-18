@@ -28,6 +28,11 @@ jobs:
       - name: Unit tests
         run: bun run test
         working-directory: frontend
+      # Typecheck does not run Vite, so a broken build config or an import only the
+      # bundler fails to resolve would otherwise reach the deploy.
+      - name: Build every bundle
+        run: bun run build:all
+        working-directory: frontend
       - name: Guard — no raw-HTML rendering of UGC (ADR-0002, #843)
         run: bun run guard:no-raw-html
         working-directory: frontend

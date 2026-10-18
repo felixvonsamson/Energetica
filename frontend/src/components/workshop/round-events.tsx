@@ -17,21 +17,21 @@
 import { Check, Star } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
-import { TypographyMuted } from "@/components/ui/typography";
 import {
     usePlanChangePending,
     usePlanEvent,
     useUnplanEvent,
 } from "@/hooks/use-workshop";
-import { formatEmissions } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import { SEASON_LABELS, SEASONS } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
+import { formatEmissions } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { TypographyMuted } from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 type WorkshopEvents = ApiSchema<"WorkshopEventsOut">;
 type WorkshopEvent = ApiSchema<"WorkshopEventOut">;

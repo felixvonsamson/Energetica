@@ -1,7 +1,7 @@
 /** API client for facilities endpoints. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const facilitiesApi = {
     /** Get all active facilities for the current player. */

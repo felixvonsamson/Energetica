@@ -2,16 +2,21 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyBrand } from "@/components/ui/typography";
 import { useLobbySignup, useMyRuns } from "@/hooks/use-lobby";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 import { lobbyLandingHref, validateReturnSearch } from "@/lib/lobby";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/signup")({
     validateSearch: validateReturnSearch,

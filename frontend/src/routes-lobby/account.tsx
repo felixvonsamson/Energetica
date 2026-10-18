@@ -2,14 +2,19 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { KeyRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyBrand } from "@/components/ui/typography";
 import { useMyRuns } from "@/hooks/use-lobby";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 /**
  * The change-password form posts _natively_ to this lobby-backend route rather

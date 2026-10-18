@@ -1,15 +1,15 @@
 import { MessageSquare, Plus } from "lucide-react";
 
 import { ChatListItem } from "@/components/chat/chat-list-item";
+import type { Chat } from "@/types/chats";
+import { Button } from "@energetica/ui/components/button";
 import {
     Card,
     CardTitle,
-    Button,
     CardHeader,
     CardContent,
-} from "@/components/ui";
-import { CardFooter } from "@/components/ui/card";
-import type { Chat } from "@/types/chats";
+    CardFooter,
+} from "@energetica/ui/components/card";
 
 interface ChatSidebarProps {
     isLoading: boolean;

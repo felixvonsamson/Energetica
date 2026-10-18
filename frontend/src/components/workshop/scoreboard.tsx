@@ -16,13 +16,21 @@
 
 import { Trophy } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Money } from "@/components/ui/money";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
-import { cn } from "@/lib/utils";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    TypographyH1,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 const COLUMNS = [
     { key: "operating_profit", label: "Operating profit", sign: 1 },

@@ -50,6 +50,8 @@ export function useSettings() {
 export function useUpdateSettings() {
     return useMutation({
         mutationFn: settingsApi.updateSettings,
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         onSuccess: () => {
             // Invalidate settings cache to refetch updated values
             queryClient.invalidateQueries({

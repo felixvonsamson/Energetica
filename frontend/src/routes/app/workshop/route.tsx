@@ -24,7 +24,6 @@
 import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 import { useCallback } from "react";
 
-import { Toaster } from "@/components/ui/sonner";
 import { VoteResultDialog } from "@/components/workshop/carbon-tax-vote";
 import { PricePanel } from "@/components/workshop/price-panel";
 import { SettlementProgress } from "@/components/workshop/settlement-progress";
@@ -37,7 +36,8 @@ import {
     useWorkshopSession,
     useWorkshopSocket,
 } from "@/hooks/use-workshop";
-import { cn } from "@/lib/utils";
+import { Toaster } from "@energetica/ui/components/sonner";
+import { cn } from "@energetica/ui/lib/utils";
 
 export const Route = createFileRoute("/app/workshop")({
     component: WorkshopLayout,

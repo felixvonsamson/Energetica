@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { resolveErrorMessage } from "@/lib/game-messages";
+import { Button } from "@energetica/ui/components/button";
 
 interface MessageInputProps {
     onSend: (text: string, playerId: number) => Promise<void>;

@@ -10,19 +10,19 @@ import { useRouter } from "@tanstack/react-router";
 import { ExternalLink, Newspaper } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { RecapNewspaper } from "@/components/workshop/recap-newspaper";
+import { useWorkshopRecap } from "@/hooks/use-workshop";
+import { recapPage } from "@/lib/workshop-timeline";
+import { ApiClientError, isGameError } from "@energetica/core/api-client";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyMuted } from "@/components/ui/typography";
-import { RecapNewspaper } from "@/components/workshop/recap-newspaper";
-import { useWorkshopRecap } from "@/hooks/use-workshop";
-import { ApiClientError, isGameError } from "@/lib/api-client";
-import { recapPage } from "@/lib/workshop-timeline";
+} from "@energetica/ui/components/dialog";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 
 /**
  * The Recap that closes `round`, or why it cannot be shown yet. A `note` is

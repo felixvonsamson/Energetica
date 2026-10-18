@@ -1,14 +1,14 @@
 import { Truck } from "lucide-react";
 
 import { ShipmentList } from "@/components/dashboard/progress-lists";
+import { useShipments } from "@/hooks/use-shipments";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { useShipments } from "@/hooks/use-shipments";
+} from "@energetica/ui/components/dialog";
 
 interface IncomingShipmentsDialogProps {
     isOpen: boolean;

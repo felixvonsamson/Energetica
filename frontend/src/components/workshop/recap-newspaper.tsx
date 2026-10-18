@@ -23,18 +23,18 @@
 
 import { type ReactNode, useEffect } from "react";
 
-import {
-    formatEmissions,
-    formatEnergy,
-    formatMoney,
-    formatPower,
-} from "@/lib/format-utils";
 import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import { taxPerTonne } from "@/lib/workshop-vote";
 // Kept for the hidden weather section below.
 // import { weatherLine } from "@/lib/workshop-weather";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    formatEmissions,
+    formatEnergy,
+    formatMoney,
+    formatPower,
+} from "@energetica/core/format-utils";
 
 type WorkshopRecap = ApiSchema<"WorkshopRecap">;
 type RecapStory = ApiSchema<"RecapStory">;

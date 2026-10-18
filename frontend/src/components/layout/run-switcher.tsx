@@ -15,15 +15,6 @@
 
 import { ArrowLeftRight, Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useMyRuns } from "@/hooks/use-my-runs";
 import {
     currentRunSlug,
@@ -32,6 +23,15 @@ import {
     runAppHref,
 } from "@/lib/instances";
 import { isSingleOriginHost } from "@/lib/single-origin";
+import { Button } from "@energetica/ui/components/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@energetica/ui/components/dropdown-menu";
 
 export function RunSwitcher() {
     const { data: runs } = useMyRuns();

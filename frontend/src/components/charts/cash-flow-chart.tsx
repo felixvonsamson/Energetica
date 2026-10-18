@@ -11,7 +11,7 @@ import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatCashFlow, formatMoney } from "@/lib/format-utils";
+import { formatCashFlow, formatMoney } from "@energetica/core/format-utils";
 
 export type CashFlowType = "revenues" | "expenses" | "net-profit";
 export type NetProfitViewMode = "net" | "breakdown";

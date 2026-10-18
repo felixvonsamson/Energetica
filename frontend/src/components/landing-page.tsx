@@ -19,15 +19,15 @@ import investmentStrategies from "@/assets/landing/investment_strategies.webp";
 import renewableIntermittency from "@/assets/landing/renewable_intermittency.webp";
 import resourcesManagement from "@/assets/landing/resources_management.webp";
 import { HomeLayout } from "@/components/home-layout";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { lobbyHref } from "@/lib/instances";
+import { Dialog, DialogContent } from "@energetica/ui/components/dialog";
 import {
     TypographyH1,
     TypographyH2,
     TypographyH3,
     TypographyLead,
     TypographyP,
-} from "@/components/ui/typography";
-import { lobbyHref } from "@/lib/instances";
+} from "@energetica/ui/components/typography";
 
 type ImageTile =
     | { type: "real"; src: string; alt: string; shadow?: boolean }

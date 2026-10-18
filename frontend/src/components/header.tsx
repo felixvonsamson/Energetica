@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyBrand } from "@/components/ui/typography";
 import { lobbyHref } from "@/lib/instances";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 export function Header() {
     return (

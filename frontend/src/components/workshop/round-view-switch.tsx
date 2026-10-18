@@ -11,10 +11,6 @@
 
 import { useNavigate } from "@tanstack/react-router";
 
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@/components/ui/segmented-picker";
 import { useWorkshopEntry, useWorkshopSession } from "@/hooks/use-workshop";
 import {
     latestSeason,
@@ -22,6 +18,10 @@ import {
     tradingPeriodPage,
     workshopTimeline,
 } from "@/lib/workshop-timeline";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
 
 type RoundView = "charts" | "balance_sheet";
 

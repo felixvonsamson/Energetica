@@ -6,12 +6,12 @@ import {
 } from "@/components/charts/echarts-time-series";
 import { ResourceIcon } from "@/components/ui/asset-icon";
 import { ResourceName } from "@/components/ui/asset-name";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { usePlayerResources } from "@/hooks/use-player-resources";
-import { formatMass } from "@/lib/format-utils";
 import { Fuel } from "@/types/fuel";
+import { formatMass } from "@energetica/core/format-utils";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
 interface ResourcesChartProps {
     chartData: Array<Record<string, unknown>>;

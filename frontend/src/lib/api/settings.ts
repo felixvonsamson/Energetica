@@ -1,7 +1,7 @@
 /** User settings API calls. */
 
-import { apiClient } from "@/lib/api-client";
 import type { UserSettings, UpdateSettingsRequest } from "@/types/settings";
+import { apiClient } from "@energetica/core/api-client";
 
 export const settingsApi = {
     /** Get the current user's settings. */

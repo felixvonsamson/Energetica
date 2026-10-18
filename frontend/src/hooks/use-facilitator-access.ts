@@ -36,6 +36,8 @@ export function useSetJoinOpen() {
     return useMutation({
         mutationFn: (joinOpen: boolean) =>
             facilitatorApi.updateAccess({ join_open: joinOpen }),
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         onSettled: () => {
             // Refetch on both success and failure: the switch reads `join_open`
             // straight from this query rather than tracking optimistic state, so

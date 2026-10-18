@@ -12,13 +12,13 @@
 
 import { HexTile } from "@/components/map/hex-tile";
 import { useMapContext } from "@/contexts/map-context";
-import { useTheme } from "@/contexts/theme-context";
 import {
     ResourceId,
     calculateTileFillWithResource,
     calculateTileLabel,
 } from "@/lib/map-resources";
 import { HexTileResources } from "@/types/map";
+import { useTheme } from "@energetica/ui/contexts/theme-context";
 
 interface MapTilesProps {
     mapData: HexTileResources[];

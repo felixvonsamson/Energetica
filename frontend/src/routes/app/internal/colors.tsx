@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { Separator } from "@/components/ui/separator";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { Separator } from "@energetica/ui/components/separator";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import {
     TypographyH1,
     TypographyH2,
@@ -11,7 +11,7 @@ import {
     TypographyLead,
     TypographyMuted,
     TypographyP,
-} from "@/components/ui/typography";
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/internal/colors")({
     component: ColorsPage,

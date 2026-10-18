@@ -21,7 +21,6 @@ import io from "socket.io-client";
 import { toast } from "sonner";
 
 import { workshopApi } from "@/lib/api/workshop";
-import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
 import {
     formatLeverChangeError,
@@ -33,6 +32,7 @@ import { phaseRedirect, type SessionPhase } from "@/lib/workshop-redirect";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
+import { ApiClientError } from "@energetica/core/api-client";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
@@ -341,6 +341,8 @@ export function useSetPrice(
     return useMutation({
         mutationFn: (price: number) =>
             workshopApi.setPrice({ facility, side, price }),
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         scope: { id: `workshop-price-${facility}-${side}` },
         onMutate: (price) => {
             queryClient.setQueryData(
@@ -497,6 +499,8 @@ export function useWorkshopVote() {
 export function useCastBallot() {
     return useMutation({
         mutationFn: workshopApi.castBallot,
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         scope: { id: "workshop-ballot" },
         onSuccess: (answer) => {
             queryClient.setQueryData(
@@ -529,6 +533,8 @@ export function useSetFuelOrder(fuel: ApiSchema<"Fuel">) {
     return useMutation({
         mutationFn: (quantity: number) =>
             workshopApi.setFuelOrder({ fuel, quantity }),
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         scope: { id: `workshop-fuel-${fuel}` },
         onMutate: (quantity) => {
             queryClient.setQueryData(
@@ -669,6 +675,8 @@ export function useWorkshopTimers() {
 export function useSetTimers() {
     return useMutation({
         mutationFn: workshopApi.setTimers,
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         onSuccess: (timers) => {
             queryClient.setQueryData(queryKeys.workshop.timers, timers);
         },

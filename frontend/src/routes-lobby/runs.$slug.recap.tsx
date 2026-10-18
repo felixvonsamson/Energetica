@@ -32,16 +32,22 @@ import {
 import { useMemo, useState } from "react";
 
 import { RecapMap } from "@/components/lobby/recap/recap-map";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Money } from "@/components/ui/money";
-import { Spinner } from "@/components/ui/spinner";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 import { useRecap } from "@/hooks/use-lobby";
-import { formatEmissions, formatTimestamp } from "@/lib/format-utils";
 import type { RecapRow } from "@/lib/recap";
-import { cn } from "@/lib/utils";
+import {
+    formatEmissions,
+    formatTimestamp,
+} from "@energetica/core/format-utils";
+import { Card, CardContent } from "@energetica/ui/components/card";
+import { EmptyState } from "@energetica/ui/components/empty-state";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Money } from "@energetica/ui/components/money";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    TypographyH1,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 export const Route = createFileRoute("/runs/$slug/recap")({
     component: RecapPage,

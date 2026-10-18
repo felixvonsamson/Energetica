@@ -5,9 +5,9 @@ import {
     PageCard,
     CardTitle,
     CardContent,
-    EmptyState,
     CardHeader,
-} from "@/components/ui";
+} from "@energetica/ui/components/card";
+import { EmptyState } from "@energetica/ui/components/empty-state";
 
 interface DashboardSectionProps {
     title: ReactNode;

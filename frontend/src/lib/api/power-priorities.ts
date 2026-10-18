@@ -1,7 +1,7 @@
 /** API client for power priorities endpoints. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const powerPrioritiesApi = {
     /** Get the current power priorities list for the player. */

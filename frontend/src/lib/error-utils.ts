@@ -21,8 +21,8 @@
  *     ```;
  */
 
-import { ApiClientError } from "@/lib/api-client";
 import { GAME_ERROR_MESSAGES, ErrorCode } from "@/lib/game-messages";
+import { ApiClientError } from "@energetica/core/api-client";
 
 /**
  * Get a user-friendly error message from any error object.

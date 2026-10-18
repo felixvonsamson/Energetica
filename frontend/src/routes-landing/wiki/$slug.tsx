@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { JSX } from "react";
 
-import { TypographyH1, TypographyLead } from "@/components/ui/typography";
 import { WikiLayoutPublic } from "@/components/wiki/wiki-layout-public";
+import {
+    TypographyH1,
+    TypographyLead,
+} from "@energetica/ui/components/typography";
 
 const wikiModules = import.meta.glob<{ default: () => JSX.Element }>(
     "@/content/wiki/*.mdx",

@@ -7,10 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { createContext, type ReactNode } from "react";
 
 import { authApi } from "@/lib/api/auth";
-import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
+import { ApiClientError } from "@energetica/core/api-client";
 
 type User = ApiSchema<"UserOut">;
 

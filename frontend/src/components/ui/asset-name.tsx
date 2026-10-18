@@ -19,8 +19,8 @@ import {
     getAssetLongName,
     getAssetShortName,
 } from "@/lib/assets/asset-names";
-import { cn } from "@/lib/utils";
 import { Fuel } from "@/types/fuel";
+import { cn } from "@energetica/ui/lib/utils";
 
 /**
  * Display mode for asset names.

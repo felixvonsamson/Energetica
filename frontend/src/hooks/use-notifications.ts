@@ -248,6 +248,8 @@ export function useNotificationFeedSubscriptions() {
 export function useUpdateNotificationFeedSubscriptions() {
     return useMutation({
         mutationFn: notificationsApi.patchFeedSubscriptions,
+        // Safe to repeat: it sets the value outright.
+        retry: 1,
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.feedSubscriptions,

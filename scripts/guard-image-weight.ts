@@ -34,8 +34,8 @@
  */
 
 import { execFileSync } from "child_process";
-import { statSync } from "fs";
-import { dirname, resolve } from "path";
+import { readdirSync, statSync } from "fs";
+import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,13 +43,20 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /**
  * Where the frontend keeps images, as repo-relative prefixes.
  *
- * `frontend/src/assets/` is the bundled tree — imported, hashed, and emitted
- * only into the bundles that use it. `frontend/public/` is copied verbatim and
+ * `frontend/src/assets/` and each shared package's `src/assets/` are the
+ * bundled trees — imported, hashed, and emitted only into the bundles that use
+ * them. `frontend/public/` is copied verbatim and
  * holds the one icon that needs a URL no bundler owns (see the comment on
  * FORMAT_EXEMPT), so it is covered here too: being exempt from hashing is not a
  * reason to be exempt from weighing.
  */
-const IMAGE_ROOTS = ["frontend/src/assets/", "frontend/public/"];
+const IMAGE_ROOTS = [
+    "frontend/src/assets/",
+    ...readdirSync(join(REPO_ROOT, "frontend/packages")).map(
+        (name) => `frontend/packages/${name}/src/assets/`,
+    ),
+    "frontend/public/",
+];
 
 /**
  * Ceiling for a single image.

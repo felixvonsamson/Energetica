@@ -1,13 +1,13 @@
 import { useMatches } from "@tanstack/react-router";
 
+import { navConfig } from "@/lib/nav-config";
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { navConfig } from "@/lib/nav-config";
+} from "@energetica/ui/components/breadcrumb";
 
 /**
  * Look up a label for a route path in the navigation config. Returns null if

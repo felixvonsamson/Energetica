@@ -23,7 +23,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
-} from "@/components/ui/sidebar";
+} from "@energetica/ui/components/sidebar";
 
 const wikiLinks = [
     { slug: "introduction", label: "Introduction", icon: BookOpen },

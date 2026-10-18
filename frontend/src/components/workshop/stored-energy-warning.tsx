@@ -7,7 +7,7 @@
 
 import { AlertTriangle } from "lucide-react";
 
-import { formatEnergy } from "@/lib/format-utils";
+import { formatEnergy } from "@energetica/core/format-utils";
 
 export function StoredEnergyWarning({
     energyAtRisk,

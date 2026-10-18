@@ -5,7 +5,10 @@
 
 import type { ReactNode } from "react";
 
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 export function WorkshopPlaceholder({
     title,

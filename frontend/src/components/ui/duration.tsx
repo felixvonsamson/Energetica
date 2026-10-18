@@ -9,8 +9,11 @@
 
 import { TimeTooltip } from "@/components/ui/time-tooltip";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatDuration, formatDurationDual } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
+import {
+    formatDuration,
+    formatDurationDual,
+} from "@energetica/core/format-utils";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface DurationProps {
     /** Duration in ticks (source of truth) */

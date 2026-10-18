@@ -17,7 +17,7 @@ import {
     TypographyH3,
     TypographyLead,
     TypographyP,
-} from "@/components/ui/typography";
+} from "@energetica/ui/components/typography";
 
 export function ForEducatorsPage() {
     const concepts = [

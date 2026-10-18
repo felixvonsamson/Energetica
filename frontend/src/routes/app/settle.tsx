@@ -10,20 +10,10 @@ import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
 import { MapTiles } from "@/components/map/map-tiles";
 import { ResourceButton } from "@/components/map/resource-button";
-import { Button, ThemeToggle } from "@/components/ui";
-import { ButtonGroup } from "@/components/ui/button-group";
-import {
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
 import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
-import { formatMass } from "@/lib/format-utils";
 import {
     RESOURCES,
     MAX_VALUES,
@@ -33,6 +23,20 @@ import {
 } from "@/lib/map-resources";
 import { queryKeys } from "@/lib/query-client";
 import { HexTileResources } from "@/types/map";
+import { formatMass } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { ButtonGroup } from "@energetica/ui/components/button-group";
+import {
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import {
+    TypographyH1,
+    TypographyH2,
+} from "@energetica/ui/components/typography";
 
 function SettleHelp() {
     return (

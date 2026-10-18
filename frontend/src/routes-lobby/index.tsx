@@ -7,21 +7,21 @@ import {
     MyRunCard,
     OpenRunCard,
 } from "@/components/lobby/run-cards";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Spinner } from "@/components/ui/spinner";
-import {
-    TypographyBrand,
-    TypographyH2,
-    TypographyLead,
-    TypographyMuted,
-} from "@/components/ui/typography";
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import type { InstanceFragment } from "@/lib/instances";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
 import { isSingleOriginHost } from "@/lib/single-origin";
+import { Button } from "@energetica/ui/components/button";
+import { EmptyState } from "@energetica/ui/components/empty-state";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
+import {
+    TypographyBrand,
+    TypographyH2,
+    TypographyLead,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/")({
     validateSearch: validateReturnSearch,

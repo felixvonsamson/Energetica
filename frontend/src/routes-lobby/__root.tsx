@@ -1,10 +1,10 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { LogOut, UserCog } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyBrand } from "@/components/ui/typography";
 import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
+import { Button } from "@energetica/ui/components/button";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 export const Route = createRootRoute({
     staticData: { title: "" },

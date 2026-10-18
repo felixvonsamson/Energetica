@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import {
+    useLeaveElectricityMarket,
+    useElectricityMarketForPlayer,
+} from "@/hooks/use-electricity-markets";
+import { useMe } from "@/hooks/use-players";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -9,14 +14,9 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { InfoBanner } from "@/components/ui/info-banner";
-import { Spinner } from "@/components/ui/spinner";
-import {
-    useLeaveElectricityMarket,
-    useElectricityMarketForPlayer,
-} from "@/hooks/use-electricity-markets";
-import { useMe } from "@/hooks/use-players";
+} from "@energetica/ui/components/dialog";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 interface LeaveMarketDialogProps {
     isOpen: boolean;

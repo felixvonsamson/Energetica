@@ -1,26 +1,31 @@
 import { Link } from "@tanstack/react-router";
 import { PlugZap, Check, BarChart2 } from "lucide-react";
 
-import { CardContent, Button, Money } from "@/components/ui";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Duration } from "@/components/ui/duration";
 import { PlayerName } from "@/components/ui/player-name";
-import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLastDefined } from "@/hooks/use-last-defined";
 import { usePlayerMap } from "@/hooks/use-players";
-import { formatPower } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";
+import { formatPower } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { CardContent } from "@energetica/ui/components/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { Money } from "@energetica/ui/components/money";
+import {
+    TypographyH2,
+    TypographyH3,
+} from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface MarketDetailDialogProps {
     isOpen: boolean;

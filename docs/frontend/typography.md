@@ -1,7 +1,7 @@
 # Typography System
 
 **Created:** 2026-01-25
-**Location:** `frontend/src/components/ui/typography.tsx`
+**Location:** `frontend/packages/ui/src/components/typography.tsx`
 
 ## Why We Built This
 
@@ -100,7 +100,7 @@ The `DataValue` foundation enables systematic expansion:
 <Temperature value={15.5} />          // formatTemperature + monospace
 ```
 
-These can be added progressively as format-utils functions are componentized. Each follows the same pattern: format logic from `lib/format-utils.ts` + `DataValue` wrapper for monospace styling.
+These can be added progressively as format-utils functions are componentized. Each follows the same pattern: format logic from `@energetica/core/format-utils` + `DataValue` wrapper for monospace styling.
 
 ### Table Integration
 
@@ -137,4 +137,4 @@ Single change point—all data components update automatically.
 
 - `CLAUDE.md` - Usage patterns and examples
 - `frontend/src/components/ui/typography-examples.tsx` - Visual reference
-- `frontend/src/components/ui/money.tsx` - Example of DataValue composition
+- `frontend/packages/ui/src/components/money.tsx` - Example of DataValue composition

@@ -10,16 +10,16 @@ import { useMemo } from "react";
 import { StatusBadge } from "@/components/power-priorities/status-badge";
 import type { RenewableFacilityType } from "@/components/power-priorities/types";
 import { AssetName } from "@/components/ui/asset-name";
-import { CoinIcon } from "@/components/ui/coin-icon";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
+import { formatPower } from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useLatestChartDataSlice } from "@/hooks/use-charts";
-import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
-import { formatPower } from "@/lib/format-utils";
+} from "@energetica/ui/components/tooltip";
 
 interface RenewablesSectionProps {
     /** Array of renewable facility types */

@@ -16,7 +16,6 @@ import type { ReactNode } from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
 import { useWorkshopSession } from "@/hooks/use-workshop";
-import { cn } from "@/lib/utils";
 import {
     adjacentSeasons,
     type Season,
@@ -25,6 +24,7 @@ import {
     tradingPeriodPage,
     workshopTimeline,
 } from "@/lib/workshop-timeline";
+import { cn } from "@energetica/ui/lib/utils";
 
 export function SeasonStepButtons({
     round,

@@ -26,19 +26,19 @@ import {
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useFacilities } from "@/hooks/use-facilities";
 import { useGameEngine } from "@/hooks/use-game";
 import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
-import { formatEnergy, formatPower } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
+import { formatEnergy, formatPower } from "@energetica/core/format-utils";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@energetica/ui/components/tooltip";
 
 export type PowerChartViewMode = "absolute" | "percent";
 

@@ -13,18 +13,6 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { useState } from "react";
 
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Money,
-} from "@/components/ui";
-import { Button } from "@/components/ui/button";
-import { ProgressBar } from "@/components/ui/progress-bar";
-import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { PhaseTimersCard } from "@/components/workshop/phase-timers-card";
 import { RoundEvents } from "@/components/workshop/round-events";
 import { RoundLevers } from "@/components/workshop/round-levers";
@@ -37,6 +25,21 @@ import {
 } from "@/hooks/use-workshop";
 import { consoleRound } from "@/lib/workshop-console";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { ProgressBar } from "@energetica/ui/components/progress-bar";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { Tabs, TabsList, TabsTrigger } from "@energetica/ui/components/tabs";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 type WorkshopUnlocks = ApiSchema<"WorkshopUnlocksOut">;
 type TechnologyProgress = ApiSchema<"WorkshopTechnologyProgressOut">;

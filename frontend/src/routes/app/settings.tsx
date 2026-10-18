@@ -2,15 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, InfoBanner, CardContent, ThemeToggle } from "@/components/ui";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
-import {
-    TypographyH2,
-    TypographyLarge,
-    TypographyMuted,
-} from "@/components/ui/typography";
 import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
 import {
     getAllPushPrefs,
@@ -18,6 +9,17 @@ import {
     PUSH_CATEGORIES,
 } from "@/lib/push-notification-prefs";
 import { PUSH_CATEGORY_LABELS, type PushCategory } from "@/types/notifications";
+import { Card, CardContent } from "@energetica/ui/components/card";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Label } from "@energetica/ui/components/label";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { Switch } from "@energetica/ui/components/switch";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import {
+    TypographyH2,
+    TypographyLarge,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

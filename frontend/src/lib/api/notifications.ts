@@ -1,11 +1,11 @@
 /** Notifications-related API calls. Handles game notification functionality. */
 
-import { apiClient } from "@/lib/api-client";
 import type {
     ApiResponse,
     ApiRequestBody,
     ApiSchema,
 } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const notificationsApi = {
     /** Get all notifications for the current user. */

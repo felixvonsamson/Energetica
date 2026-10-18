@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-import { Button, Money } from "@/components/ui";
+import { useLastDefined } from "@/hooks/use-last-defined";
+import { usePurchaseAsk } from "@/hooks/use-resource-market";
+import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
+import { formatMass } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -9,14 +13,11 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { useLastDefined } from "@/hooks/use-last-defined";
-import { usePurchaseAsk } from "@/hooks/use-resource-market";
-import { formatMass } from "@/lib/format-utils";
-import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
+} from "@energetica/ui/components/dialog";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Money } from "@energetica/ui/components/money";
+import { Spinner } from "@energetica/ui/components/spinner";
 
 export interface PurchaseDialogProps {
     isOpen: boolean;

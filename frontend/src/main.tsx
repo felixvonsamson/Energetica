@@ -3,20 +3,20 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { AuthProvider } from "@/contexts/auth-context";
 import { GameTickProvider } from "@/contexts/game-tick-context";
 import { ResolutionProvider } from "@/contexts/resolution-context";
 import { SocketProvider } from "@/contexts/socket-context";
-import { ThemeProvider } from "@/contexts/theme-context";
 import { useRunMode } from "@/hooks/use-run-mode";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
+import { Button } from "@energetica/ui/components/button";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
 
 import { routeTree } from "./routeTree.gen";
 
-import "./styles/global.css";
+import "@energetica/ui/global.css";
 
 // HMR: Invalidate color cache when any file updates during development
 // This ensures CSS variable changes are reflected immediately after editing global.css

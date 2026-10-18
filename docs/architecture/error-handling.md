@@ -2,7 +2,7 @@
 
 ## Backend error formats
 
-The backend produces three distinct error shapes. The API client in `lib/api-client.ts` normalises all of them into `ApiClientError`.
+The backend produces three distinct error shapes. The API client in `@energetica/core/api-client` normalises all of them into `ApiClientError`.
 
 **HTTP errors** — most auth and request failures. `detail` is a plain string.
 ```json

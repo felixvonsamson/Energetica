@@ -27,17 +27,6 @@ import {
 } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Money } from "@/components/ui/money";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { TypographyBrand } from "@/components/ui/typography";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { RecapButton } from "@/components/workshop/recap-view";
 import {
@@ -55,6 +44,17 @@ import {
     latestRecapRound,
 } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
+import { Button } from "@energetica/ui/components/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@energetica/ui/components/dropdown-menu";
+import { Money } from "@energetica/ui/components/money";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import { TypographyBrand } from "@energetica/ui/components/typography";
 
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
 

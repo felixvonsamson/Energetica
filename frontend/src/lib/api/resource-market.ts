@@ -3,8 +3,8 @@
  * market.
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const resourceMarketApi = {
     /** Get all asks (resource listings) in the market. */

@@ -6,9 +6,12 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { WelcomeGuide } from "@/components/workshop/welcome-guide";
 import { useWorkshopSession } from "@/hooks/use-workshop";
+import {
+    TypographyH2,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/workshop/intro")({
     component: Intro,

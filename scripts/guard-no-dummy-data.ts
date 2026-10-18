@@ -41,7 +41,8 @@ import { fileURLToPath } from "url";
 import { readFileSync } from "fs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SCAN_PREFIX = "frontend/src/";
+// The app's sources and every shared workspace package.
+const SCAN_PREFIXES = ["frontend/src/", "frontend/packages/"];
 
 /**
  * Words that mark a module as fixture data. Matched against whole
@@ -105,7 +106,7 @@ function lineOf(source: string, index: number): number {
     return line;
 }
 
-const files = execFileSync("git", ["ls-files", SCAN_PREFIX], {
+const files = execFileSync("git", ["ls-files", ...SCAN_PREFIXES], {
     cwd: REPO_ROOT,
     encoding: "utf8",
 })

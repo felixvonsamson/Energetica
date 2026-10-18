@@ -2,17 +2,17 @@ import { ArrowLeft, Bell, BellOff } from "lucide-react";
 
 import { MessageContainer } from "@/components/chat/message-container";
 import { MessageInput } from "@/components/chat/message-input";
-import { Button } from "@/components/ui/button";
 import { PlayerName } from "@/components/ui/player-name";
+import { useMuteChat, useUnmuteChat } from "@/hooks/use-chats";
+import { useMyId, usePlayerMap } from "@/hooks/use-players";
+import type { Message, Chat } from "@/types/chats";
+import { Button } from "@energetica/ui/components/button";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { TypographyH2 } from "@/components/ui/typography";
-import { useMuteChat, useUnmuteChat } from "@/hooks/use-chats";
-import { useMyId, usePlayerMap } from "@/hooks/use-players";
-import type { Message, Chat } from "@/types/chats";
+} from "@energetica/ui/components/tooltip";
+import { TypographyH2 } from "@energetica/ui/components/typography";
 
 interface ChatWindowProps {
     selectedChat: Chat | undefined;

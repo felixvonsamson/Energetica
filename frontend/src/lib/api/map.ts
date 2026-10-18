@@ -1,7 +1,7 @@
 /** Map-related API calls. */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const mapApi = {
     /** Get the entire map with all tiles and their resources. */

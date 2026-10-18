@@ -11,7 +11,7 @@ import {
     getFacilityRoute,
     isTechnology,
 } from "@/lib/facility-routes";
-import { cn } from "@/lib/utils";
+import { cn } from "@energetica/ui/lib/utils";
 
 interface Requirement {
     name: string;

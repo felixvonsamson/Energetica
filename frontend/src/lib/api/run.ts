@@ -4,8 +4,8 @@
  * which page tree to show (#994).
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const runApi = {
     /** Get this instance's Run mode. Needs no session. */

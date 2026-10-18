@@ -3,8 +3,8 @@
  * their progress.
  */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const achievementApi = {
     /**

@@ -5,8 +5,8 @@
 
 import { useEffect, useState } from "react";
 
-import { CoinIcon } from "@/components/ui/coin-icon";
-import { Input } from "@/components/ui/input";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { Input } from "@energetica/ui/components/input";
 
 interface PriceInputProps {
     /** Current price value from server */

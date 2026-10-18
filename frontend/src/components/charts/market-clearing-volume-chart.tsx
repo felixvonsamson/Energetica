@@ -5,7 +5,6 @@ import {
     EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { FacilityName } from "@/components/ui/asset-name";
-import { Button } from "@/components/ui/button";
 import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
@@ -16,8 +15,9 @@ import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
 import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
-import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { ChartType, ResolutionOption } from "@/types/charts";
+import { formatEnergy, formatPower } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
 
 export type BreakdownType = "supply" | "demand";
 export type BreakdownMode = "player" | "type";

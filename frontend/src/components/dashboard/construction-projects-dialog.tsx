@@ -1,14 +1,14 @@
 import { HardHat } from "lucide-react";
 
 import { ProjectList } from "@/components/dashboard/progress-lists";
+import { useProjects } from "@/hooks/use-projects";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import { useProjects } from "@/hooks/use-projects";
+} from "@energetica/ui/components/dialog";
 
 interface ConstructionProjectsDialogProps {
     isOpen: boolean;

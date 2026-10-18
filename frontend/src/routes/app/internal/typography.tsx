@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { Money } from "@/components/ui/money";
+import { Money } from "@energetica/ui/components/money";
 import {
     DataValue,
     TypographyBlockquote,
@@ -16,7 +16,7 @@ import {
     TypographyMuted,
     TypographyP,
     TypographySmall,
-} from "@/components/ui/typography";
+} from "@energetica/ui/components/typography";
 
 export const Route = createFileRoute("/app/internal/typography")({
     component: RouteComponent,

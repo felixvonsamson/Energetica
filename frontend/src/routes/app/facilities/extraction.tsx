@@ -12,14 +12,15 @@ import {
 } from "@/components/dashboard/projects-panel";
 import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
-import { ResourceName, CashFlow, Duration, CatalogGrid } from "@/components/ui";
+import { ResourceName, CashFlow, Duration } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
     useExtractionFacilitiesCatalog,
     useProjects,
 } from "@/hooks/use-projects";
-import { formatPower, formatMass } from "@/lib/format-utils";
 import { ExtractionFacility } from "@/types/projects";
+import { formatPower, formatMass } from "@energetica/core/format-utils";
+import { CatalogGrid } from "@energetica/ui/components/catalog-grid";
 
 function ExtractionFacilitiesHelp() {
     return (

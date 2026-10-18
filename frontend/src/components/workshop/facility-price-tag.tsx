@@ -20,13 +20,13 @@ import { Cloud, Hammer } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Money } from "@/components/ui/money";
-import { formatEmissions } from "@/lib/format-utils";
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
-import { cn } from "@/lib/utils";
 import { formatCatalogPrice } from "@/lib/workshop-facilities";
 import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
+import { formatEmissions } from "@energetica/core/format-utils";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 

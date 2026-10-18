@@ -1,4 +1,4 @@
-import { InfoBanner } from "@/components/ui";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
 
 export function DevelopmentBanner() {
     return (

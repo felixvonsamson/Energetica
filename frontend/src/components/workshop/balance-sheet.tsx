@@ -18,10 +18,8 @@ import { ZapOff } from "lucide-react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
-import { CoinIcon } from "@/components/ui/coin-icon";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { cn } from "@/lib/utils";
 import {
     type BalanceSheet,
     type Row,
@@ -38,6 +36,8 @@ import {
     waterfallSteps,
 } from "@/lib/workshop-balance-sheet";
 import { SEASON_LABELS, type Season } from "@/lib/workshop-timeline";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { cn } from "@energetica/ui/lib/utils";
 
 const SHEET_COLORS = {
     "--bs-muted": "oklch(50% 0.07 145)",

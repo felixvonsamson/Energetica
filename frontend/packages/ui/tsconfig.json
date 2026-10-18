@@ -1,0 +1,11 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        // `?react` SVG imports, which every app's Vite config turns into components.
+        "types": ["vite/client", "vite-plugin-svgr/client"],
+        // Lets the shadcn CLI resolve the aliases in components.json. The files it
+        // adds import `@energetica/ui/...`; lint asks for `#ui/...` imports instead.
+        "paths": { "@energetica/ui/*": ["./src/*"] }
+    },
+    "include": ["src"]
+}

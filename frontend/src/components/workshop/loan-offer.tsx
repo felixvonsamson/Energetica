@@ -11,8 +11,6 @@
 
 import { HandCoins } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Money } from "@/components/ui/money";
 import {
     useCancelLoan,
     useInvestmentOpen,
@@ -22,6 +20,8 @@ import {
     useWorkshopSession,
 } from "@/hooks/use-workshop";
 import { paymentAfterRecap, paymentWhen } from "@/lib/workshop-loan";
+import { Button } from "@energetica/ui/components/button";
+import { Money } from "@energetica/ui/components/money";
 
 export function LoanOffer() {
     const investmentOpen = useInvestmentOpen();

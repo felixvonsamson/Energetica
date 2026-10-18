@@ -10,13 +10,16 @@
 
 import type { ReactNode } from "react";
 
-import { TypographyH3, TypographyMuted } from "@/components/ui/typography";
 import { RoundViewPicker } from "@/components/workshop/round-view-switch";
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import {
     FacilitiesButton,
     PricesButton,
 } from "@/components/workshop/workshop-top-bar";
+import {
+    TypographyH3,
+    TypographyMuted,
+} from "@energetica/ui/components/typography";
 
 export function WelcomeGuide() {
     return (

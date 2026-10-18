@@ -6,11 +6,20 @@ import { useState } from "react";
 import { FacilityGroupTable } from "@/components/facilities/facility-group-table";
 import { GameLayout } from "@/components/layout/game-layout";
 import { StatusBadge } from "@/components/power-priorities/status-badge";
-import { CardContent, CardHeader, CardTitle, PageCard } from "@/components/ui";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useFacilities, useFacilityStatuses } from "@/hooks/use-facilities";
-import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
+import {
+    formatPower,
+    formatEnergy,
+    formatMassRate,
+} from "@energetica/core/format-utils";
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    PageCard,
+} from "@energetica/ui/components/card";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
 type FacilityCategory = "power" | "storage" | "extraction";
 

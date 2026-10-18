@@ -7,7 +7,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@energetica/ui/components/dialog";
 
 export const Route = createFileRoute("/app/dashboard/quiz")({
     component: QuizDialog,

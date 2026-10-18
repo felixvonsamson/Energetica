@@ -1,7 +1,7 @@
 /** Facilitator instance-admin API calls (#1020, #1022). */
 
-import { apiClient } from "@/lib/api-client";
 import type { ApiRequestBody, ApiResponse } from "@/types/api-helpers";
+import { apiClient } from "@energetica/core/api-client";
 
 export const facilitatorApi = {
     /**

@@ -13,7 +13,6 @@ import { IncomingShipmentsDialog } from "@/components/dashboard/incoming-shipmen
 import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
-import { Button, CardContent, Money, PageCard } from "@/components/ui";
 import { DualDuration } from "@/components/ui/duration";
 import { PlayerName } from "@/components/ui/player-name";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
@@ -25,14 +24,17 @@ import {
     useCalculateDeliveryTime,
 } from "@/hooks/use-resource-market";
 import { useShipments } from "@/hooks/use-shipments";
-import { formatMass } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
 import { Player } from "@/types/players";
 import {
     ResourceType,
     RESOURCE_TYPES,
     RESOURCE_LABELS,
 } from "@/types/resource-market";
+import { formatMass } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { CardContent, PageCard } from "@energetica/ui/components/card";
+import { Money } from "@energetica/ui/components/money";
+import { cn } from "@energetica/ui/lib/utils";
 
 function ResourceMarketHelp() {
     return (
