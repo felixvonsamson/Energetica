@@ -30,7 +30,7 @@ class ApiError(Exception):
 
 
 class LoginError(ApiError):
-    """An account the script has no password for, or whose login the lobby refused."""
+    """An account the script has no password for, whose login the lobby refused, or that cannot enter the Run."""
 
 
 def _passwords() -> dict[str, str] | None:
@@ -80,7 +80,10 @@ class Api:
         )
         if login.status_code >= 400:
             raise LoginError(f"the lobby refused the login of {username}: {login.status_code} {login.text[:200]}")
-        self.entry: dict[str, Any] = self.request("POST", "/workshop/enter").json()
+        entry = self.request("POST", "/workshop/enter")
+        if entry.status_code >= 400:
+            raise LoginError(f"{username} cannot enter the Run: {entry.status_code} {entry.text[:200]}")
+        self.entry: dict[str, Any] = entry.json()
 
     def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Send a request, and send it once more if the connection dropped before any response came back.

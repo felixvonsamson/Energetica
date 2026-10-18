@@ -117,9 +117,13 @@ class Bot:
         try:
             if checkpoint["kind"] == "investment":
                 self.pause(5, 25)
+                if self.moved_on(checkpoint):
+                    return
                 self.invest(session, history)
             else:
                 self.pause(3, 15)
+                if self.moved_on(checkpoint):
+                    return
                 self.trade(session, history)
         except ApiError as error:
             # Most often the facilitator closed the window before the bot was done.
@@ -153,8 +157,20 @@ class Bot:
         counts = {facility: picked.count(facility) for facility in dict.fromkeys(picked)}
         log(f"{self.name} picks {counts or 'nothing'} (cash {ctx.money / 1e6:.1f}M)")
 
-    def set_prices(self, prices: Prices) -> None:
+    def moved_on(self, checkpoint: dict[str, Any]) -> bool:
+        """Whether the session left ``checkpoint`` while the bot was thinking. Only live runs pause, so only they check.
+
+        The next season's window accepts prices and fuel orders too, so a late write would land in the wrong season.
+        """
+        if not self.live or self.api.get("/session")["checkpoint"] == checkpoint:
+            return False
+        log(f"{self.name}: too slow, the session has moved on from {checkpoint}")
+        return True
+
+    def set_prices(self, prices: Prices, checkpoint: dict[str, Any]) -> None:
         for (facility, side), price in prices.items():
+            if self.moved_on(checkpoint):
+                return
             self.api.set_price(facility, side, price)
             self.pause(0.3, 1.5)
         if prices:
@@ -162,8 +178,9 @@ class Bot:
 
     def trade(self, session: dict[str, Any], history: History) -> None:
         ctx = self.context(session, history)
-        self.set_prices(self.strategy.prices(ctx))
-        if ctx.procurement == "manual":
+        checkpoint = session["checkpoint"]
+        self.set_prices(self.strategy.prices(ctx), checkpoint)
+        if ctx.procurement == "manual" and not self.moved_on(checkpoint):
             for fuel, quantity in self.strategy.fuel_orders(ctx).items():
                 self.api.set_fuel_order(fuel, quantity)
                 need = ctx.fuel[fuel]["season_need"] or 1
@@ -176,9 +193,9 @@ class Bot:
             deadline = time.monotonic() + random.uniform(0.3, 0.6) * remaining
             while time.monotonic() < deadline:
                 time.sleep(1)
-                if self.api.get("/session")["checkpoint"] != session["checkpoint"]:
+                if self.api.get("/session")["checkpoint"] != checkpoint:
                     return
-            self.set_prices(self.strategy.revise_prices(ctx))
+            self.set_prices(self.strategy.revise_prices(ctx), checkpoint)
 
     def show_notes(self) -> None:
         notes = self.memory.get("notes", [])
