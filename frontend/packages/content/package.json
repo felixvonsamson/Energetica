@@ -1,0 +1,41 @@
+{
+    "name": "@energetica/content",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./components/*": "./src/components/*.tsx",
+        "./changelog": "./src/changelog.ts",
+        "./wiki-pages": "./src/wiki-pages.ts",
+        "./vite-plugin": "./src/vite-plugin.ts"
+    },
+    "imports": {
+        "#content/assets/*": "./src/assets/*",
+        "#content/components/*": "./src/components/*.tsx"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/ui": "workspace:*",
+        "@mdx-js/rollup": "^3.1.1",
+        "@tanstack/react-router": "catalog:",
+        "@types/estree": "^1.0.9",
+        "@types/mdast": "^4.0.4",
+        "mdast-util-mdx-jsx": "^3.2.0",
+        "mdast-util-mdxjs-esm": "^2.0.1",
+        "react": "catalog:",
+        "rehype-katex": "^7.0.1",
+        "rehype-slug": "^6.0.0",
+        "remark-gfm": "^4.0.1",
+        "remark-math": "^6.0.0",
+        "unist-util-visit": "^5.1.0",
+        "vite": "catalog:"
+    },
+    "devDependencies": {
+        "@mdx-js/mdx": "^3.1.1",
+        "@types/react": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}

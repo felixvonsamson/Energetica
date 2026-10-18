@@ -17,7 +17,7 @@
  * exactly that, not as a single netted number.
  */
 
-import type { Lifecycle } from "./instances";
+import type { Lifecycle } from "@energetica/core/instances";
 
 /** One player's row of the per-player retrospective table (no rank — ADR-0005). */
 export type RecapRow = {

@@ -38,11 +38,18 @@
 import { execFileSync } from "child_process";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-// The app's sources and every shared workspace package.
-const SCAN_PREFIXES = ["frontend/src/", "frontend/packages/"];
+// The sources of the combined app, of each app under apps/, and of every shared
+// package. An app's top-level files are build configs, not shipped code.
+const SCAN_PREFIXES = [
+    "frontend/src/",
+    ...readdirSync(join(REPO_ROOT, "frontend/apps")).map(
+        (name) => `frontend/apps/${name}/src/`,
+    ),
+    "frontend/packages/",
+];
 
 /**
  * Words that mark a module as fixture data. Matched against whole

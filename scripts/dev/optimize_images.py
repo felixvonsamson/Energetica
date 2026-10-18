@@ -25,11 +25,17 @@ from typing import NamedTuple
 
 ROOT = Path(__file__).parent.parent.parent
 
-# The same two roots guard-image-weight.ts weighs, and for the same reason: the
-# bundled tree Vite hashes and emits, plus the verbatim-copied public/ dir that
-# holds the one icon needing a URL no bundler owns. Walking both keeps the
-# script able to fix everything the guard can reject.
-IMAGE_ROOTS = (ROOT / "frontend/src/assets", ROOT / "frontend/public")
+# The same roots guard-image-weight.ts weighs, and for the same reason: the
+# bundled trees Vite hashes and emits (the combined app's and each workspace
+# package's), plus the verbatim-copied public/ dir that holds the one icon
+# needing a URL no bundler owns. Walking them all keeps the script able to fix
+# everything the guard can reject.
+IMAGE_ROOTS = (
+    ROOT / "frontend/src/assets",
+    *sorted((ROOT / "frontend").glob("apps/*/src/assets")),
+    *sorted((ROOT / "frontend").glob("packages/*/src/assets")),
+    ROOT / "frontend/public",
+)
 
 
 class Policy(NamedTuple):
@@ -42,7 +48,7 @@ class Policy(NamedTuple):
 # Each cap is about twice the largest size the group is ever displayed at, which
 # covers 2x displays with nothing to spare:
 #
-#   landing/       tiles render ~560 CSS px wide, the lightbox at most 1024
+#   landing        tiles render ~560 CSS px wide, the lightbox at most 1024
 #                  (max-w-5xl in landing-page.tsx); the hero banner and the
 #                  educators photo span a max-w-6xl column, so 1152
 #   wiki/          figures sit in a max-w-4xl prose column, so 896 CSS px
@@ -59,7 +65,7 @@ class Policy(NamedTuple):
 # here: at these qualities WebP reproduces the JPEG's own artifacts rather than
 # adding to them.
 POLICIES: list[tuple[str, Policy]] = [
-    ("assets/landing/", Policy(max_width=2400, quality=85)),
+    ("apps/landing/src/assets/", Policy(max_width=2400, quality=85)),
     ("assets/wiki/", Policy(max_width=1800, quality=85)),
     ("assets/technologies/", Policy(max_width=1344, quality=82)),
     ("assets/facilities/", Policy(max_width=1344, quality=82)),

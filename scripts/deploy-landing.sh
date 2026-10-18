@@ -5,7 +5,8 @@ set -euo pipefail
 #
 #   ./scripts/deploy-landing.sh --server <ssh-host> --domain <apex> [--yes] [--skip-build]
 #
-# Builds the landing bundle locally and rsyncs it to /var/www/energetica-landing/.
+# Builds the landing app (frontend/apps/landing) locally and rsyncs it to
+# /var/www/energetica-landing/.
 # instances.json, instances/ and recaps/ are owned and written by the instance backends — they
 # are excluded from the sync (and from --delete) so a landing deploy never clobbers them.
 
@@ -71,14 +72,14 @@ log_step "Syncing landing files..."
 # static/ is deliberately NOT excluded any more (#1078). The landing used to receive a
 # second rsync of the whole image tree into $LANDING_DIR/static/images/, because its pages
 # referenced /static/images/... by URL. Those images are now imported, so they arrive inside
-# dist-landing/assets/ hashed, and only the ones the landing actually renders. Letting
+# the build's assets/ hashed, and only the ones the landing actually renders. Letting
 # --delete see static/ is what removes the old tree from hosts that still carry it; once it
 # is gone the exclude would have nothing left to protect.
 rsync -az --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
     --exclude='recaps/' \
-    ./frontend/dist-landing/ "$SSH:$LANDING_DIR/" >/dev/null
+    ./frontend/apps/landing/dist/ "$SSH:$LANDING_DIR/" >/dev/null
 log_success "Landing bundle deployed"
 
 # rsync -a applies the source dir's mode to $LANDING_DIR itself, stripping the setgid +

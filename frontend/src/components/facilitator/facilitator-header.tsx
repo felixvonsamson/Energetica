@@ -11,9 +11,9 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
 import { useRunMode } from "@/hooks/use-run-mode";
-import { lobbyHref } from "@/lib/instances";
+import { lobbyHref } from "@energetica/core/instances";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { Button } from "@energetica/ui/components/button";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { cn } from "@energetica/ui/lib/utils";

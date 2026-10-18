@@ -26,7 +26,6 @@ import {
     TimerOff,
 } from "lucide-react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { RecapButton } from "@/components/workshop/recap-view";
 import {
@@ -36,14 +35,15 @@ import {
     useWorkshopEntry,
     useWorkshopSelection,
 } from "@/hooks/use-workshop";
-import { lobbyHref } from "@/lib/instances";
-import { isSingleOriginHost } from "@/lib/single-origin";
 import {
     advanceAction,
     checkpointLabel,
     latestRecapRound,
 } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
+import { lobbyHref } from "@energetica/core/instances";
+import { isSingleOriginHost } from "@energetica/core/single-origin";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { Button } from "@energetica/ui/components/button";
 import {
     DropdownMenu,

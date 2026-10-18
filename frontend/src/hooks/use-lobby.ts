@@ -12,10 +12,13 @@ import {
 } from "@tanstack/react-query";
 
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
-import { fetchInstances, type InstanceFragment } from "@/lib/instances";
 import { fetchRecap, RecapNotMintedError, type Recap } from "@/lib/recap";
 import type { LoginRequest, SignupRequest } from "@/types/auth";
 import { ApiClientError } from "@energetica/core/api-client";
+import {
+    fetchInstances,
+    type InstanceFragment,
+} from "@energetica/core/instances";
 
 /**
  * Query keys local to the lobby bundle. Deliberately not part of the game's

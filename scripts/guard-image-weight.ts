@@ -43,7 +43,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /**
  * Where the frontend keeps images, as repo-relative prefixes.
  *
- * `frontend/src/assets/` and each shared package's `src/assets/` are the
+ * `frontend/src/assets/` and each workspace package's `src/assets/` are the
  * bundled trees — imported, hashed, and emitted only into the bundles that use
  * them. `frontend/public/` is copied verbatim and
  * holds the one icon that needs a URL no bundler owns (see the comment on
@@ -52,8 +52,10 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  */
 const IMAGE_ROOTS = [
     "frontend/src/assets/",
-    ...readdirSync(join(REPO_ROOT, "frontend/packages")).map(
-        (name) => `frontend/packages/${name}/src/assets/`,
+    ...["apps", "packages"].flatMap((group) =>
+        readdirSync(join(REPO_ROOT, "frontend", group)).map(
+            (name) => `frontend/${group}/${name}/src/assets/`,
+        ),
     ),
     "frontend/public/",
 ];

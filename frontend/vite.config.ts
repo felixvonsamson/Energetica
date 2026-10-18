@@ -2,15 +2,11 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
-import mdx from "@mdx-js/rollup";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
-import remarkImageImports from "./remark-image-imports";
+import { contentMdx } from "@energetica/content/vite-plugin";
+
 import {
     buildInfoPlugin,
     DEV_PORTS,
@@ -128,12 +124,7 @@ export default defineConfig(async ({ mode, command }) => {
                 target: "react",
                 autoCodeSplitting: true,
             }),
-            mdx({
-                // remarkImageImports turns figure paths into imports, so a
-                // missing figure is a build error. See its module comment.
-                remarkPlugins: [remarkGfm, remarkMath, remarkImageImports],
-                rehypePlugins: [rehypeSlug, rehypeKatex],
-            }),
+            contentMdx(),
             tailwindcss(),
             svgr({
                 svgrOptions: {
@@ -155,7 +146,7 @@ export default defineConfig(async ({ mode, command }) => {
             react(),
         ],
         resolve: {
-            alias: { "@": path.resolve(__dirname, "./src") },
+            alias: { "@": path.resolve(import.meta.dirname, "./src") },
         },
         define: {
             "import.meta.env.VITE_DEV_INSTANCE_SLUG":
@@ -209,7 +200,7 @@ export default defineConfig(async ({ mode, command }) => {
         },
         build: {
             // The output directory and the public URL do not match on purpose: the
-            // bundle is built to `dist-app/` (beside dist-landing/ and dist-lobby/) but
+            // bundle is built to `dist-app/` (beside dist-lobby/) but
             // is served at `/static/app/` per `base` above, which an Apache Alias maps
             // back to this directory. The URL is frozen; docs/architecture/
             // static-serving-and-deployment.md § Request routing explains why.

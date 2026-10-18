@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { RunSwitcher } from "@/components/layout/run-switcher";
@@ -33,6 +32,7 @@ import { usePlayerWorkers } from "@/hooks/use-player-workers";
 import { Money } from "@/types/money";
 import { Capabilities } from "@/types/players";
 import { Workers } from "@/types/workers";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { Button } from "@energetica/ui/components/button";
 import { ButtonGroup } from "@energetica/ui/components/button-group";
 import {

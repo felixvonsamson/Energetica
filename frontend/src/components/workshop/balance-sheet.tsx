@@ -17,7 +17,6 @@
 import { ZapOff } from "lucide-react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
@@ -36,6 +35,7 @@ import {
     waterfallSteps,
 } from "@/lib/workshop-balance-sheet";
 import { SEASON_LABELS, type Season } from "@/lib/workshop-timeline";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { cn } from "@energetica/ui/lib/utils";
 

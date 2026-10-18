@@ -7,7 +7,7 @@ interface ImportMetaEnv {
     /**
      * Local-dev override for the lobby dev-server origin the app bundle's "log
      * in" bounce targets (default `http://localhost:5174`). See
-     * `lib/instances.ts`.
+     * `@energetica/core/instances`.
      */
     readonly VITE_LOBBY_URL?: string;
     /**
@@ -20,7 +20,7 @@ interface ImportMetaEnv {
      * The single live instance slug the app dev server is pinned to, injected
      * at dev-server startup (never in a prod build). Lets the in-run switcher
      * mark that instance and disable hops to the account's other (prod) runs.
-     * See `lib/instances.ts` and `vite.config.ts`.
+     * See `@energetica/core/instances` and `vite.config.ts`.
      */
     readonly VITE_DEV_INSTANCE_SLUG?: string | null;
 }

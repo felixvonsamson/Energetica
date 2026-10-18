@@ -55,6 +55,43 @@ describe("frontend boundaries", () => {
         ).toContain("import/no-restricted-paths");
     });
 
+    it("allows an app under apps/ to import its own files through @/", async () => {
+        expect(
+            await violatedRules(
+                "apps/landing/src/routes/example.tsx",
+                'import { HomeLayout } from "@/components/home-layout";\nexport const x = HomeLayout;\n',
+            ),
+        ).toEqual([]);
+    });
+
+    it("rejects an app under apps/ importing the combined app's files", async () => {
+        expect(
+            await violatedRules(
+                "apps/landing/src/example.tsx",
+                'import { queryKeys } from "../../../src/lib/query-client";\nexport const x = queryKeys;\n',
+            ),
+        ).toContain("import/no-relative-packages");
+    });
+
+    it("rejects the combined app importing an app under apps/", async () => {
+        expect(
+            await violatedRules(
+                "src/routes/example.tsx",
+                'import { Header } from "../../apps/landing/src/components/header";\nexport const x = Header;\n',
+            ),
+        ).toContain("import/no-relative-packages");
+    });
+
+    // The root package declares echarts, so it resolves from the landing app too.
+    it("rejects a dependency an app under apps/ does not declare", async () => {
+        expect(
+            await violatedRules(
+                "apps/landing/src/example.ts",
+                'import * as echarts from "echarts";\nexport const x = echarts;\n',
+            ),
+        ).toContain("import/no-extraneous-dependencies");
+    });
+
     it("rejects the app-local @/ alias in a shared package", async () => {
         expect(
             await violatedRules(

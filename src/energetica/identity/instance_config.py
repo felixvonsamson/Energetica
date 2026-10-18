@@ -60,7 +60,7 @@ def derive_phase(
     """The lifecycle phase at ``now``, a pure function of the three transition timestamps.
 
     The single source of truth for "what phase is this instance in" — both the backend and the
-    lobby/app frontends (``derivePhase`` in ``frontend/src/lib/instances.ts``) implement this same
+    lobby/app frontends (``derivePhase`` in ``frontend/packages/core/src/instances.ts``) implement this same
     ladder, so a run self-drives its transitions from its own clock with nothing to store or
     republish as time passes.
 

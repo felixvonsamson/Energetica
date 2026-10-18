@@ -4,10 +4,10 @@
  * The backend self-drives its transitions from its own clock (#861 freeze, #862
  * announced) and exposes the three boundary timestamps on `/game/engine`; this
  * hook is the frontend mirror, deriving the phase the same way (`derivePhase`,
- * `lib/instances.ts`) so the UI can present "not started yet" / "read-only"
- * without waiting to learn about a transition from a rejected request.
- * Re-evaluated on a light wall-clock interval so a boundary crossed mid-session
- * flips the UI on its own.
+ * `@energetica/core/instances`) so the UI can present "not started yet" /
+ * "read-only" without waiting to learn about a transition from a rejected
+ * request. Re-evaluated on a light wall-clock interval so a boundary crossed
+ * mid-session flips the UI on its own.
  *
  * `starts_at`/`freeze_at`/`ended_at` come from the engine config, NOT from
  * `start_date` — `start_date` is the sim epoch, which during an announced
@@ -17,7 +17,7 @@
 import { useEffect, useState } from "react";
 
 import { useGameEngine } from "@/hooks/use-game";
-import { derivePhase, type Phase } from "@/lib/instances";
+import { derivePhase, type Phase } from "@energetica/core/instances";
 
 /**
  * The instance's current lifecycle phase, or `undefined` while the engine

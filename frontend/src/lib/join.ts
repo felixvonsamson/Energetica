@@ -3,10 +3,10 @@
  *
  * A visitor with no SSO session yet must go through the lobby's existing,
  * unmodified login/signup flow before they can confirm joining — but that
- * flow's `?return=` bounce (`lobbyLoginHref` in `lib/instances.ts`) only ever
- * lands them back on this run's bare `/app` root, never on the specific
- * `/app/join/:token` page they started from (the bounce carries a run slug, not
- * an arbitrary path, and is shared with unrelated login flows the
+ * flow's `?return=` bounce (`lobbyLoginHref` in `@energetica/core/instances`)
+ * only ever lands them back on this run's bare `/app` root, never on the
+ * specific `/app/join/:token` page they started from (the bounce carries a run
+ * slug, not an arbitrary path, and is shared with unrelated login flows the
  * switcher/picker also use). `sessionStorage` — scoped to this run's own
  * origin, so it survives the round trip to the lobby's different origin and
  * back, and is cleared when the tab closes rather than lingering forever — is

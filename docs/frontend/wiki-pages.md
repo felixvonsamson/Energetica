@@ -1,25 +1,35 @@
 # Wiki Pages
 
-Wiki pages are hosted under:
+Wiki pages are hosted in two places:
 
--   New wiki: `/app/wiki/introduction`
--   Legacy wiki: `/wiki/introduction`
+-   In the game: `/app/wiki/introduction`
+-   On the landing page: `/wiki/introduction`
 
-Wiki pages use MDX to combine markdown content with React components.
+Both render the same pages, written in MDX to combine markdown with React components.
 
 ## File Structure
 
+The pages live in the `@energetica/content` workspace package, so every app renders
+the same files:
+
 ```
-frontend/src/
-├── content/wiki/           # MDX source files
+frontend/packages/content/src/
+├── wiki/                   # MDX source files, one per page
 │   ├── introduction.mdx
 │   └── map.mdx
-├── components/wiki/        # Reusable wiki components
-│   ├── WikiLayout.tsx      # Layout wrapper with navigation
-│   └── WindTable.tsx       # Example: complex table component
-└── routes/wiki/
-    └── $slug.tsx           # Dynamic route handler
+├── assets/wiki/            # Figures
+├── components/             # Components the pages import
+│   ├── mdx-content.tsx     # Prose wrapper that every app renders pages inside
+│   └── wind-table.tsx      # Example: complex table component
+├── wiki-pages.ts           # wikiPages: every page by slug
+└── vite-plugin.ts          # contentMdx(): the Vite plugin that compiles the MDX
 ```
+
+Each app has its own route that looks the slug up in `wikiPages`:
+`frontend/src/routes/app/wiki/$slug.tsx` in the game and
+`frontend/apps/landing/src/routes/wiki/$slug.tsx` on the landing page. A new `.mdx`
+file in `wiki/` is a new page in both; see [Dynamic Route](#dynamic-route) for the
+navigation links.
 
 ## Writing MDX Pages
 
@@ -54,8 +64,11 @@ $$
 
 **Importing components:**
 
+A page imports the package's own components through its `#content/` subpath imports,
+and the shared UI through `@energetica/ui`:
+
 ```mdx
-import { WindTable } from "@/components/wiki/WindTable";
+import { WindTable } from "#content/components/wind-table";
 
 ### Wind Capacity Factors
 
@@ -74,10 +87,11 @@ See [Wind Capacity Factors](#wind-capacity-factors) for details.
 
 ## Reusable Components
 
-Complex elements (tables, charts) should be React components:
+Complex elements (tables, charts) should be React components in
+`frontend/packages/content/src/components/`:
 
 ```tsx
-// components/wiki/WindTable.tsx
+// components/wind-table.tsx
 export function WindTable() {
     const data = {
         /* ... */
@@ -89,31 +103,42 @@ export function WindTable() {
 Use in MDX:
 
 ```mdx
-import { WindTable } from "@/components/wiki/WindTable";
+import { WindTable } from "#content/components/wind-table";
 
 <WindTable />
 ```
 
-## Figures
-
-Figures live in `frontend/src/assets/wiki/` and are referenced by module path, not
-by URL. Both markdown and JSX syntax work:
+A component that depends on the app rendering the page cannot live in the package.
+`LockedLink` is one: in the game it checks the player's capabilities, and on the
+landing page nobody has unlocked anything. A page uses such a component without
+importing it, and each app passes its own version to the page through the
+`components` prop. `WikiComponents` in `wiki-pages.ts` lists them, so an app that
+forgets one fails to type-check.
 
 ```mdx
-![Probability distribution of heatwaves](@/assets/wiki/heatwave_probability_distribution.webp)
+See the <LockedLink to="/app/facilities/power-priorities" capability="has_network">Power Priorities</LockedLink> page.
+```
+
+## Figures
+
+Figures live in `frontend/packages/content/src/assets/wiki/` and are referenced by
+module path, not by URL. Both markdown and JSX syntax work:
+
+```mdx
+![Probability distribution of heatwaves](#content/assets/wiki/heatwave_probability_distribution.webp)
 
 <img
     className="h-75"
-    src="@/assets/wiki/cloud_coverage.webp"
+    src="#content/assets/wiki/cloud_coverage.webp"
     alt="Cloud coverage over a year"
 />
 ```
 
-A remark plugin (`frontend/remark-image-imports.ts`) turns each of those into an
-import before the page compiles, so Vite resolves the file at build time. Get the
-path wrong and the build fails with the offending file named, rather than the page
-rendering a broken image for a reader. See [Images](images.md) for the wider
-convention.
+A remark plugin (`frontend/packages/content/src/remark-image-imports.ts`) turns each
+of those into an import before the page compiles, so Vite resolves the file at build
+time. Get the path wrong and the build fails with the offending file named, rather
+than the page rendering a broken image for a reader. See [Images](images.md) for the
+wider convention.
 
 ## Styling
 
@@ -203,15 +228,17 @@ See `frontend/packages/ui/src/styles/global.css` for full configuration.
 
 ### Dynamic Route
 
-`routes/wiki/$slug.tsx` maps URL slugs to MDX files:
+Each app's `$slug.tsx` route maps URL slugs to MDX files through `wikiPages`:
 
--   `/wiki/introduction` → `content/wiki/introduction.mdx`
--   `/wiki/power-facilities` → `content/wiki/power-facilities.mdx`
+-   `/wiki/introduction` → `packages/content/src/wiki/introduction.mdx`
+-   `/wiki/power-facilities` → `packages/content/src/wiki/power-facilities.mdx`
 
 Add new pages by:
 
-1. Creating `.mdx` file in `content/wiki/`
-2. Adding navigation link to `WikiLayout.tsx`
+1. Creating the `.mdx` file in `frontend/packages/content/src/wiki/`
+2. Adding a navigation link to both sidebars: `frontend/src/components/wiki/wiki-sidebar.tsx`
+   in the game and `frontend/apps/landing/src/components/wiki/wiki-sidebar-public.tsx` on
+   the landing page
 
 ## Best Practices
 

@@ -7,8 +7,9 @@ import { loadEnv, type Plugin, type ProxyOptions } from "vite";
 /**
  * Fixed dev-server ports, one per surface, so the app and lobby (and landing)
  * frontends can run at the same time without colliding on Vite's default 5173.
- * The app bundle's dev login redirect (`lobbyHref` in `src/lib/instances.ts`)
- * hard-codes the lobby port, so the two must agree.
+ * The app bundle's dev login redirect (`lobbyHref` in
+ * `@energetica/core/instances`) hard-codes the lobby port, so the two must
+ * agree.
  */
 export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
 

@@ -3,6 +3,7 @@
     "private": true,
     "type": "module",
     "exports": {
+        "./assets/*": "./src/assets/*",
         "./components/*": "./src/components/*.tsx",
         "./contexts/*": "./src/contexts/*.tsx",
         "./hooks/*": "./src/hooks/*.ts",

@@ -20,12 +20,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
 import { useConfirmJoin, useJoinLink } from "@/hooks/use-join";
 import { getUserFriendlyError } from "@/lib/error-utils";
-import { lobbyLoginHref } from "@/lib/instances";
 import { rememberPendingJoinToken } from "@/lib/join";
 import type { ApiSchema } from "@/types/api-helpers";
+import { lobbyLoginHref } from "@energetica/core/instances";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { Button } from "@energetica/ui/components/button";
 import {
     Card,

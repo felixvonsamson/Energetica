@@ -12,9 +12,9 @@
 
 import type { StaticDataRouteOption } from "@tanstack/react-router";
 
-import type { Phase } from "@/lib/instances";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
+import type { Phase } from "@energetica/core/instances";
 
 type User = ApiSchema<"UserOut">;
 

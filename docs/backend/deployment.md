@@ -133,7 +133,7 @@ From your local machine:
   serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
   directory, which the rsync step excludes.
 - `deploy-landing.sh` builds the landing bundle (also baking `VITE_APEX_DOMAIN` so the
-  "Play now" / "Log In" CTAs target `lobby.{apex}`) and rsyncs `dist-landing/`. It preserves
+  "Play now" / "Log In" CTAs target `lobby.{apex}`) and rsyncs `frontend/apps/landing/dist/`. It preserves
   the instance-owned `instances.json` and `instances/` dir. No service restart — the landing
   is pure static.
 

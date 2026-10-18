@@ -56,10 +56,13 @@ src/energetica/       # Python/FastAPI backend
 
 ## Frontend
 
-The frontend is a set of Bun workspaces rooted at `frontend/`. The combined app, the lobby and the landing page are built from `frontend/src/`. Code they share lives in workspace packages under `frontend/packages/`:
+The frontend is a set of Bun workspaces rooted at `frontend/`. The combined app and the lobby are still built from `frontend/src/`. The landing page is its own workspace package, `frontend/apps/landing` (`@energetica/landing`), and the other apps will follow it into `frontend/apps/`. An app there has its own `package.json`, `vite.config.ts`, `tsconfig.json` and `index.html`, builds to its own `dist/`, and imports only its own `src/` (through `@/`) and the shared packages. Code the apps share lives in workspace packages under `frontend/packages/`:
 
-- `@energetica/ui`: the customised shadcn components, the `cn` helper, the theme context and the global stylesheet.
-- `@energetica/core`: the API client, the formatting helpers and `createQueryClient`, the query client factory.
+- `@energetica/ui`: the customised shadcn components, the `cn` helper, the theme context, the global stylesheet and the logo.
+- `@energetica/core`: the API client, the formatting helpers, `createQueryClient` (the query client factory) and the links between the apex, the lobby and the Instances (`instances.ts`, `single-origin.ts`).
+- `@energetica/content`: the wiki pages and the changelog, written in MDX, with their figures and the components they import. Its `contentMdx()` Vite plugin compiles them; see [Wiki pages](../frontend/wiki-pages.md).
+
+A Vite config that imports a workspace package, as one using `contentMdx()` does, runs with `vite --configLoader runner`. Otherwise Vite hands the package's TypeScript files to Node, which cannot load them.
 
 Bun's isolated install layout means a package can only import the dependencies its own `package.json` declares. Dependency versions shared by several packages are pinned once, in the `catalog` of `frontend/package.json`, and referenced as `"catalog:"`. Lint rejects imports across these boundaries; `frontend/boundaries.test.ts` shows which.
 

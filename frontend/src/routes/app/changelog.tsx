@@ -4,9 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { GameLayout } from "@/components/layout/game-layout";
-import { MdxContent } from "@/components/mdx-content";
-import ChangelogContent from "@/content/changelog.mdx";
 import { useAuth } from "@/hooks/use-auth";
+import { Changelog } from "@energetica/content/changelog";
+import { MdxContent } from "@energetica/content/components/mdx-content";
 
 export const Route = createFileRoute("/app/changelog")({
     component: ChangelogPage,
@@ -19,7 +19,7 @@ function ChangelogPage() {
     const content = (
         <div className="bg-background text-foreground px-6 lg:px-8 py-12 pb-24">
             <MdxContent>
-                <ChangelogContent />
+                <Changelog />
             </MdxContent>
         </div>
     );

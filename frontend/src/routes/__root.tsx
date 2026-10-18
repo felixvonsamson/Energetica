@@ -13,12 +13,12 @@ import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
 import { useRunMode } from "@/hooks/use-run-mode";
 import { useWorkshopEntry } from "@/hooks/use-workshop";
-import { lobbyLoginHref } from "@/lib/instances";
 import {
     computeRedirect,
     isAnnouncedTakeover,
     workshopRedirect,
 } from "@/lib/route-guard";
+import { lobbyLoginHref } from "@energetica/core/instances";
 import { Button } from "@energetica/ui/components/button";
 import { Spinner } from "@energetica/ui/components/spinner";
 

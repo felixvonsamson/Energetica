@@ -1,5 +1,5 @@
 /**
- * CI guard: every source file under `frontend/src` and `frontend/packages` is named in kebab-case
+ * CI guard: every source file under `frontend/src`, `frontend/apps` and `frontend/packages` is named in kebab-case
  * (#971, decided in #942).
  *
  * This guard pins reality rather than imposing a preference. All 321 tracked
@@ -17,7 +17,7 @@
  * 2. **Known compound suffixes are stripped before the stem is judged**: `.d.ts`
  *    (ambient declarations) and `.test.ts` / `.test.tsx` (vitest). Without
  *    this, `single-origin.test.ts` would fail on a dot it is required to have.
- * 3. **Inside the three route trees, the stem is a TanStack file-based route path,
+ * 3. **Inside the route trees, the stem is a TanStack file-based route path,
  *    not a plain name.** `runs.$slug.recap.tsx` is three route segments,
  *    `$slug.tsx` is a path parameter and `__root.tsx` is the root layout —
  *    framework syntax, not sloppy naming. Each dot-separated segment is checked
@@ -28,18 +28,26 @@
  */
 
 import { execFileSync } from "child_process";
+import { readdirSync } from "fs";
 import { basename, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-// The app's sources and every shared workspace package.
-const SCAN_PREFIXES = ["frontend/src/", "frontend/packages/"];
+const APPS = readdirSync(resolve(REPO_ROOT, "frontend/apps"));
+// The sources of the combined app, of each app under apps/, and of every shared
+// package. An app's top-level files are build configs, named by their tools.
+const SCAN_PREFIXES = [
+    "frontend/src/",
+    ...APPS.map((name) => `frontend/apps/${name}/src/`),
+    "frontend/packages/",
+];
 
 /** Route trees where TanStack's file-based route syntax applies. */
 const ROUTE_TREES = [
     "frontend/src/routes/",
-    "frontend/src/routes-landing/",
     "frontend/src/routes-lobby/",
+    // Each app under apps/ keeps its route tree in src/routes.
+    ...APPS.map((name) => `frontend/apps/${name}/src/routes/`),
 ];
 
 /** Suffixes whose names are written by a tool, not by us. */
@@ -117,7 +125,7 @@ if (violations.length === 0) {
 
 console.error("✗ filename guard failed (#971).\n");
 console.error(
-    "Every source file under frontend/src is named in kebab-case. Generated\n" +
+    "Every frontend source file is named in kebab-case. Generated\n" +
         "files (`*.gen.ts`, `*.generated.ts`) are exempt, `.d.ts` and `.test.ts`\n" +
         "suffixes are allowed, and inside the route trees TanStack's file-based\n" +
         "route syntax applies.\n\nOffending files:",

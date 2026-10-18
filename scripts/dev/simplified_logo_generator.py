@@ -8,7 +8,7 @@ that you can then open and edit in Inkscape (every shape is a normal,
 fully editable path/circle/ellipse, not a bitmap).
 
 Run with:  python3 scripts/dev/simplified_logo_generator.py
-Produces:  frontend/src/assets/simplified_logo.svg
+Produces:  frontend/packages/ui/src/assets/simplified_logo.svg
 """
 
 import math
@@ -181,6 +181,14 @@ def build_svg() -> str:
 
 if __name__ == "__main__":
     svg = build_svg()
-    output_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "src" / "assets" / "simplified_logo.svg"
+    output_path = (
+        Path(__file__).resolve().parent.parent.parent
+        / "frontend"
+        / "packages"
+        / "ui"
+        / "src"
+        / "assets"
+        / "simplified_logo.svg"
+    )
     output_path.write_text(svg)
     print(f"Wrote {output_path}")
