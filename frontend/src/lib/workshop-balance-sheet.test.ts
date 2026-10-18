@@ -17,8 +17,30 @@ import {
 const SPRING: PeriodSheet = {
     energy_sold: 9_800e6,
     sale_revenue: 412_580,
+    sold: [
+        {
+            facility: "onshore_wind_turbine",
+            name: "Onshore wind turbine",
+            energy: 3_800e6,
+            amount: 152_580,
+        },
+        {
+            facility: "coal_burner",
+            name: "Coal burner",
+            energy: 6_000e6,
+            amount: 260_000,
+        },
+    ],
     energy_bought: 1_150e6,
     purchase_cost: 20_010,
+    bought: [
+        {
+            facility: "lithium_ion_batteries",
+            name: "Lithium-ion batteries",
+            energy: 1_150e6,
+            amount: 20_010,
+        },
+    ],
     market_income: 392_570,
     energy_dumped: 310e6,
     dump_cost: 7_750,
@@ -143,7 +165,10 @@ describe("balanceSheetRows", () => {
         expect(rows.map((r) => r.id)).toEqual([
             "market",
             "sold",
+            "sold-onshore_wind_turbine",
+            "sold-coal_burner",
             "bought",
+            "bought-lithium_ion_batteries",
             "dump",
             "om",
             "om-onshore_wind_turbine",
@@ -165,6 +190,25 @@ describe("balanceSheetRows", () => {
         expect(sold.rate! * sold.volume!).toBeCloseTo(sold.amount!);
         expect(row("bought").cell(SPRING).amount).toBe(-20_010);
         expect(row("dump").cell(SPRING).rate).toBeCloseTo(25);
+    });
+
+    it("breaks energy sold and bought down by facility type, adding up to the totals", () => {
+        const wind = row("sold-onshore_wind_turbine");
+        expect(wind).toMatchObject({ label: "Onshore wind turbine", level: 2 });
+        expect(wind.unit).toBe("energy");
+        expect(wind.cell(SPRING).volume).toBeCloseTo(3_800);
+        const amount = (id: string) => row(id).cell(SPRING).amount!;
+        expect(
+            amount("sold-onshore_wind_turbine") + amount("sold-coal_burner"),
+        ).toBeCloseTo(amount("sold"));
+        expect(amount("bought-lithium_ion_batteries")).toBe(amount("bought"));
+    });
+
+    it("shows zero for a facility type a season did not sell from", () => {
+        const summer = { ...SPRING, sold: SPRING.sold.slice(1) };
+        expect(row("sold-onshore_wind_turbine").cell(summer)).toEqual({
+            amount: 0,
+        });
     });
 
     it("splits variable O&M into usage times the full variable cost", () => {
