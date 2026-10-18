@@ -514,7 +514,7 @@ function ByTheNumbers({ recap }: { recap: WorkshopRecap }) {
             "Average price",
             figures.average_price === null
                 ? "—"
-                : `${formatMoney(figures.average_price)} coins/MWh`,
+                : `${formatMoney(figures.average_price)}/MWh`,
         ],
         [
             "From renewables",

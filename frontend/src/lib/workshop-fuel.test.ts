@@ -2,47 +2,114 @@ import { describe, expect, it } from "vitest";
 
 import {
     formatPriceChange,
+    fieldPrice,
+    fuelFieldText,
+    fuelFieldUnit,
+    shownQuantity,
     isOverStockpile,
     orderCost,
-    parseTonnes,
+    parseFuelQuantity,
     stockpileSeasons,
-    tonnesFieldText,
 } from "./workshop-fuel";
 
-describe("parseTonnes", () => {
-    it("reads tonnes typed into the field as kg", () => {
-        expect(parseTonnes("12.5")).toEqual({ ok: true, kg: 12_500 });
-        expect(parseTonnes(" 0 ")).toEqual({ ok: true, kg: 0 });
+describe("fuelFieldUnit", () => {
+    it("counts gas and coal in kilotonnes and uranium in tonnes", () => {
+        expect(fuelFieldUnit("gas")).toBe("kt");
+        expect(fuelFieldUnit("coal")).toBe("kt");
+        expect(fuelFieldUnit("uranium")).toBe("t");
+    });
+});
+
+describe("parseFuelQuantity", () => {
+    it("reads kilotonnes of gas and coal as kg", () => {
+        expect(parseFuelQuantity("12.5", "gas")).toEqual({
+            ok: true,
+            kg: 12_500_000,
+        });
+        expect(parseFuelQuantity("0.25", "coal")).toEqual({
+            ok: true,
+            kg: 250_000,
+        });
+        expect(parseFuelQuantity(" 0 ", "coal")).toEqual({ ok: true, kg: 0 });
+    });
+
+    it("reads tonnes of uranium as kg", () => {
+        expect(parseFuelQuantity("12.5", "uranium")).toEqual({
+            ok: true,
+            kg: 12_500,
+        });
     });
 
     it("ignores thousands separators, as an apostrophe or a space", () => {
-        expect(parseTonnes("88'059")).toEqual({ ok: true, kg: 88_059_000 });
-        expect(parseTonnes("1 234.5")).toEqual({ ok: true, kg: 1_234_500 });
+        expect(parseFuelQuantity("88'059", "uranium")).toEqual({
+            ok: true,
+            kg: 88_059_000,
+        });
+        expect(parseFuelQuantity("1 234.5", "gas")).toEqual({
+            ok: true,
+            kg: 1_234_500_000,
+        });
     });
 
     it("refuses an empty field, a negative quantity and text", () => {
-        expect(parseTonnes("")).toEqual({ ok: false, reason: "empty" });
-        expect(parseTonnes("-1")).toEqual({ ok: false, reason: "negative" });
-        expect(parseTonnes("lots")).toEqual({ ok: false, reason: "invalid" });
-        expect(parseTonnes("Infinity")).toEqual({
+        expect(parseFuelQuantity("", "gas")).toEqual({
+            ok: false,
+            reason: "empty",
+        });
+        expect(parseFuelQuantity("-1", "gas")).toEqual({
+            ok: false,
+            reason: "negative",
+        });
+        expect(parseFuelQuantity("lots", "coal")).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseFuelQuantity("Infinity", "uranium")).toEqual({
             ok: false,
             reason: "invalid",
         });
     });
 });
 
-describe("tonnesFieldText", () => {
-    it("shows kg as tonnes to the nearest kg, without trailing zeros", () => {
-        expect(tonnesFieldText(417.2)).toBe("0.417");
-        expect(tonnesFieldText(2_000)).toBe("2");
-        expect(tonnesFieldText(0)).toBe("0");
+describe("fuelFieldText", () => {
+    it("shows gas and coal as kilotonnes to the nearest tonne, without trailing zeros", () => {
+        expect(fuelFieldText(417_200.4, "gas")).toBe("0.417");
+        expect(fuelFieldText(2_000_000, "coal")).toBe("2");
+        expect(fuelFieldText(0, "gas")).toBe("0");
+    });
+
+    it("shows uranium as tonnes to the nearest kg", () => {
+        expect(fuelFieldText(417.2, "uranium")).toBe("0.417");
+        expect(fuelFieldText(2_000, "uranium")).toBe("2");
     });
 
     it("separates thousands with an apostrophe", () => {
-        expect(tonnesFieldText(50_888_784.4)).toBe("50'888.784");
-        expect(tonnesFieldText(88_059_000)).toBe("88'059");
-        expect(tonnesFieldText(1_234_567_000)).toBe("1'234'567");
-        expect(tonnesFieldText(999_000)).toBe("999");
+        expect(fuelFieldText(50_888_784_400, "gas")).toBe("50'888.784");
+        expect(fuelFieldText(88_059_000, "uranium")).toBe("88'059");
+        expect(fuelFieldText(1_234_567_000_000, "coal")).toBe("1'234'567");
+    });
+
+    it("reads back as the quantity it shows", () => {
+        const text = fuelFieldText(88_059_000, "coal");
+        expect(text).toBe("88.059");
+        expect(parseFuelQuantity(text, "coal")).toEqual({
+            ok: true,
+            kg: 88_059_000,
+        });
+    });
+});
+
+describe("shownQuantity", () => {
+    it("rounds kg to what the field shows, so retyping it changes nothing", () => {
+        expect(shownQuantity(12_345_678.9, "gas")).toBe(12_346_000);
+        expect(shownQuantity(417.2, "uranium")).toBe(417);
+    });
+});
+
+describe("fieldPrice", () => {
+    it("is the price per unit of the order field", () => {
+        expect(fieldPrice({ fuel: "gas", price: 0.08 })).toBeCloseTo(80_000);
+        expect(fieldPrice({ fuel: "uranium", price: 0.5 })).toBe(500);
     });
 });
 

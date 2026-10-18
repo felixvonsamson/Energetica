@@ -1,10 +1,11 @@
 /**
  * The picker's run cards — the lobby's signature element. Tiers sharing one
  * frame (the landing's `RunCard` idiom, so returning players recognise it):
- * "your runs" carry a pine icon tile and a "Play" affordance; "open runs" stay
- * quieter with a "Join" affordance; "runs you facilitate" (#1032) carry a
- * distinct shield tile and a "Manage" affordance, so a facilitator card never
- * reads as a played run out of context.
+ * "your runs" carry a pine icon tile (a bolt, or a presentation board for a
+ * Workshop run) and a "Play" affordance; "open runs" stay quieter with a "Join"
+ * affordance; "runs you facilitate" (#1032) carry a distinct shield tile and a
+ * "Manage" affordance, so a facilitator card never reads as a played run out of
+ * context.
  *
  * "Your runs" cards render as plain `<a href>`: run links are cross-origin
  * (`{slug}.{apex}/app`), which a full page load handles fine. A logged-in "open
@@ -30,7 +31,13 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, FileClock, Shield, Zap } from "lucide-react";
+import {
+    ChevronRight,
+    FileClock,
+    Presentation,
+    Shield,
+    Zap,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -119,6 +126,7 @@ function RunCardFrame({
 /** An emphasized card for a run the account has joined. */
 export function MyRunCard({ run }: { run: MyRun }) {
     const joined = formatMonthYear(run.joined_at);
+    const RunIcon = run.mode === "workshop" ? Presentation : Zap;
     return (
         <RunCardFrame
             href={runAppHref(run.slug)}
@@ -128,7 +136,7 @@ export function MyRunCard({ run }: { run: MyRun }) {
         >
             <div className="flex flex-row items-center gap-4 min-w-0">
                 <div className="bg-primary/10 text-primary rounded-2xl p-3 shrink-0">
-                    <Zap className="w-6 h-6" />
+                    <RunIcon className="w-6 h-6" />
                 </div>
                 <div className="flex flex-col min-w-0">
                     <p className="text-lg font-semibold truncate">{run.name}</p>
@@ -145,9 +153,9 @@ export function MyRunCard({ run }: { run: MyRun }) {
  * A card for a run the account facilitates (instance-scoped grant, #1032).
  * Reuses {@link RunCardFrame} so freeze/ended recap behavior comes for free, but
  * is otherwise visually distinct from {@link MyRunCard}: a `Shield` tile instead
- * of the played-run `Zap` bolt, a "Facilitator" label instead of a joined-date,
- * and a "Manage" CTA that links to the run's facilitator page rather than its
- * play view.
+ * of the played-run bolt or presentation board, a "Facilitator" label instead
+ * of a joined-date, and a "Manage" CTA that links to the run's facilitator page
+ * rather than its play view.
  */
 export function FacilitatedRunCard({ run }: { run: FacilitatedRun }) {
     return (

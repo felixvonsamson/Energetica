@@ -382,6 +382,7 @@ def test_publish_strips_access_block(configured: Path) -> None:
         "name": "ETHZ Spring 2026",
         "advertised": False,
         "private": True,
+        "mode": "freeplay",
         "starts_at": fragment["starts_at"],
         "freeze_at": None,
         "ended_at": None,
@@ -546,6 +547,30 @@ def test_load_fragment_reads_unadvertised_fragment(configured: Path) -> None:
     assert fragment is not None
     assert fragment.advertised is False
     assert fragment.name == "Hidden"
+
+
+def test_fragment_carries_the_run_mode(configured: Path) -> None:
+    """The fragment says which Run mode the run is in, so the lobby can tell Workshops apart."""
+    instance_config.publish(InstanceConfig.model_validate({**PRIVATE_JSON, "run": {"mode": "workshop"}}))
+
+    fragment = instance_config.load_fragment(SLUG)
+
+    assert fragment is not None
+    assert fragment.mode == "workshop"
+
+
+def test_fragment_without_mode_reads_as_freeplay(configured: Path) -> None:
+    """A fragment published before the mode was added reads as freeplay until it is republished."""
+    (Path(instance_config._landing_dir()) / "instances").mkdir(parents=True, exist_ok=True)
+    (Path(instance_config._landing_dir()) / "instances" / "old-run.json").write_text(
+        json.dumps({"slug": "old-run", "name": "Old", "advertised": True, "starts_at": "2026-03-01T00:00:00Z"}),
+        encoding="utf-8",
+    )
+
+    fragment = instance_config.load_fragment("old-run")
+
+    assert fragment is not None
+    assert fragment.mode == "freeplay"
 
 
 def test_load_fragment_returns_none_when_absent(configured: Path) -> None:

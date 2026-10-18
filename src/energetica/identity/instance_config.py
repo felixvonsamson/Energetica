@@ -156,6 +156,9 @@ class WorkshopRun(BaseModel):
 
 RunMode = FreeplayRun | WorkshopRun
 
+# The ``mode`` tags of :data:`RunMode`. ``test_run_route.py`` holds the two equal.
+RunModeTag = Literal["freeplay", "workshop"]
+
 
 def run_modes() -> tuple[str, ...]:
     """The ``mode`` tags :class:`InstanceConfig` accepts, in declaration order.
@@ -236,6 +239,10 @@ class InstanceFragment(BaseModel):
     name: str
     advertised: bool
     private: bool = False
+    # Defaults to freeplay so a fragment written before this field existed still loads. The next
+    # publish (on startup or login) adds it, so a run that never starts again keeps reading as
+    # freeplay.
+    mode: RunModeTag = "freeplay"
     starts_at: AwareDatetime
     freeze_at: AwareDatetime | None = None
     ended_at: AwareDatetime | None = None
@@ -247,6 +254,7 @@ class InstanceFragment(BaseModel):
             name=config.name,
             advertised=config.advertised,
             private=isinstance(config.access, PrivateAccess),
+            mode=config.run.mode,
             starts_at=config.starts_at,
             freeze_at=config.freeze_at,
             ended_at=config.ended_at,

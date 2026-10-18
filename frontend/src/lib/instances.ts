@@ -27,6 +27,11 @@ export type InstanceFragment = {
      * freely-joinable "Open runs" list.
      */
     private?: boolean;
+    /**
+     * The kind of Run. Absent in a fragment published before this field
+     * existed.
+     */
+    mode?: "freeplay" | "workshop";
     /** ISO-8601 UTC, e.g. "2025-09-15T00:00:00Z". */
     starts_at: string;
     /** `active → freeze` boundary; `null` for an open-ended run. */

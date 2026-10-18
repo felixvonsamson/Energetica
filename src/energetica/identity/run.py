@@ -9,13 +9,10 @@ before it knows whether anyone is signed in.
 
 from __future__ import annotations
 
-from typing import Literal
-
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-# The ``mode`` tags of ``instance_config.RunMode``. ``test_run_route.py`` holds the two equal.
-RunModeTag = Literal["freeplay", "workshop"]
+from energetica.identity.instance_config import RunModeTag
 
 
 class RunOut(BaseModel):

@@ -5,6 +5,7 @@ import {
     isFinalMinute,
     phaseDeadline,
     phaseLabel,
+    timeUpStatus,
 } from "./workshop-countdown";
 
 describe("phaseLabel", () => {
@@ -19,6 +20,37 @@ describe("phaseLabel", () => {
         expect(phaseLabel({ kind: "not_started" })).toBeNull();
         expect(phaseLabel({ kind: "recap", round: 1 })).toBeNull();
         expect(phaseLabel({ kind: "finished" })).toBeNull();
+    });
+});
+
+describe("timeUpStatus", () => {
+    it("says the Investment phase has closed", () => {
+        expect(timeUpStatus({ kind: "investment", round: 2 })).toBe(
+            "Investments closed",
+        );
+    });
+
+    it("says which season is over at the end of a Trading period", () => {
+        expect(
+            timeUpStatus({
+                kind: "trading_period",
+                round: 1,
+                season: "spring",
+            }),
+        ).toBe("Spring over");
+        expect(
+            timeUpStatus({
+                kind: "trading_period",
+                round: 3,
+                season: "winter",
+            }),
+        ).toBe("Winter over");
+    });
+
+    it("has no status for a checkpoint without a countdown", () => {
+        expect(timeUpStatus({ kind: "not_started" })).toBeNull();
+        expect(timeUpStatus({ kind: "recap", round: 1 })).toBeNull();
+        expect(timeUpStatus({ kind: "finished" })).toBeNull();
     });
 });
 

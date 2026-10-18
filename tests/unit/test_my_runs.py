@@ -30,9 +30,11 @@ def stores(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return instances
 
 
-def _fragment(instances: Path, *, slug: str, name: str, starts_at: str, advertised: bool = True) -> None:
+def _fragment(
+    instances: Path, *, slug: str, name: str, starts_at: str, advertised: bool = True, mode: str = "freeplay"
+) -> None:
     (instances / f"{slug}.json").write_text(
-        json.dumps({"slug": slug, "name": name, "advertised": advertised, "starts_at": starts_at}),
+        json.dumps({"slug": slug, "name": name, "advertised": advertised, "starts_at": starts_at, "mode": mode}),
         encoding="utf-8",
     )
 
@@ -51,6 +53,19 @@ def test_joins_memberships_with_fragments_most_recent_first(stores: Path) -> Non
     assert response.runs[0].name == "Autumn 2026"
     # Echoed back for the change-password form's autocomplete="username" field.
     assert response.username == "alice"
+
+
+def test_runs_carry_their_run_mode(stores: Path) -> None:
+    """The lobby shows a Workshop run with a different icon, so each run says which mode it is in."""
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    _fragment(stores, slug="workshop-1", name="Workshop", starts_at="2026-03-01T00:00:00Z", mode="workshop")
+    _fragment(stores, slug="world", name="World", starts_at="2026-01-01T00:00:00Z")
+    accounts.record_join(account_id=account_id, slug="workshop-1", joined_at="2026-03-02T00:00:00+00:00")
+    accounts.record_join(account_id=account_id, slug="world", joined_at="2026-01-02T00:00:00+00:00")
+
+    runs = resolve_my_runs(account_id, "alice").runs
+
+    assert [(run.slug, run.mode) for run in runs] == [("workshop-1", "workshop"), ("world", "freeplay")]
 
 
 def test_joined_but_not_settled_run_appears(stores: Path) -> None:
