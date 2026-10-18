@@ -709,8 +709,8 @@ export interface paths {
         };
         /**
          * Get Scoreboard
-         * @description Every player's final score, highest first, with what it adds up from. The same for everyone in the Run, and
-         *     refused until the session is over.
+         * @description Every player's score after the Rounds completed so far, highest first, with what it adds up from. The same
+         *     for everyone in the Run. Final once the session is over.
          */
         get: operations["get_scoreboard_api_v1_workshop_scoreboard_get"];
         put?: never;
@@ -894,41 +894,6 @@ export interface components {
          * @enum {string}
          */
         FacilityId: "onshore_wind_turbine" | "offshore_wind_turbine" | "coal_burner" | "modern_coal_plant" | "gas_burner" | "combined_cycle" | "small_water_dam" | "large_water_dam" | "nuclear_reactor" | "nuclear_reactor_gen4" | "pv_solar" | "multi_layer_pv" | "csp_solar" | "lithium_ion_batteries" | "solid_state_batteries" | "hydrogen_storage" | "pumped_hydro";
-        /**
-         * FinalScore
-         * @description One player's final score and what it adds up from.
-         */
-        FinalScore: {
-            /** Account Id */
-            account_id: number;
-            /** Username */
-            username: string;
-            /**
-             * Operating Profit
-             * @description Operating profit over the whole session
-             */
-            operating_profit: number;
-            /**
-             * Investments
-             * @description What the player paid for every facility they bought, plus the cost of their loan if they took one
-             */
-            investments: number;
-            /**
-             * Carbon Tax
-             * @description The carbon tax the player paid over the session, less their shared payback
-             */
-            carbon_tax: number;
-            /**
-             * Residual Value
-             * @description What the facilities they still own are worth
-             */
-            residual_value: number;
-            /**
-             * Score
-             * @description operating_profit - investments - carbon_tax + residual_value
-             */
-            score: number;
-        };
         /**
          * FinancingLine
          * @description The loan coming in, or one of its payments going out (#1225).
@@ -1523,6 +1488,59 @@ export interface components {
             mode: "freeplay" | "workshop";
         };
         /**
+         * Score
+         * @description One player's score after the Rounds completed so far, and what it adds up from.
+         */
+        Score: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
+            /**
+             * Operating Profit
+             * @description Operating profit over the Rounds completed so far
+             */
+            operating_profit: number;
+            /**
+             * Investments
+             * @description What the player paid for every facility they bought, plus the cost of their loan if they took one
+             */
+            investments: number;
+            /**
+             * Carbon Tax
+             * @description The carbon tax the player paid, less their shared payback
+             */
+            carbon_tax: number;
+            /**
+             * Residual Value
+             * @description What the facilities they still own are worth
+             */
+            residual_value: number;
+            /**
+             * Score
+             * @description operating_profit - investments - carbon_tax + residual_value
+             */
+            score: number;
+        };
+        /**
+         * Scoreboard
+         * @description Every player's score after the Rounds completed so far, highest first.
+         */
+        Scoreboard: {
+            /**
+             * Completed Rounds
+             * @description How many Rounds the scores count
+             */
+            completed_rounds: number;
+            /**
+             * Final
+             * @description Whether the session is over, so the scores are final
+             */
+            final: boolean;
+            /** Scores */
+            scores: components["schemas"]["Score"][];
+        };
+        /**
          * SeasonSheet
          * @description One season's column of the balance sheet.
          */
@@ -1688,6 +1706,13 @@ export interface components {
              * @description Whether the facilitator picks the fuel it moves
              */
             fuel_chosen: boolean;
+            /**
+             * Summaries
+             * @description What it does at each of its severities, in one short line of plain numbers, such as "Demand +18% this season". It speaks of the Round and season it is planned for as "this Round" and "this season"
+             */
+            summaries: {
+                [key: string]: string;
+            };
         };
         /**
          * WorkshopEventsOut
@@ -1791,6 +1816,11 @@ export interface components {
              * @description What it costs in the current Round: base_price, moved by any price shock
              */
             price: number;
+            /**
+             * Fuel Use
+             * @description The fuel it burns per MWh it generates, in kg, or null for a facility that burns no fuel
+             */
+            fuel_use: number | null;
         };
         /**
          * WorkshopFiredEventOut
@@ -2160,6 +2190,11 @@ export interface components {
              */
             season: ("spring" | "summer" | "autumn" | "winter") | null;
             /**
+             * Summary
+             * @description What it does, in one short line of plain numbers, such as "Demand +18% for the summer". Null if the catalog no longer allows the pick
+             */
+            summary: string | null;
+            /**
              * Status
              * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
              * @enum {string}
@@ -2516,12 +2551,17 @@ export interface components {
             demand: components["schemas"]["DemandOutlook"] | null;
             /** @description The vote the Round holds, or null if it holds none */
             carbon_tax_vote: components["schemas"]["RecapVote"] | null;
+            /**
+             * Manual Fuel Procurement Starts
+             * @description Whether players start buying their own fuel in the Round, after a Round of automatic procurement
+             */
+            manual_fuel_procurement_starts: boolean;
         };
         /**
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_SESSION_NOT_FINISHED" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
     };
     responses: never;
     parameters: never;
@@ -3513,7 +3553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FinalScore"][];
+                    "application/json": components["schemas"]["Scoreboard"];
                 };
             };
         };

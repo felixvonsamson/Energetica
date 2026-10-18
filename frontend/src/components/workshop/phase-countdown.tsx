@@ -1,7 +1,8 @@
 /**
  * The countdown on the running phase (#996), labeled by the decision it is for,
- * e.g. "Set prices — 2:14". The facilitator also gets "+N min" buttons to give
- * the room more time. Ending a phase early is the advance button's job.
+ * e.g. "Set prices — 2:14". The digits are large and bold, and glow red in the
+ * last minute (#1249). The facilitator also gets "+N min" buttons to give the
+ * room more time. Ending a phase early is the advance button's job.
  */
 
 import { Timer } from "lucide-react";
@@ -12,6 +13,7 @@ import { useExtendPhase, useWorkshopSession } from "@/hooks/use-workshop";
 import { cn } from "@/lib/utils";
 import {
     formatCountdown,
+    isFinalMinute,
     phaseDeadline,
     phaseLabel,
 } from "@/lib/workshop-countdown";
@@ -50,8 +52,18 @@ export function PhaseCountdown({ isFacilitator }: { isFacilitator: boolean }) {
                         : "border-destructive/40 bg-destructive/10 text-destructive",
                 )}
             >
-                <Timer className="size-4" />
-                {label} — {formatCountdown(remainingMs)}
+                <Timer className="size-4 shrink-0" />
+                {/* On a phone, the digits alone. */}
+                <span className="hidden sm:inline">{label} —</span>
+                <span
+                    className={cn(
+                        "text-base leading-none font-bold",
+                        isFinalMinute(remainingMs) &&
+                            "text-destructive text-shadow-[0_0_8px_var(--color-destructive)]",
+                    )}
+                >
+                    {formatCountdown(remainingMs)}
+                </span>
             </span>
             {isFacilitator && isRunning && <ExtendButtons />}
         </div>
@@ -62,7 +74,7 @@ function ExtendButtons() {
     const { mutate: extend, isPending } = useExtendPhase();
 
     return (
-        <div className="flex items-center gap-1">
+        <div className="hidden items-center gap-1 md:flex">
             {EXTENSIONS.map((minutes) => (
                 <Button
                     key={minutes}

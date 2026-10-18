@@ -5,7 +5,8 @@
  * Trading period's price-setting window (#1002), reviewing a settled Trading
  * period (#1007), voting on a carbon tax (#1014), and following technology
  * unlocks and planning each Round's levers, events and phase timers as the
- * facilitator (#1011, #1012, #1018, #1190).
+ * facilitator (#1011, #1012, #1018, #1190), and sending players to the page
+ * they need when a phase starts or ends (#1251).
  */
 
 import {
@@ -14,7 +15,8 @@ import {
     useMutation,
     useQuery,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import { toast } from "sonner";
 
@@ -27,6 +29,7 @@ import {
 } from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
 import { phaseDeadline } from "@/lib/workshop-countdown";
+import { phaseRedirect, type SessionPhase } from "@/lib/workshop-redirect";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -145,6 +148,32 @@ function usePhaseOpen(kind: "investment" | "trading_period"): boolean {
     // `now` stands still while nothing is timed, so it can be older than the
     // answer. The answer's arrival is a floor for the current time.
     return deadline !== null && Math.max(now, dataUpdatedAt) < deadline;
+}
+
+/**
+ * Send a player to the page they need when a phase starts or ends
+ * ({@link phaseRedirect}), and open the price panel through `openPricePanel`
+ * when a price-setting window starts. It acts even while the player is busy,
+ * such as typing a fuel order: the phase is over, so their time is up anyway.
+ * The facilitator is never redirected.
+ */
+export function usePhaseRedirects(openPricePanel: () => void) {
+    const { data: session } = useWorkshopSession();
+    const { data: entry } = useWorkshopEntry();
+    const priceSettingOpen = usePriceSettingOpen();
+    const navigate = useNavigate();
+    const previous = useRef<SessionPhase | null>(null);
+    const checkpoint = session?.checkpoint;
+
+    useEffect(() => {
+        if (!checkpoint) return;
+        const current = { checkpoint, priceSettingOpen };
+        const redirect = phaseRedirect(previous.current, current);
+        previous.current = current;
+        if (!redirect || entry?.role !== "player") return;
+        if (redirect.kind === "open_price_panel") openPricePanel();
+        else void navigate(redirect.page);
+    }, [checkpoint, priceSettingOpen, entry?.role, navigate, openPricePanel]);
 }
 
 /**
@@ -683,9 +712,9 @@ export function useWorkshopRecap(round: number) {
 }
 
 /**
- * Every player's final score, highest first (#1017). Refused until the session
- * is over, and read again whenever the session changes, so it appears as soon
- * as it ends.
+ * Every player's score after the Rounds completed so far, highest first (#1017,
+ * #1250). Read again whenever the session changes, so it follows each Recap as
+ * it opens.
  */
 export function useWorkshopScoreboard() {
     return useQuery({

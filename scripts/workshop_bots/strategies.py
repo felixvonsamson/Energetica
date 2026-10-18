@@ -296,8 +296,12 @@ class Nuke(Strategy):
             return shopping(ctx, [(reactor, 1), ("gas_burner", 2)], ctx.money)
         missing = ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM | {"small_water_dam", "large_water_dam"})
         if not ctx.is_last_round:
-            self.note(ctx, "another reactor, running next Round")
-            return shopping(ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], ctx.money)
+            picks = shopping(ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], ctx.money)
+            if reactor in picks:
+                self.note(ctx, "another reactor, running next Round")
+            else:
+                self.note(ctx, "cannot afford another reactor, so gas burners only")
+            return picks
         self.note(ctx, "last Round: a reactor would not run, so gas and dams, plenty, since they keep their value")
         missing += 0.3 * ctx.fair_share()
         dam = best_of(ctx, "large_water_dam", "small_water_dam")

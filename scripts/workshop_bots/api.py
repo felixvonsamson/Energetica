@@ -13,6 +13,10 @@ import httpx
 APP_URL = os.environ.get("ENERGETICA_APP_URL", "http://localhost:8000") + "/api/v1"
 LOBBY_URL = os.environ.get("ENERGETICA_LOBBY_URL", "http://localhost:8001") + "/api/v1"
 
+# The range the server accepts for a price, both included: energetica.workshop.prices.PRICE_FLOOR and PRICE_CEILING.
+PRICE_FLOOR = -25.0
+PRICE_CEILING = 1000.0
+
 
 # A JSON file {"<username>": "<password>", ...} for accounts that do not use the local default password.
 PASSWORDS_FILE = os.environ.get("ENERGETICA_BOT_PASSWORDS")
@@ -109,6 +113,8 @@ class Api:
         return self.send("POST", "/selection", {"facility": facility})
 
     def set_price(self, facility: str, side: str, price: float) -> Any:
+        # The server refuses prices outside this range, and the refusal would end the bot's turn.
+        price = min(max(price, PRICE_FLOOR), PRICE_CEILING)
         return self.send("PUT", f"/prices/{facility}/{side}", {"price": price})
 
     def set_fuel_order(self, fuel: str, quantity: float) -> Any:

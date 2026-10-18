@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     formatPriceChange,
     isOverStockpile,
+    orderCost,
     parseTonnes,
     stockpileSeasons,
     tonnesFieldText,
@@ -84,5 +85,25 @@ describe("isOverStockpile", () => {
         expect(
             isOverStockpile(1, { stock: 400_000, stockpile_limit: 300_000 }),
         ).toBe(true);
+    });
+});
+
+describe("orderCost", () => {
+    const line = { price: 0.06, stock: 100_000, stockpile_limit: 300_000 };
+
+    it("is the quantity at the season's price per kg", () => {
+        expect(orderCost(50_000, line)).toBeCloseTo(3_000);
+        expect(orderCost(0, line)).toBe(0);
+    });
+
+    it("counts only what fits under the stockpile limit, as the server cuts the order down", () => {
+        expect(orderCost(500_000, line)).toBeCloseTo(12_000);
+        expect(
+            orderCost(1, {
+                price: 0.06,
+                stock: 400_000,
+                stockpile_limit: 300_000,
+            }),
+        ).toBe(0);
     });
 });
