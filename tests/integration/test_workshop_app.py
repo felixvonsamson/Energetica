@@ -430,6 +430,19 @@ def test_the_catalog_offers_every_base_tier_and_nothing_unlockable(session_path:
     ]
 
 
+def test_the_catalog_gives_fuel_use_in_kg_per_mwh_for_fuel_burning_facilities_only(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    fuel_use = {facility["id"]: facility["fuel_use"] for facility in client.get(FACILITIES_URL).json()}
+
+    assert fuel_use["coal_burner"] == 640.0
+    assert fuel_use["gas_burner"] == 353.0
+    assert fuel_use["nuclear_reactor"] == 0.044
+    assert fuel_use["onshore_wind_turbine"] is None
+    assert fuel_use["lithium_ion_batteries"] is None
+
+
 def test_a_new_players_fleet_is_empty(session_path: Path) -> None:
     client = _client(session_path)
     _player(client, "alice")
@@ -684,7 +697,7 @@ def test_a_player_takes_the_loan_and_cancels_it(session_path: Path, clock: _Cloc
     ("request_loan", "error"),
     [
         (lambda client: client.post(LOAN_URL), "WORKSHOP_LOAN_TAKEN"),
-        (lambda client: client.delete(LOAN_URL), "WORKSHOP_NOT_ENOUGH_MONEY"),
+        (lambda client: client.delete(LOAN_URL), "WORKSHOP_LOAN_NEEDED"),
     ],
     ids=["taken twice", "cancel needed"],
 )
@@ -1678,6 +1691,11 @@ def test_the_facilitator_lists_the_events_without_their_headlines(session_path: 
         "severities": ["moderate", "major", "catastrophic"],
         "suggested_severity": "moderate",
         "fuel_chosen": False,
+        "summaries": {
+            "moderate": "3% of every player's sales lost this season",
+            "major": "7% of every player's sales lost this season",
+            "catastrophic": "15% of every player's sales lost this season",
+        },
     }
     assert "substation" not in json.dumps(body)
     assert (body["fired"], body["emissions"]) == ([], 0.0)
@@ -1724,7 +1742,12 @@ def test_the_facilitator_plans_and_drops_an_event(session_path: Path) -> None:
     planned = client.put(PLANNED_EVENTS_URL.format(round=2), json=shock)
     assert planned.status_code == 200
     assert planned.json()["rounds"][1]["events"] == [
-        {**shock, "name": "Diplomatic resolution ends a regional conflict", "status": "planned"}
+        {
+            **shock,
+            "name": "Diplomatic resolution ends a regional conflict",
+            "summary": "Coal costs 15% less in summer, then eases back",
+            "status": "planned",
+        }
     ]
 
     # Without a season, it names the Round-wide event, which is not planned.
@@ -1817,21 +1840,24 @@ def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path:
     assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
 
 
-# --- the scoreboard (#1017) -----------------------------------------------------------------
+# --- the scoreboard (#1017, #1250) ---------------------------------------------------------
 
 SCOREBOARD_URL = "/api/v1/workshop/scoreboard"
 
 
-def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(session_path: Path) -> None:
+def test_everyone_reads_the_scoreboard_all_game(session_path: Path) -> None:
     client = _client(session_path)
     alice = _player(client, "alice")
     client.post(ENTER_URL)
     bob = _player(client, "bob")
     client.post(ENTER_URL)
 
+    # Before any Round is completed, nobody has scored anything yet.
     early = client.get(SCOREBOARD_URL)
-    assert early.status_code == 400
-    assert early.json()["game_exception_type"] == "WORKSHOP_SESSION_NOT_FINISHED"
+    assert early.status_code == 200
+    assert early.json()["completed_rounds"] == 0
+    assert early.json()["final"] is False
+    assert [row["score"] for row in early.json()["scores"]] == [0.0, 0.0]
 
     facilitator = _facilitator(client)
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
@@ -1849,7 +1875,8 @@ def test_everyone_reads_the_scoreboard_once_the_session_is_over_and_not_before(s
 
     assert player_view.status_code == 200
     assert player_view.json() == facilitator_view.json()
-    board = player_view.json()
+    assert player_view.json()["final"] is True
+    board = player_view.json()["scores"]
     assert [(row["username"], row["investments"]) for row in board] == [("bob", 100_000.0), ("alice", 400_000.0)]
     assert all(
         row["score"]

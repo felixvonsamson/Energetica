@@ -151,7 +151,7 @@ export function recapPage(round: number) {
     } as const;
 }
 
-/** The scoreboard, shown once the session is over (#1017). */
+/** The scoreboard (#1017), open all game (#1250). */
 export function scoreboardPage() {
     return { to: "/app/workshop/scoreboard" } as const;
 }
@@ -164,11 +164,24 @@ export type WorkshopPage =
     | ReturnType<typeof scoreboardPage>;
 
 /**
- * Where the scoreboard stands: it is the session's last node, and opens once
- * the session is over.
+ * Where the scoreboard stands: it is the session's last node. It is open all
+ * game (#1250), so it is never `future`, and it becomes `current` once the
+ * session is over.
  */
 export function scoreboardStatus(checkpoint: Checkpoint): NodeStatus {
-    return checkpoint.kind === "finished" ? "current" : "future";
+    return checkpoint.kind === "finished" ? "current" : "past";
+}
+
+/**
+ * The latest of a Round's Trading periods the session has reached, or `null`
+ * while it has reached none. The balance sheet's switch to the charts opens
+ * this one (#1250).
+ */
+export function latestSeason(round: TimelineRound): Season | null {
+    const reached = round.seasons.filter(
+        ({ status }) => status === "past" || status === "current",
+    );
+    return reached.at(-1)?.season ?? null;
 }
 
 /**
@@ -191,6 +204,11 @@ export function checkpointPage(checkpoint: Checkpoint): WorkshopPage | null {
         default:
             throw checkpoint satisfies never;
     }
+}
+
+/** The facility catalog and the player's fleet (#998). */
+export function facilitiesPage() {
+    return { to: "/app/workshop/facilities" } as const;
 }
 
 /** The facilitator's console (#1011, #1018). */

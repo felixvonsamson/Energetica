@@ -11,6 +11,8 @@
  *
  * A facility a player can own only a few of, such as a dam (#1223), shows how
  * many they have out of the limit, and its back is disabled at the limit.
+ *
+ * Prices are always in millions ("8M", #1247), unlike money elsewhere.
  */
 
 import { useAnimate } from "framer-motion";
@@ -22,6 +24,7 @@ import { Money } from "@/components/ui/money";
 import { formatEmissions } from "@/lib/format-utils";
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 import { cn } from "@/lib/utils";
+import { formatCatalogPrice } from "@/lib/workshop-facilities";
 import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -117,12 +120,14 @@ export function FacilityPriceTag({
                         <PinHole />
                         <Money
                             amount={facility.price}
+                            format={formatCatalogPrice}
                             className="block text-center text-sm font-extrabold"
                         />
                         {/* A price shock this Round moved the price (#1012). */}
                         {facility.price !== facility.base_price && (
                             <Money
                                 amount={facility.base_price}
+                                format={formatCatalogPrice}
                                 className="block text-center text-[10px] line-through opacity-60"
                             />
                         )}

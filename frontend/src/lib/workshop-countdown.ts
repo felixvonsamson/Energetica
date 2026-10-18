@@ -47,3 +47,12 @@ export function formatCountdown(remainingMs: number): string {
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
+
+/**
+ * Whether the countdown is in its last minute, when it glows red. It goes by
+ * the time shown, so it starts at `0:59`, and it stops once the time is up.
+ */
+export function isFinalMinute(remainingMs: number): boolean {
+    const shownSeconds = Math.ceil(remainingMs / 1000);
+    return shownSeconds > 0 && shownSeconds < 60;
+}

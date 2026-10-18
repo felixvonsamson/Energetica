@@ -259,8 +259,10 @@ their shared payback, plus the residual value of the facilities they still own. 
 floor top-up and the blackout reset never change a score. A facility's residual value is its catalog
 price times the share of its lifetime left once the session is over, counting only the Rounds after the
 last one. A facility still under construction keeps its whole lifetime, so it pays back its full price.
-The energy a storage facility holds is worth nothing. Once the session is over, the **scoreboard** ranks
-every player by final score, and everyone in the Run sees it.
+The energy a storage facility holds is worth nothing. The **scoreboard** ranks every player by score, and
+everyone in the Run sees it all game (#1250). Mid-game it uses the same formula over the Rounds completed so
+far (a Round is completed once its Recap opens), with residual value counted from the Round after the last
+completed one. So it changes once per Round, and after the last Round it is the final score.
 _Avoid_: leaderboard, salvage value.
 
 **Loan** (#1225):

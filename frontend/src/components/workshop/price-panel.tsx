@@ -6,8 +6,8 @@
  * the page rather than over it, so the player can set prices while still
  * looking at their data.
  *
- * Under manual fuel procurement, the panel also holds the fuel the player buys
- * for the season (#1009), below the prices.
+ * Below the prices, the panel shows the season's fuel prices, and under manual
+ * fuel procurement holds the fuel the player buys for the season (#1009).
  *
  * Prices can be changed while a Trading period's price-setting window is open,
  * and are locked when its countdown ends. A field cannot be left empty or set
@@ -109,14 +109,13 @@ export function PricePanel({ onClose }: { onClose: () => void }) {
                             open={open}
                         />
                         {/* Last season's prices are no use outside a Trading period. */}
-                        {inTradingPeriod &&
-                            fuel.data?.procurement === "manual" && (
-                                <FuelOrders
-                                    key={`fuel-${String(open)}`}
-                                    fuels={fuel.data.fuels}
-                                    open={open}
-                                />
-                            )}
+                        {inTradingPeriod && fuel.data && (
+                            <FuelOrders
+                                key={`fuel-${String(open)}`}
+                                fuels={fuel.data.fuels}
+                                open={open}
+                            />
+                        )}
                     </>
                 )}
             </div>
@@ -147,7 +146,7 @@ function PriceList({
     return (
         <>
             <p className="mb-3 text-[13px] text-fg-subtle">
-                Prices go from {formatPrice(range.floor)} to{" "}
+                Prices must be between {formatPrice(range.floor)} and{" "}
                 {formatPrice(range.ceiling)} per MWh.
             </p>
             <ul className="flex flex-col gap-3">
