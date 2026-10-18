@@ -107,8 +107,8 @@ export const queryKeys = {
         // again once the Recap opens.
         recap: (round: number) =>
             ["workshop", "session", "recap", round] as const,
-        // Every player's final score (#1017). Under the session's key, so it is read again
-        // once the session is over.
+        // Every player's score (#1017, #1250). Under the session's key, so it is read again
+        // as each Recap opens.
         scoreboard: ["workshop", "session", "scoreboard"] as const,
         periodWeek: (round: number, season: string, week: number) =>
             ["workshop", "periods", round, season, "weeks", week] as const,

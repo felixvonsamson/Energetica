@@ -6,7 +6,7 @@
  *   took it in this phase can cancel it until the phase closes. One who took it
  *   in an earlier Round sees what is left to pay back.
  * - {@link LoanReminder}: on a Recap, the payment taken as the next Round starts,
- *   or when the session ends.
+ *   or when the session ends, as a yellow post-it note stuck on the page.
  */
 
 import { HandCoins } from "lucide-react";
@@ -21,7 +21,6 @@ import {
 } from "@/hooks/use-workshop";
 import { paymentAfterRecap, paymentWhen } from "@/lib/workshop-loan";
 import { Button } from "@energetica/ui/components/button";
-import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { Money } from "@energetica/ui/components/money";
 
 export function LoanOffer() {
@@ -120,9 +119,14 @@ export function LoanReminder({ round }: { round: number }) {
     if (!payment) return null;
 
     return (
-        <InfoBanner variant="warning" className="mb-6">
-            Loan payment: <Money amount={payment.amount} /> comes off your cash{" "}
-            {paymentWhen(payment)}.
-        </InfoBanner>
+        // A sticky note, in the newspaper's colours rather than the theme's, so
+        // it reads the same way in dark mode.
+        <aside className="w-48 rotate-3 bg-yellow-200 p-3 font-sans text-sm leading-snug text-neutral-900 shadow-[2px_4px_10px_rgba(0,0,0,0.3)] sm:w-56">
+            <p className="font-bold">Loan payment</p>
+            <p>
+                <Money amount={payment.amount} /> comes off your cash{" "}
+                {paymentWhen(payment)}.
+            </p>
+        </aside>
     );
 }

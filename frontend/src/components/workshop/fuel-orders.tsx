@@ -1,18 +1,21 @@
 /**
- * The fuel part of the bids panel (#1009): under manual procurement, how much
- * of each fuel the player buys when the price-setting window closes. It shows
- * only the fuels the player's operating facilities burn.
+ * The fuel part of the bids panel (#1009): each fuel's price for the season,
+ * and under manual procurement how much of it the player buys when the
+ * price-setting window closes. It shows only the fuels the player's operating
+ * facilities burn. Under automatic procurement the prices sit where they will
+ * be once procurement turns manual, so players already know where to find them
+ * (#1248).
  *
  * Each row is laid out like a facility's row above it: the fuel's image, then
  * the player's stock, their maximum consumption (what their facilities burn
  * running at full output all season), the season's price with its change since
- * last season (in red, with a note, when a price shock landed), and the
- * quantity to buy. The quantity starts at a default the server sets: half the
- * maximum consumption the first time the player buys a fuel (#1224), then what
- * they bought last time. A quantity that would take the stock over the
- * stockpile limit is cut down to fit. A note under the stock says when the fuel
- * ran out last season, which held back the output of the facilities burning it
- * (#1010).
+ * last season (in red, with a note, when a price shock landed), and under
+ * manual procurement the quantity to buy with what it costs. The quantity
+ * starts at a default the server sets: half the maximum consumption the first
+ * time the player buys a fuel (#1224), then what they bought last time. A
+ * quantity that would take the stock over the stockpile limit is cut down to
+ * fit. A note under the stock says when the fuel ran out last season, which
+ * held back the output of the facilities burning it (#1010).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -22,6 +25,7 @@ import {
     KG_PER_TONNE,
     formatPriceChange,
     isOverStockpile,
+    orderCost,
     parseTonnes,
     stockpileSeasons,
     tonnesFieldText,
@@ -187,9 +191,14 @@ function OrderField({
     // As in the price fields, a pending send goes with the field when it
     // unmounts at the window's opening or closing.
     useEffect(() => () => clearTimeout(sendTimer.current), []);
-    const text = disabled || draft === null ? tonnesFieldText(order) : draft;
+    const typing = !disabled && draft !== null;
+    const text = typing ? draft : tonnesFieldText(order);
     const parsed = parseTonnes(text);
-    const over = parsed.ok && isOverStockpile(parsed.kg, line);
+    // Only a typed quantity is checked against the stockpile limit. The server
+    // cut the saved order down to fit when it was set, and once the period is
+    // settled the order has joined the stock, so checking it again would cut it
+    // down a second time.
+    const over = typing && parsed.ok && isOverStockpile(parsed.kg, line);
 
     function send(typed: string) {
         clearTimeout(sendTimer.current);
@@ -251,12 +260,25 @@ function OrderField({
                           : "Enter a number."}
                 </p>
             ) : (
-                (over || capped) && (
-                    <p className="pl-[60px] text-[13px] text-warning">
-                        The stockpile is limited to {stockpileSeasons(line)}{" "}
-                        times the 100% needs.
+                <>
+                    <p className="flex items-center gap-1 pl-[60px] text-[13px] text-fg-subtle">
+                        Costs
+                        <span className="font-mono font-medium text-fg-base">
+                            {formatMoney(
+                                typing
+                                    ? orderCost(parsed.kg, line)
+                                    : order * line.price,
+                            )}
+                        </span>
+                        <CoinIcon className="size-3" />
                     </p>
-                )
+                    {(over || capped) && (
+                        <p className="pl-[60px] text-[13px] text-warning">
+                            The stockpile is limited to {stockpileSeasons(line)}{" "}
+                            times the 100% needs.
+                        </p>
+                    )}
+                </>
             )}
         </div>
     );

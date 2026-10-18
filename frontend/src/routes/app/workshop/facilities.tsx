@@ -7,7 +7,8 @@
  * that nothing holds gets a warning under its price tag, until the selection
  * holds it (#1001). In a Round that holds a carbon tax vote, the player votes
  * above the selection while the phase is open (#1014), and can take or cancel
- * the loan there too (#1225). Players only: a facilitator runs the session
+ * the loan there too (#1225). While a carbon tax is in force, a notice above
+ * both tabs says so (#1247). Players only: a facilitator runs the session
  * rather than plays, so is sent back to the Workshop home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
@@ -19,7 +20,10 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Layers } from "lucide-react";
 
-import { CarbonTaxBallot } from "@/components/workshop/carbon-tax-vote";
+import {
+    CarbonTaxBallot,
+    CarbonTaxNotice,
+} from "@/components/workshop/carbon-tax-vote";
 import { FacilityCard } from "@/components/workshop/facility-card";
 import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
 import { FleetStack } from "@/components/workshop/fleet-stack";
@@ -99,6 +103,7 @@ function PlayerFacilities() {
                     </SegmentedPickerOption>
                 </SegmentedPicker>
             </div>
+            <CarbonTaxNotice />
             {facilities.isError ||
             fleet.isError ||
             // Only the catalog shows the selection.

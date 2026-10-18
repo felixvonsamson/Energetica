@@ -14,11 +14,15 @@
  * far it has got (#1155). The result of a carbon tax vote is announced in a
  * dialog over whatever page is open (#1014).
  *
+ * When a phase starts or ends, players are sent to the page they need, and the
+ * price panel opens when a price-setting window starts (#1251).
+ *
  * Pages share a content column 1400px wide at most, or 1600px for a page marked
  * `wide`.
  */
 
 import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
+import { useCallback } from "react";
 
 import { VoteResultDialog } from "@/components/workshop/carbon-tax-vote";
 import { PricePanel } from "@/components/workshop/price-panel";
@@ -27,6 +31,7 @@ import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import { WorkshopTopBar } from "@/components/workshop/workshop-top-bar";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
+    usePhaseRedirects,
     useWorkshopEntry,
     useWorkshopSession,
     useWorkshopSocket,
@@ -49,6 +54,11 @@ function WorkshopLayout() {
         "workshop-price-panel-open",
         false,
     );
+    const openPricePanel = useCallback(
+        () => setPricePanelOpen(true),
+        [setPricePanelOpen],
+    );
+    usePhaseRedirects(openPricePanel);
     // A facilitator runs the session rather than plays, so has no prices.
     const showPricePanel = pricePanelOpen && entry?.role === "player";
 

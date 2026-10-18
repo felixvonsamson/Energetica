@@ -88,6 +88,7 @@
     --color-surface-overlay: var(--surface-overlay);
     --color-surface-sunken:  var(--surface-sunken);
     --color-surface-topbar:  var(--surface-topbar);
+    --color-surface-highlight: var(--surface-highlight);
 
     /* Text / foreground */
     --color-fg-base:         var(--fg-base);
@@ -99,6 +100,7 @@
     /* Borders */
     --color-border-subtle:   var(--border-subtle);
     --color-border-brand:    var(--border-brand);
+    --color-border-highlight: var(--border-highlight);
 
     /* Brand */
     --color-brand:           var(--brand);
@@ -175,6 +177,7 @@
         --surface-overlay: var(--color-bone-50);   /* lightest bone surface, interactive elements */
         --surface-sunken: var(--color-bone-150);   /* table rows, inset areas (below card) */
         --surface-topbar: var(--color-pine-100);   /* top navigation bar */
+        --surface-highlight: var(--color-bone-300); /* sand marker, e.g. the current step when another is selected */
 
         /* Text */
         --fg-base:        var(--color-pine-700);   /* primary body text */
@@ -186,6 +189,7 @@
         /* Borders */
         --border-subtle:  var(--color-bone-300);   /* dividers, subtle separators */
         --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
+        --border-highlight: var(--color-bone-600); /* border of a surface-highlight element */
         /* --border (default) is already defined above */
 
         /* Brand — the pine-green action colour */
@@ -403,6 +407,7 @@
         --surface-overlay: #454545;  /* lightest surface, interactive elements */
         --surface-sunken: #1e1e1e;   /* below card: table rows, inset areas */
         --surface-topbar: var(--color-pine-900);
+        --surface-highlight: var(--color-bone-800);
 
         /* Text */
         --fg-base:        oklch(100% 0 0);   /* white */
@@ -414,6 +419,7 @@
         /* Borders */
         --border-subtle:  #525252;
         --border-brand:   var(--color-pine-500);   /* brand-coloured input/widget borders */
+        --border-highlight: var(--color-bone-600);
 
         /* Brand */
         --brand:    var(--color-pine-500);

@@ -4,7 +4,12 @@
  * mutations against the lobby backend.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    type QueryClient,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { fetchInstances, type InstanceFragment } from "@/lib/instances";
@@ -157,10 +162,21 @@ export function useLobbyLogout() {
                 }
             }
         },
-        onSuccess: () => {
-            // Mark as logged out directly instead of invalidating: a refetch
-            // would race the cookie deletion.
-            queryClient.setQueryData(lobbyQueryKeys.myRuns, null);
-        },
+        onSuccess: () => markLoggedOut(queryClient),
     });
+}
+
+/**
+ * Mark the account logged out once the logout has cleared the cookie. This is
+ * set directly rather than read again, since a new read would race the cookie
+ * deletion.
+ *
+ * A read of the runs still on its way is dropped first. The logout page opens
+ * with one, sent alongside the logout with the cookie still set. If it answered
+ * after the logout, it would put the runs back, and the login page would send
+ * the account to the picker as if still logged in (#1249).
+ */
+export async function markLoggedOut(queryClient: QueryClient): Promise<void> {
+    await queryClient.cancelQueries({ queryKey: lobbyQueryKeys.myRuns });
+    queryClient.setQueryData(lobbyQueryKeys.myRuns, null);
 }

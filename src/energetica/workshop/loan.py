@@ -9,7 +9,7 @@ r+2, … start, before the cash floor is applied (#1016). A payment due after th
 ends. A payment can take a player's cash below zero, like any other cost, and a blackout reset can wipe it out.
 
 The loan costs more than it brings in. The difference, :data:`LOAN_COST`, counts in the final score as an
-investment with no residual value (:mod:`~energetica.workshop.final_score`), whatever the cash floor or the blackout
+investment with no residual value (:mod:`~energetica.workshop.score`), whatever the cash floor or the blackout
 reset do to the payments.
 """
 

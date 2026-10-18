@@ -6,25 +6,28 @@
  * It has two sections, kept strictly apart:
  *
  * - "The Year in Review" tells what happened in the Round just closed: a "Lights
- *   out" report if the grid went down, every event that fired as an article
- *   ending in a line of plain numbers, the room's figures, and each season's
- *   weather against a normal season's (#1200).
+ *   out" report if the grid went down, an article on the opening of the market
+ *   in Round 1, every event that fired as an article ending in a line of plain
+ *   numbers, and the room's figures.
  * - "The Year Ahead" tells what the next Round holds: how much demand grows
  *   (#1226), each facility that unlocks, with a black-and-white photo, a carbon
- *   tax vote if the Round holds one (#1014), the Round's events with their
- *   exact effect, the change in peak demand, and a seasonal outlook that only
- *   hints at the seasonal events, with no figures. After the last Round, a
- *   "Final Edition" banner takes its place.
+ *   tax vote if the Round holds one (#1014), the switch to buying fuel by hand
+ *   if the Round makes it, the Round's events with their exact effect, the
+ *   change in peak demand, and a seasonal outlook that only hints at the
+ *   seasonal events, with no figures. After the last Round, a "Final Edition"
+ *   banner takes its place.
  *
- * Players and the facilitator read the same page.
+ * Players and the facilitator read the same page. A note, such as a player's
+ * loan payment, can be stuck on the page's top corner as a post-it.
  */
 
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import { taxPerTonne } from "@/lib/workshop-vote";
-import { weatherLine } from "@/lib/workshop-weather";
+// Kept for the hidden weather section below.
+// import { weatherLine } from "@/lib/workshop-weather";
 import type { ApiSchema } from "@/types/api-helpers";
 import {
     formatEmissions,
@@ -60,14 +63,25 @@ function useNewspaperFonts() {
     }, []);
 }
 
-export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
+export function RecapNewspaper({
+    recap,
+    note,
+}: {
+    recap: WorkshopRecap;
+    note?: ReactNode;
+}) {
     useNewspaperFonts();
     const [lead, ...rest] = recap.stories;
 
     return (
         <article
-            className={`mx-auto max-w-6xl bg-white p-5 text-neutral-900 shadow-[0_1px_3px_rgba(0,0,0,0.2),0_16px_48px_rgba(0,0,0,0.3)] md:p-10 ${BODY}`}
+            className={`relative mx-auto max-w-6xl bg-white p-5 text-neutral-900 shadow-[0_1px_3px_rgba(0,0,0,0.2),0_16px_48px_rgba(0,0,0,0.3)] md:p-10 ${BODY}`}
         >
+            {note && (
+                <div className="absolute -top-3 -right-2 z-10 md:-right-4">
+                    {note}
+                </div>
+            )}
             <Masthead recap={recap} />
             <LightsOut recap={recap} />
 
@@ -77,6 +91,7 @@ export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
             />
             <div className="grid gap-8 lg:grid-cols-[1fr_17rem]">
                 <div>
+                    {recap.round === 1 && <OpeningArticle />}
                     {lead ? (
                         <>
                             <Article story={lead} lead />
@@ -103,7 +118,8 @@ export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
                 </div>
                 <aside className="space-y-6 lg:border-l lg:border-neutral-900 lg:pl-6">
                     <ByTheNumbers recap={recap} />
-                    <Weather recap={recap} />
+                    {/* Hidden, see Weather below. */}
+                    {/* <Weather recap={recap} /> */}
                 </aside>
             </div>
 
@@ -113,7 +129,7 @@ export function RecapNewspaper({ recap }: { recap: WorkshopRecap }) {
                 <>
                     <SectionBanner title="Final Edition" />
                     <p className="text-center text-xl italic">
-                        This was the last year. The presses fall silent.
+                        This was the last year.
                     </p>
                 </>
             )}
@@ -147,6 +163,9 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
                             vote={yearAhead.carbon_tax_vote}
                             round={yearAhead.round}
                         />
+                    )}
+                    {yearAhead.manual_fuel_procurement_starts && (
+                        <FuelArticle round={yearAhead.round} />
                     )}
                     {yearAhead.stories.length > 0 && (
                         <div
@@ -271,6 +290,32 @@ function Article({ story, lead }: { story: RecapStory; lead?: boolean }) {
     );
 }
 
+/**
+ * The start of the game, told in Round 1's Recap: the new energy companies that
+ * have started supplying the country's electricity.
+ */
+function OpeningArticle() {
+    return (
+        <section className="mb-6 border-b border-neutral-900 pb-6">
+            <Kicker>Business · Special</Kicker>
+            <h3
+                className={`mt-1 text-3xl leading-[1.05] font-black md:text-4xl ${HEADLINE}`}
+            >
+                New energy companies take over the grid
+            </h3>
+            <p className="mt-2 text-justify leading-relaxed hyphens-auto">
+                The country's electricity market has opened to competition. A
+                handful of new energy companies, each with fresh capital and big
+                ambitions, have started building power plants and selling their
+                electricity on the market. Every season they name their price,
+                and the cheapest offers keep the lights on. Investors and
+                households alike are watching: who will build wisely, who will
+                overspend, and what the new market will cost the planet in CO₂.
+            </p>
+        </section>
+    );
+}
+
 /** Why a facility reached the market, as the first lines of its article. */
 function unlockStory(unlock: RecapUnlock): string {
     switch (unlock.trigger) {
@@ -378,6 +423,30 @@ function VoteArticle({ vote, round }: { vote: RecapVote; round: number }) {
     );
 }
 
+/** The next Round switches fuel procurement from automatic to manual. */
+function FuelArticle({ round }: { round: number }) {
+    return (
+        <section className="border-t border-neutral-900 pt-5 first:border-t-0 first:pt-0">
+            <Kicker>Markets · Round {round}</Kicker>
+            <h3
+                className={`mt-1 text-3xl leading-[1.05] font-black ${HEADLINE}`}
+            >
+                Companies to buy their own fuel
+            </h3>
+            <p className="mt-2 text-justify leading-relaxed">
+                Until now, fuel was delivered as it was burned. From next year,
+                companies buy it themselves: each season, next to their prices,
+                they choose how much of each fuel their facilities burn to buy.
+                Fuel left over carries over to the next season, but a facility
+                that runs out of fuel cannot produce.
+            </p>
+            <p className="mt-2 border-l-2 border-neutral-900 pl-2 text-sm font-bold">
+                Fuel is bought by hand from Round {round}
+            </p>
+        </section>
+    );
+}
+
 /**
  * The next Round's seasonal events, only hinted at: what experts expect, with
  * no figures.
@@ -479,10 +548,14 @@ function ByTheNumbers({ recap }: { recap: WorkshopRecap }) {
     );
 }
 
-/**
+/*
+ * Hidden from the Recap: the section was long and told players little they
+ * could act on. Kept, as a short text version may come back. To show it again,
+ * uncomment this, its import and its use in the Year in Review.
+ *
  * How each season's wind and sunshine compared with a normal season's. Hydro
  * follows a fixed table, so it is left out.
- */
+ *
 function Weather({ recap }: { recap: WorkshopRecap }) {
     if (recap.weather.length === 0) return null;
     return (
@@ -506,3 +579,4 @@ function Weather({ recap }: { recap: WorkshopRecap }) {
         </section>
     );
 }
+*/

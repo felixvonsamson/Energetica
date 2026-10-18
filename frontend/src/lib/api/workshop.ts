@@ -271,8 +271,8 @@ export const workshopApi = {
         >(`/workshop/rounds/${round}/recap`),
 
     /**
-     * Every player's final score, highest first (#1017). Refused until the
-     * session is over.
+     * Every player's score after the Rounds completed so far, highest first
+     * (#1017, #1250). Final once the session is over.
      */
     getScoreboard: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/scoreboard", "get">>(

@@ -8,7 +8,7 @@
 
 import { useRouter } from "@tanstack/react-router";
 import { ExternalLink, Newspaper } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { RecapNewspaper } from "@/components/workshop/recap-newspaper";
 import { useWorkshopRecap } from "@/hooks/use-workshop";
@@ -24,8 +24,17 @@ import {
 import { Spinner } from "@energetica/ui/components/spinner";
 import { TypographyMuted } from "@energetica/ui/components/typography";
 
-/** The Recap that closes `round`, or why it cannot be shown yet. */
-export function RecapForRound({ round }: { round: number }) {
+/**
+ * The Recap that closes `round`, or why it cannot be shown yet. A `note` is
+ * stuck on the page's corner.
+ */
+export function RecapForRound({
+    round,
+    note,
+}: {
+    round: number;
+    note?: ReactNode;
+}) {
     const recap = useWorkshopRecap(round);
 
     if (recap.isError) {
@@ -50,7 +59,7 @@ export function RecapForRound({ round }: { round: number }) {
                 <Spinner />
             </div>
         );
-    return <RecapNewspaper recap={recap.data} />;
+    return <RecapNewspaper recap={recap.data} note={note} />;
 }
 
 /**
@@ -68,9 +77,15 @@ export function RecapButton({ round }: { round: number }) {
 
     return (
         <>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+            <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Recap"
+                onClick={() => setOpen(true)}
+            >
                 <Newspaper className="size-4" />
-                Recap
+                {/* On a phone, the icon alone, so the top bar fits. */}
+                <span className="hidden md:inline">Recap</span>
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="flex h-[92vh] max-h-[92vh] w-[96vw] max-w-[96vw] flex-col sm:max-w-[96vw] md:max-w-[96vw] xl:max-w-[96vw]">

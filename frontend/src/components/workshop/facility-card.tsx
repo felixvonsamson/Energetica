@@ -11,15 +11,16 @@ import {
     BatteryFull,
     Flame,
     Fuel,
-    Gauge,
     type LucideIcon,
     Percent,
+    Weight,
     Wrench,
     Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
+    formatFuelUse,
     isStorage,
     workshopFacilityColor,
     workshopFacilityImages,
@@ -28,7 +29,6 @@ import { roundsLabel } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 import {
     formatEnergy,
-    formatGameTimeDuration,
     formatMass,
     formatPower,
 } from "@energetica/core/format-utils";
@@ -236,19 +236,18 @@ function facilityStats(facility: WorkshopFacility): Stat[] {
         icon: Wrench,
         value: <Money amount={facility.om_per_round} />,
     });
-    stats.push({
-        label: "Ramping",
-        icon: Gauge,
-        value:
-            facility.ramping_time === 0
-                ? "Instant"
-                : formatGameTimeDuration(facility.ramping_time),
-    });
     if (facility.fuel_type !== null) {
         stats.push({
             label: "Fuel",
             icon: Fuel,
             value: capitalize(facility.fuel_type),
+        });
+    }
+    if (facility.fuel_use !== null) {
+        stats.push({
+            label: "Fuel use",
+            icon: Weight,
+            value: formatFuelUse(facility.fuel_use),
         });
     }
     return stats;

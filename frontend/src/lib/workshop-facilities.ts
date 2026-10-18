@@ -72,3 +72,25 @@ export function isStorage(
         facility.base_efficiency !== null
     );
 }
+
+/**
+ * A price in the catalog, always in millions (#1247): "8M", "7.5M". This is an
+ * exception to the usual money formatting, which would show "8'000k", so that
+ * every price on the catalog reads in the same unit.
+ */
+export function formatCatalogPrice(amount: number): string {
+    const tenths = Math.round(amount / 100_000);
+    const whole = Math.trunc(tenths / 10)
+        .toString()
+        .replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    const decimal = Math.abs(tenths % 10);
+    return decimal === 0 ? `${whole}M` : `${whole}.${decimal}M`;
+}
+
+/**
+ * The fuel a facility burns per MWh, always in kg/MWh (#1247), so that players
+ * comparing fuels never have to convert units: "640 kg/MWh", "0.044 kg/MWh".
+ */
+export function formatFuelUse(kgPerMWh: number): string {
+    return `${Number(kgPerMWh.toPrecision(3))} kg/MWh`;
+}

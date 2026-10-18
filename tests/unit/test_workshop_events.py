@@ -18,6 +18,7 @@ from energetica.workshop.events import (
     WorkshopEvent,
     demand_factor,
     effect_line,
+    effect_summary,
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
@@ -274,3 +275,37 @@ def test_every_event_has_an_effect_line_at_every_severity() -> None:
             fuel = Fuel.GAS if event.fuel_chosen else None
             pick = EventPick(event=event.id, severity=severity, fuel=fuel)
             assert effect_line(FiredEvent.of(pick, round_number=2, season=season))
+
+
+@pytest.mark.parametrize(
+    ("event", "severity", "summary"),
+    [
+        ("climate.heatwave", "minor", "Demand +3% this season"),
+        ("climate.heatwave", "major", "Demand +18% this season"),
+        ("climate.mild_season", "base", "Demand −3% this season"),
+        ("demand.ev_tipping_point", "base", "Demand +12% from this Round on"),
+        ("demand.recession", "base", "Demand −10% from this Round on"),
+        ("climate.wildfire", "catastrophic", "12% of every player's sales lost this season"),
+        ("geo.wind_supply_war", "base", "Wind turbines cost 35% more this Round"),
+        ("geo.pv_megafactory", "base", "Solar panels cost 20% less this Round"),
+        ("geo.rare_earth_ban", "base", "Wind turbines and batteries cost 20% more this Round"),
+        ("geo.gas_pipeline_disruption", "base", "Gas costs 50% more this season, then eases back"),
+        ("geo.gas_discovery", "base", "Gas costs 20% less this season, then eases back"),
+        ("geo.conflict_resolution", "base", "The chosen fuel costs 15% less this season, then eases back"),
+    ],
+)
+def test_an_event_summarises_its_effect_before_it_is_planned(event: str, severity: Severity, summary: str) -> None:
+    assert effect_summary(EVENTS[event], severity) == summary
+
+
+def test_a_summary_follows_the_magnitude_it_is_given() -> None:
+    tuned = EVENTS["climate.flood"].model_copy(
+        update={"magnitude": {"moderate": 0.96, "major": 0.9, "catastrophic": 0.5}}
+    )
+    assert effect_summary(tuned, "catastrophic") == "50% of every player's sales lost this season"
+
+
+def test_every_event_has_a_summary_at_every_severity() -> None:
+    for event in EVENTS.values():
+        for severity in event.severities:
+            assert effect_summary(event, severity)
