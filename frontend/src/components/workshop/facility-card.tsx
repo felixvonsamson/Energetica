@@ -11,6 +11,7 @@ import {
     BatteryFull,
     Flame,
     Fuel,
+    Gauge,
     type LucideIcon,
     Percent,
     Weight,
@@ -225,6 +226,13 @@ function facilityStats(facility: WorkshopFacility): Stat[] {
                 facility.base_pollution === 0
                     ? "None"
                     : `${formatMass(facility.base_pollution)}/MWh`,
+        });
+    }
+    if (facility.capacity_factor !== null) {
+        stats.push({
+            label: "Capacity factor",
+            icon: Gauge,
+            value: `${Math.round(facility.capacity_factor * 100)}%`,
         });
     }
     stats.push({

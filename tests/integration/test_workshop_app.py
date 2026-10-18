@@ -443,6 +443,18 @@ def test_the_catalog_gives_fuel_use_in_kg_per_mwh_for_fuel_burning_facilities_on
     assert fuel_use["lithium_ion_batteries"] is None
 
 
+def test_the_catalog_gives_a_capacity_factor_for_renewable_facilities_only(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    factors = {facility["id"]: facility["capacity_factor"] for facility in client.get(FACILITIES_URL).json()}
+
+    for renewable in ("onshore_wind_turbine", "small_water_dam", "pv_solar"):
+        assert 0 < factors[renewable] < 1
+    for other in ("coal_burner", "gas_burner", "nuclear_reactor", "lithium_ion_batteries"):
+        assert factors[other] is None
+
+
 def test_a_new_players_fleet_is_empty(session_path: Path) -> None:
     client = _client(session_path)
     _player(client, "alice")

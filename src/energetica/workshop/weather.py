@@ -266,6 +266,31 @@ def season_output(seed: int, round_number: int, season: Season) -> AverageOutput
         return _season_output(seed, round_number, season)
 
 
+@cache
+def _hydro_capacity_factor() -> float:
+    """Hydro's average output over a year: the same in every Run, since it follows a fixed table."""
+    weather = RunWeather(seed=0)
+    hours = [t for season in SEASONS for day in _hours(season) for t in day]
+    return sum(weather.share(FacilityId.SMALL_WATER_DAM, t) for t in hours) / len(hours)
+
+
+def capacity_factor(seed: int, facility: FacilityId) -> float | None:
+    """The average share of its power ``facility`` produces over the first Round's year of a Run whose random seed
+    is ``seed``, from 0 to 1, or None for a facility that does not follow the weather (#1272). The seasons are all
+    the same length, so the year's average is the average of theirs.
+    """
+    match CATALOG[facility].category:
+        case FacilityCategory.WIND:
+            kind: Callable[[AverageOutput], float] = lambda output: output.wind
+        case FacilityCategory.PV | FacilityCategory.CSP:
+            kind = lambda output: output.solar
+        case FacilityCategory.HYDRO:
+            return _hydro_capacity_factor()
+        case _:
+            return None
+    return sum(kind(season_output(seed, 1, season)) for season in SEASONS) / len(SEASONS)
+
+
 def normal_output(seeds: range) -> dict[Season, AverageOutput]:
     """The average output of each season in Round 1 over ``seeds``: what a normal season gives. :data:`NORMAL_OUTPUT`
     holds it for ``range(128)``.
