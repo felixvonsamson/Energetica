@@ -4,9 +4,11 @@
  * together and the money left after. Everything picked is bought when the
  * phase's countdown runs out.
  *
- * The cards sit in one row. When they no longer fit side by side, they overlap
- * like a hand of playing cards. Hovering one lifts it and shows its Remove
- * button. A touch screen cannot hover, so there the button always shows.
+ * Copies of one facility form a stack, with each copy behind the top card
+ * sticking out a little to its right (#1272). The stacks sit in one row. When
+ * they no longer fit side by side, they overlap like a hand of playing cards.
+ * Hovering a stack lifts it and shows its top card's Remove button, which takes
+ * off one copy. A touch screen cannot hover, so there the button always shows.
  */
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,8 +16,10 @@ import { X } from "lucide-react";
 import { useRef } from "react";
 
 import { Money } from "@/components/ui/money";
-import { FacilityCard } from "@/components/workshop/facility-card";
+import { cardFrame, FacilityCard } from "@/components/workshop/facility-card";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
+import { workshopFacilityColor } from "@/lib/workshop-facilities";
+import { overlapMargin, selectionStacks } from "@/lib/workshop-selection";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
@@ -30,10 +34,16 @@ type WorkshopSelection = ApiSchema<"WorkshopSelectionOut">;
 const CARD_ZOOM = 0.7;
 /** A card's width in the row: the catalog card's `w-60` (240px), zoomed. */
 const CARD_WIDTH = 240 * CARD_ZOOM;
-/** The space between cards while they all fit side by side. */
+/** The catalog card's `rounded-2xl` (16px), zoomed. */
+const CARD_RADIUS = 16 * CARD_ZOOM;
+/** The space between stacks while they all fit side by side. */
 const CARD_GAP = 12;
-/** The least of each card that stays visible when they overlap. */
-const MIN_VISIBLE = 16;
+/** How far each copy behind the top card of a stack sticks out to its right. */
+const STACK_OFFSET = 8;
+/** Copies drawn behind the top card. The "×N" badge counts any more. */
+const MAX_BEHIND = 4;
+/** How much darker each copy behind the top card is than the one in front. */
+const DEPTH_SHADE = 0.06;
 
 export function InvestmentSelection({
     facilities,
@@ -50,8 +60,14 @@ export function InvestmentSelection({
 }) {
     const byId = new Map(facilities.map((facility) => [facility.id, facility]));
     const count = selection.facilities.length;
+    const stacks = selectionStacks(selection.facilities);
     const rowRef = useRef<HTMLDivElement>(null);
     const { width: rowWidth } = useContainerDimensions(rowRef);
+    const margin = overlapMargin(
+        stacks.map((stack) => stackWidth(stack.count)),
+        rowWidth,
+        CARD_GAP,
+    );
 
     return (
         <section className="space-y-3 rounded-xl border border-border bg-card p-4">
@@ -89,42 +105,30 @@ export function InvestmentSelection({
              */}
             <div ref={rowRef} className="flex h-60 items-start pt-2">
                 <AnimatePresence initial={false}>
-                    {selection.facilities.map((id, index) => {
-                        const facility = byId.get(id);
+                    {stacks.map((stack, index) => {
+                        const facility = byId.get(stack.facility);
                         return (
                             facility && (
                                 <motion.div
-                                    // Removing takes out the last copy of a facility, so
-                                    // numbering the copies keeps every other card's key.
-                                    key={`${id}-${copyNumber(selection.facilities, index)}`}
+                                    key={stack.facility}
                                     layout
                                     initial={{ opacity: 0, y: -12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     className="group relative shrink-0 transition-[translate] hover:z-10 hover:-translate-y-2 focus-within:z-10 focus-within:-translate-y-2"
                                     style={{
-                                        marginLeft:
-                                            index === 0
-                                                ? 0
-                                                : overlapMargin(
-                                                      count,
-                                                      rowWidth,
-                                                  ),
+                                        width: stackWidth(stack.count),
+                                        marginLeft: index === 0 ? 0 : margin,
                                     }}
                                 >
-                                    <div style={{ zoom: CARD_ZOOM }}>
-                                        <FacilityCard facility={facility} />
-                                    </div>
-                                    {investmentOpen && (
-                                        <button
-                                            type="button"
-                                            aria-label={`Remove ${facility.name}`}
-                                            onClick={() => onRemove(id)}
-                                            className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100 pointer-coarse:opacity-100"
-                                        >
-                                            <X className="size-3.5" />
-                                        </button>
-                                    )}
+                                    <SelectionStackCards
+                                        facility={facility}
+                                        count={stack.count}
+                                        removable={investmentOpen}
+                                        onRemove={() =>
+                                            onRemove(stack.facility)
+                                        }
+                                    />
                                 </motion.div>
                             )
                         );
@@ -135,19 +139,76 @@ export function InvestmentSelection({
     );
 }
 
-/**
- * The left margin of every card after the first: a gap while they all fit in
- * `rowWidth`, and a negative margin that overlaps them once they do not.
- */
-function overlapMargin(count: number, rowWidth: number): number {
-    const sideBySide = count * CARD_WIDTH + (count - 1) * CARD_GAP;
-    if (count < 2 || sideBySide <= rowWidth) return CARD_GAP;
-    const step = Math.max((rowWidth - CARD_WIDTH) / (count - 1), MIN_VISIBLE);
-    return step - CARD_WIDTH;
+/** A stack's width: the top card, and the edge of each copy showing behind it. */
+function stackWidth(count: number): number {
+    return CARD_WIDTH + Math.min(count - 1, MAX_BEHIND) * STACK_OFFSET;
 }
 
-/** Which copy of its facility the entry at `index` is: 0 for the first. */
-function copyNumber(selection: FacilityId[], index: number): number {
-    return selection.slice(0, index).filter((id) => id === selection[index])
-        .length;
+/**
+ * Every copy of one facility in the selection: the top card, with the other
+ * copies' edges showing to its right, and a "×N" badge once there are several.
+ * Only the top card has the Remove button, which takes off one copy.
+ */
+function SelectionStackCards({
+    facility,
+    count,
+    removable,
+    onRemove,
+}: {
+    facility: WorkshopFacility;
+    count: number;
+    removable: boolean;
+    onRemove: () => void;
+}) {
+    const behind = Math.min(count - 1, MAX_BEHIND);
+    return (
+        <>
+            <AnimatePresence initial={false}>
+                {Array.from({ length: behind }, (_, i) => behind - i).map(
+                    (depth) => (
+                        <motion.div
+                            key={depth}
+                            aria-hidden
+                            className="absolute top-0 h-full shadow-lg"
+                            style={{
+                                left: depth * STACK_OFFSET,
+                                width: CARD_WIDTH,
+                                borderRadius: CARD_RADIUS,
+                                background: cardFrame(facility),
+                                filter: `brightness(${1 - depth * DEPTH_SHADE})`,
+                            }}
+                            initial={{ x: -STACK_OFFSET, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -STACK_OFFSET, opacity: 0 }}
+                        />
+                    ),
+                )}
+            </AnimatePresence>
+            <div className="relative" style={{ width: CARD_WIDTH }}>
+                <div style={{ zoom: CARD_ZOOM }}>
+                    <FacilityCard facility={facility} />
+                </div>
+                {count > 1 && (
+                    <span
+                        className="absolute -top-2 -left-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background px-1 text-xs font-extrabold text-white shadow-md"
+                        style={{
+                            backgroundColor: workshopFacilityColor(facility.id),
+                        }}
+                    >
+                        ×{count}
+                    </span>
+                )}
+                {removable && (
+                    <button
+                        type="button"
+                        aria-label={`Remove one ${facility.name}`}
+                        onClick={onRemove}
+                        className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100 pointer-coarse:opacity-100"
+                    >
+                        <X className="size-3.5" />
+                    </button>
+                )}
+            </div>
+        </>
+    );
 }

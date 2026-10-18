@@ -124,6 +124,10 @@ class WorkshopFacilityOut(WorkshopFacility):
     fuel_use: float | None = Field(
         description="The fuel it burns per MWh it generates, in kg, or null for a facility that burns no fuel"
     )
+    capacity_factor: float | None = Field(
+        description="Its average output over a year of the Run's weather, as a share of its power from 0 to 1, or "
+        "null for a facility that does not follow the weather"
+    )
 
 
 class WorkshopSelectionIn(BaseModel):

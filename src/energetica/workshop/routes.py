@@ -84,6 +84,7 @@ from energetica.workshop.session import (
 from energetica.workshop.storage import energy_at_risk
 from energetica.workshop.unlocks import CSP_UNLOCK_ROUND, UPGRADES
 from energetica.workshop.votes import CARBON_TAX_RATE
+from energetica.workshop.weather import capacity_factor
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -377,6 +378,7 @@ def get_facilities(
             for_sale=facility.id in for_sale,
             price=session.facility_price(facility.id),
             fuel_use=FUEL_USE.get(facility.id),
+            capacity_factor=capacity_factor(session.weather_seed, facility.id),
         )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned
