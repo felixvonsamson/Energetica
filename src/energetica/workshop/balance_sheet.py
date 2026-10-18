@@ -36,7 +36,7 @@ from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, L
 from energetica.workshop.fuel import FUEL_NAMES
 from energetica.workshop.operating_profit import period_operating_profit, round_operating_profit
 from energetica.workshop.seasons import SEASONS, Season
-from energetica.workshop.trading import TradingResult
+from energetica.workshop.trading import FacilityPerformance, TradingResult
 
 SeasonStatus = Literal["settled", "upcoming", "skipped"]
 
@@ -53,6 +53,17 @@ class OmLine(BaseModel):
     fixed: float = Field(description="The part charged whatever the use")
     variable_full: float = Field(description="The variable part at full use")
     usage: float = Field(description="Capacity factor, from 0 to 1. The variable part charged is variable_full × usage")
+
+
+class MarketLine(BaseModel):
+    """The energy one facility type sold, or bought, over a period, and the money it was worth."""
+
+    model_config = ConfigDict(frozen=True)
+
+    facility: FacilityId
+    name: str
+    energy: float = Field(description="In Wh")
+    amount: float = Field(description="The sale revenue, or the purchase cost")
 
 
 class FuelLine(BaseModel):
@@ -77,8 +88,10 @@ class PeriodSheet(BaseModel):
 
     energy_sold: float
     sale_revenue: float
+    sold: list[MarketLine] = Field(description="One line per facility type that sold energy, in catalog order")
     energy_bought: float = Field(description="Energy storage bought to charge")
     purchase_cost: float
+    bought: list[MarketLine] = Field(description="One line per facility type that bought energy, in catalog order")
     market_income: float = Field(description="Sale revenue minus the cost of the energy bought")
     energy_dumped: float = Field(description="Renewable energy that did not sell")
     dump_cost: float
@@ -200,6 +213,23 @@ def _catalog_order(facility: FacilityId) -> int:
     return list(FacilityId).index(facility)
 
 
+def _market_lines(
+    performances: Sequence[tuple[FacilityId, FacilityPerformance]], side: Literal["sold", "bought"]
+) -> list[MarketLine]:
+    """The energy each facility type sold, or bought, added up, leaving out the types with none."""
+    sold = side == "sold"
+    energy: dict[FacilityId, float] = {}
+    amounts: dict[FacilityId, float] = {}
+    for facility, performance in performances:
+        energy[facility] = energy.get(facility, 0.0) + (performance.sold if sold else performance.bought)
+        amounts[facility] = amounts.get(facility, 0.0) + (performance.revenue if sold else performance.purchase_cost)
+    return [
+        MarketLine(facility=facility, name=CATALOG[facility].name, energy=energy[facility], amount=amounts[facility])
+        for facility in sorted(energy, key=_catalog_order)
+        if energy[facility] > 0
+    ]
+
+
 def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
     """The figures of ``results`` added up: one result for a season, or a Round's settled ones for its total."""
     performances = [
@@ -248,8 +278,10 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
     return PeriodSheet(
         energy_sold=sum(performance.sold for _, performance in performances),
         sale_revenue=sale_revenue,
+        sold=_market_lines(performances, "sold"),
         energy_bought=sum(performance.bought for _, performance in performances),
         purchase_cost=purchase_cost,
+        bought=_market_lines(performances, "bought"),
         market_income=sale_revenue - purchase_cost,
         energy_dumped=sum(performance.dumped for _, performance in performances),
         dump_cost=dump_cost,

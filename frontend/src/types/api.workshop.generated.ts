@@ -1046,6 +1046,25 @@ export interface components {
             prices: components["schemas"]["PriceSheet"];
         };
         /**
+         * MarketLine
+         * @description The energy one facility type sold, or bought, over a period, and the money it was worth.
+         */
+        MarketLine: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /**
+             * Energy
+             * @description In Wh
+             */
+            energy: number;
+            /**
+             * Amount
+             * @description The sale revenue, or the purchase cost
+             */
+            amount: number;
+        };
+        /**
          * NotStarted
          * @description Before Round 1: players are arriving and nothing is open yet.
          */
@@ -1102,12 +1121,22 @@ export interface components {
             /** Sale Revenue */
             sale_revenue: number;
             /**
+             * Sold
+             * @description One line per facility type that sold energy, in catalog order
+             */
+            sold: components["schemas"]["MarketLine"][];
+            /**
              * Energy Bought
              * @description Energy storage bought to charge
              */
             energy_bought: number;
             /** Purchase Cost */
             purchase_cost: number;
+            /**
+             * Bought
+             * @description One line per facility type that bought energy, in catalog order
+             */
+            bought: components["schemas"]["MarketLine"][];
             /**
              * Market Income
              * @description Sale revenue minus the cost of the energy bought

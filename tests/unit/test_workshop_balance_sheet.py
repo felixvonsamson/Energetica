@@ -92,6 +92,25 @@ def test_o_and_m_has_a_line_per_facility_type_in_catalog_order_with_its_fixed_an
     assert sheet.om[0].count == 2
 
 
+def test_energy_sold_and_bought_have_a_line_per_facility_type_that_add_up_to_the_totals() -> None:
+    sheet = balance_sheet(1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[], round_count=3)
+
+    spring = sheet.seasons[0].sheet
+    assert spring is not None
+    # In catalog order, leaving out the batteries, which sold nothing, and the generators, which bought nothing.
+    assert [(line.facility, line.energy, line.amount) for line in spring.sold] == [
+        (WIND, 1e9, 40_000.0),
+        (GAS, 2e9, 100_000.0),
+    ]
+    assert [(line.facility, line.name) for line in spring.bought] == [(BATTERIES, "Lithium-ion batteries")]
+    for period in (spring, sheet.total):
+        assert period is not None
+        assert sum(line.energy for line in period.sold) == pytest.approx(period.energy_sold)
+        assert sum(line.amount for line in period.sold) == pytest.approx(period.sale_revenue)
+        assert sum(line.energy for line in period.bought) == pytest.approx(period.energy_bought)
+        assert sum(line.amount for line in period.bought) == pytest.approx(period.purchase_cost)
+
+
 def test_the_round_total_adds_up_its_seasons_and_matches_the_operating_profit_accumulator() -> None:
     sheet = balance_sheet(1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[], round_count=3)
 

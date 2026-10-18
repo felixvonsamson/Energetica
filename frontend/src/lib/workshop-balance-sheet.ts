@@ -15,6 +15,7 @@ export type BalanceSheet = ApiSchema<"BalanceSheet">;
 export type PeriodSheet = ApiSchema<"PeriodSheet">;
 export type SeasonSheet = ApiSchema<"SeasonSheet">;
 export type FinancingLine = ApiSchema<"FinancingLine">;
+type MarketLine = ApiSchema<"MarketLine">;
 
 const WH_PER_MWH = 1_000_000;
 
@@ -103,6 +104,29 @@ function energyCell(energy: number, money: number): Cell {
     };
 }
 
+/**
+ * One line per facility type under energy sold or bought, from the Round's
+ * total. A season the type sold or bought nothing in shows zero.
+ */
+function marketRows(
+    side: "sold" | "bought",
+    lines: MarketLine[],
+    sign: 1 | -1,
+): Row[] {
+    return lines.map((line) => ({
+        id: `${side}-${line.facility}`,
+        label: line.name,
+        level: 2,
+        kind: "line",
+        unit: "energy",
+        cell: (p) => {
+            const season = p[side].find((l) => l.facility === line.facility);
+            if (!season) return { amount: 0 };
+            return energyCell(season.energy, sign * season.amount);
+        },
+    }));
+}
+
 /** CO₂ taxed, as tonnes times the price per tonne. */
 function co2Cell(emissions: number, ratePerKg: number, tax: number): Cell {
     return {
@@ -135,6 +159,7 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             unit: "energy",
             cell: (p) => energyCell(p.energy_sold, p.sale_revenue),
         },
+        ...marketRows("sold", sheet.total?.sold ?? [], 1),
         {
             id: "bought",
             label: "Energy bought (storage)",
@@ -143,6 +168,7 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             unit: "energy",
             cell: (p) => energyCell(p.energy_bought, -p.purchase_cost),
         },
+        ...marketRows("bought", sheet.total?.bought ?? [], -1),
         {
             id: "dump",
             label: "Dumping cost",
