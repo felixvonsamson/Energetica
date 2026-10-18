@@ -166,17 +166,8 @@ function DetailedToggle({
 
 // --- Waterfall ------------------------------------------------------------
 
-/**
- * A waterfall row's columns in px: the label, the value, and the gap beside the
- * bar track between them.
- */
-const STEP_LABEL = 170;
-const STEP_VALUE = 100;
-const STEP_GAP = 14;
-const STEP_COLUMNS: CSSProperties = {
-    gridTemplateColumns: `${STEP_LABEL}px minmax(0, 1fr) ${STEP_VALUE}px`,
-    columnGap: STEP_GAP,
-};
+/** A waterfall row: the label, the bar track and the value. */
+const STEP_GRID = "grid grid-cols-[170px_minmax(0,1fr)_100px] gap-3.5";
 
 function Waterfall({
     sheet,
@@ -228,20 +219,24 @@ function Waterfall({
                     {/* Zero on the running total, so a total below it shows. */}
                     <div
                         aria-hidden
-                        className="absolute inset-y-0 border-l border-dotted border-(--bs-light)"
-                        style={{
-                            left: `calc(${STEP_LABEL + STEP_GAP}px + (100% - ${STEP_LABEL + STEP_VALUE + 2 * STEP_GAP}px) * ${at(0) / 100})`,
-                        }}
-                    />
+                        className={cn(STEP_GRID, "absolute inset-0")}
+                    >
+                        <div className="relative col-start-2">
+                            <div
+                                className="absolute inset-y-0 border-l border-dotted border-(--bs-light)"
+                                style={{ left: `${at(0)}%` }}
+                            />
+                        </div>
+                    </div>
                     {steps.map((step) => (
                         <div
                             key={step.label}
                             className={cn(
-                                "grid items-center py-[3px]",
+                                STEP_GRID,
+                                "items-center py-[3px]",
                                 step.kind === "subtotal" &&
                                     "border-t border-bone-300",
                             )}
-                            style={STEP_COLUMNS}
                         >
                             <span
                                 className={cn(

@@ -108,11 +108,8 @@ function energyCell(energy: number, money: number): Cell {
  * One line per facility type under energy sold or bought, from the Round's
  * total. A season the type sold or bought nothing in shows zero.
  */
-function marketRows(
-    side: "sold" | "bought",
-    lines: MarketLine[],
-    sign: 1 | -1,
-): Row[] {
+function marketRows(side: "sold" | "bought", lines: MarketLine[]): Row[] {
+    const sign = side === "sold" ? 1 : -1;
     return lines.map((line) => ({
         id: `${side}-${line.facility}`,
         label: line.name,
@@ -120,7 +117,9 @@ function marketRows(
         kind: "line",
         unit: "energy",
         cell: (p) => {
-            const season = p[side].find((l) => l.facility === line.facility);
+            const season = p[side].find(
+                (seasonLine) => seasonLine.facility === line.facility,
+            );
             if (!season) return { amount: 0 };
             return energyCell(season.energy, sign * season.amount);
         },
@@ -159,7 +158,7 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             unit: "energy",
             cell: (p) => energyCell(p.energy_sold, p.sale_revenue),
         },
-        ...marketRows("sold", sheet.total?.sold ?? [], 1),
+        ...marketRows("sold", sheet.total?.sold ?? []),
         {
             id: "bought",
             label: "Energy bought (storage)",
@@ -168,7 +167,7 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             unit: "energy",
             cell: (p) => energyCell(p.energy_bought, -p.purchase_cost),
         },
-        ...marketRows("bought", sheet.total?.bought ?? [], -1),
+        ...marketRows("bought", sheet.total?.bought ?? []),
         {
             id: "dump",
             label: "Dumping cost",
