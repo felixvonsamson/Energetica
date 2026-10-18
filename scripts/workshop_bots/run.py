@@ -244,8 +244,12 @@ def live(args: argparse.Namespace) -> None:
     log(f"bots entered: {', '.join(bot.name for bot in bots)}")
     plan = load_plan(args.plan)
     if plan is not None:
-        Facilitator(args.facilitator).apply_plan(plan)
-        log(f"applied the {args.plan} plan; check it on the console before you start")
+        # Once the session has started, some Rounds are locked and the server refuses the whole plan.
+        if bots[0].api.get("/session")["checkpoint"]["kind"] == "not_started":
+            Facilitator(args.facilitator).apply_plan(plan)
+            log(f"applied the {args.plan} plan; check it on the console before you start")
+        else:
+            log(f"the session has started, so the {args.plan} plan is not applied again")
     history = History(bots[0].api)
     threads: dict[str, threading.Thread] = {}
     last_kind = None
