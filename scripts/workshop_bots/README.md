@@ -71,6 +71,30 @@ The stand-in the bots were tested against bought 2 coal burners, a gas burner an
 (170 MW of firm capacity), then one more gas burner and onshore turbine each Round. It never took the loan, ordered
 its full fuel need and never changed a price.
 
+## Running against a deployed Run
+
+The bots can also play in a Run on a server, such as a test Run before a real workshop. Point them at it and give
+them the accounts' passwords:
+
+```bash
+export ENERGETICA_LOBBY_URL=https://lobby.energetica-game.org
+export ENERGETICA_APP_URL=https://workshop-test.energetica-game.org
+export ENERGETICA_INSTANCE_SLUG=<the Run's slug>
+export ENERGETICA_BOT_PASSWORDS="$HOME/workshop-bot-passwords.json"  # {"coalking": "...", "greenie": "...", ...}
+.venv/bin/python scripts/workshop_bots/run.py live
+```
+
+When `ENERGETICA_BOT_PASSWORDS` is set, every account the script logs in as must be in the file. The script stops
+and names any account that is missing, rather than trying `<name>1234`. Keep the file outside the repo.
+
+- An operator creates the bot accounts on the server, with random passwords, and puts them on the Run's roster.
+  `setup` refuses to run against a remote URL, since it would create accounts with known passwords.
+- `--plan` logs in as the facilitator to set the levers. Put the facilitator's password in the file or in
+  `ENERGETICA_FACILITATOR_PASSWORD`, or leave out `--plan` and set the levers on the console.
+- Never run `headless` against a live Run. It acts as the facilitator and plays the whole session through.
+- The bots and every human player must enter the Run before the facilitator starts the session, since demand is
+  set by the number of players at the start. Start `live` first and wait for `bots entered`.
+
 ## Running without a browser
 
 `headless` plays a whole session at once: the five bots, a stand-in for you (the `player` account), and the
