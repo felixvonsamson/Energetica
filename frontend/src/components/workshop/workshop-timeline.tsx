@@ -15,9 +15,17 @@
  * The season the grid went down in is labeled "Blackout". The seasons after it
  * in that Round never run, so they are crossed out and do not link (#1005).
  *
- * Below the `xl` breakpoint the seasons show only their icons, so three Rounds
- * fit a laptop screen. If the timeline is still wider than the screen it
- * scrolls, and `justify-center-safe` keeps the first Round reachable.
+ * The timeline adapts to the width it has (#1271). When it does not fit, it
+ * first drops the season names, keeping them in each icon's tooltip, then the
+ * arrows between phases. Only if even that does not fit does it scroll, and
+ * `justify-center-safe` keeps the first Round reachable.
+ *
+ * To choose, it lays out every layout in a hidden ruler as wide as its content
+ * box, and measures them. The ruler holds no links, so it costs the router
+ * nothing. The widths do not depend on the layout shown, so switching cannot
+ * make the timeline flicker between two layouts, as long as the timeline fills
+ * its container's width. A container sized by its content, such as the picture
+ * in the welcome guide, fixes the layout instead.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -28,7 +36,15 @@ import {
     Trophy,
     ZapOff,
 } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
+import {
+    createContext,
+    Fragment,
+    type ReactNode,
+    use,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from "react";
 
 import { SEASON_ICONS } from "@/components/workshop/season-icons";
 import { cn } from "@/lib/utils";
@@ -43,6 +59,9 @@ import {
     scoreboardPage,
     scoreboardStatus,
     SEASON_LABELS,
+    TIMELINE_LAYOUTS,
+    type TimelineLayout,
+    timelineLayout,
     type TimelineRound,
     tradingPeriodPage,
     type WorkshopPage,
@@ -53,18 +72,100 @@ export function WorkshopTimeline({
     checkpoint,
     roundCount,
     blackouts,
+    layout: fixedLayout,
 }: {
     checkpoint: Checkpoint;
     roundCount: number;
     blackouts: TradingPeriod[];
+    /** Fixes the layout instead of fitting it to the width. */
+    layout?: TimelineLayout;
 }) {
     const rounds = workshopTimeline(checkpoint, roundCount, blackouts);
+    const rulerRef = useRef<HTMLDivElement>(null);
+    const [fittedLayout, setFittedLayout] = useState<TimelineLayout>("full");
+
+    // Measured before the first paint, and again whenever the space or a
+    // layout's width changes: on resize, zoom, or when the content changes.
+    // Both sides come from getBoundingClientRect, so CSS zoom scales them
+    // alike.
+    useLayoutEffect(() => {
+        const ruler = rulerRef.current;
+        if (!ruler) return;
+        const rows = [...ruler.children];
+        const measure = () => {
+            const widths = Object.fromEntries(
+                TIMELINE_LAYOUTS.map((layout, i) => [
+                    layout,
+                    rows[i]?.getBoundingClientRect().width ?? Infinity,
+                ]),
+            ) as Record<TimelineLayout, number>;
+            setFittedLayout(
+                timelineLayout(ruler.getBoundingClientRect().width, widths),
+            );
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(ruler);
+        for (const row of rows) observer.observe(row);
+        return () => observer.disconnect();
+    }, [fixedLayout]);
 
     return (
         <nav
             aria-label="Session timeline"
-            className="flex shrink-0 items-center justify-center-safe gap-2 overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
+            className="relative flex shrink-0 items-center justify-center-safe overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
         >
+            <TimelineRow
+                checkpoint={checkpoint}
+                rounds={rounds}
+                layout={fixedLayout ?? fittedLayout}
+            />
+            {/* The ruler: every layout at its natural width, inside a box
+                spanning the nav's content box (inset by its `px-4`), clipped
+                to no height, invisible, and out of reach. */}
+            {!fixedLayout && (
+                <InRuler value={true}>
+                    <div
+                        ref={rulerRef}
+                        aria-hidden="true"
+                        inert
+                        className="invisible absolute inset-x-4 top-0 h-0 overflow-hidden"
+                    >
+                        {TIMELINE_LAYOUTS.map((layout) => (
+                            <TimelineRow
+                                key={layout}
+                                checkpoint={checkpoint}
+                                rounds={rounds}
+                                layout={layout}
+                                className="w-max"
+                            />
+                        ))}
+                    </div>
+                </InRuler>
+            )}
+        </nav>
+    );
+}
+
+/** Whether nodes render inside the ruler, where they need not link. */
+const InRuler = createContext(false);
+
+function TimelineRow({
+    checkpoint,
+    rounds,
+    layout,
+    className,
+}: {
+    checkpoint: Checkpoint;
+    rounds: TimelineRound[];
+    layout: TimelineLayout;
+    className?: string;
+}) {
+    const arrow = layout !== "compact" && (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+    );
+    return (
+        <div className={cn("flex shrink-0 items-center gap-2", className)}>
             <TimelineNode
                 status={introStatus(checkpoint)}
                 page={introPage()}
@@ -74,11 +175,11 @@ export function WorkshopTimeline({
                 <BookOpen className="size-4" />
                 <span className="text-xs">Intro</span>
             </TimelineNode>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            {arrow}
             {rounds.map((round) => (
                 <Fragment key={round.round}>
-                    <RoundBlock round={round} />
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    <RoundBlock round={round} showNames={layout === "full"} />
+                    {arrow}
                     <TimelineNode
                         status={round.recap}
                         page={recapPage(round.round)}
@@ -88,7 +189,7 @@ export function WorkshopTimeline({
                         <ScrollText className="size-4" />
                         <span className="text-xs">Recap</span>
                     </TimelineNode>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    {arrow}
                 </Fragment>
             ))}
             <TimelineNode
@@ -100,11 +201,17 @@ export function WorkshopTimeline({
                 <Trophy className="size-4" />
                 <span className="text-xs">Scores</span>
             </TimelineNode>
-        </nav>
+        </div>
     );
 }
 
-function RoundBlock({ round }: { round: TimelineRound }) {
+function RoundBlock({
+    round,
+    showNames,
+}: {
+    round: TimelineRound;
+    showNames: boolean;
+}) {
     return (
         <div
             className={cn(
@@ -136,7 +243,8 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                                       : name
                             }
                             className={cn(
-                                "rounded-full border border-border px-1.5 py-1 text-xs xl:px-2.5",
+                                "rounded-full border border-border py-1 text-xs",
+                                showNames ? "px-2.5" : "px-1.5",
                                 blackout &&
                                     "border-destructive text-destructive",
                                 status === "current" &&
@@ -146,9 +254,7 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                             )}
                         >
                             <Icon className="size-3.5" />
-                            <span className="hidden xl:inline">
-                                {SEASON_LABELS[season]}
-                            </span>
+                            {showNames && <span>{SEASON_LABELS[season]}</span>}
                             {blackout && (
                                 <span className="font-semibold">Blackout</span>
                             )}
@@ -162,7 +268,7 @@ function RoundBlock({ round }: { round: TimelineRound }) {
 
 /**
  * One node: a link to its page, unless the session has not reached it yet or
- * skipped it.
+ * skipped it, or it is in the ruler.
  */
 function TimelineNode({
     status,
@@ -178,6 +284,8 @@ function TimelineNode({
     children: ReactNode;
 }) {
     const base = "flex shrink-0 items-center gap-1.5 font-medium";
+    if (use(InRuler))
+        return <span className={cn(base, className)}>{children}</span>;
     if (status === "future" || status === "skipped") {
         return (
             <span
