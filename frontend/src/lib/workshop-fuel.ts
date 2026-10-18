@@ -3,7 +3,8 @@
  * into the bids panel, showing a price's change since last season, and telling
  * when an order runs into the stockpile limit.
  *
- * The server counts fuel in kg. Players type and read it in tonnes.
+ * The server counts fuel in kg. Players type gas and coal in kilotonnes and
+ * uranium in tonnes.
  */
 
 import coal from "@/assets/fuels/coal.svg";
@@ -28,34 +29,68 @@ export function workshopFuelColor(fuel: Fuel): string {
 
 export const KG_PER_TONNE = 1_000;
 
-export type ParsedTonnes =
+/**
+ * The unit each fuel's order field takes. Gas and coal are bought by the
+ * thousand tonnes. Uranium is bought by the kg, so a coarser unit would hide
+ * most of an order.
+ */
+const FIELD_UNITS: Record<Fuel, { label: string; kg: number }> = {
+    gas: { label: "kt", kg: 1_000_000 },
+    coal: { label: "kt", kg: 1_000_000 },
+    uranium: { label: "t", kg: KG_PER_TONNE },
+};
+
+/** The unit beside a fuel's order field, "kt" or "t". */
+export function fuelFieldUnit(fuel: Fuel): string {
+    return FIELD_UNITS[fuel].label;
+}
+
+export type ParsedQuantity =
     | { ok: true; kg: number }
     | { ok: false; reason: "empty" | "invalid" | "negative" };
 
 /**
- * Read a quantity typed into a fuel field, in tonnes, as kg. Thousands
- * separators, an apostrophe or a space, are ignored.
+ * Read a quantity typed into a fuel's order field, in the field's unit, as kg
+ * to the nearest kg. Thousands separators, an apostrophe or a space, are
+ * ignored.
  */
-export function parseTonnes(text: string): ParsedTonnes {
+export function parseFuelQuantity(text: string, fuel: Fuel): ParsedQuantity {
     const trimmed = text.replace(/['\s]/g, "");
     if (trimmed === "") return { ok: false, reason: "empty" };
-    const tonnes = Number(trimmed);
-    if (!Number.isFinite(tonnes)) return { ok: false, reason: "invalid" };
-    if (tonnes < 0) return { ok: false, reason: "negative" };
-    return { ok: true, kg: tonnes * KG_PER_TONNE };
+    const quantity = Number(trimmed);
+    if (!Number.isFinite(quantity)) return { ok: false, reason: "invalid" };
+    if (quantity < 0) return { ok: false, reason: "negative" };
+    return { ok: true, kg: Math.round(quantity * FIELD_UNITS[fuel].kg) };
 }
 
 /**
- * `kg` as a fuel field shows it: tonnes, to the nearest kg, with thousands
- * separated by an apostrophe as elsewhere in the game. Uranium is bought by the
- * kg, so anything coarser would hide most of an order.
+ * `kg` as a fuel's order field shows it: in the field's unit, to three
+ * decimals, with thousands separated by an apostrophe as elsewhere in the
+ * game.
  */
-export function tonnesFieldText(kg: number): string {
+export function fuelFieldText(kg: number, fuel: Fuel): string {
     const [whole = "0", fraction] = String(
-        Number((kg / KG_PER_TONNE).toFixed(3)),
+        Number((kg / FIELD_UNITS[fuel].kg).toFixed(3)),
     ).split(".");
     const separated = whole.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
     return fraction === undefined ? separated : `${separated}.${fraction}`;
+}
+
+/**
+ * `kg` rounded to the quantity its fuel's field shows. Typing back what the
+ * field shows gives this, rather than the exact order.
+ */
+export function shownQuantity(kg: number, fuel: Fuel): number {
+    const parsed = parseFuelQuantity(fuelFieldText(kg, fuel), fuel);
+    return parsed.ok ? parsed.kg : kg;
+}
+
+/**
+ * The season's price per unit of the fuel's order field, so it reads in the
+ * same unit as the quantity beside it.
+ */
+export function fieldPrice(line: Pick<FuelLine, "fuel" | "price">): number {
+    return line.price * FIELD_UNITS[line.fuel].kg;
 }
 
 /** How many seasons at full output the stockpile limit holds, such as 3. */

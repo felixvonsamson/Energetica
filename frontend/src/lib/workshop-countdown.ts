@@ -7,7 +7,7 @@
  * that to the moment the answer arrived.
  */
 
-import type { Checkpoint } from "@/lib/workshop-timeline";
+import { type Checkpoint, SEASON_LABELS } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type PhaseTimer = ApiSchema<"WorkshopPhaseTimerOut">;
@@ -23,6 +23,25 @@ export function phaseLabel(checkpoint: Checkpoint): string | null {
             return "Invest";
         case "trading_period":
             return "Set prices";
+        case "not_started":
+        case "recap":
+        case "finished":
+            return null;
+        default:
+            throw checkpoint satisfies never;
+    }
+}
+
+/**
+ * What the countdown shows in place of the digits once its time is up, e.g.
+ * "Spring over", or `null` at a checkpoint that has no countdown.
+ */
+export function timeUpStatus(checkpoint: Checkpoint): string | null {
+    switch (checkpoint.kind) {
+        case "investment":
+            return "Investments closed";
+        case "trading_period":
+            return `${SEASON_LABELS[checkpoint.season]} over`;
         case "not_started":
         case "recap":
         case "finished":

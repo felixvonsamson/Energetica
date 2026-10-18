@@ -1,7 +1,8 @@
 /**
  * The fuel part of the bids panel (#1009): each fuel's price for the season,
  * and under manual procurement how much of it the player buys when the
- * price-setting window closes. It shows only the fuels the player's operating
+ * price-setting window closes. The prices show in every phase, the quantities
+ * only during a Trading period. It shows only the fuels the player's operating
  * facilities burn. Under automatic procurement the prices sit where they will
  * be once procurement turns manual, so players already know where to find them
  * (#1248).
@@ -26,13 +27,15 @@ import { useSetFuelOrder } from "@/hooks/use-workshop";
 import { formatMass, formatMoney } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import {
-    KG_PER_TONNE,
     formatPriceChange,
     isOverStockpile,
+    fieldPrice,
+    fuelFieldText,
+    fuelFieldUnit,
     orderCost,
-    parseTonnes,
+    parseFuelQuantity,
+    shownQuantity,
     stockpileSeasons,
-    tonnesFieldText,
     workshopFuelColor,
     workshopFuelImages,
 } from "@/lib/workshop-fuel";
@@ -46,9 +49,12 @@ const SEND_DELAY_MS = 600;
 export function FuelOrders({
     fuels,
     open,
+    showOrders,
 }: {
     fuels: FuelLine[];
     open: boolean;
+    /** Whether to show the quantity fields, which only a Trading period has. */
+    showOrders: boolean;
 }) {
     if (fuels.length === 0) return null;
     return (
@@ -61,14 +67,27 @@ export function FuelOrders({
             </h3>
             <ul className="flex flex-col gap-3">
                 {fuels.map((line) => (
-                    <FuelRow key={line.fuel} line={line} open={open} />
+                    <FuelRow
+                        key={line.fuel}
+                        line={line}
+                        open={open}
+                        showOrder={showOrders}
+                    />
                 ))}
             </ul>
         </section>
     );
 }
 
-function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
+function FuelRow({
+    line,
+    open,
+    showOrder,
+}: {
+    line: FuelLine;
+    open: boolean;
+    showOrder: boolean;
+}) {
     const change = formatPriceChange(line.change);
     return (
         <li className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3.5 rounded-xl border border-border-subtle bg-surface-raised p-2 shadow-[0_1px_2px_rgba(54,48,20,0.12)]">
@@ -122,11 +141,11 @@ function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
                         </span>
                         <span className="flex items-center gap-1 text-sm whitespace-nowrap text-fg-base">
                             <span className="font-mono font-medium">
-                                {formatMoney(line.price * KG_PER_TONNE)}
+                                {formatMoney(fieldPrice(line))}
                             </span>
                             <span className="inline-flex items-center gap-0.5 text-xs text-fg-muted">
-                                <CoinIcon className="size-3" />
-                                /t
+                                <CoinIcon className="size-3" />/
+                                {fuelFieldUnit(line.fuel)}
                             </span>
                             {change !== null && (
                                 <span
@@ -148,7 +167,7 @@ function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
                         </p>
                     )}
                 </div>
-                {line.order !== null && (
+                {showOrder && line.order !== null && (
                     <OrderField
                         line={line}
                         order={line.order}
@@ -161,8 +180,9 @@ function FuelRow({ line, open }: { line: FuelLine; open: boolean }) {
 }
 
 /**
- * The quantity to buy, in tonnes. A valid quantity is sent a moment after the
- * player stops typing, and straight away when the field loses focus.
+ * The quantity to buy, in kilotonnes for gas and coal and tonnes for uranium. A
+ * valid quantity is sent a moment after the player stops typing, and straight
+ * away when the field loses focus.
  */
 function OrderField({
     line,
@@ -192,19 +212,26 @@ function OrderField({
     // unmounts at the window's opening or closing.
     useEffect(() => () => clearTimeout(sendTimer.current), []);
     const typing = !disabled && draft !== null;
-    const text = typing ? draft : tonnesFieldText(order);
-    const parsed = parseTonnes(text);
+    const text = typing ? draft : fuelFieldText(order, line.fuel);
+    const parsed = parseFuelQuantity(text, line.fuel);
     // Only a typed quantity is checked against the stockpile limit. The server
     // cut the saved order down to fit when it was set, and once the period is
     // settled the order has joined the stock, so checking it again would cut it
     // down a second time.
-    const over = typing && parsed.ok && isOverStockpile(parsed.kg, line);
+    // Typing back what the field shows is not a new quantity, even though the
+    // field rounds the order.
+    const over =
+        typing &&
+        parsed.ok &&
+        parsed.kg !== shownQuantity(order, line.fuel) &&
+        isOverStockpile(parsed.kg, line);
 
     function send(typed: string) {
         clearTimeout(sendTimer.current);
-        const result = parseTonnes(typed);
+        const result = parseFuelQuantity(typed, line.fuel);
         if (!result.ok) return;
         const current = latest.current;
+        if (result.kg === shownQuantity(current.order, line.fuel)) return;
         setCapped(isOverStockpile(result.kg, current.line));
         if (result.kg !== current.order) setOrder.mutate(result.kg);
     }
@@ -247,7 +274,7 @@ function OrderField({
                         className="h-9 rounded-md border-border-brand bg-white pr-8 pl-2.5 text-right font-mono text-sm font-medium text-fg-base shadow-none focus-visible:border-border-brand focus-visible:ring-[3px] focus-visible:ring-pine-500/35 aria-invalid:ring-[3px] md:text-sm"
                     />
                     <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-fg-muted">
-                        t
+                        {fuelFieldUnit(line.fuel)}
                     </span>
                 </div>
             </div>
