@@ -5,7 +5,7 @@ import ReactDOM from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
 
-import "@energetica/ui/global.css";
+import "./styles.css";
 
 // The landing bundle does not augment the `Register` interface — the app bundle
 // owns that augmentation. Without a Register, TanStack Router's `to` props

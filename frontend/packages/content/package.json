@@ -6,7 +6,8 @@
         "./components/*": "./src/components/*.tsx",
         "./changelog": "./src/changelog.ts",
         "./wiki-pages": "./src/wiki-pages.ts",
-        "./vite-plugin": "./src/vite-plugin.ts"
+        "./vite-plugin": "./src/vite-plugin.ts",
+        "./styles/sources.css": "./src/styles/sources.css"
     },
     "imports": {
         "#content/assets/*": "./src/assets/*",

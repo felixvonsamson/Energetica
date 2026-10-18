@@ -60,7 +60,7 @@ The frontend is a set of Bun workspaces rooted at `frontend/`. The combined app 
 
 - `@energetica/ui`: the customised shadcn components, the `cn` helper, the theme context, the global stylesheet and the logo.
 - `@energetica/core`: the API client, the formatting helpers, `createQueryClient` (the query client factory) and the links between the apex, the lobby and the Instances (`instances.ts`, `single-origin.ts`).
-- `@energetica/content`: the wiki pages and the changelog, written in MDX, with their figures and the components they import. Its `contentMdx()` Vite plugin compiles them; see [Wiki pages](../frontend/wiki-pages.md).
+- `@energetica/content`: the wiki pages and the changelog, written in MDX, with their figures and the components they import. Its `contentMdx()` Vite plugin compiles them; see [Wiki pages](../frontend/wiki-pages.md). An app under `apps/` that renders them imports `@energetica/content/styles/sources.css` in the same stylesheet as `@energetica/ui/global.css`, because Tailwind only scans the app's own directory for class names.
 
 A Vite config that imports a workspace package, as one using `contentMdx()` does, runs with `vite --configLoader runner`. Otherwise Vite hands the package's TypeScript files to Node, which cannot load them.
 
