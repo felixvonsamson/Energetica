@@ -60,6 +60,8 @@ interface PowerChartProps {
     timeAxis?: TimeAxis;
     height?: number;
     markerTick?: number;
+    /** Shade the chart from this tick to its end as a blackout. */
+    blackoutTick?: number;
     onTickClick?: (tick: number) => void;
     zoom?: ZoomRange;
     onZoomChange?: (zoom: ZoomRange) => void;
@@ -89,6 +91,7 @@ export function PowerChart({
     timeAxis,
     height,
     markerTick,
+    blackoutTick,
     onTickClick,
     zoom,
     onZoomChange,
@@ -158,6 +161,7 @@ export function PowerChart({
         isLoading,
         isError,
         markerTick,
+        blackoutTick,
         onTickClick,
         zoom,
         onZoomChange,

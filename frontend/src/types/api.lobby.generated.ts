@@ -184,6 +184,12 @@ export interface components {
              */
             name: string;
             /**
+             * Mode
+             * @description The kind of Run: the persistent world (freeplay) or a Workshop
+             * @enum {string}
+             */
+            mode: "freeplay" | "workshop";
+            /**
              * Starts At
              * Format: date-time
              * @description When the run starts (announced → active), from the instance fragment

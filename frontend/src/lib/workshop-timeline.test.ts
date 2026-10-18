@@ -3,16 +3,20 @@ import { describe, expect, it } from "vitest";
 import type { ApiSchema } from "@/types/api-helpers";
 
 import {
+    adjacentSeasons,
     advanceAction,
     type Checkpoint,
     checkpointLabel,
     checkpointPage,
     homePage,
+    introStatus,
     isSeason,
     latestRecapRound,
     latestSeason,
     scoreboardStatus,
+    type Season,
     type SeasonStatus,
+    timelineLayout,
     type TimelineRound,
     type TradingPeriod,
     workshopTimeline,
@@ -135,8 +139,10 @@ describe("workshopTimeline", () => {
 });
 
 describe("checkpointPage", () => {
-    it("has no page before the session starts", () => {
-        expect(checkpointPage({ kind: "not_started" })).toBeNull();
+    it("is the intro before the session starts", () => {
+        expect(checkpointPage({ kind: "not_started" })).toEqual({
+            to: "/app/workshop/intro",
+        });
     });
 
     it("is the Round overview during the Round's Investment phase", () => {
@@ -194,9 +200,18 @@ describe("homePage", () => {
         });
     });
 
-    it("has no page for anyone before the session starts", () => {
-        expect(homePage({ kind: "not_started" }, "facilitator")).toBeNull();
-        expect(homePage({ kind: "not_started" }, "player")).toBeNull();
+    it("sends everyone to the intro before the session starts", () => {
+        const intro = { to: "/app/workshop/intro" };
+        expect(homePage({ kind: "not_started" }, "facilitator")).toEqual(intro);
+        expect(homePage({ kind: "not_started" }, "player")).toEqual(intro);
+    });
+});
+
+describe("introStatus", () => {
+    it("is current before the session starts, and open all game after", () => {
+        expect(introStatus({ kind: "not_started" })).toBe("current");
+        expect(introStatus({ kind: "investment", round: 1 })).toBe("past");
+        expect(introStatus({ kind: "finished" })).toBe("past");
     });
 });
 
@@ -244,6 +259,88 @@ describe("latestSeason", () => {
                 ]),
             ),
         ).toBe("summer");
+    });
+});
+
+describe("adjacentSeasons", () => {
+    function adjacent(
+        checkpoint: Checkpoint,
+        round: number,
+        season: Season,
+        blackouts: TradingPeriod[] = [],
+    ) {
+        return adjacentSeasons(
+            workshopTimeline(checkpoint, 2, blackouts),
+            round,
+            season,
+        );
+    }
+
+    it("links the seasons before and after within a Round", () => {
+        expect(adjacent({ kind: "recap", round: 1 }, 1, "summer")).toEqual({
+            previous: { round: 1, season: "spring", blackout: false },
+            next: { round: 1, season: "autumn", blackout: false },
+        });
+    });
+
+    it("goes from winter to the next Round's spring, and back", () => {
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "winter").next).toEqual({
+            round: 2,
+            season: "spring",
+            blackout: false,
+        });
+        expect(adjacent(checkpoint, 2, "spring").previous).toEqual({
+            round: 1,
+            season: "winter",
+            blackout: false,
+        });
+    });
+
+    it("has nothing before the first Round's spring or after the last winter", () => {
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "spring").previous).toBe(null);
+        expect(adjacent(checkpoint, 2, "winter").next).toBe(null);
+    });
+
+    it("does not link a season the session has not reached", () => {
+        const checkpoint: Checkpoint = {
+            kind: "trading_period",
+            round: 1,
+            season: "summer",
+        };
+        expect(adjacent(checkpoint, 1, "summer").next).toBe(null);
+        expect(adjacent(checkpoint, 1, "spring").next).toEqual({
+            round: 1,
+            season: "summer",
+            blackout: false,
+        });
+    });
+
+    it("steps over the seasons a blackout skipped", () => {
+        const blackouts: TradingPeriod[] = [
+            { kind: "trading_period", round: 1, season: "summer" },
+        ];
+        const checkpoint: Checkpoint = { kind: "finished" };
+        expect(adjacent(checkpoint, 1, "summer", blackouts).next).toEqual({
+            round: 2,
+            season: "spring",
+            blackout: false,
+        });
+        expect(adjacent(checkpoint, 2, "spring", blackouts).previous).toEqual({
+            round: 1,
+            season: "summer",
+            blackout: true,
+        });
+    });
+
+    it("has nothing after a blackout while the next Round has not started", () => {
+        const blackouts: TradingPeriod[] = [
+            { kind: "trading_period", round: 1, season: "summer" },
+        ];
+        expect(
+            adjacent({ kind: "recap", round: 1 }, 1, "summer", blackouts).next,
+        ).toBe(null);
     });
 });
 
@@ -378,5 +475,31 @@ describe("latestRecapRound", () => {
         ).toBe(1);
         expect(latestRecapRound({ kind: "recap", round: 2 }, 3)).toBe(2);
         expect(latestRecapRound({ kind: "finished" }, 3)).toBe(3);
+    });
+});
+
+describe("timelineLayout", () => {
+    const widths = { full: 1500, icons: 1200, compact: 1000 };
+
+    it("keeps the full layout when it fits", () => {
+        expect(timelineLayout(1500, widths)).toBe("full");
+    });
+
+    it("hides the season names first", () => {
+        expect(timelineLayout(1499, widths)).toBe("icons");
+        expect(timelineLayout(1200, widths)).toBe("icons");
+    });
+
+    it("then hides the arrows between phases", () => {
+        expect(timelineLayout(1199, widths)).toBe("compact");
+        expect(timelineLayout(1000, widths)).toBe("compact");
+    });
+
+    it("stays compact, and scrolls, when nothing fits", () => {
+        expect(timelineLayout(400, widths)).toBe("compact");
+    });
+
+    it("does not round a sub-pixel overflow away", () => {
+        expect(timelineLayout(1499.6, widths)).toBe("icons");
     });
 });

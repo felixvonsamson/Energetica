@@ -307,10 +307,9 @@ function OpeningArticle() {
                 The country's electricity market has opened to competition. A
                 handful of new energy companies, each with fresh capital and big
                 ambitions, have started building power plants and selling their
-                electricity on the market. Every season they name their price,
-                and the cheapest offers keep the lights on. Investors and
-                households alike are watching: who will build wisely, who will
-                overspend, and what the new market will cost the planet in CO₂.
+                electricity on the market. Every season they name their price.
+                Who will build wisely, who will overspend, and what the new
+                market will cost the planet in CO₂?
             </p>
         </section>
     );
@@ -515,7 +514,7 @@ function ByTheNumbers({ recap }: { recap: WorkshopRecap }) {
             "Average price",
             figures.average_price === null
                 ? "—"
-                : `${formatMoney(figures.average_price)} coins/MWh`,
+                : `${formatMoney(figures.average_price)}/MWh`,
         ],
         [
             "From renewables",

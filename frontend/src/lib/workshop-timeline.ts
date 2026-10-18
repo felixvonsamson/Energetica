@@ -5,7 +5,8 @@
  * The session runs `not_started → [investment → 4 trading_period → recap] ×
  * Rounds → finished` and only the facilitator moves it along (#994). Each node
  * on the timeline is `past` (already reached, so its page has something to
- * show), `current`, or `future`, and each has its own page.
+ * show), `current`, or `future`, and each has its own page. Before Round 1 sits
+ * the intro, a guide to getting around the game (#1254).
  *
  * A blackout ends its Round (#1005): the Trading periods after it in that Round
  * never run, so they are `skipped` and have no page.
@@ -127,6 +128,44 @@ export function workshopTimeline(
     });
 }
 
+/** A Trading period on the timeline, as a link to it needs it. */
+export interface SeasonLink {
+    round: number;
+    season: Season;
+    blackout: boolean;
+}
+
+/**
+ * The Trading periods just before and after one, for the season page's previous
+ * and next buttons (#1273). Winter leads on to the next Round's spring. Seasons
+ * a blackout skipped have no page, so they are stepped over. Each side is
+ * `null` when there is no season there the session has reached.
+ */
+export function adjacentSeasons(
+    rounds: TimelineRound[],
+    round: number,
+    season: Season,
+): { previous: SeasonLink | null; next: SeasonLink | null } {
+    const seasons = rounds.flatMap((timelineRound) =>
+        timelineRound.seasons
+            .filter(({ status }) => status !== "skipped")
+            .map((entry) => ({ ...entry, round: timelineRound.round })),
+    );
+    const index = seasons.findIndex(
+        (entry) => entry.round === round && entry.season === season,
+    );
+    const linkAt = (at: number): SeasonLink | null => {
+        const entry = index < 0 ? undefined : seasons[at];
+        if (!entry || entry.status === "future") return null;
+        return {
+            round: entry.round,
+            season: entry.season,
+            blackout: entry.blackout,
+        };
+    };
+    return { previous: linkAt(index - 1), next: linkAt(index + 1) };
+}
+
 /** The page for a Round: its overview. */
 export function roundPage(round: number) {
     return {
@@ -151,6 +190,11 @@ export function recapPage(round: number) {
     } as const;
 }
 
+/** The intro (#1254), a guide to getting around the game, open all game. */
+export function introPage() {
+    return { to: "/app/workshop/intro" } as const;
+}
+
 /** The scoreboard (#1017), open all game (#1250). */
 export function scoreboardPage() {
     return { to: "/app/workshop/scoreboard" } as const;
@@ -158,10 +202,19 @@ export function scoreboardPage() {
 
 /** A link to one node's page, ready to spread into a `<Link>`. */
 export type WorkshopPage =
+    | ReturnType<typeof introPage>
     | ReturnType<typeof roundPage>
     | ReturnType<typeof tradingPeriodPage>
     | ReturnType<typeof recapPage>
     | ReturnType<typeof scoreboardPage>;
+
+/**
+ * Where the intro stands: it is the session's first node, `current` until the
+ * session starts. It stays open all game, so it is never `future`.
+ */
+export function introStatus(checkpoint: Checkpoint): NodeStatus {
+    return checkpoint.kind === "not_started" ? "current" : "past";
+}
 
 /**
  * Where the scoreboard stands: it is the session's last node. It is open all
@@ -185,14 +238,14 @@ export function latestSeason(round: TimelineRound): Season | null {
 }
 
 /**
- * The page for where the session is now, or `null` before it starts, when no
- * page has anything to show. During an Investment phase it is the Round's
- * overview, and once the session is over it is the scoreboard.
+ * The page for where the session is now. Before it starts it is the intro,
+ * during an Investment phase it is the Round's overview, and once the session
+ * is over it is the scoreboard.
  */
-export function checkpointPage(checkpoint: Checkpoint): WorkshopPage | null {
+export function checkpointPage(checkpoint: Checkpoint): WorkshopPage {
     switch (checkpoint.kind) {
         case "not_started":
-            return null;
+            return introPage();
         case "investment":
             return roundPage(checkpoint.round);
         case "trading_period":
@@ -225,7 +278,7 @@ export function consolePage() {
 export function homePage(
     checkpoint: Checkpoint,
     role: ApiSchema<"WorkshopEntryOut">["role"],
-): WorkshopPage | ReturnType<typeof consolePage> | null {
+): WorkshopPage | ReturnType<typeof consolePage> {
     if (role === "facilitator" && checkpoint.kind === "investment") {
         return consolePage();
     }
@@ -306,4 +359,26 @@ export function latestRecapRound(
         default:
             throw checkpoint satisfies never;
     }
+}
+
+/**
+ * How much the Workshop timeline shows (#1271), from most to least: season
+ * names and arrows, then season icons and arrows, then season icons alone.
+ */
+export const TIMELINE_LAYOUTS = ["full", "icons", "compact"] as const;
+export type TimelineLayout = (typeof TIMELINE_LAYOUTS)[number];
+
+/**
+ * The fullest layout whose width fits in `available` pixels. When none fits,
+ * the most compact one, which then scrolls. Widths are compared exactly, since
+ * even a fraction of a pixel too wide would show a scroll bar.
+ */
+export function timelineLayout(
+    available: number,
+    widths: Record<TimelineLayout, number>,
+): TimelineLayout {
+    return (
+        TIMELINE_LAYOUTS.find((layout) => widths[layout] <= available) ??
+        "compact"
+    );
 }

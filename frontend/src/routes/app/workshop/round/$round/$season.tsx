@@ -1,12 +1,14 @@
 /**
  * A Trading period's review page (#1007), with the switch to the Round's
- * balance sheet above it (#1250).
+ * balance sheet above it (#1250) and buttons to the previous and next seasons
+ * in its margins (#1273).
  */
 
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PeriodReview } from "@/components/workshop/period-review";
 import { RoundViewSwitch } from "@/components/workshop/round-view-switch";
+import { SeasonStepButtons } from "@/components/workshop/season-step-buttons";
 import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { isSeason, SEASON_LABELS } from "@/lib/workshop-timeline";
 import { TypographyH2 } from "@energetica/ui/components/typography";
@@ -26,7 +28,8 @@ function TradingPeriodPage() {
         );
     }
     return (
-        <div className="space-y-4">
+        <div className="relative space-y-4">
+            <SeasonStepButtons round={Number(round)} season={season} />
             <RoundViewSwitch round={Number(round)} view="charts" />
             <TypographyH2>
                 Round {round} · {SEASON_LABELS[season]} trading

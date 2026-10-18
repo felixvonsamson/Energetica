@@ -118,10 +118,11 @@ export function FacilityPriceTag({
                         className={FACE}
                     >
                         <PinHole />
+                        {/* The coin sits a little low next to these bold digits. */}
                         <Money
                             amount={facility.price}
                             format={formatCatalogPrice}
-                            className="block text-center text-sm font-extrabold"
+                            className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
                         />
                         {/* A price shock this Round moved the price (#1012). */}
                         {facility.price !== facility.base_price && (

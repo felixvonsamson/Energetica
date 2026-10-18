@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from pydantic import AwareDatetime, BaseModel, Field
 
+from energetica.identity.instance_config import RunModeTag
+
 
 class MyRun(BaseModel):
     """One run the authenticated account has joined, joined with its on-disk fragment."""
 
     slug: str = Field(description="Subdomain slug of the run")
     name: str = Field(description="Human-readable run name, from the instance fragment")
+    mode: RunModeTag = Field(description="The kind of Run: the persistent world (freeplay) or a Workshop")
     starts_at: AwareDatetime = Field(description="When the run starts (announced → active), from the instance fragment")
     freeze_at: AwareDatetime | None = Field(
         default=None, description="When play/sim ends (active → freeze), or null for an open-ended run"

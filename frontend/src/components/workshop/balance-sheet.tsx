@@ -166,6 +166,9 @@ function DetailedToggle({
 
 // --- Waterfall ------------------------------------------------------------
 
+/** A waterfall row: the label, the bar track and the value. */
+const STEP_GRID = "grid grid-cols-[170px_minmax(0,1fr)_100px] gap-3.5";
+
 function Waterfall({
     sheet,
     period,
@@ -212,62 +215,77 @@ function Waterfall({
                     The chart fills in once the first season is settled.
                 </p>
             ) : (
-                steps.map((step) => (
+                <div className="relative">
+                    {/* Zero on the running total, so a total below it shows. */}
                     <div
-                        key={step.label}
-                        className={cn(
-                            "grid grid-cols-[170px_minmax(0,1fr)_100px] items-center gap-3.5 py-[3px]",
-                            step.kind === "subtotal" &&
-                                "border-t border-bone-300",
-                        )}
+                        aria-hidden
+                        className={cn(STEP_GRID, "absolute inset-0")}
                     >
-                        <span
-                            className={cn(
-                                "text-[15px]",
-                                step.kind === "subtotal"
-                                    ? "font-bold"
-                                    : "font-medium",
-                            )}
-                        >
-                            {step.label}
-                        </span>
-                        <div className="relative h-4">
+                        <div className="relative col-start-2">
                             <div
-                                className={cn(
-                                    "absolute top-0.5 h-3 rounded-[3px]",
-                                    step.kind === "subtotal"
-                                        ? "bg-pine-800"
-                                        : step.kind === "pending"
-                                          ? "bg-pine-500"
-                                          : step.value! >= 0
-                                            ? "bg-(--bs-bar-income)"
-                                            : "bg-(--bs-bar-cost)",
-                                )}
-                                style={{
-                                    left: `${at(Math.min(step.from, step.to))}%`,
-                                    width:
-                                        step.kind === "pending"
-                                            ? "0.3%"
-                                            : `${Math.abs(at(step.to) - at(step.from))}%`,
-                                }}
+                                className="absolute inset-y-0 border-l border-dotted border-(--bs-light)"
+                                style={{ left: `${at(0)}%` }}
                             />
                         </div>
-                        <span
+                    </div>
+                    {steps.map((step) => (
+                        <div
+                            key={step.label}
                             className={cn(
-                                "text-right font-mono text-sm font-normal",
-                                step.value === null
-                                    ? "text-(--bs-muted) italic"
-                                    : step.value < 0
-                                      ? "text-(--bs-negative)"
-                                      : "text-pine-800",
+                                STEP_GRID,
+                                "items-center py-[3px]",
+                                step.kind === "subtotal" &&
+                                    "border-t border-bone-300",
                             )}
                         >
-                            {step.value === null
-                                ? "pending"
-                                : formatAmount(step.value)}
-                        </span>
-                    </div>
-                ))
+                            <span
+                                className={cn(
+                                    "text-[15px]",
+                                    step.kind === "subtotal"
+                                        ? "font-bold"
+                                        : "font-medium",
+                                )}
+                            >
+                                {step.label}
+                            </span>
+                            <div className="relative h-4">
+                                <div
+                                    className={cn(
+                                        "absolute top-0.5 h-3 rounded-[3px]",
+                                        step.kind === "subtotal"
+                                            ? "bg-pine-800"
+                                            : step.kind === "pending"
+                                              ? "bg-pine-500"
+                                              : step.value! >= 0
+                                                ? "bg-(--bs-bar-income)"
+                                                : "bg-(--bs-bar-cost)",
+                                    )}
+                                    style={{
+                                        left: `${at(Math.min(step.from, step.to))}%`,
+                                        width:
+                                            step.kind === "pending"
+                                                ? "0.3%"
+                                                : `${Math.abs(at(step.to) - at(step.from))}%`,
+                                    }}
+                                />
+                            </div>
+                            <span
+                                className={cn(
+                                    "text-right font-mono text-sm font-normal",
+                                    step.value === null
+                                        ? "text-(--bs-muted) italic"
+                                        : step.value < 0
+                                          ? "text-(--bs-negative)"
+                                          : "text-pine-800",
+                                )}
+                            >
+                                {step.value === null
+                                    ? "pending"
+                                    : formatAmount(step.value)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
     );

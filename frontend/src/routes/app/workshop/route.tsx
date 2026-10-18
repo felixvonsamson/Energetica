@@ -78,7 +78,7 @@ function WorkshopLayout() {
             )}
             <SettlementProgress />
             <div className="flex min-h-0 flex-1">
-                <main className="min-w-0 flex-1 overflow-auto">
+                <main className="@container min-w-0 flex-1 overflow-auto">
                     <div
                         className={cn(
                             "mx-auto p-4 md:p-8",

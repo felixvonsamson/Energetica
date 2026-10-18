@@ -1,8 +1,9 @@
 /**
  * The countdown on the running phase (#996), labeled by the decision it is for,
  * e.g. "Set prices — 2:14". The digits are large and bold, and glow red in the
- * last minute (#1249). The facilitator also gets "+N min" buttons to give the
- * room more time. Ending a phase early is the advance button's job.
+ * last minute (#1249). Once the time is up, a status such as "Spring over"
+ * replaces it. The facilitator also gets "+N min" buttons to give the room more
+ * time while the phase runs. Ending a phase early is the advance button's job.
  */
 
 import { Timer } from "lucide-react";
@@ -14,6 +15,7 @@ import {
     isFinalMinute,
     phaseDeadline,
     phaseLabel,
+    timeUpStatus,
 } from "@/lib/workshop-countdown";
 import { Button } from "@energetica/ui/components/button";
 import { cn } from "@energetica/ui/lib/utils";
@@ -33,7 +35,8 @@ export function PhaseCountdown({ isFacilitator }: { isFacilitator: boolean }) {
     }, [timer]);
 
     const label = session && phaseLabel(session.checkpoint);
-    if (!timer || !label) return null;
+    const status = session && timeUpStatus(session.checkpoint);
+    if (!timer || !label || !status) return null;
 
     // `now` stops moving while no phase is timed, so right after a new timer
     // arrives it can be older than the answer. The answer's arrival is a
@@ -46,24 +49,28 @@ export function PhaseCountdown({ isFacilitator }: { isFacilitator: boolean }) {
         <div className="flex items-center gap-2">
             <span
                 className={cn(
-                    "flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium tabular-nums",
-                    isRunning
-                        ? "border-border text-foreground"
-                        : "border-destructive/40 bg-destructive/10 text-destructive",
+                    "flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm font-medium tabular-nums",
+                    isRunning ? "text-foreground" : "text-muted-foreground",
                 )}
             >
                 <Timer className="size-4 shrink-0" />
-                {/* On a phone, the digits alone. */}
-                <span className="hidden sm:inline">{label} —</span>
-                <span
-                    className={cn(
-                        "text-base leading-none font-bold",
-                        isFinalMinute(remainingMs) &&
-                            "text-destructive text-shadow-[0_0_8px_var(--color-destructive)]",
-                    )}
-                >
-                    {formatCountdown(remainingMs)}
-                </span>
+                {isRunning ? (
+                    <>
+                        {/* On a phone, the digits alone. */}
+                        <span className="hidden sm:inline">{label} —</span>
+                        <span
+                            className={cn(
+                                "text-base leading-none font-bold",
+                                isFinalMinute(remainingMs) &&
+                                    "text-destructive text-shadow-[0_0_8px_var(--color-destructive)]",
+                            )}
+                        >
+                            {formatCountdown(remainingMs)}
+                        </span>
+                    </>
+                ) : (
+                    status
+                )}
             </span>
             {isFacilitator && isRunning && <ExtendButtons />}
         </div>

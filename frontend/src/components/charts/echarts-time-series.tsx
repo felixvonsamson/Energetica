@@ -10,6 +10,8 @@
  * - Drag-to-zoom with zoom preservation on new data, which charts can share
  * - React tooltip overlay with colored circles on the axis pointer
  * - An optional marker on one tick, and a callback when a tick is clicked
+ * - An optional red striped "Blackout" region, from where the grid went down to
+ *   the chart's end
  *
  * {@link TimeSeriesChart} takes its time axis as a prop, so any mode can use it.
  * {@link EChartsTimeSeries} is the persistent world's chart: its axis counts
@@ -22,6 +24,7 @@ import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
     DataZoomComponent,
     GridComponent,
+    MarkAreaComponent,
     MarkLineComponent,
     ToolboxComponent,
     TooltipComponent,
@@ -29,6 +32,7 @@ import {
 import type {
     DataZoomComponentOption,
     GridComponentOption,
+    MarkAreaComponentOption,
     MarkLineComponentOption,
     ToolboxComponentOption,
     TooltipComponentOption,
@@ -68,6 +72,7 @@ echarts.use([
     GridComponent,
     TooltipComponent,
     DataZoomComponent,
+    MarkAreaComponent,
     MarkLineComponent,
     ToolboxComponent,
     CanvasRenderer,
@@ -79,6 +84,7 @@ type ECOption = ComposeOption<
     | GridComponentOption
     | TooltipComponentOption
     | DataZoomComponentOption
+    | MarkAreaComponentOption
     | MarkLineComponentOption
     | ToolboxComponentOption
 >;
@@ -131,6 +137,11 @@ export interface EChartsTimeSeriesProps {
     isError?: boolean;
     /** Draw a vertical marker at this tick, if it is one of the data's ticks. */
     markerTick?: number;
+    /**
+     * Shade the chart red from this tick to its end, labelled "Blackout": the
+     * grid went down there, so the series stop.
+     */
+    blackoutTick?: number;
     /** Called with the tick under the pointer when the plot is clicked. */
     onTickClick?: (tick: number) => void;
     /**
@@ -358,6 +369,38 @@ export function EChartsTimeSeries(props: EChartsTimeSeriesProps) {
     return <TimeSeriesChart {...props} timeAxis={timeAxis} />;
 }
 
+// ── Blackout stripes ──────────────────────────────────────────────────────────
+
+const stripePatterns = new Map<string, HTMLCanvasElement>();
+
+/**
+ * A tile of faint diagonal stripes in `color`, for the blackout region. Each
+ * color's tile is drawn once, rather than each time a chart's option is built.
+ */
+function stripePattern(color: string): HTMLCanvasElement {
+    const cached = stripePatterns.get(color);
+    if (cached) return cached;
+    const size = 10;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    stripePatterns.set(color, canvas);
+    const context = canvas.getContext("2d");
+    if (!context) return canvas;
+    context.globalAlpha = 0.3;
+    context.strokeStyle = color;
+    context.lineWidth = 3;
+    // The diagonal, plus its ends at the tile's corners, so the stripes join
+    // up from one tile to the next.
+    for (const offset of [-size, 0, size]) {
+        context.beginPath();
+        context.moveTo(offset, size);
+        context.lineTo(offset + size, 0);
+        context.stroke();
+    }
+    return canvas;
+}
+
 // ── TimeSeriesChart ───────────────────────────────────────────────────────────
 
 /**
@@ -373,6 +416,7 @@ export function TimeSeriesChart({
     isLoading = false,
     isError = false,
     markerTick,
+    blackoutTick,
     onTickClick,
     zoom,
     onZoomChange,
@@ -590,8 +634,42 @@ export function TimeSeriesChart({
                       data: [{ xAxis: markerIndex }],
                   };
 
+        // The blackout region, from the first tick at or after the blackout to
+        // the plot's right edge, drawn on the first series like the marker. Its
+        // end is left open, so ECharts runs it to the edge rather than to the
+        // middle of the last bar.
+        const blackoutIndex =
+            blackoutTick === undefined
+                ? -1
+                : ticks.findIndex((tick) => tick >= blackoutTick);
+        const markArea: MarkAreaComponentOption | undefined =
+            blackoutIndex < 0
+                ? undefined
+                : {
+                      silent: true,
+                      animation: false,
+                      itemStyle: {
+                          color: {
+                              image: stripePattern(destructiveColor),
+                              repeat: "repeat",
+                          },
+                      },
+                      label: {
+                          show: true,
+                          position: "insideTop",
+                          formatter: "Blackout",
+                          color: destructiveColor,
+                          fontWeight: "bold",
+                      },
+                      data: [[{ xAxis: blackoutIndex }, {}]],
+                  };
+        const marks = {
+            ...(markLine ? { markLine } : {}),
+            ...(markArea ? { markArea } : {}),
+        };
+
         const series: ECOption["series"] = visibleKeys.map((key, index) => {
-            const marker = index === 0 && markLine ? { markLine } : {};
+            const marker = index === 0 ? marks : {};
             const rawColor = config.getColor?.(key) ?? "#888";
             const color = resolveColor(rawColor);
             const useGradient = (config.gradientKeys ?? []).includes(key);
@@ -683,15 +761,16 @@ export function TimeSeriesChart({
             };
         });
 
-        // With no series shown, an empty one still carries the marker, so the
-        // chart stays lined up with whatever picks the tick.
-        if (series.length === 0 && markLine) {
+        // With no series shown, an empty one still carries the marker and the
+        // blackout region, so the chart stays lined up with whatever picks the
+        // tick.
+        if (series.length === 0 && (markLine || markArea)) {
             series.push({
                 name: "marker",
                 type: "line",
                 data: [],
                 silent: true,
-                markLine,
+                ...marks,
             });
         }
 
@@ -790,6 +869,7 @@ export function TimeSeriesChart({
         containerWidth,
         zoomRange,
         markerTick,
+        blackoutTick,
     ]);
 
     // ── Chart lifecycle ───────────────────────────────────────────────────────

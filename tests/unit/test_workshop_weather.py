@@ -13,6 +13,7 @@ from energetica.workshop.weather import (
     NORMAL_OUTPUT,
     WEATHER_POSITION,
     SeasonWeather,
+    capacity_factor,
     closest_run,
     normal_output,
     representative_weather,
@@ -140,3 +141,31 @@ def test_winter_weather_runs_on_over_the_new_year() -> None:
     spring = season_days("spring")[0] * DAY
     speed = calculate_wind_speed(WEATHER_POSITION, spring, 7, DAYS_PER_YEAR, weather_seconds=year + spring)
     assert representative_weather(7, round_number=2).share(WIND, spring) == pytest.approx(wind_power_fraction(speed))
+
+
+@pytest.mark.parametrize("facility", [WIND, SOLAR, HYDRO])
+def test_a_renewable_facilitys_capacity_factor_is_a_share_of_its_power(facility: FacilityId) -> None:
+    factor = capacity_factor(7, facility)
+
+    assert factor is not None
+    assert 0 < factor < 1
+
+
+def test_the_capacity_factor_is_the_average_output_over_the_year() -> None:
+    weather = representative_weather(7)
+    seasons = [weather.average_output(season) for season in SEASONS]
+
+    assert capacity_factor(7, WIND) == pytest.approx(sum(output.wind for output in seasons) / len(SEASONS))
+    assert capacity_factor(7, SOLAR) == pytest.approx(sum(output.solar for output in seasons) / len(SEASONS))
+
+
+def test_facilities_of_the_same_kind_share_a_capacity_factor() -> None:
+    assert capacity_factor(7, FacilityId.OFFSHORE_WIND_TURBINE) == capacity_factor(7, WIND)
+    assert capacity_factor(7, FacilityId.CSP_SOLAR) == capacity_factor(7, SOLAR)
+
+
+@pytest.mark.parametrize(
+    "facility", [FacilityId.COAL_BURNER, FacilityId.NUCLEAR_REACTOR, FacilityId.LITHIUM_ION_BATTERIES]
+)
+def test_a_facility_that_does_not_follow_the_weather_has_no_capacity_factor(facility: FacilityId) -> None:
+    assert capacity_factor(7, facility) is None

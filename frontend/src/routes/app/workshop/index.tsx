@@ -1,12 +1,11 @@
 /**
  * The Workshop home (#995): sends the visitor to the page for where the session
  * is now, or the facilitator to their console during an Investment phase.
- * Before the session starts there is no such page yet, so it says so.
+ * Before the session starts, that is the intro (#1254).
  */
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
-import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { useWorkshopEntry, useWorkshopSession } from "@/hooks/use-workshop";
 import { homePage } from "@/lib/workshop-timeline";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
@@ -35,12 +34,5 @@ function WorkshopHome() {
             </div>
         );
     }
-    const page = homePage(session.checkpoint, entry.role);
-    if (page) return <Navigate {...page} replace />;
-    return (
-        <WorkshopPlaceholder title="Welcome to the Workshop">
-            The session has not started yet. Round 1 opens when the facilitator
-            starts it.
-        </WorkshopPlaceholder>
-    );
+    return <Navigate {...homePage(session.checkpoint, entry.role)} replace />;
 }

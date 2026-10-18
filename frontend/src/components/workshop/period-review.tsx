@@ -10,11 +10,13 @@
  *   three charts above mark. Clicking a chart moves the scrubber there.
  *
  * The three charts span the whole week and share one zoom window: zooming or
- * resetting one does the same to the others, so they can be compared.
+ * resetting one does the same to the others, so they can be compared. When the
+ * grid went down, they shade the rest of the week red from that point (#1273).
  *
  * A period is reviewed one simulated week at a time: a representative week has
- * one, a full season 13. The prices the player set for the period are in their
- * own tab.
+ * one, a full season 13. The week is picked in the scrubber's sticky bar, so it
+ * can be changed without scrolling back up (#1273). The prices the player set
+ * for the period are in their own tab.
  */
 
 import { Activity, BarChart2, Layers, TrendingUp, Zap } from "lucide-react";
@@ -56,7 +58,6 @@ import {
     type PowerView,
     TIER_NAMES,
     WEEK_DAYS,
-    dateOfDay,
     isPointOfWeek,
     meritOrderData,
     networkPowerRows,
@@ -268,6 +269,7 @@ function Review({
     const chart = {
         timeAxis,
         markerTick: point,
+        blackoutTick: period.blackout_at ?? undefined,
         onTickClick,
         isLoading: week.isPending,
         isError: week.isError,
@@ -284,18 +286,6 @@ function Review({
                     was produced or sold after that.
                 </TypographyMuted>
             )}
-            {period.weeks > 1 && (
-                <WeekPicker
-                    // Weeks after a blackout never cleared, so the list ends at it.
-                    weeks={reviewableWeeks(
-                        period.days,
-                        period.blackout_at,
-                        cpd,
-                    )}
-                    value={weekIndex}
-                    onChange={chooseWeek}
-                />
-            )}
             {labels.me !== null && (
                 <PlayerPowerCard
                     week={shown}
@@ -311,16 +301,30 @@ function Review({
                 {...chart}
             />
             <PriceCard week={shown} {...chart} />
-            <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-background/95 p-3 backdrop-blur">
-                <PeriodScrubber
-                    first={weekIndex * pointsPerWeek}
-                    count={pointsPerWeek}
-                    last={lastPoint}
-                    days={period.days}
-                    clearingsPerDay={cpd}
-                    point={point}
-                    onPointChange={setPoint}
-                />
+            <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
+                {period.weeks > 1 && (
+                    <WeekPicker
+                        // Weeks after a blackout never cleared, so the list ends at it.
+                        weeks={reviewableWeeks(
+                            period.days,
+                            period.blackout_at,
+                            cpd,
+                        )}
+                        value={weekIndex}
+                        onChange={chooseWeek}
+                    />
+                )}
+                <div className="min-w-0 flex-1">
+                    <PeriodScrubber
+                        first={weekIndex * pointsPerWeek}
+                        count={pointsPerWeek}
+                        last={lastPoint}
+                        days={period.days}
+                        clearingsPerDay={cpd}
+                        point={point}
+                        onPointChange={setPoint}
+                    />
+                </div>
             </div>
             <MeritOrderCard period={period} point={point} labels={labels} />
         </div>
@@ -337,24 +341,18 @@ function WeekPicker({
     onChange: (index: number) => void;
 }) {
     return (
-        <div className="max-w-xs">
-            <Label className="mb-2" htmlFor="review-week">
-                Simulated week
-            </Label>
-            <select
-                id="review-week"
-                value={value}
-                onChange={(e) => onChange(Number(e.target.value))}
-                className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-                {weeks.map((days, index) => (
-                    <option key={days[0]} value={index}>
-                        Week {index + 1} · {dateOfDay(days[0] ?? 0)} to{" "}
-                        {dateOfDay(days[days.length - 1] ?? 0)}
-                    </option>
-                ))}
-            </select>
-        </div>
+        <select
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            aria-label="Simulated week"
+            className="h-9 px-3 border border-input rounded-lg bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+            {weeks.map((days, index) => (
+                <option key={days[0]} value={index}>
+                    Week {index + 1}
+                </option>
+            ))}
+        </select>
     );
 }
 
@@ -363,6 +361,7 @@ function WeekPicker({
 interface ChartProps {
     timeAxis: TimeAxis;
     markerTick: number;
+    blackoutTick: number | undefined;
     onTickClick: (tick: number) => void;
     isLoading: boolean;
     isError: boolean;
