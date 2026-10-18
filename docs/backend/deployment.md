@@ -73,6 +73,18 @@ why the two files above are owned differently. Editing `instance.json` by hand w
 that saves by rename will reassign its ownership and stop the service writing it; if that
 happens the error says which `chown` restores it.
 
+Root cannot write into `instance.json` either: `printf … > instance.json` or `tee` run as root
+fails with `Permission denied`. The cause is the kernel setting `fs.protected_regular = 2`
+(Ubuntu's default). In a sticky directory that the group can write, it refuses to open an
+existing file for writing when the file belongs to someone other than the directory's owner
+and the writer, and that includes root. It exists so that another user cannot plant a file
+that root then writes into. Write the file as its owner instead, which also keeps its owner and
+mode:
+
+```bash
+printf '%s\n' "$NEW" | runuser -u energetica -- tee /etc/energetica/{slug}/instance.json >/dev/null
+```
+
 Instances provisioned before this split carry their configuration inside the rendered unit. The
 one-off migration is in the commit that introduced the split — `git log --grep '#1072'` — rather
 than a script in the tree, since it is worth running exactly once per instance and nothing would
@@ -135,7 +147,7 @@ From your local machine:
 
 Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
 subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
-`export_instance_to_csv.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
+`export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
 `grant-facilitator.py`, `whitelist-run.py` — both touch the shared `accounts.db`, so they
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
@@ -185,17 +197,20 @@ which by design lists only advertised Runs:
 
 At the time of #1060 there are four.
 
-**2. Stop the instance and edit its file.** On the VPS, as root. `printf … >` writes into the
-existing file, so it keeps its owner (`energetica`) and mode (`0640`). Do not edit it with an
-editor that saves by rename (see [Where an instance's configuration
-lives](#where-an-instances-configuration-lives)).
+**2. Stop the instance and edit its file.** On the VPS, as root. The write goes through `tee`
+run as `energetica`, because the kernel setting `fs.protected_regular` stops root from writing
+into a file that another user owns in this directory. Writing into the existing file keeps its
+owner (`energetica`) and mode (`0640`). Do not edit it with an editor that saves by rename (see
+[Where an instance's configuration lives](#where-an-instances-configuration-lives)), which
+covers both points.
 
 ```bash
 SLUG=autumn-2025
 CONFIG=/etc/energetica/$SLUG/instance.json
 
 systemctl stop "energetica-$SLUG"
-NEW="$(jq '. + {run: {mode: "freeplay"}}' "$CONFIG")" && printf '%s\n' "$NEW" > "$CONFIG"
+NEW="$(jq '. + {run: {mode: "freeplay"}}' "$CONFIG")" \
+  && printf '%s\n' "$NEW" | runuser -u energetica -- tee "$CONFIG" >/dev/null
 jq -e '.run.mode == "freeplay"' "$CONFIG"   # prints true
 stat -c '%U:%G %a' "$CONFIG"                # energetica:energetica 640
 ```
