@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+import type { ResolvedConfig } from "vite";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
+    buildInfoPlugin,
     explicitBackendUrl,
     instanceSlugFromBackend,
     resolveLobbyProxyTarget,
@@ -84,5 +90,47 @@ describe("instanceSlugFromBackend", () => {
         ["unparseable URL", "not a url", APEX, null],
     ])("%s", (_label, url, apex, expected) => {
         expect(instanceSlugFromBackend(url, apex)).toBe(expected);
+    });
+});
+
+describe("buildInfoPlugin", () => {
+    const tmpDirs: string[] = [];
+    afterEach(() => {
+        for (const dir of tmpDirs.splice(0)) {
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
+    });
+
+    function makeTmpDir(): string {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), "build-info-"));
+        tmpDirs.push(dir);
+        return dir;
+    }
+
+    // Run the plugin's two hooks the way Vite would, with only the config
+    // fields it reads.
+    function runPlugin(root: string, outDir: string) {
+        const plugin = buildInfoPlugin();
+        const config = { root, build: { outDir } } as ResolvedConfig;
+        (plugin.configResolved as (c: ResolvedConfig) => void)(config);
+        (plugin.closeBundle as () => void)();
+    }
+
+    // The regression: the landing app's root (apps/landing) need not be the
+    // process cwd, so a relative outDir must resolve against the root.
+    it("resolves a relative outDir against the config root", () => {
+        const root = makeTmpDir();
+        expect(root).not.toBe(process.cwd());
+        runPlugin(root, "dist");
+        const stamp = JSON.parse(
+            fs.readFileSync(path.join(root, "dist", "build-info.json"), "utf8"),
+        );
+        expect(stamp.source).toBe("build");
+    });
+
+    it("writes to an absolute outDir as given", () => {
+        const outDir = path.join(makeTmpDir(), "out");
+        runPlugin(makeTmpDir(), outDir);
+        expect(fs.existsSync(path.join(outDir, "build-info.json"))).toBe(true);
     });
 });
