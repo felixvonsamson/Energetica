@@ -29,7 +29,6 @@ import {
 } from "@/components/dashboard/progress-lists";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { WeatherSection } from "@/components/dashboard/weather";
-import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
@@ -42,6 +41,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@energetica/ui/components/card";
+import { DevelopmentBanner } from "@energetica/ui/components/development-banner";
 
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,

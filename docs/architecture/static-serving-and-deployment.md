@@ -465,16 +465,16 @@ Two separate config files:
 | File | Bundle | `base` | Output dir |
 |------|--------|--------|------------|
 | `vite.config.ts` | app | `/static/app/` | `frontend/dist-app/` |
-| `vite.config.landing.ts` | landing | `/` | `frontend/dist-landing/` |
+| `apps/landing/vite.config.ts` | landing | `/` | `frontend/apps/landing/dist/` |
 
-✅ Both configs land in Phase 1. The landing bundle uses a separate `tsconfig.landing.json` (eslint sees both via `parserOptions.project: [...]`). Because shared components (`landing-page.tsx`, `wiki-sidebar.tsx`, etc.) link into `/app/*` routes that don't exist in the landing route tree, `main-landing.tsx` deliberately does **not** declare a `Register` module augmentation — typed `to` props fall back to `string`. This is acceptable during the interim; when Apache moves the landing to the apex domain, those links become explicit cross-origin `<a href>` and the loose typing is no longer load-bearing.
+✅ Both configs land in Phase 1. Since #1176 the landing is its own workspace app, `frontend/apps/landing`, with its own `vite.config.ts` and `tsconfig.json`; the rest of this paragraph describes Phase 1. The landing bundle uses a separate `tsconfig.landing.json` (eslint sees both via `parserOptions.project: [...]`). Because shared components (`landing-page.tsx`, `wiki-sidebar.tsx`, etc.) link into `/app/*` routes that don't exist in the landing route tree, `main-landing.tsx` deliberately does **not** declare a `Register` module augmentation — typed `to` props fall back to `string`. This is acceptable during the interim; when Apache moves the landing to the apex domain, those links become explicit cross-origin `<a href>` and the loose typing is no longer load-bearing.
 
 Both build outputs are **gitignored** and deployed via rsync:
 
 | Bundle | Output dir | Gitignored | Deployed to |
 |--------|-----------|------------|-------------|
 | app | `frontend/dist-app/` | yes | `server:/var/www/energetica-{instance}/dist-app/` |
-| landing | `frontend/dist-landing/` | yes | `server:/var/www/energetica-landing/` |
+| landing | `frontend/apps/landing/dist/` | yes | `server:/var/www/energetica-landing/` |
 
 `.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`. ✅ (Phase 1)
 

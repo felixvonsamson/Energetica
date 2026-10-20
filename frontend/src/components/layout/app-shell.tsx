@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import Logo from "@/assets/simplified_logo.svg?react";
+import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { TypographyBrand } from "@energetica/ui/components/typography";
 

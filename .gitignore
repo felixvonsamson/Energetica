@@ -8,7 +8,6 @@ __pycache__
 **/node_modules/*
 .eslintcache
 frontend/dist-app/*
-frontend/dist-landing/*
 frontend/dist-lobby/*
 frontend/public/instances.json
 scripts/openapi-schema*.json

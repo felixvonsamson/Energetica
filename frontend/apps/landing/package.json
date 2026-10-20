@@ -1,0 +1,30 @@
+{
+    "name": "@energetica/landing",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite --configLoader runner",
+        "build": "vite build --configLoader runner",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/content": "workspace:*",
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@tanstack/react-router": "catalog:",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
+        "@tanstack/router-plugin": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^4.7.0",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:"
+    }
+}

@@ -14,7 +14,7 @@ terms are fine). In-session conversational style is exempt.
 Backend(`src/energetica/`, `src/lobby/`): Python + FastAPI, an installed project (`pip install -e '.[dev]'`)
 Frontend(`frontend/`): TSX + Tailwind v4 (no `tailwind.config.ts`)
 Components: customised shadcn components + global stylesheet in `frontend/packages/ui` (`@energetica/ui`)
-Shared packages: `frontend/packages/` are Bun workspaces with isolated installs; see `docs/architecture/overview.md` § Frontend
+Workspaces: apps in `frontend/apps/` (so far the landing page) and shared packages in `frontend/packages/` are Bun workspaces with isolated installs; see `docs/architecture/overview.md` § Frontend
 Package manager: `bun`
 Project docs: `docs/README.md`
 

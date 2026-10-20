@@ -1,0 +1,7 @@
+/*
+ * Tells Tailwind to scan this package for class names. Tailwind only finds the
+ * files under the app being built, so an app that renders the wiki or the
+ * changelog imports this file from the same stylesheet as
+ * @energetica/ui/global.css.
+ */
+@source "..";

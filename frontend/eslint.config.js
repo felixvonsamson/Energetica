@@ -9,9 +9,10 @@ import { defineConfig } from "eslint/config";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 
-// The combined app, the lobby and the landing page are separate bundles that still
-// share one src directory. Each bundle's own entry files may not import another
-// bundle's. Code they share lives in the rest of src or in packages/.
+// The combined app and the lobby are separate bundles that still share one src
+// directory. Each bundle's own entry files may not import another bundle's. Code
+// they share lives in the rest of src or in packages/. The apps under apps/ are
+// workspace packages of their own, so the package rules below cover them.
 const BUNDLE_FILES = {
     app: ["./src/main.tsx", "./src/routes", "./src/routeTree.gen.ts"],
     lobby: [
@@ -19,11 +20,6 @@ const BUNDLE_FILES = {
         "./src/routes-lobby",
         "./src/routeTree.lobby.gen.ts",
         "./src/components/lobby",
-    ],
-    landing: [
-        "./src/main-landing.tsx",
-        "./src/routes-landing",
-        "./src/routeTree.landing.gen.ts",
     ],
 };
 const BUNDLE_ZONES = [
@@ -36,9 +32,26 @@ const BUNDLE_ZONES = [
     })),
     {
         target: "./packages",
-        from: "./src",
+        from: ["./src", "./apps"],
         message: "Shared packages cannot import from an app.",
     },
+];
+
+// The workspace packages in a folder. Only folders with a package.json count,
+// so stray files such as macOS's .DS_Store are skipped.
+const workspaces = (group) =>
+    fs
+        .readdirSync(new URL(`./${group}`, import.meta.url))
+        .filter((name) =>
+            fs.existsSync(new URL(`./${group}/${name}/package.json`, import.meta.url)),
+        );
+const APPS = workspaces("apps");
+const PACKAGES = workspaces("packages");
+const TSCONFIGS = [
+    "./tsconfig.json",
+    "./tsconfig.lobby.json",
+    ...APPS.map((name) => `./apps/${name}/tsconfig.json`),
+    ...PACKAGES.map((name) => `./packages/${name}/tsconfig.json`),
 ];
 
 export default defineConfig([
@@ -47,7 +60,7 @@ export default defineConfig([
             "node_modules/",
             "dist/",
             "dist-app/",
-            "dist-landing/",
+            "apps/*/dist/",
             "dist-lobby/",
             "*.config.ts",
             "*.config.js",
@@ -58,7 +71,11 @@ export default defineConfig([
     ...tseslint.configs.recommended,
     react.configs.flat.recommended,
     {
-        files: ["src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+        files: [
+            "src/**/*.{ts,tsx}",
+            "apps/*/src/**/*.{ts,tsx}",
+            "packages/*/src/**/*.{ts,tsx}",
+        ],
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
@@ -67,13 +84,7 @@ export default defineConfig([
                 ecmaFeatures: {
                     jsx: true,
                 },
-                project: [
-                    "./tsconfig.json",
-                    "./tsconfig.landing.json",
-                    "./tsconfig.lobby.json",
-                    "./packages/ui/tsconfig.json",
-                    "./packages/core/tsconfig.json",
-                ],
+                project: TSCONFIGS,
             },
             globals: {
                 // Browser globals
@@ -97,13 +108,7 @@ export default defineConfig([
             "import/resolver": {
                 typescript: {
                     alwaysTryTypes: true,
-                    project: [
-                    "./tsconfig.json",
-                    "./tsconfig.landing.json",
-                    "./tsconfig.lobby.json",
-                    "./packages/ui/tsconfig.json",
-                    "./packages/core/tsconfig.json",
-                ],
+                    project: TSCONFIGS,
                 },
                 node: true,
             },
@@ -181,7 +186,7 @@ export default defineConfig([
     // "this app's src", so inside a package it would silently point at whichever
     // app is compiling it. A package importing itself by name only resolves
     // through the root package's node_modules, which the apps will not share.
-    ...fs.readdirSync(new URL("./packages", import.meta.url)).map((name) => ({
+    ...PACKAGES.map((name) => ({
         files: [`packages/${name}/src/**/*.{ts,tsx}`],
         rules: {
             "no-restricted-imports": [

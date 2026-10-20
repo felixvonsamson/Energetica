@@ -9,9 +9,9 @@ import {
 } from "@/components/lobby/run-cards";
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
-import type { InstanceFragment } from "@/lib/instances";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
-import { isSingleOriginHost } from "@/lib/single-origin";
+import type { InstanceFragment } from "@energetica/core/instances";
+import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
 import { EmptyState } from "@energetica/ui/components/empty-state";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
@@ -44,7 +44,7 @@ function PickerPage() {
             // run is reachable through this origin, so the picker's choice is
             // moot. Send the player straight into the app — the instance's
             // entry gate provisions/authorises them per its access policy. The
-            // multi-run UI below is never rendered here. See lib/single-origin.ts
+            // multi-run UI below is never rendered here. See @energetica/core/single-origin
             // and the ADR-0002 amendment.
             bounceHref = "/app";
         } else if (returnSlug) {

@@ -1,9 +1,9 @@
 import { type ReactNode } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { MdxContent } from "@/components/mdx-content";
 import { WikiSidebar } from "@/components/wiki/wiki-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { MdxContent } from "@energetica/content/components/mdx-content";
 import {
     SidebarInset,
     SidebarProvider,

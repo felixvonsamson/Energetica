@@ -21,8 +21,8 @@ import {
     devInstanceSlug,
     lobbyHref,
     runAppHref,
-} from "@/lib/instances";
-import { isSingleOriginHost } from "@/lib/single-origin";
+} from "@energetica/core/instances";
+import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
 import {
     DropdownMenu,
@@ -38,7 +38,7 @@ export function RunSwitcher() {
     // On a single-origin proxy host (e.g. energetica.ethz.ch) exactly one run is
     // reachable and the lobby is the same origin, so every entry this control
     // offers — lateral run-hops and "Open lobby" — is a no-op that lands back on
-    // this same app. Hide it entirely. See lib/single-origin.ts + ADR-0002.
+    // this same app. Hide it entirely. See @energetica/core/single-origin + ADR-0002.
     if (isSingleOriginHost()) return null;
     // In a live-backend dev server the hostname is `localhost`, so there is no run in the URL —
     // fall back to the injected slug the proxy is pinned to. When that is set, hopping to any other

@@ -17,9 +17,9 @@ from pathlib import Path
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 5173
 BASE_URL = f"http://localhost:{PORT}"
 ROOT = Path(__file__).parent.parent.parent
-WIKI_DIR = ROOT / "frontend/src/content/wiki"
+CONTENT_SRC = ROOT / "frontend/packages/content/src"
+WIKI_DIR = CONTENT_SRC / "wiki"
 ROUTES_DIR = ROOT / "frontend/src/routes"
-FRONTEND_SRC = ROOT / "frontend/src"
 
 OUT_FILE = ROOT / "wiki-links.md"
 
@@ -110,6 +110,13 @@ def asset_result(path: Path) -> tuple[bool, str]:
 
 def validate(href: str, route_patterns: list[re.Pattern]) -> tuple[bool, str]:
     """Returns (ok, status_label) for a given href."""
+    # Bundled assets: figures are referenced by module path, which Vite resolves at build
+    # time (#1078). Check the file is on disk rather than fetching it -- the dev server has
+    # no URL for it, and the hashed name it gets in a build is not knowable from here.
+    # Checked before the split on "#", since the content package's subpath imports start
+    # with one.
+    if href.startswith("#content/"):
+        return asset_result(CONTENT_SRC / href.removeprefix("#content/"))
     base, _, anchor = href.partition("#")
     if base.startswith("./") and base.endswith(".mdx"):
         mdx_path = WIKI_DIR / base[2:]
@@ -128,11 +135,6 @@ def validate(href: str, route_patterns: list[re.Pattern]) -> tuple[bool, str]:
         status = check_url(url)
         ok = isinstance(status, int) and 200 <= status < 300
         return ok, str(status)
-    # Bundled assets: figures are referenced by module path, which Vite resolves at build
-    # time (#1078). Check the file is on disk rather than fetching it -- the dev server has
-    # no URL for it, and the hashed name it gets in a build is not knowable from here.
-    if base.startswith("@/"):
-        return asset_result(FRONTEND_SRC / base[2:])
     if base.startswith("./") or base.startswith("../"):
         return asset_result(WIKI_DIR / base)
     return True, "skip"

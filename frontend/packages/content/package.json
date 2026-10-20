@@ -1,0 +1,46 @@
+{
+    "name": "@energetica/content",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./changelog": "./src/changelog.ts",
+        "./components/*": "./src/components/*.tsx",
+        "./content-links": "./src/content-links.ts",
+        "./styles/sources.css": "./src/styles/sources.css",
+        "./vite-plugin": "./src/vite-plugin.ts",
+        "./wiki-pages": "./src/wiki-pages.ts"
+    },
+    "imports": {
+        "#content/assets/*": "./src/assets/*",
+        "#content/components/*": "./src/components/*.tsx",
+        "#content/content-links": "./src/content-links.ts",
+        "#content/content-page": "./src/content-page.tsx",
+        "#content/host-context": "./src/host-context.ts"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/ui": "workspace:*",
+        "@mdx-js/rollup": "^3.1.1",
+        "@tanstack/react-router": "catalog:",
+        "@types/estree": "^1.0.9",
+        "@types/mdast": "^4.0.4",
+        "mdast-util-mdx-jsx": "^3.2.0",
+        "mdast-util-mdxjs-esm": "^2.0.1",
+        "react": "catalog:",
+        "rehype-katex": "^7.0.1",
+        "rehype-slug": "^6.0.0",
+        "remark-gfm": "^4.0.1",
+        "remark-math": "^6.0.0",
+        "unist-util-visit": "^5.1.0",
+        "vite": "catalog:"
+    },
+    "devDependencies": {
+        "@mdx-js/mdx": "^3.1.1",
+        "@types/react": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}

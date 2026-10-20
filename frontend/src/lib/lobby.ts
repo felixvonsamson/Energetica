@@ -9,8 +9,8 @@
  * template, so no open redirect is possible.
  *
  * The landing derives its apex from the build-time `VITE_APEX_DOMAIN` instead
- * (`lib/instances.ts`); the lobby can do better because its own hostname always
- * carries the apex in production.
+ * (`@energetica/core/instances`); the lobby can do better because its own
+ * hostname always carries the apex in production.
  */
 
 const LOBBY_HOSTNAME_PREFIX = "lobby.";
@@ -19,10 +19,10 @@ const LOBBY_HOSTNAME_PREFIX = "lobby.";
  * Where the app lives in local dev, when the lobby is served from `localhost`
  * and no apex exists. The app frontend runs on its own fixed Vite port
  * (`DEV_PORTS.app` in `vite.shared.ts`); `VITE_APP_URL` overrides for
- * non-default setups. The mirror of `LOBBY_DEV_URL` in `lib/instances.ts`: it
- * lets the lobby's "enter run" links reach the local app dev server instead of
- * dead-ending on a relative path, so the full local stack (`bun run dev`) is
- * clickable in both directions.
+ * non-default setups. The mirror of `LOBBY_DEV_URL` in
+ * `@energetica/core/instances`: it lets the lobby's "enter run" links reach the
+ * local app dev server instead of dead-ending on a relative path, so the full
+ * local stack (`bun run dev`) is clickable in both directions.
  */
 const APP_DEV_URL = import.meta.env.VITE_APP_URL ?? "http://localhost:5173";
 

@@ -15,9 +15,10 @@ cannot quietly ship. And a hashed filename can safely carry the year-long
 frontend/src/assets/
 ├── facilities/{power,storage,extraction,functional}/   # facility card artwork
 ├── technologies/                                       # technology card artwork
-├── landing/                                            # landing and educators pages
-├── wiki/                                               # wiki figures
 └── quiz.png                                            # dashboard quiz icon
+frontend/apps/landing/src/assets/                       # landing and educators pages
+frontend/packages/content/src/assets/wiki/              # wiki figures
+frontend/packages/ui/src/assets/                        # the logo and the coin icon
 ```
 
 `frontend/public/icon_green.png` is the one exception. It is the PWA icon, and both
@@ -33,7 +34,7 @@ verbatim, and `src/service-worker.ts` is built by `bun build`. Both name it by U
 2. Import it and use the imported value:
 
     ```tsx
-    import liveDemoPhoto from "@/assets/landing/live_demo_photo.webp";
+    import liveDemoPhoto from "@/assets/live_demo_photo.webp";
 
     <img src={liveDemoPhoto} alt="Students playing Energetica in a classroom" />;
     ```

@@ -99,7 +99,7 @@ export default defineConfig(({ mode }) => {
             port: DEV_PORTS.lobby,
             // Fail loudly on a busy port instead of drifting to the next free one:
             // the app bundle's login/logout bounce hard-codes this port (LOBBY_DEV_URL
-            // in src/lib/instances.ts), so a silent drift would send auth to a dead
+            // in @energetica/core/instances), so a silent drift would send auth to a dead
             // origin. See DEV_PORTS in vite.shared.ts.
             strictPort: true,
             proxy: {
