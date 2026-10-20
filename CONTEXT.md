@@ -108,9 +108,16 @@ project's lobby / instance-picker work adds or sharpens.
 The server-wide front door: where a player signs up, logs in (once, server-wide), and
 picks which **run** to enter or rejoin. Lives on its own subdomain (`lobby.{apex}`) with a
 small backend, separate from any run, and **outlives** individual runs (runs are created
-and deleted; the lobby is not). Owns the server-wide session.
+and deleted; the lobby is not). It is the public front door only: like every run, it is a
+client of the **accounts service** (ADR-0009).
 _Avoid_: landing (the **landing** is the pure-static marketing site on the apex; the lobby
 is the authenticated identity surface — distinct origins, distinct purposes).
+
+**Accounts service**:
+The one process that owns accounts, server-wide sessions and memberships. It is reachable only from
+the same server. The lobby, every run and the operator scripts are its clients (ADR-0009). It knows
+whether an account has **joined a run**, but nothing about settling.
+_Avoid_: lobby (the lobby is a client of the accounts service, not the owner of accounts).
 
 **Joined a run**:
 An account that has explicitly, deliberately joined a run — the lobby's two-click join for a
@@ -120,7 +127,8 @@ lobby's "your runs" view is keyed on this, not on settling. See the flagged ambi
 
 **Settled**:
 An account that has picked a tile — has a **Player** in that run's engine. A later, separate
-step from joining; `instance_membership`'s `settled_at` is null until it happens.
+step from joining, and a freeplay engine act only: the **accounts service** does not record it
+(ADR-0009; `instance_membership`'s `settled_at` is vestigial and being removed).
 
 **Server-wide session**:
 The single authenticated session a player gets from the lobby, carried to every run on the
@@ -133,8 +141,8 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
   entry on a public run's first visit from cluttering "your runs" with runs never actually
   played. #1030 revisits this: the lobby's two-click join is itself a deliberate act (not
   silent), so it now writes `instance_membership` immediately, before settling. Currently
-  resolved: **membership = joined** (settled or not); `settled_at` on the row distinguishes the
-  two for player-count purposes. A silently auto-provisioned account on a run it never
+  resolved: **membership = joined** (settled or not). Whether a member has settled is known
+  only to the run's engine (ADR-0009). A silently auto-provisioned account on a run it never
   explicitly joined still does **not** count as membership — the entry gate's auto-provision
   step itself writes nothing here.
 
