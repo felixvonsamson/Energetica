@@ -24,6 +24,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { useMarketData } from "@/hooks/use-charts";
 import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
@@ -394,23 +395,28 @@ function MarketDepthChartInner({
             style={{ height: `${height}px` }}
         >
             <div ref={chartRef} className="w-full h-full" />
-            {tooltipState && (
-                <div
-                    style={{
-                        position: "fixed",
-                        left: tooltipState.clientX + 12,
-                        top: tooltipState.clientY - 50,
-                        pointerEvents: "none",
-                        zIndex: 9999,
-                    }}
-                >
-                    <DepthTooltip
-                        price={tooltipState.price}
-                        supplyVolume={tooltipState.supplyVolume}
-                        demandVolume={tooltipState.demandVolume}
-                    />
-                </div>
-            )}
+            {/* Portal into the body: a transformed or filtered ancestor would
+                otherwise position this fixed tooltip against itself, not the
+                viewport, and it would drift once the page is scrolled. */}
+            {tooltipState &&
+                createPortal(
+                    <div
+                        style={{
+                            position: "fixed",
+                            left: tooltipState.clientX + 12,
+                            top: tooltipState.clientY - 50,
+                            pointerEvents: "none",
+                            zIndex: 9999,
+                        }}
+                    >
+                        <DepthTooltip
+                            price={tooltipState.price}
+                            supplyVolume={tooltipState.supplyVolume}
+                            demandVolume={tooltipState.demandVolume}
+                        />
+                    </div>,
+                    document.body,
+                )}
         </div>
     );
 }

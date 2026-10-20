@@ -40,6 +40,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
@@ -123,7 +124,10 @@ function BlockTooltip({
     clientX,
     clientY,
 }: BlockTooltipProps): ReactNode {
-    return (
+    // Portal into the body: a transformed or filtered ancestor would otherwise
+    // position this fixed tooltip against itself, not the viewport, and it
+    // would drift once the page is scrolled.
+    return createPortal(
         <div
             style={{
                 position: "fixed",
@@ -174,7 +178,8 @@ function BlockTooltip({
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div>,
+        document.body,
     );
 }
 
