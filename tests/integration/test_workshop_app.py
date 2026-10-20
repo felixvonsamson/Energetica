@@ -977,12 +977,16 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
     response = client.get(FUEL_URL)
 
     assert response.status_code == 200
-    assert response.json() == {
+    body = response.json()
+    assert [line["fuel"] for line in body["fuels"]] == ["coal", "gas", "uranium"]
+    assert body == {
         "procurement": "manual",
         "fuels": [
+            _unburned_fuel_line(session, Fuel.COAL, "Coal"),
             {
                 "fuel": "gas",
                 "name": "Gas",
+                "burned": True,
                 "price": session.fuel_prices[Fuel.GAS].price,
                 "change": None,
                 "shocked": False,
@@ -991,8 +995,32 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "stockpile_limit": pytest.approx(3 * need),
                 "order": math.ceil(need / 2 / 1_000) * 1_000.0,
                 "ran_out": False,
-            }
+            },
+            _unburned_fuel_line(session, Fuel.URANIUM, "Uranium"),
         ],
+    }
+
+
+def _gas_line(body: dict) -> dict:
+    """The gas line of a fuel response, the fuel Alice's gas burners burn."""
+    return next(line for line in body["fuels"] if line["fuel"] == "gas")
+
+
+def _unburned_fuel_line(session: WorkshopSession, fuel: Fuel, name: str) -> dict:
+    """The line of a fuel the player does not burn: its price, but nothing to order (#1290)."""
+    price = session.fuel_prices[fuel]
+    return {
+        "fuel": fuel.value,
+        "name": name,
+        "burned": False,
+        "price": price.price,
+        "change": price.change,
+        "shocked": price.shocked,
+        "stock": 0.0,
+        "season_need": 0.0,
+        "stockpile_limit": 0.0,
+        "order": None,
+        "ran_out": False,
     }
 
 
@@ -1002,7 +1030,11 @@ def test_under_automatic_procurement_a_player_sees_prices_but_orders_nothing(ses
     body = client.get(FUEL_URL).json()
 
     assert body["procurement"] == "automatic"
-    assert [(line["fuel"], line["order"]) for line in body["fuels"]] == [("gas", None)]
+    assert [(line["fuel"], line["order"]) for line in body["fuels"]] == [
+        ("coal", None),
+        ("gas", None),
+        ("uranium", None),
+    ]
 
 
 def test_a_player_sets_their_order_and_it_is_capped_by_the_stockpile_limit(session_path: Path, clock: _Clock) -> None:
@@ -1012,8 +1044,8 @@ def test_a_player_sets_their_order_and_it_is_capped_by_the_stockpile_limit(sessi
     capped = client.put(f"{FUEL_URL}/gas", json={"quantity": 1e15})
 
     assert response.status_code == 200
-    assert response.json()["fuels"][0]["order"] == 1_000.0
-    line = capped.json()["fuels"][0]
+    assert _gas_line(response.json())["order"] == 1_000.0
+    line = _gas_line(capped.json())
     assert line["order"] == pytest.approx(line["stockpile_limit"])
     assert client.get(FUEL_URL).json() == capped.json()
 
@@ -1062,7 +1094,7 @@ def test_the_facilitator_has_no_fuel(session_path: Path, clock: _Clock) -> None:
 def test_the_fuel_paid_for_shows_on_the_balance_sheet(session_path: Path, clock: _Clock) -> None:
     client, facilitator, alice = _fuel_trading(session_path, clock)
     # As much as the stockpile limit allows, more than the season burns, so some is left over.
-    line = client.put(f"{FUEL_URL}/gas", json={"quantity": 1e15}).json()["fuels"][0]
+    line = _gas_line(client.put(f"{FUEL_URL}/gas", json={"quantity": 1e15}).json())
     quantity, price = line["order"], line["price"]
 
     authenticate(client, facilitator)
@@ -1080,7 +1112,7 @@ def test_the_fuel_paid_for_shows_on_the_balance_sheet(session_path: Path, clock:
         }
     ]
     assert spring["fuel_total"] == pytest.approx(quantity * price)
-    assert client.get(FUEL_URL).json()["fuels"][0]["stock"] > 0
+    assert _gas_line(client.get(FUEL_URL).json())["stock"] > 0
 
 
 def test_a_player_reads_that_their_fuel_ran_out_last_season(session_path: Path, clock: _Clock) -> None:
@@ -1091,7 +1123,7 @@ def test_a_player_reads_that_their_fuel_ran_out_last_season(session_path: Path, 
     _advance(client)
     authenticate(client, alice)
 
-    assert client.get(FUEL_URL).json()["fuels"][0]["ran_out"] is True
+    assert _gas_line(client.get(FUEL_URL).json())["ran_out"] is True
 
 
 def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, clock: _Clock) -> None:
@@ -1106,7 +1138,7 @@ def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, cl
     results = session.network.members[alice].trading_results
     results[-1] = results[-1].model_copy(update={"season": "winter"})
 
-    assert client.get(FUEL_URL).json()["fuels"][0]["ran_out"] is False
+    assert _gas_line(client.get(FUEL_URL).json())["ran_out"] is False
 
 
 # --- round format: full-season mode, clearings per day and storage (#1004) ------------------

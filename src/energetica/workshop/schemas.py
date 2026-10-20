@@ -198,12 +198,13 @@ class WorkshopPricesOut(PriceSheet):
 
 
 class WorkshopFuelLineOut(BaseModel):
-    """One fuel the calling player's operating facilities burn, in the current Trading period (#1009). Quantities
-    are in kg.
+    """One fuel and the calling player's dealings in it, in the current Trading period (#1009). Every fuel is listed,
+    so a player sees its price even before they build a facility that burns it (#1290). Quantities are in kg.
     """
 
     fuel: Fuel
     name: str
+    burned: bool = Field(description="Whether the player's operating facilities burn it. Only then can they order it")
     price: float = Field(description="The season's price per kg")
     change: float | None = Field(
         description="The change since last season, as a share of last season's price, such as 0.15 for +15%. Null "
@@ -212,11 +213,13 @@ class WorkshopFuelLineOut(BaseModel):
     shocked: bool = Field(description="Whether a price shock landed this season")
     stock: float = Field(description="What the player holds")
     season_need: float = Field(
-        description="What the player's facilities burning it burn running at full output for the whole season"
+        description="What the player's facilities burning it burn running at full output for the whole season. 0 "
+        "for a fuel they do not burn"
     )
     stockpile_limit: float = Field(description="The most the player's stock may hold, counting what they order")
     order: float | None = Field(
-        description="What the player buys when the price-setting window closes. Null under automatic procurement"
+        description="What the player buys when the price-setting window closes. Null under automatic procurement "
+        "and for a fuel they do not burn"
     )
     ran_out: bool = Field(
         description="Whether the fuel ran short in the player's last Trading period, holding back the output of "
@@ -232,7 +235,7 @@ class WorkshopFuelOut(BaseModel):
         "in the price-setting window"
     )
     fuels: list[WorkshopFuelLineOut] = Field(
-        description="Each fuel the player's operating facilities burn, in a fixed order. Empty before the first "
+        description="Every fuel, in a fixed order, whether the player burns it or not. Empty before the first "
         "Trading period"
     )
 

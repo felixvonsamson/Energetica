@@ -560,8 +560,8 @@ export interface paths {
         };
         /**
          * Get Fuel
-         * @description The fuel the calling player's operating facilities burn: this season's prices, their stock, and under manual
-         *     procurement what they buy when the price-setting window closes.
+         * @description Every fuel's price this season, the calling player's stock of it, and for a fuel their operating facilities
+         *     burn, under manual procurement, what they buy when the price-setting window closes.
          */
         get: operations["get_fuel_api_v1_workshop_fuel_get"];
         put?: never;
@@ -1885,13 +1885,18 @@ export interface components {
         };
         /**
          * WorkshopFuelLineOut
-         * @description One fuel the calling player's operating facilities burn, in the current Trading period (#1009). Quantities
-         *     are in kg.
+         * @description One fuel and the calling player's dealings in it, in the current Trading period (#1009). Every fuel is listed,
+         *     so a player sees its price even before they build a facility that burns it (#1290). Quantities are in kg.
          */
         WorkshopFuelLineOut: {
             fuel: components["schemas"]["Fuel"];
             /** Name */
             name: string;
+            /**
+             * Burned
+             * @description Whether the player's operating facilities burn it. Only then can they order it
+             */
+            burned: boolean;
             /**
              * Price
              * @description The season's price per kg
@@ -1914,7 +1919,7 @@ export interface components {
             stock: number;
             /**
              * Season Need
-             * @description What the player's facilities burning it burn running at full output for the whole season
+             * @description What the player's facilities burning it burn running at full output for the whole season. 0 for a fuel they do not burn
              */
             season_need: number;
             /**
@@ -1924,7 +1929,7 @@ export interface components {
             stockpile_limit: number;
             /**
              * Order
-             * @description What the player buys when the price-setting window closes. Null under automatic procurement
+             * @description What the player buys when the price-setting window closes. Null under automatic procurement and for a fuel they do not burn
              */
             order: number | null;
             /**
@@ -1957,7 +1962,7 @@ export interface components {
             procurement: "automatic" | "manual";
             /**
              * Fuels
-             * @description Each fuel the player's operating facilities burn, in a fixed order. Empty before the first Trading period
+             * @description Every fuel, in a fixed order, whether the player burns it or not. Empty before the first Trading period
              */
             fuels: components["schemas"]["WorkshopFuelLineOut"][];
         };
