@@ -1,14 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-# Energetica — show the deployed version of every instance + the lobby on a server, and how
-# each compares to a reference commit (default: origin/main).
+# Energetica — show the deployed version of the landing, the lobby and every instance on a
+# server, and how each compares to a reference commit (default: origin/main).
 #
 #   ./scripts/deployed-versions.sh --server <ssh-host> --domain <apex> [--ref <git-ref>]
 #
 # Reads each component's public /healthz (added for the lobby in the same change that added
 # this script) and prints its stamped backend commit, frontend commit, dirty flags, and a
-# BEHIND / up-to-date / dirty verdict against the reference. Instances are enumerated from
+# BEHIND / up-to-date / dirty verdict against the reference. The landing has no backend, so
+# its build-info.json is fetched from the apex instead. Instances are enumerated from
 # systemd, the same source of truth as list-instances.sh.
 #
 # This is a read-only diagnostic — it deploys nothing. Requires git (locally) and jq.
@@ -45,7 +46,7 @@ echo "Reference: $REF = $REF_SHORT"
 echo
 
 # Enumerate instance slugs from systemd (same source of truth as list-instances.sh), then
-# probe the lobby too. The landing site is pure static with no /healthz, so it is not listed.
+# probe the landing and the lobby too.
 # energetica-lobby and energetica-reaper share the prefix but are not game instances, so they
 # are dropped from SLUGS by name (the lobby is probed separately below). list-instances.sh
 # applies the same exclusion; keep the two in step.
@@ -92,8 +93,35 @@ probe() {
     echo "$label|$url|$be|$fe|$verdict"
 }
 
+# The landing is pure static, so it has no /healthz and no backend half: its only stamp is the
+# build-info.json the vite build writes into the bundle. The apex's FallbackResource answers a
+# missing file with index.html (HTTP 200), so a landing built before the stamp existed returns
+# HTML here; jq fails to parse it and the row reads "no-stamp".
+probe_landing() {
+    local url="$1"
+    local body fe_full fe fe_dirty verdict
+    body=$(curl -fsS --max-time 8 "$url/build-info.json" 2>/dev/null || true)
+    if [ -z "$body" ]; then
+        echo "landing|$url|-|unreachable|UNREACHABLE"; return
+    fi
+    fe_full=$(echo "$body" | jq -r '.commit // ""' 2>/dev/null || echo "")
+    fe=$(echo "$body" | jq -r '.commit_short // "?"' 2>/dev/null || echo "?")
+    fe_dirty=$(echo "$body" | jq -r '.dirty // false' 2>/dev/null || echo false)
+    [ "$fe_dirty" = "true" ] && fe="$fe*"
+
+    if [ -z "$fe_full" ]; then
+        verdict="no-stamp"
+    elif [ "$fe_dirty" = "true" ]; then
+        verdict="DIRTY"
+    else
+        verdict=$(classify "$fe_full")
+    fi
+    echo "landing|$url|-|$fe|$verdict"
+}
+
 {
     echo "COMPONENT|URL|BACKEND|FRONTEND|VS-REF"
+    probe_landing "https://$DOMAIN"
     probe "lobby" "https://lobby.$DOMAIN"
     for slug in $SLUGS; do
         probe "$slug" "https://$slug.$DOMAIN"

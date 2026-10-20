@@ -316,7 +316,9 @@ read its own commit from git. Instead each half is stamped, and both are reporte
     "frontend": { "commit_short": "abc123def", "dirty": false, "source": "build" } } }
 ```
 
-The lobby now serves `/healthz` too (it previously had none). To see every component on a server
+The lobby now serves `/healthz` too (it previously had none). The landing is pure static and has
+no `/healthz`, so its stamp is read straight from `https://<apex>/build-info.json`; its row in
+the table below shows `-` for the backend. To see every component on a server
 and how each compares to `origin/main` in one table:
 
 ```bash
