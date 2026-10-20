@@ -498,20 +498,23 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
     lines = []
     for fuel in Fuel:
         price = session.fuel_prices.get(fuel)
-        need = needs.get(fuel)
-        if need is None or price is None:
+        if price is None:
             continue
+        # A fuel the player does not burn is listed for its price alone (#1290).
+        burned = fuel in needs
+        need = needs.get(fuel, 0.0)
         lines.append(
             WorkshopFuelLineOut(
                 fuel=fuel,
                 name=FUEL_NAMES[fuel],
+                burned=burned,
                 price=price.price,
                 change=price.change,
                 shocked=price.shocked,
                 stock=player.fuel_stock.get(fuel, 0.0),
                 season_need=need,
                 stockpile_limit=STOCKPILE_SEASONS * need,
-                order=player.fuel_order.get(fuel) if session.fuel_procurement == "manual" else None,
+                order=player.fuel_order.get(fuel) if burned and session.fuel_procurement == "manual" else None,
                 ran_out=fuel in run_out,
             )
         )
@@ -520,8 +523,8 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
 
 @router.get("/fuel")
 def get_fuel(player: Player, session: Session) -> WorkshopFuelOut:
-    """The fuel the calling player's operating facilities burn: this season's prices, their stock, and under manual
-    procurement what they buy when the price-setting window closes.
+    """Every fuel's price this season, the calling player's stock of it, and for a fuel their operating facilities
+    burn, under manual procurement, what they buy when the price-setting window closes.
     """
     return _fuel_out(player, session)
 

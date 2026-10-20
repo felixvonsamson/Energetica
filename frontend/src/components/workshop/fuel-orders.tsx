@@ -2,21 +2,25 @@
  * The fuel part of the bids panel (#1009): each fuel's price for the season,
  * and under manual procurement how much of it the player buys when the
  * price-setting window closes. The prices show in every phase, the quantities
- * only during a Trading period. It shows only the fuels the player's operating
- * facilities burn. Under automatic procurement the prices sit where they will
- * be once procurement turns manual, so players already know where to find them
- * (#1248).
+ * only during a Trading period. It shows every fuel, so a player sees what a
+ * fuel costs before they build a facility that burns it (#1290), but only the
+ * fuels their operating facilities burn can be ordered. Under automatic
+ * procurement the prices sit where they will be once procurement turns manual,
+ * so players already know where to find them (#1248), under a note that fuel is
+ * bought for them.
  *
  * Each row is laid out like a facility's row above it: the fuel's image, then
- * the player's stock, their maximum consumption (what their facilities burn
- * running at full output all season), the season's price with its change since
- * last season (in red, with a note, when a price shock landed), and under
- * manual procurement the quantity to buy with what it costs. The quantity
- * starts at a default the server sets: half the maximum consumption the first
- * time the player buys a fuel (#1224), then what they bought last time. A
- * quantity that would take the stock over the stockpile limit is cut down to
- * fit. A note under the stock says when the fuel ran out last season, which
- * held back the output of the facilities burning it (#1010).
+ * for a fuel the player burns, their stock, their maximum consumption (what
+ * their facilities burn running at full output all season), the season's price
+ * with its change since last season (in red, with a note, when a price shock
+ * landed), and under manual procurement the quantity to buy with what it costs.
+ * The quantity starts at a default the server sets: half the maximum
+ * consumption the first time the player buys a fuel (#1224), then what they
+ * bought last time. A quantity that would take the stock over the stockpile
+ * limit is cut down to fit. A fuel the player does not burn shows its price,
+ * with a note saying so in place of the stock. A note under the stock says when
+ * the fuel ran out last season, which held back the output of the facilities
+ * burning it (#1010).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -42,16 +46,19 @@ import { Input } from "@energetica/ui/components/input";
 import { cn } from "@energetica/ui/lib/utils";
 
 type FuelLine = ApiSchema<"WorkshopFuelLineOut">;
+type FuelProcurement = ApiSchema<"WorkshopFuelOut">["procurement"];
 
 /** How long after the last keystroke a typed quantity is sent, in milliseconds. */
 const SEND_DELAY_MS = 600;
 
 export function FuelOrders({
     fuels,
+    procurement,
     open,
     showOrders,
 }: {
     fuels: FuelLine[];
+    procurement: FuelProcurement;
     open: boolean;
     /** Whether to show the quantity fields, which only a Trading period has. */
     showOrders: boolean;
@@ -65,6 +72,11 @@ export function FuelOrders({
             >
                 Fuel
             </h3>
+            {procurement === "automatic" && (
+                <p className="mb-3 text-[13px] text-fg-subtle">
+                    Fuel will be purchased automatically for your facilities.
+                </p>
+            )}
             <ul className="flex flex-col gap-3">
                 {fuels.map((line) => (
                     <FuelRow
@@ -109,24 +121,30 @@ function FuelRow({
                             {line.name}
                         </span>
                     </div>
-                    <dl className="text-[13px] leading-snug">
-                        <div className="flex flex-wrap gap-x-1">
-                            <dt className="whitespace-nowrap text-fg-subtle">
-                                Stock
-                            </dt>
-                            <dd className="font-bold whitespace-nowrap text-fg-base">
-                                {formatMass(line.stock)}
-                            </dd>
-                        </div>
-                        <div className="flex flex-wrap gap-x-1">
-                            <dt className="whitespace-nowrap text-fg-subtle">
-                                Max consumption
-                            </dt>
-                            <dd className="font-bold whitespace-nowrap text-fg-base">
-                                {formatMass(line.season_need)}/season
-                            </dd>
-                        </div>
-                    </dl>
+                    {!line.burned ? (
+                        <p className="text-[13px] leading-snug text-fg-subtle">
+                            None of your facilities burn it.
+                        </p>
+                    ) : (
+                        <dl className="text-[13px] leading-snug">
+                            <div className="flex flex-wrap gap-x-1">
+                                <dt className="whitespace-nowrap text-fg-subtle">
+                                    Stock
+                                </dt>
+                                <dd className="font-bold whitespace-nowrap text-fg-base">
+                                    {formatMass(line.stock)}
+                                </dd>
+                            </div>
+                            <div className="flex flex-wrap gap-x-1">
+                                <dt className="whitespace-nowrap text-fg-subtle">
+                                    Max consumption
+                                </dt>
+                                <dd className="font-bold whitespace-nowrap text-fg-base">
+                                    {formatMass(line.season_need)}/season
+                                </dd>
+                            </div>
+                        </dl>
+                    )}
                     {line.ran_out && (
                         <p className="text-[13px] leading-snug text-warning">
                             Ran out last season, so your facilities produced
