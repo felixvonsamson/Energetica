@@ -3,11 +3,12 @@
  * so it reads as the price of the card rather than one of its stats: the price,
  * the construction time and the construction pollution.
  *
- * While the Investment phase is open, the tag flips over when hovered (or
- * tapped, on a touch screen). Clicking its back adds the facility to the
- * player's selection (#999), and the tag gives a little bounce. While the phase
- * is closed, the tag does not flip: clicking it shakes it and says to wait for
- * the next one.
+ * While the Investment phase is open, the tag flips over when the tag or its
+ * card is hovered (or tapped, on a touch screen). Clicking the tag's back, or
+ * the card, adds the facility to the player's selection (#999), and the tag
+ * gives a little bounce (#1295). While the phase is closed, the tag does not
+ * flip: clicking it or the card shakes it and says to wait for the next one.
+ * `usePriceTag` holds this behaviour, so the card can share it with the tag.
  *
  * A facility a player can own only a few of, such as a dam (#1223), shows how
  * many they have out of the limit, and its back is disabled at the limit.
@@ -17,7 +18,7 @@
 
 import { useAnimate } from "framer-motion";
 import { Cloud, Hammer } from "lucide-react";
-import { useState } from "react";
+import { type PointerEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
@@ -36,19 +37,18 @@ const SHAKE = [0, -6, 6, -5, 5, -3, 3, 0];
 /** A quick squeeze and spring back, when a click adds the facility. */
 const BOUNCE = [1, 0.88, 1.06, 0.98, 1];
 
+/**
+ * How long the tag stays flipped after the pointer leaves the card or the tag,
+ * in milliseconds, so it does not flip back as the pointer passes from one to
+ * the other.
+ */
+const UNFLIP_DELAY = 150;
+
 /** The look shared by both faces of the tag. */
 const FACE =
     "relative col-start-1 row-start-1 flex flex-col items-center justify-center rounded-md border border-border bg-amber-100 px-3 py-1.5 text-stone-900 shadow-sm backface-hidden";
 
-export function FacilityPriceTag({
-    facility,
-    owned,
-    selected,
-    investmentOpen,
-    affordable,
-    onAdd,
-    adding,
-}: {
+export interface PriceTagOptions {
     facility: WorkshopFacility;
     /** How many the visitor owns already. */
     owned: number;
@@ -61,25 +61,68 @@ export function FacilityPriceTag({
     onAdd: () => void;
     /** True while an add is on its way to the server. */
     adding: boolean;
-}) {
+}
+
+/**
+ * The state of a facility's price tag, and the handlers its card and the tag
+ * both use: `hoverHandlers` flip it while the pointer is over them, and
+ * `handleClick` does what a click on the card or the tag's front does. The
+ * caller calls `turnBack` when focus leaves both, which is what turns over a
+ * tag a tap flipped.
+ */
+export function usePriceTag({
+    facility,
+    owned,
+    selected,
+    investmentOpen,
+    affordable,
+    onAdd,
+    adding,
+}: PriceTagOptions) {
     const [turned, setTurned] = useState(false);
     const [scope, animate] = useAnimate<HTMLDivElement>();
+    const unflipTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+    useEffect(() => () => clearTimeout(unflipTimer.current), []);
     // A tag turned over just as the phase closed turns back.
     const flipped = turned && investmentOpen;
     // Owned ones count whether built or under construction, and selected ones too.
     const limit = facility.max_owned;
     const atLimit = limit !== null && owned + selected >= limit;
+    const canAdd = affordable && !atLimit && !adding;
 
-    function handleFrontClick() {
-        if (investmentOpen) {
-            // A touch screen has no hover, so a tap turns the tag over.
+    // Only a mouse hovers. A touch screen or a pen turns the tag over on a
+    // tap instead, so that same tap does not also add the facility.
+    const hoverHandlers = {
+        onPointerEnter(event: PointerEvent) {
+            if (event.pointerType !== "mouse") return;
+            clearTimeout(unflipTimer.current);
+            setTurned(true);
+        },
+        onPointerLeave(event: PointerEvent) {
+            if (event.pointerType !== "mouse") return;
+            clearTimeout(unflipTimer.current);
+            unflipTimer.current = setTimeout(turnBack, UNFLIP_DELAY);
+        },
+    };
+
+    function turnBack() {
+        clearTimeout(unflipTimer.current);
+        setTurned(false);
+    }
+
+    function handleClick() {
+        if (!investmentOpen) {
+            void animate(scope.current, { x: SHAKE }, { duration: 0.4 });
+            toast.error(GAME_ERROR_MESSAGES.WORKSHOP_INVESTMENT_CLOSED, {
+                id: "workshop-investment-closed",
+            });
+            return;
+        }
+        if (!flipped) {
             setTurned(true);
             return;
         }
-        void animate(scope.current, { x: SHAKE }, { duration: 0.4 });
-        toast.error(GAME_ERROR_MESSAGES.WORKSHOP_INVESTMENT_CLOSED, {
-            id: "workshop-investment-closed",
-        });
+        if (canAdd) handleAdd();
     }
 
     function handleAdd() {
@@ -87,19 +130,38 @@ export function FacilityPriceTag({
         onAdd();
     }
 
+    return {
+        facility,
+        owned,
+        selected,
+        affordable,
+        flipped,
+        scope,
+        limit,
+        atLimit,
+        canAdd,
+        hoverHandlers,
+        turnBack,
+        handleClick,
+        handleAdd,
+    };
+}
+
+/** A facility's price tag, as `usePriceTag` returns it. */
+export type PriceTag = ReturnType<typeof usePriceTag>;
+
+export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
+    const { facility, owned, selected, affordable, flipped, scope } = tag;
+    const { limit, atLimit } = tag;
+
     return (
-        <div className="flex flex-col items-center">
+        // The string counts as part of the tag for hovering, so the pointer
+        // goes straight from the card's hover area to the tag's.
+        <div className="flex flex-col items-center" {...tag.hoverHandlers}>
             {/* The string the tag hangs from. */}
             <div className="h-4 w-px bg-muted-foreground" />
             <div
                 ref={scope}
-                onMouseEnter={() => setTurned(true)}
-                onMouseLeave={() => setTurned(false)}
-                onBlur={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) {
-                        setTurned(false);
-                    }
-                }}
                 className={cn(
                     "perspective-[600px] transition-[rotate] hover:rotate-0",
                     flipped ? "rotate-0" : "-rotate-2",
@@ -113,7 +175,7 @@ export function FacilityPriceTag({
                 >
                     <button
                         type="button"
-                        onClick={handleFrontClick}
+                        onClick={tag.handleClick}
                         inert={flipped}
                         className={FACE}
                     >
@@ -165,8 +227,8 @@ export function FacilityPriceTag({
                     </button>
                     <button
                         type="button"
-                        onClick={handleAdd}
-                        disabled={!affordable || atLimit || adding}
+                        onClick={tag.handleAdd}
+                        disabled={!tag.canAdd}
                         inert={!flipped}
                         className={cn(
                             FACE,
