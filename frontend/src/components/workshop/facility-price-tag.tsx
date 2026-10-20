@@ -39,8 +39,8 @@ const BOUNCE = [1, 0.88, 1.06, 0.98, 1];
 
 /**
  * How long the tag stays flipped after the pointer leaves the card or the tag,
- * in milliseconds, so it does not flip back while the pointer crosses the
- * string between them.
+ * in milliseconds, so it does not flip back as the pointer passes from one to
+ * the other.
  */
 const UNFLIP_DELAY = 150;
 
@@ -90,21 +90,18 @@ export function usePriceTag({
     const atLimit = limit !== null && owned + selected >= limit;
     const canAdd = affordable && !atLimit && !adding;
 
-    // A touch screen has no hover: a tap turns the tag over instead, so touch
-    // pointers are left to the click handler.
+    // Only a mouse hovers. A touch screen or a pen turns the tag over on a
+    // tap instead, so that same tap does not also add the facility.
     const hoverHandlers = {
         onPointerEnter(event: PointerEvent) {
-            if (event.pointerType === "touch") return;
+            if (event.pointerType !== "mouse") return;
             clearTimeout(unflipTimer.current);
             setTurned(true);
         },
         onPointerLeave(event: PointerEvent) {
-            if (event.pointerType === "touch") return;
+            if (event.pointerType !== "mouse") return;
             clearTimeout(unflipTimer.current);
-            unflipTimer.current = setTimeout(
-                () => setTurned(false),
-                UNFLIP_DELAY,
-            );
+            unflipTimer.current = setTimeout(turnBack, UNFLIP_DELAY);
         },
     };
 
@@ -150,22 +147,21 @@ export function usePriceTag({
     };
 }
 
-export function FacilityPriceTag({
-    tag,
-}: {
-    /** From `usePriceTag`. */
-    tag: ReturnType<typeof usePriceTag>;
-}) {
+/** A facility's price tag, as `usePriceTag` returns it. */
+export type PriceTag = ReturnType<typeof usePriceTag>;
+
+export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
     const { facility, owned, selected, affordable, flipped, scope } = tag;
     const { limit, atLimit } = tag;
 
     return (
-        <div className="flex flex-col items-center">
+        // The string counts as part of the tag for hovering, so the pointer
+        // goes straight from the card's hover area to the tag's.
+        <div className="flex flex-col items-center" {...tag.hoverHandlers}>
             {/* The string the tag hangs from. */}
             <div className="h-4 w-px bg-muted-foreground" />
             <div
                 ref={scope}
-                {...tag.hoverHandlers}
                 className={cn(
                     "perspective-[600px] transition-[rotate] hover:rotate-0",
                     flipped ? "rotate-0" : "-rotate-2",

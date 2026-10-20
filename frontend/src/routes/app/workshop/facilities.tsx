@@ -224,7 +224,12 @@ function CatalogItem({
                 }
             }}
         >
-            <div className="relative flex items-center">
+            {/*
+             * The whole first row hovers, not just the card, so its hover area
+             * reaches down to the tag's string however much shorter than the
+             * row the card is.
+             */}
+            <div className="relative flex items-center" {...tag.hoverHandlers}>
                 {/*
                  * The top of the price tag's string. It runs from behind the
                  * card's middle to the bottom of the row, so it meets the
@@ -237,10 +242,9 @@ function CatalogItem({
                  * elsewhere turns the tag back. A shortcut for the pointer
                  * only: keyboard users have the tag's own buttons.
                  */}
-                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the tag's buttons serve the keyboard */}
                 <div
                     tabIndex={-1}
-                    {...tag.hoverHandlers}
                     onClick={tag.handleClick}
                     className={cn(
                         "relative outline-none",
