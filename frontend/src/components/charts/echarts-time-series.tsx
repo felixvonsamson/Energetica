@@ -50,6 +50,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -1180,9 +1181,13 @@ export function TimeSeriesChart({
                 </button>
             )}
 
+            {/* Portal into the body: a transformed or filtered ancestor would
+                otherwise position these fixed elements against itself, not the
+                viewport, and they would drift once the page is scrolled. */}
             {tooltip &&
                 !isLoading &&
-                appliedStructuralKey === structuralKey && (
+                appliedStructuralKey === structuralKey &&
+                createPortal(
                     <>
                         {tooltip.circles.map((c) => (
                             <div
@@ -1206,7 +1211,8 @@ export function TimeSeriesChart({
                             title={timeAxis.formatTooltipTitle(tooltip.tick)}
                             formatValue={config.formatValue}
                         />
-                    </>
+                    </>,
+                    document.body,
                 )}
         </div>
     );
