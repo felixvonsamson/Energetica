@@ -25,7 +25,11 @@ import {
     CarbonTaxNotice,
 } from "@/components/workshop/carbon-tax-vote";
 import { FacilityCard } from "@/components/workshop/facility-card";
-import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
+import {
+    FacilityPriceTag,
+    type PriceTagOptions,
+    usePriceTag,
+} from "@/components/workshop/facility-price-tag";
 import { FleetStack } from "@/components/workshop/fleet-stack";
 import { InvestmentSelection } from "@/components/workshop/investment-selection";
 import { LoanOffer } from "@/components/workshop/loan-offer";
@@ -49,6 +53,7 @@ import {
 } from "@energetica/ui/components/segmented-picker";
 import { Spinner } from "@energetica/ui/components/spinner";
 import { TypographyH2 } from "@energetica/ui/components/typography";
+import { cn } from "@energetica/ui/lib/utils";
 
 type Tab = "catalog" | "fleet";
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
@@ -168,55 +173,89 @@ function Catalog({
                 {/* Facilities the player owns but can no longer buy are only on the fleet tab. */}
                 {facilities
                     .filter((facility) => facility.for_sale)
-                    .map((facility) => {
-                        const energyAtRisk =
-                            selection.stored_energy_at_risk[facility.id];
-                        return (
-                            <div
-                                key={facility.id}
-                                className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
-                            >
-                                <div className="relative flex items-center">
-                                    {/*
-                                     * The top of the price tag's string. It runs from
-                                     * behind the card's middle to the bottom of the row,
-                                     * so it meets the card's bottom edge however much
-                                     * shorter than the row the card is.
-                                     */}
-                                    <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
-                                    <FacilityCard facility={facility} />
-                                </div>
-                                {/* The cell's second row, under the card. */}
-                                <div className="flex flex-col items-center">
-                                    <FacilityPriceTag
-                                        facility={facility}
-                                        owned={
-                                            fleet.filter(
-                                                (owned) =>
-                                                    owned.facility ===
-                                                    facility.id,
-                                            ).length
-                                        }
-                                        selected={
-                                            selection.facilities.filter(
-                                                (id) => id === facility.id,
-                                            ).length
-                                        }
-                                        investmentOpen={investmentOpen}
-                                        affordable={facility.price <= moneyLeft}
-                                        onAdd={() => add.mutate(facility.id)}
-                                        adding={add.isPending}
-                                    />
-                                    {investmentOpen &&
-                                        energyAtRisk !== undefined && (
-                                            <StoredEnergyWarning
-                                                energyAtRisk={energyAtRisk}
-                                            />
-                                        )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    .map((facility) => (
+                        <CatalogItem
+                            key={facility.id}
+                            facility={facility}
+                            owned={
+                                fleet.filter(
+                                    (owned) => owned.facility === facility.id,
+                                ).length
+                            }
+                            selected={
+                                selection.facilities.filter(
+                                    (id) => id === facility.id,
+                                ).length
+                            }
+                            investmentOpen={investmentOpen}
+                            affordable={facility.price <= moneyLeft}
+                            onAdd={() => add.mutate(facility.id)}
+                            adding={add.isPending}
+                            energyAtRisk={
+                                selection.stored_energy_at_risk[facility.id]
+                            }
+                        />
+                    ))}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * One grid cell of the catalog: the card, and its price tag under it. Hovering
+ * or clicking the card does what hovering or clicking the tag does (#1295).
+ */
+function CatalogItem({
+    energyAtRisk,
+    ...options
+}: PriceTagOptions & {
+    /** Stored energy of this type that nothing holds, in Wh, if any. */
+    energyAtRisk: number | undefined;
+}) {
+    const tag = usePriceTag(options);
+    return (
+        <div
+            className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
+            onBlur={(event) => {
+                // Focus left both the card and the tag, as when a tap elsewhere
+                // follows the tap that flipped the tag.
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                    tag.turnBack();
+                }
+            }}
+        >
+            <div className="relative flex items-center">
+                {/*
+                 * The top of the price tag's string. It runs from behind the
+                 * card's middle to the bottom of the row, so it meets the
+                 * card's bottom edge however much shorter than the row the card
+                 * is.
+                 */}
+                <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
+                {/*
+                 * Focusable, so that a tap on it takes focus and a tap
+                 * elsewhere turns the tag back. A shortcut for the pointer
+                 * only: keyboard users have the tag's own buttons.
+                 */}
+                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                <div
+                    tabIndex={-1}
+                    {...tag.hoverHandlers}
+                    onClick={tag.handleClick}
+                    className={cn(
+                        "relative outline-none",
+                        tag.flipped && tag.canAdd && "cursor-pointer",
+                    )}
+                >
+                    <FacilityCard facility={options.facility} />
+                </div>
+            </div>
+            {/* The cell's second row, under the card. */}
+            <div className="flex flex-col items-center">
+                <FacilityPriceTag tag={tag} />
+                {options.investmentOpen && energyAtRisk !== undefined && (
+                    <StoredEnergyWarning energyAtRisk={energyAtRisk} />
+                )}
             </div>
         </div>
     );
