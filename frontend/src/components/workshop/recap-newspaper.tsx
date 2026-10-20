@@ -495,7 +495,7 @@ function DemandForecast({ yearAhead }: { yearAhead: YearAhead }) {
                     demand.peak_next_round,
                 )}
             </p>
-            <p className="text-sm italic">
+            <p className="mt-3 text-sm italic">
                 Peak demand {formatPower(demand.peak_this_round)} →{" "}
                 {formatPower(demand.peak_next_round)}
             </p>
