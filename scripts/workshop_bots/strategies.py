@@ -3,9 +3,10 @@
 Each persona has a plain idea of the game and changes its mind as the session goes on. None of them plays well on
 purpose: together they should look like a room of first-time players.
 
-In Round 1 the starting budget limits what a bot buys, as it would a human. From Round 2 on, a bot sizes its
-purchases in megawatts against the demand it expects, from what it has seen and the Recap's forecast, and spends no
-more than a share of its cash. Some bots take the loan, each for its own reason.
+Every Round, a bot sizes its purchases in megawatts against the demand it expects: in Round 1 a guess from the player
+count, later what it has seen and the Recap's forecast. What it can pay for caps that: the starting budget in Round
+1, a share of its cash later. So the bots follow the catalog's prices and powers rather than buying fixed counts. Some
+bots take the loan, each for its own reason.
 """
 
 from __future__ import annotations
@@ -107,8 +108,8 @@ class CoalKing(Strategy):
 
     def invest(self, ctx: Ctx) -> list[str]:
         if ctx.round == 1:
-            self.note(ctx, "five coal burners")
-            return shopping(ctx, [("coal_burner", 5)], ctx.money)
+            self.note(ctx, "coal burners for 1.6x his share of the peak, as far as his budget goes")
+            return shopping(ctx, [("coal_burner", units_for(ctx, "coal_burner", 1.6 * ctx.fair_share()))], ctx.money)
         if ctx.session.get("carbon_tax_since") is not None:
             plant = best_of(ctx, "combined_cycle", "gas_burner")
             self.note(ctx, f"the carbon tax is on, so {plant} from now on")
@@ -158,8 +159,12 @@ class Greenie(Strategy):
 
     def invest(self, ctx: Ctx) -> list[str]:
         if ctx.round == 1:
-            self.note(ctx, "two wind turbines and two PV farms")
-            return shopping(ctx, [("onshore_wind_turbine", 2), ("pv_solar", 2)], ctx.money)
+            self.note(ctx, "wind turbines for her share of the peak, then PV for 60% of it")
+            wishes: list[tuple[str | None, int]] = [
+                ("onshore_wind_turbine", units_for(ctx, "onshore_wind_turbine", ctx.fair_share())),
+                ("pv_solar", units_for(ctx, "pv_solar", 0.6 * ctx.fair_share())),
+            ]
+            return shopping(ctx, wishes, ctx.money)
         wind = best_of(ctx, "offshore_wind_turbine", "onshore_wind_turbine")
         missing = 2.0 * ctx.fair_share() - ctx.capacity(RENEWABLE)
         wishes: list[tuple[str | None, int]] = [
@@ -207,8 +212,8 @@ class Trader(Strategy):
 
     def invest(self, ctx: Ctx) -> list[str]:
         if ctx.round == 1:
-            self.note(ctx, "six gas peakers")
-            return shopping(ctx, [("gas_burner", 6)], ctx.money)
+            self.note(ctx, "gas peakers for 1.3x his share of the peak")
+            return shopping(ctx, [("gas_burner", units_for(ctx, "gas_burner", 1.3 * ctx.fair_share()))], ctx.money)
         # In the last Round a plant keeps most of its price as residual value, so he builds more.
         missing = ctx.fair_share() * panic(ctx) * (1.3 if ctx.is_last_round else 1.0) - ctx.capacity(FIRM)
         battery = best_of(ctx, "lithium_ion_batteries", "solid_state_batteries")
@@ -292,8 +297,10 @@ class Nuke(Strategy):
     def invest(self, ctx: Ctx) -> list[str]:
         reactor = best_of(ctx, "nuclear_reactor_gen4", "nuclear_reactor")
         if ctx.round == 1:
-            self.note(ctx, "a reactor for Round 2, and gas burners to bridge the wait")
-            return shopping(ctx, [(reactor, 1), ("gas_burner", 2)], ctx.money)
+            self.note(ctx, "a reactor for Round 2, and gas burners for 80% of her share of the peak to bridge the wait")
+            return shopping(
+                ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", 0.8 * ctx.fair_share()))], ctx.money
+            )
         missing = ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM | {"small_water_dam", "large_water_dam"})
         if not ctx.is_last_round:
             picks = shopping(ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], ctx.money)
@@ -342,9 +349,10 @@ class Gambler(Strategy):
             guess = self.rng.choice(["coal_burner", "gas_burner", "onshore_wind_turbine"])
             self.note(ctx, f"first guess: {guess}")
             # Even a gambler keeps some plants that run on demand next to his wind.
-            wishes: list[tuple[str | None, int]] = [(guess, 5), ("small_water_dam", 3)]
+            share = self.rng.uniform(1.0, 1.5) * ctx.fair_share()
+            wishes: list[tuple[str | None, int]] = [(guess, units_for(ctx, guess, share)), ("small_water_dam", 3)]
             if guess == "onshore_wind_turbine":
-                wishes = [(guess, 3), ("gas_burner", 4)]
+                wishes = [(guess, units_for(ctx, guess, share)), ("gas_burner", units_for(ctx, "gas_burner", 0.8 * share))]
             return shopping(ctx, wishes, ctx.money * self.rng.uniform(0.7, 1.0))
         earned: dict[str, float] = {}
         for view in ctx.history[-4:]:
@@ -412,14 +420,19 @@ class TypicalHuman(Strategy):
     persona = "Cautious first-timer who keeps the default prices"
 
     def invest(self, ctx: Ctx) -> list[str]:
+        # Firm plants for a little more than its share of the peak, two thirds coal and one third gas in Round 1, and
+        # one wind turbine each Round.
+        missing = 1.1 * ctx.fair_share() - ctx.capacity(FIRM)
         if ctx.round == 1:
             wishes: list[tuple[str | None, int]] = [
-                ("coal_burner", 2),
-                ("gas_burner", 1),
+                ("coal_burner", units_for(ctx, "coal_burner", missing * 2 / 3)),
+                ("gas_burner", units_for(ctx, "gas_burner", missing / 3)),
                 ("onshore_wind_turbine", 1),
             ]
             return shopping(ctx, wishes, ctx.money)
-        return shopping(ctx, [("gas_burner", 1), ("onshore_wind_turbine", 1)], ctx.money)
+        return shopping(
+            ctx, [("gas_burner", units_for(ctx, "gas_burner", missing)), ("onshore_wind_turbine", 1)], ctx.money
+        )
 
     def ballot(self, ctx: Ctx) -> str:
         return "yes"

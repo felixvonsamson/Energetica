@@ -42,7 +42,7 @@ DAYS_PER_YEAR = 364
 
 #: The nominal demand each player brings to the session's Round-1 amplitude, in W, so a player needs a few facilities
 #: to cover their share. Lowered from 150 MW in #1291 to cut blackouts, now that nominal demand is all must-serve.
-PER_PLAYER_BASE_AMPLITUDE = 100e6
+PER_PLAYER_BASE_AMPLITUDE = 80e6
 
 
 _DATA_DIR = Path(__file__).parent / "data"
