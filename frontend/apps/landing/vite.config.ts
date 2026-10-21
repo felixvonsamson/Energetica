@@ -7,7 +7,7 @@ import path from "path";
 
 import { contentMdx } from "@energetica/content/vite-plugin";
 
-import { DEV_PORTS } from "../../vite.shared";
+import { buildInfoPlugin, DEV_PORTS } from "../../vite.shared";
 
 export default defineConfig(() => {
     return {
@@ -40,6 +40,9 @@ export default defineConfig(() => {
                 },
             }),
             react(),
+            // The landing has no backend to serve /healthz, so deployed-versions.sh
+            // fetches this stamp straight from the apex as /build-info.json.
+            buildInfoPlugin(),
         ],
         resolve: {
             alias: { "@": path.resolve(import.meta.dirname, "./src") },

@@ -187,10 +187,11 @@ export function gitBuildInfo(): Record<string, string | boolean | null> {
 
 /**
  * Write build-info.json into the build output dir so the backend's /healthz can
- * report the deployed frontend version. Build-only (`apply: "build"`): a dev
- * server serves the app from vite, not from a bundle, so there is nothing to
- * stamp. Runs at closeBundle — after Vite has emitted (and, with emptyOutDir,
- * cleared then repopulated) the dir — so the stamp survives.
+ * report the deployed frontend version (the landing, which has no backend,
+ * serves the file itself). Build-only (`apply: "build"`): a dev server serves
+ * the app from vite, not from a bundle, so there is nothing to stamp. Runs at
+ * closeBundle — after Vite has emitted (and, with emptyOutDir, cleared then
+ * repopulated) the dir — so the stamp survives.
  */
 export function buildInfoPlugin(): Plugin {
     let outDir = "";
@@ -198,7 +199,8 @@ export function buildInfoPlugin(): Plugin {
         name: "energetica-build-info",
         apply: "build",
         configResolved(config) {
-            outDir = config.build.outDir;
+            // outDir is relative to the config's root, not the process cwd.
+            outDir = path.resolve(config.root, config.build.outDir);
         },
         closeBundle() {
             fs.mkdirSync(outDir, { recursive: true });
