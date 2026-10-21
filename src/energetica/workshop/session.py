@@ -70,6 +70,7 @@ counts the Rounds completed so far, so it changes as each Recap opens, and is fi
 
 from __future__ import annotations
 
+import os
 import math
 import random
 import threading
@@ -156,7 +157,7 @@ if TYPE_CHECKING:
 
 # How many Rounds a session runs unless the facilitator chooses otherwise (#992). A placeholder, like
 # every other Workshop magnitude.
-DEFAULT_ROUND_COUNT = 3
+DEFAULT_ROUND_COUNT = int(os.environ.get("SIM_ROUND_COUNT", "3"))  # simulation only
 
 # How many different weather seeds there are. The noise behind ``sim.renewables`` repeats after 256.
 WEATHER_SEEDS = 256
