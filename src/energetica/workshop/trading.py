@@ -267,8 +267,8 @@ class TradingOutcome:
     record: TradingPeriodRecord
     """What the period did at each settlement point, for its review."""
     peak_demand: float | None = None
-    """The most the market cleared at one settlement point, in W: the period's peak demand (#1013). None if no
-    clearing succeeded, as when the grid went down at the first."""
+    """The highest must-serve demand at one settlement point, in W: the period's peak demand (#1013, #1291). It
+    counts every point of the simulated days, whether or not the market cleared there. None if there were none."""
 
 
 @dataclass(slots=True)
@@ -546,7 +546,7 @@ class _Clearings:
     offered: np.ndarray
     served: np.ndarray
     blackout_at: int | None = None
-    # The most the market has cleared at one settlement point so far, overwritten whenever a clearing clears more.
+    # The highest must-serve demand at one settlement point so far, overwritten whenever a point's is higher.
     peak_demand: float | None = None
 
 
@@ -588,6 +588,11 @@ def _clear_days(
     for day_number, day in enumerate(days):
         for clearing in range(clearings_per_day):
             point = day_number * clearings_per_day + clearing
+            period = SettlementPeriod(day, clearing, clearings_per_day)
+            # Must-serve demand does not depend on what clears, so the peak counts points after a blackout too.
+            must_serve = nominal_demand(amplitude, curve, period) * _MUST_SERVE.share
+            if cleared.peak_demand is None or must_serve > cleared.peak_demand:
+                cleared.peak_demand = must_serve
             if cleared.blackout_at is not None and stop_at_blackout:
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
@@ -601,7 +606,7 @@ def _clear_days(
                 pool.reserve_fuel(seconds_per_tick)
             for pool in pools.values():
                 pool.place(market, weather.get(pool.facility, 0.0), seconds_per_tick)
-            demand_block = build_demand_block(amplitude, curve, SettlementPeriod(day, clearing, clearings_per_day))
+            demand_block = build_demand_block(amplitude, curve, period)
             demands = market["demands"] + demand_block
             sides: tuple[tuple[Side, list[MarketEntry]], ...] = (("offer", market["capacities"]), ("demand", demands))
             for side, entries in sides:
@@ -615,8 +620,6 @@ def _clear_days(
                     cleared.blackout_at = point
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
-            if cleared.peak_demand is None or result.quantity > cleared.peak_demand:
-                cleared.peak_demand = result.quantity
             if not math.isfinite(result.price):
                 result = dataclasses.replace(result, price=SCARCITY_PRICE)
                 cleared.price[point] = SCARCITY_PRICE

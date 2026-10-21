@@ -2,8 +2,8 @@
 
 The engine keeps, beside each player's result, the time series and the merit order of each settlement
 point it cleared. These tests use a flat demand curve and steady weather, as the engine's tests do. With
-an amplitude of 50 MW, the demand block bids 40 MW at any price (must-serve), then 5 MW up to 250, 7.5 MW
-up to 140, 10 MW up to 80, 10 MW up to 40 and 10 MW up to 10.
+an amplitude of 40 MW, the demand block bids 40 MW at any price (must-serve), then 12 MW each up to 250,
+140, 80, 40 and 10.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from energetica.workshop.weather import Shares
 from ._weather_helpers import FixedWeather
 
 _FLAT = DemandCurve((1.0,) * DAYS_PER_YEAR)
-_AMPLITUDE = 50e6
+_AMPLITUDE = 40e6
 _WEEK_HOURS = 7 * 24
 
 GAS = FacilityId.GAS_BURNER  # 50 MW
@@ -135,10 +135,10 @@ def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None
 def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
     record = _simulate(_bidder(GAS, sell={GAS: 50.0})).record
 
-    # Gas sells 50 MW to the tiers bidding above 50: 40 MW must-serve, 5 MW, and 5 MW of the next.
+    # Gas sells all 50 MW: 40 MW to must-serve and 10 MW to the tier bidding 250, which sets the price.
     assert record.served.sum(axis=0) == pytest.approx(record.quantity)
-    assert record.served[:, 0] == pytest.approx([40e6, 5e6, 5e6, 0, 0, 0])
-    assert record.price == pytest.approx(np.full(_WEEK_HOURS, 140.0))
+    assert record.served[:, 0] == pytest.approx([40e6, 10e6, 0, 0, 0, 0])
+    assert record.price == pytest.approx(np.full(_WEEK_HOURS, 250.0))
 
 
 def test_each_merit_order_clears_again_at_the_recorded_price_and_quantity() -> None:

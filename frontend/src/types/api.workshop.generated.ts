@@ -833,12 +833,13 @@ export interface components {
         };
         /**
          * DemandOutlook
-         * @description How peak demand moves from this Round to the next, through demand growth and the Round events that last.
+         * @description How peak must-serve demand moves from this Round to the next, through demand growth and the Round events that
+         *     last.
          */
         DemandOutlook: {
             /**
              * Peak This Round
-             * @description The most the market cleared at one settlement point this Round, in W
+             * @description The highest must-serve demand at one settlement point this Round, in W (#1291)
              */
             peak_this_round: number;
             /**
@@ -2586,7 +2587,7 @@ export interface components {
              * @description The factor demand grows by from this Round to the next before any event, 1.35 for 35% (#1226)
              */
             demand_growth: number;
-            /** @description Null if the market never cleared this Round */
+            /** @description Null if no Trading period of this Round was simulated */
             demand: components["schemas"]["DemandOutlook"] | null;
             /** @description The vote the Round holds, or null if it holds none */
             carbon_tax_vote: components["schemas"]["RecapVote"] | null;

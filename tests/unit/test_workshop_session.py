@@ -1402,9 +1402,9 @@ def test_a_cancelled_simulation_stops_and_changes_nothing(path: Path, clock: _Cl
 
 
 def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Path, clock: _Clock) -> None:
-    # Four combined cycles (320 MW) asking 100 meet every tier of demand willing to pay at least 100: 105% of
-    # nominal demand, which stays under 180 MW for one player in spring. Above them the next tier pays only 80, so
-    # every hourly clearing sells 1.05 x nominal demand at 100.
+    # Four combined cycles (320 MW) asking 100 meet every tier of demand willing to pay at least 100: 160% of
+    # nominal demand, which stays under 190 MW for one player in spring. Above them the next tier pays only 80, so
+    # every hourly clearing sells 1.6 x nominal demand at 100.
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
     plants = [OwnedFacility(facility=FacilityId.COMBINED_CYCLE, built_round=1)] * 4
     session.join(_account(1, "alice")).owned_facilities.extend(plants)
@@ -1421,7 +1421,7 @@ def test_a_trading_period_settles_to_the_scaled_week_worked_out_by_hand(path: Pa
         "spring", RoundFormat(), curve
     )
     hourly = [
-        1.05 * nominal_demand(amplitude, curve, SettlementPeriod(day, hour, 24))
+        1.6 * nominal_demand(amplitude, curve, SettlementPeriod(day, hour, 24))
         for day in representative_week("spring")
         for hour in range(24)
     ]
