@@ -41,12 +41,12 @@ from energetica.workshop.seasons import SEASONS
 #: world, except the modern coal plant, which it does not have, and the combined cycle, which burns only gas
 #: here and so gets the coal it would burn there as gas.
 FUEL_USE: dict[FacilityId, float] = {
-    FacilityId.COAL_BURNER: 640.0,
-    FacilityId.MODERN_COAL_PLANT: 500.0,
-    FacilityId.GAS_BURNER: 353.0,
-    FacilityId.COMBINED_CYCLE: 260.0,
-    FacilityId.NUCLEAR_REACTOR: 0.044,
-    FacilityId.NUCLEAR_REACTOR_GEN4: 0.000_57,
+    FacilityId.COAL_BURNER: 400.0,
+    FacilityId.MODERN_COAL_PLANT: 300.0,
+    FacilityId.GAS_BURNER: 225.0,
+    FacilityId.COMBINED_CYCLE: 150.0,
+    FacilityId.NUCLEAR_REACTOR: 0.04,
+    FacilityId.NUCLEAR_REACTOR_GEN4: 0.0005,
 }
 
 #: Each fuel's name, as players read it.
@@ -56,8 +56,8 @@ FUEL_NAMES: dict[Fuel, str] = {Fuel.COAL: "Coal", Fuel.GAS: "Gas", Fuel.URANIUM:
 #: since players trade fuel there, so these are invented (#1227). Power then sells for about 100 per MWh. Gas costs
 #: more per MWh than coal, but less once the carbon tax is on, since gas emits less CO₂.
 CATALOG_FUEL_PRICES: dict[Fuel, float] = {
-    Fuel.COAL: 0.06,
-    Fuel.GAS: 0.16,
+    Fuel.COAL: 0.1,
+    Fuel.GAS: 0.25,
     Fuel.URANIUM: 250.0,
 }
 

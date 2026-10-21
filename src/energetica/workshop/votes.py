@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 #: What the carbon tax charges per kg of CO₂ emitted. Shown on the ballot. Set by the first recalibration (#1227):
 #: about 83 per MWh on a coal burner and 50 on a gas burner, enough to make gas cheaper to run than coal.
-CARBON_TAX_RATE = 0.05
+CARBON_TAX_RATE = 0.025
 
 Ballot = Literal["yes", "no"]
 
