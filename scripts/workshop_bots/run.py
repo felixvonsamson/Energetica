@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import random
+import re
 import subprocess
 import sys
 import threading
@@ -211,9 +212,17 @@ def load_plan(name: str | None) -> dict[str, Any] | None:
     return json.loads(path.read_text())
 
 
-def make_bots(names: list[str], seed: int, *, live: bool) -> list[Bot]:
+def persona_of(name: str) -> type[Strategy]:
+    """The persona an account plays: its name without a trailing number, so greenie2 plays greenie."""
     strategies = {**PERSONAS, STAND_IN.name: STAND_IN}
-    return [Bot(strategies[name](seed=seed), live=live) for name in names]
+    persona = re.sub(r"\d+$", "", name)
+    if persona not in strategies:
+        sys.exit(f"no persona for {name}: use one of {', '.join(strategies)}, optionally followed by a number")
+    return strategies[persona]
+
+
+def make_bots(names: list[str], seed: int, *, live: bool) -> list[Bot]:
+    return [Bot(persona_of(name)(seed=seed, name=name), live=live) for name in names]
 
 
 def balance_summary(bots: list[Bot], round_count: int) -> None:
@@ -264,13 +273,14 @@ def setup(args: argparse.Namespace) -> None:
     from energetica.identity import accounts  # noqa: PLC0415 - only this command needs the backend
     from energetica.kernel.session import generate_password_hash  # noqa: PLC0415
 
-    names = [args.facilitator, args.player, *PERSONAS]
+    bots = args.bots.split(",")
+    names = [args.facilitator, args.player, *bots]
     for name in names:
         accounts.get_or_create_account_id(username=name, pwhash=generate_password_hash(f"{name}1234"))
     lobby_scripts = HERE.parent / "lobby"
     run = [sys.executable, str(lobby_scripts / "grant-facilitator.py"), "--username", args.facilitator]
     subprocess.run([*run, "--slug", SLUG, "--accounts-db", ACCOUNTS_DB], check=True)
-    run = [sys.executable, str(lobby_scripts / "whitelist-run.py"), SLUG, "add", args.player, *PERSONAS]
+    run = [sys.executable, str(lobby_scripts / "whitelist-run.py"), SLUG, "add", args.player, *bots]
     subprocess.run([*run, "--accounts-db", ACCOUNTS_DB], check=True)
     log(f"accounts ready, each with the password <name>1234: {', '.join(names)}")
 
@@ -323,7 +333,8 @@ def live(args: argparse.Namespace) -> None:
 def headless(args: argparse.Namespace) -> None:
     """Play a whole session at once: the bots, a stand-in for the human player, and the facilitator."""
     facilitator = Facilitator(args.facilitator)
-    bots = make_bots([*args.bots.split(","), STAND_IN.name], args.seed, live=False)
+    names = args.bots.split(",") + ([] if args.no_stand_in else [STAND_IN.name])
+    bots = make_bots(names, args.seed, live=False)
     plan = load_plan(args.plan)
     if plan is not None:
         facilitator.apply_plan(plan)
@@ -359,12 +370,19 @@ def main() -> None:
     for name in ("setup", "live", "headless"):
         command = commands.add_parser(name)
         command.add_argument("--facilitator", default="prof", help="the facilitator's username")
+        command.add_argument(
+            "--bots",
+            default=",".join(PERSONAS),
+            help="the bot accounts, each a persona's name, optionally numbered to run a persona more than once "
+            "(greenie,greenie2)",
+        )
         if name == "setup":
             command.add_argument("--player", default="player", help="the account you play with")
         else:
-            command.add_argument("--bots", default=",".join(PERSONAS), help="which personas to run")
             command.add_argument("--plan", help="a plan in plans/ (blackout, blackout-full-season) or a JSON file")
             command.add_argument("--seed", type=int, default=1, help="changes the random choices of the bots")
+        if name == "headless":
+            command.add_argument("--no-stand-in", action="store_true", help="play without the stand-in player")
     args = parser.parse_args()
     commands_by_name: dict[str, Callable[[argparse.Namespace], None]] = {
         "setup": setup,

@@ -91,6 +91,15 @@ class PeriodView:
     must_serve: list[float]  # W served to the must-serve tier at each point
     generation: dict[int, dict[str, list[float]]]  # player id -> facility -> W at each point
     blackout: bool
+    clearings_per_day: int = 24
+    # Every offer at the point of highest must-serve demand: player_id, facility, capacity in W and price.
+    offers: list[dict[str, Any]] = field(default_factory=list)
+
+    def series(self, player_id: int, facility: str) -> list[float] | None:
+        return self.generation.get(player_id, {}).get(facility)
+
+    def generation_series(self) -> dict[tuple[int, str], list[float]]:
+        return {(player, facility): values for player, series in self.generation.items() for facility, values in series.items()}
 
     @property
     def finite_prices(self) -> list[float]:
@@ -145,6 +154,20 @@ def read_period(api: Api, round_number: int, season: str) -> PeriodView | None:
     for pool in week["pools"]:
         if "generation" in pool:
             generation.setdefault(pool["player_id"], {})[pool["facility"]] = pool["generation"]
+    must_serve = next((tier["served"] for tier in week["tiers"] if tier["tier"] == "must_serve"), [])
+    # The merit order at the busiest point that cleared shows every player's offers and prices.
+    cleared = [i for i, price in enumerate(week["price"]) if price is not None and price < 1e9]
+    offers: list[dict[str, Any]] = []
+    if cleared:
+        point = max(cleared, key=lambda i: must_serve[i] if i < len(must_serve) else 0.0)
+        try:
+            order = api.get(f"/periods/{round_number}/{season}/points/{point}/merit-order")["offers"]
+            offers = [
+                {"player_id": pid, "facility": f, "capacity": c, "price": pr if pr is not None else 0.0}
+                for pid, f, c, pr in zip(order["player_id"], order["facility"], order["capacity"], order["price"])
+            ]
+        except ApiError:
+            pass
     return PeriodView(
         round=round_number,
         season=season,
@@ -152,6 +175,8 @@ def read_period(api: Api, round_number: int, season: str) -> PeriodView | None:
         must_serve=next((tier["served"] for tier in week["tiers"] if tier["tier"] == "must_serve"), []),
         generation=generation,
         blackout=period.get("blackout_at") is not None,
+        clearings_per_day=period["clearings_per_day"],
+        offers=offers,
     )
 
 
@@ -171,6 +196,7 @@ class Ctx:
     history: list[PeriodView]  # every settled period, oldest first
     recap: dict[str, Any] | None  # the Recap before this Round
     loan: dict[str, Any]  # GET /loan: its terms, and whether it can be taken now
+    rng: Any = None  # the bot's random source
     memory: dict[str, Any] = field(default_factory=dict)  # the bot's own notes, kept across the session
 
     @property

@@ -1,19 +1,35 @@
-"""Five bot personas for testing a Workshop session, and a stand-in for a human player.
+"""Five rational bot personas for testing a Workshop session, and a stand-in for a human player.
 
-Each persona has a plain idea of the game and changes its mind as the session goes on. None of them plays well on
-purpose: together they should look like a room of first-time players.
-
-Every Round, a bot sizes its purchases in megawatts against the demand it expects: in Round 1 a guess from the player
-count, later what it has seen and the Recap's forecast. What it can pay for caps that: the starting budget in Round
-1, a share of its cash later. So the bots follow the catalog's prices and powers rather than buying fixed counts. Some
-bots take the loan, each for its own reason.
+Every persona plays to win, with the same reasoning (see planner.py): it forecasts the coming Round's market from
+the public record, buys what adds most to its final score, and sets prices from the same forecast. Its forecasts
+are wrong by a random amount, so it makes mistakes. The personas differ in what they are willing to build, how they
+price, how far they trust their forecast, and how they vote.
 """
 
 from __future__ import annotations
 
 import random
 
-from market import FIRM, RENEWABLE, STORAGE, Ctx
+from collections import Counter
+
+import numpy as np
+
+from forecast import CATALOG_FUEL_PRICES, RENEWABLE_PRICE, fuel_cost, is_storage, spec, weather_kind
+from market import FIRM, Ctx
+from planner import (
+    Beliefs,
+    Plan,
+    PriceRule,
+    best_response,
+    build_outlook,
+    cost_plus,
+    loan_cost,
+    operating,
+    own_intensity,
+    plan_investment,
+    scenarios,
+    storage_prices,
+)
 
 Prices = dict[tuple[str, str], float]  # (facility, "sell" or "buy") -> price per MWh
 
@@ -22,7 +38,9 @@ class Strategy:
     name = "base"
     persona = ""
 
-    def __init__(self, seed: int = 0):
+    def __init__(self, seed: int = 0, name: str | None = None):
+        # Several bots can play one persona, each under its own account, such as greenie2.
+        self.name = name or type(self).name
         self.rng = random.Random(f"{self.name}:{seed}")
 
     def invest(self, ctx: Ctx) -> list[str]:
@@ -96,237 +114,273 @@ def panic(ctx: Ctx) -> float:
     return 1.3 if ctx.blackout_last_round() else 1.0
 
 
-class CoalKing(Strategy):
-    """Old-energy incumbent. Builds cheap coal, more than his share of the peak, and grows a little every Round.
-    Prices at fuel cost plus a markup that he tunes each period: lower when he sold little, higher when he sold a
-    lot. Orders the fuel he burned last season plus 15%. Votes against the carbon tax, and once it passes he builds
-    gas instead of coal. Takes the loan in Round 2 to build coal while he still can.
+
+def burned(ctx: Ctx) -> dict[str, dict]:
+    """The fuel lines of the fuels the bot's operating plants burn: the only ones it can order."""
+    return {fuel: line for fuel, line in ctx.fuel.items() if line.get("season_need")}
+
+
+WIND = ("offshore_wind_turbine", "onshore_wind_turbine")
+SOLAR = ("multi_layer_pv", "pv_solar", "csp_solar")
+HYDRO = ("large_water_dam", "small_water_dam")
+STORAGE_TYPES = ("lithium_ion_batteries", "solid_state_batteries", "hydrogen_storage", "pumped_hydro")
+GAS = ("combined_cycle", "gas_burner")
+COAL = ("modern_coal_plant", "coal_burner")
+NUCLEAR = ("nuclear_reactor_gen4", "nuclear_reactor")
+
+
+class Rational(Strategy):
+    """A bot that forecasts the market and plays for its final score. Subclasses say what it builds and how it prices."""
+
+    noise = 0.1
+    others_bias = 0.0
+    decay = 0.9
+    strategic = False  # whether it looks for the price that earns most, or prices at cost plus a markup
+    markup = 1.15
+    hurdle = 0.0
+
+    cover = 0.85
+    firm_trust = 0.5
+    reaction = 0.2
+
+    def beliefs(self) -> Beliefs:
+        return Beliefs(
+            self.noise, self.others_bias, self.decay, self.rng.randrange(4), self.cover, self.firm_trust, self.reaction
+        )
+
+    def candidates(self, ctx: Ctx) -> list[str]:
+        return []
+
+    def price_rule(self, ctx: Ctx) -> PriceRule:
+        return cost_plus(ctx, self.markup)
+
+    def required(self, ctx: Ctx) -> dict[str, int]:
+        return {}
+
+    def tight_seasons(self, ctx: Ctx) -> frozenset[str]:
+        return frozenset()
+
+    # -- investing --
+
+    def outlook(self, ctx: Ctx):
+        cached = ctx.memory.get("outlook")
+        if cached is None or cached[0] != ctx.round:
+            cached = (ctx.round, build_outlook(ctx, self.beliefs(), self.rng, tight=self.tight_seasons(ctx)))
+            ctx.memory["outlook"] = cached
+        return cached[1]
+
+    def plan(self, ctx: Ctx, budget: float) -> Plan:
+        return plan_investment(
+            ctx,
+            self.outlook(ctx),
+            [f for f in self.candidates(ctx) if f in ctx.offered],
+            budget,
+            self.beliefs(),
+            self.price_rule(ctx),
+            hurdle=self.hurdle,
+            required=self.required(ctx),
+        )
+
+    def holds_back(self, ctx: Ctx) -> bool:
+        return False
+
+    def invest(self, ctx: Ctx) -> list[str]:
+        if self.holds_back(ctx):
+            return []
+        planned = ctx.memory.get("plan")
+        plan = planned[1] if planned and planned[0] == ctx.round else self.plan(ctx, ctx.money)
+        outlook = self.outlook(ctx)
+        fleet = Counter(operating(ctx, ctx.round)) + Counter(
+            {f: n for f, n in plan.picks.items() if spec(f).construction_lag_rounds == 0}
+        )
+        mean = outlook.mean_price(fleet, self.price_rule(ctx)(fleet))
+        bought = ", ".join(f"{n} {f}" for f, n in plan.picks.items()) or "nothing"
+        self.note(
+            ctx,
+            f"buys {bought} for {plan.spent / 1e6:.0f}M of {ctx.money / 1e6:.0f}M, expects +{plan.gain / 1e6:.0f}M "
+            f"on the score and a mean price of {mean:.0f}",
+        )
+        return [f for f, n in plan.picks.items() for _ in range(n)]
+
+    def rational_loan(self, ctx: Ctx) -> bool:
+        """Take the loan if what it lets the bot buy adds more to the score than the loan costs."""
+        without = self.plan(ctx, ctx.money)
+        with_loan = self.plan(ctx, ctx.money + ctx.loan["amount"])
+        take = with_loan.gain - without.gain > loan_cost(ctx)
+        ctx.memory["plan"] = (ctx.round, with_loan if take else without)
+        self.note(
+            ctx,
+            f"the loan would add {(with_loan.gain - without.gain) / 1e6:.0f}M and cost {loan_cost(ctx) / 1e6:.0f}M: "
+            + ("takes it" if take else "declines"),
+        )
+        return take
+
+    # -- trading --
+
+    def season_outlook(self, ctx: Ctx):
+        noisy = Beliefs(
+            self.noise / 2, self.others_bias, self.decay, self.rng.randrange(4), self.cover, self.firm_trust, 0.0
+        )
+        return build_outlook(ctx, noisy, self.rng, seasons=[ctx.season], tight=self.tight_seasons(ctx)).seasons[0]
+
+    def prices(self, ctx: Ctx) -> Prices:
+        fleet = operating(ctx, ctx.round)
+        if not fleet:
+            return {}
+        season = self.season_outlook(ctx)
+        prices = self.price_rule(ctx)(fleet)
+        if self.strategic:
+            # Before any trading it knows nothing of the others' plants, so it is less sure of its forecast.
+            spread = 0.1 if ctx.history else 0.25
+            prices = best_response(season, fleet, prices, spread)
+            shading = self.learn_shading(ctx)
+            for facility in list(prices):
+                if weather_kind(facility) is not None or is_storage(facility):
+                    continue
+                # A few euros off at random, as people do: two bots that reason alike would otherwise tie.
+                shade = shading.get(facility, 0.0) + self.rng.uniform(0, 4)
+                cost = fuel_cost(facility, {f: line["price"] for f, line in ctx.fuel.items()}, taxed=ctx.carbon_tax_on)
+                prices[facility] = round(max(cost + 1, prices[facility] - shade), 1)
+            run = season.run(fleet, prices)
+            ctx.memory["expected"] = {
+                "period": (ctx.round, ctx.season),
+                "sold": {o.owner: float(s.mean()) for o, s in zip(run.own, run.cleared.sold[run.start :])},
+            }
+        ctx.memory["season_prices"] = (ctx.round, ctx.season, prices)
+        forecast = season.run(fleet, prices).cleared.price
+        out: Prices = {(f, "sell"): p for f, p in prices.items()}
+        for facility in fleet:
+            if is_storage(facility):
+                out[(facility, "buy")], out[(facility, "sell")] = storage_prices(forecast, facility)
+        fossil = {f: p for f, p in prices.items() if weather_kind(f) is None}
+        self.note(ctx, f"expects a mean price of {forecast.mean():.0f}; prices {fossil or 'renewables low'}")
+        ctx.memory["season_outlook"] = (ctx.round, ctx.season, season)
+        return out
+
+    def learn_shading(self, ctx: Ctx) -> dict[str, float]:
+        """How much below its best price to ask for each plant type, learned from the last period: a plant type that
+        sold under a third of what the bot expected was priced too high, so it asks 15 less next time; one that sold
+        most of it eases back."""
+        shading: dict[str, float] = ctx.memory.setdefault("shading", {})
+        expected = ctx.memory.get("expected")
+        last = ctx.last
+        if expected and last is not None and expected["period"] == (last.round, last.season) and not last.blackout:
+            for facility, forecast in expected["sold"].items():
+                if forecast <= 0 or weather_kind(facility) is not None:
+                    continue
+                sold = last.output(ctx.me, facility)
+                if sold < forecast / 3:
+                    shading[facility] = shading.get(facility, 0.0) + 15
+                    self.note(ctx, f"{facility} sold {sold / forecast:.0%} of what it expected: asks less")
+                elif sold > forecast * 0.8:
+                    shading[facility] = max(0.0, shading.get(facility, 0.0) - 5)
+        return shading
+
+    def fuel_need(self, ctx: Ctx) -> dict[str, float]:
+        """The fuel its plants should burn this season, from the season's forecast at its prices."""
+        fleet = operating(ctx, ctx.round)
+        held = ctx.memory.get("season_outlook")
+        season = held[2] if held and held[:2] == (ctx.round, ctx.season) else self.season_outlook(ctx)
+        priced = ctx.memory.get("season_prices")
+        prices = priced[2] if priced and priced[:2] == (ctx.round, ctx.season) else self.price_rule(ctx)(fleet)
+        # Running out of fuel could black the grid out, so it plans for a season 10% tighter than forecast.
+        need: dict[str, float] = {}
+        for case in scenarios(season, 0.1):
+            for fuel, kg in case.burn(fleet, prices).items():
+                need[fuel] = max(need.get(fuel, 0.0), kg)
+        return need
+
+    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+        need = self.fuel_need(ctx)
+        margin = 1.25 if ctx.full_season else 1.1
+        # Running short could black the grid out, which resets everyone's cash, so it keeps a margin, and never
+        # buys less than half of what its plants would burn at full output.
+        return {
+            fuel: max(0.0, max(need.get(fuel, 0.0) * margin, 0.5 * line["season_need"]) - line["stock"])
+            for fuel, line in burned(ctx).items()
+        }
+
+    def self_interest_ballot(self, ctx: Ctx) -> str:
+        """For the tax if it emits less per MWh than the room, since the tax then hurts its rivals more."""
+        mine, room = own_intensity(ctx)
+        return "yes" if mine < room else "no"
+
+
+class CoalKing(Rational):
+    """Old-energy incumbent. Builds coal, and gas once the carbon tax passes, as long as he expects it to pay. Stops
+    building when he expects prices too low to earn his plants back. Prices at fuel cost plus 15%. Optimistic: he
+    expects the others to build a little less than they do. Takes the loan if it pays. Votes against the carbon tax.
     """
 
     name = "coalking"
-    persona = "Old-energy incumbent: big coal fleet, cost-plus prices tuned by sales, against the carbon tax"
+    persona = "Old-energy incumbent: coal, then gas once taxed, stops building when prices fall; against the carbon tax"
+    noise = 0.12
+    others_bias = -0.1
+    decay = 1.0
+    reaction = 0.0  # he does not expect anyone to follow him
 
-    def invest(self, ctx: Ctx) -> list[str]:
-        if ctx.round == 1:
-            self.note(ctx, "coal burners for 1.6x his share of the peak, as far as his budget goes")
-            return shopping(ctx, [("coal_burner", units_for(ctx, "coal_burner", 1.6 * ctx.fair_share()))], ctx.money)
-        if ctx.session.get("carbon_tax_since") is not None:
-            plant = best_of(ctx, "combined_cycle", "gas_burner")
-            self.note(ctx, f"the carbon tax is on, so {plant} from now on")
-        else:
-            plant = best_of(ctx, "modern_coal_plant", "coal_burner")
-        missing = 1.6 * ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM)
-        return shopping(ctx, [(plant, max(1, units_for(ctx, plant, missing)))], budget(ctx, 0.8))
+    def candidates(self, ctx: Ctx) -> list[str]:
+        return list(GAS if ctx.carbon_tax_on else COAL)
 
-    def prices(self, ctx: Ctx) -> Prices:
-        markup = ctx.memory.get("markup", 1.6)
-        if ctx.last is not None and "markup" in ctx.memory:
-            sold = ctx.last.output(ctx.me) / (ctx.capacity(FIRM) or 1)
-            if sold < 0.3:
-                markup = max(1.05, markup - 0.2)
-            elif sold > 0.6:
-                markup += 0.15
-            self.note(ctx, f"sold {sold:.0%} of capacity last period, markup now {markup:.2f}")
-        ctx.memory["markup"] = markup
-        return {(f, "sell"): round(ctx.marginal_cost(f) * markup) for f in ctx.operating() if f in FIRM}
+    def holds_back(self, ctx: Ctx) -> bool:
+        plant = next((f for f in self.candidates(ctx) if f in ctx.offered), None)
+        if plant is None:
+            return True
+        floor = max(60.0, 1.3 * fuel_cost(plant, {fuel: line["price"] for fuel, line in ctx.fuel.items()}, taxed=ctx.carbon_tax_on))
+        fleet = operating(ctx, ctx.round)
+        mean = self.outlook(ctx).mean_price(fleet, self.price_rule(ctx)(fleet)) if fleet else 100.0
+        if mean < floor:
+            self.note(ctx, f"expects a mean price of {mean:.0f}, below his {floor:.0f}: builds nothing this Round")
+            return True
+        return False
 
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
-        orders = {}
-        for fuel, line in ctx.fuel.items():
-            share = ctx.fuel_margin(ctx.burn_share(fuel) * (1.3 if (line.get("change") or 0) < -0.02 else 1.15))
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
-            self.note(ctx, f"burned {ctx.burn_share(fuel):.0%} of his full {fuel} need, orders {share:.0%}")
-        return orders
+    def wants_loan(self, ctx: Ctx) -> bool:
+        return not self.holds_back(ctx) and self.rational_loan(ctx)
 
     def ballot(self, ctx: Ctx) -> str:
         return "no"
 
-    def wants_loan(self, ctx: Ctx) -> bool:
-        if ctx.round == 2 and not ctx.carbon_tax_on:
-            self.note(ctx, "takes the loan to build coal before they tax it")
-            return True
-        return False
 
-
-class Greenie(Strategy):
-    """Idealist. Only wind, sun and water. Gives her power away for nothing at first, and starts asking a price
-    in Round 1's winter. From Round 2 she adds a battery, and long-term storage once it is allowed. Votes for the
-    carbon tax.
+class Greenie(Rational):
+    """Idealist. Builds only wind, sun and water, and storage when her forecast shows it pays. Sells her power at any
+    price rather than dump it. Never borrows. Votes for the carbon tax.
     """
 
     name = "greenie"
-    persona = "Idealist: renewables only, gives power away at first, adds storage later, for the carbon tax"
+    persona = "Idealist: renewables only, storage when it pays, never borrows; for the carbon tax"
+    noise = 0.12
+    # She counts on the others' fossil plants to keep the lights on when the wind drops.
+    cover = 1.15
+    firm_trust = 1.0
 
-    def invest(self, ctx: Ctx) -> list[str]:
-        if ctx.round == 1:
-            self.note(ctx, "wind turbines for her share of the peak, then PV for 60% of it")
-            wishes: list[tuple[str | None, int]] = [
-                ("onshore_wind_turbine", units_for(ctx, "onshore_wind_turbine", ctx.fair_share())),
-                ("pv_solar", units_for(ctx, "pv_solar", 0.6 * ctx.fair_share())),
-            ]
-            return shopping(ctx, wishes, ctx.money)
-        wind = best_of(ctx, "offshore_wind_turbine", "onshore_wind_turbine")
-        missing = 2.0 * ctx.fair_share() - ctx.capacity(RENEWABLE)
-        wishes: list[tuple[str | None, int]] = [
-            (best_of(ctx, "solid_state_batteries", "lithium_ion_batteries"), 1),
-            (best_of(ctx, "pumped_hydro", "hydrogen_storage"), 1),
-            (best_of(ctx, "multi_layer_pv", "pv_solar"), 1),
-            ("csp_solar", 1),
-            (wind, units_for(ctx, wind, missing / 2)),
-            (best_of(ctx, "large_water_dam", "small_water_dam"), 2),
-        ]
-        return shopping(ctx, wishes, ctx.money * 0.6)
-
-    def prices(self, ctx: Ctx) -> Prices:
-        level = 40.0
-        if ctx.round == 1 and ctx.season != "winter":
-            level = 0.0
-        elif ctx.round == 1:
-            self.note(ctx, "free power earns nothing: asks 40 from now on")
-        mean = ctx.last.mean_price if ctx.last else 100.0
-        prices: Prices = {}
-        for facility in ctx.operating():
-            if facility in RENEWABLE:
-                prices[(facility, "sell")] = level
-            elif facility in STORAGE:
-                prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.3, 0.7)
-        return prices
+    def candidates(self, ctx: Ctx) -> list[str]:
+        return [*WIND, *SOLAR, *HYDRO, *STORAGE_TYPES]
 
     def ballot(self, ctx: Ctx) -> str:
         return "yes"
 
 
-class Trader(Strategy):
-    """Speculator. Gas peakers and a battery. Tries a ladder of markups over fuel cost and settles on the one that
-    earned most per MW. Plays the fuel market: buys 30% less than he burned when the price has gone up, half as
-    much again when it has fallen. In a season the Recap warned about he asks at least 3x fuel cost and buys no fuel at
-    all, betting that scarcity pays, until a blackout in such a season teaches him otherwise. Takes the loan in
-    Round 2 to grow. Votes for the carbon tax, because it hurts
-    coal more than gas.
-    """
-
-    name = "trader"
-    persona = "Speculator: gas peakers, experiments with markups, plays the fuel price, withholds in a crisis"
-
-    LADDER = (1.3, 2.0, 3.0, 1.6)
-
-    def invest(self, ctx: Ctx) -> list[str]:
-        if ctx.round == 1:
-            self.note(ctx, "gas peakers for 1.3x his share of the peak")
-            return shopping(ctx, [("gas_burner", units_for(ctx, "gas_burner", 1.3 * ctx.fair_share()))], ctx.money)
-        # In the last Round a plant keeps most of its price as residual value, so he builds more.
-        missing = ctx.fair_share() * panic(ctx) * (1.3 if ctx.is_last_round else 1.0) - ctx.capacity(FIRM)
-        battery = best_of(ctx, "lithium_ion_batteries", "solid_state_batteries")
-        return shopping(
-            ctx, [(battery, 1), ("gas_burner", max(1, units_for(ctx, "gas_burner", missing)))], budget(ctx, 0.7)
-        )
-
-    def withholds(self, ctx: Ctx) -> bool:
-        """Whether he plays the crisis this season: only if it was forecast, and no crisis he played went dark."""
-        played = ctx.memory.setdefault("crises", [])
-        if any(view.blackout and (view.round, view.season) in played for view in ctx.history):
-            if not ctx.memory.get("learned"):
-                ctx.memory["learned"] = True
-                self.note(ctx, "the grid went down when he held back his fuel: he will not do that again")
-            return False
-        if ctx.season not in ctx.forecast_seasons():
-            return False
-        if (ctx.round, ctx.season) not in played:
-            played.append((ctx.round, ctx.season))
-        return True
-
-    def prices(self, ctx: Ctx) -> Prices:
-        trials: dict[float, list[float]] = ctx.memory.setdefault("trials", {})
-        if "markup" in ctx.memory and ctx.last is not None:
-            costs = {f: ctx.marginal_cost(f) for f in ctx.operating()}
-            trials.setdefault(ctx.memory["markup"], []).append(
-                ctx.last.income(ctx.me, costs) / (ctx.capacity(FIRM) or 1)
-            )
-        untried = [markup for markup in self.LADDER if markup not in trials]
-        markup = untried[0] if untried else max(trials, key=lambda m: sum(trials[m]) / len(trials[m]))
-        if self.withholds(ctx):
-            markup = max(markup, 3.0)
-            self.note(ctx, "the Recap warned about this season: prices up")
-        ctx.memory["markup"] = markup
-        self.note(ctx, f"markup {markup}x fuel cost")
-        mean = ctx.last.mean_price if ctx.last else 100.0
-        prices: Prices = {}
-        for facility in ctx.operating():
-            if facility in FIRM:
-                prices[(facility, "sell")] = round(ctx.marginal_cost(facility) * markup)
-            elif facility in STORAGE:
-                prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.25, 0.8)
-        return prices
-
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
-        orders = {}
-        for fuel, line in ctx.fuel.items():
-            change = line.get("change") or 0
-            share = ctx.burn_share(fuel)
-            if change > 0.03:
-                share *= 0.7
-                self.note(ctx, f"{fuel} is up {change:.0%}: buys less than usual and waits for it to fall")
-            elif change < -0.03:
-                share *= 1.5
-            share = ctx.fuel_margin(share)
-            if self.withholds(ctx):
-                share = 0.0
-                self.note(ctx, f"the Recap warned about this season: buys no {fuel}, betting that scarcity pays")
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
-        return orders
-
-    def ballot(self, ctx: Ctx) -> str:
-        return "yes"
-
-    def wants_loan(self, ctx: Ctx) -> bool:
-        if ctx.round == 2:
-            self.note(ctx, "borrows to grow")
-            return True
-        return False
-
-
-class Nuke(Strategy):
-    """Long-term planner. Takes the loan in Round 1 to buy a reactor, which runs from Round 2, with gas burners to
-    bridge the wait. Prices nuclear just over fuel cost so it always runs. Buys a second reactor in Round 2. In the
-    last Round a reactor would not run, so she buys gas and dams instead. Votes for the carbon tax.
+class Nuke(Rational):
+    """Long-term planner. Takes the loan in Round 1 for a reactor, which works from Round 2, and gas burners to
+    bridge the wait. After that, only reactors, when she expects them to pay. Prices nuclear just above fuel cost so
+    it always runs. Trusts the long run: an extra plant's profit does not fade in her eyes. Votes for the carbon tax.
     """
 
     name = "nuke"
-    persona = "Planner: borrows for a reactor in Round 1, nuclear baseload priced at cost; for the carbon tax"
+    persona = "Planner: borrows for a reactor in Round 1, bridges with gas, then only reactors; for the carbon tax"
+    decay = 1.0
+    markup = 1.25
 
-    def invest(self, ctx: Ctx) -> list[str]:
-        reactor = best_of(ctx, "nuclear_reactor_gen4", "nuclear_reactor")
+    def candidates(self, ctx: Ctx) -> list[str]:
+        return [*NUCLEAR, "gas_burner"] if ctx.round == 1 else list(NUCLEAR)
+
+    def required(self, ctx: Ctx) -> dict[str, int]:
         if ctx.round == 1:
-            self.note(ctx, "a reactor for Round 2, and gas burners for 80% of her share of the peak to bridge the wait")
-            return shopping(
-                ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", 0.8 * ctx.fair_share()))], ctx.money
-            )
-        missing = ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM | {"small_water_dam", "large_water_dam"})
-        if not ctx.is_last_round:
-            picks = shopping(ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], ctx.money)
-            if reactor in picks:
-                self.note(ctx, "another reactor, running next Round")
-            else:
-                self.note(ctx, "cannot afford another reactor, so gas burners only")
-            return picks
-        self.note(ctx, "last Round: a reactor would not run, so gas and dams, plenty, since they keep their value")
-        missing += 0.3 * ctx.fair_share()
-        dam = best_of(ctx, "large_water_dam", "small_water_dam")
-        return shopping(ctx, [(dam, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], budget(ctx, 0.8))
-
-    def prices(self, ctx: Ctx) -> Prices:
-        prices: Prices = {}
-        for facility in ctx.operating():
-            if facility.startswith("nuclear"):
-                prices[(facility, "sell")] = round(ctx.marginal_cost(facility) + 15)
-            elif facility in FIRM:
-                prices[(facility, "sell")] = round(ctx.marginal_cost(facility) * 1.4)
-            elif facility in RENEWABLE:
-                prices[(facility, "sell")] = 10.0
-        return prices
-
-    def ballot(self, ctx: Ctx) -> str:
-        return "yes"
+            reactor = next((f for f in NUCLEAR if f in ctx.offered), None)
+            # Gas burners for 60% of her share of the peak, to earn something while the reactor is built.
+            gas = units_for(ctx, "gas_burner", 0.6 * ctx.fair_share())
+            return {reactor: 1, "gas_burner": gas} if reactor else {"gas_burner": gas}
+        return {}
 
     def wants_loan(self, ctx: Ctx) -> bool:
         if ctx.round == 1:
@@ -334,83 +388,91 @@ class Nuke(Strategy):
             return True
         return False
 
+    def ballot(self, ctx: Ctx) -> str:
+        return "yes"
 
-class Gambler(Strategy):
-    """Copycat. Guesses in Round 1, then buys whatever earned most per euro in the last Round, among what he can still
-    buy. Follows the crowd's price with random swings, and now and then types something wild. Forgets his fuel order
-    half the time. Takes the loan the first time he sees it. Votes at random.
+
+class Trader(Rational):
+    """Speculator. Gas and coal plants and batteries, and renewables too once the carbon tax passes. Looks for the
+    price that earns most in each season, and expects tight seasons where the Recap warns of one. Plays the fuel
+    market: fuel prices drift back to the catalog price, so he stocks up when fuel is cheap and buys less when it is
+    dear, and stocks up before a season the Recap warns about. Takes the loan if it pays. Votes for the tax if he
+    emits less than the room.
     """
 
-    name = "gambler"
-    persona = "Copycat: buys last Round's winner, erratic and sometimes wild prices, sloppy with fuel"
+    name = "trader"
+    persona = "Speculator: gas, coal and batteries, renewables once taxed; strategic prices; speculates on fuel"
+    noise = 0.08
+    decay = 0.85
+    strategic = True
+    reaction = 0.3
 
-    def invest(self, ctx: Ctx) -> list[str]:
-        if ctx.round == 1 or not ctx.history:
-            guess = self.rng.choice(["coal_burner", "gas_burner", "onshore_wind_turbine"])
-            self.note(ctx, f"first guess: {guess}")
-            # Even a gambler keeps some plants that run on demand next to his wind.
-            share = self.rng.uniform(1.0, 1.5) * ctx.fair_share()
-            wishes: list[tuple[str | None, int]] = [(guess, units_for(ctx, guess, share)), ("small_water_dam", 3)]
-            if guess == "onshore_wind_turbine":
-                wishes = [(guess, units_for(ctx, guess, share)), ("gas_burner", units_for(ctx, "gas_burner", 0.8 * share))]
-            return shopping(ctx, wishes, ctx.money * self.rng.uniform(0.7, 1.0))
-        earned: dict[str, float] = {}
-        for view in ctx.history[-4:]:
-            for facility, value in view.income_by_facility().items():
-                earned[facility] = earned.get(facility, 0.0) + value
-        per_euro = {
-            f: value / ctx.offered[f]["price"]
-            for f, value in earned.items()
-            if f in ctx.offered and ctx.room_for(f) > 0
-        }
-        if not per_euro:
-            return []
-        winner = max(per_euro, key=per_euro.__getitem__)
-        count = max(1, units_for(ctx, winner, self.rng.uniform(0.5, 1.2) * ctx.fair_share()))
-        self.note(ctx, f"copies last Round's winner: {count} x {winner}")
-        return shopping(ctx, [(winner, count)], budget(ctx, 0.8))
+    def candidates(self, ctx: Ctx) -> list[str]:
+        plants = [*GAS, *COAL, "lithium_ion_batteries", "solid_state_batteries"]
+        return plants + ([*WIND, *SOLAR] if ctx.carbon_tax_on else [])
 
-    def prices(self, ctx: Ctx) -> Prices:
-        anchor = ctx.last.mean_price if ctx.last else 120.0
-        prices: Prices = {}
-        for facility in ctx.operating():
-            if self.rng.random() < 0.1:
-                price = self.rng.choice([500.0, 1000.0])
-                self.note(ctx, f"wild price {price:g} on {facility}")
-            else:
-                price = max(ctx.marginal_cost(facility) * 1.05, anchor * self.rng.uniform(0.8, 1.25))
-            prices[(facility, "sell")] = round(price)
-            if facility in STORAGE:
-                prices[(facility, "buy")] = round(anchor * 0.6)
-        return prices
+    def tight_seasons(self, ctx: Ctx) -> frozenset[str]:
+        return frozenset(ctx.forecast_seasons())
 
-    def revise_prices(self, ctx: Ctx) -> Prices:
-        # second thoughts on one price
-        operating = [f for f in ctx.operating() if f not in STORAGE]
-        if not operating or self.rng.random() < 0.5:
-            return {}
-        facility = self.rng.choice(operating)
-        anchor = ctx.last.mean_price if ctx.last else 120.0
-        return {(facility, "sell"): round(max(ctx.marginal_cost(facility) * 1.05, anchor * self.rng.uniform(0.8, 1.1)))}
+    def wants_loan(self, ctx: Ctx) -> bool:
+        return self.rational_loan(ctx)
 
     def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+        need = self.fuel_need(ctx)
+        warned = ctx.forecast_seasons()
+        upcoming = SEASONS[SEASONS.index(ctx.season) + 1] if ctx.season != "winter" else None
         orders = {}
-        for fuel, line in ctx.fuel.items():
-            first_time = "fuel_seen" not in ctx.memory
-            if not first_time and self.rng.random() < 0.5:
-                self.note(ctx, f"forgets to change his {fuel} order")
-                continue  # the order stays at what he bought last time
-            share = ctx.burn_share(fuel) * self.rng.uniform(0.8, 1.2)
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
-        ctx.memory["fuel_seen"] = True
+        # Fuel left over at the end of the session is worth nothing, so he never stocks more than the seasons left
+        # would burn.
+        seasons_left = (ctx.session["round_count"] - ctx.round) * 4 + 3 - SEASONS.index(ctx.season)
+        for fuel, line in burned(ctx).items():
+            burn = need.get(fuel, 0.0)
+            ratio = line["price"] / CATALOG_FUEL_PRICES_BY_NAME[fuel]
+            if ratio < 0.9 and seasons_left > 0:
+                target = burn * (1 + min(1, seasons_left))
+                self.note(ctx, f"{fuel} at {ratio:.0%} of its usual price: stocks up for later seasons")
+            elif ratio > 1.15:
+                target = burn * 0.9
+                self.note(ctx, f"{fuel} at {ratio:.0%} of its usual price: buys less, burns his stock")
+            else:
+                target = burn * 1.15
+            if upcoming in warned and fuel != "uranium" and seasons_left > 0:
+                target = max(target, 2 * burn)
+                self.note(ctx, f"the Recap warns about {upcoming}: stocks up on {fuel} before it")
+            orders[fuel] = max(0.0, target - line["stock"])
         return orders
 
     def ballot(self, ctx: Ctx) -> str:
-        return self.rng.choice(["yes", "no"])
+        return self.self_interest_ballot(ctx)
+
+
+class Strategizer(Rational):
+    """Rational player. Builds whatever its forecast says adds most to its score, looks for the price that earns most,
+    takes the loan if it pays, and votes for the tax if it emits less than the room. Its forecasts are the best of the
+    bots'.
+    """
+
+    name = "strategizer"
+    persona = "Rational player: the best investment it can see, strategic prices, loan if it pays"
+    noise = 0.05
+    reaction = 0.5  # it expects its rivals to see the same chances it does
+    strategic = True
+
+    def candidates(self, ctx: Ctx) -> list[str]:
+        return list(ctx.offered)
+
+    def tight_seasons(self, ctx: Ctx) -> frozenset[str]:
+        return frozenset(ctx.forecast_seasons())
 
     def wants_loan(self, ctx: Ctx) -> bool:
-        self.note(ctx, "free money: takes the loan")
-        return True
+        return self.rational_loan(ctx)
+
+    def ballot(self, ctx: Ctx) -> str:
+        return self.self_interest_ballot(ctx)
+
+
+CATALOG_FUEL_PRICES_BY_NAME = {fuel.value: price for fuel, price in CATALOG_FUEL_PRICES.items()}
+SEASONS = ("spring", "summer", "autumn", "winter")
 
 
 class TypicalHuman(Strategy):
@@ -438,5 +500,5 @@ class TypicalHuman(Strategy):
         return "yes"
 
 
-PERSONAS: dict[str, type[Strategy]] = {cls.name: cls for cls in (CoalKing, Greenie, Trader, Nuke, Gambler)}
+PERSONAS: dict[str, type[Strategy]] = {cls.name: cls for cls in (CoalKing, Greenie, Trader, Nuke, Strategizer)}
 STAND_IN = TypicalHuman
