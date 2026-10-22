@@ -10,8 +10,8 @@ Most of this page describes freeplay Runs. A Workshop Run has its own, smaller S
 
 - **Authenticated players only** (not admins)
 - **Both settled and unsettled players can connect**
-    - Unsettled players (choosing location) receive broadcasts (e.g., map updates)
-    - Settled players receive broadcasts + player-specific events
+  - Unsettled players (choosing location) receive broadcasts (e.g., map updates)
+  - Settled players receive broadcasts + player-specific events
 - Uses session cookie authentication
 - Multi-device support: same player can have multiple connected clients
 
@@ -170,12 +170,12 @@ Backend query keys must match `frontend/src/lib/query-client.ts`:
 
 ```ts
 export const queryKeys = {
-    players: {
-        money: ["players", "me", "money"] as const,
-    },
-    facilities: {
-        all: ["facilities", "all"] as const,
-    },
+  players: {
+    money: ["players", "me", "money"] as const,
+  },
+  facilities: {
+    all: ["facilities", "all"] as const,
+  },
 } as const;
 ```
 
@@ -251,13 +251,13 @@ player.invalidate_queries(["facilities", "all"])
 ```ts
 // frontend/src/contexts/game-tick-context.tsx
 useSocketEvent("money_updated", (data) => {
-    queryClient.setQueryData(queryKeys.players.money, data);
+  queryClient.setQueryData(queryKeys.players.money, data);
 });
 
 useSocketEvent("invalidate", (data) => {
-    data.queries.forEach((key) =>
-        queryClient.invalidateQueries({ queryKey: key }),
-    );
+  data.queries.forEach((key) =>
+    queryClient.invalidateQueries({ queryKey: key }),
+  );
 });
 ```
 

@@ -44,7 +44,7 @@ This enables natural composition:
 
 ```tsx
 <TypographyH1>
-    Revenue: <Money amount={50000} />
+  Revenue: <Money amount={50000} />
 </TypographyH1>
 ```
 
@@ -108,7 +108,7 @@ When implementing `@tanstack/react-table`, numeric cells should default to:
 
 ```tsx
 <TableCell className="font-mono text-right">
-    <DataValue>{value}</DataValue>
+  <DataValue>{value}</DataValue>
 </TableCell>
 ```
 

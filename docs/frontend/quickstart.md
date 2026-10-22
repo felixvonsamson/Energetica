@@ -29,9 +29,9 @@ Visit http://localhost:5173/app/dashboard
 
 You should see:
 
--   User information
--   Socket.IO connection status
--   Tick counter incrementing every minute
+- User information
+- Socket.IO connection status
+- Tick counter incrementing every minute
 
 ## Verification
 
@@ -39,8 +39,8 @@ You should see:
 
 Check Network tab in DevTools:
 
--   `GET /api/v1/auth/me` returns 200 with user data (when logged in)
--   Returns 401 when not logged in
+- `GET /api/v1/auth/me` returns 200 with user data (when logged in)
+- Returns 401 when not logged in
 
 ### Socket.IO
 
@@ -86,8 +86,8 @@ function MyPageContent() {
 
 Both old and new can coexist:
 
--   Legacy: http://localhost:8000/dashboard (Jinja)
--   New: http://localhost:5173/app/dashboard (React)
+- Legacy: http://localhost:8000/dashboard (Jinja)
+- New: http://localhost:5173/app/dashboard (React)
 
 ## Quick Reference
 
@@ -103,8 +103,8 @@ const data = await apiClient.get("/endpoint");
 
 // Query
 const { data } = useQuery({
-    queryKey: queryKeys.players.me,
-    queryFn: () => apiClient.get("/players/me"),
+  queryKey: queryKeys.players.me,
+  queryFn: () => apiClient.get("/players/me"),
 });
 
 // Protected route
@@ -116,18 +116,18 @@ const { data } = useQuery({
 
 **Essential Reading:**
 
--   [best-practices.md](best-practices.md) - **Start here** for component patterns and standards
--   [styling.md](styling.md) - Tailwind patterns and theme colors
--   [animations.md](animations.md) - Animation and transition guidelines
--   [overview.md](overview.md) - Foundation documentation
--   [data-fetching.md](data-fetching.md) - API integration & types
+- [best-practices.md](best-practices.md) - **Start here** for component patterns and standards
+- [styling.md](styling.md) - Tailwind patterns and theme colors
+- [animations.md](animations.md) - Animation and transition guidelines
+- [overview.md](overview.md) - Foundation documentation
+- [data-fetching.md](data-fetching.md) - API integration & types
 
 **Learn by Example:**
 
--   See `src/routes/app/dashboard.tsx` for best practices in action
--   Check `packages/ui/src/components/` for reusable components, and `src/components/ui/` for the game-specific ones
+- See `src/routes/app/dashboard.tsx` for best practices in action
+- Check `packages/ui/src/components/` for reusable components, and `src/components/ui/` for the game-specific ones
 
 **Reference:**
 
--   [capabilities.md](capabilities.md) - Feature flag system
--   [asset-colours.md](asset-colours.md) - Asset color system
+- [capabilities.md](capabilities.md) - Feature flag system
+- [asset-colours.md](asset-colours.md) - Asset color system

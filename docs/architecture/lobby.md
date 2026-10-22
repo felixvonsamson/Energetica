@@ -13,7 +13,7 @@
 Players have no in-app way to move between runs, and no single place to sign in.
 Authentication is per-instance: credentials are server-wide (`accounts.db`) but a player
 re-enters their password on every instance's first visit, each instance carries its own
-login/signup UI, and the apex is a pure-static landing that cannot show "the runs *you*
+login/signup UI, and the apex is a pure-static landing that cannot show "the runs _you_
 are playing." The landing's global CTAs (`primaryInstanceAppHref`) point at the latest
 advertised instance and dead-end (404) when nothing is advertised.
 
@@ -27,8 +27,8 @@ quick switcher to hop laterally without returning to the lobby.
 
 - **One identity, one session.** Sign up / log in once at the lobby; roam between runs
   with no re-auth (single-sign-on across instance subdomains).
-- **Personalised "your runs."** The lobby shows the runs an account has *started*
-  (settled on), plus other runs to join — including the account's own *unadvertised* runs.
+- **Personalised "your runs."** The lobby shows the runs an account has _started_
+  (settled on), plus other runs to join — including the account's own _unadvertised_ runs.
 - **In-run lateral navigation.** A quick-switcher inside each run (top-right, next to
   Logout) to jump to your other runs or open the lobby.
 - **No CTA dead-ends.** Every "Play / Log in" path resolves to the lobby, which always
@@ -52,12 +52,12 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 **User**, **Player** — are defined in `static-serving-and-deployment.md` § Terminology and
 `CONTEXT.md` § Accounts & users. This design adds:
 
-| Term | Definition |
-|------|------------|
-| **Lobby** | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session. |
-| **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie. |
-| **Membership** | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A player's row is written at **join** time — the lobby's explicit two-click join for a public run, or a private run's roster add / join-link confirm (#1030) — and its `settled_at` filled in later, at settle; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
-| **Entry gate** | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives. |
+| Term                    | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lobby**               | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session.                                                                                                                                                                                                                                                               |
+| **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie.                                                                                                                                                                                                                                                                                                                                                    |
+| **Membership**          | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A player's row is written at **join** time — the lobby's explicit two-click join for a public run, or a private run's roster add / join-link confirm (#1030) — and its `settled_at` filled in later, at settle; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
+| **Entry gate**          | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives.                                                                               |
 
 ---
 
@@ -82,7 +82,7 @@ cookie** (`domain=.{apex}`). The lobby mints the cookie on login; every instance
 it with the shared secret. The session payload is the immutable **`account_id`** (ADR-0002
 amendment), so each instance resolves it against its own local `User` by `account_id`.
 
-The SSO cookie is named **`energetica_session`**, deliberately *not* `session`: pre-cutover
+The SSO cookie is named **`energetica_session`**, deliberately _not_ `session`: pre-cutover
 instances minted a host-only `session` cookie that lingers in browsers for the cookie's whole
 `max_age`, and RFC 6265 leaves undefined which of two same-named cookies wins on a request. A
 distinct name lets the post-cutover instance read only the shared `.{apex}` cookie and ignore
@@ -98,15 +98,15 @@ is that all UGC renders as escaped text — guarded by a CI tripwire (see Securi
 
 ### Endpoint ownership after cutover
 
-| Concern | Owner |
-|---------|-------|
-| Signup, login, change-password, logout | **Lobby** |
-| `my-runs` (read `instance_membership` for the authed account) | **Both** — the lobby (for the picker) *and* every instance (for the in-run switcher). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
-| Join a public run (`instance_membership` write, unsettled, #1030) | **Lobby** |
-| Session-cookie *validation* (shared secret) | Every instance |
-| Entry gate: auto-provision local `User` (access-policy-gated) | Instance |
-| Settle (`Player` creation) + `instance_membership` write | Instance |
-| `/auth/me`, all game state, `/api/*`, `/socket.io` | Instance |
+| Concern                                                           | Owner                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signup, login, change-password, logout                            | **Lobby**                                                                                                                                                                                                                    |
+| `my-runs` (read `instance_membership` for the authed account)     | **Both** — the lobby (for the picker) _and_ every instance (for the in-run switcher). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
+| Join a public run (`instance_membership` write, unsettled, #1030) | **Lobby**                                                                                                                                                                                                                    |
+| Session-cookie _validation_ (shared secret)                       | Every instance                                                                                                                                                                                                               |
+| Entry gate: auto-provision local `User` (access-policy-gated)     | Instance                                                                                                                                                                                                                     |
+| Settle (`Player` creation) + `instance_membership` write          | Instance                                                                                                                                                                                                                     |
+| `/auth/me`, all game state, `/api/*`, `/socket.io`                | Instance                                                                                                                                                                                                                     |
 
 Instances **lose** their login/signup pages and credential endpoints; unauthenticated
 access redirects to the lobby.
@@ -190,7 +190,7 @@ prevent an open-redirect.
 **Join a public run (#1030).** The picker's explicit two-click action — select a run, then
 "Join run" — calls the lobby's own `POST /api/v1/lobby/runs/{slug}/join`, which writes an
 unsettled `instance_membership` row straight from the lobby (no instance round-trip). This is
-what makes a run appear under "your runs," *before* the account has settled. A private run is
+what makes a run appear under "your runs," _before_ the account has settled. A private run is
 excluded from this endpoint (403) — its admission stays instance-owned (roster / join-link).
 
 **Settle.** Unchanged game-side, plus a write to `instance_membership` — fills in `settled_at`
@@ -241,8 +241,8 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
   committed hardening path; meanwhile a **CI guard** — a repo-wide frontend lint forbidding
   `dangerouslySetInnerHTML` / `rehype-raw`, with a small explicit allowlist for
   developer-authored game content (the technology/facility description renders) — ensures no
-  *user-controlled* string (chat, player/team/tile names, any future rich field) can render
-  as raw HTML. This is the sole live defence, so it ships *with* A1. See ADR-0002 for the
+  _user-controlled_ string (chat, player/team/tile names, any future rich field) can render
+  as raw HTML. This is the sole live defence, so it ships _with_ A1. See ADR-0002 for the
   exact rule scope.
 - **Open-redirect prevention.** The lobby `?return=` must resolve to a known
   `{slug}.{apex}` from the live instance list.
@@ -256,22 +256,22 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
 ## Phasing
 
 **Code** can be developed A‖B in parallel. **Deploy order is strict: A before B.** Phase A's
-backfill migration must have run on the box *before* the lobby serves "your runs" —
+backfill migration must have run on the box _before_ the lobby serves "your runs" —
 otherwise existing players (who settled before `instance_membership` existed) have no rows
 and the lobby shows them **zero runs with no error**, silently breaking the core feature.
 **C is a coordinated flag-day deploy** (like the Phase-5 cutover).
 
 - **Phase A — backend foundations (invisible).** `instance_membership` table + write-on-
   settle; the `my-runs` read; a backfill migration for existing `Player`s; shared-secret
-  *support* (read shared if present, else per-instance) without flipping the cookie.
+  _support_ (read shared if present, else per-instance) without flipping the cookie.
 - **Phase B — lobby stands up alongside untouched instances.** Lobby backend + frontend
   bundle + infra + DNS. No instance behaviour changes yet. **Deploy precondition:** Phase A
   (incl. the backfill migration) is live on the box first — `deploy-lobby.sh` should refuse
   to run, or the lobby should log loudly, if the `instance_membership` table is absent.
 - **Phase C — cutover (flag day).** Flip instances to shared secret + parent-domain cookie
-  + entry-gate auto-provision; retire instance login/signup → redirect to lobby; in-run
-  switcher; landing CTAs → lobby + remove `AdvertisedRuns`; land the #813 CI guard.
-  **One-time forced global re-login** (old per-instance-signed sessions invalidate).
+  - entry-gate auto-provision; retire instance login/signup → redirect to lobby; in-run
+    switcher; landing CTAs → lobby + remove `AdvertisedRuns`; land the #813 CI guard.
+    **One-time forced global re-login** (old per-instance-signed sessions invalidate).
 
 ---
 
@@ -284,7 +284,7 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
   are inert: `resolve_my_runs` drops any membership whose fragment is gone. Purging them is a
   chore, not a blocker.
 - **Cross-server identity** — accounts stay per-VPS (RFC).
-- **Personalized / invited run visibility** ("advertise a run to *specific accounts* only")
+- **Personalized / invited run visibility** ("advertise a run to _specific accounts_ only")
   — distinct from `advertised` (all-or-nothing picker visibility) and from private+allowlist
-  (which gates *entry*, not visibility). A new invitation feature; deferred. ("Advertise or
+  (which gates _entry_, not visibility). A new invitation feature; deferred. ("Advertise or
   not" itself is just the existing `advertised` flag — nothing to build.)

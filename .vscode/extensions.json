@@ -1,10 +1,10 @@
 {
-  "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "unifiedjs.vscode-mdx",
-    "bradlc.vscode-tailwindcss",
-    "charliermarsh.ruff",
-    "ms-python.python"
-  ]
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "unifiedjs.vscode-mdx",
+        "bradlc.vscode-tailwindcss",
+        "charliermarsh.ruff",
+        "ms-python.python"
+    ]
 }

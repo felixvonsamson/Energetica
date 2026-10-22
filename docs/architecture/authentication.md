@@ -25,27 +25,25 @@ sequenceDiagram
 To authenticate via API:
 
 1. **Login** - `POST /api/v1/auth/login`
-
-    - Send: `{"username": "...", "password": "..."}`
-    - Get back: `Set-Cookie: session=<token>`
+   - Send: `{"username": "...", "password": "..."}`
+   - Get back: `Set-Cookie: session=<token>`
 
 2. **Use the cookie** - Include it in all subsequent requests
-
-    - Browsers do this automatically
-    - API clients: set `credentials: "include"` (fetch) or similar
+   - Browsers do this automatically
+   - API clients: set `credentials: "include"` (fetch) or similar
 
 3. **Check auth** - `GET /api/v1/auth/me`
-    - Returns current user if authenticated
-    - Returns 401 if not
+   - Returns current user if authenticated
+   - Returns 401 if not
 
 ## Backend Implementation
 
 **Entry point:** `energetica/routers/auth.py`
 
--   `POST /auth/login` - Validates credentials, sets session cookie
--   `GET /auth/me` - Returns current user
--   `POST /auth/signup` - Creates new account
--   `POST /auth/change-password` - Changes password
+- `POST /auth/login` - Validates credentials, sets session cookie
+- `GET /auth/me` - Returns current user
+- `POST /auth/signup` - Creates new account
+- `POST /auth/change-password` - Changes password
 
 **Entry gate:** `resolve_entry_account` in `energetica/identity/web.py` checks the session cookie
 and this instance's access policy. The persistent world's `GET /auth/me` and Workshop's
@@ -53,13 +51,13 @@ and this instance's access policy. The persistent world's `GET /auth/me` and Wor
 
 **Session management:** `energetica/kernel/session.py`
 
--   `add_session_cookie_to_response()` - Sets the session cookie on responses
--   Session tokens are signed using `itsdangerous` serializer
+- `add_session_cookie_to_response()` - Sets the session cookie on responses
+- Session tokens are signed using `itsdangerous` serializer
 
 **Middleware:** `energetica/routers/__init__.py`
 
--   The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
--   POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
+- The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
+- POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
 
 **Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication.
 The account and role checks live in `energetica/identity/web.py`, so every game mode can use them.
@@ -76,9 +74,9 @@ get_settled_player()    - Requires a player who has chosen a location  (utils/au
 
 **Auth state:** `frontend/src/contexts/AuthContext.tsx`
 
--   Manages global auth state (user, isAuthenticated, isLoading)
--   Fetches `/auth/me` on app startup
--   Handles 401 errors gracefully (user not authenticated)
+- Manages global auth state (user, isAuthenticated, isLoading)
+- Fetches `/auth/me` on app startup
+- Handles 401 errors gracefully (user not authenticated)
 
 **In a Workshop Run** the app enters through `POST /api/v1/workshop/enter` instead of `/auth/me`,
 which the Workshop backend does not serve. `frontend/src/main.tsx` reads the Run mode from
@@ -91,24 +89,24 @@ or a denied account sends the visitor to the lobby. Routes declare which Run mod
 
 **Auth hook:** `frontend/src/hooks/useAuth.ts`
 
--   Provides `user`, `isAuthenticated`, `isLoading`, `refetch()`, `logout()`
--   Must be used within `AuthProvider`
+- Provides `user`, `isAuthenticated`, `isLoading`, `refetch()`, `logout()`
+- Must be used within `AuthProvider`
 
 **Protected routes:** `frontend/src/components/auth/ProtectedRoute.tsx`
 
--   TODO: explain and fill in details in [routing.md](../frontend/routing.md)
+- TODO: explain and fill in details in [routing.md](../frontend/routing.md)
 
 **API client:** `frontend/packages/core/src/api-client.ts`
 
--   Automatically includes cookies with all requests (`credentials: "include"`)
+- Automatically includes cookies with all requests (`credentials: "include"`)
 
 ## Reverse Proxy / Deployment
 
 When deployed behind a reverse proxy (e.g., Apache with SSL termination):
 
--   The frontend receives HTTPS but backend receives HTTP from the proxy
--   Backend checks the `X-Forwarded-Proto: https` header to determine if SSL is active upstream
--   Session cookie is set with `secure=true` only when `X-Forwarded-Proto: https` is present
--   This allows the same code to work in dev (HTTP) and production (HTTPS behind proxy)
+- The frontend receives HTTPS but backend receives HTTP from the proxy
+- Backend checks the `X-Forwarded-Proto: https` header to determine if SSL is active upstream
+- Session cookie is set with `secure=true` only when `X-Forwarded-Proto: https` is present
+- This allows the same code to work in dev (HTTP) and production (HTTPS behind proxy)
 
 See `energetica/kernel/session.py:add_session_cookie_to_response()` for implementation.

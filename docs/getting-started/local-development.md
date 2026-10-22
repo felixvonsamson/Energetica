@@ -25,16 +25,16 @@ convenience, since it spans both.)
 
 ## Scenarios
 
-| I want to…                                   | Command                                          | Backend used            |
-| -------------------------------------------- | ------------------------------------------------ | ----------------------- |
-| Change **lobby** UI against real data        | `cd frontend && BACKEND=game bun run dev:lobby`  | live game lobby         |
-| Change **app** (game) UI against real data (public/pre-login) | `cd frontend && BACKEND=game bun run dev:app` | live game instance |
-| **Authenticated app** work against live data | `BACKEND=game bun run dev`                        | live lobby + instance   |
-| Work on the **landing** site                 | `cd frontend && bun run dev:landing`             | none (static)           |
-| Full **local app** dev (frontend + backend)  | `bun run dev`                                    | local lobby + app       |
-| Just the **lobby**, locally                  | `bun run dev:lobby`                              | local lobby             |
-| **Backend** iteration, driven from the CLI   | `bun run serve:lobby` + `bun run serve:app`      | local lobby + app       |
-| Run a **Workshop Run** locally               | see [below](#running-a-workshop-run-locally)     | local lobby + app       |
+| I want to…                                                    | Command                                         | Backend used          |
+| ------------------------------------------------------------- | ----------------------------------------------- | --------------------- |
+| Change **lobby** UI against real data                         | `cd frontend && BACKEND=game bun run dev:lobby` | live game lobby       |
+| Change **app** (game) UI against real data (public/pre-login) | `cd frontend && BACKEND=game bun run dev:app`   | live game instance    |
+| **Authenticated app** work against live data                  | `BACKEND=game bun run dev`                      | live lobby + instance |
+| Work on the **landing** site                                  | `cd frontend && bun run dev:landing`            | none (static)         |
+| Full **local app** dev (frontend + backend)                   | `bun run dev`                                   | local lobby + app     |
+| Just the **lobby**, locally                                   | `bun run dev:lobby`                             | local lobby           |
+| **Backend** iteration, driven from the CLI                    | `bun run serve:lobby` + `bun run serve:app`     | local lobby + app     |
+| Run a **Workshop Run** locally                                | see [below](#running-a-workshop-run-locally)    | local lobby + app     |
 
 `BACKEND=game` selects the live game deployment; `edu` and `ethz` select the other two (each maps to
 `frontend/.env.{deployment}`). Omit `BACKEND` for a local backend. To pin one specific instance or
@@ -58,7 +58,7 @@ in for real: its login POST is proxied, and the response's `Set-Cookie` is rewri
 `Secure`/`Domain` (`rewriteSetCookieForLocalhost`), so the session cookie sticks to
 `http://localhost:5174`. Work on lobby UI against live data with your real credentials.
 
-The **app** dev server run *alone* against a live backend can't authenticate: its "log in" bounce
+The **app** dev server run _alone_ against a live backend can't authenticate: its "log in" bounce
 points at the local lobby dev server (:5174), and if nothing is running there the link dead-ends. So
 `BACKEND=game bun run dev:app` on its own is for the **public / pre-login** surface. For authenticated
 app work against live data, run both frontends as one stack (next).
@@ -81,7 +81,7 @@ One launcher, both frontends, same `BACKEND` — no local backends. The flow:
    server-wide secret — so you're authenticated as your real account, against live data.
 
 Why both frontends and one launcher: they must share `BACKEND`, or the lobby mints a cookie signed
-by a *different* backend than the app talks to, and the live instance rejects it with a bare 401.
+by a _different_ backend than the app talks to, and the live instance rejects it with a bare 401.
 Running them separately invites that mismatch; the launcher forecloses it.
 
 Two things to know:
@@ -97,7 +97,7 @@ Two things to know:
 ## Full local stack (backend work)
 
 Since the [lobby cutover](../architecture/lobby.md), the app server **no longer mints sessions** —
-it's a pure *entry gate* that validates the SSO cookie the **lobby** issues and auto-provisions a
+it's a pure _entry gate_ that validates the SSO cookie the **lobby** issues and auto-provisions a
 local user on first visit. So a usable local app backend needs the **lobby running too**, and both
 backends must share one signing secret + accounts store. `scripts/lib/dev-env.sh` wires that up under
 `.energetica-dev/` (gitignored, outside `instance/`), and the launcher starts everything:
@@ -379,13 +379,13 @@ bun run serve:app:test        # fresh instance + seeded test players/bots
 
 ## Ports
 
-| Service          | URL                     |
-| ---------------- | ----------------------- |
-| app frontend     | http://localhost:5173   |
-| lobby frontend   | http://localhost:5174   |
-| landing frontend | http://localhost:5175   |
-| app backend      | http://localhost:8000   |
-| lobby backend    | http://localhost:8001   |
+| Service          | URL                   |
+| ---------------- | --------------------- |
+| app frontend     | http://localhost:5173 |
+| lobby frontend   | http://localhost:5174 |
+| landing frontend | http://localhost:5175 |
+| app backend      | http://localhost:8000 |
+| lobby backend    | http://localhost:8001 |
 
 Fixed per surface (in `frontend/vite.shared.ts`) so all three frontends can run at once. The app
 bundle's "log in" bounce targets the lobby port; override with `VITE_LOBBY_URL` if you change it.

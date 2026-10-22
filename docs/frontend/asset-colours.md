@@ -19,17 +19,17 @@ All asset colors are defined as CSS variables in both light and dark modes:
 
 ```css
 :root {
-    /* Light mode */
-    --asset-color-pv-solar: rgb(255, 234, 0);
-    --asset-color-coal-burner: rgb(0, 0, 0);
-    /* ... etc */
+  /* Light mode */
+  --asset-color-pv-solar: rgb(255, 234, 0);
+  --asset-color-coal-burner: rgb(0, 0, 0);
+  /* ... etc */
 }
 
 .dark {
-    /* Dark mode */
-    --asset-color-pv-solar: rgb(255, 244, 80);
-    --asset-color-coal-burner: rgb(120, 120, 120);
-    /* ... etc */
+  /* Dark mode */
+  --asset-color-pv-solar: rgb(255, 244, 80);
+  --asset-color-coal-burner: rgb(120, 120, 120);
+  /* ... etc */
 }
 ```
 
@@ -41,11 +41,11 @@ Use inline styles with CSS variables:
 const colorVar = `--asset-color-${facility.toLowerCase().replace(/_/g, "-")}`;
 
 <div
-    className="h-full transition-all"
-    style={{
-        width: `${usage * 100}%`,
-        backgroundColor: `var(${colorVar})`,
-    }}
+  className="h-full transition-all"
+  style={{
+    width: `${usage * 100}%`,
+    backgroundColor: `var(${colorVar})`,
+  }}
 />;
 ```
 
@@ -58,11 +58,11 @@ To modify a color, edit `frontend/packages/ui/src/styles/global.css`:
 ```css
 /* Change PV Solar color */
 :root {
-    --asset-color-pv-solar: rgb(255, 200, 0); /* was: rgb(255, 234, 0) */
+  --asset-color-pv-solar: rgb(255, 200, 0); /* was: rgb(255, 234, 0) */
 }
 
 .dark {
-    --asset-color-pv-solar: rgb(255, 220, 50); /* was: rgb(255, 244, 80) */
+  --asset-color-pv-solar: rgb(255, 220, 50); /* was: rgb(255, 244, 80) */
 }
 ```
 
@@ -80,8 +80,8 @@ Example for charts:
 
 ```tsx
 const chartColor = getComputedStyle(document.documentElement)
-    .getPropertyValue("--asset-color-pv-solar")
-    .trim();
+  .getPropertyValue("--asset-color-pv-solar")
+  .trim();
 ```
 
 ## Related Files

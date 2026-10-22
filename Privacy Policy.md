@@ -16,8 +16,7 @@ We use the information we collect or receive:
 
 To create your account and facilitate login.
 To save your progress throughout the game.
-To improve our App. We may use the game data to understand how our users take actions and to make improvements.
-3. Sharing Your Information
+To improve our App. We may use the game data to understand how our users take actions and to make improvements. 3. Sharing Your Information
 
 We do not share, sell, rent, or trade your information with third parties except in the following circumstances:
 
@@ -36,4 +35,3 @@ Request deletion of your account: You can request the deletion of your account a
 7. Changes to This Privacy Policy
 
 We may update this privacy policy from time to time.
-

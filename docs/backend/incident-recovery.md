@@ -46,7 +46,7 @@ PORT=$(printf '%s\n' "$ENV" | sed -n 's/^ENERGETICA_PORT=//p') && \
 ```
 
 The port is passed as a flag, not left to the environment. `main.py` takes it as
-`--port`; `ENERGETICA_PORT` exists so that *systemd* can expand it into that flag, and nothing
+`--port`; `ENERGETICA_PORT` exists so that _systemd_ can expand it into that flag, and nothing
 in the app reads the variable. Without the flag the replay binds the argparse default of 8000
 and can collide with something else on the box. The two clock values need no such treatment —
 the engine read them at its very first tick and has carried them in its own state ever since.
@@ -98,10 +98,10 @@ followed by rapid tick replays (`t = XXXX`). If the engine logs an error instead
 
 ## Common causes
 
-| Symptom | Cause |
-|---|---|
-| OOM kill in journalctl (`result 'oom-kill'`) | Process exceeded memory limit mid-save |
-| `Deactivated successfully` just before crash loop | Process stopped cleanly mid-tick (manual stop, deploy) |
+| Symptom                                                        | Cause                                                                 |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| OOM kill in journalctl (`result 'oom-kill'`)                   | Process exceeded memory limit mid-save                                |
+| `Deactivated successfully` just before crash loop              | Process stopped cleanly mid-tick (manual stop, deploy)                |
 | `dictionary changed size during iteration` errors before crash | Race condition between tick thread and request threads (separate bug) |
 
 ## Checkpoints

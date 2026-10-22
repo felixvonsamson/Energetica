@@ -20,7 +20,7 @@ Project docs: `docs/README.md`
 
 ## package.json scripts
 
-- `bun run typecheck` 
+- `bun run typecheck`
 - `bun run format` and `bun run lint` - run both before committing
 - `bun run generate-types`
 

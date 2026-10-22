@@ -6,7 +6,7 @@
 
 `create_app()` deserialised the entire `instance/actions_history.log` into Pydantic
 objects on every startup (~270 MB / 365K lines → ~1.3 GB RSS on a 1.8 GB box → OOM
-crash loop; see issue #766). The full list is barely used: only actions *after* the
+crash loop; see issue #766). The full list is barely used: only actions _after_ the
 loaded tick are replayed; the rest is read just to locate one boundary line.
 
 ## Decision

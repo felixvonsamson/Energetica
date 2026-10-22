@@ -43,7 +43,9 @@ const workspaces = (group) =>
     fs
         .readdirSync(new URL(`./${group}`, import.meta.url))
         .filter((name) =>
-            fs.existsSync(new URL(`./${group}/${name}/package.json`, import.meta.url)),
+            fs.existsSync(
+                new URL(`./${group}/${name}/package.json`, import.meta.url),
+            ),
         );
 const APPS = workspaces("apps");
 const PACKAGES = workspaces("packages");
@@ -147,7 +149,10 @@ export default defineConfig([
             ],
             // React extras (recommended rules come from react.configs.flat.recommended above)
             "react/no-unescaped-entities": "off",
-            "react/jsx-no-useless-fragment": ["error", { allowExpressions: true }],
+            "react/jsx-no-useless-fragment": [
+                "error",
+                { allowExpressions: true },
+            ],
             "react/no-array-index-key": "warn",
             "react/no-unstable-nested-components": "warn",
             "react/self-closing-comp": "warn",
@@ -202,7 +207,10 @@ export default defineConfig([
                             message: `Shared packages cannot use the app-local @/ alias. Use this package's #${name}/ subpath imports, or import another package by name.`,
                         },
                         {
-                            group: [`@energetica/${name}`, `@energetica/${name}/*`],
+                            group: [
+                                `@energetica/${name}`,
+                                `@energetica/${name}/*`,
+                            ],
                             message: `Use this package's #${name}/ subpath imports for its own files.`,
                         },
                     ],

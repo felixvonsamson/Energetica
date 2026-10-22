@@ -12,7 +12,7 @@ That left two different stores answering the same question — "does this accoun
 this run?" — depending on the run's policy: a lobby-visible `accounts.db` row for a public run,
 an instance-local JSON file the lobby never reads for a private one. Concretely, this meant:
 
-- The lobby could not show "you've been invited to *this* private run" anywhere, because it had
+- The lobby could not show "you've been invited to _this_ private run" anywhere, because it had
   no visibility into any instance's `allowed_usernames` — only the instance process serving that
   one run could answer that question, and only for itself.
 - The facilitator roster page's own "joined vs invited" split (`GET /facilitator/roster`) had to
@@ -26,7 +26,7 @@ an instance-local JSON file the lobby never reads for a private one. Concretely,
 ## Decision
 
 **The private-run allowlist moves to `instance_membership`, using exactly the join/settle model
-ADR-0005 introduced.** A private run's admission is *itself* a "join" — a facilitator's roster
+ADR-0005 introduced.** A private run's admission is _itself_ a "join" — a facilitator's roster
 add, or a visitor confirming a join link — so it writes through `accounts.record_join` the same
 way the public-run picker's two-click join does. The entry gate's access check
 (`_enforce_instance_access`) reads `accounts.has_joined` instead of a per-instance allowlist.
@@ -34,7 +34,7 @@ Removing a roster entry (`accounts.remove_membership`) is a plain delete — it 
 account's next entry attempt without touching any `Player` already created in that run's engine,
 matching the roster page's already-documented "revocation is eventual" behaviour.
 
-**`instance.json` keeps deciding *whether* a run is gated at all, not *who* passes the gate.**
+**`instance.json` keeps deciding _whether_ a run is gated at all, not _who_ passes the gate.**
 `access.policy` (`public`/`private`) and the join-link settings (`join_token`/`join_open`) stay
 exactly where they are — they're properties of the run, set by a sysadmin (policy) or a
 facilitator (the toggle), not of any one account's relationship to it. Only the per-account
@@ -77,7 +77,7 @@ edited moved to `accounts.db`.
   `record_join`/`record_settlement`/`is_facilitator`.
 - `instance_config.is_access_allowed`, `add_allowed_username`, `remove_allowed_username` are
   removed — `_enforce_instance_access` (now in identity/web.py) now branches on `isinstance(config.access,
-  PrivateAccess)` for *whether* to check, and `accounts.has_joined` for *who* passes.
+PrivateAccess)` for _whether_ to check, and `accounts.has_joined` for _who_ passes.
 - The facilitator roster page's API contract (`FacilitatorRosterOut`, `RosterAddIn`, the
   `GET`/`POST`/`DELETE /facilitator/roster*` routes) is unchanged — this is a storage migration
   behind an existing interface, not a product change, so the frontend needed no changes.

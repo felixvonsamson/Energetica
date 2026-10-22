@@ -10,18 +10,19 @@
  * Two sinks are covered:
  *
  * 1. `dangerouslySetInnerHTML` — a JSX-level sink, so it is only scanned in
- *    `frontend/src` and each workspace package's `src`. Each occurrence is pinned to a (file, __html-expression)
- *    allowlist entry, consumed 1:1: a second sink — even one that reuses the
- *    same expression text in a different scope — needs its own reviewable
- *    entry, so a refactor cannot silently ride an existing approval.
+ *    `frontend/src` and each workspace package's `src`. Each occurrence is
+ *    pinned to a (file, __html-expression) allowlist entry, consumed 1:1: a
+ *    second sink — even one that reuses the same expression text in a different
+ *    scope — needs its own reviewable entry, so a refactor cannot silently ride
+ *    an existing approval.
  * 2. `rehype-raw` — re-enables raw HTML inside our build-time MDX pipeline. MDX
- *    plugins are wired in the Vite configs (never in `src`), so a
- *    `src`-only scan would miss it entirely. It is forbidden outright at two
- *    layers: (a) it must not be a declared dependency (or npm-aliased
- *    dependency) in `frontend/package.json` or any workspace package's
- *    manifest — no package present, nothing to
- *    import; (b) it must not be imported as a module specifier anywhere in
- *    `frontend/src`, the workspace packages' `src` or the build configs.
+ *    plugins are wired in the Vite configs (never in `src`), so a `src`-only
+ *    scan would miss it entirely. It is forbidden outright at two layers: (a)
+ *    it must not be a declared dependency (or npm-aliased dependency) in
+ *    `frontend/package.json` or any workspace package's manifest — no package
+ *    present, nothing to import; (b) it must not be imported as a module
+ *    specifier anywhere in `frontend/src`, the workspace packages' `src` or the
+ *    build configs.
  *
  * Known boundary: this is a text-and-manifest guard, one defence-in-depth layer
  * — not a hermetic sandbox. It does not resolve the dependency graph, so a
@@ -50,9 +51,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FRONTEND_ROOT = join(REPO_ROOT, "frontend");
 // Every workspace package: the apps under apps/ and the shared packages.
 const WORKSPACE_DIRS = (["apps", "packages"] as const).flatMap((group) =>
-    frontendWorkspaces(group).map((name) =>
-        join(FRONTEND_ROOT, group, name),
-    ),
+    frontendWorkspaces(group).map((name) => join(FRONTEND_ROOT, group, name)),
 );
 // The combined app's sources and every workspace package's sources.
 const SCAN_ROOTS = [

@@ -150,7 +150,7 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
 ### Flagged ambiguities
 
 - **"Membership": joined vs settled.** Originally resolved as membership = settled (has a
-  Player) — see ADR-0002/CONTEXT history — specifically to keep a *silent* auto-provisioned
+  Player) — see ADR-0002/CONTEXT history — specifically to keep a _silent_ auto-provisioned
   entry on a public run's first visit from cluttering "your runs" with runs never actually
   played. #1030 revisits this: the lobby's two-click join is itself a deliberate act (not
   silent), so it now writes `instance_membership` immediately, before settling. Currently

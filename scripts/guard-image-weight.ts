@@ -13,14 +13,14 @@
  *
  * Two rules, and both matter:
  *
- * 1. **Raster images are WebP.** This is the rule that catches the actual
- *    mistake. A size limit alone would let a 300 KB PNG through, and then the
- *    tree drifts back to mixed formats one file at a time.
+ * 1. **Raster images are WebP.** This is the rule that catches the actual mistake.
+ *    A size limit alone would let a 300 KB PNG through, and then the tree
+ *    drifts back to mixed formats one file at a time.
  * 2. **No file exceeds MAX_BYTES.** WebP is not automatically small — a photo
  *    saved at full camera resolution is still heavy. This catches an image that
  *    is the right format but the wrong dimensions.
  *
- * What this guard does *not* check, since #1078, is whether anything references
+ * What this guard does _not_ check, since #1078, is whether anything references
  * a given image. Vite owns that: every image is reached through an import, so a
  * broken reference fails the build and an unreferenced file is never bundled
  * and never shipped. The rules left here are about weight and format, which a
@@ -47,10 +47,10 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  *
  * `frontend/src/assets/` and each workspace package's `src/assets/` are the
  * bundled trees — imported, hashed, and emitted only into the bundles that use
- * them. `frontend/public/` is copied verbatim and
- * holds the one icon that needs a URL no bundler owns (see the comment on
- * FORMAT_EXEMPT), so it is covered here too: being exempt from hashing is not a
- * reason to be exempt from weighing.
+ * them. `frontend/public/` is copied verbatim and holds the one icon that needs
+ * a URL no bundler owns (see the comment on FORMAT_EXEMPT), so it is covered
+ * here too: being exempt from hashing is not a reason to be exempt from
+ * weighing.
  */
 const IMAGE_ROOTS = [
     "frontend/src/assets/",
@@ -120,7 +120,9 @@ function trackedImages(): string[] {
         .split("\n")
         .filter(Boolean)
         .filter((f) =>
-            IMAGE_EXTENSIONS.includes(f.slice(f.lastIndexOf(".")).toLowerCase()),
+            IMAGE_EXTENSIONS.includes(
+                f.slice(f.lastIndexOf(".")).toLowerCase(),
+            ),
         )
         .sort();
 }
