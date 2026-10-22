@@ -530,27 +530,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/prices/locked": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Locked Prices
-         * @description The prices each completed Trading period ran at for the calling player, oldest first. A period
-         *     in which they had nothing operating is left out.
-         */
-        get: operations["get_locked_prices_api_v1_workshop_prices_locked_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/workshop/fuel": {
         parameters: {
             query?: never;
@@ -606,6 +585,27 @@ export interface paths {
          * @description A settled Trading period's simulated days and settlement points, for its review.
          */
         get: operations["get_period_api_v1_workshop_periods__round_number___season__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/periods/{round_number}/{season}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Market Prices
+         * @description Every player's prices for a Trading period, the same for everyone in the Run (#1299): live while it is the
+         *     current period, and the prices it ran at once settled.
+         */
+        get: operations["get_market_prices_api_v1_workshop_periods__round_number___season__prices_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1032,19 +1032,13 @@ export interface components {
             carbon_tax_vote?: boolean | null;
         };
         /**
-         * LockedPrices
-         * @description The prices a player's facilities were offered at during one Trading period.
+         * MarketFacility
+         * @description A facility type the room's prices hold, named for the board's column (#1299).
          */
-        LockedPrices: {
-            /** Round */
-            round: number;
-            /**
-             * Season
-             * @enum {string}
-             */
-            season: "spring" | "summer" | "autumn" | "winter";
-            /** @description The prices of the facility types the player had operating */
-            prices: components["schemas"]["PriceSheet"];
+        MarketFacility: {
+            id: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
         };
         /**
          * MarketLine
@@ -1064,6 +1058,31 @@ export interface components {
              * @description The sale revenue, or the purchase cost
              */
             amount: number;
+        };
+        /**
+         * MarketPrices
+         * @description Every player's prices for one Trading period, which the whole room sees (#1299).
+         */
+        MarketPrices: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Live
+             * @description Whether the price-setting window is open, so the prices can still change
+             */
+            live: boolean;
+            /**
+             * Facilities
+             * @description Every facility type at least one player has a price for, in catalog order
+             */
+            facilities: components["schemas"]["MarketFacility"][];
+            /** Players */
+            players: components["schemas"]["PlayerQuotes"][];
         };
         /**
          * NotStarted
@@ -1275,24 +1294,41 @@ export interface components {
             season?: ("spring" | "summer" | "autumn" | "winter") | null;
         };
         /**
-         * PriceSheet
-         * @description A player's prices, per MWh.
+         * PlayerQuotes
+         * @description A player's prices for one Trading period, as the whole room sees them (#1299).
          */
-        PriceSheet: {
+        PlayerQuotes: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
             /**
              * Sell
-             * @description The price each facility type sells its power at
+             * @description The sell price of each facility type they had operating
              */
             sell: {
-                [key: string]: number;
+                [key: string]: components["schemas"]["QuotedPrice"];
             };
             /**
              * Buy
-             * @description The price each storage type buys power at to charge
+             * @description The buy price of each storage type they had operating
              */
             buy: {
-                [key: string]: number;
+                [key: string]: components["schemas"]["QuotedPrice"];
             };
+        };
+        /**
+         * QuotedPrice
+         * @description One price a player offers, next to the one it ran at in their last Trading period (#1299).
+         */
+        QuotedPrice: {
+            /** Price */
+            price: number;
+            /**
+             * Previous
+             * @description The price the facility type ran at in the player's last Trading period with it, if any
+             */
+            previous: number | null;
         };
         /**
          * Recap
@@ -2613,7 +2649,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
     };
     responses: never;
     parameters: never;
@@ -3355,26 +3391,6 @@ export interface operations {
             };
         };
     };
-    get_locked_prices_api_v1_workshop_prices_locked_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LockedPrices"][];
-                };
-            };
-        };
-    };
     get_fuel_api_v1_workshop_fuel_get: {
         parameters: {
             query?: never;
@@ -3449,6 +3465,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopPeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_market_prices_api_v1_workshop_periods__round_number___season__prices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketPrices"];
                 };
             };
             /** @description Validation Error */

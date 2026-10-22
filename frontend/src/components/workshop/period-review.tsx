@@ -17,8 +17,9 @@
  *
  * A period is reviewed one simulated week at a time: a representative week has
  * one, a full season 13. The week is picked in the scrubber's sticky bar, so it
- * can be changed without scrolling back up (#1273). The prices the player set
- * for the period are in their own tab.
+ * can be changed without scrolling back up (#1273). Every player's prices for
+ * the period are in their own tab (#1299), which is the only one open before
+ * the period is simulated.
  */
 
 import {
@@ -49,6 +50,7 @@ import {
     StorageChart,
     type StorageView,
 } from "@/components/charts/storage-chart";
+import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
@@ -56,7 +58,6 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePlayerColors } from "@/hooks/use-player-color-getter";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import {
-    useLockedPrices,
     useWorkshopEntry,
     useWorkshopFacilities,
     useWorkshopMeritOrder,
@@ -178,53 +179,55 @@ export function PeriodReview({
     season: Season;
 }) {
     const period = useWorkshopPeriod(round, season);
-    const { data: entry } = useWorkshopEntry();
-    const isPlayer = entry?.role === "player";
     // Held here rather than in the review tab, which unmounts while the prices
     // tab is open, so the week, point and zoom survive a look at the prices.
     const [weekIndex, setWeekIndex] = useState(0);
     const [point, setPoint] = useState(0);
     const [zoom, setZoom] = useState<ZoomRange>(FULL_ZOOM);
 
+    // Before the period is simulated it has nothing to review, but its prices
+    // are on show: live while the price-setting window is open (#1299).
+    const notSettled =
+        period.isError &&
+        period.error instanceof ApiClientError &&
+        period.error.status === 404;
+    const [tab, setTab] = useState<"review" | "prices" | null>(null);
+
+    // Until then, it is not known which tab to open.
     if (period.isPending) return <Spinner />;
-    if (period.isError) {
-        const notSettled =
-            period.error instanceof ApiClientError &&
-            period.error.status === 404;
-        return (
-            <TypographyMuted>
-                {notSettled
-                    ? "This Trading period has not been simulated yet."
-                    : "The Trading period could not be loaded."}
-            </TypographyMuted>
-        );
-    }
 
     return (
-        <Tabs defaultValue="review">
+        <Tabs
+            value={tab ?? (period.isError ? "prices" : "review")}
+            onValueChange={(value) => setTab(value as "review" | "prices")}
+        >
             <TabsList>
-                <TabsTrigger value="review">Review</TabsTrigger>
-                <TabsTrigger value="prices">Your prices</TabsTrigger>
+                <TabsTrigger value="review" disabled={period.isError}>
+                    Review
+                </TabsTrigger>
+                <TabsTrigger value="prices">Prices</TabsTrigger>
             </TabsList>
             <TabsContent value="review">
-                <Review
-                    period={period.data}
-                    weekIndex={weekIndex}
-                    onWeekIndexChange={setWeekIndex}
-                    point={point}
-                    onPointChange={setPoint}
-                    zoom={zoom}
-                    onZoomChange={setZoom}
-                />
+                {period.isError ? (
+                    <TypographyMuted>
+                        {notSettled
+                            ? "This Trading period has not been simulated yet."
+                            : "The Trading period could not be loaded."}
+                    </TypographyMuted>
+                ) : (
+                    <Review
+                        period={period.data}
+                        weekIndex={weekIndex}
+                        onWeekIndexChange={setWeekIndex}
+                        point={point}
+                        onPointChange={setPoint}
+                        zoom={zoom}
+                        onZoomChange={setZoom}
+                    />
+                )}
             </TabsContent>
             <TabsContent value="prices">
-                {isPlayer ? (
-                    <LockedPricesTab round={round} season={season} />
-                ) : (
-                    <TypographyMuted>
-                        The facilitator sets no prices.
-                    </TypographyMuted>
-                )}
+                <MarketPricesBoard round={round} season={season} />
             </TabsContent>
         </Tabs>
     );
@@ -780,71 +783,5 @@ function MeritOrderCard({
                 emptyMessage="No bids at this settlement point"
             />
         </ChartCard>
-    );
-}
-
-// ── Prices tab ────────────────────────────────────────────────────────────────
-
-function LockedPricesTab({ round, season }: { round: number; season: Season }) {
-    const { data: locked, isPending } = useLockedPrices();
-    const labels = useLabels();
-    if (isPending) return <Spinner />;
-    const prices = locked?.find(
-        (entry) => entry.round === round && entry.season === season,
-    )?.prices;
-    if (!prices) {
-        return (
-            <TypographyMuted className="pt-4">
-                You had nothing operating in this Trading period, so you set no
-                prices.
-            </TypographyMuted>
-        );
-    }
-    const facilities = Object.keys(prices.sell);
-
-    return (
-        <div className="overflow-x-auto pt-4">
-            <table className="w-full max-w-xl text-sm">
-                <thead>
-                    <tr className="bg-secondary">
-                        <th className="py-2 px-4 text-left font-semibold">
-                            Facility
-                        </th>
-                        <th className="py-2 px-4 text-right font-semibold">
-                            Sell price
-                        </th>
-                        <th className="py-2 px-4 text-right font-semibold">
-                            Buy price
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {facilities.map((facility) => {
-                        const sell = prices.sell[facility as never];
-                        const buy = prices.buy[facility as never];
-                        return (
-                            <tr
-                                key={facility}
-                                className="border-b border-border/30"
-                            >
-                                <td className="py-2 px-4">
-                                    {labels.facilityName(facility)}
-                                </td>
-                                <td className="py-2 px-4 text-right font-mono">
-                                    {sell === undefined
-                                        ? "–"
-                                        : `${formatMoney(sell)}/MWh`}
-                                </td>
-                                <td className="py-2 px-4 text-right font-mono">
-                                    {buy === undefined
-                                        ? "–"
-                                        : `${formatMoney(buy)}/MWh`}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
     );
 }

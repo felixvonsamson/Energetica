@@ -60,7 +60,7 @@ FACILITIES_URL = "/api/v1/workshop/facilities"
 FLEET_URL = "/api/v1/workshop/fleet"
 SELECTION_URL = "/api/v1/workshop/selection"
 PRICES_URL = "/api/v1/workshop/prices"
-LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
+MARKET_PRICES_URL = "/api/v1/workshop/periods/{round}/{season}/prices"
 BALANCE_SHEET_URL = "/api/v1/workshop/rounds/{round}/balance-sheet"
 FUEL_URL = "/api/v1/workshop/fuel"
 RECAP_URL = "/api/v1/workshop/rounds/{round}/recap"
@@ -827,7 +827,7 @@ def test_a_trading_period_settles_as_soon_as_its_price_setting_window_runs_out(
     with client:
         clock.tick(minutes=5)
         deadline = time.monotonic() + 5
-        while not client.get(LOCKED_PRICES_URL).json() and time.monotonic() < deadline:
+        while not app.state.workshop_session.player(alice).trading_results and time.monotonic() < deadline:
             time.sleep(0.01)
 
         [result] = app.state.workshop_session.player(alice).trading_results
@@ -926,18 +926,40 @@ def test_setting_a_price_once_the_window_runs_out_is_an_error(session_path: Path
     assert response.json()["game_exception_type"] == "WORKSHOP_PRICE_SETTING_CLOSED"
 
 
-def test_a_completed_periods_prices_can_be_read_back(session_path: Path, clock: _Clock) -> None:
+def test_a_settled_periods_room_prices_are_the_ones_it_ran_at(session_path: Path, clock: _Clock) -> None:
     client, facilitator, alice = _trading(session_path, clock)
     client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
-    assert client.get(LOCKED_PRICES_URL).json() == []
 
     authenticate(client, facilitator)
     _advance(client)
-
     authenticate(client, alice)
-    assert client.get(LOCKED_PRICES_URL).json() == [
-        {"round": 1, "season": "spring", "prices": {"sell": {"gas_burner": 80.0}, "buy": {}}}
-    ]
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 50.0})
+
+    spring = client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json()
+    assert not spring["live"]
+    assert spring["players"][0]["sell"] == {"gas_burner": {"price": 80.0, "previous": None}}
+
+
+def test_everyone_in_the_run_reads_the_rooms_prices(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, _ = _trading(session_path, clock)
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+    alice_sees = client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json()
+
+    authenticate(client, facilitator)
+
+    assert client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json() == alice_sees
+    assert alice_sees["live"]
+    [alice] = alice_sees["players"]
+    assert (alice["username"], alice["sell"]) == ("alice", {"gas_burner": {"price": 80.0, "previous": None}})
+
+
+def test_a_period_that_has_not_started_has_no_room_prices(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    response = client.get(MARKET_PRICES_URL.format(round=1, season="summer"))
+
+    assert response.status_code == 404
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_MARKET_PRICES"
 
 
 def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
@@ -946,7 +968,6 @@ def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
 
     assert client.get(PRICES_URL).status_code == 403
     assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 403
-    assert client.get(LOCKED_PRICES_URL).status_code == 403
 
 
 # --- fuel (#1009) ---------------------------------------------------------------------------
@@ -1474,6 +1495,43 @@ def test_advancing_tells_every_open_page_to_reread_the_session(session_path: Pat
         invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
         assert socket.poll(client, player_sid) == [invalidate]
         assert socket.poll(client, facilitator_sid) == [invalidate]
+
+
+def test_setting_a_price_tells_every_open_page_to_reread_the_rooms_prices(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+
+    with client:
+        authenticate(client, facilitator)
+        facilitator_sid, _ = socket.connect(client)
+        authenticate(client, alice)
+
+        assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 200
+
+        invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+
+
+def test_a_burst_of_price_changes_rereads_the_rooms_prices_at_most_every_half_second(
+    session_path: Path, clock: _Clock
+) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
+
+    with client:
+        authenticate(client, facilitator)
+        facilitator_sid, _ = socket.connect(client)
+        authenticate(client, alice)
+
+        started = time.monotonic()
+        for price in (80.0, 81.0, 82.0):
+            client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": price})
+
+        # The first change is sent at once, and the rest wait for the interval to pass.
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+        assert time.monotonic() - started < 0.5
+        # Then they are sent together, once.
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+        assert time.monotonic() - started >= 0.5
 
 
 def _poll_until(client: TestClient, sid: str, event: str) -> list:
