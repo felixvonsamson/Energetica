@@ -1,6 +1,8 @@
 import { useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { useLastDefined } from "@/hooks/use-last-defined";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePurchaseAsk } from "@/hooks/use-resource-market";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
 import { formatMass } from "@energetica/core/format-utils";
@@ -43,6 +45,7 @@ export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
     }
 
     const purchaseMutation = usePurchaseAsk();
+    const readOnly = useIsReadOnly();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -184,23 +187,26 @@ export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button
-                                type="submit"
-                                form="purchase-form"
-                                variant={
-                                    purchaseMutation.isPending
-                                        ? "outline"
-                                        : "default"
-                                }
-                                disabled={
-                                    purchaseMutation.isPending ||
-                                    (!buyAll && !quantity)
-                                }
-                                className="flex items-center gap-2"
-                            >
-                                {purchaseMutation.isPending && <Spinner />}
-                                Purchase
-                            </Button>
+                            <ReadOnlyTooltip readOnly={readOnly}>
+                                <Button
+                                    type="submit"
+                                    form="purchase-form"
+                                    variant={
+                                        purchaseMutation.isPending
+                                            ? "outline"
+                                            : "default"
+                                    }
+                                    disabled={
+                                        purchaseMutation.isPending ||
+                                        readOnly ||
+                                        (!buyAll && !quantity)
+                                    }
+                                    className="flex items-center gap-2"
+                                >
+                                    {purchaseMutation.isPending && <Spinner />}
+                                    Purchase
+                                </Button>
+                            </ReadOnlyTooltip>
                         </DialogFooter>
                     </DialogContent>
                 </form>

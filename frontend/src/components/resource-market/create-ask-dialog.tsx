@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { useCreateAsk } from "@/hooks/use-resource-market";
 import {
     RESOURCE_LABELS,
@@ -42,6 +44,7 @@ export function CreateAskDialog({
     const [price, setPrice] = useState("");
 
     const createMutation = useCreateAsk();
+    const readOnly = useIsReadOnly();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -211,18 +214,22 @@ export function CreateAskDialog({
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button
-                            type="submit"
-                            form="create-ask-form"
-                            variant={
-                                createMutation.isPending ? "outline" : "default"
-                            }
-                            disabled={createMutation.isPending}
-                            className="flex items-center gap-2"
-                        >
-                            {createMutation.isPending && <Spinner />}
-                            Put on Sale
-                        </Button>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <Button
+                                type="submit"
+                                form="create-ask-form"
+                                variant={
+                                    createMutation.isPending
+                                        ? "outline"
+                                        : "default"
+                                }
+                                disabled={createMutation.isPending || readOnly}
+                                className="flex items-center gap-2"
+                            >
+                                {createMutation.isPending && <Spinner />}
+                                Put on Sale
+                            </Button>
+                        </ReadOnlyTooltip>
                     </DialogFooter>
                 </DialogContent>
             </form>

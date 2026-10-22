@@ -2,7 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Bell, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { getPushPref, setPushPref } from "@/lib/push-notification-prefs";
 import { Label } from "@energetica/ui/components/label";
 import { Switch } from "@energetica/ui/components/switch";
@@ -106,6 +108,7 @@ export function DailyQuizSection() {
     // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
     const { data: quizData, isLoading, isError } = useDailyQuiz();
     const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();
+    const readOnly = useIsReadOnly();
 
     const handleAnswerClick = (answer: "answer1" | "answer2" | "answer3") => {
         if (!quizData || quizData.player_answer) return; // Already answered
@@ -204,17 +207,24 @@ export function DailyQuizSection() {
                     <div className="space-y-3">
                         {(["answer1", "answer2", "answer3"] as const).map(
                             (key) => (
-                                <button
+                                <ReadOnlyTooltip
                                     key={key}
-                                    onClick={() => handleAnswerClick(key)}
-                                    disabled={hasAnswered || isPending}
-                                    className={getButtonClass(key)}
+                                    readOnly={readOnly}
+                                    className="block"
                                 >
-                                    <span className="block text-center px-28">
-                                        {quizData[key]}
-                                    </span>
-                                    {getAnswerIndicator(key)}
-                                </button>
+                                    <button
+                                        onClick={() => handleAnswerClick(key)}
+                                        disabled={
+                                            hasAnswered || isPending || readOnly
+                                        }
+                                        className={getButtonClass(key)}
+                                    >
+                                        <span className="block text-center px-28">
+                                            {quizData[key]}
+                                        </span>
+                                        {getAnswerIndicator(key)}
+                                    </button>
+                                </ReadOnlyTooltip>
                             ),
                         )}
                     </div>

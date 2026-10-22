@@ -2,8 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { TechnologyIcon, AssetName } from "@/components/ui";
 import { useLastDefined } from "@/hooks/use-last-defined";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { useQueueProject } from "@/hooks/use-projects";
 import { assetImages } from "@/lib/assets/asset-images";
 import { getFacilityRoute } from "@/lib/facility-routes";
@@ -54,6 +56,7 @@ export function TechnologyDetailDialog<T>({
 }: TechnologyDetailModalProps<T>) {
     const displayedTechnology = useLastDefined(technology);
     const queueProjectMutation = useQueueProject();
+    const readOnly = useIsReadOnly();
 
     const handleResearch = () => {
         if (technology === null) return;
@@ -241,29 +244,32 @@ export function TechnologyDetailDialog<T>({
                                         </Tooltip>
                                     )}
                                 </div>
-                                <Button
-                                    size="lg"
-                                    onClick={handleResearch}
-                                    disabled={
-                                        displayedTechnology.requirements_status ===
+                                <ReadOnlyTooltip readOnly={readOnly}>
+                                    <Button
+                                        size="lg"
+                                        onClick={handleResearch}
+                                        disabled={
+                                            readOnly ||
+                                            displayedTechnology.requirements_status ===
+                                                "unsatisfied"
+                                        }
+                                        variant={
+                                            displayedTechnology.requirements_status ===
+                                            "unsatisfied"
+                                                ? "destructive"
+                                                : "default"
+                                        }
+                                        className="px-8 text-base font-bold"
+                                    >
+                                        {displayedTechnology.requirements_status ===
                                         "unsatisfied"
-                                    }
-                                    variant={
-                                        displayedTechnology.requirements_status ===
-                                        "unsatisfied"
-                                            ? "destructive"
-                                            : "default"
-                                    }
-                                    className="px-8 text-base font-bold"
-                                >
-                                    {displayedTechnology.requirements_status ===
-                                    "unsatisfied"
-                                        ? "Locked"
-                                        : displayedTechnology.requirements_status ===
-                                            "queued"
-                                          ? "Queue Research"
-                                          : "Start Research"}
-                                </Button>
+                                            ? "Locked"
+                                            : displayedTechnology.requirements_status ===
+                                                "queued"
+                                              ? "Queue Research"
+                                              : "Start Research"}
+                                    </Button>
+                                </ReadOnlyTooltip>
                             </div>
                         </div>
                     </>

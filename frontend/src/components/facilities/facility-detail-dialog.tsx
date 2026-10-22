@@ -3,8 +3,10 @@ import { ExternalLink, GitCompareArrows } from "lucide-react";
 import { ReactNode, useMemo } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { FacilityName, FacilityIcon, AssetName } from "@/components/ui";
 import { useLastDefined } from "@/hooks/use-last-defined";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { useQueueProject, useTechnologiesCatalog } from "@/hooks/use-projects";
 import { assetImages } from "@/lib/assets/asset-images";
 import { getTechnologyRoute } from "@/lib/facility-routes";
@@ -56,6 +58,7 @@ export function FacilityDetailDialog<T>({
 }: FacilityDetailDialogProps<T>) {
     const displayedFacility = useLastDefined(facility);
     const queueProjectMutation = useQueueProject();
+    const readOnly = useIsReadOnly();
     const { data: technologiesData } = useTechnologiesCatalog();
 
     // Reverse of each technology's `affected_facilities`: the technologies that
@@ -91,6 +94,7 @@ export function FacilityDetailDialog<T>({
                         onCompare,
                         handleConstruction,
                         affectingTechnologies,
+                        readOnly,
                     )}
             </DialogContent>
         </Dialog>
@@ -119,6 +123,7 @@ function FacilityContent<T>(
     onCompare: ((facility: T) => void) | undefined,
     handleConstruction: () => void,
     affectingTechnologies: string[],
+    readOnly: boolean,
 ) {
     const isLocked = facility.requirements_status === "unsatisfied";
     const hasUnsatisfiedRequirements = facility.requirements.some(
@@ -278,15 +283,17 @@ function FacilityContent<T>(
                         long
                         className="text-lg font-semibold"
                     />
-                    <Button
-                        size="lg"
-                        onClick={handleConstruction}
-                        disabled={isLocked}
-                        variant={isLocked ? "destructive" : "default"}
-                        className="px-8 text-base font-bold"
-                    >
-                        {isLocked ? "Locked" : "Start Construction"}
-                    </Button>
+                    <ReadOnlyTooltip readOnly={readOnly}>
+                        <Button
+                            size="lg"
+                            onClick={handleConstruction}
+                            disabled={isLocked || readOnly}
+                            variant={isLocked ? "destructive" : "default"}
+                            className="px-8 text-base font-bold"
+                        >
+                            {isLocked ? "Locked" : "Start Construction"}
+                        </Button>
+                    </ReadOnlyTooltip>
                 </div>
             </div>
         </>

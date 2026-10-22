@@ -25,6 +25,7 @@ from energetica.enums import Fuel, Renewable
 from energetica.freeplay import legacy_pickle
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 from energetica.freeplay.national_demand import national_demand_curve
+from energetica.kernel.atomic_file import open_atomically
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.messages import Chat
@@ -250,7 +251,8 @@ class GameEngine(object):
             "general_chat_id",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
-        with open("instance/engine_data.pck", "wb") as file:
+        # Atomic, so a save killed partway (as by the OOM kills in #766) keeps the last good save.
+        with open_atomically(Path("instance/engine_data.pck")) as file:
             pickle.dump(data, file)
 
     def load(self) -> None:

@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { dailyQuizApi } from "@/lib/api/daily-quiz";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import { toastActionError } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -44,7 +44,7 @@ export function useSubmitQuizAnswer() {
             }
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }

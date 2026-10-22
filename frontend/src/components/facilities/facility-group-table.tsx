@@ -5,6 +5,10 @@
 
 import { useState, ReactNode, Fragment } from "react";
 
+import {
+    READ_ONLY_REASON,
+    ReadOnlyTooltip,
+} from "@/components/lifecycle/read-only-tooltip";
 import { CashFlow, FacilityName, Duration } from "@/components/ui";
 import {
     useUpgradeFacility,
@@ -12,6 +16,7 @@ import {
     useDismantleFacility,
     useDismantleAllOfType,
 } from "@/hooks/use-facilities";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { ConfirmDialog } from "@energetica/ui/components/confirm-dialog";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { Money } from "@energetica/ui/components/money";
@@ -109,17 +114,20 @@ function FacilityActions({
     upgradeMutation: ReturnType<typeof useUpgradeFacility>;
     dismantleMutation: ReturnType<typeof useDismantleFacility>;
 }) {
+    const readOnly = useIsReadOnly();
     return (
         <>
             <td className="py-3 px-4 text-center">
                 {facility.upgrade_cost !== null ? (
-                    <button
-                        onClick={() => upgradeMutation.mutate(facility.id)}
-                        disabled={upgradeMutation.isPending}
-                        className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                    >
-                        <Money amount={facility.upgrade_cost} />
-                    </button>
+                    <ReadOnlyTooltip readOnly={readOnly}>
+                        <button
+                            onClick={() => upgradeMutation.mutate(facility.id)}
+                            disabled={upgradeMutation.isPending || readOnly}
+                            className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                            <Money amount={facility.upgrade_cost} />
+                        </button>
+                    </ReadOnlyTooltip>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )}
@@ -151,6 +159,7 @@ function FacilityActions({
                         variant="danger"
                         onConfirm={() => dismantleMutation.mutate(facility.id)}
                         isPending={dismantleMutation.isPending}
+                        disabledReason={readOnly ? READ_ONLY_REASON : undefined}
                     />
                 ) : (
                     <span className="text-gray-400">-</span>
@@ -178,6 +187,7 @@ function GroupActions({
     upgradeAllMutation: ReturnType<typeof useUpgradeAllOfType>;
     dismantleAllMutation: ReturnType<typeof useDismantleAllOfType>;
 }) {
+    const readOnly = useIsReadOnly();
     return (
         <>
             <td
@@ -209,6 +219,7 @@ function GroupActions({
                             upgradeAllMutation.mutate(facilityName)
                         }
                         isPending={upgradeAllMutation.isPending}
+                        disabledReason={readOnly ? READ_ONLY_REASON : undefined}
                     />
                 ) : (
                     <span className="text-gray-400">-</span>
@@ -241,6 +252,7 @@ function GroupActions({
                     variant="danger"
                     onConfirm={() => dismantleAllMutation.mutate(facilityName)}
                     isPending={dismantleAllMutation.isPending}
+                    disabledReason={readOnly ? READ_ONLY_REASON : undefined}
                 />
             </td>
         </>

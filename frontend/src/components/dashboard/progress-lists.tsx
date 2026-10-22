@@ -2,10 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { Duration } from "@/components/ui";
 import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
 import { Countdown } from "@/components/ui/countdown";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import {
     useCancelProject,
     useDecreaseProjectPriority,
@@ -128,35 +130,39 @@ function ProjectItem({ project }: ProjectItemProps) {
         decreasePriorityMutation.mutate(project.id);
     const cancelMutation = useCancelProject();
     const onCancel = () => cancelMutation.mutate(project.id);
+    const readOnly = useIsReadOnly();
 
     const cardActions = (
         <>
-            {/* Pause/Resume button */}
-            {project.status === "paused" ? (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onResume}
-                    disabled={resumeMutation.isPending}
-                    className="p-1"
-                    aria-label="Resume project"
-                >
-                    <Play size={14} />
-                </Button>
-            ) : (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onPause}
-                    disabled={pauseMutation.isPending}
-                    className="p-1"
-                    aria-label="Pause project"
-                >
-                    <Pause size={14} />
-                </Button>
-            )}
+            <ReadOnlyTooltip readOnly={readOnly}>
+                {/* Pause/Resume button */}
+                {project.status === "paused" ? (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onResume}
+                        disabled={resumeMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Resume project"
+                    >
+                        <Play size={14} />
+                    </Button>
+                ) : (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onPause}
+                        disabled={pauseMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Pause project"
+                    >
+                        <Pause size={14} />
+                    </Button>
+                )}
+            </ReadOnlyTooltip>
 
-            {/* Cancel button */}
+            {/* Cancel button. It stays enabled while frozen, so the refund details can still be read;
+                the dialog's Continue button is the one disabled. */}
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button
@@ -198,14 +204,18 @@ function ProjectItem({ project }: ProjectItemProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction variant="destructive" asChild>
-                            <Button
-                                onClick={onCancel}
-                                disabled={cancelMutation.isPending}
-                            >
-                                Continue
-                            </Button>
-                        </AlertDialogAction>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <AlertDialogAction variant="destructive" asChild>
+                                <Button
+                                    onClick={onCancel}
+                                    disabled={
+                                        cancelMutation.isPending || readOnly
+                                    }
+                                >
+                                    Continue
+                                </Button>
+                            </AlertDialogAction>
+                        </ReadOnlyTooltip>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -215,36 +225,42 @@ function ProjectItem({ project }: ProjectItemProps) {
     return (
         <div className="flex items-stretch gap-2">
             {/* Priority arrows — outside the card, left side, matching card bg */}
-            <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
-                {!project.isFirst ? (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onIncreasePriority}
-                        disabled={increasePriorityMutation.isPending}
-                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                        aria-label="Increase priority"
-                    >
-                        <ChevronUp size={14} />
-                    </Button>
-                ) : (
-                    <div className="h-6 w-6" />
-                )}
-                {!project.isLast ? (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDecreasePriority}
-                        disabled={decreasePriorityMutation.isPending}
-                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                        aria-label="Decrease priority"
-                    >
-                        <ChevronDown size={14} />
-                    </Button>
-                ) : (
-                    <div className="h-6 w-6" />
-                )}
-            </div>
+            <ReadOnlyTooltip readOnly={readOnly}>
+                <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
+                    {!project.isFirst ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onIncreasePriority}
+                            disabled={
+                                increasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Increase priority"
+                        >
+                            <ChevronUp size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                    {!project.isLast ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onDecreasePriority}
+                            disabled={
+                                decreasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Decrease priority"
+                        >
+                            <ChevronDown size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                </div>
+            </ReadOnlyTooltip>
 
             {/* Card */}
             <div className="flex-1">

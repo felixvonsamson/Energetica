@@ -1,9 +1,11 @@
 import { useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,
 } from "@/hooks/use-electricity-markets";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMe } from "@/hooks/use-players";
 import { Button } from "@energetica/ui/components/button";
@@ -33,6 +35,7 @@ export function CreateMarketDialog({
     const [marketName, setMarketName] = useState("");
     const [error, setError] = useState<string | null>(null);
     const { mutate: createMarket, isPending } = useCreateElectricityMarket();
+    const readOnly = useIsReadOnly();
     const me = useMe();
     const currentMarket = useElectricityMarketForPlayer(me?.id);
     const { data: moneyData } = usePlayerMoney();
@@ -204,21 +207,24 @@ export function CreateMarketDialog({
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button
-                            type="submit"
-                            form="create-market-form"
-                            variant={isPending ? "outline" : "default"}
-                            disabled={
-                                isPending ||
-                                isNameMissing ||
-                                hasNameError ||
-                                hasInsufficientFunds
-                            }
-                            className="flex items-center gap-2"
-                        >
-                            {isPending && <Spinner />}
-                            Create Market
-                        </Button>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <Button
+                                type="submit"
+                                form="create-market-form"
+                                variant={isPending ? "outline" : "default"}
+                                disabled={
+                                    isPending ||
+                                    readOnly ||
+                                    isNameMissing ||
+                                    hasNameError ||
+                                    hasInsufficientFunds
+                                }
+                                className="flex items-center gap-2"
+                            >
+                                {isPending && <Spinner />}
+                                Create Market
+                            </Button>
+                        </ReadOnlyTooltip>
                     </DialogFooter>
                 </DialogContent>
             </form>

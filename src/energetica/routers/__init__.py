@@ -122,6 +122,8 @@ def setup_routes(app: FastAPI) -> None:
             except Exception:
                 request_payload = "unparsable or not JSON"
 
+        # Write the log line before releasing the lock, so that the action log lists requests and
+        # ticks in the order they ran (#1317).
         with engine.lock:
             try:
                 response = await call_next(request)
@@ -132,52 +134,52 @@ def setup_routes(app: FastAPI) -> None:
                 print(f"payload: {request_payload}")
                 raise e
 
-        # Buffer the response body
-        response_body = b""
-        async for chunk in response.__dict__.get("body_iterator", []):
-            response_body += chunk
+            # Buffer the response body
+            response_body = b""
+            async for chunk in response.__dict__.get("body_iterator", []):
+                response_body += chunk
 
-        # Rebuild the response so FastAPI can send it
-        new_response = Response(
-            content=response_body,
-            status_code=response.status_code,
-            headers=response.headers,
-            media_type=response.media_type,
-        )
-
-        response_payload = None
-        try:
-            response_payload = json.loads(response_body.decode())
-        except Exception:
-            response_payload = "unparsable or not JSON"
-
-        account = get_current_account(request)
-        if account is None:
-            return new_response
-
-        log_entry = ApiAction(
-            timestamp=start,
-            elapsed=(datetime.now() - start).total_seconds(),
-            ip=request.headers.get(
-                "X-Forwarded-For",
-                request.client.host if request.client is not None else "null",
-            ),
-            action_type="request",
-            user_id=account.account_id,
-            request=ApiActionRequest(
-                endpoint=request.url.path,
-                method=cast(Method, request.method),
-                content_type=request.headers.get("content-type"),
-                payload=request_payload,
-            ),
-            response=ApiActionResponse(
+            # Rebuild the response so FastAPI can send it
+            new_response = Response(
+                content=response_body,
                 status_code=response.status_code,
-                content_type=response.headers.get("content-type", "unknown"),
-                payload=response_payload,
-            ),
-        )
-        engine.log_action(log_entry)
-        return new_response
+                headers=response.headers,
+                media_type=response.media_type,
+            )
+
+            response_payload = None
+            try:
+                response_payload = json.loads(response_body.decode())
+            except Exception:
+                response_payload = "unparsable or not JSON"
+
+            account = get_current_account(request)
+            if account is None:
+                return new_response
+
+            log_entry = ApiAction(
+                timestamp=start,
+                elapsed=(datetime.now() - start).total_seconds(),
+                ip=request.headers.get(
+                    "X-Forwarded-For",
+                    request.client.host if request.client is not None else "null",
+                ),
+                action_type="request",
+                user_id=account.account_id,
+                request=ApiActionRequest(
+                    endpoint=request.url.path,
+                    method=cast(Method, request.method),
+                    content_type=request.headers.get("content-type"),
+                    payload=request_payload,
+                ),
+                response=ApiActionResponse(
+                    status_code=response.status_code,
+                    content_type=response.headers.get("content-type", "unknown"),
+                    payload=response_payload,
+                ),
+            )
+            engine.log_action(log_entry)
+            return new_response
 
     for router in api_routers:
         app.include_router(router, prefix="/api/v1")
