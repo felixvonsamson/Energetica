@@ -483,7 +483,7 @@ def test_selecting_before_the_session_starts_is_rejected(path: Path, clock: _Clo
 
 
 def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: _Clock) -> None:
-    # A gas burner costs 8,000,000 and a small water dam 25,000,000.
+    # A gas burner costs 8,000,000 and, in a 3-Round session, a small water dam 22,000,000.
     session = _investing(path, clock, money=40_000_000.0)
     session.select(1, FacilityId.GAS_BURNER)
     session.select(1, FacilityId.SMALL_WATER_DAM)
@@ -492,6 +492,20 @@ def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: 
         session.select(1, FacilityId.SMALL_WATER_DAM)
 
     assert session.network.members[1].selection == [FacilityId.GAS_BURNER, FacilityId.SMALL_WATER_DAM]
+
+
+@pytest.mark.parametrize(
+    ("round_count", "reactor", "dam"),
+    [(3, 53_000_000, 22_000_000), (4, 60_000_000, 25_000_000), (5, 70_000_000, 25_000_000)],
+)
+def test_nuclear_and_dams_are_priced_for_the_sessions_length(
+    path: Path, clock: _Clock, round_count: int, reactor: float, dam: float
+) -> None:
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=clock)
+
+    assert session.facility_price(FacilityId.NUCLEAR_REACTOR, round_number=1) == reactor
+    assert session.facility_price(FacilityId.SMALL_WATER_DAM, round_number=1) == dam
+    assert session.facility_price(FacilityId.GAS_BURNER, round_number=1) == CATALOG[FacilityId.GAS_BURNER].base_price
 
 
 def test_a_selection_can_spend_every_last_coin(path: Path, clock: _Clock) -> None:
@@ -640,9 +654,9 @@ def test_every_players_selection_is_bought_once_the_investment_timer_runs_out(pa
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1),
         OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
     ]
-    assert alice.money == 200_000_000.0 - 8_000_000 - 70_000_000
+    assert alice.money == 200_000_000.0 - 8_000_000 - 53_000_000  # the reactor and dam at their 3-Round prices
     assert bob.owned_facilities == [OwnedFacility(facility=FacilityId.SMALL_WATER_DAM, built_round=1)]
-    assert bob.money == 50_000_000.0 - 25_000_000
+    assert bob.money == 50_000_000.0 - 22_000_000
     assert alice.selection == bob.selection == []
 
 
@@ -1713,12 +1727,12 @@ def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
     session = _at_round_one_recap(path)
     alice = session.network.members[1]
     alice.money = -15_000_000.0
-    before = score(alice, completed_rounds=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
 
     _advance(session)
 
     assert alice.money == FLOOR
-    assert score(alice, completed_rounds=session.round_count) == before
+    assert score(alice, completed_rounds=session.round_count, round_count=session.round_count) == before
 
 
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
@@ -1801,12 +1815,16 @@ def test_a_blackout_resets_every_players_cash_to_the_starting_budget(path: Path,
 def test_a_blackout_reset_leaves_every_final_score_unchanged(path: Path, clock: _Clock) -> None:
     session = _round_starting_after_a_blackout(path, clock, alice=6_000_000.0, bob=150_000_000.0)
     players = list(session.network.players())
-    before = [score(player, completed_rounds=session.round_count) for player in players]
+    before = [
+        score(player, completed_rounds=session.round_count, round_count=session.round_count) for player in players
+    ]
 
     _advance(session)
 
     assert [player.money for player in players] == [WORKSHOP_STARTING_BUDGET] * len(players)
-    assert [score(player, completed_rounds=session.round_count) for player in players] == before
+    assert [
+        score(player, completed_rounds=session.round_count, round_count=session.round_count) for player in players
+    ] == before
 
 
 def test_a_blackout_reset_leaves_every_facility_in_place(path: Path, clock: _Clock) -> None:
@@ -1869,18 +1887,18 @@ def test_the_scoreboard_counts_the_rounds_completed_so_far(path: Path) -> None:
 
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (0, False)
-    assert board.scores == ranked(players, completed_rounds=0)
+    assert board.scores == ranked(players, completed_rounds=0, round_count=session.round_count)
 
     while session.checkpoint != TradingPeriod(round=2, season="summer"):
         _advance(session)
     # Round 2's spring is settled, but the Round is not completed, so it is not counted yet.
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (1, False)
-    assert board.scores == ranked(players, completed_rounds=1)
-    assert board.scores != ranked(players, completed_rounds=2)
+    assert board.scores == ranked(players, completed_rounds=1, round_count=session.round_count)
+    assert board.scores != ranked(players, completed_rounds=2, round_count=session.round_count)
 
     while not isinstance(session.checkpoint, Finished):
         _advance(session)
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (session.round_count, True)
-    assert board.scores == ranked(players, completed_rounds=session.round_count)
+    assert board.scores == ranked(players, completed_rounds=session.round_count, round_count=session.round_count)

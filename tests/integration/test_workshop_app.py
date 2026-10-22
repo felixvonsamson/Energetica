@@ -765,7 +765,7 @@ def test_players_buy_their_own_selections_when_the_facilitator_advances(session_
     }
     authenticate(client, bob)
     assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam"]
-    assert client.get(SELECTION_URL).json()["money"] == 25_000_000.0
+    assert client.get(SELECTION_URL).json()["money"] == 28_000_000.0  # a small dam costs 22M in a 3-Round session
 
 
 def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(

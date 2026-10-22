@@ -272,13 +272,13 @@ until curl -sf localhost:8000/healthz >/dev/null; do sleep 0.5; done
 **d. Start Round 1 and buy plants.** Only what `GET /api/v1/workshop/facilities` lists is for sale:
 upgrade tiers such as the combined cycle appear only once unlocked, and a nuclear reactor takes a Round
 to build. Buy enough capacity for the market, or the first Trading period ends in a blackout, which
-ends the Round. Must-serve demand averages about 100 MW per player and peaks near 160 MW in winter,
-so give each player around 200 MW or more. Six gas burners (38 MW each) do, within the 50M starting budget:
+ends the Round. Must-serve demand averages about 80 MW per player and peaks near 130 MW in winter,
+so give each player around 160 MW or more. Five gas burners (38 MW each) do, within the 50M starting budget:
 
 ```bash
 curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # opens the Investment phase
 for user in alice bob; do
-    for facility in gas_burner gas_burner gas_burner gas_burner gas_burner gas_burner; do
+    for facility in gas_burner gas_burner gas_burner gas_burner gas_burner; do
         curl -s -o /dev/null -w '%{http_code} ' -b .energetica-dev/$user.txt -X POST \
             localhost:8000/api/v1/workshop/selection -H 'Content-Type: application/json' \
             -d "{\"facility\": \"$facility\"}"

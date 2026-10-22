@@ -227,8 +227,8 @@ class Ctx:
     def peak_must_serve(self) -> float:
         """The highest must-serve demand seen so far in W, or a guess from the player count before any trading."""
         seen = [view.peak_must_serve for view in self.history if view.peak_must_serve > 0]
-        # Before any trading: 100 MW per player, all of it must-serve, peaking about 45% over the average.
-        return max(seen) if seen else 100e6 * self.player_count * 1.45
+        # Before any trading: 80 MW per player, all of it must-serve, peaking about 45% over the average.
+        return max(seen) if seen else 80e6 * self.player_count * 1.45
 
     def growth(self) -> float:
         """How much the Recap says peak demand moves into this Round, with demand growth and events. 1 in Round 1."""

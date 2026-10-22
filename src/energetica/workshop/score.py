@@ -21,10 +21,10 @@ would count the operating profit twice. Cash also moves with the top-up and the 
 Leaving cash out means neither changes anyone's score, even when they cover a loan payment. A player who overspends on facilities or goes deep into
 debt keeps that loss in their score, and causing a blackout gains a trailing player nothing.
 
-A facility's residual value is its catalog price, scaled by the share of its lifetime it has left after the last
-completed Round: ``base_price × remaining_lifetime_rounds / lifetime_rounds``. The Rounds left are counted from the
-Round after it, so at the end of the session a facility that worked its final Round in the last Round is worth
-nothing. One still under construction keeps its whole lifetime, so it pays back its full catalog price. Any price
+A facility's residual value is its price for the session's length (#1306), scaled by the share of its lifetime it
+has left after the last completed Round: ``session_price × remaining_lifetime_rounds / lifetime_rounds``. The Rounds
+left are counted from the Round after it, so at the end of the session a facility that worked its final Round in the
+last Round is worth nothing. One still under construction keeps its whole lifetime, so it pays back its full price. Any price
 shock the player paid is left out. Only the facility counts: the energy a storage facility still holds is worth nothing.
 """
 
@@ -34,7 +34,7 @@ from collections.abc import Iterable
 
 from pydantic import BaseModel, Field
 
-from energetica.workshop.facilities import CATALOG
+from energetica.workshop.facilities import CATALOG, session_price
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.loan import LOAN_COST
 from energetica.workshop.operating_profit import session_operating_profit
@@ -55,22 +55,24 @@ class Score(BaseModel):
     score: float = Field(description="operating_profit - investments - carbon_tax + residual_value")
 
 
-def residual_value(owned: OwnedFacility, *, completed_rounds: int) -> float:
-    """What ``owned`` is worth once ``completed_rounds`` Rounds are completed."""
+def residual_value(owned: OwnedFacility, *, completed_rounds: int, round_count: int) -> float:
+    """What ``owned`` is worth once ``completed_rounds`` Rounds of a session of ``round_count`` are completed."""
     facility = CATALOG[owned.facility]
     left = lifetime_left(owned, current_round=completed_rounds + 1)
-    return facility.base_price * left.rounds / facility.lifetime_rounds
+    return session_price(owned.facility, round_count) * left.rounds / facility.lifetime_rounds
 
 
-def score(player: WorkshopPlayer, *, completed_rounds: int) -> Score:
-    """``player``'s score once ``completed_rounds`` Rounds are completed. Anything from a later Round is left out."""
+def score(player: WorkshopPlayer, *, completed_rounds: int, round_count: int) -> Score:
+    """``player``'s score once ``completed_rounds`` Rounds of a session of ``round_count`` are completed. Anything
+    from a later Round is left out.
+    """
     results = [result for result in player.trading_results if result.round <= completed_rounds]
     operating_profit = session_operating_profit(results)
     purchases = sum(purchase.price for purchase in player.purchases if purchase.round <= completed_rounds)
     loan_cost = LOAN_COST if player.loan is not None and player.loan.round <= completed_rounds else 0.0
     carbon_tax = sum(result.carbon_tax for result in results)
     residual = sum(
-        residual_value(owned, completed_rounds=completed_rounds)
+        residual_value(owned, completed_rounds=completed_rounds, round_count=round_count)
         for owned in player.owned_facilities
         if owned.built_round <= completed_rounds
     )
@@ -93,9 +95,9 @@ class Scoreboard(BaseModel):
     scores: list[Score]
 
 
-def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int) -> list[Score]:
-    """Every player's score once ``completed_rounds`` Rounds are completed, highest first. Players on the same score
-    keep the order they joined in.
+def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int, round_count: int) -> list[Score]:
+    """Every player's score once ``completed_rounds`` Rounds of a session of ``round_count`` are completed, highest
+    first. Players on the same score keep the order they joined in.
     """
-    scores = [score(player, completed_rounds=completed_rounds) for player in players]
+    scores = [score(player, completed_rounds=completed_rounds, round_count=round_count) for player in players]
     return sorted(scores, key=lambda player_score: player_score.score, reverse=True)

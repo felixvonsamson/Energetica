@@ -275,3 +275,23 @@ _FACILITIES = [
 
 CATALOG: dict[FacilityId, WorkshopFacility] = {facility.id: facility for facility in _FACILITIES}
 """Every Workshop facility, in display order: each base tier followed by its upgrade."""
+
+#: What the long-lived facilities cost in a short session (#1306), instead of their catalog price. They earn for fewer
+#: Rounds before the session ends, so they cost less. Each entry is the most Rounds a session may have for the price
+#: to apply, and the price, shortest session first. A longer session pays the catalog price.
+SESSION_LENGTH_PRICES: dict[FacilityId, tuple[tuple[int, float], ...]] = {
+    FacilityId.NUCLEAR_REACTOR: ((3, 53_000_000), (4, 60_000_000)),
+    FacilityId.NUCLEAR_REACTOR_GEN4: ((3, 83_000_000), (4, 95_000_000)),
+    FacilityId.SMALL_WATER_DAM: ((3, 22_000_000),),
+    FacilityId.LARGE_WATER_DAM: ((3, 54_000_000),),
+}
+
+
+def session_price(facility: FacilityId, round_count: int) -> float:
+    """What ``facility`` costs in a session of ``round_count`` Rounds, before any price shock. Fixed for the whole
+    session.
+    """
+    for most_rounds, price in SESSION_LENGTH_PRICES.get(facility, ()):
+        if round_count <= most_rounds:
+            return price
+    return CATALOG[facility].base_price

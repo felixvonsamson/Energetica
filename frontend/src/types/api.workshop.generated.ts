@@ -1843,7 +1843,7 @@ export interface components {
             for_sale: boolean;
             /**
              * Price
-             * @description What it costs in the current Round: base_price, moved by any price shock
+             * @description What it costs in the current Round: its price for the session's length, moved by any price shock
              */
             price: number;
             /**

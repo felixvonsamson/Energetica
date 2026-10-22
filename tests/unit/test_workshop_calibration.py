@@ -7,7 +7,14 @@ from __future__ import annotations
 import statistics
 
 from energetica.workshop.demand_block import DAYS_PER_YEAR
-from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
+from energetica.workshop.facilities import (
+    CATALOG,
+    SESSION_LENGTH_PRICES,
+    FacilityCategory,
+    FacilityId,
+    Fuel,
+    session_price,
+)
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, FUEL_USE
 from energetica.workshop.loan import LOAN_AMOUNT
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
@@ -75,8 +82,28 @@ def test_an_upgrade_costs_less_per_mwh_than_its_base_tier() -> None:
 
 
 def test_a_nuclear_reactor_needs_the_loan_in_round_one() -> None:
-    price = CATALOG[FacilityId.NUCLEAR_REACTOR].base_price
-    assert WORKSHOP_STARTING_BUDGET < price <= WORKSHOP_STARTING_BUDGET + LOAN_AMOUNT
+    for round_count in range(1, 8):
+        price = session_price(FacilityId.NUCLEAR_REACTOR, round_count)
+        assert WORKSHOP_STARTING_BUDGET < price <= WORKSHOP_STARTING_BUDGET + LOAN_AMOUNT, round_count
+
+
+def test_nuclear_and_dams_cost_less_in_short_sessions() -> None:
+    millions = {
+        facility: [session_price(facility, round_count) / 1e6 for round_count in (2, 3, 4, 5, 6)]
+        for facility in SESSION_LENGTH_PRICES
+    }
+    assert millions == {
+        FacilityId.NUCLEAR_REACTOR: [53, 53, 60, 70, 70],
+        FacilityId.NUCLEAR_REACTOR_GEN4: [83, 83, 95, 110, 110],
+        FacilityId.SMALL_WATER_DAM: [22, 22, 25, 25, 25],
+        FacilityId.LARGE_WATER_DAM: [54, 54, 60, 60, 60],
+    }
+
+
+def test_other_facilities_cost_their_catalog_price_whatever_the_session_length() -> None:
+    for facility in CATALOG.values():
+        if facility.id not in SESSION_LENGTH_PRICES:
+            assert session_price(facility.id, 3) == facility.base_price, facility.id
 
 
 def test_small_dams_can_reach_the_large_dam_unlock() -> None:
