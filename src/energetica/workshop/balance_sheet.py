@@ -5,8 +5,7 @@ into market income, dumping cost, O&M and fuel, with the volumes and prices behi
 off the Round's investments to give its net profit. Operating income is added up by
 :mod:`~energetica.workshop.operating_profit`, so the overview and the final score always agree.
 
-The sheet fills in as the Round's Trading periods are settled: a season not settled yet has no figures, and
-neither does one a blackout ended the Round before.
+The sheet fills in as the Round's Trading periods are settled: a season not settled yet has no figures.
 
 Fuel is paid for once per season (#1009), so each season's column has its own fuel cost.
 
@@ -16,6 +15,11 @@ income, above fuel.
 The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
 emitted building the Round's investments, charged in its first season, the tax on the CO₂ emitted generating, and
 the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
+
+Each blackout in the Round costs the player a share of their operating income for it (#1286,
+:mod:`~energetica.workshop.blackout`). The cost sits below operating income, and the Round's net profit takes it off
+too. Until the Round's last season is settled it is worked out on the operating income so far, and the Recap charges
+the final figure.
 
 The loan (#1225) is shown in its own financing section, below net profit and apart from it, since borrowing money
 is not a profit. The sheet of the Round the loan was taken in shows the money coming in, and the sheet of each Round
@@ -30,6 +34,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from energetica.workshop.blackout import Blackout, blackout_cost, blackout_cost_share
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, Loan, payment_round
@@ -38,7 +43,7 @@ from energetica.workshop.operating_profit import period_operating_profit, round_
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import FacilityPerformance, TradingResult
 
-SeasonStatus = Literal["settled", "upcoming", "skipped"]
+SeasonStatus = Literal["settled", "upcoming"]
 
 
 class OmLine(BaseModel):
@@ -139,11 +144,8 @@ class SeasonSheet(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     season: Season
-    status: SeasonStatus = Field(
-        description="settled: simulated, with figures. upcoming: not simulated yet. skipped: a blackout earlier in "
-        "the Round ended it before this season"
-    )
-    blackout: bool = Field(description="Whether a blackout ended the Round in this season")
+    status: SeasonStatus = Field(description="settled: simulated, with figures. upcoming: not simulated yet")
+    blackout_count: int = Field(description="How many times the grid went down in this season")
     sheet: PeriodSheet | None = Field(description="The season's figures, if it is settled")
 
 
@@ -180,8 +182,16 @@ class BalanceSheet(BaseModel):
     total: PeriodSheet | None = Field(description="The settled seasons added up, or None if none is settled yet")
     investments: list[InvestmentLine] = Field(description="One line per facility type bought, in catalog order")
     investment_total: float
+    blackout_cost_share: float = Field(
+        description="The share of the Round's operating income its blackouts cost, from 0 to 1"
+    )
+    blackout_cost: float = Field(
+        description="What the Round's blackouts cost, on its operating income so far. Never below zero. Charged when "
+        "the Round's Recap opens"
+    )
     net_profit: float = Field(
-        description="The Round's operating income so far minus its carbon tax so far and its investments"
+        description="The Round's operating income so far minus its carbon tax so far, its investments and its "
+        "blackout cost"
     )
     financing: list[FinancingLine] = Field(
         description="The loan coming in this Round, and the payments taken at its start or at the session end. Not "
@@ -194,16 +204,8 @@ def _position(round_number: int, season: Season) -> tuple[int, int]:
     return round_number, SEASONS.index(season)
 
 
-def season_status(
-    round_number: int, season: Season, *, settled: tuple[int, Season] | None, blackouts: Sequence[tuple[int, Season]]
-) -> SeasonStatus:
-    """Whether a season has been settled, is still to come, or was skipped by a blackout earlier in its Round.
-
-    ``settled`` is the last Trading period settled, and ``blackouts`` the periods the grid went down in.
-    """
-    for blackout_round, blackout_season in blackouts:
-        if blackout_round == round_number and SEASONS.index(season) > SEASONS.index(blackout_season):
-            return "skipped"
+def season_status(round_number: int, season: Season, *, settled: tuple[int, Season] | None) -> SeasonStatus:
+    """Whether a season has been settled or is still to come. ``settled`` is the last Trading period settled."""
     if settled is not None and _position(round_number, season) <= _position(*settled):
         return "settled"
     return "upcoming"
@@ -354,26 +356,28 @@ def balance_sheet(
     results: Sequence[TradingResult],
     purchases: Iterable[Purchase],
     settled: tuple[int, Season] | None,
-    blackouts: Sequence[tuple[int, Season]],
+    blackouts: Sequence[Blackout],
     loan: Loan | None = None,
     round_count: int,
 ) -> BalanceSheet:
     """A player's balance sheet for Round ``round_number`` of ``round_count``, from their Trading-period ``results``,
-    ``purchases`` and ``loan``. ``settled`` is the last Trading period settled, and ``blackouts`` the periods the
-    grid went down in.
+    ``purchases`` and ``loan``. ``settled`` is the last Trading period settled, and ``blackouts`` every blackout so
+    far.
 
     A settled season in which the player had nothing operating has no result, and shows zero throughout.
     """
     round_results = [result for result in results if result.round == round_number]
     seasons = []
     for season in SEASONS:
-        status = season_status(round_number, season, settled=settled, blackouts=blackouts)
+        status = season_status(round_number, season, settled=settled)
         season_results = [result for result in round_results if result.season == season]
         seasons.append(
             SeasonSheet(
                 season=season,
                 status=status,
-                blackout=(round_number, season) in blackouts,
+                blackout_count=sum(
+                    1 for blackout in blackouts if (blackout.round, blackout.season) == (round_number, season)
+                ),
                 sheet=period_sheet(season_results) if status == "settled" else None,
             )
         )
@@ -381,15 +385,18 @@ def balance_sheet(
     lines = investments(purchases, round_number)
     investment_total = sum(line.cost for line in lines)
     financing_lines = financing(loan, round_number, round_count=round_count)
+    operating_income = round_operating_profit(results, round_number)
+    blackout_count = sum(season.blackout_count for season in seasons)
+    cost = blackout_cost(operating_income, blackout_count)
     return BalanceSheet(
         round=round_number,
         seasons=seasons,
         total=period_sheet(round_results) if any_settled else None,
         investments=lines,
         investment_total=investment_total,
-        net_profit=round_operating_profit(results, round_number)
-        - sum(result.carbon_tax for result in round_results)
-        - investment_total,
+        blackout_cost_share=blackout_cost_share(blackout_count),
+        blackout_cost=cost,
+        net_profit=operating_income - sum(result.carbon_tax for result in round_results) - investment_total - cost,
         financing=financing_lines,
         financing_total=sum(line.amount for line in financing_lines),
     )

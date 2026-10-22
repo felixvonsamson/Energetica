@@ -12,8 +12,7 @@
  * The intro and the scoreboard are open all game (#1250), so their nodes always
  * link.
  *
- * The season the grid went down in is labeled "Blackout". The seasons after it
- * in that Round never run, so they are crossed out and do not link (#1005).
+ * Each season the grid went down in is labeled "Blackout" (#1005).
  *
  * The timeline adapts to the width it has (#1271). When it does not fit, it
  * first drops the season names, keeping them in each icon's tooltip, then the
@@ -51,9 +50,9 @@ import {
     type Checkpoint,
     introPage,
     introStatus,
-    type TradingPeriod,
+    type Blackout,
     recapPage,
-    type SeasonStatus,
+    type NodeStatus,
     roundPage,
     scoreboardPage,
     scoreboardStatus,
@@ -76,7 +75,7 @@ export function WorkshopTimeline({
 }: {
     checkpoint: Checkpoint;
     roundCount: number;
-    blackouts: TradingPeriod[];
+    blackouts: Blackout[];
     /** Fixes the layout instead of fitting it to the width. */
     layout?: TimelineLayout;
 }) {
@@ -235,13 +234,7 @@ function RoundBlock({
                             key={season}
                             status={status}
                             page={tradingPeriodPage(round.round, season)}
-                            title={
-                                blackout
-                                    ? `${name}: blackout`
-                                    : status === "skipped"
-                                      ? `${name}: skipped after the blackout`
-                                      : name
-                            }
+                            title={blackout ? `${name}: blackout` : name}
                             className={cn(
                                 "rounded-full border border-border py-1 text-xs",
                                 showNames ? "px-2.5" : "px-1.5",
@@ -249,7 +242,6 @@ function RoundBlock({
                                     "border-destructive text-destructive",
                                 status === "current" &&
                                     "not-data-[status=active]:border-border-highlight not-data-[status=active]:bg-surface-highlight not-data-[status=active]:text-fg-base",
-                                status === "skipped" && "line-through",
                                 "data-[status=active]:border-brand data-[status=active]:bg-brand data-[status=active]:text-brand-fg",
                             )}
                         >
@@ -267,8 +259,8 @@ function RoundBlock({
 }
 
 /**
- * One node: a link to its page, unless the session has not reached it yet or
- * skipped it, or it is in the ruler.
+ * One node: a link to its page, unless the session has not reached it yet, or
+ * it is in the ruler.
  */
 function TimelineNode({
     status,
@@ -277,7 +269,7 @@ function TimelineNode({
     className,
     children,
 }: {
-    status: SeasonStatus;
+    status: NodeStatus;
     page: WorkshopPage;
     title?: string;
     className?: string;
@@ -286,7 +278,7 @@ function TimelineNode({
     const base = "flex shrink-0 items-center gap-1.5 font-medium";
     if (use(InRuler))
         return <span className={cn(base, className)}>{children}</span>;
-    if (status === "future" || status === "skipped") {
+    if (status === "future") {
         return (
             <span
                 aria-disabled="true"

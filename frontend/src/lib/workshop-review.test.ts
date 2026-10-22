@@ -14,6 +14,8 @@ import {
     pointTime,
     priceRows,
     reviewableWeeks,
+    outages,
+    isGridDown,
     seriesEnergy,
     timeOfDay,
     weekdayOfDay,
@@ -242,20 +244,31 @@ describe("pointAxisLabel", () => {
 describe("reviewableWeeks", () => {
     const days = Array.from({ length: 14 }, (_, i) => 59 + i);
 
-    it("lists every week when the grid held", () => {
-        expect(reviewableWeeks(days, null, 24)).toEqual([
+    it("lists every week, whether or not the grid went down", () => {
+        expect(reviewableWeeks(days)).toEqual([
             days.slice(0, 7),
             days.slice(7),
         ]);
     });
+});
 
-    it("ends at the week the grid went down in", () => {
-        // Point 30 is 06:00 on the second day, in the first week.
-        expect(reviewableWeeks(days, 30, 24)).toEqual([days.slice(0, 7)]);
-        expect(reviewableWeeks(days, 7 * 24, 24)).toEqual([
-            days.slice(0, 7),
-            days.slice(7),
+describe("outages", () => {
+    it("covers a day from each blackout, cut short at the end of the period", () => {
+        // A week of 24 clearings a day has 168 points.
+        expect(outages([12, 160], 168, 24)).toEqual([
+            { start: 12, end: 36 },
+            { start: 160, end: 168 },
         ]);
+    });
+});
+
+describe("isGridDown", () => {
+    it("is the day after each blackout, not the blackout itself", () => {
+        expect(isGridDown(12, [12], 24)).toBe(false);
+        expect(isGridDown(13, [12], 24)).toBe(true);
+        expect(isGridDown(35, [12], 24)).toBe(true);
+        expect(isGridDown(36, [12], 24)).toBe(false);
+        expect(isGridDown(5, [], 24)).toBe(false);
     });
 });
 

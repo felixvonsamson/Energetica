@@ -11,6 +11,7 @@ from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_plan import PlannedEvent
+from energetica.workshop.seasons import SEASONS
 from energetica.workshop.session import (
     NoSuchRoundError,
     Recap,
@@ -130,11 +131,13 @@ def test_the_recap_tells_the_weather_of_each_season_the_round_played(tmp_path: P
     assert weather[0].solar == pytest.approx(spring.solar / NORMAL_OUTPUT["spring"].solar - 1)
 
 
-def test_the_recap_tells_no_weather_after_a_blackout(tmp_path: Path) -> None:
-    # A player who owns nothing cannot meet the demand she brings, so the grid goes down in spring.
+def test_the_recap_tells_every_seasons_weather_and_blackouts_after_a_blackout(tmp_path: Path) -> None:
+    # A player who owns nothing cannot meet the demand they bring, so the grid goes down in every season.
     session = WorkshopSession.open(WORKSHOP_CONFIG, tmp_path / "session.json", round_count=2, clock=_Clock())
     session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
     session.advance()
     _to_recap(session)
-    assert session.blackouts == [TradingPeriod(round=1, season="spring")]
-    assert [report.season for report in session.recap(1).weather] == ["spring"]
+    recap = session.recap(1)
+    assert recap.blackouts == session.blackouts
+    assert {blackout.season for blackout in recap.blackouts} == set(SEASONS)
+    assert [report.season for report in recap.weather] == list(SEASONS)

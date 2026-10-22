@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from energetica.workshop.balance_sheet import balance_sheet, period_sheet, season_status
+from energetica.workshop.balance_sheet import balance_sheet, period_sheet
+from energetica.workshop.blackout import Blackout
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
 from energetica.workshop.fuel import FuelPurchase
@@ -210,17 +211,47 @@ def test_a_settled_season_with_nothing_operating_shows_zero() -> None:
     assert (spring.market_income, spring.om, spring.operating_income) == (0.0, [], 0.0)
 
 
-def test_a_blackout_marks_its_season_and_skips_the_rest_of_the_round() -> None:
+def _blackout(round_number: int, season: Season) -> Blackout:
+    return Blackout(round=round_number, season=season, day=0, minute=0)
+
+
+def test_a_blackout_marks_its_season_and_the_round_goes_on() -> None:
     sheet = balance_sheet(
-        1, results=[SPRING, SUMMER], purchases=[], settled=(1, "summer"), blackouts=[(1, "summer")], round_count=3
+        1,
+        results=[SPRING, SUMMER],
+        purchases=[],
+        settled=(1, "summer"),
+        blackouts=[_blackout(1, "spring"), _blackout(1, "spring"), _blackout(2, "summer")],
+        round_count=3,
     )
 
-    assert [season.status for season in sheet.seasons] == ["settled", "settled", "skipped", "skipped"]
-    assert [season.blackout for season in sheet.seasons] == [False, True, False, False]
+    assert [season.status for season in sheet.seasons] == ["settled", "settled", "upcoming", "upcoming"]
+    assert [season.blackout_count for season in sheet.seasons] == [2, 0, 0, 0]
 
 
-def test_a_blackout_in_another_round_skips_nothing() -> None:
-    assert season_status(2, "winter", settled=(2, "winter"), blackouts=[(1, "spring")]) == "settled"
+def test_the_blackout_cost_is_a_share_of_the_operating_income_and_comes_off_the_net_profit() -> None:
+    sheet = balance_sheet(
+        1,
+        results=[SPRING, SUMMER],
+        purchases=[],
+        settled=(1, "summer"),
+        blackouts=[_blackout(1, "spring"), _blackout(1, "summer")],
+        round_count=3,
+    )
+
+    operating = round_operating_profit([SPRING, SUMMER], 1)
+    assert operating > 0
+    assert sheet.blackout_cost_share == pytest.approx(0.6)
+    assert sheet.blackout_cost == pytest.approx(0.6 * operating)
+    assert sheet.net_profit == pytest.approx(operating - 0.6 * operating)
+
+
+def test_a_round_without_blackouts_has_no_blackout_cost() -> None:
+    sheet = balance_sheet(
+        2, results=[SPRING], purchases=[], settled=(2, "spring"), blackouts=[_blackout(1, "spring")], round_count=3
+    )
+
+    assert (sheet.blackout_cost_share, sheet.blackout_cost) == (0.0, 0.0)
 
 
 def test_investments_are_the_rounds_purchases_by_type_and_come_off_the_net_profit() -> None:

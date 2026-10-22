@@ -68,6 +68,9 @@ import {
     pointTime,
     priceRows,
     reviewableWeeks,
+    outages,
+    isGridDown,
+    type Outage,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
 import { ApiClientError } from "@energetica/core/api-client";
@@ -244,8 +247,12 @@ function Review({
         setPoint(index * pointsPerWeek);
     };
 
-    // Points after a blackout never cleared, so the scrubber stops at it.
-    const lastPoint = period.blackout_at ?? period.days.length * cpd - 1;
+    const pointCount = period.days.length * cpd;
+    const lastPoint = pointCount - 1;
+    const blackouts = useMemo(
+        () => outages(period.blackouts, pointCount, cpd),
+        [period.blackouts, pointCount, cpd],
+    );
 
     const timeAxis = useMemo(
         (): TimeAxis => ({
@@ -272,7 +279,7 @@ function Review({
     const chart = {
         timeAxis,
         markerTick: point,
-        blackoutTick: period.blackout_at ?? undefined,
+        blackouts,
         onTickClick,
         isLoading: week.isPending,
         isError: week.isError,
@@ -282,11 +289,16 @@ function Review({
 
     return (
         <div className="space-y-6 pt-4">
-            {period.blackout_at !== null && (
+            {period.blackouts.length > 0 && (
                 <TypographyMuted>
                     The grid went down on{" "}
-                    {pointTime(period.blackout_at, period.days, cpd)}. Nothing
-                    was produced or sold after that.
+                    {period.blackouts
+                        .map((blackout) =>
+                            pointTime(blackout, period.days, cpd),
+                        )
+                        .join("; ")}
+                    . Each time, nothing was produced or sold for the next 24
+                    hours, and demand was rationed after that.
                 </TypographyMuted>
             )}
             {labels.me !== null && (
@@ -307,12 +319,7 @@ function Review({
             <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
                 {period.weeks > 1 && (
                     <WeekPicker
-                        // Weeks after a blackout never cleared, so the list ends at it.
-                        weeks={reviewableWeeks(
-                            period.days,
-                            period.blackout_at,
-                            cpd,
-                        )}
+                        weeks={reviewableWeeks(period.days)}
                         value={weekIndex}
                         onChange={chooseWeek}
                     />
@@ -364,7 +371,7 @@ function WeekPicker({
 interface ChartProps {
     timeAxis: TimeAxis;
     markerTick: number;
-    blackoutTick: number | undefined;
+    blackouts: readonly Outage[];
     onTickClick: (tick: number) => void;
     isLoading: boolean;
     isError: boolean;
@@ -695,28 +702,41 @@ function MeritOrderCard({
     point: number;
     labels: Labels;
 }) {
-    const order = useWorkshopMeritOrder(period.round, period.season, point);
+    const cpd = period.clearings_per_day;
+    // The market never cleared while the grid was down, so there is nothing to ask for.
+    const down = isGridDown(point, period.blackouts, cpd);
+    const order = useWorkshopMeritOrder(
+        period.round,
+        period.season,
+        down ? null : point,
+    );
     const data = useMemo(
         () => (order.data ? meritOrderData(order.data) : undefined),
         [order.data],
     );
-    const cpd = period.clearings_per_day;
     const title: ReactNode = (
         <>Merit order on {pointTime(point, period.days, cpd)}</>
     );
 
     return (
         <ChartCard icon={BarChart2} iconClassName="text-primary" title={title}>
-            <MeritOrderView
-                data={data}
-                isLoading={order.isPending}
-                isError={order.isError}
-                getFacilityColor={labels.assetColor}
-                getPlayerColor={labels.playerColor}
-                playerName={labels.playerName}
-                facilityName={labels.facilityName}
-                emptyMessage="No bids at this settlement point"
-            />
+            {down ? (
+                <TypographyMuted className="py-6 text-center">
+                    The grid was down at this point, so the market did not
+                    clear.
+                </TypographyMuted>
+            ) : (
+                <MeritOrderView
+                    data={data}
+                    isLoading={order.isPending}
+                    isError={order.isError}
+                    getFacilityColor={labels.assetColor}
+                    getPlayerColor={labels.playerColor}
+                    playerName={labels.playerName}
+                    facilityName={labels.facilityName}
+                    emptyMessage="No bids at this settlement point"
+                />
+            )}
         </ChartCard>
     );
 }

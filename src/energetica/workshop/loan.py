@@ -6,11 +6,11 @@ as their selection still fits their cash without it. Once the phase closes, the 
 
 The loan is paid back in :data:`LOAN_PAYMENTS` equal payments. A loan taken in Round r is paid back as Rounds r+1,
 r+2, … start, before the cash floor is applied (#1016). A payment due after the last Round is taken when the session
-ends. A payment can take a player's cash below zero, like any other cost, and a blackout reset can wipe it out.
+ends. A payment can take a player's cash below zero, like any other cost.
 
 The loan costs more than it brings in. The difference, :data:`LOAN_COST`, counts in the final score as an
-investment with no residual value (:mod:`~energetica.workshop.score`), whatever the cash floor or the blackout
-reset do to the payments.
+investment with no residual value (:mod:`~energetica.workshop.score`), whatever the cash floor does to the
+payments.
 """
 
 from __future__ import annotations

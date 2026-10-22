@@ -8,8 +8,8 @@
  * show), `current`, or `future`, and each has its own page. Before Round 1 sits
  * the intro, a guide to getting around the game (#1254).
  *
- * A blackout ends its Round (#1005): the Trading periods after it in that Round
- * never run, so they are `skipped` and have no page.
+ * A Trading period the grid went down in is marked as a blackout (#1005). The
+ * grid comes back a day later and the Round goes on (#1286).
  */
 
 import type { ApiSchema } from "@/types/api-helpers";
@@ -17,8 +17,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 export type Checkpoint = ApiSchema<"WorkshopSessionOut">["checkpoint"];
 export type Season = ApiSchema<"TradingPeriod">["season"];
 export type NodeStatus = "past" | "current" | "future";
-export type SeasonStatus = NodeStatus | "skipped";
-export type TradingPeriod = ApiSchema<"TradingPeriod">;
+export type Blackout = ApiSchema<"Blackout">;
 
 /** The four Trading periods of a Round, in the order they run. */
 export const SEASONS = [
@@ -48,7 +47,7 @@ export interface TimelineRound {
     status: NodeStatus;
     seasons: {
         season: Season;
-        status: SeasonStatus;
+        status: NodeStatus;
         /** Whether the grid went down in this Trading period. */
         blackout: boolean;
     }[];
@@ -97,31 +96,27 @@ function statusOf(current: number, first: number, last = first): NodeStatus {
 
 /**
  * Every Round of a session of `roundCount` Rounds, with each node's status.
- * `blackouts` are the Trading periods the grid went down in.
+ * `blackouts` are every time the grid went down.
  */
 export function workshopTimeline(
     checkpoint: Checkpoint,
     roundCount: number,
-    blackouts: TradingPeriod[],
+    blackouts: Blackout[],
 ): TimelineRound[] {
     const current = stepOf(checkpoint);
     return Array.from({ length: roundCount }, (_, index) => {
         const round = index + 1;
         const start = roundStart(round);
-        const blackout = blackouts.find((period) => period.round === round);
-        const blackoutIndex = blackout
-            ? SEASONS.indexOf(blackout.season)
-            : SEASONS.length;
         return {
             round,
             status: statusOf(current, start, start + SEASONS.length),
             seasons: SEASONS.map((season, i) => ({
                 season,
-                status:
-                    i > blackoutIndex
-                        ? "skipped"
-                        : statusOf(current, start + 1 + i),
-                blackout: i === blackoutIndex,
+                status: statusOf(current, start + 1 + i),
+                blackout: blackouts.some(
+                    (blackout) =>
+                        blackout.round === round && blackout.season === season,
+                ),
             })),
             recap: statusOf(current, start + STEPS_PER_ROUND - 1),
         };
@@ -137,9 +132,8 @@ export interface SeasonLink {
 
 /**
  * The Trading periods just before and after one, for the season page's previous
- * and next buttons (#1273). Winter leads on to the next Round's spring. Seasons
- * a blackout skipped have no page, so they are stepped over. Each side is
- * `null` when there is no season there the session has reached.
+ * and next buttons (#1273). Winter leads on to the next Round's spring. Each
+ * side is `null` when there is no season there the session has reached.
  */
 export function adjacentSeasons(
     rounds: TimelineRound[],
@@ -147,9 +141,10 @@ export function adjacentSeasons(
     season: Season,
 ): { previous: SeasonLink | null; next: SeasonLink | null } {
     const seasons = rounds.flatMap((timelineRound) =>
-        timelineRound.seasons
-            .filter(({ status }) => status !== "skipped")
-            .map((entry) => ({ ...entry, round: timelineRound.round })),
+        timelineRound.seasons.map((entry) => ({
+            ...entry,
+            round: timelineRound.round,
+        })),
     );
     const index = seasons.findIndex(
         (entry) => entry.round === round && entry.season === season,

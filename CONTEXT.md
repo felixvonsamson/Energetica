@@ -259,22 +259,29 @@ order at any point is rebuilt. It is saved to its own file beside the session's.
 All of a player's trading income, after any climate-event `revenue_tax`, minus their operating costs:
 O&M, fuel bought, the energy storage bought to charge, and renewable output dumped unsold. Fuel counts
 when it is bought, not when it is burned, since its price changes over time. Facility investments, the
-carbon tax, the floor top-up and blackout resets are left out. Summed over the session, it is the first
+carbon tax, the floor top-up and the **blackout cost** are left out. Summed over the session, it is the first
 term of the final score.
 _Avoid_: revenue, gross proceeds, net.
 
-**Floor top-up** and **blackout reset** (#1016):
-Cash carries forward from Round to Round. As a new Round starts, a player holding less than half the
-Round-1 starting budget is topped up to exactly half. After a blackout, every player's cash is reset to
-the full starting budget instead, however much they held. Facilities stay as they are, and the
-blacked-out Round still counts toward their lifetimes. The Recap's blackout report tells players about the
-reset; the top-up is silent.
+**Floor top-up** (#1016, #1286):
+Cash carries forward from Round to Round. As a new Round starts, a player holding less than 70% of the
+Round-1 starting budget (35M of 50M) is topped up to exactly that. The top-up is silent.
+
+**Blackout**, **rationing** and **blackout cost** (#1005, #1286):
+A blackout is a clearing that leaves must-serve demand unserved: the grid goes down for a day, or until the
+end of the Trading period if that comes first. It then restarts with electricity rationed: demand is cut by
+10% for the rest of the Round, and by another 10% after each further blackout, which can happen in the same
+Trading period or a later one. The next Round starts with demand back at its full level. When the Recap
+opens, each blackout in the Round costs every player 30% of their operating profit for it, up to all of it;
+a player who made a loss pays nothing. The cost comes out of cash, and the balance sheet shows it below
+operating income, but it never changes a score.
+_Avoid_: blackout reset (removed in #1286).
 
 **Final score** and **residual value** (#1017, #1222):
 A player's final score is their operating profit over the whole session, minus their **investments** (what
 they paid for every facility they bought, price shocks included, plus the cost of any **loan**), minus the carbon tax they paid less
 their shared payback, plus the residual value of the facilities they still own. Cash is not part of it, so the
-floor top-up and the blackout reset never change a score. A facility's residual value is its price for
+floor top-up and the blackout cost never change a score. A facility's residual value is its price for
 the session's length (see **session-length price**) times the share of its lifetime left once the session is
 over, counting only the Rounds after the last one. A facility still under construction keeps its whole lifetime, so it pays back its full price.
 The energy a storage facility holds is worth nothing. The **scoreboard** ranks every player by score, and
@@ -295,7 +302,7 @@ Investment phase in any Round but the last. It is added to their cash straight a
 until the phase closes, as long as their selection still fits without it. It is paid back in two payments of
 30M, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
 taken when the session ends. The final score counts the 10M it costs as an investment with no residual
-value, whatever the floor top-up or the blackout reset do to the payments.
+value, whatever the floor top-up does to the payments.
 _Avoid_: credit, debt (a player's cash can go negative without a loan).
 
 **Balance sheet** (#1008):
@@ -350,7 +357,7 @@ point, in one of three categories: climate, price shock or geopolitics, and dema
 be changed or dropped until the Round's plan is **locked**. A Round event **fires** when the Round's
 Investment phase opens, and a seasonal event when its season's Trading period opens. Each category holds
 at most one event per **boundary**: one per Round, or one per season for a seasonal event. Round 1 holds
-none. An event planned for a season that a blackout skips never fires, but stays in the plan. A fired
+none. A fired
 event's headline is told at the Recap, and nobody, the facilitator included, sees it before. The Recap
 before a Round also tells what the Round holds: a Round event with its exact effect, and a seasonal event
 only as a **forecast** that names its season, gives no figures, and sounds more certain the more severe
@@ -359,7 +366,8 @@ _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Peak demand** (#1013):
 The most the market cleared at one **settlement point** in a Round, kept as the Round's Trading periods settle:
-a clearing that clears more than the peak so far replaces it. A clearing the grid went down at does not count.
+a clearing that clears more than the peak so far replaces it. It is must-serve demand before any **rationing**,
+since rationing ends with the Round.
 The Recap forecasts next Round's peak as this one grown by **demand growth** and moved by the demand shifts that
 start next Round.
 
@@ -367,15 +375,15 @@ start next Round.
 How much demand grows from one Round to the next, before any event. Each Round after the first has a growth
 factor, and its demand is the Round before's times that factor, so demand grows exponentially. The factor for
 Round N+1 is worked out when Recap N opens, from the room's average operating profit per player in Round N: the
-more the room earned, the faster demand grows, within a floor and a cap. A Round that ended in a blackout counts
-the profit it made up to it. The Recap announces the growth as a percentage, without the formula. The demand
+more the room earned, the faster demand grows, within a floor and a cap. It counts the profit before any **blackout
+cost**. The Recap announces the growth as a percentage, without the formula. The demand
 shifts of events multiply on top of it.
 _Avoid_: player progression, demand trend.
 
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
 strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its
-headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout,
+headline and a line of plain numbers such as "Demand +18% for the summer", the day and hour of each blackout with what it cost,
 the room's figures, and how each season's wind and sunshine compared with a normal season (#1200). **The
 Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if it holds one, its Round
 events with their exact effect, the **demand growth** and the change in peak demand, and its seasonal events as
