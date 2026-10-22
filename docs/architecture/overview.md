@@ -43,7 +43,7 @@ production import the same code the same way.
 src/energetica/       # Python/FastAPI backend
 ├── routers/          # API endpoints
 ├── schemas/          # Pydantic models
-├── kernel/           # Error types, session signing, hashing, version, formatting
+├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
 ├── identity/         # Accounts store, instance and server configuration, my-runs
 ├── sim/              # Market clearing and settlement, facility statuses
 └── freeplay/         # The persistent world
