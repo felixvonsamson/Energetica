@@ -74,31 +74,64 @@ def fuel_prices(ctx: Ctx) -> dict[str, float]:
     return {fuel: line["price"] for fuel, line in ctx.fuel.items()}
 
 
+def others_fleets(ctx: Ctx, beliefs: Beliefs) -> dict[int, dict[tuple[int, str], float]]:
+    """Each Round's view of the other players' plants: W of each player's fossil and nuclear types, from the merit
+    order, and of each renewable type, estimated from its output. Taken from the Round's last season that held."""
+    by_round: dict[int, dict[tuple[int, str], float]] = {}
+    for round_number in sorted({view.round for view in ctx.history}):
+        views = [view for view in ctx.history if view.round == round_number]
+        held = [view for view in views if not view.blackout] or views
+        fleet: dict[tuple[int, str], float] = {}
+        for line in held[-1].offers:
+            if line["player_id"] != ctx.me and not is_storage(line["facility"]) and weather_kind(line["facility"]) is None:
+                fleet[(line["player_id"], line["facility"])] = line["capacity"]
+        estimates: dict[tuple[int, str], list[float]] = {}
+        for view in held:
+            for key, power in renewable_power(view, ctx.me, operating(ctx, view.round), beliefs.year).items():
+                estimates.setdefault(key, []).append(power)
+        fleet.update({key: float(np.mean(powers)) for key, powers in estimates.items()})
+        by_round[round_number] = fleet
+    return by_round
+
+
+def alive(by_round: Mapping[int, Mapping[tuple[int, str], float]], target: int) -> dict[tuple[int, str], float]:
+    """The others' plants still working in Round ``target``. Plants first seen in a Round retire their lifetime later,
+    so the bot works out each player's plants by the Round they appeared, as a player reading the record could."""
+    working: dict[tuple[int, str], float] = {}
+    seen: dict[tuple[int, str], float] = {}
+    for round_number in sorted(by_round):
+        for key, power in by_round[round_number].items():
+            added = power - seen.get(key, 0.0)
+            seen[key] = power
+            if added > 0 and target <= round_number + spec(key[1]).lifetime_rounds - 1:
+                working[key] = working.get(key, 0.0) + added
+    return working
+
+
 def others_offers(
     ctx: Ctx, season: str, cpd: int, shares: Mapping[str, np.ndarray], scale: float, beliefs: Beliefs
 ) -> list[Offer]:
-    """The other players' offers in ``season``, from the latest record, scaled by ``scale`` for what they build."""
+    """The other players' offers in ``season`` of this Round: their plants still working by then, from the record,
+    plus what the bot expects them to build, ``scale`` times what they had."""
     latest = ctx.history[-1]
     points = len(shares["wind"])
-    offers: list[Offer] = []
-    price_of: dict[tuple[int, str], float] = {}
+    by_round = others_fleets(ctx, beliefs)
+    now = by_round[max(by_round)]
+    working = now if latest.round == ctx.round else alive(by_round, ctx.round)
+    price_of = {(line["player_id"], line["facility"]): line["price"] for line in latest.offers}
     # The others' fossil and nuclear plants may not keep up with demand: how far the bot counts on them is a belief.
+    # Plants that retire are not assumed to be replaced: no one can count on that.
     firm_scale = 1 + (scale - 1) * beliefs.firm_trust
-    for line in latest.offers:
-        key = (line["player_id"], line["facility"])
-        price_of[key] = line["price"]
-        if line["player_id"] == ctx.me or is_storage(line["facility"]) or weather_kind(line["facility"]) is not None:
-            continue
-        offers.append(Offer(line["price"], np.full(points, line["capacity"] * firm_scale)))
-    # Renewables: each player's installed power, from the latest Round's record, at the share a typical season gives.
-    views = [view for view in ctx.history if view.round == latest.round and not view.blackout] or [latest]
-    estimates: dict[tuple[int, str], list[float]] = {}
-    for view in views:
-        for key, power in renewable_power(view, ctx.me, operating(ctx, view.round), beliefs.year).items():
-            estimates.setdefault(key, []).append(power)
-    for (player, facility), powers in estimates.items():
-        power = float(np.mean(powers)) * scale
-        offers.append(Offer(price_of.get((player, facility), RENEWABLE_PRICE), power * shares[weather_kind(facility)], True))
+    offers: list[Offer] = []
+    for (player, facility), power in working.items():
+        kind = weather_kind(facility)
+        if kind is None:
+            built = now.get((player, facility), 0.0) * (firm_scale - 1)
+            offers.append(Offer(price_of.get((player, facility), UNSEEN_FIRM_PRICE), np.full(points, power + built)))
+        else:
+            built = now.get((player, facility), 0.0) * (scale - 1)
+            price = price_of.get((player, facility), RENEWABLE_PRICE)
+            offers.append(Offer(price, (power + built) * shares[kind], True))
     return offers
 
 
