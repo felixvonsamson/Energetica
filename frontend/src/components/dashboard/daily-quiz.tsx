@@ -204,12 +204,15 @@ export function DailyQuizSection() {
                     </p>
 
                     {/* Answer Buttons */}
-                    <ReadOnlyTooltip readOnly={readOnly} className="block">
-                        <div className="space-y-3">
-                            {(["answer1", "answer2", "answer3"] as const).map(
-                                (key) => (
+                    <div className="space-y-3">
+                        {(["answer1", "answer2", "answer3"] as const).map(
+                            (key) => (
+                                <ReadOnlyTooltip
+                                    key={key}
+                                    readOnly={readOnly}
+                                    className="block"
+                                >
                                     <button
-                                        key={key}
                                         onClick={() => handleAnswerClick(key)}
                                         disabled={
                                             hasAnswered || isPending || readOnly
@@ -221,10 +224,10 @@ export function DailyQuizSection() {
                                         </span>
                                         {getAnswerIndicator(key)}
                                     </button>
-                                ),
-                            )}
-                        </div>
-                    </ReadOnlyTooltip>
+                                </ReadOnlyTooltip>
+                            ),
+                        )}
+                    </div>
 
                     {/* Explanation and Learn More (only shown after answering) */}
                     {hasAnswered && quizData.explanation && (

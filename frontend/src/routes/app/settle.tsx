@@ -92,12 +92,14 @@ function SettlePage() {
     }, [user?.is_settled, isAuthLoading, navigate]);
 
     // The settle page renders outside GameLayout, so it mounts the lifecycle banner itself: an
-    // unsettled player arriving during freeze still learns the game has ended (#866).
+    // unsettled player arriving during freeze still learns the game has ended (#866). On large
+    // screens the page fills the viewport without scrolling, so the banner takes its height out
+    // of the content rather than adding to it.
     return (
-        <>
+        <div className="flex flex-col lg:h-screen">
             <LifecycleBanner />
             <SettleContent />
-        </>
+        </div>
     );
 }
 
@@ -168,7 +170,7 @@ function SettleContent() {
     }
 
     return (
-        <div className="p-4 flex flex-col lg:h-screen">
+        <div className="p-4 flex flex-col lg:flex-1 lg:min-h-0">
             {/* Title with theme toggle */}
             <div className="flex items-center gap-3 mb-6 lg:shrink-0">
                 <div className="flex-1" />
