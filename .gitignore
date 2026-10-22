@@ -15,7 +15,16 @@ admin_accounts.txt
 *actions_history.log
 .env
 frontend/.env
-.claude
+
+# Claude Code: only the shared setup is committed. Personal settings (settings.local.json),
+# skills and worktrees stay local. Git cannot re-include a file inside an ignored directory,
+# so ignore the directory's contents and re-include the shared files.
+.claude/*
+!.claude/settings.json
+!.claude/scripts/
+!.claude/hooks/
+.claude/hooks/*
+!.claude/hooks/greptile-after-pr-create.sh
 
 # Deploy-time backend version stamp — written on the server by scripts/deploy-*.sh, and
 # never committed (would be stale the moment it lands). See scripts/lib/version-stamp.sh.
