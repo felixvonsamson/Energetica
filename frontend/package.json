@@ -38,8 +38,6 @@
         "generate-types": "bash ../scripts/generate-types.sh",
         "lint": "eslint . --max-warnings 0 --cache",
         "lint:fix": "eslint . --fix --cache",
-        "format": "prettier --write \"./**/*.{ts,tsx}\"",
-        "format:check": "prettier --check \"./**/*.{ts,tsx}\"",
         "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.lobby.json && tsc --noEmit --project tsconfig.sw.json && bun run --filter './apps/*' --filter './packages/*' typecheck",
         "typecheck:watch": "tsc --noEmit --watch",
         "guard:no-raw-html": "bun ../scripts/guard-no-raw-html.ts",
