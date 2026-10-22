@@ -19,6 +19,8 @@ interface ResourcesChartProps {
     isError: boolean;
     hiddenResources: Set<string>;
     viewMode: "mass" | "percent";
+    /** The series to highlight, with the others faded. */
+    highlightedKey?: string | null;
 }
 
 export function ResourcesChart({
@@ -27,6 +29,7 @@ export function ResourcesChart({
     isError,
     hiddenResources,
     viewMode,
+    highlightedKey,
 }: ResourcesChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenResources);
@@ -71,6 +74,7 @@ export function ResourcesChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
+            highlightedKey={highlightedKey}
         />
     );
 }
@@ -79,6 +83,11 @@ interface ResourcesOverviewTableProps {
     chartData: Array<Record<string, number>>;
     hiddenResources: Set<string>;
     onToggleResource: (resource: string) => void;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 
 interface ResourceRow {
@@ -94,6 +103,7 @@ export function ResourcesOverviewTable({
     chartData,
     hiddenResources,
     onToggleResource,
+    onHoverRow,
 }: ResourcesOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("stock");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -245,12 +255,13 @@ export function ResourcesOverviewTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sortedRows.map((row) => {
                         const isVisible = !hiddenResources.has(row.resource);
                         return (
                             <tr
                                 key={row.resource}
+                                onMouseEnter={() => onHoverRow?.(row.resource)}
                                 className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                             >
                                 <td className="py-3 px-4">

@@ -12,6 +12,7 @@
  * - An optional marker on one tick, and a callback when a tick is clicked
  * - Optional red striped "Blackout" regions, each from where the grid went down
  *   to where it came back
+ * - An optional highlighted series, with the others faded
  *
  * {@link TimeSeriesChart} takes its time axis as a prop, so any mode can use it.
  * {@link EChartsTimeSeries} is the persistent world's chart: its axis counts
@@ -63,6 +64,7 @@ import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
 } from "@/lib/charts/key-order";
+import { seriesOpacity } from "@/lib/charts/series-highlight";
 import type { ChartType } from "@/types/charts";
 import { formatDuration } from "@energetica/core/format-utils";
 
@@ -151,6 +153,11 @@ export interface EChartsTimeSeriesProps {
      */
     zoom?: ZoomRange;
     onZoomChange?: (zoom: ZoomRange) => void;
+    /**
+     * The series to highlight, with the others faded, such as the one whose row
+     * the player hovers in a table below the chart.
+     */
+    highlightedKey?: string | null;
 }
 
 /** The part of the data a chart shows, as percentages from its start. */
@@ -197,11 +204,17 @@ export interface TimeSeriesChartProps extends EChartsTimeSeriesProps {
 
 /**
  * The props a chart built on the time-series chart passes straight through to
- * it: the marker, blackout, click and shared zoom, and the time axis.
+ * it: the marker, blackout, click, shared zoom and highlighted series, and the
+ * time axis.
  */
 export type ChartSyncProps = Pick<
     EChartsTimeSeriesProps,
-    "markerTick" | "blackouts" | "onTickClick" | "zoom" | "onZoomChange"
+    | "markerTick"
+    | "blackouts"
+    | "onTickClick"
+    | "zoom"
+    | "onZoomChange"
+    | "highlightedKey"
 > & {
     /**
      * The chart's time axis. Defaults to the persistent world's game ticks.
@@ -451,6 +464,7 @@ export function TimeSeriesChart({
     onTickClick,
     zoom,
     onZoomChange,
+    highlightedKey,
 }: TimeSeriesChartProps) {
     const chartRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<echarts.ECharts | null>(null);
@@ -709,6 +723,7 @@ export function TimeSeriesChart({
             const rawColor = config.getColor?.(key) ?? "#888";
             const color = resolveColor(rawColor);
             const useGradient = (config.gradientKeys ?? []).includes(key);
+            const opacity = seriesOpacity(key, highlightedKey, visibleKeys);
 
             if (isBar) {
                 // "area" → stacked bars, 0-gap, 1px overlap to seal sub-pixel seams.
@@ -722,6 +737,7 @@ export function TimeSeriesChart({
                     data: processedData.map((d) => Number(d[key] ?? 0)),
                     itemStyle: {
                         borderWidth: 0,
+                        opacity,
                         color: useGradient
                             ? (params: { value: unknown }) =>
                                   Number(params.value) >= 0
@@ -742,7 +758,7 @@ export function TimeSeriesChart({
                 stack: config.stacked ? "total" : undefined,
                 emphasis: { disabled: true },
                 data: processedData.map((d) => Number(d[key] ?? 0)),
-                itemStyle: { color },
+                itemStyle: { color, opacity },
                 animation: false,
                 ...marker,
             };
@@ -765,9 +781,14 @@ export function TimeSeriesChart({
                 return {
                     ...base,
                     smooth: true,
-                    lineStyle: { width: 2, color },
+                    lineStyle: { width: 2, color, opacity },
                     ...(areaColor
-                        ? { areaStyle: { opacity: 0.3, color: areaColor } }
+                        ? {
+                              areaStyle: {
+                                  opacity: 0.3 * opacity,
+                                  color: areaColor,
+                              },
+                          }
                         : {}),
                 };
             }
@@ -790,9 +811,14 @@ export function TimeSeriesChart({
             return {
                 ...base,
                 step: "end",
-                lineStyle: { width: 2, color },
+                lineStyle: { width: 2, color, opacity },
                 ...(areaColor
-                    ? { areaStyle: { opacity: 0.3, color: areaColor } }
+                    ? {
+                          areaStyle: {
+                              opacity: 0.3 * opacity,
+                              color: areaColor,
+                          },
+                      }
                     : {}),
             };
         });
@@ -906,6 +932,7 @@ export function TimeSeriesChart({
         zoomRange,
         markerTick,
         blackouts,
+        highlightedKey,
     ]);
 
     // ── Chart lifecycle ───────────────────────────────────────────────────────

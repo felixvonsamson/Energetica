@@ -21,6 +21,11 @@ interface PeriodSeriesTableProps {
     color: (key: string) => string;
     /** The energy column's heading, such as "Generated". */
     energyHeading: string;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 
 export function PeriodSeriesTable({
@@ -32,6 +37,7 @@ export function PeriodSeriesTable({
     label,
     color,
     energyHeading,
+    onHoverRow,
 }: PeriodSeriesTableProps) {
     if (keys.length === 0) return null;
     const energies = keys.map((key) => seriesEnergy(rows, key, hoursPerPoint));
@@ -54,11 +60,15 @@ export function PeriodSeriesTable({
                         <th className="py-2 px-4" />
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sorted.map(({ key, energy }) => {
                         const visible = !hidden.has(key);
                         return (
-                            <tr key={key} className="border-b border-border/30">
+                            <tr
+                                key={key}
+                                onMouseEnter={() => onHoverRow?.(key)}
+                                className="border-b border-border/30"
+                            >
                                 <td className="py-2 px-4">{label(key)}</td>
                                 <td className="py-2 px-4">
                                     <MagnitudeBar

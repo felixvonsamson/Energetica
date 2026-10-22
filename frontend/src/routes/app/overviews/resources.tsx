@@ -8,6 +8,7 @@ import {
     BarChart3,
     Funnel,
 } from "lucide-react";
+import { useState } from "react";
 
 import {
     ResourcesChart,
@@ -114,6 +115,8 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 function ResourcesOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useLocalStorage<"mass" | "percent">(
         "energetica:chart:resources:viewMode",
@@ -195,12 +198,14 @@ function ResourcesOverviewContent() {
                     isError={isError}
                     hiddenResources={hiddenResources}
                     viewMode={viewMode}
+                    highlightedKey={highlightedKey}
                 />
 
                 <ResourcesOverviewTable
                     chartData={resourcesData}
                     hiddenResources={hiddenResources}
                     onToggleResource={toggleResource}
+                    onHoverRow={setHighlightedKey}
                 />
             </ChartCard>
         </div>

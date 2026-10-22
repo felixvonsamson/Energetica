@@ -2,6 +2,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Cloud, Thermometer, Globe, Leaf } from "lucide-react";
+import { useState } from "react";
 
 import { CO2Chart } from "@/components/charts/co2-chart";
 import {
@@ -111,6 +112,8 @@ const EMISSIONS_CUMULATIVE_OPTIONS = [
 ] as const;
 
 function EmissionsOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const [hiddenSources, toggleSource] = useToggleSet<string>(
         undefined,
@@ -285,6 +288,7 @@ function EmissionsOverviewContent() {
                     hiddenSources={hiddenSources}
                     viewMode={emissionsViewMode}
                     cumulativeMode={emissionsCumulativeMode}
+                    highlightedKey={highlightedKey}
                 />
 
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -327,6 +331,7 @@ function EmissionsOverviewContent() {
                     resolution={selectedResolution.resolution}
                     hiddenSources={hiddenSources}
                     onToggleSource={toggleSource}
+                    onHoverRow={setHighlightedKey}
                 />
             </ChartCard>
         </div>

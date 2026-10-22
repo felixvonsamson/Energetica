@@ -21,6 +21,8 @@ interface EmissionsChartProps {
     hiddenSources: Set<string>;
     viewMode: "normal" | "percent";
     cumulativeMode: "rates" | "cumulative";
+    /** The series to highlight, with the others faded. */
+    highlightedKey?: string | null;
 }
 
 export function EmissionsChart({
@@ -30,6 +32,7 @@ export function EmissionsChart({
     hiddenSources,
     viewMode,
     cumulativeMode,
+    highlightedKey,
 }: EmissionsChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenSources);
@@ -166,6 +169,7 @@ export function EmissionsChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
+            highlightedKey={highlightedKey}
         />
     );
 }
@@ -179,6 +183,11 @@ interface EmissionsOverviewTableProps {
     hiddenSources: Set<string>;
     /** Callback when a source visibility is toggled */
     onToggleSource: (sourceType: string) => void;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 
 interface SourceRow {
@@ -211,6 +220,7 @@ export function EmissionsOverviewTable({
     resolution,
     hiddenSources,
     onToggleSource,
+    onHoverRow,
 }: EmissionsOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("emissions");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -364,10 +374,11 @@ export function EmissionsOverviewTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sortedRows.map((row) => (
                         <tr
                             key={row.sourceType}
+                            onMouseEnter={() => onHoverRow?.(row.sourceType)}
                             className="border-b border-gray-200 hover:bg-gray-50"
                         >
                             <td className="py-2 px-4">

@@ -2,6 +2,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
+import { useState } from "react";
 
 import {
     PowerChart,
@@ -94,6 +95,8 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 function PowerOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const [chartType, setChartType] = useLocalStorage<
         "power-sources" | "power-sinks"
@@ -188,6 +191,7 @@ function PowerOverviewContent() {
                     isError={isError}
                     hiddenFacilities={hiddenFacilities}
                     viewMode={viewMode}
+                    highlightedKey={highlightedKey}
                 />
 
                 <PowerOverviewTable
@@ -196,6 +200,7 @@ function PowerOverviewContent() {
                     resolution={selectedResolution.resolution}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
+                    onHoverRow={setHighlightedKey}
                 />
             </ChartCard>
         </div>
