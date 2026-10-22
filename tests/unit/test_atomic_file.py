@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import pickle
+import stat
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -91,3 +92,17 @@ def test_a_save_that_fails_partway_keeps_the_last_good_save(tmp_path: Path, monk
 
     assert pickle.loads(save.read_bytes()) == {"total_t": 1}
     assert list(save.parent.iterdir()) == [save]
+
+
+def test_the_new_file_keeps_the_mode_of_the_file_it_replaces(tmp_path: Path) -> None:
+    """``scripts/download-instance.sh`` reads ``instance/`` as another user, so a save must not turn owner-only."""
+    replaced = tmp_path / "replaced.bin"
+    replaced.write_bytes(b"old")
+    replaced.chmod(0o640)
+    new = tmp_path / "new.bin"
+
+    write_atomically(replaced, b"new")
+    write_atomically(new, b"new")
+
+    assert stat.S_IMODE(replaced.stat().st_mode) == 0o640
+    assert stat.S_IMODE(new.stat().st_mode) == 0o644
