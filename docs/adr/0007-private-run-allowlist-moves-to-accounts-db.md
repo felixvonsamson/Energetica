@@ -76,8 +76,9 @@ edited moved to `accounts.db`.
   private-run entry-gate check and the roster page's read/write, alongside the existing
   `record_join`/`record_settlement`/`is_facilitator`.
 - `instance_config.is_access_allowed`, `add_allowed_username`, `remove_allowed_username` are
-  removed — `_enforce_instance_access` (now in identity/web.py) now branches on `isinstance(config.access,
-PrivateAccess)` for _whether_ to check, and `accounts.has_joined` for _who_ passes.
+  removed — `_enforce_instance_access` (now in identity/web.py) now branches on
+  `isinstance(config.access, PrivateAccess)` for _whether_ to check, and `accounts.has_joined`
+  for _who_ passes.
 - The facilitator roster page's API contract (`FacilitatorRosterOut`, `RosterAddIn`, the
   `GET`/`POST`/`DELETE /facilitator/roster*` routes) is unchanged — this is a storage migration
   behind an existing interface, not a product change, so the frontend needed no changes.

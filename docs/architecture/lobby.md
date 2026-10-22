@@ -268,10 +268,10 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
   bundle + infra + DNS. No instance behaviour changes yet. **Deploy precondition:** Phase A
   (incl. the backfill migration) is live on the box first — `deploy-lobby.sh` should refuse
   to run, or the lobby should log loudly, if the `instance_membership` table is absent.
-- **Phase C — cutover (flag day).** Flip instances to shared secret + parent-domain cookie
-  - entry-gate auto-provision; retire instance login/signup → redirect to lobby; in-run
-    switcher; landing CTAs → lobby + remove `AdvertisedRuns`; land the #813 CI guard.
-    **One-time forced global re-login** (old per-instance-signed sessions invalidate).
+- **Phase C — cutover (flag day).** Flip instances to shared secret + parent-domain
+  cookie + entry-gate auto-provision; retire instance login/signup → redirect to lobby;
+  in-run switcher; landing CTAs → lobby + remove `AdvertisedRuns`; land the #813 CI guard.
+  **One-time forced global re-login** (old per-instance-signed sessions invalidate).
 
 ---
 
