@@ -23,6 +23,7 @@
 
 import { type ReactNode, useEffect } from "react";
 
+import { blackoutReport } from "@/lib/workshop-blackout-report";
 import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import { taxPerTonne } from "@/lib/workshop-vote";
@@ -110,8 +111,8 @@ export function RecapNewspaper({
                         </>
                     ) : (
                         <p className="py-10 text-center text-2xl italic">
-                            {recap.blackout
-                                ? "Apart from the blackout, the year passed without incident."
+                            {recap.blackouts.length > 0
+                                ? `Apart from the blackout${recap.blackouts.length > 1 ? "s" : ""}, the year passed without incident.`
                                 : "A quiet year. Nothing out of the ordinary to report."}
                         </p>
                     )}
@@ -216,7 +217,12 @@ function Masthead({ recap }: { recap: WorkshopRecap }) {
 }
 
 function LightsOut({ recap }: { recap: WorkshopRecap }) {
-    if (!recap.blackout) return null;
+    const report = blackoutReport(
+        recap.blackouts,
+        recap.blackout_cost_share,
+        recap.rationing,
+    );
+    if (!report) return null;
     return (
         <section className="mt-5 border-4 border-neutral-900 p-4 text-center">
             <p className="text-xs font-bold tracking-[0.4em] uppercase">
@@ -225,15 +231,10 @@ function LightsOut({ recap }: { recap: WorkshopRecap }) {
             <h2
                 className={`mt-1 text-4xl leading-none font-black uppercase md:text-6xl ${HEADLINE}`}
             >
-                Lights out in {SEASON_LABELS[recap.blackout].toLowerCase()}
+                {report.headline}
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-lg italic">
-                The grid could not cover the demand that must always be served,
-                and went down.
-                {recap.blackout !== "winter" &&
-                    " The rest of the year was called off."}
-                {recap.year_ahead &&
-                    " Every producer starts next year with its cash restored to the original budget."}
+                {report.body}
             </p>
         </section>
     );

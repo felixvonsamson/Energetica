@@ -30,18 +30,15 @@ if TYPE_CHECKING:
 # a Round's income is a few times the budget.
 WORKSHOP_STARTING_BUDGET = 50_000_000.0
 
-# The least a player starts a Round with (#1016): half the Round-1 starting budget.
-WORKSHOP_CASH_FLOOR = WORKSHOP_STARTING_BUDGET / 2
+# The least a player starts a Round with (#1016): 70% of the Round-1 starting budget. Raised from half in #1286, when
+# the blackout reset was removed and the top-up became the only help for a player who overspent.
+WORKSHOP_CASH_FLOOR = WORKSHOP_STARTING_BUDGET * 0.7
 
 
-def round_start_money(money: float, *, after_blackout: bool) -> float:
-    """The cash a player holding ``money`` starts the next Round with (#1016).
-
-    Cash carries forward, but a player below the floor is topped up to exactly it. After a blackout, every
-    player starts again from the Round-1 starting budget instead, however much they held.
+def round_start_money(money: float) -> float:
+    """The cash a player holding ``money`` starts the next Round with (#1016): what they hold, but a player below the
+    floor is topped up to exactly it.
     """
-    if after_blackout:
-        return WORKSHOP_STARTING_BUDGET
     return max(money, WORKSHOP_CASH_FLOOR)
 
 

@@ -2,10 +2,11 @@
  * Shaping a settled Trading period's record for its review charts (#1007).
  *
  * The API gives one simulated week at a time: the price at each settlement
- * point, and for each player's facility type its generation, dumped power and
- * charging. These functions turn that into the rows the time-series charts
- * draw, one per settlement point, keyed by `tick`: the point's number in the
- * whole period, so the scrubber, the charts and the merit order agree on it.
+ * point, and for each player's facility type its generation, dumped power,
+ * charging and stored energy. These functions turn that into the rows the
+ * time-series charts draw, one per settlement point, keyed by `tick`: the
+ * point's number in the whole period, so the scrubber, the charts and the merit
+ * order agree on it.
  *
  * - A player generates what each facility type produced. They consume what they
  *   sold to the market (`exports`), what their storage charged, and what they
@@ -14,9 +15,12 @@
  *   consumes what each demand tier was served, plus all charging and dumping.
  *   By player, the demand tiers add up to one `consumers` series, and each
  *   player's series is their charging and dumping.
+ * - A player's storage shows, for each storage type, the energy it held or its
+ *   state of charge: that energy over the type's capacity.
  */
 
 import type { MeritOrderData } from "@/components/charts/merit-order-view";
+import type { StorageView } from "@/components/charts/storage-chart";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type PeriodWeek = ApiSchema<"WorkshopPeriodWeekOut">;
@@ -84,6 +88,28 @@ export function playerPowerRows(
             addSeries(rows, DUMPING, pool.dumped);
             if (hasCharged(pool)) addSeries(rows, pool.facility, pool.charged);
         }
+    }
+    return rows;
+}
+
+/**
+ * One player's stored energy over the week, in Wh, or its state of charge, from
+ * 0 to 1, for each storage type they had.
+ */
+export function playerStorageRows(
+    week: PeriodWeek,
+    playerId: number,
+    view: StorageView,
+): ChartRow[] {
+    const rows = emptyRows(week, []);
+    for (const pool of week.pools) {
+        if (pool.player_id !== playerId || pool.storage_capacity <= 0) continue;
+        const scale = view === "soc" ? 1 / pool.storage_capacity : 1;
+        addSeries(
+            rows,
+            pool.facility,
+            pool.stored.map((value) => value * scale),
+        );
     }
     return rows;
 }
@@ -248,22 +274,51 @@ export function pointAxisLabel(
 }
 
 /**
- * The weeks that can be reviewed, each as the days of the year it simulated:
- * all of them, or up to the week the grid went down in. Weeks after a blackout
- * never cleared.
+ * The weeks that can be reviewed, each as the days of the year it simulated.
+ * The grid comes back a day after a blackout (#1286), so every week cleared.
  */
-export function reviewableWeeks(
-    days: readonly number[],
-    blackoutAt: number | null,
-    clearingsPerDay: number,
-): number[][] {
+export function reviewableWeeks(days: readonly number[]): number[][] {
     const weeks: number[][] = [];
     for (let start = 0; start < days.length; start += WEEK_DAYS) {
         weeks.push(days.slice(start, start + WEEK_DAYS));
     }
-    if (blackoutAt === null) return weeks;
-    const pointsPerWeek = WEEK_DAYS * clearingsPerDay;
-    return weeks.slice(0, Math.floor(blackoutAt / pointsPerWeek) + 1);
+    return weeks;
+}
+
+/** The points a blackout kept the grid down for, from `start` up to `end`. */
+export interface Outage {
+    start: number;
+    end: number;
+}
+
+/**
+ * The outage after each of a period's `blackouts`: a day of points from the
+ * blackout, cut short where the period's `pointCount` points end (#1286).
+ */
+export function outages(
+    blackouts: readonly number[],
+    pointCount: number,
+    clearingsPerDay: number,
+): Outage[] {
+    return blackouts.map((start) => ({
+        start,
+        end: Math.min(start + clearingsPerDay, pointCount),
+    }));
+}
+
+/**
+ * Whether the grid was down at `point` after one of the period's `blackouts`,
+ * so that the market never cleared there. At a blackout itself it cleared, and
+ * failed.
+ */
+export function isGridDown(
+    point: number,
+    blackouts: readonly number[],
+    clearingsPerDay: number,
+): boolean {
+    return blackouts.some(
+        (blackout) => blackout < point && point < blackout + clearingsPerDay,
+    );
 }
 
 /** Whether `point` is one of the settlement points of the `week`-th week. */

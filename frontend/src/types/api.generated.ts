@@ -2133,6 +2133,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/plans:add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Round
+         * @description Add a Round after the last one, and tell every open page (#1298). Its plan copies the last Round's levers,
+         *     without its events. Refused once the last Round's Recap has opened, since it shows the final scores. Facility
+         *     prices stay those of the length the session started with.
+         */
+        post: operations["add_round_api_v1_workshop_plans_add_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/plans/{round_number}/levers": {
         parameters: {
             query?: never;
@@ -2444,8 +2466,8 @@ export interface paths {
         /**
          * Get Merit Order
          * @description The merit order at one settlement point of a settled Trading period, counted from the period's first.
-         *     Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
-         *     none.
+         *     Every bid is listed with its player, whether it sold or not. A point the grid was down at after a blackout never
+         *     cleared, so it has none.
          */
         get: operations["get_merit_order_api_v1_workshop_periods__round_number___season__points__point__merit_order_get"];
         put?: never;
@@ -5216,8 +5238,18 @@ export interface components {
             /** Investment Total */
             investment_total: number;
             /**
+             * Blackout Cost Share
+             * @description The share of the Round's operating income its blackouts cost, from 0 to 1
+             */
+            blackout_cost_share: number;
+            /**
+             * Blackout Cost
+             * @description What the Round's blackouts cost, on its operating income so far. Never below zero. Charged when the Round's Recap opens
+             */
+            blackout_cost: number;
+            /**
              * Net Profit
-             * @description The Round's operating income so far minus its carbon tax so far and its investments
+             * @description The Round's operating income so far minus its carbon tax so far, its investments and its blackout cost
              */
             net_profit: number;
             /**
@@ -5227,6 +5259,29 @@ export interface components {
             financing: components["schemas"]["FinancingLine"][];
             /** Financing Total */
             financing_total: number;
+        };
+        /**
+         * Blackout
+         * @description When the grid went down.
+         */
+        Blackout: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Day
+             * @description The day of the year it happened on, from 0
+             */
+            day: number;
+            /**
+             * Minute
+             * @description The minute of the day it happened at, from 0
+             */
+            minute: number;
         };
         /**
          * DemandOutlook
@@ -5915,15 +5970,15 @@ export interface components {
             season: "spring" | "summer" | "autumn" | "winter";
             /**
              * Status
-             * @description settled: simulated, with figures. upcoming: not simulated yet. skipped: a blackout earlier in the Round ended it before this season
+             * @description settled: simulated, with figures. upcoming: not simulated yet
              * @enum {string}
              */
-            status: "settled" | "upcoming" | "skipped";
+            status: "settled" | "upcoming";
             /**
-             * Blackout
-             * @description Whether a blackout ended the Round in this season
+             * Blackout Count
+             * @description How many times the grid went down in this season
              */
-            blackout: boolean;
+            blackout_count: number;
             /** @description The season's figures, if it is settled */
             sheet: components["schemas"]["PeriodSheet"] | null;
         };
@@ -6448,10 +6503,10 @@ export interface components {
              */
             weeks: number;
             /**
-             * Blackout At
-             * @description The settlement point the grid went down at, counted from the period's first, or null if it held. Points after it never cleared
+             * Blackouts
+             * @description The settlement point of each blackout, counted from the period's first, in order. Empty if the grid held. The grid stays down for a day after each, and those points never cleared
              */
-            blackout_at: number | null;
+            blackouts: number[];
         };
         /**
          * WorkshopPeriodWeekOut
@@ -6478,12 +6533,12 @@ export interface components {
             first_point: number;
             /**
              * Price
-             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing after it
+             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing while it was down after it
              */
             price: (number | null)[];
             /**
              * Quantity
-             * @description The power each point cleared, in W. Null after a blackout
+             * @description The power each point cleared, in W. Null while the grid was down after a blackout
              */
             quantity: (number | null)[];
             /**
@@ -6547,10 +6602,10 @@ export interface components {
             summary: string | null;
             /**
              * Status
-             * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
+             * @description planned: still to come. fired: it fired
              * @enum {string}
              */
-            status: "planned" | "fired" | "skipped";
+            status: "planned" | "fired";
         };
         /**
          * WorkshopPlansOut
@@ -6574,7 +6629,9 @@ export interface components {
         };
         /**
          * WorkshopPoolSeriesOut
-         * @description One player's facilities of one type over a simulated week, in W at each settlement point.
+         * @description One player's facilities of one type over a simulated week, at each settlement point.
+         *
+         *     Power is in W and stored energy in Wh.
          */
         WorkshopPoolSeriesOut: {
             /** Player Id */
@@ -6595,6 +6652,16 @@ export interface components {
              * @description What storage bought to charge
              */
             charged: number[];
+            /**
+             * Stored
+             * @description The energy storage held once each point was over, in Wh
+             */
+            stored: number[];
+            /**
+             * Storage Capacity
+             * @description The most energy it could hold, in Wh. Zero if it is not storage
+             */
+            storage_capacity: number;
         };
         /**
          * WorkshopPriceIn
@@ -6654,10 +6721,20 @@ export interface components {
             /** Round Count */
             round_count: number;
             /**
-             * Blackout
-             * @description The season the grid went down in this Round, if it did
+             * Blackouts
+             * @description Every time the grid went down in this Round, in order
              */
-            blackout: ("spring" | "summer" | "autumn" | "winter") | null;
+            blackouts: components["schemas"]["Blackout"][];
+            /**
+             * Blackout Cost Share
+             * @description The share of each player's operating profit for the Round its blackouts cost, from 0 to 1
+             */
+            blackout_cost_share: number;
+            /**
+             * Rationing
+             * @description What rationing had cut demand to by the end of the Round, 0.81 for 81%. One without blackouts
+             */
+            rationing: number;
             /**
              * Stories
              * @description Every event that fired in the Round: the Round's own first, then each season's in order
@@ -6756,9 +6833,9 @@ export interface components {
             settlement: components["schemas"]["WorkshopSettlementOut"] | null;
             /**
              * Blackouts
-             * @description Every Trading period the grid went down in, in order. Each one ended its Round, so the Round's later Trading periods were skipped
+             * @description Every blackout, in order, with the Trading period it happened in. The grid came back a day later, with demand rationed for the rest of the Round
              */
-            blackouts: components["schemas"]["TradingPeriod"][];
+            blackouts: components["schemas"]["Blackout"][];
             /**
              * Carbon Tax Since
              * @description The Round whose vote put the carbon tax in force, for the rest of the session, or null if no vote has passed
@@ -6912,7 +6989,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN";
     };
     responses: never;
     parameters: never;
@@ -9925,6 +10002,26 @@ export interface operations {
         };
     };
     get_plans_api_v1_workshop_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPlansOut"];
+                };
+            };
+        };
+    };
+    add_round_api_v1_workshop_plans_add_post: {
         parameters: {
             query?: never;
             header?: never;

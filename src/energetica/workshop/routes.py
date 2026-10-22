@@ -307,6 +307,21 @@ def get_plans(_: Annotated[Account, Depends(get_facilitator)], session: Session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.post("/plans:add")
+async def add_round(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+) -> WorkshopPlansOut:
+    """Add a Round after the last one, and tell every open page (#1298). Its plan copies the last Round's levers,
+    without its events. Refused once the last Round's Recap has opened, since it shows the final scores. Facility
+    prices stay those of the length the session started with.
+    """
+    await run_in_threadpool(session.add_round)
+    await invalidate_session(request.app)
+    return _plans_out(session)
+
+
 @router.patch("/plans/{round_number}/levers")
 async def change_round_levers(
     _: Annotated[Account, Depends(get_facilitator)],
@@ -587,8 +602,8 @@ def get_merit_order(
     point: int,
 ) -> WorkshopMeritOrderOut:
     """The merit order at one settlement point of a settled Trading period, counted from the period's first.
-    Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
-    none.
+    Every bid is listed with its player, whether it sold or not. A point the grid was down at after a blackout never
+    cleared, so it has none.
     """
     record = _period_record(session, round_number, season)
     if not 0 <= point < record.point_count:
@@ -612,7 +627,7 @@ def get_balance_sheet(player: Player, session: Session, round_number: int) -> Ba
         results=player.trading_results,
         purchases=player.purchases,
         settled=(settled.round, settled.season) if settled is not None else None,
-        blackouts=[(period.round, period.season) for period in session.blackouts],
+        blackouts=session.blackouts,
         loan=player.loan,
         round_count=session.round_count,
     )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from energetica.workshop.blackout import Blackout
 from energetica.workshop.events import EVENTS, FiredEvent, Severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
@@ -102,9 +103,22 @@ def test_an_event_the_catalog_no_longer_has_is_left_out() -> None:
     assert _recap(1, fired=[gone]).stories == []
 
 
-def test_a_blackout_names_its_season() -> None:
-    assert _recap(2, blackouts=[(1, "winter"), (2, "summer")]).blackout == "summer"
-    assert _recap(3, blackouts=[(1, "winter")]).blackout is None
+def test_the_year_in_review_lists_the_rounds_blackouts_with_what_they_cost() -> None:
+    first = Blackout(round=2, season="summer", day=140, minute=18 * 60)
+    second = Blackout(round=2, season="winter", day=340, minute=19 * 60)
+    blackouts = [Blackout(round=1, season="winter", day=330, minute=0), first, second]
+
+    told = _recap(2, blackouts=blackouts)
+
+    assert told.blackouts == [first, second]
+    assert told.blackout_cost_share == pytest.approx(0.6)
+    assert told.rationing == pytest.approx(0.81)
+
+
+def test_a_round_without_blackouts_tells_none() -> None:
+    told = _recap(3, blackouts=[Blackout(round=1, season="winter", day=330, minute=0)])
+
+    assert (told.blackouts, told.blackout_cost_share, told.rationing) == ([], 0.0, 1.0)
 
 
 def test_the_rooms_figures_cover_the_round() -> None:

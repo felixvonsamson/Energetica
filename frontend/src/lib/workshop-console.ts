@@ -1,8 +1,10 @@
 /**
  * What the facilitator's lever console (#1018) shows: which Round it opens on,
- * and which later Rounds a lever change carried to.
+ * whether a Round can still be added, and which later Rounds a lever change
+ * carried to.
  */
 
+import { type Checkpoint, latestRecapRound } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
@@ -15,6 +17,17 @@ type WorkshopPlans = ApiSchema<"WorkshopPlansOut">;
 export function consoleRound(plans: WorkshopPlans): number {
     const open = plans.rounds.find((plan) => !plan.locked);
     return open?.round ?? plans.rounds.length;
+}
+
+/**
+ * Whether the facilitator can still add a Round (#1298): until the last Round's
+ * Recap opens, since it shows the final scores.
+ */
+export function canAddRound(
+    checkpoint: Checkpoint,
+    roundCount: number,
+): boolean {
+    return latestRecapRound(checkpoint, roundCount) !== roundCount;
 }
 
 type RoundLevers = ApiSchema<"RoundLevers">;

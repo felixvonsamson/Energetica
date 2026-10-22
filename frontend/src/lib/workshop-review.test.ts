@@ -10,10 +10,13 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    playerStorageRows,
     pointAxisLabel,
     pointTime,
     priceRows,
     reviewableWeeks,
+    outages,
+    isGridDown,
     seriesEnergy,
     timeOfDay,
     weekdayOfDay,
@@ -21,7 +24,8 @@ import {
 
 // Two points of a week starting at the period's point 24. Alice (1) has wind,
 // which dumps 1 W at the first point, and batteries, which charge 3 W then
-// discharge 2 W. Bob (2) has gas.
+// discharge 2 W. The batteries hold 4 Wh and end the points at 2 Wh, then
+// empty. Bob (2) has gas.
 const week = {
     week: 1,
     days: [66, 67, 68, 69, 70, 71, 72],
@@ -35,6 +39,8 @@ const week = {
             generation: [10, 4],
             dumped: [1, 0],
             charged: [0, 0],
+            stored: [0, 0],
+            storage_capacity: 0,
         },
         {
             player_id: 1,
@@ -42,6 +48,8 @@ const week = {
             generation: [0, 2],
             dumped: [0, 0],
             charged: [3, 0],
+            stored: [2, 0],
+            storage_capacity: 4,
         },
         {
             player_id: 2,
@@ -49,6 +57,8 @@ const week = {
             generation: [5, 5],
             dumped: [0, 0],
             charged: [0, 0],
+            stored: [0, 0],
+            storage_capacity: 0,
         },
     ],
     tiers: [
@@ -84,6 +94,50 @@ describe("playerPowerRows", () => {
 
     it("gives a player with nothing operating empty rows", () => {
         expect(playerPowerRows(week, 3, "generation")).toEqual([
+            { tick: 24 },
+            { tick: 25 },
+        ]);
+    });
+});
+
+describe("playerStorageRows", () => {
+    it("gives each storage type's stored energy", () => {
+        expect(playerStorageRows(week, 1, "energy")).toEqual([
+            { tick: 24, lithium_ion_batteries: 2 },
+            { tick: 25, lithium_ion_batteries: 0 },
+        ]);
+    });
+
+    it("gives each storage type's state of charge, from 0 to 1", () => {
+        expect(playerStorageRows(week, 1, "soc")).toEqual([
+            { tick: 24, lithium_ion_batteries: 0.5 },
+            { tick: 25, lithium_ion_batteries: 0 },
+        ]);
+    });
+
+    it("keeps a storage type that stayed empty all week", () => {
+        const empty = {
+            ...week,
+            pools: [
+                {
+                    player_id: 2,
+                    facility: "pumped_hydro" as const,
+                    generation: [0, 0],
+                    dumped: [0, 0],
+                    charged: [0, 0],
+                    stored: [0, 0],
+                    storage_capacity: 4,
+                },
+            ],
+        };
+        expect(playerStorageRows(empty, 2, "soc")).toEqual([
+            { tick: 24, pumped_hydro: 0 },
+            { tick: 25, pumped_hydro: 0 },
+        ]);
+    });
+
+    it("gives a player with no storage empty rows", () => {
+        expect(playerStorageRows(week, 2, "soc")).toEqual([
             { tick: 24 },
             { tick: 25 },
         ]);
@@ -242,20 +296,31 @@ describe("pointAxisLabel", () => {
 describe("reviewableWeeks", () => {
     const days = Array.from({ length: 14 }, (_, i) => 59 + i);
 
-    it("lists every week when the grid held", () => {
-        expect(reviewableWeeks(days, null, 24)).toEqual([
+    it("lists every week, whether or not the grid went down", () => {
+        expect(reviewableWeeks(days)).toEqual([
             days.slice(0, 7),
             days.slice(7),
         ]);
     });
+});
 
-    it("ends at the week the grid went down in", () => {
-        // Point 30 is 06:00 on the second day, in the first week.
-        expect(reviewableWeeks(days, 30, 24)).toEqual([days.slice(0, 7)]);
-        expect(reviewableWeeks(days, 7 * 24, 24)).toEqual([
-            days.slice(0, 7),
-            days.slice(7),
+describe("outages", () => {
+    it("covers a day from each blackout, cut short at the end of the period", () => {
+        // A week of 24 clearings a day has 168 points.
+        expect(outages([12, 160], 168, 24)).toEqual([
+            { start: 12, end: 36 },
+            { start: 160, end: 168 },
         ]);
+    });
+});
+
+describe("isGridDown", () => {
+    it("is the day after each blackout, not the blackout itself", () => {
+        expect(isGridDown(12, [12], 24)).toBe(false);
+        expect(isGridDown(13, [12], 24)).toBe(true);
+        expect(isGridDown(35, [12], 24)).toBe(true);
+        expect(isGridDown(36, [12], 24)).toBe(false);
+        expect(isGridDown(5, [], 24)).toBe(false);
     });
 });
 

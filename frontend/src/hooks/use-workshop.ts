@@ -457,6 +457,11 @@ function usePlanChange<Variables>(
     });
 }
 
+/** Add a Round after the last one (#1298). */
+export function useAddRound() {
+    return usePlanChange(workshopApi.addRound);
+}
+
 /** Plan an event for a Round (#1190). */
 export function usePlanEvent() {
     return usePlanChange(workshopApi.planEvent);

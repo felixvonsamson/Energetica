@@ -70,10 +70,17 @@ arbitrary user-controlled JSON payloads.
 **Migration**:
 A step that converts stored data from the shape an older version of the code wrote into
 the shape the newer version expects, so the newer code can read it. There are two kinds.
-A **schema migration** changes the tables of a SQL database, such as `accounts.db`. A
+A **schema migration** changes the tables of a SQL database, such as `lobby.db`. A
 **state migration** changes a run's saved state, such as a freeplay **save** or a workshop
 session. A code change that reads the same data but simulates differently is not a
 migration: nothing needs converting.
+
+**State version**:
+The number stored with a piece of persisted data that says which migrations it has had. On
+start-up, the code applies every migration from the stored version up to its own. Migrations
+only go forward: code that finds a newer state version than its own refuses to start. Data
+with no state version is at version 0.
+_Avoid_: schema version (use it only for a SQL database's state version).
 
 ### Relationships
 
@@ -105,19 +112,25 @@ project's lobby / instance-picker work adds or sharpens.
 ### Language
 
 **Lobby**:
-The server-wide front door: where a player signs up, logs in (once, server-wide), and
-picks which **run** to enter or rejoin. Lives on its own subdomain (`lobby.{apex}`) with a
-small backend, separate from any run, and **outlives** individual runs (runs are created
-and deleted; the lobby is not). It is the public front door only: like every run, it is a
-client of the **accounts service** (ADR-0009).
+The server-wide part of Energetica that is not a run: where a player signs up, logs in (once,
+server-wide), and picks which **run** to enter or rejoin. It is made of a frontend, the **lobby
+backend**, the **lobby service** and `lobby.db`. It lives on its own subdomain (`lobby.{apex}`),
+separate from any run, and **outlives** individual runs (runs are created and deleted; the lobby
+is not).
 _Avoid_: landing (the **landing** is the pure-static marketing site on the apex; the lobby
 is the authenticated identity surface — distinct origins, distinct purposes).
 
-**Accounts service**:
-The one process that owns accounts, server-wide sessions and memberships. It is reachable only from
-the same server. The lobby, every run and the operator scripts are its clients (ADR-0009). It knows
-whether an account has **joined a run**, but nothing about settling.
-_Avoid_: lobby (the lobby is a client of the accounts service, not the owner of accounts).
+**Lobby backend**:
+The lobby's public HTTP app, behind `lobby.{apex}`. Like every run, it is a client of the
+**lobby service** and never opens `lobby.db` itself.
+_Avoid_: lobby web.
+
+**Lobby service**:
+The one process that owns accounts, server-wide sessions and memberships, stored in `lobby.db`.
+It is reachable only from the same server. The **lobby backend**, every run and the operator
+scripts are its clients (ADR-0009). It knows whether an account has **joined a run**, but nothing
+about settling.
+_Avoid_: accounts service, and `accounts.db` for its database (the names before the rename).
 
 **Joined a run**:
 An account that has explicitly, deliberately joined a run — the lobby's two-click join for a
@@ -127,7 +140,7 @@ lobby's "your runs" view is keyed on this, not on settling. See the flagged ambi
 
 **Settled**:
 An account that has picked a tile — has a **Player** in that run's engine. A later, separate
-step from joining, and a freeplay engine act only: the **accounts service** does not record it
+step from joining, and a freeplay engine act only: the **lobby service** does not record it
 (ADR-0009; `instance_membership`'s `settled_at` is vestigial and being removed).
 
 **Server-wide session**:
@@ -212,6 +225,14 @@ locks when the session starts, and Round N+1's when Recap N opens, since the Rec
 comes next. Which Rounds are locked follows from where the session is.
 _Avoid_: freeze, commit.
 
+**Added Round** (#1298):
+A Round the facilitator adds after the last one, such as when the room moves faster than planned.
+It can be added until the last Round's Recap opens, since that Recap shows the final scores, and it cannot be
+removed. Its **Round plan** copies the last Round's levers, without its events. Everything that depends on which
+Round is the last follows the new count: the loan can be taken in what was the last Round, a loan payment that
+was due after the end is taken as the added Round starts, demand keeps growing, and residual value counts from the
+new end. Only the **session-length price** stays as it was.
+
 **Representative week** (#1164, ADR-0008, #1198):
 The seven simulated days that stand for a whole Trading period in representative-week mode: the middle
 week of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled ×13
@@ -259,22 +280,29 @@ order at any point is rebuilt. It is saved to its own file beside the session's.
 All of a player's trading income, after any climate-event `revenue_tax`, minus their operating costs:
 O&M, fuel bought, the energy storage bought to charge, and renewable output dumped unsold. Fuel counts
 when it is bought, not when it is burned, since its price changes over time. Facility investments, the
-carbon tax, the floor top-up and blackout resets are left out. Summed over the session, it is the first
+carbon tax, the floor top-up and the **blackout cost** are left out. Summed over the session, it is the first
 term of the final score.
 _Avoid_: revenue, gross proceeds, net.
 
-**Floor top-up** and **blackout reset** (#1016):
-Cash carries forward from Round to Round. As a new Round starts, a player holding less than half the
-Round-1 starting budget is topped up to exactly half. After a blackout, every player's cash is reset to
-the full starting budget instead, however much they held. Facilities stay as they are, and the
-blacked-out Round still counts toward their lifetimes. The Recap's blackout report tells players about the
-reset; the top-up is silent.
+**Floor top-up** (#1016, #1286):
+Cash carries forward from Round to Round. As a new Round starts, a player holding less than 70% of the
+Round-1 starting budget (35M of 50M) is topped up to exactly that. The top-up is silent.
+
+**Blackout**, **rationing** and **blackout cost** (#1005, #1286):
+A blackout is a clearing that leaves must-serve demand unserved: the grid goes down for a day, or until the
+end of the Trading period if that comes first. It then restarts with electricity rationed: demand is cut by
+10% for the rest of the Round, and by another 10% after each further blackout, which can happen in the same
+Trading period or a later one. The next Round starts with demand back at its full level. When the Recap
+opens, each blackout in the Round costs every player 30% of their operating profit for it, up to all of it;
+a player who made a loss pays nothing. The cost comes out of cash, and the balance sheet shows it below
+operating income, but it never changes a score.
+_Avoid_: blackout reset (removed in #1286).
 
 **Final score** and **residual value** (#1017, #1222):
 A player's final score is their operating profit over the whole session, minus their **investments** (what
 they paid for every facility they bought, price shocks included, plus the cost of any **loan**), minus the carbon tax they paid less
 their shared payback, plus the residual value of the facilities they still own. Cash is not part of it, so the
-floor top-up and the blackout reset never change a score. A facility's residual value is its price for
+floor top-up and the blackout cost never change a score. A facility's residual value is its price for
 the session's length (see **session-length price**) times the share of its lifetime left once the session is
 over, counting only the Rounds after the last one. A facility still under construction keeps its whole lifetime, so it pays back its full price.
 The energy a storage facility holds is worth nothing. The **scoreboard** ranks every player by score, and
@@ -284,10 +312,11 @@ completed one. So it changes once per Round, and after the last Round it is the 
 _Avoid_: leaderboard, salvage value.
 
 **Session-length price** (#1306):
-What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it has. Nuclear
+What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it starts with. Nuclear
 reactors and water dams earn for fewer Rounds in a short session, so they cost less there: a nuclear reactor costs
 53M in a session of 3 Rounds or fewer, 60M in one of 4 and 70M in a longer one. Every other facility costs its
-catalog price whatever the length. Price shocks apply on top.
+catalog price whatever the length. Price shocks apply on top. A Round **added** once the session has started
+leaves the prices as they were. One added before it starts prices for the new length.
 
 **Loan** (#1225):
 Money a player borrows to invest more than their cash allows: 50M, once per session, taken in an open
@@ -295,7 +324,7 @@ Investment phase in any Round but the last. It is added to their cash straight a
 until the phase closes, as long as their selection still fits without it. It is paid back in two payments of
 30M, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
 taken when the session ends. The final score counts the 10M it costs as an investment with no residual
-value, whatever the floor top-up or the blackout reset do to the payments.
+value, whatever the floor top-up does to the payments.
 _Avoid_: credit, debt (a player's cash can go negative without a loan).
 
 **Balance sheet** (#1008):
@@ -350,7 +379,7 @@ point, in one of three categories: climate, price shock or geopolitics, and dema
 be changed or dropped until the Round's plan is **locked**. A Round event **fires** when the Round's
 Investment phase opens, and a seasonal event when its season's Trading period opens. Each category holds
 at most one event per **boundary**: one per Round, or one per season for a seasonal event. Round 1 holds
-none. An event planned for a season that a blackout skips never fires, but stays in the plan. A fired
+none. A fired
 event's headline is told at the Recap, and nobody, the facilitator included, sees it before. The Recap
 before a Round also tells what the Round holds: a Round event with its exact effect, and a seasonal event
 only as a **forecast** that names its season, gives no figures, and sounds more certain the more severe
@@ -359,7 +388,8 @@ _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Peak demand** (#1013):
 The most the market cleared at one **settlement point** in a Round, kept as the Round's Trading periods settle:
-a clearing that clears more than the peak so far replaces it. A clearing the grid went down at does not count.
+a clearing that clears more than the peak so far replaces it. It is must-serve demand before any **rationing**,
+since rationing ends with the Round.
 The Recap forecasts next Round's peak as this one grown by **demand growth** and moved by the demand shifts that
 start next Round.
 
@@ -367,15 +397,15 @@ start next Round.
 How much demand grows from one Round to the next, before any event. Each Round after the first has a growth
 factor, and its demand is the Round before's times that factor, so demand grows exponentially. The factor for
 Round N+1 is worked out when Recap N opens, from the room's average operating profit per player in Round N: the
-more the room earned, the faster demand grows, within a floor and a cap. A Round that ended in a blackout counts
-the profit it made up to it. The Recap announces the growth as a percentage, without the formula. The demand
+more the room earned, the faster demand grows, within a floor and a cap. It counts the profit before any **blackout
+cost**. The Recap announces the growth as a percentage, without the formula. The demand
 shifts of events multiply on top of it.
 _Avoid_: player progression, demand trend.
 
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
 strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its
-headline and a line of plain numbers such as "Demand +18% for the summer", the season of any blackout,
+headline and a line of plain numbers such as "Demand +18% for the summer", the day and hour of each blackout with what it cost,
 the room's figures, and how each season's wind and sunshine compared with a normal season (#1200). **The
 Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if it holds one, its Round
 events with their exact effect, the **demand growth** and the change in peak demand, and its seasonal events as

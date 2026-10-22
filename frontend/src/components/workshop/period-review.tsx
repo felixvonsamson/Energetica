@@ -4,12 +4,14 @@
  *
  * - The player's own power, generation or consumption (not for the facilitator,
  *   who has no fleet);
+ * - The player's storage, as a state of charge or stored energy, if they had any
+ *   (#1297);
  * - The whole market's power, by facility type or by player;
  * - The market price;
  * - The merit order at one settlement point, picked with the scrubber, which the
- *   three charts above mark. Clicking a chart moves the scrubber there.
+ *   charts above mark. Clicking a chart moves the scrubber there.
  *
- * The three charts span the whole week and share one zoom window: zooming or
+ * The charts above it span the whole week and share one zoom window: zooming or
  * resetting one does the same to the others, so they can be compared. When the
  * grid went down, they shade the rest of the week red from that point (#1273).
  *
@@ -20,10 +22,18 @@
  * the period is simulated.
  */
 
-import { Activity, BarChart2, Layers, TrendingUp, Zap } from "lucide-react";
+import {
+    Activity,
+    BarChart2,
+    Battery,
+    Layers,
+    TrendingUp,
+    Zap,
+} from "lucide-react";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
+    type ChartSyncProps,
     type EChartsTimeSeriesConfig,
     FULL_ZOOM,
     type TimeAxis,
@@ -35,6 +45,11 @@ import {
     PowerChart,
     type PowerChartViewMode,
 } from "@/components/charts/power-chart";
+import {
+    STORAGE_VIEW_OPTIONS,
+    StorageChart,
+    type StorageView,
+} from "@/components/charts/storage-chart";
 import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
@@ -64,10 +79,13 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    playerStorageRows,
     pointAxisLabel,
     pointTime,
     priceRows,
     reviewableWeeks,
+    outages,
+    isGridDown,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
 import { ApiClientError } from "@energetica/core/api-client";
@@ -244,8 +262,12 @@ function Review({
         setPoint(index * pointsPerWeek);
     };
 
-    // Points after a blackout never cleared, so the scrubber stops at it.
-    const lastPoint = period.blackout_at ?? period.days.length * cpd - 1;
+    const pointCount = period.days.length * cpd;
+    const lastPoint = pointCount - 1;
+    const blackouts = useMemo(
+        () => outages(period.blackouts, pointCount, cpd),
+        [period.blackouts, pointCount, cpd],
+    );
 
     const timeAxis = useMemo(
         (): TimeAxis => ({
@@ -272,7 +294,7 @@ function Review({
     const chart = {
         timeAxis,
         markerTick: point,
-        blackoutTick: period.blackout_at ?? undefined,
+        blackouts,
         onTickClick,
         isLoading: week.isPending,
         isError: week.isError,
@@ -282,11 +304,16 @@ function Review({
 
     return (
         <div className="space-y-6 pt-4">
-            {period.blackout_at !== null && (
+            {period.blackouts.length > 0 && (
                 <TypographyMuted>
                     The grid went down on{" "}
-                    {pointTime(period.blackout_at, period.days, cpd)}. Nothing
-                    was produced or sold after that.
+                    {period.blackouts
+                        .map((blackout) =>
+                            pointTime(blackout, period.days, cpd),
+                        )
+                        .join("; ")}
+                    . Each time, nothing was produced or sold for the next 24
+                    hours, and demand was rationed after that.
                 </TypographyMuted>
             )}
             {labels.me !== null && (
@@ -296,6 +323,9 @@ function Review({
                     cpd={cpd}
                     {...chart}
                 />
+            )}
+            {labels.me !== null && (
+                <PlayerStorageCard week={shown} labels={labels} {...chart} />
             )}
             <NetworkPowerCard
                 week={shown}
@@ -307,12 +337,7 @@ function Review({
             <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
                 {period.weeks > 1 && (
                     <WeekPicker
-                        // Weeks after a blackout never cleared, so the list ends at it.
-                        weeks={reviewableWeeks(
-                            period.days,
-                            period.blackout_at,
-                            cpd,
-                        )}
+                        weeks={reviewableWeeks(period.days)}
                         value={weekIndex}
                         onChange={chooseWeek}
                     />
@@ -361,15 +386,10 @@ function WeekPicker({
 
 // ── Power charts ──────────────────────────────────────────────────────────────
 
-interface ChartProps {
+interface ChartProps extends ChartSyncProps {
     timeAxis: TimeAxis;
-    markerTick: number;
-    blackoutTick: number | undefined;
-    onTickClick: (tick: number) => void;
     isLoading: boolean;
     isError: boolean;
-    zoom: ZoomRange;
-    onZoomChange: (zoom: ZoomRange) => void;
 }
 
 interface PowerCardProps extends ChartProps {
@@ -658,6 +678,60 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     );
 }
 
+// ── Storage chart ─────────────────────────────────────────────────────────────
+
+const NO_HIDDEN_SERIES = new Set<string>();
+
+function PlayerStorageCard({
+    week,
+    labels,
+    ...chart
+}: ChartProps & { week: PeriodWeek | undefined; labels: Labels }) {
+    const [view, setView] = useLocalStorage<StorageView>(
+        `${STORAGE_PREFIX}:storage:view`,
+        "soc",
+    );
+    const rows = useMemo(
+        () =>
+            week && labels.me !== null
+                ? playerStorageRows(week, labels.me, view)
+                : [],
+        [week, labels.me, view],
+    );
+    const hadStorage = week?.pools.some(
+        (pool) => pool.player_id === labels.me && pool.storage_capacity > 0,
+    );
+    if (!hadStorage) return null;
+
+    return (
+        <ChartCard
+            icon={Battery}
+            iconClassName="text-primary"
+            title="Your storage"
+            headerContent={
+                <Picker
+                    label="Display"
+                    value={view}
+                    onChange={setView}
+                    options={STORAGE_VIEW_OPTIONS}
+                />
+            }
+        >
+            <StorageChart
+                chartData={rows}
+                hiddenFacilities={NO_HIDDEN_SERIES}
+                // Every storage type the player had shows, even if it stayed
+                // empty all week.
+                showEmpty
+                view={view}
+                formatLabel={labels.facilityName}
+                height={300}
+                {...chart}
+            />
+        </ChartCard>
+    );
+}
+
 // ── Price chart ───────────────────────────────────────────────────────────────
 
 const PRICE_CONFIG: EChartsTimeSeriesConfig = {
@@ -699,28 +773,41 @@ function MeritOrderCard({
     point: number;
     labels: Labels;
 }) {
-    const order = useWorkshopMeritOrder(period.round, period.season, point);
+    const cpd = period.clearings_per_day;
+    // The market never cleared while the grid was down, so there is nothing to ask for.
+    const down = isGridDown(point, period.blackouts, cpd);
+    const order = useWorkshopMeritOrder(
+        period.round,
+        period.season,
+        down ? null : point,
+    );
     const data = useMemo(
         () => (order.data ? meritOrderData(order.data) : undefined),
         [order.data],
     );
-    const cpd = period.clearings_per_day;
     const title: ReactNode = (
         <>Merit order on {pointTime(point, period.days, cpd)}</>
     );
 
     return (
         <ChartCard icon={BarChart2} iconClassName="text-primary" title={title}>
-            <MeritOrderView
-                data={data}
-                isLoading={order.isPending}
-                isError={order.isError}
-                getFacilityColor={labels.assetColor}
-                getPlayerColor={labels.playerColor}
-                playerName={labels.playerName}
-                facilityName={labels.facilityName}
-                emptyMessage="No bids at this settlement point"
-            />
+            {down ? (
+                <TypographyMuted className="py-6 text-center">
+                    The grid was down at this point, so the market did not
+                    clear.
+                </TypographyMuted>
+            ) : (
+                <MeritOrderView
+                    data={data}
+                    isLoading={order.isPending}
+                    isError={order.isError}
+                    getFacilityColor={labels.assetColor}
+                    getPlayerColor={labels.playerColor}
+                    playerName={labels.playerName}
+                    facilityName={labels.facilityName}
+                    emptyMessage="No bids at this settlement point"
+                />
+            )}
         </ChartCard>
     );
 }

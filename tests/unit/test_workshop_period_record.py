@@ -84,7 +84,7 @@ def test_a_representative_week_has_one_point_per_clearing() -> None:
     assert record.clearings_per_day == 96
     assert len(record.days) == 7
     assert record.generation.shape == (1, 7 * 96)
-    assert record.blackout_at is None
+    assert record.blackouts == ()
 
 
 def test_a_full_season_has_every_clearing_of_every_day() -> None:
@@ -130,6 +130,17 @@ def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None
     assert record.stored[row, -1] == pytest.approx(outcome.stored_energy[1][BATTERIES])
     # A facility that stores nothing holds nothing.
     assert not record.stored[_row(record, 1, WIND)].any()
+
+
+def test_each_pool_keeps_the_storage_capacity_it_had() -> None:
+    # The state of charge is the stored energy over this capacity. Retired facilities leave the fleet, so it cannot
+    # be worked out again after the period.
+    record = _simulate(_bidder(WIND, *[BATTERIES] * 3)).record
+
+    assert record.storage_capacity[_row(record, 1, BATTERIES)] == pytest.approx(
+        3 * (CATALOG[BATTERIES].base_storage_capacity or 0.0)
+    )
+    assert record.storage_capacity[_row(record, 1, WIND)] == 0.0
 
 
 def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
@@ -183,20 +194,23 @@ def test_a_merit_order_keeps_the_bids_that_did_not_sell() -> None:
     assert len(order.demands["facility"]) == 6
 
 
-def test_a_blackout_keeps_the_merit_order_that_failed_and_nothing_after_it() -> None:
-    # The wind cannot meet the 30 MW must-serve demand once it drops to 9 MW at noon.
+def test_a_blackout_keeps_the_merit_order_that_failed_and_nothing_for_the_day_after_it() -> None:
+    # The wind cannot meet the 30 MW must-serve demand once it drops to 9 MW at noon. The grid restarts at noon the
+    # next day, when the wind is still too weak for the rationed demand, and goes down again.
     record = _simulate(
         _bidder(WIND, WIND, sell={WIND: 0.0}), weather=lambda _facility, seconds: _sunny_mornings(seconds)
     ).record
 
-    assert record.blackout_at == 12
+    assert record.blackouts[:2] == (12, 36)
     failed = record.merit_order(12)
     assert failed is not None
     assert failed.offers["capacity"] == pytest.approx([9e6])
     assert record.merit_order(13) is None
-    assert np.isnan(record.price[13:]).all()
-    assert not record.generation[:, 12:].any()
-    assert not record.served[:, 12:].any()
+    assert record.merit_order(35) is None
+    assert record.merit_order(36) is not None
+    assert np.isnan(record.price[13:36]).all()
+    assert not record.generation[:, 12:37].any()
+    assert not record.served[:, 12:37].any()
 
 
 def test_a_point_outside_the_period_has_no_merit_order() -> None:
@@ -216,9 +230,19 @@ def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
     record.save(path)
     loaded = TradingPeriodRecord.load(path)
 
-    names = ("round", "season", "clearings_per_day", "days", "blackout_at", "pools", "tiers", "lines", "average_output")
+    names = ("round", "season", "clearings_per_day", "days", "blackouts", "pools", "tiers", "lines", "average_output")
     for name in names:
         assert getattr(loaded, name) == getattr(record, name)
-    for name in ("price", "quantity", "generation", "dumped", "charged", "stored", "served", "offered"):
+    for name in (
+        "price",
+        "quantity",
+        "generation",
+        "dumped",
+        "charged",
+        "stored",
+        "storage_capacity",
+        "served",
+        "offered",
+    ):
         np.testing.assert_array_equal(getattr(loaded, name), getattr(record, name))
     assert loaded.merit_order(5) == record.merit_order(5)

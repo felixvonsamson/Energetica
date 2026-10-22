@@ -35,6 +35,7 @@ from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.round_format import TradingFormat
+from energetica.workshop.seasons import representative_week
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 from energetica.workshop.votes import CARBON_TAX_RATE
@@ -262,7 +263,7 @@ def test_the_session_names_the_checkpoint_an_advance_moves_to(session_path: Path
     assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
-def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_path: Path) -> None:
+def test_the_session_lists_every_blackout_with_when_it_happened(session_path: Path) -> None:
     # Alice owns nothing, so nothing meets her must-serve demand and the grid goes down in spring.
     client = _client(session_path)
     _player(client, "alice")
@@ -281,8 +282,9 @@ def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_pat
 
     body = client.get(SESSION_URL).json()
     assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
-    assert body["blackouts"] == [_checkpoint("trading_period", 1, "spring")]
-    assert body["next_checkpoint"] == _checkpoint("recap", 1)
+    first = representative_week("spring")[0]
+    assert body["blackouts"][0] == {"round": 1, "season": "spring", "day": first, "minute": 0}
+    assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "summer")
 
 
 def test_reading_the_session_needs_entry(session_path: Path) -> None:
@@ -1166,6 +1168,7 @@ def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, cl
 
 PLANS_URL = "/api/v1/workshop/plans"
 LEVERS_URL = "/api/v1/workshop/plans/{round}/levers"
+ADD_ROUND_URL = "/api/v1/workshop/plans:add"
 TIMERS_URL = "/api/v1/workshop/timers"
 
 
@@ -1192,15 +1195,13 @@ def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_p
     authenticate(client, alice)
     after = client.get(BALANCE_SHEET_URL.format(round=1)).json()
     [result] = app.state.workshop_session.player(alice).trading_results
-    # One gas burner cannot meet the must-serve demand, so the grid goes down and ends the Round.
-    assert [(season["status"], season["blackout"]) for season in after["seasons"]] == [
-        ("settled", True),
-        ("skipped", False),
-        ("skipped", False),
-        ("skipped", False),
-    ]
+    # One gas burner cannot meet the must-serve demand, so the grid goes down, and the Round goes on.
+    assert [season["status"] for season in after["seasons"]] == ["settled", "upcoming", "upcoming", "upcoming"]
+    assert after["seasons"][0]["blackout_count"] > 0
     assert after["total"]["operating_income"] == pytest.approx(result.operating_profit)
-    assert after["net_profit"] == pytest.approx(result.operating_profit - 8_000_000.0)
+    cost = after["blackout_cost_share"] * max(0.0, result.operating_profit)
+    assert after["blackout_cost"] == pytest.approx(cost)
+    assert after["net_profit"] == pytest.approx(result.operating_profit - 8_000_000.0 - cost)
 
 
 def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(session_path: Path) -> None:
@@ -1281,6 +1282,23 @@ def test_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> N
     assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_ROUND"
 
 
+def test_the_facilitator_adds_a_round_that_copies_the_last_rounds_levers(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    round_format = {"trading_format": "full_season", "clearings_per_day": 96, "storage": "all"}
+    client.patch(LEVERS_URL.format(round=3), json=_levers(**round_format))
+    client.post(ADVANCE_URL)
+
+    response = client.post(ADD_ROUND_URL)
+
+    assert response.status_code == 200
+    rounds = response.json()["rounds"]
+    assert [plan["locked"] for plan in rounds] == [True, False, False, False]
+    assert rounds[3]["levers"] == rounds[2]["levers"]
+    assert rounds[3]["events"] == []
+    assert client.get(SESSION_URL).json()["round_count"] == 4
+
+
 def test_the_facilitator_reads_and_changes_the_timers(session_path: Path) -> None:
     client = _client(session_path)
     _facilitator(client)
@@ -1335,6 +1353,7 @@ def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) ->
 
     assert client.get(PLANS_URL).status_code == 403
     assert client.patch(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96)).status_code == 403
+    assert client.post(ADD_ROUND_URL).status_code == 403
     assert client.get(TIMERS_URL).status_code == 403
     assert client.put(TIMERS_URL, json={"investment_minutes": 3, "price_setting_minutes": 2}).status_code == 403
 
@@ -1645,6 +1664,8 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
         [pool] = week["pools"]
         assert (pool["player_id"], pool["facility"]) == (alice, "gas_burner")
         assert len(pool["generation"]) == 7 * 24
+        # A gas burner stores nothing.
+        assert (pool["stored"], pool["storage_capacity"]) == ([0.0] * 7 * 24, 0.0)
         assert [tier["tier"] for tier in week["tiers"]][0] == "must_serve"
 
         order = client.get(f"{PERIOD_URL}/points/0/merit-order").json()

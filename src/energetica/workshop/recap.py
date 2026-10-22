@@ -3,9 +3,9 @@
 The Recap that closes Round N has two sections, kept strictly apart:
 
 - **The Year in Review** tells what happened in Round N: every event that fired in it, with its headline and a
-  line of plain numbers (:func:`~energetica.workshop.events.effect_line`), the season the grid went down in if it
-  did, the room's figures for the Round, and each season's weather: how its wind and sunshine compared with a
-  normal season (#1200). The weather only tells what happened, never what is coming.
+  line of plain numbers (:func:`~energetica.workshop.events.effect_line`), each time the grid went down, with how far
+  rationing cut demand and what the blackouts cost (#1286), the room's figures for the Round, and each season's
+  weather: how its wind and sunshine compared with a normal season (#1200). The weather only tells what happened, never what is coming.
 - **The Year Ahead** tells what Round N+1 holds. Its plan locks when Recap N opens (#1190), so what the Recap tells
   holds. Round events are told with their headline and exact effect, and seasonal events only as a forecast with
   no figures (#1189). The facilities that unlock for Round N+1 are announced here, the first place players learn
@@ -24,6 +24,7 @@ from collections.abc import Iterable, Mapping, Sequence
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.blackout import Blackout, blackout_cost_share, round_blackouts
 from energetica.workshop.events import (
     EVENTS,
     Direction,
@@ -38,7 +39,7 @@ from energetica.workshop.fleet import Purchase
 from energetica.workshop.prices import is_storage
 from energetica.workshop.round_plan import RoundPlan
 from energetica.workshop.seasons import SEASONS, Season
-from energetica.workshop.trading import RENEWABLE_CATEGORIES, TradingResult
+from energetica.workshop.trading import RATIONING, RENEWABLE_CATEGORIES, TradingResult
 from energetica.workshop.unlocks import UPGRADES, Unlock, UnlockTrigger
 from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome, vote_held
 from energetica.workshop.weather import NORMAL_OUTPUT, AverageOutput
@@ -148,7 +149,13 @@ class WorkshopRecap(BaseModel):
 
     round: int
     round_count: int
-    blackout: Season | None = Field(description="The season the grid went down in this Round, if it did")
+    blackouts: list[Blackout] = Field(description="Every time the grid went down in this Round, in order")
+    blackout_cost_share: float = Field(
+        description="The share of each player's operating profit for the Round its blackouts cost, from 0 to 1"
+    )
+    rationing: float = Field(
+        description="What rationing had cut demand to by the end of the Round, 0.81 for 81%. One without blackouts"
+    )
     stories: list[RecapStory] = Field(
         description="Every event that fired in the Round: the Round's own first, then each season's in order"
     )
@@ -294,7 +301,7 @@ def recap(
     round_count: int,
     plans: Sequence[RoundPlan],
     fired: Sequence[FiredEvent],
-    blackouts: Iterable[tuple[int, Season]],
+    blackouts: Iterable[Blackout],
     unlocks: Sequence[Unlock],
     purchases: Sequence[Purchase],
     results: Sequence[TradingResult],
@@ -305,19 +312,19 @@ def recap(
 ) -> WorkshopRecap:
     """The Recap that closes Round ``round_number`` of ``round_count``.
 
-    ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` the Trading period of every
-    blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
-    ``peak_demand`` the highest must-serve demand at one settlement point in the Round, or None if none was simulated.
-    ``vote_outcomes`` holds every vote's outcome so far, and ``weather`` the real average wind and solar output of
-    each season the Round played. ``demand_growth`` is the factor demand grows by into the next Round (#1226).
+    ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` every blackout, and
+    ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and ``peak_demand`` the highest
+    must-serve demand at one settlement point in the Round, or None if none was simulated. ``vote_outcomes`` holds
+    every vote's outcome so far, and ``weather`` the real average wind and solar output of each season the Round
+    played. ``demand_growth`` is the factor demand grows by into the next Round (#1226).
     """
-    blackout: Season | None = next(
-        (season for blackout_round, season in blackouts if blackout_round == round_number), None
-    )
+    this_round = round_blackouts(blackouts, round_number)
     return WorkshopRecap(
         round=round_number,
         round_count=round_count,
-        blackout=blackout,
+        blackouts=this_round,
+        blackout_cost_share=blackout_cost_share(len(this_round)),
+        rationing=RATIONING ** len(this_round),
         stories=_stories(event for event in fired if event.round == round_number),
         figures=_figures(round_number, purchases=purchases, results=results),
         weather=_weather(weather),

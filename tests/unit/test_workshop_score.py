@@ -11,6 +11,7 @@ from energetica.workshop.score import ranked, residual_value, score
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.loan import LOAN_COST, Loan
 from energetica.workshop.network import WorkshopNetwork
+from energetica.workshop.blackout import blackout_cost
 from energetica.workshop.player import WorkshopPlayer, round_start_money
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.trading import FacilityPerformance, TradingResult
@@ -73,18 +74,19 @@ def test_a_facility_is_worth_its_price_times_the_share_of_its_lifetime_left_afte
     # Built in Round 4, it works Rounds 4 to 6, so after a 5-Round session it has Round 6 left.
     owned = OwnedFacility(facility=GAS, built_round=4)
 
-    assert residual_value(owned, completed_rounds=ROUNDS, round_count=ROUNDS) == pytest.approx(
+    assert residual_value(owned, completed_rounds=ROUNDS, price_round_count=ROUNDS) == pytest.approx(
         CATALOG[GAS].base_price / 3
     )
 
 
 def test_a_facility_whose_life_ends_with_the_last_round_is_worth_nothing() -> None:
     assert (
-        residual_value(OwnedFacility(facility=GAS, built_round=3), completed_rounds=ROUNDS, round_count=ROUNDS) == 0.0
+        residual_value(OwnedFacility(facility=GAS, built_round=3), completed_rounds=ROUNDS, price_round_count=ROUNDS)
+        == 0.0
     )
     assert (
         residual_value(
-            OwnedFacility(facility=BATTERIES, built_round=ROUNDS), completed_rounds=ROUNDS, round_count=ROUNDS
+            OwnedFacility(facility=BATTERIES, built_round=ROUNDS), completed_rounds=ROUNDS, price_round_count=ROUNDS
         )
         == 0.0
     )
@@ -93,14 +95,14 @@ def test_a_facility_whose_life_ends_with_the_last_round_is_worth_nothing() -> No
 def test_a_facility_still_under_construction_pays_back_its_full_price() -> None:
     owned = OwnedFacility(facility=NUCLEAR, built_round=ROUNDS)
 
-    assert residual_value(owned, completed_rounds=ROUNDS, round_count=ROUNDS) == CATALOG[NUCLEAR].base_price
+    assert residual_value(owned, completed_rounds=ROUNDS, price_round_count=ROUNDS) == CATALOG[NUCLEAR].base_price
 
 
 def test_a_facility_priced_for_a_short_session_is_worth_that_price() -> None:
     # A reactor costs 53,000,000 in a session of 3 Rounds, and one bought in the last Round is still being built.
     owned = OwnedFacility(facility=NUCLEAR, built_round=3)
 
-    assert residual_value(owned, completed_rounds=3, round_count=3) == 53_000_000
+    assert residual_value(owned, completed_rounds=3, price_round_count=3) == 53_000_000
 
 
 def test_stored_energy_is_not_worth_anything(network: WorkshopNetwork) -> None:
@@ -110,8 +112,8 @@ def test_stored_energy_is_not_worth_anything(network: WorkshopNetwork) -> None:
     full.stored_energy = {FacilityId.PUMPED_HYDRO: 4e9}
 
     assert (
-        score(full, completed_rounds=ROUNDS, round_count=ROUNDS).residual_value
-        == score(empty, completed_rounds=ROUNDS, round_count=ROUNDS).residual_value
+        score(full, completed_rounds=ROUNDS, price_round_count=ROUNDS).residual_value
+        == score(empty, completed_rounds=ROUNDS, price_round_count=ROUNDS).residual_value
     )
 
 
@@ -134,7 +136,7 @@ def test_the_score_is_operating_profit_less_investments_and_carbon_tax_plus_resi
         Purchase(facility=NUCLEAR, round=ROUNDS, price=200_000.0),
     ]
 
-    result = score(alice, completed_rounds=ROUNDS, round_count=ROUNDS)
+    result = score(alice, completed_rounds=ROUNDS, price_round_count=ROUNDS)
 
     residual = CATALOG[GAS].base_price / 3 + CATALOG[NUCLEAR].base_price
     assert result.operating_profit == pytest.approx(75_000.0)
@@ -148,7 +150,7 @@ def test_a_carbon_tax_share_above_what_the_player_paid_raises_their_score(networ
     alice = _player(network, 1, "alice")
     alice.trading_results = [_result(1, 0.0, emissions=100.0, carbon_tax_rate=1.0, carbon_tax_share=400.0)]
 
-    result = score(alice, completed_rounds=ROUNDS, round_count=ROUNDS)
+    result = score(alice, completed_rounds=ROUNDS, price_round_count=ROUNDS)
 
     assert result.carbon_tax == pytest.approx(-300.0)
     assert result.score == pytest.approx(300.0)
@@ -158,27 +160,27 @@ def test_a_carbon_tax_share_above_what_the_player_paid_raises_their_score(networ
     "money",
     [
         pytest.param(-243_000_000.0, id="deep in debt"),
-        pytest.param(round_start_money(-243_000_000.0, after_blackout=False), id="after the floor top-up"),
+        pytest.param(round_start_money(-243_000_000.0), id="after the floor top-up"),
         pytest.param(200_000_000.0, id="rich"),
-        pytest.param(round_start_money(200_000_000.0, after_blackout=True), id="after the blackout reset"),
+        pytest.param(200_000_000.0 - blackout_cost(50_000.0, 2), id="after a blackout cost"),
     ],
 )
 def test_cash_has_no_effect_on_the_score(network: WorkshopNetwork, money: float) -> None:
     alice = _player(network, 1, "alice")
     alice.trading_results = [_result(1, 50_000.0)]
     alice.purchases = [Purchase(facility=GAS, round=1, price=30_000.0)]
-    before = score(alice, completed_rounds=ROUNDS, round_count=ROUNDS)
+    before = score(alice, completed_rounds=ROUNDS, price_round_count=ROUNDS)
 
     alice.money = money
 
-    assert score(alice, completed_rounds=ROUNDS, round_count=ROUNDS) == before
+    assert score(alice, completed_rounds=ROUNDS, price_round_count=ROUNDS) == before
 
 
 def test_the_scoreboard_ranks_the_highest_score_first(network: WorkshopNetwork) -> None:
     for account_id, (username, profit) in enumerate((("low", 100.0), ("high", 900.0), ("middle", 500.0)), start=1):
         _player(network, account_id, username).trading_results = [_result(1, profit)]
 
-    board = ranked(network.players(), completed_rounds=ROUNDS, round_count=ROUNDS)
+    board = ranked(network.players(), completed_rounds=ROUNDS, price_round_count=ROUNDS)
 
     assert [row.username for row in board] == ["high", "middle", "low"]
 
@@ -190,7 +192,7 @@ def test_a_mid_game_score_leaves_out_what_happened_after_the_last_completed_roun
     alice.purchases = [Purchase(facility=GAS, round=1, price=30_000.0), Purchase(facility=GAS, round=3, price=40_000.0)]
     alice.loan = Loan(round=3)
 
-    result = score(alice, completed_rounds=2, round_count=ROUNDS)
+    result = score(alice, completed_rounds=2, price_round_count=ROUNDS)
 
     # The gas burner built in Round 1 works Rounds 1 to 3, so after Round 2 it has Round 3 left.
     residual = CATALOG[GAS].base_price / 3
@@ -204,8 +206,8 @@ def test_a_loan_counts_from_the_round_it_was_taken_in(network: WorkshopNetwork) 
     alice = _player(network, 1, "alice")
     alice.loan = Loan(round=2)
 
-    assert score(alice, completed_rounds=1, round_count=ROUNDS).investments == 0.0
-    assert score(alice, completed_rounds=2, round_count=ROUNDS).investments == LOAN_COST
+    assert score(alice, completed_rounds=1, price_round_count=ROUNDS).investments == 0.0
+    assert score(alice, completed_rounds=2, price_round_count=ROUNDS).investments == LOAN_COST
 
 
 def test_before_the_first_round_completes_everyone_scores_nothing(network: WorkshopNetwork) -> None:
@@ -214,4 +216,4 @@ def test_before_the_first_round_completes_everyone_scores_nothing(network: Works
     alice.owned_facilities = [OwnedFacility(facility=GAS, built_round=1)]
     alice.purchases = [Purchase(facility=GAS, round=1, price=30_000.0)]
 
-    assert score(alice, completed_rounds=0, round_count=ROUNDS).score == 0.0
+    assert score(alice, completed_rounds=0, price_round_count=ROUNDS).score == 0.0
