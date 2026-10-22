@@ -171,8 +171,8 @@ export function usePhaseRedirects(openPricePanel: () => void) {
         const redirect = phaseRedirect(previous.current, current);
         previous.current = current;
         if (!redirect || entry?.role !== "player") return;
+        void navigate(redirect.page);
         if (redirect.kind === "open_price_panel") openPricePanel();
-        else void navigate(redirect.page);
     }, [checkpoint, priceSettingOpen, entry?.role, navigate, openPricePanel]);
 }
 
@@ -684,18 +684,6 @@ export function useSetTimers() {
 }
 
 /**
- * The prices each completed Trading period ran at for the visitor, oldest
- * first. Players only.
- */
-export function useLockedPrices({ enabled = true } = {}) {
-    return useQuery({
-        queryKey: queryKeys.workshop.lockedPrices,
-        queryFn: workshopApi.getLockedPrices,
-        enabled,
-    });
-}
-
-/**
  * The player's balance sheet for a Round (#1008). Read again whenever the
  * session changes, so it fills in as the Round's seasons are settled.
  */
@@ -741,6 +729,19 @@ export function useWorkshopPeriod(round: number, season: Season) {
     return useQuery({
         queryKey: queryKeys.workshop.period(round, season),
         queryFn: () => workshopApi.getPeriod(round, season),
+        retry: false,
+    });
+}
+
+/**
+ * Every player's prices for a Trading period (#1299). Read again whenever a
+ * player changes one, so it updates live while the price-setting window is
+ * open.
+ */
+export function useMarketPrices(round: number, season: Season) {
+    return useQuery({
+        queryKey: queryKeys.workshop.marketPricesFor(round, season),
+        queryFn: () => workshopApi.getMarketPrices(round, season),
         retry: false,
     });
 }
