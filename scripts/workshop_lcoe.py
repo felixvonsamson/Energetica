@@ -148,7 +148,7 @@ def simulate_lifetime(facility: WorkshopFacility, seed: int) -> tuple[float, flo
                 curve=_FLAT,
                 weather=weather,
             )
-            assert not outcome.blackout
+            assert not outcome.blackouts
             performance = outcome.results[1].facilities[facility.id]
             mwh += performance.generation / 1e6
             om += performance.om
