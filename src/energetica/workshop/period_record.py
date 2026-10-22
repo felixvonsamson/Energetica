@@ -18,6 +18,9 @@ season here.
 - ``charged``: what storage bought to charge.
 - ``stored``: the energy storage held once the point was over. Zero for a facility that stores nothing.
 
+Each pool's ``storage_capacity`` is the most energy it could hold, which the review needs for the state of
+charge. It is kept because it cannot be worked out later: retired facilities leave the player's fleet.
+
 What a pool sold is ``generation - dumped``. These come from the settlement, so they match what players
 were paid. For each demand tier, ``served`` is what it bought.
 
@@ -109,6 +112,8 @@ class TradingPeriodRecord:
     dumped: Array
     charged: Array
     stored: Array
+    storage_capacity: Array
+    """The energy each pool could hold, in Wh. Zero for a facility that stores nothing."""
     tiers: tuple[str, ...]
     """Each demand tier's label: the rows of ``served``."""
     served: Array
@@ -168,6 +173,7 @@ class TradingPeriodRecord:
             dumped=self.dumped,
             charged=self.charged,
             stored=self.stored,
+            storage_capacity=self.storage_capacity,
             served=self.served,
             offered=self.offered,
         )
@@ -192,6 +198,7 @@ class TradingPeriodRecord:
                 dumped=data["dumped"],
                 charged=data["charged"],
                 stored=data["stored"],
+                storage_capacity=data["storage_capacity"],
                 tiers=tuple(meta["tiers"]),
                 served=data["served"],
                 lines=tuple(

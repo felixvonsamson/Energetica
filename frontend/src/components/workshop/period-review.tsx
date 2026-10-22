@@ -4,12 +4,14 @@
  *
  * - The player's own power, generation or consumption (not for the facilitator,
  *   who has no fleet);
+ * - The player's storage, as a state of charge or stored energy, if they had any
+ *   (#1297);
  * - The whole market's power, by facility type or by player;
  * - The market price;
  * - The merit order at one settlement point, picked with the scrubber, which the
- *   three charts above mark. Clicking a chart moves the scrubber there.
+ *   charts above mark. Clicking a chart moves the scrubber there.
  *
- * The three charts span the whole week and share one zoom window: zooming or
+ * The charts above it span the whole week and share one zoom window: zooming or
  * resetting one does the same to the others, so they can be compared. When the
  * grid went down, they shade the rest of the week red from that point (#1273).
  *
@@ -19,7 +21,14 @@
  * for the period are in their own tab.
  */
 
-import { Activity, BarChart2, Layers, TrendingUp, Zap } from "lucide-react";
+import {
+    Activity,
+    BarChart2,
+    Battery,
+    Layers,
+    TrendingUp,
+    Zap,
+} from "lucide-react";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
@@ -34,6 +43,7 @@ import {
     PowerChart,
     type PowerChartViewMode,
 } from "@/components/charts/power-chart";
+import { StorageChart } from "@/components/charts/storage-chart";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
@@ -56,6 +66,7 @@ import {
     EXPORTS,
     type NetworkGrouping,
     type PowerView,
+    type StorageView,
     TIER_NAMES,
     WEEK_DAYS,
     isPointOfWeek,
@@ -63,6 +74,7 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    playerStorageRows,
     pointAxisLabel,
     pointTime,
     priceRows,
@@ -293,6 +305,9 @@ function Review({
                     cpd={cpd}
                     {...chart}
                 />
+            )}
+            {labels.me !== null && (
+                <PlayerStorageCard week={shown} labels={labels} {...chart} />
             )}
             <NetworkPowerCard
                 week={shown}
@@ -645,6 +660,62 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
                 hidden={hidden}
                 onToggle={toggle}
                 cpd={cpd}
+                {...chart}
+            />
+        </ChartCard>
+    );
+}
+
+// ── Storage chart ─────────────────────────────────────────────────────────────
+
+const STORAGE_OPTIONS = [
+    { value: "soc", label: "State of charge" },
+    { value: "energy", label: "Stored energy" },
+] as const;
+
+const NO_HIDDEN_SERIES = new Set<string>();
+
+function PlayerStorageCard({
+    week,
+    labels,
+    ...chart
+}: ChartProps & { week: PeriodWeek | undefined; labels: Labels }) {
+    const [view, setView] = useLocalStorage<StorageView>(
+        `${STORAGE_PREFIX}:storage:view`,
+        "soc",
+    );
+    const rows = useMemo(
+        () =>
+            week && labels.me !== null
+                ? playerStorageRows(week, labels.me, view)
+                : [],
+        [week, labels.me, view],
+    );
+    const hadStorage = week?.pools.some(
+        (pool) => pool.player_id === labels.me && pool.storage_capacity > 0,
+    );
+    if (!hadStorage) return null;
+
+    return (
+        <ChartCard
+            icon={Battery}
+            iconClassName="text-primary"
+            title="Your storage"
+            headerContent={
+                <Picker
+                    label="Display"
+                    value={view}
+                    onChange={setView}
+                    options={STORAGE_OPTIONS}
+                />
+            }
+        >
+            <StorageChart
+                chartData={rows}
+                hiddenFacilities={NO_HIDDEN_SERIES}
+                viewMode={view === "soc" ? "percent" : "normal"}
+                formatLabel={labels.facilityName}
+                height={300}
                 {...chart}
             />
         </ChartCard>

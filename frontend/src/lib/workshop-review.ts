@@ -2,10 +2,11 @@
  * Shaping a settled Trading period's record for its review charts (#1007).
  *
  * The API gives one simulated week at a time: the price at each settlement
- * point, and for each player's facility type its generation, dumped power and
- * charging. These functions turn that into the rows the time-series charts
- * draw, one per settlement point, keyed by `tick`: the point's number in the
- * whole period, so the scrubber, the charts and the merit order agree on it.
+ * point, and for each player's facility type its generation, dumped power,
+ * charging and stored energy. These functions turn that into the rows the
+ * time-series charts draw, one per settlement point, keyed by `tick`: the
+ * point's number in the whole period, so the scrubber, the charts and the merit
+ * order agree on it.
  *
  * - A player generates what each facility type produced. They consume what they
  *   sold to the market (`exports`), what their storage charged, and what they
@@ -14,6 +15,8 @@
  *   consumes what each demand tier was served, plus all charging and dumping.
  *   By player, the demand tiers add up to one `consumers` series, and each
  *   player's series is their charging and dumping.
+ * - A player's storage shows, for each storage type, the energy it held or its
+ *   state of charge: that energy over the type's capacity.
  */
 
 import type { MeritOrderData } from "@/components/charts/merit-order-view";
@@ -26,6 +29,7 @@ type Orders = ApiSchema<"WorkshopOrdersOut">;
 
 export type PowerView = "generation" | "consumption";
 export type NetworkGrouping = "type" | "player";
+export type StorageView = "soc" | "energy";
 
 /** One settlement point's values, by series key. */
 export type ChartRow = { tick: number } & Record<string, number>;
@@ -84,6 +88,28 @@ export function playerPowerRows(
             addSeries(rows, DUMPING, pool.dumped);
             if (hasCharged(pool)) addSeries(rows, pool.facility, pool.charged);
         }
+    }
+    return rows;
+}
+
+/**
+ * One player's stored energy over the week, in Wh, or its state of charge, from
+ * 0 to 1, for each storage type they had.
+ */
+export function playerStorageRows(
+    week: PeriodWeek,
+    playerId: number,
+    view: StorageView,
+): ChartRow[] {
+    const rows = emptyRows(week, []);
+    for (const pool of week.pools) {
+        if (pool.player_id !== playerId || pool.storage_capacity <= 0) continue;
+        const scale = view === "soc" ? 1 / pool.storage_capacity : 1;
+        addSeries(
+            rows,
+            pool.facility,
+            pool.stored.map((value) => value * scale),
+        );
     }
     return rows;
 }

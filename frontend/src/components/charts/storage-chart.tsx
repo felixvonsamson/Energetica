@@ -1,15 +1,21 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 /**
  * Storage overview table component that displays aggregated storage data by
  * facility type.
  *
  * Shows cumulative charging/discharging, max storage capacity, and current
  * state of charge for each storage facility type.
+ *
+ * The chart is also the Workshop period review's storage chart, which passes
+ * its own labels and time axis, like the power chart.
  */
 
 import {
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
+    type EChartsTimeSeriesConfig,
+    type TimeAxis,
+    TimeSeriesChart,
+    type ZoomRange,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -25,6 +31,17 @@ interface StorageChartProps {
     isError: boolean;
     hiddenFacilities: Set<string>;
     viewMode: "normal" | "percent";
+    /** Each series' tooltip label. Defaults to the facility's name. */
+    formatLabel?: (key: string) => ReactNode;
+    /** The chart's time axis. Defaults to the persistent world's game ticks. */
+    timeAxis?: TimeAxis;
+    height?: number;
+    markerTick?: number;
+    /** Shade the chart from this tick to its end as a blackout. */
+    blackoutTick?: number;
+    onTickClick?: (tick: number) => void;
+    zoom?: ZoomRange;
+    onZoomChange?: (zoom: ZoomRange) => void;
 }
 
 export function StorageChart({
@@ -33,6 +50,14 @@ export function StorageChart({
     isError,
     hiddenFacilities,
     viewMode,
+    formatLabel,
+    timeAxis,
+    height,
+    markerTick,
+    blackoutTick,
+    onTickClick,
+    zoom,
+    onZoomChange,
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenFacilities);
@@ -67,17 +92,27 @@ export function StorageChart({
                     : (value: number) => `${value.toFixed(1)}%`,
             formatYAxis: (value: number) =>
                 viewMode === "normal" ? formatEnergy(value) : `${value}%`,
+            formatLabel,
+            height,
         }),
-        [viewMode, getColor, filterDataKeys],
+        [viewMode, getColor, filterDataKeys, formatLabel, height],
     );
 
-    return (
-        <EChartsTimeSeries
-            data={displayData}
-            config={chartConfig}
-            isLoading={isLoading}
-            isError={isError}
-        />
+    const chartProps = {
+        data: displayData,
+        config: chartConfig,
+        isLoading,
+        isError,
+        markerTick,
+        blackoutTick,
+        onTickClick,
+        zoom,
+        onZoomChange,
+    };
+    return timeAxis ? (
+        <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
+    ) : (
+        <EChartsTimeSeries {...chartProps} />
     );
 }
 

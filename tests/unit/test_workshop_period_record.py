@@ -132,6 +132,17 @@ def test_stored_energy_follows_charging_and_ends_where_the_period_does() -> None
     assert not record.stored[_row(record, 1, WIND)].any()
 
 
+def test_each_pool_keeps_the_storage_capacity_it_had() -> None:
+    # The state of charge is the stored energy over this capacity. Retired facilities leave the fleet, so it cannot
+    # be worked out again after the period.
+    record = _simulate(_bidder(WIND, *[BATTERIES] * 3)).record
+
+    assert record.storage_capacity[_row(record, 1, BATTERIES)] == pytest.approx(
+        3 * (CATALOG[BATTERIES].base_storage_capacity or 0.0)
+    )
+    assert record.storage_capacity[_row(record, 1, WIND)] == 0.0
+
+
 def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
     record = _simulate(_bidder(GAS, sell={GAS: 50.0})).record
 
@@ -219,6 +230,16 @@ def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
     names = ("round", "season", "clearings_per_day", "days", "blackout_at", "pools", "tiers", "lines", "average_output")
     for name in names:
         assert getattr(loaded, name) == getattr(record, name)
-    for name in ("price", "quantity", "generation", "dumped", "charged", "stored", "served", "offered"):
+    for name in (
+        "price",
+        "quantity",
+        "generation",
+        "dumped",
+        "charged",
+        "stored",
+        "storage_capacity",
+        "served",
+        "offered",
+    ):
         np.testing.assert_array_equal(getattr(loaded, name), getattr(record, name))
     assert loaded.merit_order(5) == record.merit_order(5)

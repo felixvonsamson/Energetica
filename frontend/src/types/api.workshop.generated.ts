@@ -2263,7 +2263,9 @@ export interface components {
         };
         /**
          * WorkshopPoolSeriesOut
-         * @description One player's facilities of one type over a simulated week, in W at each settlement point.
+         * @description One player's facilities of one type over a simulated week, at each settlement point.
+         *
+         *     Power is in W and stored energy in Wh.
          */
         WorkshopPoolSeriesOut: {
             /** Player Id */
@@ -2284,6 +2286,16 @@ export interface components {
              * @description What storage bought to charge
              */
             charged: number[];
+            /**
+             * Stored
+             * @description The energy storage held once each point was over, in Wh
+             */
+            stored: number[];
+            /**
+             * Storage Capacity
+             * @description The most energy it could hold, in Wh. Zero if it is not storage
+             */
+            storage_capacity: number;
         };
         /**
          * WorkshopPriceIn
