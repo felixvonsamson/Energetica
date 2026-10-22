@@ -16,7 +16,17 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
-from energetica.workshop.prices import DEFAULT_PRICES, PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide
+from energetica.workshop.prices import (
+    DEFAULT_PRICES,
+    PRICE_CEILING,
+    PRICE_FLOOR,
+    LockedPrices,
+    MarketFacility,
+    PlayerQuotes,
+    PriceSheet,
+    PriceSide,
+    QuotedPrice,
+)
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import LeverChanges, RoundLevers
 from energetica.workshop.session import (
@@ -27,6 +37,7 @@ from energetica.workshop.session import (
     Finished,
     Investment,
     InvestmentClosedError,
+    NoMarketPricesError,
     NoPhaseRunningError,
     NotEnoughMoneyError,
     NotSelectedError,
@@ -1107,6 +1118,92 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
 
     assert session.checkpoint == TradingPeriod(round=1, season="spring")
     assert session.network.members[1].locked_prices == []
+
+
+# --- the room's prices (#1299) ----------------------------------------------------------------
+
+
+def _quote(price: float, previous: float | None = None) -> QuotedPrice:
+    return QuotedPrice(price=price, previous=previous)
+
+
+def test_the_room_sees_every_players_live_prices_for_the_types_they_have_operating(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.join(_account(2, "bob"))
+    session.set_price(1, GAS, "sell", 80.0)
+
+    room = session.market_prices(TradingPeriod(round=1, season="spring"))
+
+    assert room.live
+    assert room.players == [
+        PlayerQuotes(
+            account_id=1,
+            username="alice",
+            sell={GAS: _quote(80.0), BATTERIES: _quote(150.0)},
+            buy={BATTERIES: _quote(60.0)},
+        ),
+        PlayerQuotes(account_id=2, username="bob", sell={}, buy={}),
+    ]
+
+
+def test_the_room_lists_every_type_someone_has_a_price_for_in_catalog_order(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.join(_account(2, "bob"))
+    _advance(session)
+
+    room = session.market_prices(TradingPeriod(round=1, season="spring"))
+
+    # Whatever the reader owns or can buy now: a settled period lists the types it ran.
+    assert room.facilities == [
+        MarketFacility(id=facility, name=CATALOG[facility].name) for facility in CATALOG if facility in (GAS, BATTERIES)
+    ]
+
+
+def test_each_price_is_compared_with_the_one_the_last_period_ran_at(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.set_price(1, GAS, "sell", 90.0)
+    _advance(session)
+
+    session.set_price(1, GAS, "sell", 200.0)
+    session.set_price(1, GAS, "sell", 150.0)
+    [alice] = session.market_prices(TradingPeriod(round=1, season="summer")).players
+
+    assert alice.sell == {GAS: _quote(150.0, previous=90.0), BATTERIES: _quote(150.0, previous=150.0)}
+    assert alice.buy == {BATTERIES: _quote(60.0, previous=60.0)}
+
+
+def test_a_settled_period_shows_the_prices_it_ran_at(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.set_price(1, GAS, "sell", 90.0)
+    _advance(session)
+    session.set_price(1, GAS, "sell", 120.0)
+    _advance(session)
+    session.set_price(1, GAS, "sell", 50.0)
+
+    room = session.market_prices(TradingPeriod(round=1, season="summer"))
+
+    assert not room.live
+    [alice] = room.players
+    assert alice.sell[GAS] == _quote(120.0, previous=90.0)
+
+
+def test_prices_stop_being_live_when_the_window_closes(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.advance()
+
+    room = session.market_prices(TradingPeriod(round=1, season="spring"))
+
+    assert not room.live
+    assert room.players[0].sell[GAS] == _quote(DEFAULT_PRICES.sell[GAS])
+
+
+def test_a_period_that_has_not_started_has_no_prices(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+
+    with pytest.raises(NoMarketPricesError):
+        session.market_prices(TradingPeriod(round=1, season="summer"))
+    with pytest.raises(NoMarketPricesError):
+        session.market_prices(TradingPeriod(round=2, season="spring"))
 
 
 # --- the Trading-period engine (#1003) ------------------------------------------------------

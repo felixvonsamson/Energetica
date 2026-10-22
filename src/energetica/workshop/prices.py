@@ -12,6 +12,7 @@ They then carry over as the starting prices of the next window.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -75,6 +76,73 @@ class LockedPrices(BaseModel):
     round: int = Field(ge=1)
     season: Season
     prices: PriceSheet = Field(description="The prices of the facility types the player had operating")
+
+
+class QuotedPrice(BaseModel):
+    """One price a player offers, next to the one it ran at in their last Trading period (#1299)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    price: float
+    previous: float | None = Field(
+        description="The price the facility type ran at in the player's last Trading period with it, if any"
+    )
+
+
+class PlayerQuotes(BaseModel):
+    """A player's prices for one Trading period, as the whole room sees them (#1299)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    account_id: int
+    username: str
+    sell: dict[FacilityId, QuotedPrice] = Field(description="The sell price of each facility type they had operating")
+    buy: dict[FacilityId, QuotedPrice] = Field(description="The buy price of each storage type they had operating")
+
+
+class MarketFacility(BaseModel):
+    """A facility type the room's prices hold, named for the board's column (#1299)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: FacilityId
+    name: str
+
+
+class MarketPrices(BaseModel):
+    """Every player's prices for one Trading period, which the whole room sees (#1299)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    round: int = Field(ge=1)
+    season: Season
+    live: bool = Field(description="Whether the price-setting window is open, so the prices can still change")
+    facilities: list[MarketFacility] = Field(
+        description="Every facility type at least one player has a price for, in catalog order"
+    )
+    players: list[PlayerQuotes]
+
+
+Quotes = dict[FacilityId, QuotedPrice]
+
+
+def quoted(prices: PriceSheet, earlier: Sequence[LockedPrices]) -> tuple[Quotes, Quotes]:
+    """``prices``' sell and buy prices, each next to the price it ran at in the latest of the ``earlier``
+    periods, oldest first, that had it.
+    """
+
+    def side(pick: Callable[[PriceSheet], dict[FacilityId, float]]) -> Quotes:
+        def previous(facility: FacilityId) -> float | None:
+            return next(
+                (pick(locked.prices)[facility] for locked in reversed(earlier) if facility in pick(locked.prices)),
+                None,
+            )
+
+        return {
+            facility: QuotedPrice(price=price, previous=previous(facility)) for facility, price in pick(prices).items()
+        }
+
+    return side(lambda sheet: sheet.sell), side(lambda sheet: sheet.buy)
 
 
 # Every facility type's default prices were set by the first recalibration (#1227), around power prices of

@@ -34,8 +34,8 @@ from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
-from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSide
-from energetica.workshop.realtime import invalidate_session
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, MarketPrices, PriceSide
+from energetica.workshop.realtime import invalidate_market_prices, invalidate_session
 from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
@@ -469,21 +469,14 @@ def get_prices(player: Player) -> WorkshopPricesOut:
 # Waits on the session's lock and writes the session file, so it runs on a worker thread.
 @router.put("/prices/{facility}/{side}")
 async def set_price(
-    player: Player, session: Session, facility: FacilityId, side: PriceSide, new: WorkshopPriceIn
+    request: Request, player: Player, session: Session, facility: FacilityId, side: PriceSide, new: WorkshopPriceIn
 ) -> WorkshopPricesOut:
     """Set the calling player's ``side`` price for ``facility``: what it sells at, or for storage, what
     it buys at to charge. Only while a Trading period's price-setting window is open.
     """
     await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
+    await invalidate_market_prices(request.app)
     return _prices_out(player)
-
-
-@router.get("/prices/locked")
-def get_locked_prices(player: Player) -> list[LockedPrices]:
-    """The prices each completed Trading period ran at for the calling player, oldest first. A period
-    in which they had nothing operating is left out.
-    """
-    return player.locked_prices
 
 
 def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelOut:
@@ -555,6 +548,16 @@ def get_period(
 ) -> WorkshopPeriodOut:
     """A settled Trading period's simulated days and settlement points, for its review."""
     return WorkshopPeriodOut.from_record(_period_record(session, round_number, season))
+
+
+@router.get("/periods/{round_number}/{season}/prices")
+def get_market_prices(
+    _: Annotated[Account, Depends(resolve_entry_account)], session: Session, round_number: int, season: Season
+) -> MarketPrices:
+    """Every player's prices for a Trading period, the same for everyone in the Run (#1299): live while it is the
+    current period, and the prices it ran at once settled.
+    """
+    return session.market_prices(TradingPeriod(round=round_number, season=season))
 
 
 @router.get("/periods/{round_number}/{season}/weeks/{week}")

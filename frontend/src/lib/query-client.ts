@@ -90,13 +90,17 @@ export const queryKeys = {
         // Also under the session's key: a Round starting takes a payment, and the Investment phase
         // closing makes the loan final (#1225).
         loan: ["workshop", "session", "loan"] as const,
-        // Also under the session's key: settling a Trading period adds one.
-        lockedPrices: ["workshop", "session", "prices", "locked"] as const,
         // A Trading period's review (#1007). The summary sits under the session's key, so a
         // period that was not settled when first asked for is read again once it is. What a
         // settled period did never changes, so its days and merit orders are read once.
         period: (round: number, season: string) =>
             ["workshop", "session", "periods", round, season] as const,
+        // Every player's prices for a Trading period (#1299). The server invalidates them all
+        // when a player changes a price, and they sit under the session's key, so they are read
+        // again when the window closes or the period is settled.
+        marketPrices: ["workshop", "session", "market-prices"] as const,
+        marketPricesFor: (round: number, season: string) =>
+            [...queryKeys.workshop.marketPrices, round, season] as const,
         // A player's balance sheet for a Round (#1008). Under the session's key, so it fills in
         // as each of the Round's Trading periods is settled.
         balanceSheet: (round: number) =>

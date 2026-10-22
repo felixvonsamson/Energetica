@@ -114,7 +114,18 @@ from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.player import round_start_money
 from energetica.workshop.operating_profit import round_operating_profit
 from energetica.workshop.blackout import Blackout, blackout_cost, rationing, round_blackouts
-from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
+from energetica.workshop.prices import (
+    PRICE_CEILING,
+    PRICE_FLOOR,
+    LockedPrices,
+    MarketFacility,
+    MarketPrices,
+    PlayerQuotes,
+    PriceSheet,
+    PriceSide,
+    is_storage,
+    quoted,
+)
 from energetica.workshop.recap import WorkshopRecap, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
@@ -258,6 +269,13 @@ class NoPhaseRunningError(WorkshopError):
     """Raised when extending a phase while none is open: the checkpoint is not timed, or its time is up."""
 
     code = WorkshopErrorCode.WORKSHOP_NO_PHASE_RUNNING
+
+
+class NoMarketPricesError(WorkshopError):
+    """Raised when reading the room's prices for a Trading period that has not started (#1299)."""
+
+    code = WorkshopErrorCode.WORKSHOP_NO_MARKET_PRICES
+    status_code = 404
 
 
 class PriceSettingClosedError(WorkshopError):
@@ -431,6 +449,11 @@ def recap_open(checkpoint: Checkpoint, round_number: int) -> bool:
             return current >= round_number
         case Finished():
             return True
+
+
+def _period_key(period: TradingPeriod | LockedPrices) -> tuple[int, int]:
+    """Sorts Trading periods into the order they are played in."""
+    return period.round, SEASONS.index(period.season)
 
 
 def completed_rounds(checkpoint: Checkpoint, *, round_count: int) -> int:
@@ -1366,6 +1389,54 @@ class WorkshopSession:
                 vote_outcomes=self.vote_outcomes,
                 weather=weather,
                 demand_growth=self.demand_growth.get(round_number + 1, 1.0),
+            )
+
+    def market_prices(self, period: TradingPeriod) -> MarketPrices:
+        """Every player's prices for ``period``, each next to the one it ran at in their last Trading period
+        with it (#1299): the prices it ran at once it is settled, and the prices players are setting while it is
+        the current period. A player shows prices only for the facility types they had operating.
+
+        Raises :class:`NoMarketPricesError` if ``period`` is neither, because it has not started.
+        """
+        with self._lock:
+            players = self.network.players()
+            ran_at = [
+                next(
+                    (locked.prices for locked in player.locked_prices if _period_key(locked) == _period_key(period)),
+                    None,
+                )
+                for player in players
+            ]
+            if period in self.recorded_periods or any(sheet is not None for sheet in ran_at):
+                live = False
+                sheets = [PriceSheet(sell={}, buy={}) if sheet is None else sheet for sheet in ran_at]
+            elif self.checkpoint == period:
+                live = self.price_setting_open()
+                sheets = [
+                    player.prices.only(
+                        {
+                            owned.facility
+                            for owned in player.owned_facilities
+                            if is_operating(owned, current_round=period.round)
+                        }
+                    )
+                    for player in players
+                ]
+            else:
+                raise NoMarketPricesError(f"{period} has not started")
+            quotes = []
+            for player, sheet in zip(players, sheets, strict=True):
+                earlier = [locked for locked in player.locked_prices if _period_key(locked) < _period_key(period)]
+                sell, buy = quoted(sheet, earlier)
+                quotes.append(PlayerQuotes(account_id=player.account_id, username=player.username, sell=sell, buy=buy))
+            quoted_types = {facility for sheet in sheets for facility in [*sheet.sell, *sheet.buy]}
+            facilities = [
+                MarketFacility(id=facility, name=CATALOG[facility].name)
+                for facility in CATALOG
+                if facility in quoted_types
+            ]
+            return MarketPrices(
+                round=period.round, season=period.season, live=live, facilities=facilities, players=quotes
             )
 
     def scoreboard(self) -> Scoreboard:
