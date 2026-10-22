@@ -1,9 +1,11 @@
 import { useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import {
     useLeaveElectricityMarket,
     useElectricityMarketForPlayer,
 } from "@/hooks/use-electricity-markets";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { useMe } from "@/hooks/use-players";
 import { Button } from "@energetica/ui/components/button";
 import {
@@ -26,6 +28,7 @@ interface LeaveMarketDialogProps {
 export function LeaveMarketDialog({ isOpen, onClose }: LeaveMarketDialogProps) {
     const [error, setError] = useState<string | null>(null);
     const { mutate: leaveMarket, isPending } = useLeaveElectricityMarket();
+    const readOnly = useIsReadOnly();
 
     const player = useMe();
     const market = useElectricityMarketForPlayer(player?.id);
@@ -146,16 +149,20 @@ export function LeaveMarketDialog({ isOpen, onClose }: LeaveMarketDialogProps) {
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button
-                                type="submit"
-                                form="leave-market-form"
-                                variant={isPending ? "outline" : "destructive"}
-                                disabled={isPending}
-                                className="flex items-center gap-2"
-                            >
-                                {isPending && <Spinner />}
-                                Leave Market
-                            </Button>
+                            <ReadOnlyTooltip readOnly={readOnly}>
+                                <Button
+                                    type="submit"
+                                    form="leave-market-form"
+                                    variant={
+                                        isPending ? "outline" : "destructive"
+                                    }
+                                    disabled={isPending || readOnly}
+                                    className="flex items-center gap-2"
+                                >
+                                    {isPending && <Spinner />}
+                                    Leave Market
+                                </Button>
+                            </ReadOnlyTooltip>
                         </DialogFooter>
                     </DialogContent>
                 </form>

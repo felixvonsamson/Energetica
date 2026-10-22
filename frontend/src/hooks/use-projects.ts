@@ -8,7 +8,7 @@ import { projectsApi } from "@/lib/api/projects";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import {
     formatCancelProjectError,
-    resolveErrorMessage,
+    toastActionError,
 } from "@/lib/game-messages";
 import { queryKeys, queryClient } from "@/lib/query-client";
 
@@ -119,7 +119,7 @@ export function useQueueProject() {
             toast.success(`${getAssetLongName(variables.type)} queued`);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -138,7 +138,7 @@ export function useCancelProject() {
             toast.success("Project cancelled");
         },
         onError: (error) => {
-            toast.error(formatCancelProjectError(error));
+            toastActionError(error, formatCancelProjectError);
         },
     });
 }
@@ -152,7 +152,7 @@ export function usePauseProject() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -166,7 +166,7 @@ export function useResumeProject() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -180,7 +180,7 @@ export function useDecreaseProjectPriority() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -194,7 +194,7 @@ export function useIncreaseProjectPriority() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }

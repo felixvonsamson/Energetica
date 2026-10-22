@@ -43,10 +43,22 @@
  */
 
 import { handleApiError } from "@/lib/error-utils";
+import { isInstanceFrozenError } from "@/lib/lifecycle";
 import { createQueryClient } from "@energetica/core/query-client";
 
 export const queryClient = createQueryClient({
-    onMutationError: (error) => handleApiError(error),
+    onMutationError: (error) => {
+        // The backend refused a game action because the run has frozen (#866). The client usually
+        // sees freeze coming from `freeze_at`, so this means its copy is stale, e.g. an admin moved
+        // `freeze_at` earlier. Re-read it and the game turns read-only in place.
+        if (isInstanceFrozenError(error)) {
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.game.engine,
+            });
+            return;
+        }
+        handleApiError(error);
+    },
 });
 
 /** Query keys for consistent cache management. Organized by domain/feature. */

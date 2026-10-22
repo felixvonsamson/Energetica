@@ -6,14 +6,18 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 
+import { LifecycleBanner } from "@/components/lifecycle/lifecycle-banner";
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
 import { MapTiles } from "@/components/map/map-tiles";
 import { ResourceButton } from "@/components/map/resource-button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
+import { isInstanceFrozenError } from "@/lib/lifecycle";
 import {
     RESOURCES,
     MAX_VALUES,
@@ -87,7 +91,16 @@ function SettlePage() {
         }
     }, [user?.is_settled, isAuthLoading, navigate]);
 
-    return <SettleContent />;
+    // The settle page renders outside GameLayout, so it mounts the lifecycle banner itself: an
+    // unsettled player arriving during freeze still learns the game has ended (#866). On large
+    // screens the page fills the viewport without scrolling, so the banner takes its height out
+    // of the content rather than adding to it.
+    return (
+        <div className="flex flex-col lg:h-screen">
+            <LifecycleBanner />
+            <SettleContent />
+        </div>
+    );
 }
 
 function SettleContent() {
@@ -157,7 +170,7 @@ function SettleContent() {
     }
 
     return (
-        <div className="p-4 flex flex-col lg:h-screen">
+        <div className="p-4 flex flex-col lg:flex-1 lg:min-h-0">
             {/* Title with theme toggle */}
             <div className="flex items-center gap-3 mb-6 lg:shrink-0">
                 <div className="flex-1" />
@@ -259,6 +272,7 @@ function SettleContent() {
 function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
     const queryClient = useQueryClient();
     const [isSettling, setIsSettling] = useState(false);
+    const readOnly = useIsReadOnly();
 
     const handleSettleLocation = useCallback(async () => {
         if (isSettling) return;
@@ -271,6 +285,15 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
             // an awaited refetch + imperative navigate.
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         } catch (error) {
+            setIsSettling(false);
+            // The run froze under a stale `freeze_at` (#866): re-read it and the button disables
+            // itself, rather than asking the player to retry an action that can't succeed.
+            if (isInstanceFrozenError(error)) {
+                void queryClient.invalidateQueries({
+                    queryKey: queryKeys.game.engine,
+                });
+                return;
+            }
             console.error("Error settling location:", error);
             alert("Failed to settle location. Please try again.");
             setIsSettling(false);
@@ -357,15 +380,19 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                         {playerMap[selectedTile.player_id]}!
                     </div>
                 ) : (
-                    <Button
-                        variant="success"
-                        size="lg"
-                        className="mt-6 w-full font-bold"
-                        onClick={handleSettleLocation}
-                        disabled={isSettling}
-                    >
-                        {isSettling ? "Settling..." : "Choose this location"}
-                    </Button>
+                    <ReadOnlyTooltip readOnly={readOnly} className="block">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            className="mt-6 w-full font-bold"
+                            onClick={handleSettleLocation}
+                            disabled={isSettling || readOnly}
+                        >
+                            {isSettling
+                                ? "Settling..."
+                                : "Choose this location"}
+                        </Button>
+                    </ReadOnlyTooltip>
                 )}
             </div>
         </div>

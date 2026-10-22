@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTickQuery } from "@/contexts/game-tick-context";
 import { facilitiesApi } from "@/lib/api/facilities";
 import { getAssetLongName } from "@/lib/assets/asset-names";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import { toastActionError } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -56,7 +56,7 @@ export function useUpgradeFacility() {
             toast.success("Facility upgraded successfully");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -80,7 +80,7 @@ export function useUpgradeAllOfType() {
             );
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -106,7 +106,7 @@ export function useDismantleFacility() {
             );
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -132,7 +132,7 @@ export function useDismantleAllOfType() {
             );
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }

@@ -1,12 +1,11 @@
 /** React Query hooks for power priorities data. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { useTickQuery } from "@/contexts/game-tick-context";
 import { electricityMarketsApi } from "@/lib/api/electricity-markets";
 import { powerPrioritiesApi } from "@/lib/api/power-priorities";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import { toastActionError } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -40,7 +39,7 @@ export function useUpdatePowerPriorityBump() {
             });
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -55,7 +54,7 @@ export function useUpdateElectricityPrices() {
         // Safe to repeat: it sets the value outright.
         retry: 1,
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }

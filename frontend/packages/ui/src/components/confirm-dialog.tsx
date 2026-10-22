@@ -16,6 +16,7 @@ import {
     DialogTitle,
 } from "./dialog";
 import { Spinner } from "./spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface ConfirmDialogProps {
     /** The trigger element (button) that opens the dialog */
@@ -36,6 +37,12 @@ interface ConfirmDialogProps {
     onCancel?: () => void;
     /** Whether the confirm action is currently pending */
     isPending?: boolean;
+    /**
+     * Why the action can't be confirmed right now. When set, the dialog still
+     * opens, so its details can be read, but the confirm button is disabled and
+     * shows this reason as a tooltip.
+     */
+    disabledReason?: string;
 }
 
 /**
@@ -61,6 +68,7 @@ export function ConfirmDialog({
     onConfirm,
     onCancel,
     isPending = false,
+    disabledReason,
 }: ConfirmDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -73,6 +81,24 @@ export function ConfirmDialog({
         setIsOpen(false);
         onCancel?.();
     };
+
+    const confirmButton = (
+        <Button
+            variant={
+                isPending
+                    ? "outline"
+                    : variant === "danger"
+                      ? "destructive"
+                      : "default"
+            }
+            onClick={handleConfirm}
+            disabled={isPending || !!disabledReason}
+            className="flex items-center gap-2"
+        >
+            {isPending && <Spinner />}
+            {confirmLabel}
+        </Button>
+    );
 
     return (
         <>
@@ -114,21 +140,20 @@ export function ConfirmDialog({
                                 {cancelLabel}
                             </Button>
                         </DialogClose>
-                        <Button
-                            variant={
-                                isPending
-                                    ? "outline"
-                                    : variant === "danger"
-                                      ? "destructive"
-                                      : "default"
-                            }
-                            onClick={handleConfirm}
-                            disabled={isPending}
-                            className="flex items-center gap-2"
-                        >
-                            {isPending && <Spinner />}
-                            {confirmLabel}
-                        </Button>
+                        {disabledReason ? (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="inline-flex">
+                                        {confirmButton}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {disabledReason}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : (
+                            confirmButton
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

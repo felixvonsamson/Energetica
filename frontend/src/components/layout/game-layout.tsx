@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { LifecycleBanner } from "@/components/lifecycle/lifecycle-banner";
 import {
     SidebarInset,
     SidebarProvider,
@@ -38,6 +39,7 @@ export function GameLayout({ children, sidebar }: GameLayoutProps) {
             <div className="flex h-svh w-full flex-col overflow-hidden">
                 {/* Top bar spans full width above sidebar */}
                 <TopBar />
+                <LifecycleBanner />
 
                 {/* Sidebar + content row */}
                 <div className="flex flex-1 min-h-0">

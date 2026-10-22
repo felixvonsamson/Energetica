@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { resourceMarketApi } from "@/lib/api/resource-market";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import { toastActionError } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -40,7 +40,7 @@ export function useCreateAsk() {
             toast.success("Listing created");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -67,7 +67,7 @@ export function usePurchaseAsk() {
             toast.success("Purchase complete");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -91,7 +91,7 @@ export function useUpdateAsk() {
             toast.success("Listing updated");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -114,7 +114,7 @@ export function useDeleteAsk() {
             toast.success("Listing removed");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
