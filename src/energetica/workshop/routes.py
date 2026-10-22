@@ -34,7 +34,7 @@ from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
-from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, LockedPrices, MarketPrices, PriceSide
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, MarketPrices, PriceSide
 from energetica.workshop.realtime import invalidate_market_prices, invalidate_session
 from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
@@ -477,14 +477,6 @@ async def set_price(
     await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
     await invalidate_market_prices(request.app)
     return _prices_out(player)
-
-
-@router.get("/prices/locked")
-def get_locked_prices(player: Player) -> list[LockedPrices]:
-    """The prices each completed Trading period ran at for the calling player, oldest first. A period
-    in which they had nothing operating is left out.
-    """
-    return player.locked_prices
 
 
 def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelOut:

@@ -530,27 +530,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/prices/locked": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Locked Prices
-         * @description The prices each completed Trading period ran at for the calling player, oldest first. A period
-         *     in which they had nothing operating is left out.
-         */
-        get: operations["get_locked_prices_api_v1_workshop_prices_locked_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/workshop/fuel": {
         parameters: {
             query?: never;
@@ -1053,21 +1032,6 @@ export interface components {
             carbon_tax_vote?: boolean | null;
         };
         /**
-         * LockedPrices
-         * @description The prices a player's facilities were offered at during one Trading period.
-         */
-        LockedPrices: {
-            /** Round */
-            round: number;
-            /**
-             * Season
-             * @enum {string}
-             */
-            season: "spring" | "summer" | "autumn" | "winter";
-            /** @description The prices of the facility types the player had operating */
-            prices: components["schemas"]["PriceSheet"];
-        };
-        /**
          * MarketLine
          * @description The energy one facility type sold, or bought, over a period, and the money it was worth.
          */
@@ -1337,26 +1301,6 @@ export interface components {
              */
             buy: {
                 [key: string]: components["schemas"]["QuotedPrice"];
-            };
-        };
-        /**
-         * PriceSheet
-         * @description A player's prices, per MWh.
-         */
-        PriceSheet: {
-            /**
-             * Sell
-             * @description The price each facility type sells its power at
-             */
-            sell: {
-                [key: string]: number;
-            };
-            /**
-             * Buy
-             * @description The price each storage type buys power at to charge
-             */
-            buy: {
-                [key: string]: number;
             };
         };
         /**
@@ -3417,26 +3361,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_locked_prices_api_v1_workshop_prices_locked_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LockedPrices"][];
                 };
             };
         };

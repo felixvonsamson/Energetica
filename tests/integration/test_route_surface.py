@@ -176,7 +176,6 @@ WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
     "DELETE /api/v1/workshop/selection/{facility}",
     "GET /api/v1/workshop/prices",
     "PUT /api/v1/workshop/prices/{facility}/{side}",
-    "GET /api/v1/workshop/prices/locked",
     "GET /api/v1/workshop/fuel",
     "PUT /api/v1/workshop/fuel/{fuel}",
     "GET /api/v1/workshop/periods/{round_number}/{season}",
