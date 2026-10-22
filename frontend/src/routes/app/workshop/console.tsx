@@ -2,7 +2,8 @@
  * The facilitator's console (#1018): one screen to plan the session and run it.
  * Each Round has a tab with its levers, its events and its votes, which the
  * facilitator changes until the Recap before the Round locks them. The console
- * opens on the earliest Round that can still change. Outside the tabs sit what
+ * opens on the earliest Round that can still change, and the facilitator can
+ * add a Round until the last Recap opens (#1298). Outside the tabs sit what
  * belongs to the whole session: the links to the join link and roster, the
  * phase timers, and how far each technology is from unlocking its upgrade
  * (#1011). Facilitator only: players learn of a Round only at the Recap, so
@@ -10,7 +11,7 @@
  */
 
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Lock } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { PhaseTimersCard } from "@/components/workshop/phase-timers-card";
@@ -18,12 +19,15 @@ import { RoundEvents } from "@/components/workshop/round-events";
 import { RoundLevers } from "@/components/workshop/round-levers";
 import { RoundVotes } from "@/components/workshop/round-votes";
 import {
+    useAddRound,
+    usePlanChangePending,
     useWorkshopEntry,
     useWorkshopEvents,
     useWorkshopPlans,
+    useWorkshopSession,
     useWorkshopUnlocks,
 } from "@/hooks/use-workshop";
-import { consoleRound } from "@/lib/workshop-console";
+import { canAddRound, consoleRound } from "@/lib/workshop-console";
 import type { ApiSchema } from "@/types/api-helpers";
 import { Button } from "@energetica/ui/components/button";
 import {
@@ -32,6 +36,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@energetica/ui/components/card";
+import { ConfirmDialog } from "@energetica/ui/components/confirm-dialog";
 import { Money } from "@energetica/ui/components/money";
 import { ProgressBar } from "@energetica/ui/components/progress-bar";
 import { Spinner } from "@energetica/ui/components/spinner";
@@ -139,25 +144,34 @@ function RoundTabs({
 
     return (
         <div className="space-y-6">
-            <Tabs
-                value={`${plan.round}`}
-                onValueChange={(value) => setPickedRound(Number(value))}
-            >
-                <TabsList className="flex h-auto w-full flex-wrap justify-start sm:w-fit">
-                    {plans.rounds.map((candidate) => (
-                        <TabsTrigger
-                            key={candidate.round}
-                            value={`${candidate.round}`}
-                            className="flex-none"
-                        >
-                            {candidate.locked && (
-                                <Lock className="size-3" aria-label="locked" />
-                            )}
-                            Round {candidate.round}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap items-center gap-2">
+                <Tabs
+                    value={`${plan.round}`}
+                    onValueChange={(value) => setPickedRound(Number(value))}
+                >
+                    <TabsList className="flex h-auto w-full flex-wrap justify-start sm:w-fit">
+                        {plans.rounds.map((candidate) => (
+                            <TabsTrigger
+                                key={candidate.round}
+                                value={`${candidate.round}`}
+                                className="flex-none"
+                            >
+                                {candidate.locked && (
+                                    <Lock
+                                        className="size-3"
+                                        aria-label="locked"
+                                    />
+                                )}
+                                Round {candidate.round}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
+                <AddRoundButton
+                    roundCount={plans.rounds.length}
+                    onAdded={setPickedRound}
+                />
+            </div>
             {/* Keyed by Round, so a note left by a change stays with the Round it was made in. */}
             <RoundPlanView
                 key={plan.round}
@@ -166,6 +180,53 @@ function RoundTabs({
                 events={events}
             />
         </div>
+    );
+}
+
+/**
+ * Adds a Round after the last one (#1298), once the facilitator confirms, and
+ * opens its tab. Hidden once the last Round's Recap has opened.
+ */
+function AddRoundButton({
+    roundCount,
+    onAdded,
+}: {
+    roundCount: number;
+    onAdded: (round: number) => void;
+}) {
+    const { data: session } = useWorkshopSession();
+    const addRound = useAddRound();
+    const planChangePending = usePlanChangePending();
+    if (!session || !canAddRound(session.checkpoint, roundCount)) return null;
+
+    const newRound = roundCount + 1;
+    // Prices follow the length the session starts with (#1306), so only an added Round before it starts moves them.
+    const prices =
+        session.checkpoint.kind === "not_started"
+            ? `Facility prices change to those of a ${newRound}-Round session.`
+            : "Facility prices stay as they are.";
+    return (
+        <ConfirmDialog
+            trigger={
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={planChangePending}
+                >
+                    <Plus />
+                    Add a Round
+                </Button>
+            }
+            title={`Add Round ${newRound}?`}
+            description={`The session then runs ${newRound} Rounds instead of ${roundCount}, and players see the new count straight away. Round ${newRound} starts with Round ${roundCount}'s levers and no events, and you can change it until Recap ${roundCount} opens. ${prices} A Round cannot be removed once added.`}
+            confirmLabel="Add Round"
+            onConfirm={() =>
+                addRound.mutate(undefined, {
+                    onSuccess: () => onAdded(newRound),
+                })
+            }
+            isPending={addRound.isPending}
+        />
     );
 }
 

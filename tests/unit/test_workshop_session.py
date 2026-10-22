@@ -1838,12 +1838,12 @@ def test_the_floor_top_up_leaves_the_final_score_unchanged(path: Path) -> None:
     session = _at_round_one_recap(path)
     alice = session.network.members[1]
     alice.money = -15_000_000.0
-    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count)
 
     _advance(session)
 
     assert alice.money == FLOOR
-    assert score(alice, completed_rounds=session.round_count, round_count=session.round_count) == before
+    assert score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count) == before
 
 
 def test_cash_above_the_floor_carries_forward(path: Path) -> None:
@@ -1936,11 +1936,13 @@ def test_each_blackout_costs_every_player_thirty_percent_of_the_rounds_operating
 def test_the_blackout_cost_leaves_every_score_unchanged(path: Path) -> None:
     session = _blacked_out_twice_in_winter(path)
     players = list(session.network.players())
-    before = [score(player, completed_rounds=1, round_count=session.round_count) for player in players]
+    before = [score(player, completed_rounds=1, price_round_count=session.price_round_count) for player in players]
 
     session.advance()
 
-    assert [score(player, completed_rounds=1, round_count=session.round_count) for player in players] == before
+    assert [
+        score(player, completed_rounds=1, price_round_count=session.price_round_count) for player in players
+    ] == before
 
 
 def test_demand_growth_counts_the_operating_profit_before_the_blackout_cost(path: Path) -> None:
@@ -2007,18 +2009,20 @@ def test_the_scoreboard_counts_the_rounds_completed_so_far(path: Path) -> None:
 
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (0, False)
-    assert board.scores == ranked(players, completed_rounds=0, round_count=session.round_count)
+    assert board.scores == ranked(players, completed_rounds=0, price_round_count=session.price_round_count)
 
     while session.checkpoint != TradingPeriod(round=2, season="summer"):
         _advance(session)
     # Round 2's spring is settled, but the Round is not completed, so it is not counted yet.
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (1, False)
-    assert board.scores == ranked(players, completed_rounds=1, round_count=session.round_count)
-    assert board.scores != ranked(players, completed_rounds=2, round_count=session.round_count)
+    assert board.scores == ranked(players, completed_rounds=1, price_round_count=session.price_round_count)
+    assert board.scores != ranked(players, completed_rounds=2, price_round_count=session.price_round_count)
 
     while not isinstance(session.checkpoint, Finished):
         _advance(session)
     board = session.scoreboard()
     assert (board.completed_rounds, board.final) == (session.round_count, True)
-    assert board.scores == ranked(players, completed_rounds=session.round_count, round_count=session.round_count)
+    assert board.scores == ranked(
+        players, completed_rounds=session.round_count, price_round_count=session.price_round_count
+    )

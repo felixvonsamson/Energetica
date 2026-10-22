@@ -164,6 +164,16 @@ export const workshopApi = {
         ),
 
     /**
+     * Add a Round after the last one (#1298). Its plan copies the last Round's
+     * levers, without its events. Facilitator only. Returns every Round's plan
+     * after the change.
+     */
+    addRound: () =>
+        apiClient.post<ApiResponse<"/api/v1/workshop/plans:add", "post">>(
+            "/workshop/plans:add",
+        ),
+
+    /**
      * Change some of a Round's levers (#1190). Each lever that changed also
      * changes in every later Round. Facilitator only. Returns every Round's
      * plan after the change.

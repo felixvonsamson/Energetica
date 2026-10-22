@@ -307,6 +307,21 @@ def get_plans(_: Annotated[Account, Depends(get_facilitator)], session: Session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.post("/plans:add")
+async def add_round(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+) -> WorkshopPlansOut:
+    """Add a Round after the last one, and tell every open page (#1298). Its plan copies the last Round's levers,
+    without its events. Refused once the last Round's Recap has opened, since it shows the final scores. Facility
+    prices stay those of the length the session started with.
+    """
+    await run_in_threadpool(session.add_round)
+    await invalidate_session(request.app)
+    return _plans_out(session)
+
+
 @router.patch("/plans/{round_number}/levers")
 async def change_round_levers(
     _: Annotated[Account, Depends(get_facilitator)],

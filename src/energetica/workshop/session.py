@@ -399,6 +399,12 @@ class LoanNeededError(WorkshopError):
     code = WorkshopErrorCode.WORKSHOP_LOAN_NEEDED
 
 
+class LastRecapOpenError(WorkshopError):
+    """Raised when adding a Round once the last Round's Recap has opened, which shows the final scores (#1298)."""
+
+    code = WorkshopErrorCode.WORKSHOP_LAST_RECAP_OPEN
+
+
 class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
@@ -581,6 +587,8 @@ class _SavedSession(BaseModel):
 
     checkpoint: Checkpoint
     round_count: int = Field(ge=1)
+    # None for a session saved before Rounds could be added (#1298): its prices follow its Round count.
+    price_round_count: int | None = Field(default=None, ge=1)
     timers: PhaseTimers
     phase_timer: PhaseTimer | None
     players: list[_SavedPlayer]
@@ -615,6 +623,7 @@ class WorkshopSession:
         path: Path,
         checkpoint: Checkpoint,
         round_count: int,
+        price_round_count: int | None = None,
         plans: list[RoundPlan] | None = None,
         timers: PhaseTimers | None = None,
         phase_timer: PhaseTimer | None = None,
@@ -638,6 +647,9 @@ class WorkshopSession:
         self.path = path
         self.checkpoint: Checkpoint = checkpoint
         self.round_count = round_count
+        # The Round count the facility prices are set for (#1306): the count the session started with. Prices are fixed
+        # for the whole session, so a Round added once it has started leaves them alone (#1298).
+        self.price_round_count = round_count if price_round_count is None else price_round_count
         # One plan per Round, in order (#1190). A new session copies them from the default plan.
         # An event the catalog no longer allows, such as one of an event or severity since removed, is dropped, so it
         # never blocks an advance.
@@ -741,6 +753,7 @@ class WorkshopSession:
             path=path,
             checkpoint=saved.checkpoint,
             round_count=saved.round_count,
+            price_round_count=saved.price_round_count,
             plans=saved.plans,
             timers=saved.timers,
             phase_timer=saved.phase_timer,
@@ -817,12 +830,12 @@ class WorkshopSession:
         return available_facilities(self.current_format().storage, unlocked)
 
     def facility_price(self, facility: FacilityId, round_number: int | None = None) -> float:
-        """What ``facility`` costs in Round ``round_number``, by default the current one: its price for the session's
-        length (#1306), moved by any price shock (#1012).
+        """What ``facility`` costs in Round ``round_number``, by default the current one: its price for the length the
+        session started with (#1306, #1298), moved by any price shock (#1012).
         """
         if round_number is None:
             round_number = self.current_round()
-        price = session_price(facility, self.round_count)
+        price = session_price(facility, self.price_round_count)
         return price * facility_price_factor(self.fired_events, facility, round_number)
 
     def facility_prices(self, round_number: int | None = None) -> dict[FacilityId, float]:
@@ -1448,7 +1461,9 @@ class WorkshopSession:
             return Scoreboard(
                 completed_rounds=completed,
                 final=isinstance(self.checkpoint, Finished),
-                scores=ranked(self.network.players(), completed_rounds=completed, round_count=self.round_count),
+                scores=ranked(
+                    self.network.players(), completed_rounds=completed, price_round_count=self.price_round_count
+                ),
             )
 
     def plans_view(self) -> PlansView:
@@ -1513,6 +1528,28 @@ class WorkshopSession:
             plans = list(self.plans)
             plans[round_number - 1] = without_event(plans[round_number - 1], event_id, season)
             return self._set_plans(plans)
+
+    def add_round(self) -> None:
+        """Add a Round after the last one (#1298). Its plan copies the last Round's levers, without its events, and stays
+        open to change until it locks. Before the session starts, the facility prices follow the new length too; once
+        it has started, they stay as they were.
+
+        Raises :class:`LastRecapOpenError` once the last Round's Recap has opened, since it shows the final scores.
+        """
+        with self._lock:
+            if recap_open(self.checkpoint, self.round_count):
+                raise LastRecapOpenError("the last Round's Recap has opened")
+            before = self.round_count, self.price_round_count, self.plans
+            self.round_count += 1
+            if isinstance(self.checkpoint, NotStarted):
+                self.price_round_count = self.round_count
+            self.plans = [*self.plans, RoundPlan(levers=self.plans[-1].levers)]
+            try:
+                self._save(self.checkpoint, self.phase_timer)
+            except BaseException:
+                # Undo the change, so the session matches the file.
+                self.round_count, self.price_round_count, self.plans = before
+                raise
 
     def _check_editable(self, round_number: int) -> None:
         """Raise unless the session has Round ``round_number`` and its plan is not locked. The caller holds the lock."""
@@ -1903,6 +1940,7 @@ class WorkshopSession:
         saved = _SavedSession(
             checkpoint=checkpoint,
             round_count=self.round_count,
+            price_round_count=self.price_round_count,
             timers=self.timers,
             phase_timer=phase_timer,
             players=[
