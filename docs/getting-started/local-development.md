@@ -20,8 +20,9 @@ Two questions decide every command:
 **Which package.json?** TypeScript scripts (`dev:*`, `build:*`, `lint`, `typecheck`, …) live in
 `frontend/package.json` — run them with `cd frontend && bun run …`. Python + ops + full-stack
 launchers live in the root `package.json` — run them from the repo root. (The cross-cutting quality
-gate — `typecheck`, `lint`, `format`, `generate-types` — is also exposed at the root for
-convenience, since it spans both.)
+gate — `typecheck`, `lint`, `generate-types` — is also exposed at the root for convenience, since
+it spans both. `format` and `format:check` exist only at the root, because Prettier covers the
+whole repo.)
 
 ## Scenarios
 
@@ -349,7 +350,7 @@ Run's `instance.json`, so you would repeat steps 1 and 2.
 ```bash
 dev:app       dev:lobby       dev:landing        # dev servers (prefix BACKEND=game|edu|ethz for a live backend)
 build:app     build:lobby     build:landing      build:all
-typecheck     lint            format             generate-types
+typecheck     lint            generate-types
 ```
 
 **Backend & ops** (repo root, `bun run …`):
@@ -360,7 +361,7 @@ dev:lobby      # launcher: local lobby stack
 dev:login      # mint a lobby session for CLI use (lobby must be running)
 serve:app      serve:app:fast   serve:app:test
 serve:lobby
-typecheck  typecheck:py  lint  format  generate-types  ruff:check  ruff:format
+typecheck  typecheck:py  lint  format  format:check  generate-types  ruff:check  ruff:format
 rm-instance    # full local reset (see below)
 ```
 
