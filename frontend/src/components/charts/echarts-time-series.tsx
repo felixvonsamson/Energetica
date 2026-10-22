@@ -10,8 +10,8 @@
  * - Drag-to-zoom with zoom preservation on new data, which charts can share
  * - React tooltip overlay with colored circles on the axis pointer
  * - An optional marker on one tick, and a callback when a tick is clicked
- * - An optional red striped "Blackout" region, from where the grid went down to
- *   the chart's end
+ * - Optional red striped "Blackout" regions, each from where the grid went down
+ *   to where it came back
  *
  * {@link TimeSeriesChart} takes its time axis as a prop, so any mode can use it.
  * {@link EChartsTimeSeries} is the persistent world's chart: its axis counts
@@ -139,10 +139,10 @@ export interface EChartsTimeSeriesProps {
     /** Draw a vertical marker at this tick, if it is one of the data's ticks. */
     markerTick?: number;
     /**
-     * Shade the chart red from this tick to its end, labelled "Blackout": the
-     * grid went down there, so the series stop.
+     * Shade the chart red over each of these tick ranges, from `start` up to
+     * `end`, labelled "Blackout": the grid was down there, so the series stop.
      */
-    blackoutTick?: number;
+    blackouts?: readonly { start: number; end: number }[];
     /** Called with the tick under the pointer when the plot is clicked. */
     onTickClick?: (tick: number) => void;
     /**
@@ -201,7 +201,7 @@ export interface TimeSeriesChartProps extends EChartsTimeSeriesProps {
  */
 export type ChartSyncProps = Pick<
     EChartsTimeSeriesProps,
-    "markerTick" | "blackoutTick" | "onTickClick" | "zoom" | "onZoomChange"
+    "markerTick" | "blackouts" | "onTickClick" | "zoom" | "onZoomChange"
 > & {
     /**
      * The chart's time axis. Defaults to the persistent world's game ticks.
@@ -447,7 +447,7 @@ export function TimeSeriesChart({
     isLoading = false,
     isError = false,
     markerTick,
-    blackoutTick,
+    blackouts,
     onTickClick,
     zoom,
     onZoomChange,
@@ -665,16 +665,19 @@ export function TimeSeriesChart({
                       data: [{ xAxis: markerIndex }],
                   };
 
-        // The blackout region, from the first tick at or after the blackout to
-        // the plot's right edge, drawn on the first series like the marker. Its
-        // end is left open, so ECharts runs it to the edge rather than to the
-        // middle of the last bar.
-        const blackoutIndex =
-            blackoutTick === undefined
-                ? -1
-                : ticks.findIndex((tick) => tick >= blackoutTick);
+        // The blackout regions, each from the first tick at or after the
+        // blackout to the first tick the grid is back at, drawn on the first
+        // series like the marker. A region that runs past the last tick is
+        // left open, so ECharts runs it to the plot's right edge rather than
+        // to the middle of the last bar.
+        const blackoutAreas = (blackouts ?? []).flatMap(({ start, end }) => {
+            const from = ticks.findIndex((tick) => tick >= start);
+            if (from < 0 || (ticks[from] ?? Infinity) >= end) return [];
+            const to = ticks.findIndex((tick) => tick >= end);
+            return [[{ xAxis: from }, to < 0 ? {} : { xAxis: to }]];
+        });
         const markArea: MarkAreaComponentOption | undefined =
-            blackoutIndex < 0
+            blackoutAreas.length === 0
                 ? undefined
                 : {
                       silent: true,
@@ -692,7 +695,9 @@ export function TimeSeriesChart({
                           color: destructiveColor,
                           fontWeight: "bold",
                       },
-                      data: [[{ xAxis: blackoutIndex }, {}]],
+                      data: blackoutAreas as NonNullable<
+                          MarkAreaComponentOption["data"]
+                      >,
                   };
         const marks = {
             ...(markLine ? { markLine } : {}),
@@ -900,7 +905,7 @@ export function TimeSeriesChart({
         containerWidth,
         zoomRange,
         markerTick,
-        blackoutTick,
+        blackouts,
     ]);
 
     // ── Chart lifecycle ───────────────────────────────────────────────────────

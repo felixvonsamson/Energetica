@@ -13,14 +13,19 @@ import {
     isSeason,
     latestRecapRound,
     latestSeason,
+    type NodeStatus,
     scoreboardStatus,
     type Season,
-    type SeasonStatus,
     timelineLayout,
     type TimelineRound,
-    type TradingPeriod,
     workshopTimeline,
 } from "./workshop-timeline";
+
+type Blackout = ApiSchema<"Blackout">;
+
+function blackout(round: number, season: Season): Blackout {
+    return { round, season, day: 0, minute: 0 };
+}
 
 describe("workshopTimeline", () => {
     it("marks the current Trading period, what came before it, and what comes after", () => {
@@ -94,40 +99,29 @@ describe("workshopTimeline", () => {
         expect(second?.status).toBe("future");
     });
 
-    it("marks the season the grid went down in, and skips the rest of its Round", () => {
+    it("marks each season the grid went down in, and the Round goes on", () => {
         const [first, second] = workshopTimeline(
             { kind: "investment", round: 2 },
             2,
-            [{ kind: "trading_period", round: 1, season: "summer" }],
+            [
+                blackout(1, "summer"),
+                blackout(1, "summer"),
+                blackout(1, "winter"),
+            ],
         );
 
         expect(first?.seasons).toEqual([
             { season: "spring", status: "past", blackout: false },
             { season: "summer", status: "past", blackout: true },
-            { season: "autumn", status: "skipped", blackout: false },
-            { season: "winter", status: "skipped", blackout: false },
+            { season: "autumn", status: "past", blackout: false },
+            { season: "winter", status: "past", blackout: true },
         ]);
         expect(first?.recap).toBe("past");
-        expect(second?.seasons.map((s) => s.status)).toEqual([
-            "future",
-            "future",
-            "future",
-            "future",
-        ]);
-    });
-
-    it("shows the skipped seasons while the session still waits on the blacked-out one", () => {
-        const [round] = workshopTimeline(
-            { kind: "trading_period", round: 1, season: "spring" },
-            1,
-            [{ kind: "trading_period", round: 1, season: "spring" }],
-        );
-
-        expect(round?.seasons.map((s) => [s.status, s.blackout])).toEqual([
-            ["current", true],
-            ["skipped", false],
-            ["skipped", false],
-            ["skipped", false],
+        expect(second?.seasons.map((s) => s.blackout)).toEqual([
+            false,
+            false,
+            false,
+            false,
         ]);
     });
 
@@ -224,11 +218,8 @@ describe("scoreboardStatus", () => {
 });
 
 describe("latestSeason", () => {
-    function round(
-        checkpoint: Checkpoint,
-        blackouts: TradingPeriod[] = [],
-    ): TimelineRound {
-        const [first] = workshopTimeline(checkpoint, 2, blackouts);
+    function round(checkpoint: Checkpoint): TimelineRound {
+        const [first] = workshopTimeline(checkpoint, 2, []);
         if (!first) throw new Error("the session has no Round 1");
         return first;
     }
@@ -250,16 +241,6 @@ describe("latestSeason", () => {
     it("is winter once the Round is over", () => {
         expect(latestSeason(round({ kind: "recap", round: 1 }))).toBe("winter");
     });
-
-    it("is the season of the blackout in a Round that ended early", () => {
-        expect(
-            latestSeason(
-                round({ kind: "recap", round: 1 }, [
-                    { kind: "trading_period", round: 1, season: "summer" },
-                ]),
-            ),
-        ).toBe("summer");
-    });
 });
 
 describe("adjacentSeasons", () => {
@@ -267,7 +248,7 @@ describe("adjacentSeasons", () => {
         checkpoint: Checkpoint,
         round: number,
         season: Season,
-        blackouts: TradingPeriod[] = [],
+        blackouts: Blackout[] = [],
     ) {
         return adjacentSeasons(
             workshopTimeline(checkpoint, 2, blackouts),
@@ -317,30 +298,11 @@ describe("adjacentSeasons", () => {
         });
     });
 
-    it("steps over the seasons a blackout skipped", () => {
-        const blackouts: TradingPeriod[] = [
-            { kind: "trading_period", round: 1, season: "summer" },
-        ];
+    it("tells whether a linked season had a blackout", () => {
         const checkpoint: Checkpoint = { kind: "finished" };
-        expect(adjacent(checkpoint, 1, "summer", blackouts).next).toEqual({
-            round: 2,
-            season: "spring",
-            blackout: false,
-        });
-        expect(adjacent(checkpoint, 2, "spring", blackouts).previous).toEqual({
-            round: 1,
-            season: "summer",
-            blackout: true,
-        });
-    });
-
-    it("has nothing after a blackout while the next Round has not started", () => {
-        const blackouts: TradingPeriod[] = [
-            { kind: "trading_period", round: 1, season: "summer" },
-        ];
         expect(
-            adjacent({ kind: "recap", round: 1 }, 1, "summer", blackouts).next,
-        ).toBe(null);
+            adjacent(checkpoint, 1, "spring", [blackout(1, "summer")]).next,
+        ).toEqual({ round: 1, season: "summer", blackout: true });
     });
 });
 
@@ -374,7 +336,7 @@ describe("isSeason", () => {
     });
 });
 
-function allStatuses(timeline: TimelineRound[]): Set<SeasonStatus> {
+function allStatuses(timeline: TimelineRound[]): Set<NodeStatus> {
     return new Set(
         timeline.flatMap((round) => [
             round.status,

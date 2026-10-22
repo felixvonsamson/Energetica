@@ -271,9 +271,10 @@ until curl -sf localhost:8000/healthz >/dev/null; do sleep 0.5; done
 
 **d. Start Round 1 and buy plants.** Only what `GET /api/v1/workshop/facilities` lists is for sale:
 upgrade tiers such as the combined cycle appear only once unlocked, and a nuclear reactor takes a Round
-to build. Buy enough capacity for the market, or the first Trading period ends in a blackout, which
-ends the Round. Must-serve demand averages about 80 MW per player and peaks near 130 MW in winter,
-so give each player around 160 MW or more. Five gas burners (38 MW each) do, within the 50M starting budget:
+to build. Buy enough capacity for the market, or the grid goes down in a blackout: it comes back a day
+later with demand rationed, and every player loses part of the Round's operating profit. Must-serve
+demand averages about 80 MW per player and peaks near 130 MW in winter, so give each player around
+160 MW or more. Five gas burners (38 MW each) do, within the 50M starting budget:
 
 ```bash
 curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # opens the Investment phase
@@ -323,11 +324,10 @@ for attempt in $(seq 240); do               # up to 2 minutes: a full season tak
     if [ "$now" != "$period" ] && [ "$now" != busy ]; then break; fi
     sleep 0.5
 done
-echo "$now"                                 # the next season, or the Recap after a blackout
+echo "$now"                                 # the next season, or the Recap after winter
 ```
 
-If it shows the Recap and the session lists the period under `blackouts`, the Round ended there: buy
-more capacity next time.
+If the session lists anything under `blackouts`, the grid went down: buy more capacity next time.
 
 ### 6. Saved state and starting over
 

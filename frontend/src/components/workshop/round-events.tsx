@@ -11,7 +11,7 @@
  * the Recap surprises them too.
  *
  * Round 1 holds no events. A locked Round lists what was planned, and which
- * events fired and which a blackout skipped.
+ * events fired.
  */
 
 import { Check, Star } from "lucide-react";
@@ -72,7 +72,6 @@ const POOLS: {
 const STATUS_LABELS: Record<PlannedEventOut["status"], string> = {
     planned: "planned",
     fired: "fired",
-    skipped: "skipped: a blackout ended the Round first",
 };
 
 const SEVERITY_LABELS: Record<Severity, string> = {
@@ -359,8 +358,7 @@ function LockedEvents({ plan }: { plan: RoundPlan }) {
                             ` (${SEVERITY_LABELS[event.severity].toLowerCase()})`}
                         {event.fuel && ` on ${FUEL_NAMES[event.fuel]}`}
                     </span>
-                    {/* A skipped event never took effect. */}
-                    {event.summary && event.status !== "skipped" && (
+                    {event.summary && (
                         <span className="text-xs text-muted-foreground">
                             {event.summary}
                         </span>

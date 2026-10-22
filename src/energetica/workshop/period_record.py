@@ -31,10 +31,11 @@ once and ``offered`` holds each one's power at each point. :meth:`TradingPeriodR
 them back into the merit order the market cleared. Lines are kept in the order they were placed, so bids
 at the same price come out in the order the market saw them.
 
-**Blackouts.** At the point the grid went down, ``blackout_at``, the market cleared but settled nothing:
+**Blackouts.** At each point the grid went down, listed in ``blackouts``, the market cleared but settled nothing:
 its merit order shows why. Its price is ``math.inf`` when supply is exhausted, or zero when there are
-no supply offers. Its series are zero apart from ``stored``, which holds steady. Points after it never
-cleared: their price and quantity are NaN, they have no merit order, and storage still holds steady.
+no supply offers. Its series are zero apart from ``stored``, which holds steady. The grid stays down for a day
+(#1286): the points in that day after it never cleared. Their price and quantity are NaN, they have no merit order,
+and storage still holds steady.
 
 **Weather.** ``average_output`` keeps the season's real average wind and solar output. The Recap works it out
 again from the weather seed (#1200), so it needs no record.
@@ -60,6 +61,7 @@ from energetica.workshop.seasons import Season
 from energetica.workshop.weather import AverageOutput
 
 Side = Literal["offer", "demand"]
+_MINUTES_PER_DAY = 24 * 60
 Array = npt.NDArray[np.float64]
 
 
@@ -100,8 +102,8 @@ class TradingPeriodRecord:
     clearings_per_day: int
     days: tuple[int, ...]
     """The day of the year of each simulated day, in order."""
-    blackout_at: int | None
-    """The point the grid went down at, or None if it held."""
+    blackouts: tuple[int, ...]
+    """The point of each blackout, in order. Empty if the grid held."""
     price: Array
     """The price each point settled at, in $/MWh."""
     quantity: Array
@@ -125,14 +127,23 @@ class TradingPeriodRecord:
 
     @property
     def point_count(self) -> int:
-        """How many settlement points the period has, including any after a blackout."""
+        """How many settlement points the period has, including those the grid was down at."""
         return len(self.price)
 
+    def time_of(self, point: int) -> tuple[int, int]:
+        """The day of the year ``point`` falls on, and the minute of that day it starts at."""
+        day, clearing = divmod(point, self.clearings_per_day)
+        return self.days[day], clearing * _MINUTES_PER_DAY // self.clearings_per_day
+
+    def is_down(self, point: int) -> bool:
+        """Whether the grid was down at ``point`` after a blackout, so that it never cleared."""
+        return any(blackout < point < blackout + self.clearings_per_day for blackout in self.blackouts)
+
     def merit_order(self, point: int) -> MeritOrder | None:
-        """The merit order the market cleared at ``point``, or None if the grid was already down."""
+        """The merit order the market cleared at ``point``, or None if the grid was down after a blackout."""
         if not 0 <= point < self.point_count:
             raise IndexError(f"point {point} is outside the period's {self.point_count} points")
-        if self.blackout_at is not None and point > self.blackout_at:
+        if self.is_down(point):
             return None
         quantity = float(self.quantity[point])
 
@@ -154,7 +165,7 @@ class TradingPeriodRecord:
             "season": self.season,
             "clearings_per_day": self.clearings_per_day,
             "days": list(self.days),
-            "blackout_at": self.blackout_at,
+            "blackouts": list(self.blackouts),
             "pools": [list(pool) for pool in self.pools],
             "tiers": list(self.tiers),
             "lines": [[line.side, line.player_id, line.facility, line.must_run] for line in self.lines],
@@ -190,7 +201,10 @@ class TradingPeriodRecord:
                 season=meta["season"],
                 clearings_per_day=meta["clearings_per_day"],
                 days=tuple(meta["days"]),
-                blackout_at=meta["blackout_at"],
+                # A record saved before #1286 kept only the first blackout, or None.
+                blackouts=tuple(meta["blackouts"])
+                if "blackouts" in meta
+                else tuple(point for point in [meta["blackout_at"]] if point is not None),
                 price=data["price"],
                 quantity=data["quantity"],
                 pools=tuple((player_id, facility) for player_id, facility in meta["pools"]),

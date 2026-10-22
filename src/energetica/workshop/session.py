@@ -15,9 +15,10 @@ Players change their prices only while a price-setting window is open (#1002). O
 Trading period is settled (#1003): its prices are recorded, and the engine in
 :mod:`~energetica.workshop.trading` clears the days the Round's format simulates and pays each player.
 
-If the grid goes down in a Trading period (a blackout), the Round ends there (#1005). The session waits
-on that period like any other, and advancing from it skips the Round's remaining Trading periods and goes
-straight to its Recap. Each blackout is recorded with its Trading period.
+If the grid goes down in a Trading period (a blackout, #1005), it comes back a day later with demand rationed, and the
+Round goes on (#1286, :mod:`~energetica.workshop.blackout`). Each blackout is recorded with its Trading period and the
+day and minute it happened, and each Trading period after it in the Round starts from the rationing it left. When the
+Recap opens, each blackout in the Round costs every player a share of their operating profit for it.
 
 A full season can take a minute to simulate, so settling happens in three steps (#1004).
 :meth:`WorkshopSession.start_settlement` takes what the engine needs under the session's lock,
@@ -111,6 +112,8 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.player import round_start_money
+from energetica.workshop.operating_profit import round_operating_profit
+from energetica.workshop.blackout import Blackout, blackout_cost, rationing, round_blackouts
 from energetica.workshop.prices import (
     PRICE_CEILING,
     PRICE_FLOOR,
@@ -269,7 +272,7 @@ class NoPhaseRunningError(WorkshopError):
 
 
 class NoMarketPricesError(WorkshopError):
-    """Raised when reading the room's prices for a Trading period that has not started, or was skipped (#1299)."""
+    """Raised when reading the room's prices for a Trading period that has not started (#1299)."""
 
     code = WorkshopErrorCode.WORKSHOP_NO_MARKET_PRICES
     status_code = 404
@@ -400,17 +403,14 @@ class SettlementCancelledError(Exception):
     """Raised by :meth:`WorkshopSession.run_settlement` when its job is cancelled, such as when the app stops."""
 
 
-def next_checkpoint(checkpoint: Checkpoint, *, round_count: int, blackout: bool = False) -> Checkpoint:
-    """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds.
-
-    ``blackout`` says the grid went down in the Trading period ``checkpoint``, which ends its Round.
-    """
+def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
+    """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds."""
     match checkpoint:
         case NotStarted():
             return Investment(round=1)
         case Investment(round=round_number):
             return TradingPeriod(round=round_number, season=SEASONS[0])
-        case TradingPeriod(round=round_number, season=season) if season != SEASONS[-1] and not blackout:
+        case TradingPeriod(round=round_number, season=season) if season != SEASONS[-1]:
             return TradingPeriod(round=round_number, season=SEASONS[SEASONS.index(season) + 1])
         case TradingPeriod(round=round_number):
             return Recap(round=round_number)
@@ -515,6 +515,8 @@ class SettlementJob:
     base_demand_amplitude: float
     """The session's Round-1 amplitude, before any growth or event, kept once the period is settled."""
     weather_seed: int
+    rationing: float = 1.0
+    """What demand starts the period at, after the blackouts earlier in its Round (#1286)."""
     # Set to stop the simulation after the day it is on.
     cancelled: threading.Event = field(default_factory=threading.Event)
 
@@ -585,7 +587,7 @@ class _SavedSession(BaseModel):
     weather_seed: int
     demand_amplitude: float | None
     settled_period: TradingPeriod | None
-    blackouts: list[TradingPeriod]
+    blackouts: list[Blackout]
     recorded_periods: list[TradingPeriod]
     fuel_prices: dict[Fuel, FuelPrice]
     unlocks: list[Unlock]
@@ -619,7 +621,7 @@ class WorkshopSession:
         weather_seed: int | None = None,
         demand_amplitude: float | None = None,
         settled_period: TradingPeriod | None = None,
-        blackouts: list[TradingPeriod] | None = None,
+        blackouts: list[Blackout] | None = None,
         recorded_periods: list[TradingPeriod] | None = None,
         fuel_prices: dict[Fuel, FuelPrice] | None = None,
         unlocks: list[Unlock] | None = None,
@@ -877,10 +879,8 @@ class WorkshopSession:
         return self._next_checkpoint()
 
     def _next_checkpoint(self) -> Checkpoint:
-        """The checkpoint after the current one, skipping to the Recap after a blackout."""
-        return next_checkpoint(
-            self.checkpoint, round_count=self.round_count, blackout=self.checkpoint in self.blackouts
-        )
+        """The checkpoint after the current one."""
+        return next_checkpoint(self.checkpoint, round_count=self.round_count)
 
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
@@ -893,12 +893,13 @@ class WorkshopSession:
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys any
         selection still waiting, so none is lost if the facilitator advances before the purchase at the
         phase's end has happened. Starting a new Round's Investment phase
-        retires every facility whose lifetime has ended, and tops up any player below the cash floor, or resets
-        everyone's cash after a blackout (#1016). Before that, it takes any loan payment due (#1225), and finishing
+        retires every facility whose lifetime has ended, and tops up any player below the cash floor (#1016). Before
+        that, it takes any loan payment due (#1225), and finishing
         the session takes any still owed. Opening a Trading period sets the season's fuel prices
         and each player's default fuel order (#1009). Opening either fires the events planned for it (#1012). Leaving an
         Investment phase counts its vote, if it held one (#1014).
-        Opening a Recap locks the next Round's plan (#1190) and works out how much demand grows into it (#1226). Raises
+        Opening a Recap locks the next Round's plan (#1190), works out how much demand grows into it (#1226), and
+        charges the cost of the Round's blackouts (#1286). Raises
         :class:`SettlementRunningError` while the Trading period is being simulated, and
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
@@ -930,6 +931,7 @@ class WorkshopSession:
                     undos.append(self._apply_loan_payments(self.round_count + 1))
                 if isinstance(checkpoint, Recap):
                     undos.append(self._grow_demand(checkpoint.round))
+                    undos.append(self._charge_blackout_cost(checkpoint.round))
                 undos.append(self._fire_events(checkpoint))
                 if isinstance(checkpoint, TradingPeriod):
                     undos.append(self._open_fuel_market(checkpoint))
@@ -1177,17 +1179,15 @@ class WorkshopSession:
     def _apply_round_start_money(self, round_number: int) -> Callable[[], None]:
         """Set every player's cash for the start of Round ``round_number``, without saving. Returns what undoes it.
 
-        Any loan payment due is taken first (#1225). Then a player below the floor is topped up to it, and a
-        blackout in the Round before resets everyone to the starting budget (#1016). Round 1 starts from the starting
-        budget every player joined with, so it is left alone. The caller holds the lock.
+        Any loan payment due is taken first (#1225). Then a player below the floor is topped up to it (#1016). Round 1
+        starts from the starting budget every player joined with, so it is left alone. The caller holds the lock.
         """
         if round_number == 1:
             return lambda: None
         undo_payments = self._apply_loan_payments(round_number)
-        after_blackout = any(period.round == round_number - 1 for period in self.blackouts)
         before = {player: player.money for player in self.network.players()}
         for player, money in before.items():
-            player.money = round_start_money(money, after_blackout=after_blackout)
+            player.money = round_start_money(money)
 
         def undo() -> None:
             for player, money in before.items():
@@ -1220,8 +1220,8 @@ class WorkshopSession:
         what undoes it.
 
         The factor follows the room's average operating profit per player in the Round, counting every player in the
-        session now. A Round that ended in a blackout counts the profit it made up to it. The last Round has no next
-        one, so it is left alone. The caller holds the lock.
+        session now, before any blackout cost. The last Round has no next one, so it is left alone. The caller holds
+        the lock.
         """
         players = self.network.players()
         if round_number >= self.round_count or not players:
@@ -1237,6 +1237,21 @@ class WorkshopSession:
 
         def undo() -> None:
             self.demand_growth = before
+
+        return undo
+
+    def _charge_blackout_cost(self, round_number: int) -> Callable[[], None]:
+        """Charge every player the cost of Round ``round_number``'s blackouts, a share of their operating profit for
+        it, without saving (#1286). Returns what undoes it. The caller holds the lock.
+        """
+        count = len(round_blackouts(self.blackouts, round_number))
+        before = {player: player.money for player in self.network.players()}
+        for player in before:
+            player.money -= blackout_cost(round_operating_profit(player.trading_results, round_number), count)
+
+        def undo() -> None:
+            for player, money in before.items():
+                player.money = money
 
         return undo
 
@@ -1355,12 +1370,9 @@ class WorkshopSession:
                 raise NoSuchRoundError(f"the session has no Round {round_number}")
             if not recap_open(self.checkpoint, round_number):
                 raise RecapNotOpenError(f"Round {round_number}'s Recap has not opened")
-            blackout = next((period.season for period in self.blackouts if period.round == round_number), None)
-        # The Round played up to its blackout, if it had one. Worked out without the lock, since it takes a moment
-        # the first time, and the weather seed never changes.
-        played = SEASONS if blackout is None else SEASONS[: SEASONS.index(blackout) + 1]
+        # Worked out without the lock, since it takes a moment the first time, and the weather seed never changes.
         weather: dict[Season, AverageOutput] = {
-            season: season_output(self.weather_seed, round_number, season) for season in played
+            season: season_output(self.weather_seed, round_number, season) for season in SEASONS
         }
         with self._lock:
             players = self.network.players()
@@ -1369,7 +1381,7 @@ class WorkshopSession:
                 round_count=self.round_count,
                 plans=self.plans,
                 fired=self.fired_events,
-                blackouts=[(period.round, period.season) for period in self.blackouts],
+                blackouts=self.blackouts,
                 unlocks=self.unlocks,
                 purchases=[purchase for player in players for purchase in player.purchases],
                 results=[result for player in players for result in player.trading_results],
@@ -1384,7 +1396,7 @@ class WorkshopSession:
         with it (#1299): the prices it ran at once it is settled, and the prices players are setting while it is
         the current period. A player shows prices only for the facility types they had operating.
 
-        Raises :class:`NoMarketPricesError` if ``period`` is neither, because it has not started or was skipped.
+        Raises :class:`NoMarketPricesError` if ``period`` is neither, because it has not started.
         """
         with self._lock:
             players = self.network.players()
@@ -1444,14 +1456,11 @@ class WorkshopSession:
         agree (#1190).
         """
         with self._lock:
-            blackouts: dict[int, Season] = {period.round: period.season for period in self.blackouts}
             statuses: list[list[tuple[PlannedEvent, EventStatus]]] = [
                 [
                     (
                         planned,
-                        event_status(
-                            planned, round_number, fired=self.fired_events, blackout=blackouts.get(round_number)
-                        ),
+                        event_status(planned, round_number, fired=self.fired_events),
                     )
                     for planned in plan.events
                 ]
@@ -1676,6 +1685,7 @@ class WorkshopSession:
                 * demand_factor(self.fired_events, period.round, period.season),
                 base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
+                rationing=rationing(self.blackouts, period.round, period.season),
             )
             self.settlement = SettlementProgress(period, 0, cleared_day_count(period.season, round_format))
             return job
@@ -1703,6 +1713,7 @@ class WorkshopSession:
             amplitude=job.demand_amplitude,
             curve=national_demand_curve(),
             weather=representative_weather(job.weather_seed, job.period.round),
+            rationing=job.rationing,
             on_day_done=on_day_done,
         )
 
@@ -1721,7 +1732,7 @@ class WorkshopSession:
         :mod:`~energetica.workshop.carbon_tax`). Their storage keeps the energy it ends with, and a player with anything
         operating gets a result. A player with nothing operating gets no price record, and gets a result only to hold
         their share of a carbon tax. One who joined while the period was being simulated gets neither. If the
-        grid went down, the period is recorded as a blackout, so that advancing from it ends the Round.
+        grid went down, each blackout is recorded with the day and minute it happened at.
 
         It is saved even if no player had anything operating, since the session must remember that the
         period is settled. If the save fails, nothing changes and the period still counts as being
@@ -1776,8 +1787,13 @@ class WorkshopSession:
         peak = outcome.peak_demand
         if peak is not None and peak > peak_demand.get(period.round, -math.inf):
             self.peak_demand = {**peak_demand, period.round: peak}
-        if outcome.blackout:
-            self.blackouts = [*blackouts, period]
+        self.blackouts = [
+            *blackouts,
+            *(
+                Blackout(round=period.round, season=period.season, day=day, minute=minute)
+                for day, minute in map(outcome.record.time_of, outcome.blackouts)
+            ),
+        ]
         for player in players:
             operating = {
                 owned.facility for owned in player.owned_facilities if is_operating(owned, current_round=period.round)
