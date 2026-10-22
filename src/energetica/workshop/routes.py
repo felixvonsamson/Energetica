@@ -307,7 +307,7 @@ def get_plans(_: Annotated[Account, Depends(get_facilitator)], session: Session)
 
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
-@router.post("/plans")
+@router.post("/plans:add")
 async def add_round(
     _: Annotated[Account, Depends(get_facilitator)],
     session: Session,

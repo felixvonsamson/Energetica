@@ -169,8 +169,8 @@ export const workshopApi = {
      * after the change.
      */
     addRound: () =>
-        apiClient.post<ApiResponse<"/api/v1/workshop/plans", "post">>(
-            "/workshop/plans",
+        apiClient.post<ApiResponse<"/api/v1/workshop/plans:add", "post">>(
+            "/workshop/plans:add",
         ),
 
     /**

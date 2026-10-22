@@ -2126,13 +2126,29 @@ export interface paths {
          */
         get: operations["get_plans_api_v1_workshop_plans_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/plans:add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * Add Round
          * @description Add a Round after the last one, and tell every open page (#1298). Its plan copies the last Round's levers,
          *     without its events. Refused once the last Round's Recap has opened, since it shows the final scores. Facility
          *     prices stay those of the length the session started with.
          */
-        post: operations["add_round_api_v1_workshop_plans_post"];
+        post: operations["add_round_api_v1_workshop_plans_add_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9993,7 +10009,7 @@ export interface operations {
             };
         };
     };
-    add_round_api_v1_workshop_plans_post: {
+    add_round_api_v1_workshop_plans_add_post: {
         parameters: {
             query?: never;
             header?: never;

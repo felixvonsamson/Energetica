@@ -1168,6 +1168,7 @@ def test_a_run_out_from_an_earlier_period_is_not_reported(session_path: Path, cl
 
 PLANS_URL = "/api/v1/workshop/plans"
 LEVERS_URL = "/api/v1/workshop/plans/{round}/levers"
+ADD_ROUND_URL = "/api/v1/workshop/plans:add"
 TIMERS_URL = "/api/v1/workshop/timers"
 
 
@@ -1288,7 +1289,7 @@ def test_the_facilitator_adds_a_round_that_copies_the_last_rounds_levers(session
     client.patch(LEVERS_URL.format(round=3), json=_levers(**round_format))
     client.post(ADVANCE_URL)
 
-    response = client.post(PLANS_URL)
+    response = client.post(ADD_ROUND_URL)
 
     assert response.status_code == 200
     rounds = response.json()["rounds"]
@@ -1352,7 +1353,7 @@ def test_only_the_facilitator_sees_and_changes_the_levers(session_path: Path) ->
 
     assert client.get(PLANS_URL).status_code == 403
     assert client.patch(LEVERS_URL.format(round=2), json=_levers(clearings_per_day=96)).status_code == 403
-    assert client.post(PLANS_URL).status_code == 403
+    assert client.post(ADD_ROUND_URL).status_code == 403
     assert client.get(TIMERS_URL).status_code == 403
     assert client.put(TIMERS_URL, json={"investment_minutes": 3, "price_setting_minutes": 2}).status_code == 403
 
