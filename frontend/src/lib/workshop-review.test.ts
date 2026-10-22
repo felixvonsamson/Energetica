@@ -10,6 +10,7 @@ import {
     networkPowerRows,
     orderedKeys,
     playerPowerRows,
+    playerStorageRows,
     pointAxisLabel,
     pointTime,
     priceRows,
@@ -23,7 +24,8 @@ import {
 
 // Two points of a week starting at the period's point 24. Alice (1) has wind,
 // which dumps 1 W at the first point, and batteries, which charge 3 W then
-// discharge 2 W. Bob (2) has gas.
+// discharge 2 W. The batteries hold 4 Wh and end the points at 2 Wh, then
+// empty. Bob (2) has gas.
 const week = {
     week: 1,
     days: [66, 67, 68, 69, 70, 71, 72],
@@ -37,6 +39,8 @@ const week = {
             generation: [10, 4],
             dumped: [1, 0],
             charged: [0, 0],
+            stored: [0, 0],
+            storage_capacity: 0,
         },
         {
             player_id: 1,
@@ -44,6 +48,8 @@ const week = {
             generation: [0, 2],
             dumped: [0, 0],
             charged: [3, 0],
+            stored: [2, 0],
+            storage_capacity: 4,
         },
         {
             player_id: 2,
@@ -51,6 +57,8 @@ const week = {
             generation: [5, 5],
             dumped: [0, 0],
             charged: [0, 0],
+            stored: [0, 0],
+            storage_capacity: 0,
         },
     ],
     tiers: [
@@ -86,6 +94,50 @@ describe("playerPowerRows", () => {
 
     it("gives a player with nothing operating empty rows", () => {
         expect(playerPowerRows(week, 3, "generation")).toEqual([
+            { tick: 24 },
+            { tick: 25 },
+        ]);
+    });
+});
+
+describe("playerStorageRows", () => {
+    it("gives each storage type's stored energy", () => {
+        expect(playerStorageRows(week, 1, "energy")).toEqual([
+            { tick: 24, lithium_ion_batteries: 2 },
+            { tick: 25, lithium_ion_batteries: 0 },
+        ]);
+    });
+
+    it("gives each storage type's state of charge, from 0 to 1", () => {
+        expect(playerStorageRows(week, 1, "soc")).toEqual([
+            { tick: 24, lithium_ion_batteries: 0.5 },
+            { tick: 25, lithium_ion_batteries: 0 },
+        ]);
+    });
+
+    it("keeps a storage type that stayed empty all week", () => {
+        const empty = {
+            ...week,
+            pools: [
+                {
+                    player_id: 2,
+                    facility: "pumped_hydro" as const,
+                    generation: [0, 0],
+                    dumped: [0, 0],
+                    charged: [0, 0],
+                    stored: [0, 0],
+                    storage_capacity: 4,
+                },
+            ],
+        };
+        expect(playerStorageRows(empty, 2, "soc")).toEqual([
+            { tick: 24, pumped_hydro: 0 },
+            { tick: 25, pumped_hydro: 0 },
+        ]);
+    });
+
+    it("gives a player with no storage empty rows", () => {
+        expect(playerStorageRows(week, 2, "soc")).toEqual([
             { tick: 24 },
             { tick: 25 },
         ]);

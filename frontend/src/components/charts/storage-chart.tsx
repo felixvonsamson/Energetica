@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 /**
  * Storage overview table component that displays aggregated storage data by
  * facility type.
  *
  * Shows cumulative charging/discharging, max storage capacity, and current
  * state of charge for each storage facility type.
+ *
+ * The chart is also the Workshop period review's storage chart, which passes
+ * its own labels and time axis, like the power chart.
  */
 
 import {
-    EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
+    type ChartSyncProps,
+    type EChartsTimeSeriesConfig,
+    TimeSeriesChartOnAxis,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -19,12 +23,32 @@ import { useFacilities } from "@/hooks/use-facilities";
 import { formatEnergy } from "@energetica/core/format-utils";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
-interface StorageChartProps {
+/**
+ * What the storage chart shows: each storage type's state of charge (SOC), the
+ * energy it holds as a share of its capacity, or the energy itself.
+ */
+export type StorageView = "soc" | "energy";
+
+export const STORAGE_VIEW_OPTIONS = [
+    { value: "soc", label: "SOC" },
+    { value: "energy", label: "Energy" },
+] as const satisfies readonly { value: StorageView; label: string }[];
+
+interface StorageChartProps extends ChartSyncProps {
+    /** The stored energy in Wh, or for `soc`, the SOC from 0 to 1. */
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
-    viewMode: "normal" | "percent";
+    /**
+     * Keep a storage type that held nothing throughout, rather than leaving it
+     * out, so an empty store still shows at 0%.
+     */
+    showEmpty?: boolean;
+    view: StorageView;
+    /** Each series' tooltip label. Defaults to the facility's name. */
+    formatLabel?: (key: string) => ReactNode;
+    height?: number;
 }
 
 export function StorageChart({
@@ -32,15 +56,18 @@ export function StorageChart({
     isLoading,
     isError,
     hiddenFacilities,
-    viewMode,
+    showEmpty = false,
+    view,
+    formatLabel,
+    height,
+    ...chart
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
-    const filterDataKeys = useChartFilters(hiddenFacilities);
+    const filterDataKeys = useChartFilters(hiddenFacilities, !showEmpty);
 
-    // In percent mode, chartData already contains server-computed SoC (0-1 fraction).
-    // Scale to 0-100 for display.
+    // The SOC comes from 0 to 1. Scale it to 0-100 for display.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || chartData.length === 0) {
+        if (view === "energy" || chartData.length === 0) {
             return chartData;
         }
         return chartData.map((dataPoint) => {
@@ -52,31 +79,34 @@ export function StorageChart({
             });
             return result;
         });
-    }, [chartData, viewMode]);
+    }, [chartData, view]);
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: viewMode === "normal" ? "storage-level" : "storage-soc",
-            chartVariant: viewMode === "normal" ? "area" : "smoothLine",
-            stacked: viewMode === "normal" ? true : false,
+            chartType: view === "energy" ? "storage-level" : "storage-soc",
+            chartVariant: view === "energy" ? "area" : "smoothLine",
+            stacked: view === "energy",
             getColor,
             filterDataKeys,
             formatValue:
-                viewMode === "normal"
+                view === "energy"
                     ? formatEnergy
                     : (value: number) => `${value.toFixed(1)}%`,
             formatYAxis: (value: number) =>
-                viewMode === "normal" ? formatEnergy(value) : `${value}%`,
+                view === "energy" ? formatEnergy(value) : `${value}%`,
+            formatLabel,
+            height,
         }),
-        [viewMode, getColor, filterDataKeys],
+        [view, getColor, filterDataKeys, formatLabel, height],
     );
 
     return (
-        <EChartsTimeSeries
+        <TimeSeriesChartOnAxis
             data={displayData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
+            {...chart}
         />
     );
 }

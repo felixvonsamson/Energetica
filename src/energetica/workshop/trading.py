@@ -757,6 +757,7 @@ def simulate_trading_period(
         dumped=series(lambda pool: pool.dumped_power),
         charged=series(lambda pool: pool.charged_power),
         stored=series(lambda pool: pool.stored_series),
+        storage_capacity=np.array([pool.capacity for pool in pools.values()], dtype=np.float64),
         tiers=tuple(tier.label for tier in DEMAND_TIERS),
         served=cleared.served,
         lines=tuple(lines),

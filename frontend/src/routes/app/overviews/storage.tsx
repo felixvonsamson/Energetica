@@ -4,8 +4,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
 
 import {
+    STORAGE_VIEW_OPTIONS,
     StorageChart,
     StorageOverviewTable,
+    type StorageView,
 } from "@/components/charts/storage-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
@@ -92,16 +94,11 @@ function StorageOverviewPage() {
     );
 }
 
-const VIEW_MODE_OPTIONS = [
-    { value: "normal", label: "Stored Capacity" },
-    { value: "percent", label: "State of Charge" },
-] as const;
-
 function StorageOverviewContent() {
     const { currentTick } = useGameTick();
-    const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
-        "energetica:chart:storage:viewMode",
-        "normal",
+    const [view, setView] = useLocalStorage<StorageView>(
+        "energetica:chart:storage:view",
+        "soc",
     );
     const [hiddenFacilities, toggleFacility] = useToggleSet<string>(
         undefined,
@@ -123,7 +120,7 @@ function StorageOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    // Fetch server-computed SoC (0-1 fraction) for the percent view
+    // Fetch the server-computed SOC (0-1 fraction) for the SOC view
     const {
         chartData: storageSocData,
         isLoading: isSocLoading,
@@ -136,11 +133,9 @@ function StorageOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    const chartData =
-        viewMode === "percent" ? storageSocData : storageLevelData;
-    const isChartLoading =
-        viewMode === "percent" ? isSocLoading : isLevelLoading;
-    const isError = viewMode === "percent" ? isSocError : isLevelError;
+    const chartData = view === "soc" ? storageSocData : storageLevelData;
+    const isChartLoading = view === "soc" ? isSocLoading : isLevelLoading;
+    const isError = view === "soc" ? isSocError : isLevelError;
 
     return (
         <div className="py-4 md:p-8 space-y-6">
@@ -150,12 +145,12 @@ function StorageOverviewContent() {
                         <div>
                             <Label className="mb-2">View Mode</Label>
                             <SegmentedPicker
-                                value={viewMode}
+                                value={view}
                                 onValueChange={(value) =>
-                                    setViewMode(value as "normal" | "percent")
+                                    setView(value as StorageView)
                                 }
                             >
-                                {VIEW_MODE_OPTIONS.map((option) => (
+                                {STORAGE_VIEW_OPTIONS.map((option) => (
                                     <SegmentedPickerOption
                                         key={option.value}
                                         value={option.value}
@@ -180,7 +175,7 @@ function StorageOverviewContent() {
                     isLoading={isChartLoading}
                     isError={isError}
                     hiddenFacilities={hiddenFacilities}
-                    viewMode={viewMode}
+                    view={view}
                 />
 
                 <StorageOverviewTable

@@ -195,6 +195,21 @@ export interface TimeSeriesChartProps extends EChartsTimeSeriesProps {
     timeAxis: TimeAxis;
 }
 
+/**
+ * The props a chart built on the time-series chart passes straight through to
+ * it: the marker, blackout, click and shared zoom, and the time axis.
+ */
+export type ChartSyncProps = Pick<
+    EChartsTimeSeriesProps,
+    "markerTick" | "blackouts" | "onTickClick" | "zoom" | "onZoomChange"
+> & {
+    /**
+     * The chart's time axis. Defaults to the persistent world's game ticks.
+     * Callers should memoize it, like `config`.
+     */
+    timeAxis?: TimeAxis;
+};
+
 // ── CSS variable resolver ─────────────────────────────────────────────────────
 
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
@@ -368,6 +383,21 @@ export function EChartsTimeSeries(props: EChartsTimeSeriesProps) {
     }, [gameEngine]);
 
     return <TimeSeriesChart {...props} timeAxis={timeAxis} />;
+}
+
+/**
+ * {@link TimeSeriesChart} on `timeAxis`, or {@link EChartsTimeSeries} on the
+ * persistent world's game ticks when there is none.
+ */
+export function TimeSeriesChartOnAxis({
+    timeAxis,
+    ...props
+}: EChartsTimeSeriesProps & ChartSyncProps) {
+    return timeAxis ? (
+        <TimeSeriesChart {...props} timeAxis={timeAxis} />
+    ) : (
+        <EChartsTimeSeries {...props} />
+    );
 }
 
 // ── Blackout stripes ──────────────────────────────────────────────────────────

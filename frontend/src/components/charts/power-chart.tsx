@@ -18,11 +18,9 @@ import { Link } from "@tanstack/react-router";
 import { type ReactNode, useMemo, useState } from "react";
 
 import {
-    EChartsTimeSeries,
+    type ChartSyncProps,
     type EChartsTimeSeriesConfig,
-    type TimeAxis,
-    type ZoomRange,
-    TimeSeriesChart,
+    TimeSeriesChartOnAxis,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -42,7 +40,7 @@ import {
 
 export type PowerChartViewMode = "absolute" | "percent";
 
-interface PowerChartProps {
+interface PowerChartProps extends ChartSyncProps {
     /** The persistent world's chart type. Sets the default key order. */
     chartType?: ChartType;
     chartData: Array<Record<string, unknown>>;
@@ -56,15 +54,7 @@ interface PowerChartProps {
     getColor?: (key: string) => string;
     /** Each series' tooltip label. Defaults to the facility's icon and name. */
     formatLabel?: (key: string) => ReactNode;
-    /** The chart's time axis. Defaults to the persistent world's game ticks. */
-    timeAxis?: TimeAxis;
     height?: number;
-    markerTick?: number;
-    /** Shade each of these tick ranges as a blackout. */
-    blackouts?: readonly { start: number; end: number }[];
-    onTickClick?: (tick: number) => void;
-    zoom?: ZoomRange;
-    onZoomChange?: (zoom: ZoomRange) => void;
 }
 
 // Stable label renderer — defined outside the component so it never causes
@@ -88,13 +78,8 @@ export function PowerChart({
     keyOrder,
     getColor: getColorProp,
     formatLabel = formatFacilityLabel,
-    timeAxis,
     height,
-    markerTick,
-    blackouts,
-    onTickClick,
-    zoom,
-    onZoomChange,
+    ...chart
 }: PowerChartProps) {
     const getAssetColor = useAssetColorGetter();
     const getColor = getColorProp ?? getAssetColor;
@@ -155,21 +140,14 @@ export function PowerChart({
         [chartType, getColor, formatLabel, viewMode, height],
     );
 
-    const chartProps = {
-        data: displayData,
-        config,
-        isLoading,
-        isError,
-        markerTick,
-        blackouts,
-        onTickClick,
-        zoom,
-        onZoomChange,
-    };
-    return timeAxis ? (
-        <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
-    ) : (
-        <EChartsTimeSeries {...chartProps} />
+    return (
+        <TimeSeriesChartOnAxis
+            data={displayData}
+            config={config}
+            isLoading={isLoading}
+            isError={isError}
+            {...chart}
+        />
     );
 }
 

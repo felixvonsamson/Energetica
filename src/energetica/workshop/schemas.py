@@ -453,13 +453,18 @@ class WorkshopPeriodOut(BaseModel):
 
 
 class WorkshopPoolSeriesOut(BaseModel):
-    """One player's facilities of one type over a simulated week, in W at each settlement point."""
+    """One player's facilities of one type over a simulated week, at each settlement point.
+
+    Power is in W and stored energy in Wh.
+    """
 
     player_id: int
     facility: FacilityId
     generation: list[float] = Field(description="What it produced: sold plus dumped. For storage, discharged")
     dumped: list[float] = Field(description="Renewable output that did not sell")
     charged: list[float] = Field(description="What storage bought to charge")
+    stored: list[float] = Field(description="The energy storage held once each point was over, in Wh")
+    storage_capacity: float = Field(description="The most energy it could hold, in Wh. Zero if it is not storage")
 
 
 class WorkshopTierSeriesOut(BaseModel):
@@ -506,6 +511,8 @@ class WorkshopPeriodWeekOut(BaseModel):
                     generation=record.generation[row, points].tolist(),
                     dumped=record.dumped[row, points].tolist(),
                     charged=record.charged[row, points].tolist(),
+                    stored=record.stored[row, points].tolist(),
+                    storage_capacity=float(record.storage_capacity[row]),
                 )
                 for row, (player_id, facility) in enumerate(record.pools)
             ],

@@ -1645,6 +1645,8 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
         [pool] = week["pools"]
         assert (pool["player_id"], pool["facility"]) == (alice, "gas_burner")
         assert len(pool["generation"]) == 7 * 24
+        # A gas burner stores nothing.
+        assert (pool["stored"], pool["storage_capacity"]) == ([0.0] * 7 * 24, 0.0)
         assert [tier["tier"] for tier in week["tiers"]][0] == "must_serve"
 
         order = client.get(f"{PERIOD_URL}/points/0/merit-order").json()
