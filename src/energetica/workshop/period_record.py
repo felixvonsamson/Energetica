@@ -56,7 +56,7 @@ import numpy as np
 import numpy.typing as npt
 
 from energetica.sim.market import Fill, MarketEntry, merit_order, order_columns
-from energetica.workshop.atomic_file import write_atomically
+from energetica.kernel.atomic_file import write_atomically
 from energetica.workshop.seasons import Season
 from energetica.workshop.weather import AverageOutput
 

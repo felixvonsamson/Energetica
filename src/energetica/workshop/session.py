@@ -82,7 +82,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from energetica.workshop.atomic_file import write_atomically
+from energetica.kernel.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
 from energetica.workshop.demand_growth import growth_factor, growth_through
