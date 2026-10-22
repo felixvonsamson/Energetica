@@ -19,7 +19,7 @@ REPO=$(echo "$URL" | sed -E 's#https://github\.com/([^/]+/[^/]+)/pull/.*#\1#')
 read -r -d '' NOTE <<EOF
 Greptile, an AI code reviewer, reviews PRs on this repo automatically when they are opened. Its review of PR #$PR usually lands about 2 minutes after opening. Unless you have a reason not to, wait for it and address it before reporting the PR as done. If you skip it, tell the user why.
 
-To wait, run \`$SCRIPT $PR\` with run_in_background: true. It exits once the review is finished and prints everything in one place:
+To wait, run \`"$SCRIPT" $URL\` with run_in_background: true. It exits once the review is finished and prints everything in one place:
 - the confidence score (Greptile also appends a section to the end of the PR description, below your text, with a summary and a score out of 5),
 - inline review comments tied to a file and line, with their comment ids and thread ids,
 - a "Comments Outside Diff" PR comment for findings on lines the diff does not touch.
@@ -29,7 +29,7 @@ To address the review, fix what is valid. Reply in each inline comment's thread 
 
 Greptile reads your reply and, if it accepts it, reacts to it with a thumbs up, usually within 10 seconds. About 15 seconds after replying, check the reactions on your reply: \`gh api repos/$REPO/pulls/comments/<your-reply-id>/reactions -q '.[] | select(.user.login == "greptile-apps[bot]") | .content'\`. If that prints \`+1\`, resolve the thread: \`gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<thread>"}) { thread { isResolved } } }'\`. Otherwise leave the thread open for the user, and read any reply Greptile posted in it.
 
-Greptile does not re-review on push. After pushing fixes, you may request one new review with \`$SCRIPT $PR --retrigger\`. It posts an \`@greptileai\` comment and waits for that review.
+Greptile does not re-review on push. After pushing fixes, you may request one new review with \`"$SCRIPT" $URL --retrigger\`. It posts an \`@greptileai\` comment and waits for that review.
 EOF
 
 jq -n --arg ctx "$NOTE" '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $ctx}}'

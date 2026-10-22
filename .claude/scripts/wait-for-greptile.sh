@@ -34,7 +34,7 @@ repo="$(jq -r .url <<<"$info" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/
 since=""
 if $retrigger; then
     since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    gh pr comment "$number" --body "@greptileai" >/dev/null
+    gh pr comment "$number" --repo "$repo" --body "@greptileai" >/dev/null
     echo "Posted @greptileai on PR #$number; waiting for the new review."
 fi
 
@@ -72,7 +72,7 @@ echo
 echo "=== Greptile review of PR #$number: $(jq -r '.conclusion' <<<"$run")"
 jq -r '.output.summary // empty' <<<"$run"
 
-score="$(gh pr view "$number" --json body -q .body | sed -nE 's/.*<!-- greptile_confidence_score:([0-9]+) -->.*/\1/p' | tail -1)"
+score="$(gh pr view "$number" --repo "$repo" --json body -q .body | sed -nE 's/.*<!-- greptile_confidence_score:([0-9]+) -->.*/\1/p' | tail -1)"
 echo "Confidence score: ${score:-not found}/5 (full summary is in the PR description)"
 
 # Greptile's comment bodies open with a badge image; keep only its label, e.g. "[P1]".
