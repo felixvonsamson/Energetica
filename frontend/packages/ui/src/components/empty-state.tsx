@@ -1,9 +1,8 @@
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
+import { TypographyH3 } from "#ui/components/typography";
 import { cn } from "#ui/lib/utils";
-
-import { TypographyH3 } from "./typography";
 
 interface EmptyStateProps {
     icon?: LucideIcon;

@@ -3,9 +3,13 @@
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
+import {
+    CardContent,
+    PageCard,
+    CardHeader,
+    CardTitle,
+} from "#ui/components/card";
 import { cn } from "#ui/lib/utils";
-
-import { CardContent, PageCard, CardHeader, CardTitle } from "./card";
 
 export interface ChartCardProps {
     icon?: LucideIcon;

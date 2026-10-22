@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isSingleOrigin, SINGLE_ORIGIN_HOSTS } from "./single-origin";
+import { isSingleOrigin, SINGLE_ORIGIN_HOSTS } from "#core/single-origin";
 
 describe("isSingleOrigin (proxy-host detection)", () => {
     it.each([...SINGLE_ORIGIN_HOSTS])("treats %s as single-origin", (host) => {

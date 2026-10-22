@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveContentLink } from "./content-links";
+import { resolveContentLink } from "#content/content-links";
 
 const game = {
     wikiPagePath: (slug: string) => `/app/wiki/${slug}`,

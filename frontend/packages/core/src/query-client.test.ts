@@ -1,8 +1,8 @@
 import { MutationObserver } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { ApiClientError } from "./api-client";
-import { createQueryClient } from "./query-client";
+import { ApiClientError } from "#core/api-client";
+import { createQueryClient } from "#core/query-client";
 
 /** Run one mutation that always fails, and count how often it was sent. */
 async function countAttempts(
