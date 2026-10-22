@@ -40,6 +40,11 @@ interface StorageChartProps extends ChartSyncProps {
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
+    /**
+     * Keep a storage type that held nothing throughout, rather than leaving it
+     * out, so an empty store still shows at 0%.
+     */
+    showEmpty?: boolean;
     view: StorageView;
     /** Each series' tooltip label. Defaults to the facility's name. */
     formatLabel?: (key: string) => ReactNode;
@@ -51,13 +56,14 @@ export function StorageChart({
     isLoading,
     isError,
     hiddenFacilities,
+    showEmpty = false,
     view,
     formatLabel,
     height,
     ...chart
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
-    const filterDataKeys = useChartFilters(hiddenFacilities);
+    const filterDataKeys = useChartFilters(hiddenFacilities, !showEmpty);
 
     // The SOC comes from 0 to 1. Scale it to 0-100 for display.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {

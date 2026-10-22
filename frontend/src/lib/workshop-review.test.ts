@@ -115,6 +115,27 @@ describe("playerStorageRows", () => {
         ]);
     });
 
+    it("keeps a storage type that stayed empty all week", () => {
+        const empty = {
+            ...week,
+            pools: [
+                {
+                    player_id: 2,
+                    facility: "pumped_hydro" as const,
+                    generation: [0, 0],
+                    dumped: [0, 0],
+                    charged: [0, 0],
+                    stored: [0, 0],
+                    storage_capacity: 4,
+                },
+            ],
+        };
+        expect(playerStorageRows(empty, 2, "soc")).toEqual([
+            { tick: 24, pumped_hydro: 0 },
+            { tick: 25, pumped_hydro: 0 },
+        ]);
+    });
+
     it("gives a player with no storage empty rows", () => {
         expect(playerStorageRows(week, 2, "soc")).toEqual([
             { tick: 24 },

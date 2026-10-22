@@ -716,6 +716,9 @@ function PlayerStorageCard({
             <StorageChart
                 chartData={rows}
                 hiddenFacilities={NO_HIDDEN_SERIES}
+                // Every storage type the player had shows, even if it stayed
+                // empty all week.
+                showEmpty
                 view={view}
                 formatLabel={labels.facilityName}
                 height={300}
