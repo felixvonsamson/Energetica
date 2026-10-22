@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { useMyId } from "@/hooks/use-players";
 import { electricityMarketsApi } from "@/lib/api/electricity-markets";
-import { resolveErrorMessage } from "@/lib/game-messages";
+import { toastActionError } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 import { ElectricityMarket } from "@/types/electricity-markets";
 
@@ -39,7 +39,7 @@ export function useJoinElectricityMarket() {
             toast.success(`Joined ${data.name}`);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -58,7 +58,7 @@ export function useLeaveElectricityMarket() {
             toast.success("Left electricity market");
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }
@@ -77,7 +77,7 @@ export function useCreateElectricityMarket() {
             toast.success(`Market "${data.name}" created`);
         },
         onError: (error) => {
-            toast.error(resolveErrorMessage(error));
+            toastActionError(error);
         },
     });
 }

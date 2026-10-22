@@ -1,10 +1,12 @@
 import { useState } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import {
     useJoinElectricityMarket,
     useElectricityMarkets,
     useElectricityMarket,
 } from "@/hooks/use-electricity-markets";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMyId } from "@/hooks/use-players";
 import { Button } from "@energetica/ui/components/button";
@@ -33,6 +35,7 @@ export function JoinMarketDialog({
 }: JoinMarketDialogProps) {
     const [error, setError] = useState<string | null>(null);
     const { mutate: joinMarket, isPending } = useJoinElectricityMarket();
+    const readOnly = useIsReadOnly();
     const { data: marketsData } = useElectricityMarkets();
     const myId = useMyId();
     const { data: moneyData } = usePlayerMoney();
@@ -230,20 +233,23 @@ export function JoinMarketDialog({
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button
-                            type="submit"
-                            form="join-market-form"
-                            variant={isPending ? "outline" : "default"}
-                            disabled={
-                                isPending ||
-                                hasInsufficientFunds ||
-                                isMarketFull
-                            }
-                            className="flex items-center gap-2"
-                        >
-                            {isPending && <Spinner />}
-                            Join Market
-                        </Button>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <Button
+                                type="submit"
+                                form="join-market-form"
+                                variant={isPending ? "outline" : "default"}
+                                disabled={
+                                    isPending ||
+                                    readOnly ||
+                                    hasInsufficientFunds ||
+                                    isMarketFull
+                                }
+                                className="flex items-center gap-2"
+                            >
+                                {isPending && <Spinner />}
+                                Join Market
+                            </Button>
+                        </ReadOnlyTooltip>
                     </DialogFooter>
                 </DialogContent>
             </form>

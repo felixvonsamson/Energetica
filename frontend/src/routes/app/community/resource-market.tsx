@@ -11,11 +11,13 @@ import { useState, useMemo } from "react";
 
 import { IncomingShipmentsDialog } from "@/components/dashboard/incoming-shipments-dialog";
 import { GameLayout } from "@/components/layout/game-layout";
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { DualDuration } from "@/components/ui/duration";
 import { PlayerName } from "@/components/ui/player-name";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { usePlayerMap } from "@/hooks/use-players";
 import {
@@ -420,6 +422,7 @@ function AskRow({
     onPurchaseClick,
 }: AskRowProps) {
     const deleteMutation = useDeleteAsk();
+    const readOnly = useIsReadOnly();
     const { data: deliveryData } = useCalculateDeliveryTime(ask.id);
 
     const isOwnAsk = currentPlayerId === ask.seller_id;
@@ -469,38 +472,41 @@ function AskRow({
                 )}
             </td>
             <td className="py-3 px-4 text-center">
-                <div className="flex gap-2 justify-center">
-                    {!isOwnAsk && (
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() =>
-                                onPurchaseClick({
-                                    id: ask.id,
-                                    resource_type: ask.resource_type,
-                                    quantity: ask.quantity,
-                                    unit_price: ask.unit_price,
-                                })
-                            }
-                            className="text-xs"
-                            title="Purchase this resource"
-                        >
-                            Buy
-                        </Button>
-                    )}
-                    {isOwnAsk && (
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteMutation.mutate(ask.id)}
-                            disabled={deleteMutation.isPending}
-                            className="text-xs px-3"
-                            title="Remove your listing"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    )}
-                </div>
+                <ReadOnlyTooltip readOnly={readOnly}>
+                    <div className="flex gap-2 justify-center">
+                        {!isOwnAsk && (
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                    onPurchaseClick({
+                                        id: ask.id,
+                                        resource_type: ask.resource_type,
+                                        quantity: ask.quantity,
+                                        unit_price: ask.unit_price,
+                                    })
+                                }
+                                disabled={readOnly}
+                                className="text-xs"
+                                title="Purchase this resource"
+                            >
+                                Buy
+                            </Button>
+                        )}
+                        {isOwnAsk && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteMutation.mutate(ask.id)}
+                                disabled={deleteMutation.isPending || readOnly}
+                                className="text-xs px-3"
+                                title="Remove your listing"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </div>
+                </ReadOnlyTooltip>
             </td>
         </motion.tr>
     );

@@ -5,6 +5,7 @@
 
 import { useState, ReactNode, Fragment } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { CashFlow, FacilityName, Duration } from "@/components/ui";
 import {
     useUpgradeFacility,
@@ -12,6 +13,7 @@ import {
     useDismantleFacility,
     useDismantleAllOfType,
 } from "@/hooks/use-facilities";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { ConfirmDialog } from "@energetica/ui/components/confirm-dialog";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { Money } from "@energetica/ui/components/money";
@@ -109,17 +111,20 @@ function FacilityActions({
     upgradeMutation: ReturnType<typeof useUpgradeFacility>;
     dismantleMutation: ReturnType<typeof useDismantleFacility>;
 }) {
+    const readOnly = useIsReadOnly();
     return (
         <>
             <td className="py-3 px-4 text-center">
                 {facility.upgrade_cost !== null ? (
-                    <button
-                        onClick={() => upgradeMutation.mutate(facility.id)}
-                        disabled={upgradeMutation.isPending}
-                        className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                    >
-                        <Money amount={facility.upgrade_cost} />
-                    </button>
+                    <ReadOnlyTooltip readOnly={readOnly}>
+                        <button
+                            onClick={() => upgradeMutation.mutate(facility.id)}
+                            disabled={upgradeMutation.isPending || readOnly}
+                            className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                            <Money amount={facility.upgrade_cost} />
+                        </button>
+                    </ReadOnlyTooltip>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )}
@@ -129,29 +134,35 @@ function FacilityActions({
                 onClick={(e) => e.stopPropagation()}
             >
                 {facility.dismantle_cost !== null ? (
-                    <ConfirmDialog
-                        trigger={
-                            <button
-                                disabled={dismantleMutation.isPending}
-                                className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                            >
-                                <Money amount={facility.dismantle_cost} />
-                            </button>
-                        }
-                        title="Confirm Dismantle"
-                        description={
-                            <ConfirmationContent
-                                facilityName={facility.facility}
-                                count={1}
-                                totalCost={facility.dismantle_cost}
-                                isDismantling={true}
-                            />
-                        }
-                        confirmLabel="Dismantle"
-                        variant="danger"
-                        onConfirm={() => dismantleMutation.mutate(facility.id)}
-                        isPending={dismantleMutation.isPending}
-                    />
+                    <ReadOnlyTooltip readOnly={readOnly}>
+                        <ConfirmDialog
+                            trigger={
+                                <button
+                                    disabled={
+                                        dismantleMutation.isPending || readOnly
+                                    }
+                                    className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                    <Money amount={facility.dismantle_cost} />
+                                </button>
+                            }
+                            title="Confirm Dismantle"
+                            description={
+                                <ConfirmationContent
+                                    facilityName={facility.facility}
+                                    count={1}
+                                    totalCost={facility.dismantle_cost}
+                                    isDismantling={true}
+                                />
+                            }
+                            confirmLabel="Dismantle"
+                            variant="danger"
+                            onConfirm={() =>
+                                dismantleMutation.mutate(facility.id)
+                            }
+                            isPending={dismantleMutation.isPending}
+                        />
+                    </ReadOnlyTooltip>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )}
@@ -178,6 +189,7 @@ function GroupActions({
     upgradeAllMutation: ReturnType<typeof useUpgradeAllOfType>;
     dismantleAllMutation: ReturnType<typeof useDismantleAllOfType>;
 }) {
+    const readOnly = useIsReadOnly();
     return (
         <>
             <td
@@ -185,31 +197,35 @@ function GroupActions({
                 onClick={(e) => e.stopPropagation()}
             >
                 {hasUpgrades ? (
-                    <ConfirmDialog
-                        trigger={
-                            <button
-                                disabled={upgradeAllMutation.isPending}
-                                className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                            >
-                                Upgrade All
-                            </button>
-                        }
-                        title="Confirm Upgrade All"
-                        description={
-                            <ConfirmationContent
-                                facilityName={facilityName}
-                                count={count}
-                                totalCost={totalUpgradeCost}
-                                isDismantling={false}
-                                bulk={true}
-                            />
-                        }
-                        confirmLabel="Upgrade All"
-                        onConfirm={() =>
-                            upgradeAllMutation.mutate(facilityName)
-                        }
-                        isPending={upgradeAllMutation.isPending}
-                    />
+                    <ReadOnlyTooltip readOnly={readOnly}>
+                        <ConfirmDialog
+                            trigger={
+                                <button
+                                    disabled={
+                                        upgradeAllMutation.isPending || readOnly
+                                    }
+                                    className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                    Upgrade All
+                                </button>
+                            }
+                            title="Confirm Upgrade All"
+                            description={
+                                <ConfirmationContent
+                                    facilityName={facilityName}
+                                    count={count}
+                                    totalCost={totalUpgradeCost}
+                                    isDismantling={false}
+                                    bulk={true}
+                                />
+                            }
+                            confirmLabel="Upgrade All"
+                            onConfirm={() =>
+                                upgradeAllMutation.mutate(facilityName)
+                            }
+                            isPending={upgradeAllMutation.isPending}
+                        />
+                    </ReadOnlyTooltip>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )}
@@ -218,30 +234,36 @@ function GroupActions({
                 className="py-3 px-4 text-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                <ConfirmDialog
-                    trigger={
-                        <button
-                            disabled={dismantleAllMutation.isPending}
-                            className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                        >
-                            Dismantle All
-                        </button>
-                    }
-                    title="Confirm Dismantle All"
-                    description={
-                        <ConfirmationContent
-                            facilityName={facilityName}
-                            count={count}
-                            totalCost={totalDismantleCost}
-                            isDismantling={true}
-                            bulk={true}
-                        />
-                    }
-                    confirmLabel="Dismantle All"
-                    variant="danger"
-                    onConfirm={() => dismantleAllMutation.mutate(facilityName)}
-                    isPending={dismantleAllMutation.isPending}
-                />
+                <ReadOnlyTooltip readOnly={readOnly}>
+                    <ConfirmDialog
+                        trigger={
+                            <button
+                                disabled={
+                                    dismantleAllMutation.isPending || readOnly
+                                }
+                                className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            >
+                                Dismantle All
+                            </button>
+                        }
+                        title="Confirm Dismantle All"
+                        description={
+                            <ConfirmationContent
+                                facilityName={facilityName}
+                                count={count}
+                                totalCost={totalDismantleCost}
+                                isDismantling={true}
+                                bulk={true}
+                            />
+                        }
+                        confirmLabel="Dismantle All"
+                        variant="danger"
+                        onConfirm={() =>
+                            dismantleAllMutation.mutate(facilityName)
+                        }
+                        isPending={dismantleAllMutation.isPending}
+                    />
+                </ReadOnlyTooltip>
             </td>
         </>
     );

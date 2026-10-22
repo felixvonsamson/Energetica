@@ -48,3 +48,35 @@ export function usePhase(intervalMs = 1000): Phase | undefined {
         now,
     );
 }
+
+/**
+ * Whether game actions are closed on this instance (phase `freeze` or later,
+ * #866). Controls that send a game action read this to disable themselves in
+ * place.
+ *
+ * Rather than polling, this arms one timer for the `freeze_at` boundary, so the
+ * many controls that call it cost nothing until it flips. False while the
+ * engine config loads, or for a run with no `freeze_at` — failing open to the
+ * live game, like {@link usePhase}.
+ */
+export function useIsReadOnly(): boolean {
+    const { data: engine } = useGameEngine();
+    const freezeAt = engine?.freeze_at ?? null;
+    const freezeMs = freezeAt ? Date.parse(freezeAt) : NaN;
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        if (Number.isNaN(freezeMs) || now >= freezeMs) return;
+        // `setTimeout` overflows past ~24.8 days; re-arm from there if the boundary is further.
+        const left = Math.max(0, freezeMs - Date.now());
+        const id = setTimeout(
+            () => setNow(Date.now()),
+            Math.min(left, MAX_TIMEOUT_MS),
+        );
+        return () => clearTimeout(id);
+    }, [freezeMs, now]);
+
+    return !Number.isNaN(freezeMs) && now >= freezeMs;
+}
+
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;

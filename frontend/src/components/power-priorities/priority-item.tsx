@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { PriceInput } from "@/components/power-priorities/price-input";
 import { StatusBadge } from "@/components/power-priorities/status-badge";
 import type {
@@ -18,6 +19,7 @@ import type {
 import { AssetName } from "@/components/ui/asset-name";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import {
     useUpdateElectricityPrices,
     useUpdatePowerPriorityBump,
@@ -41,6 +43,7 @@ export function PriorityItem({
 }: PriorityItemProps) {
     const updatePowerPriorityBump = useUpdatePowerPriorityBump();
     const updateElectricityPrices = useUpdateElectricityPrices();
+    const readOnly = useIsReadOnly();
 
     const { data: statusesData } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
@@ -107,30 +110,40 @@ export function PriorityItem({
     };
 
     const bumpButtons = (
-        <div className="inline-flex flex-col items-center">
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                className="size-6"
-                onClick={() => handleBump("up")}
-                disabled={!canBumpUp || updatePowerPriorityBump.isPending}
-                title="Move up (lower priority)"
-                aria-label="Move up"
-            >
-                <ChevronUp className="size-4" />
-            </Button>
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                className="size-6"
-                onClick={() => handleBump("down")}
-                disabled={!canBumpDown || updatePowerPriorityBump.isPending}
-                title="Move down (higher priority)"
-                aria-label="Move down"
-            >
-                <ChevronDown className="size-4" />
-            </Button>
-        </div>
+        <ReadOnlyTooltip readOnly={readOnly}>
+            <div className="inline-flex flex-col items-center">
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-6"
+                    onClick={() => handleBump("up")}
+                    disabled={
+                        !canBumpUp ||
+                        updatePowerPriorityBump.isPending ||
+                        readOnly
+                    }
+                    title="Move up (lower priority)"
+                    aria-label="Move up"
+                >
+                    <ChevronUp className="size-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-6"
+                    onClick={() => handleBump("down")}
+                    disabled={
+                        !canBumpDown ||
+                        updatePowerPriorityBump.isPending ||
+                        readOnly
+                    }
+                    title="Move down (higher priority)"
+                    aria-label="Move down"
+                >
+                    <ChevronDown className="size-4" />
+                </Button>
+            </div>
+        </ReadOnlyTooltip>
     );
 
     return (
@@ -204,11 +217,13 @@ export function PriorityItem({
                     isConsumption && "rounded-r-lg",
                 )}
             >
-                <PriceInput
-                    value={item.price}
-                    onCommit={handlePriceCommit}
-                    disabled={updateElectricityPrices.isPending}
-                />
+                <ReadOnlyTooltip readOnly={readOnly}>
+                    <PriceInput
+                        value={item.price}
+                        onCommit={handlePriceCommit}
+                        disabled={updateElectricityPrices.isPending || readOnly}
+                    />
+                </ReadOnlyTooltip>
             </td>
 
             {/* Production side cell — bump buttons for ask rows, empty for bid */}

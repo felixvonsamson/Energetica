@@ -2,10 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { Duration } from "@/components/ui";
 import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
 import { Countdown } from "@/components/ui/countdown";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import {
     useCancelProject,
     useDecreaseProjectPriority,
@@ -128,16 +130,17 @@ function ProjectItem({ project }: ProjectItemProps) {
         decreasePriorityMutation.mutate(project.id);
     const cancelMutation = useCancelProject();
     const onCancel = () => cancelMutation.mutate(project.id);
+    const readOnly = useIsReadOnly();
 
     const cardActions = (
-        <>
+        <ReadOnlyTooltip readOnly={readOnly}>
             {/* Pause/Resume button */}
             {project.status === "paused" ? (
                 <Button
                     variant="secondary"
                     size="sm"
                     onClick={onResume}
-                    disabled={resumeMutation.isPending}
+                    disabled={resumeMutation.isPending || readOnly}
                     className="p-1"
                     aria-label="Resume project"
                 >
@@ -148,7 +151,7 @@ function ProjectItem({ project }: ProjectItemProps) {
                     variant="secondary"
                     size="sm"
                     onClick={onPause}
-                    disabled={pauseMutation.isPending}
+                    disabled={pauseMutation.isPending || readOnly}
                     className="p-1"
                     aria-label="Pause project"
                 >
@@ -162,7 +165,7 @@ function ProjectItem({ project }: ProjectItemProps) {
                     <Button
                         variant="destructive"
                         size="sm"
-                        disabled={cancelMutation.isPending}
+                        disabled={cancelMutation.isPending || readOnly}
                         className="p-1"
                         aria-label="Cancel project"
                     >
@@ -201,7 +204,7 @@ function ProjectItem({ project }: ProjectItemProps) {
                         <AlertDialogAction variant="destructive" asChild>
                             <Button
                                 onClick={onCancel}
-                                disabled={cancelMutation.isPending}
+                                disabled={cancelMutation.isPending || readOnly}
                             >
                                 Continue
                             </Button>
@@ -209,42 +212,48 @@ function ProjectItem({ project }: ProjectItemProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </>
+        </ReadOnlyTooltip>
     );
 
     return (
         <div className="flex items-stretch gap-2">
             {/* Priority arrows — outside the card, left side, matching card bg */}
-            <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
-                {!project.isFirst ? (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onIncreasePriority}
-                        disabled={increasePriorityMutation.isPending}
-                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                        aria-label="Increase priority"
-                    >
-                        <ChevronUp size={14} />
-                    </Button>
-                ) : (
-                    <div className="h-6 w-6" />
-                )}
-                {!project.isLast ? (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDecreasePriority}
-                        disabled={decreasePriorityMutation.isPending}
-                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                        aria-label="Decrease priority"
-                    >
-                        <ChevronDown size={14} />
-                    </Button>
-                ) : (
-                    <div className="h-6 w-6" />
-                )}
-            </div>
+            <ReadOnlyTooltip readOnly={readOnly}>
+                <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
+                    {!project.isFirst ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onIncreasePriority}
+                            disabled={
+                                increasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Increase priority"
+                        >
+                            <ChevronUp size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                    {!project.isLast ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onDecreasePriority}
+                            disabled={
+                                decreasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Decrease priority"
+                        >
+                            <ChevronDown size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                </div>
+            </ReadOnlyTooltip>
 
             {/* Card */}
             <div className="flex-1">

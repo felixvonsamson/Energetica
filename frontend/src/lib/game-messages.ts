@@ -11,7 +11,10 @@
  * defined here so all copy lives in one place.
  */
 
+import { toast } from "sonner";
+
 import { getAssetLongName } from "@/lib/assets/asset-names";
+import { isInstanceFrozenError } from "@/lib/lifecycle";
 import type { ApiSchema } from "@/types/api-helpers";
 import { ApiClientError, isGameError } from "@energetica/core/api-client";
 
@@ -214,6 +217,20 @@ export function resolveErrorMessage(error: unknown): string {
     }
     if (error instanceof Error) return error.message;
     return "An unexpected error occurred. Please try again.";
+}
+
+/**
+ * Toast a failed game action, except the backend's frozen-instance `409`
+ * (#866). That one is not the player's mistake: the query client's mutation
+ * error handler re-reads the engine config, and the game turns read-only in
+ * place instead.
+ */
+export function toastActionError(
+    error: unknown,
+    format: (error: unknown) => string = resolveErrorMessage,
+): void {
+    if (isInstanceFrozenError(error)) return;
+    toast.error(format(error));
 }
 
 // ---------------------------------------------------------------------------

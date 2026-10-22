@@ -6,12 +6,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
 import { MapTiles } from "@/components/map/map-tiles";
 import { ResourceButton } from "@/components/map/resource-button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
+import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
 import {
@@ -259,6 +261,7 @@ function SettleContent() {
 function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
     const queryClient = useQueryClient();
     const [isSettling, setIsSettling] = useState(false);
+    const readOnly = useIsReadOnly();
 
     const handleSettleLocation = useCallback(async () => {
         if (isSettling) return;
@@ -357,15 +360,19 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                         {playerMap[selectedTile.player_id]}!
                     </div>
                 ) : (
-                    <Button
-                        variant="success"
-                        size="lg"
-                        className="mt-6 w-full font-bold"
-                        onClick={handleSettleLocation}
-                        disabled={isSettling}
-                    >
-                        {isSettling ? "Settling..." : "Choose this location"}
-                    </Button>
+                    <ReadOnlyTooltip readOnly={readOnly} className="block">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            className="mt-6 w-full font-bold"
+                            onClick={handleSettleLocation}
+                            disabled={isSettling || readOnly}
+                        >
+                            {isSettling
+                                ? "Settling..."
+                                : "Choose this location"}
+                        </Button>
+                    </ReadOnlyTooltip>
                 )}
             </div>
         </div>
