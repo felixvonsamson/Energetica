@@ -93,15 +93,15 @@ function StorageOverviewPage() {
 }
 
 const VIEW_MODE_OPTIONS = [
-    { value: "normal", label: "Stored Capacity" },
     { value: "percent", label: "State of Charge" },
+    { value: "normal", label: "Stored Capacity" },
 ] as const;
 
 function StorageOverviewContent() {
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
         "energetica:chart:storage:viewMode",
-        "normal",
+        "percent",
     );
     const [hiddenFacilities, toggleFacility] = useToggleSet<string>(
         undefined,
