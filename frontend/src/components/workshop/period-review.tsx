@@ -32,6 +32,7 @@ import {
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
+    type ChartSyncProps,
     type EChartsTimeSeriesConfig,
     FULL_ZOOM,
     type TimeAxis,
@@ -43,7 +44,11 @@ import {
     PowerChart,
     type PowerChartViewMode,
 } from "@/components/charts/power-chart";
-import { StorageChart } from "@/components/charts/storage-chart";
+import {
+    STORAGE_VIEW_OPTIONS,
+    StorageChart,
+    type StorageView,
+} from "@/components/charts/storage-chart";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
@@ -66,7 +71,6 @@ import {
     EXPORTS,
     type NetworkGrouping,
     type PowerView,
-    type StorageView,
     TIER_NAMES,
     WEEK_DAYS,
     isPointOfWeek,
@@ -373,15 +377,10 @@ function WeekPicker({
 
 // ── Power charts ──────────────────────────────────────────────────────────────
 
-interface ChartProps {
+interface ChartProps extends ChartSyncProps {
     timeAxis: TimeAxis;
-    markerTick: number;
-    blackoutTick: number | undefined;
-    onTickClick: (tick: number) => void;
     isLoading: boolean;
     isError: boolean;
-    zoom: ZoomRange;
-    onZoomChange: (zoom: ZoomRange) => void;
 }
 
 interface PowerCardProps extends ChartProps {
@@ -668,11 +667,6 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
 
 // ── Storage chart ─────────────────────────────────────────────────────────────
 
-const STORAGE_OPTIONS = [
-    { value: "soc", label: "State of charge" },
-    { value: "energy", label: "Stored energy" },
-] as const;
-
 const NO_HIDDEN_SERIES = new Set<string>();
 
 function PlayerStorageCard({
@@ -706,14 +700,14 @@ function PlayerStorageCard({
                     label="Display"
                     value={view}
                     onChange={setView}
-                    options={STORAGE_OPTIONS}
+                    options={STORAGE_VIEW_OPTIONS}
                 />
             }
         >
             <StorageChart
                 chartData={rows}
                 hiddenFacilities={NO_HIDDEN_SERIES}
-                viewMode={view === "soc" ? "percent" : "normal"}
+                view={view}
                 formatLabel={labels.facilityName}
                 height={300}
                 {...chart}

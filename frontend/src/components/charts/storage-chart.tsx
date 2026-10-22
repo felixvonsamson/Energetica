@@ -11,11 +11,9 @@ import { type ReactNode, useMemo, useState } from "react";
  */
 
 import {
-    EChartsTimeSeries,
+    type ChartSyncProps,
     type EChartsTimeSeriesConfig,
-    type TimeAxis,
-    TimeSeriesChart,
-    type ZoomRange,
+    TimeSeriesChartOnAxis,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
@@ -25,23 +23,27 @@ import { useFacilities } from "@/hooks/use-facilities";
 import { formatEnergy } from "@energetica/core/format-utils";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
-interface StorageChartProps {
+/**
+ * What the storage chart shows: each storage type's state of charge (SOC), the
+ * energy it holds as a share of its capacity, or the energy itself.
+ */
+export type StorageView = "soc" | "energy";
+
+export const STORAGE_VIEW_OPTIONS = [
+    { value: "soc", label: "SOC" },
+    { value: "energy", label: "Energy" },
+] as const satisfies readonly { value: StorageView; label: string }[];
+
+interface StorageChartProps extends ChartSyncProps {
+    /** The stored energy in Wh, or for `soc`, the SOC from 0 to 1. */
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
-    viewMode: "normal" | "percent";
+    view: StorageView;
     /** Each series' tooltip label. Defaults to the facility's name. */
     formatLabel?: (key: string) => ReactNode;
-    /** The chart's time axis. Defaults to the persistent world's game ticks. */
-    timeAxis?: TimeAxis;
     height?: number;
-    markerTick?: number;
-    /** Shade the chart from this tick to its end as a blackout. */
-    blackoutTick?: number;
-    onTickClick?: (tick: number) => void;
-    zoom?: ZoomRange;
-    onZoomChange?: (zoom: ZoomRange) => void;
 }
 
 export function StorageChart({
@@ -49,23 +51,17 @@ export function StorageChart({
     isLoading,
     isError,
     hiddenFacilities,
-    viewMode,
+    view,
     formatLabel,
-    timeAxis,
     height,
-    markerTick,
-    blackoutTick,
-    onTickClick,
-    zoom,
-    onZoomChange,
+    ...chart
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenFacilities);
 
-    // In percent mode, chartData already contains server-computed SoC (0-1 fraction).
-    // Scale to 0-100 for display.
+    // The SOC comes from 0 to 1. Scale it to 0-100 for display.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || chartData.length === 0) {
+        if (view === "energy" || chartData.length === 0) {
             return chartData;
         }
         return chartData.map((dataPoint) => {
@@ -77,42 +73,35 @@ export function StorageChart({
             });
             return result;
         });
-    }, [chartData, viewMode]);
+    }, [chartData, view]);
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: viewMode === "normal" ? "storage-level" : "storage-soc",
-            chartVariant: viewMode === "normal" ? "area" : "smoothLine",
-            stacked: viewMode === "normal" ? true : false,
+            chartType: view === "energy" ? "storage-level" : "storage-soc",
+            chartVariant: view === "energy" ? "area" : "smoothLine",
+            stacked: view === "energy",
             getColor,
             filterDataKeys,
             formatValue:
-                viewMode === "normal"
+                view === "energy"
                     ? formatEnergy
                     : (value: number) => `${value.toFixed(1)}%`,
             formatYAxis: (value: number) =>
-                viewMode === "normal" ? formatEnergy(value) : `${value}%`,
+                view === "energy" ? formatEnergy(value) : `${value}%`,
             formatLabel,
             height,
         }),
-        [viewMode, getColor, filterDataKeys, formatLabel, height],
+        [view, getColor, filterDataKeys, formatLabel, height],
     );
 
-    const chartProps = {
-        data: displayData,
-        config: chartConfig,
-        isLoading,
-        isError,
-        markerTick,
-        blackoutTick,
-        onTickClick,
-        zoom,
-        onZoomChange,
-    };
-    return timeAxis ? (
-        <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
-    ) : (
-        <EChartsTimeSeries {...chartProps} />
+    return (
+        <TimeSeriesChartOnAxis
+            data={displayData}
+            config={chartConfig}
+            isLoading={isLoading}
+            isError={isError}
+            {...chart}
+        />
     );
 }
 

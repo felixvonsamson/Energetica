@@ -20,6 +20,7 @@
  */
 
 import type { MeritOrderData } from "@/components/charts/merit-order-view";
+import type { StorageView } from "@/components/charts/storage-chart";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type PeriodWeek = ApiSchema<"WorkshopPeriodWeekOut">;
@@ -29,7 +30,6 @@ type Orders = ApiSchema<"WorkshopOrdersOut">;
 
 export type PowerView = "generation" | "consumption";
 export type NetworkGrouping = "type" | "player";
-export type StorageView = "soc" | "energy";
 
 /** One settlement point's values, by series key. */
 export type ChartRow = { tick: number } & Record<string, number>;
