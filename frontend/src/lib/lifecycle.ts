@@ -71,3 +71,19 @@ export function isInstanceFrozenError(error: unknown): boolean {
         error.getErrorMessage() === INSTANCE_FROZEN_DETAIL
     );
 }
+
+/**
+ * When game actions close, in epoch ms, or `null` for a run that never closes.
+ * That is `freeze_at`, or `ended_at` for a run with no freeze phase: the phase
+ * ladder goes straight from `active` to `ended` then, and the backend rejects
+ * game actions from that moment too.
+ */
+export function readOnlyFrom(
+    freezeAt: string | null | undefined,
+    endedAt: string | null | undefined,
+): number | null {
+    const boundary = freezeAt ?? endedAt;
+    if (!boundary) return null;
+    const ms = Date.parse(boundary);
+    return Number.isNaN(ms) ? null : ms;
+}

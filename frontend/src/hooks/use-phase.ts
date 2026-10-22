@@ -17,6 +17,7 @@
 import { useEffect, useState } from "react";
 
 import { useGameEngine } from "@/hooks/use-game";
+import { readOnlyFrom } from "@/lib/lifecycle";
 import { derivePhase, type Phase } from "@energetica/core/instances";
 
 /**
@@ -54,29 +55,28 @@ export function usePhase(intervalMs = 1000): Phase | undefined {
  * #866). Controls that send a game action read this to disable themselves in
  * place.
  *
- * Rather than polling, this arms one timer for the `freeze_at` boundary, so the
- * many controls that call it cost nothing until it flips. False while the
- * engine config loads, or for a run with no `freeze_at` — failing open to the
- * live game, like {@link usePhase}.
+ * Rather than polling, this arms one timer for the boundary (`readOnlyFrom`:
+ * `freeze_at`, else `ended_at`), so the many controls that call it cost nothing
+ * until it flips. False while the engine config loads, or for a run with
+ * neither boundary — failing open to the live game, like {@link usePhase}.
  */
 export function useIsReadOnly(): boolean {
     const { data: engine } = useGameEngine();
-    const freezeAt = engine?.freeze_at ?? null;
-    const freezeMs = freezeAt ? Date.parse(freezeAt) : NaN;
+    const closesAt = readOnlyFrom(engine?.freeze_at, engine?.ended_at);
     const [now, setNow] = useState(() => Date.now());
 
     useEffect(() => {
-        if (Number.isNaN(freezeMs) || now >= freezeMs) return;
+        if (closesAt === null || now >= closesAt) return;
         // `setTimeout` overflows past ~24.8 days; re-arm from there if the boundary is further.
-        const left = Math.max(0, freezeMs - Date.now());
+        const left = Math.max(0, closesAt - Date.now());
         const id = setTimeout(
             () => setNow(Date.now()),
             Math.min(left, MAX_TIMEOUT_MS),
         );
         return () => clearTimeout(id);
-    }, [freezeMs, now]);
+    }, [closesAt, now]);
 
-    return !Number.isNaN(freezeMs) && now >= freezeMs;
+    return closesAt !== null && now >= closesAt;
 }
 
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;

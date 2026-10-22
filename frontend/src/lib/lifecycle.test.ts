@@ -8,6 +8,7 @@ import {
     INSTANCE_FROZEN_DETAIL,
     isInstanceFrozenError,
     isReadOnlyPhase,
+    readOnlyFrom,
     showFreezeCountdown,
 } from "./lifecycle";
 
@@ -103,5 +104,22 @@ describe("isInstanceFrozenError", () => {
         expect(isInstanceFrozenError(new Error(INSTANCE_FROZEN_DETAIL))).toBe(
             false,
         );
+    });
+});
+
+describe("readOnlyFrom", () => {
+    const ENDED_AT = "2026-11-01T12:00:00Z";
+
+    it("closes at freeze_at", () => {
+        expect(readOnlyFrom(FREEZE_AT, ENDED_AT)).toBe(freezeMs);
+    });
+
+    it("closes at ended_at for a run with no freeze phase", () => {
+        expect(readOnlyFrom(null, ENDED_AT)).toBe(Date.parse(ENDED_AT));
+    });
+
+    it("never closes an open-ended run", () => {
+        expect(readOnlyFrom(null, null)).toBeNull();
+        expect(readOnlyFrom(undefined, undefined)).toBeNull();
     });
 });

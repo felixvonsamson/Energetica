@@ -133,39 +133,42 @@ function ProjectItem({ project }: ProjectItemProps) {
     const readOnly = useIsReadOnly();
 
     const cardActions = (
-        <ReadOnlyTooltip readOnly={readOnly}>
-            {/* Pause/Resume button */}
-            {project.status === "paused" ? (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onResume}
-                    disabled={resumeMutation.isPending || readOnly}
-                    className="p-1"
-                    aria-label="Resume project"
-                >
-                    <Play size={14} />
-                </Button>
-            ) : (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onPause}
-                    disabled={pauseMutation.isPending || readOnly}
-                    className="p-1"
-                    aria-label="Pause project"
-                >
-                    <Pause size={14} />
-                </Button>
-            )}
+        <>
+            <ReadOnlyTooltip readOnly={readOnly}>
+                {/* Pause/Resume button */}
+                {project.status === "paused" ? (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onResume}
+                        disabled={resumeMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Resume project"
+                    >
+                        <Play size={14} />
+                    </Button>
+                ) : (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onPause}
+                        disabled={pauseMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Pause project"
+                    >
+                        <Pause size={14} />
+                    </Button>
+                )}
+            </ReadOnlyTooltip>
 
-            {/* Cancel button */}
+            {/* Cancel button. It stays enabled while frozen, so the refund details can still be read;
+                the dialog's Continue button is the one disabled. */}
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button
                         variant="destructive"
                         size="sm"
-                        disabled={cancelMutation.isPending || readOnly}
+                        disabled={cancelMutation.isPending}
                         className="p-1"
                         aria-label="Cancel project"
                     >
@@ -201,18 +204,22 @@ function ProjectItem({ project }: ProjectItemProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction variant="destructive" asChild>
-                            <Button
-                                onClick={onCancel}
-                                disabled={cancelMutation.isPending || readOnly}
-                            >
-                                Continue
-                            </Button>
-                        </AlertDialogAction>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <AlertDialogAction variant="destructive" asChild>
+                                <Button
+                                    onClick={onCancel}
+                                    disabled={
+                                        cancelMutation.isPending || readOnly
+                                    }
+                                >
+                                    Continue
+                                </Button>
+                            </AlertDialogAction>
+                        </ReadOnlyTooltip>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </ReadOnlyTooltip>
+        </>
     );
 
     return (

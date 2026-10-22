@@ -6,6 +6,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 
+import { LifecycleBanner } from "@/components/lifecycle/lifecycle-banner";
 import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
@@ -16,6 +17,7 @@ import { useMap } from "@/hooks/use-map";
 import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
+import { isInstanceFrozenError } from "@/lib/lifecycle";
 import {
     RESOURCES,
     MAX_VALUES,
@@ -89,7 +91,14 @@ function SettlePage() {
         }
     }, [user?.is_settled, isAuthLoading, navigate]);
 
-    return <SettleContent />;
+    // The settle page renders outside GameLayout, so it mounts the lifecycle banner itself: an
+    // unsettled player arriving during freeze still learns the game has ended (#866).
+    return (
+        <>
+            <LifecycleBanner />
+            <SettleContent />
+        </>
+    );
 }
 
 function SettleContent() {
@@ -274,6 +283,15 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
             // an awaited refetch + imperative navigate.
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         } catch (error) {
+            setIsSettling(false);
+            // The run froze under a stale `freeze_at` (#866): re-read it and the button disables
+            // itself, rather than asking the player to retry an action that can't succeed.
+            if (isInstanceFrozenError(error)) {
+                void queryClient.invalidateQueries({
+                    queryKey: queryKeys.game.engine,
+                });
+                return;
+            }
             console.error("Error settling location:", error);
             alert("Failed to settle location. Please try again.");
             setIsSettling(false);

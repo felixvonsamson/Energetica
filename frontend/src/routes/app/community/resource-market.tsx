@@ -472,28 +472,27 @@ function AskRow({
                 )}
             </td>
             <td className="py-3 px-4 text-center">
-                <ReadOnlyTooltip readOnly={readOnly}>
-                    <div className="flex gap-2 justify-center">
-                        {!isOwnAsk && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() =>
-                                    onPurchaseClick({
-                                        id: ask.id,
-                                        resource_type: ask.resource_type,
-                                        quantity: ask.quantity,
-                                        unit_price: ask.unit_price,
-                                    })
-                                }
-                                disabled={readOnly}
-                                className="text-xs"
-                                title="Purchase this resource"
-                            >
-                                Buy
-                            </Button>
-                        )}
-                        {isOwnAsk && (
+                <div className="flex gap-2 justify-center">
+                    {!isOwnAsk && (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() =>
+                                onPurchaseClick({
+                                    id: ask.id,
+                                    resource_type: ask.resource_type,
+                                    quantity: ask.quantity,
+                                    unit_price: ask.unit_price,
+                                })
+                            }
+                            className="text-xs"
+                            title="Purchase this resource"
+                        >
+                            Buy
+                        </Button>
+                    )}
+                    {isOwnAsk && (
+                        <ReadOnlyTooltip readOnly={readOnly}>
                             <Button
                                 variant="destructive"
                                 size="sm"
@@ -504,9 +503,9 @@ function AskRow({
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
-                        )}
-                    </div>
-                </ReadOnlyTooltip>
+                        </ReadOnlyTooltip>
+                    )}
+                </div>
             </td>
         </motion.tr>
     );
