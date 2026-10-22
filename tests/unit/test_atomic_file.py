@@ -40,8 +40,17 @@ def test_the_data_is_synced_to_disk_before_it_replaces_the_file(
     target = tmp_path / "file.bin"
     calls: list[str] = []
     real_fsync, real_replace = os.fsync, os.replace
-    monkeypatch.setattr(os, "fsync", lambda fd: (calls.append("fsync"), real_fsync(fd))[1])
-    monkeypatch.setattr(os, "replace", lambda src, dst: (calls.append("replace"), real_replace(src, dst))[1])
+
+    def recording_fsync(fd: int) -> None:
+        calls.append("fsync")
+        real_fsync(fd)
+
+    def recording_replace(src: str, dst: Path) -> None:
+        calls.append("replace")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "fsync", recording_fsync)
+    monkeypatch.setattr(os, "replace", recording_replace)
 
     with open_atomically(target) as file:
         file.write(b"data")
@@ -49,23 +58,35 @@ def test_the_data_is_synced_to_disk_before_it_replaces_the_file(
     assert calls == ["fsync", "replace"]
 
 
+class _SaveKilled(Exception):
+    pass
+
+
+class _KillsTheSave:
+    """Raises while being pickled, after the members before it have been written."""
+
+    def __reduce__(self) -> tuple:
+        raise _SaveKilled
+
+
+class _StubEngine(SimpleNamespace):
+    """Stands in for ``GameEngine`` in ``save``: every saved member not set explicitly is ``None``."""
+
+    def __getattr__(self, name: str) -> None:
+        return None
+
+
 def test_a_save_that_fails_partway_keeps_the_last_good_save(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """``GameEngine.save`` must not truncate ``engine_data.pck`` before the new save is complete."""
+    """``GameEngine.save`` must not empty ``engine_data.pck`` before the new save is complete."""
     from energetica.freeplay.game_engine import GameEngine
 
     monkeypatch.chdir(tmp_path)
     (tmp_path / "instance").mkdir()
     save = tmp_path / "instance" / "engine_data.pck"
     save.write_bytes(pickle.dumps({"total_t": 1}))
-    members = (
-        "clock_time in_game_seconds_per_tick uuid random_seed total_t start_date first_tick_time delta_t "
-        "current_climate_data daily_question question_order technology_lvls db_model_instances env general_chat_id"
-    ).split()
-    engine = SimpleNamespace(**dict.fromkeys(members))
-    engine.total_t = 2
-    engine.general_chat_id = lambda: None  # pickle.dump raises on a lambda, after writing the earlier members
+    engine = _StubEngine(total_t=2, general_chat_id=_KillsTheSave())
 
-    with pytest.raises((pickle.PicklingError, AttributeError)):
+    with pytest.raises(_SaveKilled):
         GameEngine.save(engine)  # type: ignore[arg-type]
 
     assert pickle.loads(save.read_bytes()) == {"total_t": 1}

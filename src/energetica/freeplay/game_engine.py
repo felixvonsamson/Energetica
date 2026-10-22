@@ -251,8 +251,7 @@ class GameEngine(object):
             "general_chat_id",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
-        # Streamed to a temporary file and renamed into place, so a save killed partway (#766)
-        # leaves the previous save whole.
+        # Atomic, so a save killed partway (as by the OOM kills in #766) keeps the last good save.
         with open_atomically(Path("instance/engine_data.pck")) as file:
             pickle.dump(data, file)
 
