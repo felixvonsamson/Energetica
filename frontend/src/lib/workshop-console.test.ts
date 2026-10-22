@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ApiSchema } from "@/types/api-helpers";
 
-import { carriedNote, carriedRounds, consoleRound } from "./workshop-console";
+import {
+    canAddRound,
+    carriedNote,
+    carriedRounds,
+    consoleRound,
+} from "./workshop-console";
 
 type RoundPlan = ApiSchema<"WorkshopRoundPlanOut">;
 
@@ -110,5 +115,24 @@ describe("carriedNote", () => {
 
     it("says nothing when no other Round changed", () => {
         expect(carriedNote([])).toBeNull();
+    });
+});
+
+describe("canAddRound", () => {
+    it("allows a Round until the last Round's Recap opens", () => {
+        expect(canAddRound({ kind: "not_started" }, 3)).toBe(true);
+        expect(canAddRound({ kind: "recap", round: 2 }, 3)).toBe(true);
+        expect(canAddRound({ kind: "investment", round: 3 }, 3)).toBe(true);
+        expect(
+            canAddRound(
+                { kind: "trading_period", round: 3, season: "winter" },
+                3,
+            ),
+        ).toBe(true);
+    });
+
+    it("refuses once the last Round's Recap has opened", () => {
+        expect(canAddRound({ kind: "recap", round: 3 }, 3)).toBe(false);
+        expect(canAddRound({ kind: "finished" }, 3)).toBe(false);
     });
 });
