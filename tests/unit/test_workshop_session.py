@@ -483,8 +483,8 @@ def test_selecting_before_the_session_starts_is_rejected(path: Path, clock: _Clo
 
 
 def test_a_selection_cannot_cost_more_than_the_players_money(path: Path, clock: _Clock) -> None:
-    # A gas burner costs 8,000,000 and a small water dam 45,000,000.
-    session = _investing(path, clock, money=60_000_000.0)
+    # A gas burner costs 8,000,000 and a small water dam 25,000,000.
+    session = _investing(path, clock, money=40_000_000.0)
     session.select(1, FacilityId.GAS_BURNER)
     session.select(1, FacilityId.SMALL_WATER_DAM)
 
@@ -640,9 +640,9 @@ def test_every_players_selection_is_bought_once_the_investment_timer_runs_out(pa
         OwnedFacility(facility=FacilityId.GAS_BURNER, built_round=1),
         OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=1),
     ]
-    assert alice.money == 200_000_000.0 - 8_000_000 - 80_000_000
+    assert alice.money == 200_000_000.0 - 8_000_000 - 70_000_000
     assert bob.owned_facilities == [OwnedFacility(facility=FacilityId.SMALL_WATER_DAM, built_round=1)]
-    assert bob.money == 50_000_000.0 - 45_000_000
+    assert bob.money == 50_000_000.0 - 25_000_000
     assert alice.selection == bob.selection == []
 
 

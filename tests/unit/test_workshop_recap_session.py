@@ -45,7 +45,7 @@ def _session(path: Path) -> WorkshopSession:
     account = Account(account_id=1, username="p1", pwhash="hash", email=None, created_at="")
     session.join(account).money = 1_000_000_000.0
     session.advance()
-    for _ in range(3):
+    for _ in range(6):
         session.select(1, FacilityId.COAL_BURNER)
     session.select(1, FacilityId.ONSHORE_WIND_TURBINE)
     return session

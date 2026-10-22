@@ -31,7 +31,7 @@ pytestmark = pytest.mark.usefixtures("no_demand_growth")
 
 PLAYERS = 2
 BASE_AMPLITUDE = PER_PLAYER_BASE_AMPLITUDE * PLAYERS
-COAL_BURNERS = 3
+COAL_BURNERS = 6
 
 
 class _Clock:
@@ -50,7 +50,7 @@ def path(tmp_path: Path) -> Path:
 
 
 def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
-    """A session in Round 1's Investment phase, in which two players each pick three coal burners and a wind turbine:
+    """A session in Round 1's Investment phase, in which two players each pick six coal burners and a wind turbine:
     enough to keep the lights on.
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())

@@ -436,9 +436,9 @@ def test_the_catalog_gives_fuel_use_in_kg_per_mwh_for_fuel_burning_facilities_on
 
     fuel_use = {facility["id"]: facility["fuel_use"] for facility in client.get(FACILITIES_URL).json()}
 
-    assert fuel_use["coal_burner"] == 640.0
-    assert fuel_use["gas_burner"] == 353.0
-    assert fuel_use["nuclear_reactor"] == 0.044
+    assert fuel_use["coal_burner"] == 400.0
+    assert fuel_use["gas_burner"] == 225.0
+    assert fuel_use["nuclear_reactor"] == 0.04
     assert fuel_use["onshore_wind_turbine"] is None
     assert fuel_use["lithium_ion_batteries"] is None
 
@@ -557,7 +557,7 @@ def test_a_player_selects_facilities_to_buy_when_the_investment_phase_closes(ses
     assert response.status_code == 200
     assert response.json() == {
         "facilities": ["gas_burner", "coal_burner"],
-        "total_cost": 17_000_000.0,
+        "total_cost": 18_000_000.0,
         "money": 50_000_000.0,
         "stored_energy_at_risk": {},
     }
@@ -765,7 +765,7 @@ def test_players_buy_their_own_selections_when_the_facilitator_advances(session_
     }
     authenticate(client, bob)
     assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam"]
-    assert client.get(SELECTION_URL).json()["money"] == 5_000_000.0
+    assert client.get(SELECTION_URL).json()["money"] == 25_000_000.0
 
 
 def test_selections_are_bought_as_soon_as_the_investment_timer_runs_out(

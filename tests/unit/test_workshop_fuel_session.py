@@ -278,7 +278,7 @@ def test_fuel_left_over_carries_into_the_stock(path: Path) -> None:
 def test_a_short_order_holds_back_generation_to_the_fuel_held(path: Path) -> None:
     # The stock and the order are all the gas the facilities can burn (#1010), so the player pays only the order.
     # Coal plants with all the coal they need keep the grid up once the gas runs out.
-    session = _trading(path, facilities=(*_FLEET, COAL, COAL))
+    session = _trading(path, facilities=(*_FLEET, COAL, COAL, COAL, COAL))
     alice = session.network.members[1]
     alice.fuel_stock = {Fuel.GAS: 500.0}
     session.set_fuel_order(1, Fuel.COAL, 2 * _need(session, Fuel.COAL))

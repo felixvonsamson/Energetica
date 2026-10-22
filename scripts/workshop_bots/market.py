@@ -17,12 +17,12 @@ SEASONS = ("spring", "summer", "autumn", "winter")
 
 # Restated from the backend's workshop/fuel.py and workshop/facilities.py, so the bots stay plain API clients.
 FUEL_USE = {  # kg per MWh
-    "coal_burner": 640.0,
-    "modern_coal_plant": 500.0,
-    "gas_burner": 353.0,
-    "combined_cycle": 260.0,
-    "nuclear_reactor": 0.044,
-    "nuclear_reactor_gen4": 0.000_57,
+    "coal_burner": 400.0,
+    "modern_coal_plant": 300.0,
+    "gas_burner": 225.0,
+    "combined_cycle": 150.0,
+    "nuclear_reactor": 0.04,
+    "nuclear_reactor_gen4": 0.0005,
 }
 FUEL_OF = {
     "coal_burner": "coal",
@@ -32,30 +32,30 @@ FUEL_OF = {
     "nuclear_reactor": "uranium",
     "nuclear_reactor_gen4": "uranium",
 }
-CATALOG_FUEL_PRICE = {"coal": 0.06, "gas": 0.16, "uranium": 250.0}
+CATALOG_FUEL_PRICE = {"coal": 0.1, "gas": 0.25, "uranium": 250.0}
 POLLUTION = {  # kg of CO₂ per MWh
-    "coal_burner": 1_664.0,
-    "modern_coal_plant": 1_100.0,
-    "gas_burner": 1_006.0,
-    "combined_cycle": 797.0,
+    "coal_burner": 1200.0,
+    "modern_coal_plant": 900.0,
+    "gas_burner": 619.0,
+    "combined_cycle": 413.0,
     "nuclear_reactor": 2.0,
     "nuclear_reactor_gen4": 3.0,
 }
-CARBON_TAX_RATE = 0.05  # per kg of CO₂, once the vote passes
+CARBON_TAX_RATE = 0.025  # per kg of CO₂, once the vote passes
 POWER = {  # W, to size purchases when a facility is not for sale this Round
-    "onshore_wind_turbine": 50e6,
+    "onshore_wind_turbine": 45e6,
     "offshore_wind_turbine": 100e6,
-    "coal_burner": 60e6,
-    "modern_coal_plant": 100e6,
-    "gas_burner": 50e6,
-    "combined_cycle": 80e6,
-    "small_water_dam": 40e6,
+    "coal_burner": 35e6,
+    "modern_coal_plant": 75e6,
+    "gas_burner": 38e6,
+    "combined_cycle": 60e6,
+    "small_water_dam": 45e6,
     "large_water_dam": 120e6,
     "nuclear_reactor": 100e6,
-    "nuclear_reactor_gen4": 190e6,
-    "pv_solar": 60e6,
-    "multi_layer_pv": 100e6,
-    "csp_solar": 45e6,
+    "nuclear_reactor_gen4": 170e6,
+    "pv_solar": 95e6,
+    "multi_layer_pv": 140e6,
+    "csp_solar": 150e6,
     "lithium_ion_batteries": 30e6,
     "solid_state_batteries": 50e6,
     "hydrogen_storage": 20e6,
