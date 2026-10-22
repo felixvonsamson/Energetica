@@ -70,10 +70,17 @@ arbitrary user-controlled JSON payloads.
 **Migration**:
 A step that converts stored data from the shape an older version of the code wrote into
 the shape the newer version expects, so the newer code can read it. There are two kinds.
-A **schema migration** changes the tables of a SQL database, such as `accounts.db`. A
+A **schema migration** changes the tables of a SQL database, such as `lobby.db`. A
 **state migration** changes a run's saved state, such as a freeplay **save** or a workshop
 session. A code change that reads the same data but simulates differently is not a
 migration: nothing needs converting.
+
+**State version**:
+The number stored with a piece of persisted data that says which migrations it has had. On
+start-up, the code applies every migration from the stored version up to its own. Migrations
+only go forward: code that finds a newer state version than its own refuses to start. Data
+with no state version is at version 0.
+_Avoid_: schema version (use it only for a SQL database's state version).
 
 ### Relationships
 
@@ -105,19 +112,25 @@ project's lobby / instance-picker work adds or sharpens.
 ### Language
 
 **Lobby**:
-The server-wide front door: where a player signs up, logs in (once, server-wide), and
-picks which **run** to enter or rejoin. Lives on its own subdomain (`lobby.{apex}`) with a
-small backend, separate from any run, and **outlives** individual runs (runs are created
-and deleted; the lobby is not). It is the public front door only: like every run, it is a
-client of the **accounts service** (ADR-0009).
+The server-wide part of Energetica that is not a run: where a player signs up, logs in (once,
+server-wide), and picks which **run** to enter or rejoin. It is made of a frontend, the **lobby
+backend**, the **lobby service** and `lobby.db`. It lives on its own subdomain (`lobby.{apex}`),
+separate from any run, and **outlives** individual runs (runs are created and deleted; the lobby
+is not).
 _Avoid_: landing (the **landing** is the pure-static marketing site on the apex; the lobby
 is the authenticated identity surface — distinct origins, distinct purposes).
 
-**Accounts service**:
-The one process that owns accounts, server-wide sessions and memberships. It is reachable only from
-the same server. The lobby, every run and the operator scripts are its clients (ADR-0009). It knows
-whether an account has **joined a run**, but nothing about settling.
-_Avoid_: lobby (the lobby is a client of the accounts service, not the owner of accounts).
+**Lobby backend**:
+The lobby's public HTTP app, behind `lobby.{apex}`. Like every run, it is a client of the
+**lobby service** and never opens `lobby.db` itself.
+_Avoid_: lobby web.
+
+**Lobby service**:
+The one process that owns accounts, server-wide sessions and memberships, stored in `lobby.db`.
+It is reachable only from the same server. The **lobby backend**, every run and the operator
+scripts are its clients (ADR-0009). It knows whether an account has **joined a run**, but nothing
+about settling.
+_Avoid_: accounts service, and `accounts.db` for its database (the names before the rename).
 
 **Joined a run**:
 An account that has explicitly, deliberately joined a run — the lobby's two-click join for a
@@ -127,7 +140,7 @@ lobby's "your runs" view is keyed on this, not on settling. See the flagged ambi
 
 **Settled**:
 An account that has picked a tile — has a **Player** in that run's engine. A later, separate
-step from joining, and a freeplay engine act only: the **accounts service** does not record it
+step from joining, and a freeplay engine act only: the **lobby service** does not record it
 (ADR-0009; `instance_membership`'s `settled_at` is vestigial and being removed).
 
 **Server-wide session**:
