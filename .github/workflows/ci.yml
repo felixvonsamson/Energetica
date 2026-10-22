@@ -222,7 +222,7 @@ jobs:
     # Regenerate every API types file (the merged api.generated.ts and one
     # api.<app>.generated.ts per app) and fail if any drifts from what's committed.
     # Generation boots the FastAPI apps to emit the OpenAPI schemas (needs Python
-    # + deps) then runs openapi-typescript + prettier (needs bun).
+    # + deps) then runs openapi-typescript (needs bun).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
