@@ -63,7 +63,7 @@ def _session(path: Path, *, round_count: int = 3, players: int = 3, clock: _Cloc
 def _keep_the_lights_on(session: WorkshopSession) -> None:
     """In an Investment phase, have every player pick enough coal burners to meet the demand."""
     for player in session.network.players():
-        for _ in range(3):
+        for _ in range(6):
             session.select(player.account_id, FacilityId.COAL_BURNER)
 
 

@@ -46,7 +46,7 @@ def path(tmp_path: Path) -> Path:
 
 
 def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
-    """A session in Round 1's Investment phase, in which two players each pick three coal burners and a wind turbine:
+    """A session in Round 1's Investment phase, in which two players each pick six coal burners and a wind turbine:
     enough to keep the lights on.
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
@@ -55,7 +55,7 @@ def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
         session.join(account).money = 1_000_000_000.0
     session.advance()
     for account_id in range(1, PLAYERS + 1):
-        for _ in range(3):
+        for _ in range(6):
             session.select(account_id, FacilityId.COAL_BURNER)
         session.select(account_id, FacilityId.ONSHORE_WIND_TURBINE)
     return session

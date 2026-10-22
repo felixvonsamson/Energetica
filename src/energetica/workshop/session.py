@@ -92,7 +92,7 @@ from energetica.workshop.events import (
     fuel_shocks,
     revenue_tax_rate,
 )
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
@@ -792,12 +792,13 @@ class WorkshopSession:
         return available_facilities(self.current_format().storage, unlocked)
 
     def facility_price(self, facility: FacilityId, round_number: int | None = None) -> float:
-        """What ``facility`` costs in Round ``round_number``, by default the current one: its catalog price, moved by
-        any price shock (#1012).
+        """What ``facility`` costs in Round ``round_number``, by default the current one: its price for the session's
+        length (#1306), moved by any price shock (#1012).
         """
         if round_number is None:
             round_number = self.current_round()
-        return CATALOG[facility].base_price * facility_price_factor(self.fired_events, facility, round_number)
+        price = session_price(facility, self.round_count)
+        return price * facility_price_factor(self.fired_events, facility, round_number)
 
     def facility_prices(self, round_number: int | None = None) -> dict[FacilityId, float]:
         """What each facility costs in Round ``round_number``, by default the current one."""
@@ -1364,7 +1365,7 @@ class WorkshopSession:
             return Scoreboard(
                 completed_rounds=completed,
                 final=isinstance(self.checkpoint, Finished),
-                scores=ranked(self.network.players(), completed_rounds=completed),
+                scores=ranked(self.network.players(), completed_rounds=completed, round_count=self.round_count),
             )
 
     def plans_view(self) -> PlansView:

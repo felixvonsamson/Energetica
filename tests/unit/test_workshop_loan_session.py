@@ -12,7 +12,7 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.balance_sheet import balance_sheet
-from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.facilities import FacilityId
 from energetica.workshop.score import score
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_COST, LOAN_PAYMENT, Loan
@@ -117,7 +117,7 @@ def test_the_loan_adds_its_amount_to_cash_straight_away(path: Path, clock: _Cloc
 def test_the_loan_can_be_spent_in_the_same_investment_phase(path: Path, clock: _Clock) -> None:
     session = _session(path, clock)
     reactor = FacilityId.NUCLEAR_REACTOR
-    price = CATALOG[reactor].base_price
+    price = session.facility_price(reactor)
     _alice(session).money = price - 1.0
     with pytest.raises(NotEnoughMoneyError):
         session.select(1, reactor)
@@ -313,10 +313,10 @@ def test_a_payment_at_the_session_end_can_take_cash_below_zero(path: Path, clock
 def test_the_loan_counts_as_an_investment_of_its_cost(path: Path, clock: _Clock) -> None:
     session = _session(path, clock)
     alice = _alice(session)
-    before = score(alice, completed_rounds=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
 
     session.take_loan(1)
-    after = score(alice, completed_rounds=session.round_count)
+    after = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
 
     assert LOAN_COST == 10_000_000.0
     assert after.investments == before.investments + LOAN_COST
@@ -329,12 +329,12 @@ def test_the_cash_floor_covering_a_payment_leaves_the_score_unchanged(path: Path
     session.take_loan(1)
     _to_next(session, Recap)
     alice.money = 0.0
-    before = score(alice, completed_rounds=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
 
     _to_next(session, Investment)
 
     assert alice.money == WORKSHOP_CASH_FLOOR
-    assert score(alice, completed_rounds=session.round_count) == before
+    assert score(alice, completed_rounds=session.round_count, round_count=session.round_count) == before
 
 
 # --- the balance sheet --------------------------------------------------------------------------

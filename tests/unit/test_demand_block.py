@@ -42,12 +42,12 @@ def _tier_fill(clearing: MarketClearing, label: str) -> Fill:
 def test_six_tiers_in_locked_order() -> None:
     """The structure locked in the spec: six tiers, these shares, falling willingness to pay."""
     assert [(tier.label, tier.share) for tier in DEMAND_TIERS] == [
-        ("must_serve", 0.80),
-        ("low_flex", 0.10),
-        ("medium_flex", 0.15),
-        ("high_flex", 0.20),
-        ("very_high_flex", 0.20),
-        ("opportunistic", 0.20),
+        ("must_serve", 1.00),
+        ("low_flex", 0.30),
+        ("medium_flex", 0.30),
+        ("high_flex", 0.30),
+        ("very_high_flex", 0.30),
+        ("opportunistic", 0.30),
     ]
     assert DEMAND_TIERS[0].willingness_to_pay == math.inf
     prices = [tier.willingness_to_pay for tier in DEMAND_TIERS]
@@ -68,8 +68,8 @@ def test_block_splits_nominal_demand_by_tier_share() -> None:
     assert [(entry.facility, entry.capacity, entry.price, entry.player_id) for entry in block] == [
         (tier.label, pytest.approx(1000 * tier.share), tier.willingness_to_pay, tier.player_id) for tier in DEMAND_TIERS
     ]
-    # Widths sum to 165% of nominal demand on purpose: latent demand that only shows up when power is cheap.
-    assert sum(entry.capacity for entry in block) == pytest.approx(1650)
+    # Widths sum to 250% of nominal demand on purpose: latent demand that only shows up when power is cheap.
+    assert sum(entry.capacity for entry in block) == pytest.approx(2500)
 
 
 def test_nominal_demand_is_the_amplitude_times_the_curve() -> None:
@@ -149,12 +149,12 @@ def test_round_one_amplitude_scales_with_headcount() -> None:
 
 
 def test_ample_supply_serves_every_tier() -> None:
-    """Supply beyond the whole block: all 165% clears and the cheapest tier sets the price."""
+    """Supply beyond the whole block: all 250% clears and the cheapest tier sets the price."""
     block = build_demand_block(1000, _FLAT, _NOON)
 
-    clearing = clear_market([_offer(1000, 2), _offer(1000, 3)], block)
+    clearing = clear_market([_offer(1500, 2), _offer(1500, 3)], block)
 
-    assert clearing.quantity == pytest.approx(1650)
+    assert clearing.quantity == pytest.approx(2500)
     assert clearing.price == 3
     assert clearing.unserved == pytest.approx(0)
 
@@ -165,12 +165,12 @@ def test_supply_priced_out_of_flexible_tiers() -> None:
 
     clearing = clear_market([_offer(5000, 120)], block)
 
-    assert clearing.quantity == pytest.approx(1050)  # 800 + 100 + 150
+    assert clearing.quantity == pytest.approx(1600)  # 1000 + 300 + 300
     assert clearing.price == 120  # demand drops from €140 to €80 across the offer, so the offer sets the price
-    assert clearing.unserved == pytest.approx(600)
+    assert clearing.unserved == pytest.approx(900)
     assert _tier_fill(clearing, "must_serve").unmet == 0
     assert _tier_fill(clearing, "medium_flex").unmet == 0
-    assert _tier_fill(clearing, "high_flex").unmet == pytest.approx(200)
+    assert _tier_fill(clearing, "high_flex").unmet == pytest.approx(300)
 
 
 def test_shortage_leaves_must_serve_unmet() -> None:
@@ -184,6 +184,6 @@ def test_shortage_leaves_must_serve_unmet() -> None:
     # settled like a normal one (#992 §1, §8), so nothing should turn this price into money.
     assert clearing.price == math.inf
     assert _tier_fill(clearing, "must_serve").cleared == pytest.approx(500)
-    assert _tier_fill(clearing, "must_serve").unmet == pytest.approx(300)
-    assert clearing.unserved == pytest.approx(1650 - 500)
+    assert _tier_fill(clearing, "must_serve").unmet == pytest.approx(500)
+    assert clearing.unserved == pytest.approx(2500 - 500)
     assert sum(fill.cleared for fill in clearing.offers) == pytest.approx(500)

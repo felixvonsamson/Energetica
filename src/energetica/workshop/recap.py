@@ -107,9 +107,13 @@ class SeasonWeatherReport(BaseModel):
 
 
 class DemandOutlook(BaseModel):
-    """How peak demand moves from this Round to the next, through demand growth and the Round events that last."""
+    """How peak must-serve demand moves from this Round to the next, through demand growth and the Round events that
+    last.
+    """
 
-    peak_this_round: float = Field(description="The most the market cleared at one settlement point this Round, in W")
+    peak_this_round: float = Field(
+        description="The highest must-serve demand at one settlement point this Round, in W (#1291)"
+    )
     peak_next_round: float = Field(
         description="This Round's peak grown by next Round's demand growth and moved by the demand shifts that start"
         " next Round, in W: a forecast"
@@ -132,7 +136,7 @@ class YearAhead(BaseModel):
     demand_growth: float = Field(
         description="The factor demand grows by from this Round to the next before any event, 1.35 for 35% (#1226)"
     )
-    demand: DemandOutlook | None = Field(description="Null if the market never cleared this Round")
+    demand: DemandOutlook | None = Field(description="Null if no Trading period of this Round was simulated")
     carbon_tax_vote: RecapVote | None = Field(description="The vote the Round holds, or null if it holds none")
     manual_fuel_procurement_starts: bool = Field(
         description="Whether players start buying their own fuel in the Round, after a Round of automatic procurement"
@@ -303,7 +307,7 @@ def recap(
 
     ``plans`` holds every Round's plan, ``fired`` every event that fired, ``blackouts`` the Trading period of every
     blackout as (Round, season), and ``unlocks`` every unlock. ``purchases`` and ``results`` are every player's, and
-    ``peak_demand`` the most the market cleared at one settlement point in the Round, or None if it never cleared.
+    ``peak_demand`` the highest must-serve demand at one settlement point in the Round, or None if none was simulated.
     ``vote_outcomes`` holds every vote's outcome so far, and ``weather`` the real average wind and solar output of
     each season the Round played. ``demand_growth`` is the factor demand grows by into the next Round (#1226).
     """

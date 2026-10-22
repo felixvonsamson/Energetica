@@ -474,7 +474,10 @@ function SeasonalOutlook({ yearAhead }: { yearAhead: YearAhead }) {
     );
 }
 
-/** The change in peak demand from this Round to the next, as a percentage. */
+/**
+ * The change in peak must-serve demand from this Round to the next, as a
+ * percentage.
+ */
 function demandChangeLabel(thisRound: number, nextRound: number): string {
     const change = Math.round((nextRound / thisRound - 1) * 100);
     if (change === 0) return "Steady";
@@ -496,7 +499,7 @@ function DemandForecast({ yearAhead }: { yearAhead: YearAhead }) {
                 )}
             </p>
             <p className="mt-3 text-sm italic">
-                Peak demand {formatPower(demand.peak_this_round)} →{" "}
+                Peak must-serve demand {formatPower(demand.peak_this_round)} →{" "}
                 {formatPower(demand.peak_next_round)}
             </p>
         </section>

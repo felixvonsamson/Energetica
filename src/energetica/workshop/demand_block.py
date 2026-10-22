@@ -7,10 +7,11 @@ settlement period, the nominal demand is
 
 where the shape factor comes from the :class:`DemandCurve`: French national consumption over a
 whole 364-day year, one value per 15 minutes, with its weekday and weekend pattern (#1201). That
-nominal demand is split into six stacked tiers, from must-serve down to opportunistic, each bid
-into the shared ``clear_market`` as its own :class:`~energetica.sim.market.MarketEntry`. The tier
-widths sum to 165% of nominal demand on purpose: the extra is latent demand that only shows up
-when power is cheap.
+nominal demand is the must-serve demand (#1291). Six stacked tiers are built on it, from must-serve
+up to opportunistic, and each is bid into the shared ``clear_market`` as its own
+:class:`~energetica.sim.market.MarketEntry`. Must-serve is 100% of nominal demand, and each of the
+five flexible tiers adds 30% on top, so the tiers sum to 250% of nominal demand. The extra is latent
+demand that only shows up when power is cheap.
 
 Each tier bids under a reserved negative ``player_id`` and carries its label in the entry's
 ``facility`` field, so a clearing's demand side reads like any other and needs no new dump shape.
@@ -39,9 +40,10 @@ from energetica.sim.market import MarketEntry
 #: Workshop's seasonal cycle is a year of 364 days, so each season is exactly 13 weeks (#1004).
 DAYS_PER_YEAR = 364
 
-#: The nominal demand each player brings to the session's Round-1 amplitude, in W. Set by the first recalibration
-#: (#1227), so a player needs a few facilities to cover their share.
-PER_PLAYER_BASE_AMPLITUDE = 150e6
+#: The nominal demand each player brings to the session's Round-1 amplitude, in W, so a player needs a few facilities
+#: to cover their share. Lowered from 150 MW in #1291 to cut blackouts, now that nominal demand is all must-serve, and
+#: to 80 MW in #1306, the level the rebalance was tested at.
+PER_PLAYER_BASE_AMPLITUDE = 80e6
 
 
 _DATA_DIR = Path(__file__).parent / "data"
@@ -57,15 +59,16 @@ class DemandTier:
     player_id: int  # reserved, negative, so it can never be a real player's id
 
 
-#: The tier structure (six tiers, these shares, this price order) is locked by the spec. The €/MWh
-#: figures below must-serve were set by the first recalibration (#1227), around power prices of about 100.
+#: The tier structure (six tiers in this price order) is locked by the spec. The shares make must-serve the 100%
+#: reference with each flexible tier 30% on top (#1291). The €/MWh figures below must-serve were set by the first
+#: recalibration (#1227), around power prices of about 100.
 DEMAND_TIERS: tuple[DemandTier, ...] = (
-    DemandTier("must_serve", 0.80, math.inf, -1),
-    DemandTier("low_flex", 0.10, 250, -2),
-    DemandTier("medium_flex", 0.15, 140, -3),
-    DemandTier("high_flex", 0.20, 80, -4),
-    DemandTier("very_high_flex", 0.20, 40, -5),
-    DemandTier("opportunistic", 0.20, 10, -6),
+    DemandTier("must_serve", 1.00, math.inf, -1),
+    DemandTier("low_flex", 0.30, 250, -2),
+    DemandTier("medium_flex", 0.30, 140, -3),
+    DemandTier("high_flex", 0.30, 80, -4),
+    DemandTier("very_high_flex", 0.30, 40, -5),
+    DemandTier("opportunistic", 0.30, 10, -6),
 )
 
 
