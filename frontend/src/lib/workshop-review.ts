@@ -248,22 +248,51 @@ export function pointAxisLabel(
 }
 
 /**
- * The weeks that can be reviewed, each as the days of the year it simulated:
- * all of them, or up to the week the grid went down in. Weeks after a blackout
- * never cleared.
+ * The weeks that can be reviewed, each as the days of the year it simulated.
+ * The grid comes back a day after a blackout (#1286), so every week cleared.
  */
-export function reviewableWeeks(
-    days: readonly number[],
-    blackoutAt: number | null,
-    clearingsPerDay: number,
-): number[][] {
+export function reviewableWeeks(days: readonly number[]): number[][] {
     const weeks: number[][] = [];
     for (let start = 0; start < days.length; start += WEEK_DAYS) {
         weeks.push(days.slice(start, start + WEEK_DAYS));
     }
-    if (blackoutAt === null) return weeks;
-    const pointsPerWeek = WEEK_DAYS * clearingsPerDay;
-    return weeks.slice(0, Math.floor(blackoutAt / pointsPerWeek) + 1);
+    return weeks;
+}
+
+/** The points a blackout kept the grid down for, from `start` up to `end`. */
+export interface Outage {
+    start: number;
+    end: number;
+}
+
+/**
+ * The outage after each of a period's `blackouts`: a day of points from the
+ * blackout, cut short where the period's `pointCount` points end (#1286).
+ */
+export function outages(
+    blackouts: readonly number[],
+    pointCount: number,
+    clearingsPerDay: number,
+): Outage[] {
+    return blackouts.map((start) => ({
+        start,
+        end: Math.min(start + clearingsPerDay, pointCount),
+    }));
+}
+
+/**
+ * Whether the grid was down at `point` after one of the period's `blackouts`,
+ * so that the market never cleared there. At a blackout itself it cleared, and
+ * failed.
+ */
+export function isGridDown(
+    point: number,
+    blackouts: readonly number[],
+    clearingsPerDay: number,
+): boolean {
+    return blackouts.some(
+        (blackout) => blackout < point && point < blackout + clearingsPerDay,
+    );
 }
 
 /** Whether `point` is one of the settlement points of the `week`-th week. */

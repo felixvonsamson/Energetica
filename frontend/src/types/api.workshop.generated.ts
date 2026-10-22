@@ -646,8 +646,8 @@ export interface paths {
         /**
          * Get Merit Order
          * @description The merit order at one settlement point of a settled Trading period, counted from the period's first.
-         *     Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
-         *     none.
+         *     Every bid is listed with its player, whether it sold or not. A point the grid was down at after a blackout never
+         *     cleared, so it has none.
          */
         get: operations["get_merit_order_api_v1_workshop_periods__round_number___season__points__point__merit_order_get"];
         put?: never;
@@ -819,8 +819,18 @@ export interface components {
             /** Investment Total */
             investment_total: number;
             /**
+             * Blackout Cost Share
+             * @description The share of the Round's operating income its blackouts cost, from 0 to 1
+             */
+            blackout_cost_share: number;
+            /**
+             * Blackout Cost
+             * @description What the Round's blackouts cost, on its operating income so far. Never below zero. Charged when the Round's Recap opens
+             */
+            blackout_cost: number;
+            /**
              * Net Profit
-             * @description The Round's operating income so far minus its carbon tax so far and its investments
+             * @description The Round's operating income so far minus its carbon tax so far, its investments and its blackout cost
              */
             net_profit: number;
             /**
@@ -830,6 +840,29 @@ export interface components {
             financing: components["schemas"]["FinancingLine"][];
             /** Financing Total */
             financing_total: number;
+        };
+        /**
+         * Blackout
+         * @description When the grid went down.
+         */
+        Blackout: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Day
+             * @description The day of the year it happened on, from 0
+             */
+            day: number;
+            /**
+             * Minute
+             * @description The minute of the day it happened at, from 0
+             */
+            minute: number;
         };
         /**
          * DemandOutlook
@@ -1582,15 +1615,15 @@ export interface components {
             season: "spring" | "summer" | "autumn" | "winter";
             /**
              * Status
-             * @description settled: simulated, with figures. upcoming: not simulated yet. skipped: a blackout earlier in the Round ended it before this season
+             * @description settled: simulated, with figures. upcoming: not simulated yet
              * @enum {string}
              */
-            status: "settled" | "upcoming" | "skipped";
+            status: "settled" | "upcoming";
             /**
-             * Blackout
-             * @description Whether a blackout ended the Round in this season
+             * Blackout Count
+             * @description How many times the grid went down in this season
              */
-            blackout: boolean;
+            blackout_count: number;
             /** @description The season's figures, if it is settled */
             sheet: components["schemas"]["PeriodSheet"] | null;
         };
@@ -2137,10 +2170,10 @@ export interface components {
              */
             weeks: number;
             /**
-             * Blackout At
-             * @description The settlement point the grid went down at, counted from the period's first, or null if it held. Points after it never cleared
+             * Blackouts
+             * @description The settlement point of each blackout, counted from the period's first, in order. Empty if the grid held. The grid stays down for a day after each, and those points never cleared
              */
-            blackout_at: number | null;
+            blackouts: number[];
         };
         /**
          * WorkshopPeriodWeekOut
@@ -2167,12 +2200,12 @@ export interface components {
             first_point: number;
             /**
              * Price
-             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing after it
+             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing while it was down after it
              */
             price: (number | null)[];
             /**
              * Quantity
-             * @description The power each point cleared, in W. Null after a blackout
+             * @description The power each point cleared, in W. Null while the grid was down after a blackout
              */
             quantity: (number | null)[];
             /**
@@ -2236,10 +2269,10 @@ export interface components {
             summary: string | null;
             /**
              * Status
-             * @description planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season
+             * @description planned: still to come. fired: it fired
              * @enum {string}
              */
-            status: "planned" | "fired" | "skipped";
+            status: "planned" | "fired";
         };
         /**
          * WorkshopPlansOut
@@ -2343,10 +2376,20 @@ export interface components {
             /** Round Count */
             round_count: number;
             /**
-             * Blackout
-             * @description The season the grid went down in this Round, if it did
+             * Blackouts
+             * @description Every time the grid went down in this Round, in order
              */
-            blackout: ("spring" | "summer" | "autumn" | "winter") | null;
+            blackouts: components["schemas"]["Blackout"][];
+            /**
+             * Blackout Cost Share
+             * @description The share of each player's operating profit for the Round its blackouts cost, from 0 to 1
+             */
+            blackout_cost_share: number;
+            /**
+             * Rationing
+             * @description What rationing had cut demand to by the end of the Round, 0.81 for 81%. One without blackouts
+             */
+            rationing: number;
             /**
              * Stories
              * @description Every event that fired in the Round: the Round's own first, then each season's in order
@@ -2445,9 +2488,9 @@ export interface components {
             settlement: components["schemas"]["WorkshopSettlementOut"] | null;
             /**
              * Blackouts
-             * @description Every Trading period the grid went down in, in order. Each one ended its Round, so the Round's later Trading periods were skipped
+             * @description Every blackout, in order, with the Trading period it happened in. The grid came back a day later, with demand rationed for the rest of the Round
              */
-            blackouts: components["schemas"]["TradingPeriod"][];
+            blackouts: components["schemas"]["Blackout"][];
             /**
              * Carbon Tax Since
              * @description The Round whose vote put the carbon tax in force, for the rest of the session, or null if no vote has passed

@@ -111,10 +111,30 @@ const CARBON: PeriodSheet = {
 const SHEET: BalanceSheet = {
     round: 1,
     seasons: [
-        { season: "spring", status: "settled", blackout: false, sheet: SPRING },
-        { season: "summer", status: "upcoming", blackout: false, sheet: null },
-        { season: "autumn", status: "upcoming", blackout: false, sheet: null },
-        { season: "winter", status: "upcoming", blackout: false, sheet: null },
+        {
+            season: "spring",
+            status: "settled",
+            blackout_count: 0,
+            sheet: SPRING,
+        },
+        {
+            season: "summer",
+            status: "upcoming",
+            blackout_count: 0,
+            sheet: null,
+        },
+        {
+            season: "autumn",
+            status: "upcoming",
+            blackout_count: 0,
+            sheet: null,
+        },
+        {
+            season: "winter",
+            status: "upcoming",
+            blackout_count: 0,
+            sheet: null,
+        },
     ],
     total: SPRING,
     investments: [
@@ -126,6 +146,8 @@ const SHEET: BalanceSheet = {
         },
     ],
     investment_total: 90_000,
+    blackout_cost_share: 0,
+    blackout_cost: 0,
     net_profit: 280_440,
     financing: [],
     financing_total: 0,
@@ -300,6 +322,37 @@ describe("balanceSheetRows", () => {
         expect(row("investments").roundAmount).toBe(-90_000);
         expect(row("net").roundAmount).toBe(280_440);
     });
+
+    it("has no blackout cost line in a Round the grid held", () => {
+        expect(rows.some((r) => r.id === "blackout-cost")).toBe(false);
+    });
+
+    it("shows the blackout cost below operating income, in the Round only", () => {
+        const blackedOut = balanceSheetRows({
+            ...SHEET,
+            blackout_cost_share: 0.6,
+            blackout_cost: 222_264,
+        });
+        const ids = blackedOut.map((r) => r.id);
+        expect(
+            ids.slice(ids.indexOf("operating"), ids.indexOf("operating") + 3),
+        ).toEqual(["operating", "blackout-cost", "investments"]);
+        const cost = blackedOut.find((r) => r.id === "blackout-cost")!;
+        expect(cost.label).toBe(
+            "Blackout cost (60% of operating income so far)",
+        );
+        const final = balanceSheetRows({
+            ...SHEET,
+            seasons: SHEET.seasons.map((s) => ({ ...s, status: "settled" })),
+            blackout_cost_share: 0.6,
+            blackout_cost: 222_264,
+        });
+        expect(final.find((r) => r.id === "blackout-cost")!.label).toBe(
+            "Blackout cost (60% of operating income)",
+        );
+        expect(cost.roundAmount).toBe(-222_264);
+        expect(cost.cell(SPRING).amount).toBeNull();
+    });
 });
 
 describe("waterfallSteps", () => {
@@ -357,6 +410,7 @@ describe("waterfallSteps", () => {
     it("takes the Round's carbon tax off before its investments", () => {
         const steps = waterfallSteps(CARBON, {
             investment_total: 90_000,
+            blackout_cost: 0,
             net_profit: 370_440 - 1_500 - 90_000,
         });
         expect(steps.slice(-3).map((s) => s.label)).toEqual([
@@ -366,9 +420,26 @@ describe("waterfallSteps", () => {
         ]);
     });
 
+    it("takes the Round's blackout cost off before its investments", () => {
+        const steps = waterfallSteps(SPRING, {
+            investment_total: 90_000,
+            blackout_cost: 222_264,
+            net_profit: 370_440 - 222_264 - 90_000,
+        });
+        expect(steps.slice(-3)).toEqual([
+            expect.objectContaining({
+                label: "Blackout cost",
+                value: -222_264,
+            }),
+            expect.objectContaining({ label: "Investments" }),
+            expect.objectContaining({ label: "Net profit" }),
+        ]);
+    });
+
     it("takes the Round on to net profit, and scales a loss below zero", () => {
         const steps = waterfallSteps(SPRING, {
             investment_total: 500_000,
+            blackout_cost: 0,
             net_profit: -129_560,
         });
         expect(steps.at(-1)).toMatchObject({

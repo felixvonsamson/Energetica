@@ -200,7 +200,7 @@ function Waterfall({
                         onClick={() => onPeriodChange(s.season)}
                     >
                         {SEASON_LABELS[s.season]}
-                        {s.blackout && <BlackoutMark />}
+                        {s.blackout_count > 0 && <BlackoutMark />}
                     </PeriodTab>
                 ))}
                 <PeriodTab
@@ -322,7 +322,7 @@ function PeriodTab({
     );
 }
 
-/** The season the grid went down in, marked as on the timeline. */
+/** A season the grid went down in, marked as on the timeline. */
 function BlackoutMark() {
     return (
         <ZapOff
@@ -413,8 +413,7 @@ function periodName(sheet: BalanceSheet, period: Period): string {
     if (period === "round") return `Round ${sheet.round}`;
     const season = sheet.seasons.find((s) => s.season === period);
     const label = SEASON_LABELS[period];
-    if (season?.blackout) return `${label} (blackout)`;
-    if (season?.status === "skipped") return `${label} (not played)`;
+    if (season && season.blackout_count > 0) return `${label} (blackout)`;
     return label;
 }
 
@@ -448,20 +447,9 @@ function Ledger({
         ...sheet.seasons.map((s) => ({
             period: s.season,
             label: (
-                <span
-                    className={cn(
-                        "inline-flex items-center gap-1",
-                        s.status === "skipped" &&
-                            "text-(--bs-muted) line-through",
-                    )}
-                    title={
-                        s.status === "skipped"
-                            ? "Not played: a blackout ended the Round"
-                            : undefined
-                    }
-                >
+                <span className="inline-flex items-center gap-1">
                     {SEASON_LABELS[s.season]}
-                    {s.blackout && <BlackoutMark />}
+                    {s.blackout_count > 0 && <BlackoutMark />}
                 </span>
             ),
             span: expanded(s.season) ? 3 : 1,
@@ -752,18 +740,8 @@ function CellValue({
         // Investments and net profit belong to the Round as a whole.
         if (row.roundAmount !== undefined) return null;
         const season = sheet.seasons.find((s) => s.season === col.period)!;
-        if (season.status === "upcoming") {
+        if (season.status === "upcoming" || !season.sheet) {
             return col.field === "amount" ? <Dash /> : null;
-        }
-        if (season.status === "skipped" || !season.sheet) {
-            return col.field === "amount" && row.level === 0 ? (
-                <span
-                    className="text-sm text-(--bs-muted) italic"
-                    title="Not played: a blackout ended the Round"
-                >
-                    skipped
-                </span>
-            ) : null;
         }
         cell = row.cell(season.sheet);
     }

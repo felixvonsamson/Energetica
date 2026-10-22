@@ -42,11 +42,13 @@ charge the first pass ended with, and only the second pass counts. Nothing carri
 and the jump in charge between periods is not priced. Only the market settlement is scaled. O&M is already one
 Trading period's share, and stored energy is what the storage really holds at the end of the period.
 
-A clearing where the must-serve demand tier goes unserved is a blackout: the grid goes down, and the
-simulation stops there (#1005). That clearing and every one after it, to the end of the simulated days,
-produce, sell and buy nothing, and storage keeps the energy it held. In representative-week mode the part
-of the week before the blackout is still scaled ×13. What a blackout does to the session is the session's
-job; here it is only reported.
+A clearing where the must-serve demand tier goes unserved is a blackout: the grid goes down for a day (#1286). That
+clearing and the ones after it for the next 24 hours, or to the end of the simulated days if they come first, produce,
+sell and buy nothing, and storage keeps the energy it held. The grid then restarts with electricity rationed: every
+demand tier is cut by :data:`RATIONING` for the rest of the period. Each blackout cuts it again, and a period starts
+from the rationing of the blackouts earlier in its Round. In representative-week mode the outage is scaled ×13 with
+the rest of the week, so it stands for 13 days of the season. What a blackout costs the players is the session's job;
+here it is only reported.
 
 Besides each player's result, the engine keeps a :class:`~energetica.workshop.period_record.TradingPeriodRecord`
 of every settlement point it cleared, for the period's review.
@@ -100,6 +102,10 @@ SECONDS_PER_DAY = 86_400
 RENEWABLE_CATEGORIES = frozenset(
     {FacilityCategory.WIND, FacilityCategory.PV, FacilityCategory.CSP, FacilityCategory.HYDRO}
 )
+
+#: What every demand tier is multiplied by each time the grid restarts after a blackout, for the rest of the Round:
+#: electricity is rationed (#1286).
+RATIONING = 0.9
 
 _MUST_SERVE = next(tier for tier in DEMAND_TIERS if tier.label == "must_serve")
 # How far below full power a fuel-limited offer may be, as a share, and still count as full: what is left of
@@ -262,8 +268,9 @@ class TradingOutcome:
     stored_energy: dict[int, dict[FacilityId, float]]
     """Each player's stored energy at the end of the period, by player id, in Wh. A type holding nothing is
     left out."""
-    blackout: bool
-    """Whether a clearing left must-serve demand unserved, which stopped the simulation there."""
+    blackouts: tuple[int, ...]
+    """The settlement point of each blackout, in order: each clearing that left must-serve demand unserved and took the
+    grid down for a day."""
     record: TradingPeriodRecord
     """What the period did at each settlement point, for its review."""
     peak_demand: float | None = None
@@ -545,7 +552,7 @@ class _Clearings:
     quantity: np.ndarray
     offered: np.ndarray
     served: np.ndarray
-    blackout_at: int | None = None
+    blackouts: list[int] = field(default_factory=list)
     # The highest must-serve demand at one settlement point so far, overwritten whenever a point's is higher.
     peak_demand: float | None = None
 
@@ -560,13 +567,15 @@ def _clear_days(
     curve: DemandCurve,
     shares: Shares,
     on_day_cleared: Callable[[], None],
-    stop_at_blackout: bool = True,
+    rationing: float = 1.0,
+    outages: bool = True,
 ) -> _Clearings:
     """Clear ``days`` one after the other, recording what each of ``pools`` does at each clearing. ``lines`` are
-    the bid lines the pools and the demand block place, and ``on_day_cleared`` is called after each day.
+    the bid lines the pools and the demand block place, and ``on_day_cleared`` is called after each day. Demand starts
+    at ``rationing`` times its nominal level.
 
-    A blackout stops the clearing there, unless ``stop_at_blackout`` is False: then that clearing settles nothing
-    and the next ones clear as usual. ``blackout_at`` is the first.
+    A blackout takes the grid down for a day, then demand is rationed further. If ``outages`` is False, a blackout
+    clearing settles nothing, the next ones clear as usual, and none is listed.
     """
     seconds_per_tick = SECONDS_PER_DAY / clearings_per_day
     tanks = {id(pool.tank): pool.tank for pool in pools.values() if pool.tank is not None}.values()
@@ -584,16 +593,19 @@ def _clear_days(
         served=np.zeros((len(DEMAND_TIERS), point_count)),
     )
     tier_index = {tier.player_id: index for index, tier in enumerate(DEMAND_TIERS)}
+    # The first point the grid is back up at, after a blackout.
+    down_until = 0
 
     for day_number, day in enumerate(days):
         for clearing in range(clearings_per_day):
             point = day_number * clearings_per_day + clearing
             period = SettlementPeriod(day, clearing, clearings_per_day)
-            # Must-serve demand does not depend on what clears, so the peak counts points after a blackout too.
+            # Must-serve demand does not depend on what clears, so the peak counts points the grid is down at too. It
+            # leaves rationing out, since rationing ends with the Round.
             must_serve = nominal_demand(amplitude, curve, period) * _MUST_SERVE.share
             if cleared.peak_demand is None or must_serve > cleared.peak_demand:
                 cleared.peak_demand = must_serve
-            if cleared.blackout_at is not None and stop_at_blackout:
+            if point < down_until:
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
             market = init_market()
@@ -606,7 +618,7 @@ def _clear_days(
                 pool.reserve_fuel(seconds_per_tick)
             for pool in pools.values():
                 pool.place(market, weather.get(pool.facility, 0.0), seconds_per_tick)
-            demand_block = build_demand_block(amplitude, curve, period)
+            demand_block = build_demand_block(amplitude * rationing, curve, period)
             demands = market["demands"] + demand_block
             sides: tuple[tuple[Side, list[MarketEntry]], ...] = (("offer", market["capacities"]), ("demand", demands))
             for side, entries in sides:
@@ -616,8 +628,10 @@ def _clear_days(
             cleared.price[point], cleared.quantity[point] = result.price, result.quantity
             _note_fuel_run_out(fuel_pools, result)
             if _is_blackout(result):
-                if cleared.blackout_at is None:
-                    cleared.blackout_at = point
+                if outages:
+                    cleared.blackouts.append(point)
+                    down_until = point + clearings_per_day
+                    rationing *= RATIONING
                 _record_nothing(pools.values(), seconds_per_tick)
                 continue
             if not math.isfinite(result.price):
@@ -648,11 +662,14 @@ def simulate_trading_period(
     amplitude: float,
     curve: DemandCurve,
     weather: Weather,
+    rationing: float = 1.0,
     on_day_done: Callable[[int], None] | None = None,
 ) -> TradingOutcome:
     """Clear the days of ``season`` that ``round_format`` simulates, and add them up into the Trading period.
 
-    ``amplitude`` and ``curve`` shape the demand block, and ``weather`` gives the renewables' output.
+    ``amplitude`` and ``curve`` shape the demand block, and ``weather`` gives the renewables' output. ``rationing`` is
+    what demand starts the period at, after the blackouts earlier in the Round: :data:`RATIONING` to the power of how
+    many there were.
     ``on_day_done``, if given, is called after each day cleared with how many are done, out of
     :func:`cleared_day_count`.
     """
@@ -672,7 +689,7 @@ def simulate_trading_period(
         if on_day_done is not None:
             on_day_done(days_done)
 
-    def clear(pools: dict[tuple[int, str], _Pool], *, stop_at_blackout: bool = True) -> _Clearings:
+    def clear(pools: dict[tuple[int, str], _Pool], *, outages: bool = True) -> _Clearings:
         return _clear_days(
             pools,
             lines,
@@ -682,7 +699,8 @@ def simulate_trading_period(
             curve=curve,
             shares=season_weather.shares if full_season else season_weather.week,
             on_day_cleared=on_day_cleared,
-            stop_at_blackout=stop_at_blackout,
+            rationing=rationing,
+            outages=outages,
         )
 
     def build_pools(*, empty: bool = False) -> dict[tuple[int, str], _Pool]:
@@ -696,8 +714,8 @@ def simulate_trading_period(
     lines = _bid_lines(pools.values())
     if not full_season:
         # The cyclic start: clear the week once from empty, then again from the charge it ended with. A blackout in
-        # the first pass, which starts with nothing stored, does not stop it finding that charge.
-        clear(pools, stop_at_blackout=False)
+        # the first pass, which starts with nothing stored, does not take the grid down, so it still finds that charge.
+        clear(pools, outages=False)
         warmed = {key: pool.stored_energy for key, pool in pools.items()}
         pools = build_pools()
         for key, pool in pools.items():
@@ -731,7 +749,7 @@ def simulate_trading_period(
         season=season,
         clearings_per_day=clearings_per_day,
         days=tuple(days),
-        blackout_at=cleared.blackout_at,
+        blackouts=tuple(cleared.blackouts),
         price=cleared.price,
         quantity=cleared.quantity,
         pools=tuple(pools),
@@ -748,7 +766,7 @@ def simulate_trading_period(
     return TradingOutcome(
         results=results,
         stored_energy=stored_energy,
-        blackout=cleared.blackout_at is not None,
+        blackouts=tuple(cleared.blackouts),
         record=record,
         peak_demand=cleared.peak_demand,
     )

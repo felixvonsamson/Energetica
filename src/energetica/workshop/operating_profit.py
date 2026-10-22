@@ -2,7 +2,7 @@
 
 Operating profit is all of a player's trading income, after any climate event's revenue tax (#1012), minus their
 operating costs: O&M, fuel, the energy storage bought to charge, and the renewable output dumped unsold. Facility investments, the carbon tax, the floor
-top-up and blackout resets are left out, so the figure shows how well a player ran their fleet, untouched
+top-up and the blackout cost (#1286) are left out, so the figure shows how well a player ran their fleet, untouched
 by changes to their cash that are not theirs to make (#992 §8).
 
 The per-Round subtotal and the session total are both added up from the same per-period figures, so they

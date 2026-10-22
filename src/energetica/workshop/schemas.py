@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.blackout import Blackout
 from energetica.workshop.events import (
     BoundaryType,
     Direction,
@@ -25,7 +26,7 @@ from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import EventStatus, RoundLevers
 from energetica.workshop.seasons import WEEK_DAYS, Season
-from energetica.workshop.session import Checkpoint, SettlementProgress, TradingPeriod
+from energetica.workshop.session import Checkpoint, SettlementProgress
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.votes import Ballot
 
@@ -103,9 +104,9 @@ class WorkshopSessionOut(BaseModel):
         description="How far the simulation of the Trading period has got while it runs, or null when none is "
         "running. The session cannot advance while one is"
     )
-    blackouts: list[TradingPeriod] = Field(
-        description="Every Trading period the grid went down in, in order. Each one ended its Round, so the "
-        "Round's later Trading periods were skipped"
+    blackouts: list[Blackout] = Field(
+        description="Every blackout, in order, with the Trading period it happened in. The grid came back a day "
+        "later, with demand rationed for the rest of the Round"
     )
     carbon_tax_since: int | None = Field(
         description="The Round whose vote put the carbon tax in force, for the rest of the session, or null if no "
@@ -399,9 +400,7 @@ class WorkshopPlannedEventOut(BaseModel):
         description='What it does, in one short line of plain numbers, such as "Demand +18% for the summer". '
         "Null if the catalog no longer allows the pick"
     )
-    status: EventStatus = Field(
-        description="planned: still to come. fired: it fired. skipped: a blackout ended the Round before its season"
-    )
+    status: EventStatus = Field(description="planned: still to come. fired: it fired")
 
 
 class WorkshopRoundPlanOut(BaseModel):
@@ -436,9 +435,9 @@ class WorkshopPeriodOut(BaseModel):
         description="How many weeks the simulated days make: 1 for a representative week, 13 for a full season. "
         "Weeks are asked for by their position, from 0"
     )
-    blackout_at: int | None = Field(
-        description="The settlement point the grid went down at, counted from the period's first, or null if it "
-        "held. Points after it never cleared"
+    blackouts: list[int] = Field(
+        description="The settlement point of each blackout, counted from the period's first, in order. Empty if the "
+        "grid held. The grid stays down for a day after each, and those points never cleared"
     )
 
     @classmethod
@@ -449,7 +448,7 @@ class WorkshopPeriodOut(BaseModel):
             clearings_per_day=record.clearings_per_day,
             days=list(record.days),
             weeks=len(record.days) // WEEK_DAYS,
-            blackout_at=record.blackout_at,
+            blackouts=list(record.blackouts),
         )
 
 
@@ -482,9 +481,11 @@ class WorkshopPeriodWeekOut(BaseModel):
     first_point: int = Field(description="The period's settlement point the week starts at")
     price: list[float | None] = Field(
         description="The price each point settled at, per MWh. Null where the grid was down: unbounded at the "
-        "blackout itself, and missing after it"
+        "blackout itself, and missing while it was down after it"
     )
-    quantity: list[float | None] = Field(description="The power each point cleared, in W. Null after a blackout")
+    quantity: list[float | None] = Field(
+        description="The power each point cleared, in W. Null while the grid was down after a blackout"
+    )
     pools: list[WorkshopPoolSeriesOut] = Field(description="Every player's facility types that were operating")
     tiers: list[WorkshopTierSeriesOut]
 

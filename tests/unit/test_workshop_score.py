@@ -11,6 +11,7 @@ from energetica.workshop.score import ranked, residual_value, score
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.loan import LOAN_COST, Loan
 from energetica.workshop.network import WorkshopNetwork
+from energetica.workshop.blackout import blackout_cost
 from energetica.workshop.player import WorkshopPlayer, round_start_money
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.trading import FacilityPerformance, TradingResult
@@ -158,9 +159,9 @@ def test_a_carbon_tax_share_above_what_the_player_paid_raises_their_score(networ
     "money",
     [
         pytest.param(-243_000_000.0, id="deep in debt"),
-        pytest.param(round_start_money(-243_000_000.0, after_blackout=False), id="after the floor top-up"),
+        pytest.param(round_start_money(-243_000_000.0), id="after the floor top-up"),
         pytest.param(200_000_000.0, id="rich"),
-        pytest.param(round_start_money(200_000_000.0, after_blackout=True), id="after the blackout reset"),
+        pytest.param(200_000_000.0 - blackout_cost(50_000.0, 2), id="after a blackout cost"),
     ],
 )
 def test_cash_has_no_effect_on_the_score(network: WorkshopNetwork, money: float) -> None:

@@ -584,8 +584,8 @@ def get_merit_order(
     point: int,
 ) -> WorkshopMeritOrderOut:
     """The merit order at one settlement point of a settled Trading period, counted from the period's first.
-    Every bid is listed with its player, whether it sold or not. A point after a blackout never cleared, so it has
-    none.
+    Every bid is listed with its player, whether it sold or not. A point the grid was down at after a blackout never
+    cleared, so it has none.
     """
     record = _period_record(session, round_number, season)
     if not 0 <= point < record.point_count:
@@ -609,7 +609,7 @@ def get_balance_sheet(player: Player, session: Session, round_number: int) -> Ba
         results=player.trading_results,
         purchases=player.purchases,
         settled=(settled.round, settled.season) if settled is not None else None,
-        blackouts=[(period.round, period.season) for period in session.blackouts],
+        blackouts=session.blackouts,
         loan=player.loan,
         round_count=session.round_count,
     )

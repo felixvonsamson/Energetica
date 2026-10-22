@@ -35,6 +35,7 @@ from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.round_format import TradingFormat
+from energetica.workshop.seasons import representative_week
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome
 from energetica.workshop.votes import CARBON_TAX_RATE
@@ -262,7 +263,7 @@ def test_the_session_names_the_checkpoint_an_advance_moves_to(session_path: Path
     assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "spring")
 
 
-def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_path: Path) -> None:
+def test_the_session_lists_every_blackout_with_when_it_happened(session_path: Path) -> None:
     # Alice owns nothing, so nothing meets her must-serve demand and the grid goes down in spring.
     client = _client(session_path)
     _player(client, "alice")
@@ -281,8 +282,9 @@ def test_the_session_lists_the_trading_periods_the_grid_went_down_in(session_pat
 
     body = client.get(SESSION_URL).json()
     assert body["checkpoint"] == _checkpoint("trading_period", 1, "spring")
-    assert body["blackouts"] == [_checkpoint("trading_period", 1, "spring")]
-    assert body["next_checkpoint"] == _checkpoint("recap", 1)
+    first = representative_week("spring")[0]
+    assert body["blackouts"][0] == {"round": 1, "season": "spring", "day": first, "minute": 0}
+    assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "summer")
 
 
 def test_reading_the_session_needs_entry(session_path: Path) -> None:
@@ -1171,15 +1173,13 @@ def test_a_players_balance_sheet_fills_in_as_the_rounds_seasons_settle(session_p
     authenticate(client, alice)
     after = client.get(BALANCE_SHEET_URL.format(round=1)).json()
     [result] = app.state.workshop_session.player(alice).trading_results
-    # One gas burner cannot meet the must-serve demand, so the grid goes down and ends the Round.
-    assert [(season["status"], season["blackout"]) for season in after["seasons"]] == [
-        ("settled", True),
-        ("skipped", False),
-        ("skipped", False),
-        ("skipped", False),
-    ]
+    # One gas burner cannot meet the must-serve demand, so the grid goes down, and the Round goes on.
+    assert [season["status"] for season in after["seasons"]] == ["settled", "upcoming", "upcoming", "upcoming"]
+    assert after["seasons"][0]["blackout_count"] > 0
     assert after["total"]["operating_income"] == pytest.approx(result.operating_profit)
-    assert after["net_profit"] == pytest.approx(result.operating_profit - 8_000_000.0)
+    cost = after["blackout_cost_share"] * max(0.0, result.operating_profit)
+    assert after["blackout_cost"] == pytest.approx(cost)
+    assert after["net_profit"] == pytest.approx(result.operating_profit - 8_000_000.0 - cost)
 
 
 def test_a_balance_sheet_is_the_players_own_and_only_for_the_sessions_rounds(session_path: Path) -> None:

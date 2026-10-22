@@ -240,12 +240,10 @@ def test_a_planned_event_can_be_dropped_before_its_round_locks(path: Path) -> No
     assert session.plans[1].events == []
 
 
-def test_an_event_planned_for_a_season_a_blackout_skips_is_dropped_but_kept_in_the_plan(path: Path) -> None:
+def test_an_event_planned_for_a_season_after_a_blackout_still_fires(path: Path) -> None:
     session = _session(path, round_count=2, players=1)
     flood = PlannedEvent(event="climate.flood", severity="major", season="summer")
-    recession = PlannedEvent(event="demand.recession", severity="base")
     session.plan_event(2, flood)
-    session.plan_event(2, recession)
     session.advance()
     _keep_the_lights_on(session)
     _to_next(session, Recap)
@@ -257,13 +255,11 @@ def test_an_event_planned_for_a_season_a_blackout_skips_is_dropped_but_kept_in_t
     job = session.start_settlement()
     assert job is not None
     session.finish_settlement(job, session.run_settlement(job))
-    assert session.blackouts == [TradingPeriod(round=2, season="spring")]
+    assert {blackout.season for blackout in session.blackouts if blackout.round == 2} == {"spring"}
     session.advance()
 
-    assert session.checkpoint == Recap(round=2)
-    assert session.fired_events == [FiredEvent.of(recession, round_number=2, season=None)]
-    assert session.plans[1].events == [flood, recession]
-    assert session.plans_view().statuses[1] == [(flood, "skipped"), (recession, "fired")]
+    assert session.checkpoint == TradingPeriod(round=2, season="summer")
+    assert session.plans_view().statuses[1] == [(flood, "fired")]
 
 
 def test_picks_the_catalog_no_longer_allows_are_dropped_on_restart(path: Path) -> None:

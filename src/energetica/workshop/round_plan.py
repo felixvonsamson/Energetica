@@ -18,8 +18,7 @@ refused.
 A plan's events are the vignettes (:mod:`~energetica.workshop.events`) the facilitator planned for the Round: a
 Round event fires when its Investment phase opens, and a seasonal event when the Trading period of its season
 opens. Each category holds one event per boundary, as before: one per Round for a Round event, and one per
-season for a seasonal event. Events never carry to later Rounds, and Round 1 holds none. An event planned for a
-season that a blackout skips never fires, but stays in the plan.
+season for a seasonal event. Events never carry to later Rounds, and Round 1 holds none.
 """
 
 from __future__ import annotations
@@ -42,7 +41,7 @@ from energetica.workshop.events import (
 from energetica.workshop.fuel import FuelProcurement
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, StorageAvailability, TradingFormat
-from energetica.workshop.seasons import SEASONS, Season
+from energetica.workshop.seasons import Season
 
 
 class RoundLevers(BaseModel):
@@ -85,7 +84,7 @@ class RoundPlan(BaseModel):
     events: list[PlannedEvent] = Field(default=[], description="The events planned for the Round, in planning order")
 
 
-EventStatus = Literal["planned", "fired", "skipped"]
+EventStatus = Literal["planned", "fired"]
 
 
 class LeverChanges(BaseModel):
@@ -215,16 +214,8 @@ def planned_effect_line(planned: PlannedEvent, round_number: int, *, fired: Iter
     return effect_line(FiredEvent.of(planned, round_number=round_number, season=planned.season))
 
 
-def event_status(
-    planned: PlannedEvent, round_number: int, *, fired: Iterable[FiredEvent], blackout: Season | None
-) -> EventStatus:
-    """Whether ``planned``, planned for Round ``round_number``, has fired, was skipped, or is still to come.
-
-    ``fired`` is every event that fired in the session, and ``blackout`` the season of the Round's blackout, if
-    the grid went down in it. An event planned for a season after the blackout is skipped.
+def event_status(planned: PlannedEvent, round_number: int, *, fired: Iterable[FiredEvent]) -> EventStatus:
+    """Whether ``planned``, planned for Round ``round_number``, has fired or is still to come. ``fired`` is every
+    event that fired in the session.
     """
-    if _fired_as(planned, round_number, fired) is not None:
-        return "fired"
-    if blackout is not None and planned.season is not None and SEASONS.index(planned.season) > SEASONS.index(blackout):
-        return "skipped"
-    return "planned"
+    return "planned" if _fired_as(planned, round_number, fired) is None else "fired"

@@ -197,20 +197,9 @@ def _fired(planned: PlannedEvent, round_number: int) -> FiredEvent:
 def test_a_planned_event_is_planned_until_it_fires() -> None:
     planned = PlannedEvent(event="climate.flood", severity="major", season="summer")
 
-    assert event_status(planned, 2, fired=[], blackout=None) == "planned"
-    assert event_status(planned, 2, fired=[_fired(planned, 2)], blackout=None) == "fired"
-    assert event_status(planned, 2, fired=[_fired(planned, 3)], blackout=None) == "planned"
-
-
-def test_an_event_planned_for_a_season_a_blackout_skipped_is_skipped() -> None:
-    summer = PlannedEvent(event="climate.flood", severity="major", season="summer")
-    spring = PlannedEvent(event="climate.heatwave", severity="minor", season="spring")
-    shift = PlannedEvent(event="demand.recession", severity="base")
-
-    assert event_status(summer, 2, fired=[], blackout="spring") == "skipped"
-    assert event_status(summer, 2, fired=[], blackout="summer") == "planned"
-    assert event_status(spring, 2, fired=[_fired(spring, 2)], blackout="spring") == "fired"
-    assert event_status(shift, 2, fired=[], blackout="spring") == "planned"
+    assert event_status(planned, 2, fired=[]) == "planned"
+    assert event_status(planned, 2, fired=[_fired(planned, 2)]) == "fired"
+    assert event_status(planned, 2, fired=[_fired(planned, 3)]) == "planned"
 
 
 def test_a_planned_event_states_its_effect_as_the_recap_will() -> None:

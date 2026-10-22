@@ -15,11 +15,12 @@ Round's purchases, loan and Trading periods are left out. Once the last Round is
 effect, the score is each player's capital so far.
 
 Cash is left out. Operating profit minus investments and the carbon tax is exactly how much a player's cash
-changed over the session, apart from the floor top-up and the blackout reset (#1016). It also equals the sum of
-every Round's ``net_profit`` and ``financing_total`` on the balance sheet (:mod:`~energetica.workshop.balance_sheet`). Adding cash on top
-would count the operating profit twice. Cash also moves with the top-up and the reset, which say nothing about how well a player did.
-Leaving cash out means neither changes anyone's score, even when they cover a loan payment. A player who overspends on facilities or goes deep into
-debt keeps that loss in their score, and causing a blackout gains a trailing player nothing.
+changed over the session, apart from the floor top-up (#1016) and the blackout cost (#1286). It also equals the sum
+of every Round's ``net_profit``, ``blackout_cost`` and ``financing_total`` on the balance sheet
+(:mod:`~energetica.workshop.balance_sheet`). Adding cash on top would count the operating profit twice. Cash also
+moves with the top-up and the blackout cost, which the score leaves out. Leaving cash out means neither changes
+anyone's score, even when they cover a loan payment. A player who overspends on facilities or goes deep into debt
+keeps that loss in their score.
 
 A facility's residual value is its price for the session's length (#1306), scaled by the share of its lifetime it
 has left after the last completed Round: ``session_price × remaining_lifetime_rounds / lifetime_rounds``. The Rounds

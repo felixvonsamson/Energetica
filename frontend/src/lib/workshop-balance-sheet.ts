@@ -327,6 +327,21 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             },
         );
     }
+    // The blackout cost (#1286): a share of the Round's operating income, for
+    // the Round as a whole. Until the Round's last season is settled it is
+    // worked out on the operating income so far.
+    if (sheet.blackout_cost_share > 0) {
+        const share = Math.round(sheet.blackout_cost_share * 100);
+        const final = sheet.seasons.every((s) => s.status === "settled");
+        rows.push({
+            id: "blackout-cost",
+            label: `Blackout cost (${share}% of operating income${final ? "" : " so far"})`,
+            level: 0,
+            kind: "line",
+            cell: () => empty,
+            roundAmount: -sheet.blackout_cost,
+        });
+    }
     rows.push(
         {
             id: "investments",
@@ -421,14 +436,17 @@ export interface WaterfallStep {
 /**
  * The waterfall from market income down to a period's result: operating income
  * for a season, and net profit for the Round, which also takes off its
- * investments. Once a carbon tax is in force, it comes after operating income,
- * as one step: what was paid minus the share that came back. A season then ends
- * on its result after it. Each change runs from the running total; a subtotal
- * is drawn from zero and resets it.
+ * investments and any blackout cost. Once a carbon tax is in force, it comes
+ * after operating income, as one step: what was paid minus the share that came
+ * back. A season then ends on its result after it. Each change runs from the
+ * running total; a subtotal is drawn from zero and resets it.
  */
 export function waterfallSteps(
     period: PeriodSheet,
-    round?: Pick<BalanceSheet, "investment_total" | "net_profit">,
+    round?: Pick<
+        BalanceSheet,
+        "investment_total" | "blackout_cost" | "net_profit"
+    >,
 ): WaterfallStep[] {
     const steps: WaterfallStep[] = [];
     let running = 0;
@@ -455,6 +473,8 @@ export function waterfallSteps(
     const carbonTax = period.carbon_tax_rate > 0;
     if (carbonTax) change("Carbon tax", -period.carbon_tax);
     if (round) {
+        if (round.blackout_cost > 0)
+            change("Blackout cost", -round.blackout_cost);
         change("Investments", -round.investment_total);
         subtotal("Net profit", round.net_profit);
     } else if (carbonTax) {

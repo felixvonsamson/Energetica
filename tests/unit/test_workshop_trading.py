@@ -110,7 +110,7 @@ def test_a_controllable_facility_sells_at_the_clearing_price_and_the_week_is_sca
     assert gas.sold == pytest.approx(gas.generation)
     assert gas.dumped == 0
     assert gas.capacity_factor == pytest.approx(1.0)
-    assert not outcome.blackout
+    assert outcome.blackouts == ()
 
 
 def test_a_controllable_facility_produces_only_what_it_sells() -> None:
@@ -437,10 +437,23 @@ def _calm_from_hour(hour: int, share: float) -> FixedWeather:
     return FixedWeather(lambda _facility, seconds: 1.0 if seconds % 86_400 < hour * 3_600 else share)
 
 
-def test_unserved_must_serve_demand_is_a_blackout_and_nothing_is_produced_from_then_on() -> None:
-    # 30 MW of demand must be served. The 45 MW wind turbine sells all its output at 140 until noon on the week's
-    # first day, then the wind drops to 30%, and its 13.5 MW cannot meet must-serve demand. The grid goes down at
-    # noon.
+def _gusts_drop_at(*hours: int, share: float = 0.3) -> FixedWeather:
+    """Weather under which every renewable produces all its power, apart from the hour after each of ``hours``,
+    counted from the start of the representative week, when it produces ``share``.
+    """
+    start = representative_week("spring")[0] * 86_400
+
+    def weather(_facility: FacilityId, seconds: float) -> float:
+        return share if any(0 <= seconds - start - hour * 3_600 < 3_600 for hour in hours) else 1.0
+
+    return FixedWeather(weather)
+
+
+def test_a_blackout_lasts_a_day_and_the_grid_restarts_with_rationed_demand() -> None:
+    # 30 MW of demand must be served. The 45 MW wind turbine sells all its output at 140, until the wind drops to 30%
+    # at noon on the week's first day and its 13.5 MW cannot meet must-serve demand. The grid stays down until noon
+    # the next day, then restarts with demand cut by 10%: 27 MW must-serve, then 8.1 MW per tier. The turbine's 45 MW
+    # now clears at 80, the bid of the third flexible tier.
     outcome = simulate_trading_period(
         [_bidder(WIND, sell={WIND: 0.0})],
         round_number=1,
@@ -448,26 +461,87 @@ def test_unserved_must_serve_demand_is_a_blackout_and_nothing_is_produced_from_t
         round_format=RoundFormat(),
         amplitude=_AMPLITUDE,
         curve=_FLAT,
-        weather=_calm_from_hour(12, 0.3),
+        weather=_gusts_drop_at(12),
     )
 
-    assert outcome.blackout
+    assert outcome.blackouts == (12,)
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(45 * 12 * 140 * _WEEKS)
-    assert wind.generation == wind.sold == pytest.approx(45e6 * 12 * _WEEKS)
-    assert wind.dumped == 0
-    assert wind.capacity_factor == pytest.approx(12 / (7 * 24))
+    # 12 hours before the blackout, 24 hours down, then the 132 hours left in the week.
+    assert wind.revenue == pytest.approx(45 * (12 * 140 + 132 * 80) * _WEEKS)
+    assert wind.generation == wind.sold == pytest.approx(45e6 * (12 + 132) * _WEEKS)
+    assert np.isnan(outcome.record.price[13 : 12 + 24]).all()
+    assert outcome.record.price[36] == pytest.approx(80)
 
 
-def test_a_blackout_at_the_first_clearing_leaves_storage_as_it_was() -> None:
-    # The wind's 13.5 MW cannot meet the 30 MW must-serve demand, and the empty batteries hold nothing.
+def test_each_blackout_in_a_period_rations_demand_further() -> None:
+    # The wind drops at noon on the first and the fourth day. After the first blackout must-serve demand is 27 MW,
+    # still more than the 13.5 MW the wind gives, so the grid goes down again. It restarts with demand at 81%: 24.3 MW
+    # must-serve, 7.29 MW per tier, so the turbine's 45 MW still clears at 80.
+    outcome = simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=_gusts_drop_at(12, 3 * 24 + 12),
+    )
+
+    assert outcome.blackouts == (12, 3 * 24 + 12)
+    assert outcome.record.blackouts == (12, 3 * 24 + 12)
+    served = outcome.record.served[0]
+    assert served[11] == pytest.approx(30e6)
+    assert served[36] == pytest.approx(27e6)
+    assert served[4 * 24 + 12] == pytest.approx(0.81 * 30e6)
+
+
+def test_a_blackout_near_the_end_of_a_period_lasts_only_until_it_ends() -> None:
+    # The wind drops at 20:00 on the week's last day. The grid stays down for the four hours left.
+    outcome = simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=_gusts_drop_at(6 * 24 + 20),
+    )
+
+    assert outcome.blackouts == (6 * 24 + 20,)
+    wind = outcome.results[1].facilities[WIND]
+    assert wind.generation == pytest.approx(45e6 * (6 * 24 + 20) * _WEEKS)
+
+
+def test_a_period_starts_from_the_rationing_of_the_blackouts_before_it_but_its_peak_does_not() -> None:
+    # Demand is already cut by 10%, so the turbine's 45 MW clears at 80, as after a restart.
+    outcome = simulate_trading_period(
+        [_bidder(WIND, sell={WIND: 0.0})],
+        round_number=1,
+        season="spring",
+        round_format=RoundFormat(),
+        amplitude=_AMPLITUDE,
+        curve=_FLAT,
+        weather=steady(1.0),
+        rationing=0.9,
+    )
+
+    assert outcome.blackouts == ()
+    assert outcome.results[1].facilities[WIND].revenue == pytest.approx(_mwh_value(45, 80))
+    assert outcome.record.served[0][0] == pytest.approx(27e6)
+    # The peak is what demand would have been without rationing, which ends with the Round.
+    assert outcome.peak_demand == pytest.approx(_AMPLITUDE * demand_scale("spring", RoundFormat(), _FLAT))
+
+
+def test_a_grid_that_is_down_leaves_storage_as_it_was() -> None:
+    # With no wind, nothing can meet must-serve demand, however far rationing cuts it, and the batteries hold almost
+    # nothing. The grid goes down at the first clearing, and again each time it restarts, a day later.
     outcome = _simulate(
         _bidder(WIND, BATTERIES, sell={WIND: 0.0}, buy={BATTERIES: 1_000.0}, stored_energy={BATTERIES: 1.0}),
-        share=0.3,
+        share=0.0,
         trading_format="full_season",
     )
 
-    assert outcome.blackout
+    assert outcome.blackouts == tuple(day * 24 for day in range(SEASON_DAYS))
     assert outcome.stored_energy[1] == {BATTERIES: 1.0}
     performances = outcome.results[1].facilities.values()
     assert all(
@@ -476,12 +550,13 @@ def test_a_blackout_at_the_first_clearing_leaves_storage_as_it_was() -> None:
     )
 
 
-def test_a_blackout_ends_a_full_season_on_the_day_it_happens() -> None:
-    # Days 0 and 1 of spring are calm. On day 2 the wind drops to 30% at noon and the grid goes down.
+def test_a_blackout_in_a_full_season_lasts_a_day() -> None:
+    # Days 0 and 1 of spring are calm. On day 2 the wind drops to 30% at noon, for an hour, and the grid goes down
+    # until noon on day 3. From then on rationed demand clears the turbine's 45 MW at 80.
     third_day = season_days("spring")[2] * 86_400
 
     def weather(_facility: FacilityId, seconds: float) -> float:
-        return 1.0 if seconds < third_day + 12 * 3_600 else 0.3
+        return 0.3 if 0 <= seconds - third_day - 12 * 3_600 < 3_600 else 1.0
 
     reported: list[int] = []
     outcome = simulate_trading_period(
@@ -495,11 +570,11 @@ def test_a_blackout_ends_a_full_season_on_the_day_it_happens() -> None:
         on_day_done=reported.append,
     )
 
-    assert outcome.blackout
+    assert outcome.blackouts == (2 * 24 + 12,)
     wind = outcome.results[1].facilities[WIND]
-    assert wind.revenue == pytest.approx(45 * 60 * 140)
-    assert wind.capacity_factor == pytest.approx(60 / (24 * SEASON_DAYS))
-    # The days after the blackout are skipped, and still count as done.
+    after = 24 * SEASON_DAYS - 60 - 24
+    assert wind.revenue == pytest.approx(45 * (60 * 140 + after * 80))
+    assert wind.capacity_factor == pytest.approx((60 + after) / (24 * SEASON_DAYS))
     assert reported == list(range(1, SEASON_DAYS + 1))
 
 
@@ -508,7 +583,7 @@ def test_supply_exactly_meeting_must_serve_demand_is_no_blackout_and_settles_at_
     # the unbounded must-serve bid without leaving any of it unserved.
     outcome = _simulate(_bidder(WIND, WIND, sell={WIND: 0.0}), share=1 / 3)
 
-    assert not outcome.blackout
+    assert outcome.blackouts == ()
     wind = outcome.results[1].facilities[WIND]
     assert wind.revenue == pytest.approx(_mwh_value(30, SCARCITY_PRICE))
 
@@ -636,7 +711,7 @@ def test_the_peak_demand_is_the_highest_must_serve_demand_at_one_settlement_poin
     # The wind and the gas burner sell cheap enough to serve flexible demand too, but the peak counts only must-serve.
     outcome = _peak_outcome(_bidder(WIND, GAS, sell={WIND: 0.0, GAS: 100.0}), share=1.0)
 
-    assert not outcome.blackout
+    assert outcome.blackouts == ()
     peak = 1.5 * _AMPLITUDE * demand_scale("spring", RoundFormat(), _RISING)
     assert outcome.peak_demand == pytest.approx(peak)
     assert float(np.nanmax(outcome.record.quantity)) > peak
@@ -644,11 +719,10 @@ def test_the_peak_demand_is_the_highest_must_serve_demand_at_one_settlement_poin
 
 def test_a_blackout_does_not_lower_the_peak_demand() -> None:
     # The wind's 13.5 MW cannot meet the 30 MW must-serve demand, so the grid goes down at the first clearing, in the
-    # first half of the day. The peak still counts the higher demand of the second half, after the blackout.
+    # first half of the day. The peak still counts the higher demand of the second half, while it is down.
     outcome = _peak_outcome(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
 
-    assert outcome.blackout
-    assert outcome.record.blackout_at == 0
+    assert outcome.blackouts[0] == 0
     assert outcome.peak_demand == pytest.approx(1.5 * _AMPLITUDE * demand_scale("spring", RoundFormat(), _RISING))
 
 
@@ -772,4 +846,4 @@ def test_a_blackout_in_the_first_pass_does_not_stop_it_finding_the_cyclic_charge
         weather=FixedWeather(lambda _facility, seconds: 0.3 if seconds % 86_400 < 4 * 3_600 else 1.0),
     )
 
-    assert not outcome.blackout
+    assert outcome.blackouts == ()
