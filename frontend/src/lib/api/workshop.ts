@@ -137,15 +137,6 @@ export const workshopApi = {
         >(`/workshop/prices/${facility}/${side}`, { price }),
 
     /**
-     * The prices each completed Trading period ran at for the visitor, oldest
-     * first.
-     */
-    getLockedPrices: () =>
-        apiClient.get<ApiResponse<"/api/v1/workshop/prices/locked", "get">>(
-            "/workshop/prices/locked",
-        ),
-
-    /**
      * How far each technology is from unlocking its upgrade, and what has
      * unlocked so far (#1011). Facilitator only.
      */
@@ -326,6 +317,18 @@ export const workshopApi = {
         apiClient.delete<ApiResponse<"/api/v1/workshop/loan", "delete">>(
             "/workshop/loan",
         ),
+
+    /**
+     * Every player's prices for a Trading period (#1299): live while it is the
+     * current period, and the prices it ran at once settled.
+     */
+    getMarketPrices: (round: number, season: Season) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/periods/{round_number}/{season}/prices",
+                "get"
+            >
+        >(`/workshop/periods/${round}/${season}/prices`),
 
     /** A settled Trading period's simulated days, weeks and settlement points. */
     getPeriod: (round: number, season: Season) =>

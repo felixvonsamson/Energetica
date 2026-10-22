@@ -23,6 +23,8 @@ from energetica.workshop.session import SettlementProgress
 
 # The frontend's query key for the session (``queryKeys.workshop.session``).
 SESSION_QUERY_KEY = ["workshop", "session"]
+# The frontend's query key for every Trading period's room prices (``queryKeys.workshop.marketPrices``).
+MARKET_PRICES_QUERY_KEY = [*SESSION_QUERY_KEY, "market-prices"]
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -40,6 +42,11 @@ def setup_socketio(app: FastAPI) -> None:
 async def invalidate_session(app: FastAPI) -> None:
     """Tell every open page to re-read the session, and with it everything cached under its key."""
     await _emit(app, "invalidate", {"queries": [SESSION_QUERY_KEY]})
+
+
+async def invalidate_market_prices(app: FastAPI) -> None:
+    """Tell every open page to re-read the room's prices, because a player changed one (#1299)."""
+    await _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY]})
 
 
 async def send_settlement_progress(app: FastAPI, progress: SettlementProgress) -> None:

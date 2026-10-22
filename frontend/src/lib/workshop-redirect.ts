@@ -3,7 +3,8 @@
  * nobody is left on a stale page:
  *
  * - The Investment phase starts: the facility catalog;
- * - A price-setting window starts: the price panel opens;
+ * - A price-setting window starts: the season's page, on its Prices tab, with the
+ *   price panel open (#1299);
  * - A price-setting window ends: the charts for that season;
  * - A Recap is published: the Recap.
  *
@@ -31,7 +32,7 @@ export type PhaseRedirect =
           kind: "navigate";
           page: WorkshopPage | ReturnType<typeof facilitiesPage>;
       }
-    | { kind: "open_price_panel" };
+    | { kind: "open_price_panel"; page: WorkshopPage };
 
 /**
  * Where moving from `previous` to `current` sends a player, or `null` to leave
@@ -59,7 +60,13 @@ export function phaseRedirect(
         case "trading_period":
             // A window that already closed before it was seen has ended too.
             return current.priceSettingOpen
-                ? { kind: "open_price_panel" }
+                ? {
+                      kind: "open_price_panel",
+                      page: tradingPeriodPage(
+                          checkpoint.round,
+                          checkpoint.season,
+                      ),
+                  }
                 : seasonCharts(checkpoint);
         case "recap":
             return { kind: "navigate", page: recapPage(checkpoint.round) };

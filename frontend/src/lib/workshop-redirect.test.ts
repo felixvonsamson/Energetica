@@ -55,12 +55,20 @@ describe("phaseRedirect", () => {
         });
     });
 
-    it("opens the price panel when a price-setting window starts", () => {
+    it("opens the price panel on the season's page when a price-setting window starts", () => {
         expect(phaseRedirect(investment, springOpen)).toEqual({
             kind: "open_price_panel",
+            page: {
+                to: "/app/workshop/round/$round/$season",
+                params: { round: "2", season: "spring" },
+            },
         });
         expect(phaseRedirect(springClosed, summerOpen)).toEqual({
             kind: "open_price_panel",
+            page: {
+                to: "/app/workshop/round/$round/$season",
+                params: { round: "2", season: "summer" },
+            },
         });
     });
 
@@ -129,6 +137,10 @@ describe("phaseRedirect", () => {
         // The window closed and the next one opened between two reads.
         expect(phaseRedirect(springOpen, summerOpen)).toEqual({
             kind: "open_price_panel",
+            page: {
+                to: "/app/workshop/round/$round/$season",
+                params: { round: "2", season: "summer" },
+            },
         });
     });
 });

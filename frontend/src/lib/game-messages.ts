@@ -85,6 +85,7 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "This event can't be planned like this: check its severity, season and fuel.",
     WORKSHOP_INVALID_FUEL_QUANTITY: "Enter a quantity of fuel of 0 or more.",
     WORKSHOP_NO_PERIOD_RECORD: "This Trading period has no record to review.",
+    WORKSHOP_NO_MARKET_PRICES: "This Trading period has not started yet.",
     WORKSHOP_NO_SUCH_WEEK: "This Trading period did not simulate that week.",
     WORKSHOP_NO_SUCH_POINT: "This Trading period has no such settlement point.",
     WORKSHOP_GRID_DOWN:

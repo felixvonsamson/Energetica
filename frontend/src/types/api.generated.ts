@@ -2412,6 +2412,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/periods/{round_number}/{season}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Market Prices
+         * @description Every player's prices for a Trading period, the same for everyone in the Run (#1299): live while it is the
+         *     current period, and the prices it ran at once settled.
+         */
+        get: operations["get_market_prices_api_v1_workshop_periods__round_number___season__prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/periods/{round_number}/{season}/weeks/{week}": {
         parameters: {
             query?: never;
@@ -5397,6 +5418,26 @@ export interface components {
             amount: number;
         };
         /**
+         * MarketPrices
+         * @description Every player's prices for one Trading period, which the whole room sees (#1299).
+         */
+        MarketPrices: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Live
+             * @description Whether the price-setting window is open, so the prices can still change
+             */
+            live: boolean;
+            /** Players */
+            players: components["schemas"]["PlayerQuotes"][];
+        };
+        /**
          * NotStarted
          * @description Before Round 1: players are arriving and nothing is open yet.
          */
@@ -5606,6 +5647,30 @@ export interface components {
             season?: ("spring" | "summer" | "autumn" | "winter") | null;
         };
         /**
+         * PlayerQuotes
+         * @description A player's prices for one Trading period, as the whole room sees them (#1299).
+         */
+        PlayerQuotes: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
+            /**
+             * Sell
+             * @description The sell price of each facility type they had operating
+             */
+            sell: {
+                [key: string]: components["schemas"]["QuotedPrice"];
+            };
+            /**
+             * Buy
+             * @description The buy price of each storage type they had operating
+             */
+            buy: {
+                [key: string]: components["schemas"]["QuotedPrice"];
+            };
+        };
+        /**
          * PriceSheet
          * @description A player's prices, per MWh.
          */
@@ -5624,6 +5689,19 @@ export interface components {
             buy: {
                 [key: string]: number;
             };
+        };
+        /**
+         * QuotedPrice
+         * @description One price a player offers, next to the one it ran at in their last Trading period (#1299).
+         */
+        QuotedPrice: {
+            /** Price */
+            price: number;
+            /**
+             * Previous
+             * @description The price the facility type ran at in the player's last Trading period with it, if any
+             */
+            previous: number | null;
         };
         /**
          * Recap
@@ -6876,7 +6954,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED";
     };
     responses: never;
     parameters: never;
@@ -10286,6 +10364,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopPeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_market_prices_api_v1_workshop_periods__round_number___season__prices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketPrices"];
                 };
             };
             /** @description Validation Error */

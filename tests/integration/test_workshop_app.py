@@ -61,6 +61,7 @@ FLEET_URL = "/api/v1/workshop/fleet"
 SELECTION_URL = "/api/v1/workshop/selection"
 PRICES_URL = "/api/v1/workshop/prices"
 LOCKED_PRICES_URL = "/api/v1/workshop/prices/locked"
+MARKET_PRICES_URL = "/api/v1/workshop/periods/{round}/{season}/prices"
 BALANCE_SHEET_URL = "/api/v1/workshop/rounds/{round}/balance-sheet"
 FUEL_URL = "/api/v1/workshop/fuel"
 RECAP_URL = "/api/v1/workshop/rounds/{round}/recap"
@@ -940,6 +941,28 @@ def test_a_completed_periods_prices_can_be_read_back(session_path: Path, clock: 
     ]
 
 
+def test_everyone_in_the_run_reads_the_rooms_prices(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, _ = _trading(session_path, clock)
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+    alice_sees = client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json()
+
+    authenticate(client, facilitator)
+
+    assert client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json() == alice_sees
+    assert alice_sees["live"]
+    [alice] = alice_sees["players"]
+    assert (alice["username"], alice["sell"]) == ("alice", {"gas_burner": {"price": 80.0, "previous": None}})
+
+
+def test_a_period_that_has_not_started_has_no_room_prices(session_path: Path, clock: _Clock) -> None:
+    client, _, _ = _trading(session_path, clock)
+
+    response = client.get(MARKET_PRICES_URL.format(round=1, season="summer"))
+
+    assert response.status_code == 404
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_MARKET_PRICES"
+
+
 def test_a_facilitator_has_no_prices(session_path: Path, clock: _Clock) -> None:
     client, facilitator, _ = _trading(session_path, clock)
     authenticate(client, facilitator)
@@ -1473,6 +1496,20 @@ def test_advancing_tells_every_open_page_to_reread_the_session(session_path: Pat
 
         invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
         assert socket.poll(client, player_sid) == [invalidate]
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+
+
+def test_setting_a_price_tells_every_open_page_to_reread_the_rooms_prices(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+
+    with client:
+        authenticate(client, facilitator)
+        facilitator_sid, _ = socket.connect(client)
+        authenticate(client, alice)
+
+        assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 200
+
+        invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
         assert socket.poll(client, facilitator_sid) == [invalidate]
 
 
