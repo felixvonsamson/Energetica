@@ -12,6 +12,9 @@ built around that world's players and game engine.
 
 from __future__ import annotations
 
+import asyncio
+import math
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import socketio
@@ -25,6 +28,10 @@ from energetica.workshop.session import SettlementProgress
 SESSION_QUERY_KEY = ["workshop", "session"]
 # The frontend's query key for every Trading period's room prices (``queryKeys.workshop.marketPrices``).
 MARKET_PRICES_QUERY_KEY = [*SESSION_QUERY_KEY, "market-prices"]
+#: The shortest time between two messages telling pages to re-read the room's prices. Each message makes every
+#: open page read the prices again, so near the end of a price-setting window, when many players change prices at
+#: once, sending one per change would grow with the square of the number of players (#1299).
+MARKET_PRICES_INTERVAL_SECONDS = 0.5
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -32,6 +39,9 @@ def setup_socketio(app: FastAPI) -> None:
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*", logger=False)
     app.mount("/socket.io", socketio.ASGIApp(sio))
     app.state.socketio = sio
+    app.state.market_prices_throttle = _Throttle(
+        lambda: _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY]})
+    )
 
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
@@ -45,8 +55,14 @@ async def invalidate_session(app: FastAPI) -> None:
 
 
 async def invalidate_market_prices(app: FastAPI) -> None:
-    """Tell every open page to re-read the room's prices, because a player changed one (#1299)."""
-    await _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY]})
+    """Tell every open page to re-read the room's prices, because a player changed one (#1299). At most once
+    every :data:`MARKET_PRICES_INTERVAL_SECONDS`: a change soon after the last message is sent once that time has
+    passed, together with any other change made in between.
+    """
+    throttle: _Throttle | None = getattr(app.state, "market_prices_throttle", None)
+    # An app built only for its OpenAPI schema has no server.
+    if throttle is not None:
+        await throttle()
 
 
 async def send_settlement_progress(app: FastAPI, progress: SettlementProgress) -> None:
@@ -61,3 +77,32 @@ async def _emit(app: FastAPI, event: str, data: dict[str, Any]) -> None:
     # An app built only for its OpenAPI schema has no server.
     if sio is not None:
         await sio.emit(event, data)
+
+
+class _Throttle:
+    """Runs ``send`` at once when it last ran at least :data:`MARKET_PRICES_INTERVAL_SECONDS` ago, and otherwise
+    once that time has passed. Calls made while a run is waiting do not add another.
+    """
+
+    def __init__(self, send: Callable[[], Awaitable[None]]) -> None:
+        self._send = send
+        self._last = -math.inf
+        self._waiting: asyncio.Task[None] | None = None
+
+    async def __call__(self) -> None:
+        if self._waiting is not None:
+            return
+        wait = self._last + MARKET_PRICES_INTERVAL_SECONDS - asyncio.get_running_loop().time()
+        if wait <= 0:
+            await self._run()
+        else:
+            self._waiting = asyncio.create_task(self._run_after(wait))
+
+    async def _run_after(self, wait: float) -> None:
+        await asyncio.sleep(wait)
+        self._waiting = None
+        await self._run()
+
+    async def _run(self) -> None:
+        self._last = asyncio.get_running_loop().time()
+        await self._send()

@@ -1511,6 +1511,29 @@ def test_setting_a_price_tells_every_open_page_to_reread_the_rooms_prices(sessio
         assert socket.poll(client, facilitator_sid) == [invalidate]
 
 
+def test_a_burst_of_price_changes_rereads_the_rooms_prices_at_most_every_half_second(
+    session_path: Path, clock: _Clock
+) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
+
+    with client:
+        authenticate(client, facilitator)
+        facilitator_sid, _ = socket.connect(client)
+        authenticate(client, alice)
+
+        started = time.monotonic()
+        for price in (80.0, 81.0, 82.0):
+            client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": price})
+
+        # The first change is sent at once, and the rest wait for the interval to pass.
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+        assert time.monotonic() - started < 0.5
+        # Then they are sent together, once.
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+        assert time.monotonic() - started >= 0.5
+
+
 def _poll_until(client: TestClient, sid: str, event: str) -> list:
     """Every packet queued for ``sid`` up to and including the first ``event``."""
     packets: list = []
