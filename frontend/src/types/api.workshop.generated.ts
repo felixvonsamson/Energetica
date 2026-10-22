@@ -1032,6 +1032,15 @@ export interface components {
             carbon_tax_vote?: boolean | null;
         };
         /**
+         * MarketFacility
+         * @description A facility type the room's prices hold, named for the board's column (#1299).
+         */
+        MarketFacility: {
+            id: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+        };
+        /**
          * MarketLine
          * @description The energy one facility type sold, or bought, over a period, and the money it was worth.
          */
@@ -1067,6 +1076,11 @@ export interface components {
              * @description Whether the price-setting window is open, so the prices can still change
              */
             live: boolean;
+            /**
+             * Facilities
+             * @description Every facility type at least one player has a price for, in catalog order
+             */
+            facilities: components["schemas"]["MarketFacility"][];
             /** Players */
             players: components["schemas"]["PlayerQuotes"][];
         };

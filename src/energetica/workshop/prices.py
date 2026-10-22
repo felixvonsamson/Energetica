@@ -100,6 +100,15 @@ class PlayerQuotes(BaseModel):
     buy: dict[FacilityId, QuotedPrice] = Field(description="The buy price of each storage type they had operating")
 
 
+class MarketFacility(BaseModel):
+    """A facility type the room's prices hold, named for the board's column (#1299)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: FacilityId
+    name: str
+
+
 class MarketPrices(BaseModel):
     """Every player's prices for one Trading period, which the whole room sees (#1299)."""
 
@@ -108,6 +117,9 @@ class MarketPrices(BaseModel):
     round: int = Field(ge=1)
     season: Season
     live: bool = Field(description="Whether the price-setting window is open, so the prices can still change")
+    facilities: list[MarketFacility] = Field(
+        description="Every facility type at least one player has a price for, in catalog order"
+    )
     players: list[PlayerQuotes]
 
 

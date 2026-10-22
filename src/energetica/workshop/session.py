@@ -115,6 +115,7 @@ from energetica.workshop.prices import (
     PRICE_CEILING,
     PRICE_FLOOR,
     LockedPrices,
+    MarketFacility,
     MarketPrices,
     PlayerQuotes,
     PriceSheet,
@@ -1416,7 +1417,15 @@ class WorkshopSession:
                 earlier = [locked for locked in player.locked_prices if _period_key(locked) < _period_key(period)]
                 sell, buy = quoted(sheet, earlier)
                 quotes.append(PlayerQuotes(account_id=player.account_id, username=player.username, sell=sell, buy=buy))
-            return MarketPrices(round=period.round, season=period.season, live=live, players=quotes)
+            quoted_types = {facility for sheet in sheets for facility in [*sheet.sell, *sheet.buy]}
+            facilities = [
+                MarketFacility(id=facility, name=CATALOG[facility].name)
+                for facility in CATALOG
+                if facility in quoted_types
+            ]
+            return MarketPrices(
+                round=period.round, season=period.season, live=live, facilities=facilities, players=quotes
+            )
 
     def scoreboard(self) -> Scoreboard:
         """Every player's score after the Rounds completed so far, highest first (#1017, #1250). Final once the

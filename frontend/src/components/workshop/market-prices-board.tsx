@@ -16,11 +16,7 @@
 
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-import {
-    useMarketPrices,
-    useWorkshopEntry,
-    useWorkshopFacilities,
-} from "@/hooks/use-workshop";
+import { useMarketPrices, useWorkshopEntry } from "@/hooks/use-workshop";
 import {
     type MarketColumn,
     marketColumns,
@@ -45,7 +41,6 @@ export function MarketPricesBoard({
     season: Season;
 }) {
     const room = useMarketPrices(round, season);
-    const { data: facilities } = useWorkshopFacilities();
     const { data: entry } = useWorkshopEntry();
 
     if (room.isPending) return <Spinner />;
@@ -61,12 +56,14 @@ export function MarketPricesBoard({
         );
     }
 
+    // The room's own list of types, not the reader's catalog, which leaves out
+    // types no longer offered that the reader does not own.
     const names = new Map(
-        (facilities ?? []).map((facility) => [facility.id, facility.name]),
+        room.data.facilities.map((facility) => [facility.id, facility.name]),
     );
     const columns = marketColumns(
         room.data.players,
-        (facilities ?? []).map((facility) => facility.id),
+        room.data.facilities.map((facility) => facility.id),
     );
     if (columns.length === 0) {
         return (

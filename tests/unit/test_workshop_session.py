@@ -21,6 +21,7 @@ from energetica.workshop.prices import (
     PRICE_CEILING,
     PRICE_FLOOR,
     LockedPrices,
+    MarketFacility,
     PlayerQuotes,
     PriceSheet,
     PriceSide,
@@ -1140,6 +1141,19 @@ def test_the_room_sees_every_players_live_prices_for_the_types_they_have_operati
             buy={BATTERIES: _quote(60.0)},
         ),
         PlayerQuotes(account_id=2, username="bob", sell={}, buy={}),
+    ]
+
+
+def test_the_room_lists_every_type_someone_has_a_price_for_in_catalog_order(path: Path, clock: _Clock) -> None:
+    session = _trading(path, clock)
+    session.join(_account(2, "bob"))
+    _advance(session)
+
+    room = session.market_prices(TradingPeriod(round=1, season="spring"))
+
+    # Whatever the reader owns or can buy now: a settled period lists the types it ran.
+    assert room.facilities == [
+        MarketFacility(id=facility, name=CATALOG[facility].name) for facility in CATALOG if facility in (GAS, BATTERIES)
     ]
 
 
