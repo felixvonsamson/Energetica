@@ -212,6 +212,14 @@ locks when the session starts, and Round N+1's when Recap N opens, since the Rec
 comes next. Which Rounds are locked follows from where the session is.
 _Avoid_: freeze, commit.
 
+**Added Round** (#1298):
+A Round the facilitator adds after the last one, such as when the room moves faster than planned.
+It can be added until the last Round's Recap opens, since that Recap shows the final scores, and it cannot be
+removed. Its **Round plan** copies the last Round's levers, without its events. Everything that depends on which
+Round is the last follows the new count: the loan can be taken in what was the last Round, a loan payment that
+was due after the end is taken as the added Round starts, demand keeps growing, and residual value counts from the
+new end. Only the **session-length price** stays as it was.
+
 **Representative week** (#1164, ADR-0008, #1198):
 The seven simulated days that stand for a whole Trading period in representative-week mode: the middle
 week of its season, cleared at the Round's clearings per day. Its trading money and energy are scaled ×13
@@ -291,10 +299,11 @@ completed one. So it changes once per Round, and after the last Round it is the 
 _Avoid_: leaderboard, salvage value.
 
 **Session-length price** (#1306):
-What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it has. Nuclear
+What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it starts with. Nuclear
 reactors and water dams earn for fewer Rounds in a short session, so they cost less there: a nuclear reactor costs
 53M in a session of 3 Rounds or fewer, 60M in one of 4 and 70M in a longer one. Every other facility costs its
-catalog price whatever the length. Price shocks apply on top.
+catalog price whatever the length. Price shocks apply on top. A Round **added** once the session has started
+leaves the prices as they were. One added before it starts prices for the new length.
 
 **Loan** (#1225):
 Money a player borrows to invest more than their cash allows: 50M, once per session, taken in an open

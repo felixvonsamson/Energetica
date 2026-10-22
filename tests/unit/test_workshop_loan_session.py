@@ -313,10 +313,10 @@ def test_a_payment_at_the_session_end_can_take_cash_below_zero(path: Path, clock
 def test_the_loan_counts_as_an_investment_of_its_cost(path: Path, clock: _Clock) -> None:
     session = _session(path, clock)
     alice = _alice(session)
-    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count)
 
     session.take_loan(1)
-    after = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
+    after = score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count)
 
     assert LOAN_COST == 10_000_000.0
     assert after.investments == before.investments + LOAN_COST
@@ -329,12 +329,12 @@ def test_the_cash_floor_covering_a_payment_leaves_the_score_unchanged(path: Path
     session.take_loan(1)
     _to_next(session, Recap)
     alice.money = 0.0
-    before = score(alice, completed_rounds=session.round_count, round_count=session.round_count)
+    before = score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count)
 
     _to_next(session, Investment)
 
     assert alice.money == WORKSHOP_CASH_FLOOR
-    assert score(alice, completed_rounds=session.round_count, round_count=session.round_count) == before
+    assert score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count) == before
 
 
 # --- the balance sheet --------------------------------------------------------------------------
