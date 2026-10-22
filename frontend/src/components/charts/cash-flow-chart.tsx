@@ -46,6 +46,8 @@ interface CashFlowChartProps {
     viewMode: "normal" | "percent";
     revenueType: CashFlowType;
     netProfitViewMode: NetProfitViewMode;
+    /** The series to highlight, with the others faded. */
+    highlightedKey?: string | null;
 }
 
 export function CashFlowChart({
@@ -56,6 +58,7 @@ export function CashFlowChart({
     viewMode,
     revenueType,
     netProfitViewMode,
+    highlightedKey,
 }: CashFlowChartProps) {
     const { data: gameEngineConfig } = useGameEngine();
     const getColor = useAssetColorGetter();
@@ -181,6 +184,7 @@ export function CashFlowChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
+            highlightedKey={highlightedKey}
         />
     );
 }
@@ -196,6 +200,11 @@ interface CashFlowOverviewTableProps {
     hiddenFacilities: Set<string>;
     /** Callback when a facility visibility is toggled */
     onToggleFacility: (facilityType: string) => void;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 interface FacilityRow {
     facilityType: string;
@@ -211,6 +220,7 @@ export function CashFlowOverviewTable({
     revenueType,
     hiddenFacilities,
     onToggleFacility,
+    onHoverRow,
 }: CashFlowOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("revenues");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -389,7 +399,7 @@ export function CashFlowOverviewTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sortedRows.map((row) => {
                         const isVisible = !hiddenFacilities.has(
                             row.facilityType,
@@ -397,6 +407,9 @@ export function CashFlowOverviewTable({
                         return (
                             <tr
                                 key={row.facilityType}
+                                onMouseEnter={() =>
+                                    onHoverRow?.(row.facilityType)
+                                }
                                 className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                             >
                                 <td className="py-3 px-4">

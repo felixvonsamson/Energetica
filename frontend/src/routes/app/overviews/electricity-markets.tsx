@@ -14,7 +14,7 @@ import {
     UserPlus,
     LogOut,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
     BreakdownMode,
@@ -132,6 +132,8 @@ const BREAKDOWN_MODE_OPTIONS = [
 ] as const;
 
 function MarketsOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const { playerId } = useCurrentPlayer();
     const navigate = useNavigate();
@@ -428,6 +430,7 @@ function MarketsOverviewContent() {
                     breakdownMode={breakdownMode}
                     breakdownType={breakdownType}
                     minTick={marketDetails?.created_tick}
+                    highlightedKey={highlightedKey}
                 />
 
                 {breakdownEnabled && (
@@ -440,6 +443,7 @@ function MarketsOverviewContent() {
                         breakdownMode={breakdownMode}
                         breakdownType={breakdownType}
                         minTick={marketDetails?.created_tick}
+                        onHoverRow={setHighlightedKey}
                     />
                 )}
             </ChartCard>

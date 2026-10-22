@@ -2,6 +2,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
+import { useState } from "react";
 
 import {
     StorageChart,
@@ -98,6 +99,8 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 function StorageOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
         "energetica:chart:storage:viewMode",
@@ -181,12 +184,14 @@ function StorageOverviewContent() {
                     isError={isError}
                     hiddenFacilities={hiddenFacilities}
                     viewMode={viewMode}
+                    highlightedKey={highlightedKey}
                 />
 
                 <StorageOverviewTable
                     chartData={storageLevelData}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
+                    onHoverRow={setHighlightedKey}
                 />
             </ChartCard>
         </div>

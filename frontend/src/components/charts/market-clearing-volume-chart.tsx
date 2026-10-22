@@ -88,6 +88,8 @@ interface MarketClearingChartProps {
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
     minTick?: number;
+    /** The series to highlight, with the others faded. */
+    highlightedKey?: string | null;
 }
 
 export function MarketClearingVolumeChart({
@@ -97,6 +99,7 @@ export function MarketClearingVolumeChart({
     breakdownEnabled,
     breakdownMode,
     breakdownType,
+    highlightedKey,
 }: MarketClearingChartProps) {
     const getColor = useAssetColorGetter();
     const getPlayerColor = usePlayerColorGetter();
@@ -154,6 +157,7 @@ export function MarketClearingVolumeChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
+            highlightedKey={highlightedKey}
         />
     );
 }
@@ -167,6 +171,11 @@ interface MarketClearingVolumeTableProps {
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
     minTick?: number;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 
 export function MarketClearingTable({
@@ -177,6 +186,7 @@ export function MarketClearingTable({
     breakdownEnabled,
     breakdownMode,
     breakdownType,
+    onHoverRow,
 }: MarketClearingVolumeTableProps) {
     const { chartData } = useMarketClearingData(
         resolution,
@@ -322,12 +332,13 @@ export function MarketClearingTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sortedRows.map((row) => {
                         const isVisible = !hiddenItems.has(row.name);
                         return (
                             <tr
                                 key={row.name}
+                                onMouseEnter={() => onHoverRow?.(row.name)}
                                 className="border-b border-border hover:bg-muted/50 transition-colors"
                             >
                                 <td className="py-3 px-4">

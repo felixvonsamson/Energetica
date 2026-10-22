@@ -490,6 +490,8 @@ function PowerSeries({
     onToggle: (key: string) => void;
     cpd: number;
 }) {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const keys = useMemo(
         () => orderedKeys(rows, preferredOrder(labels, view, grouping)),
         [rows, labels, view, grouping],
@@ -512,6 +514,7 @@ function PowerSeries({
                 getColor={color}
                 formatLabel={label}
                 height={360}
+                highlightedKey={highlightedKey}
                 {...chart}
             />
             <PeriodSeriesTable
@@ -523,6 +526,7 @@ function PowerSeries({
                 label={label}
                 color={color}
                 energyHeading={view === "generation" ? "Generated" : "Consumed"}
+                onHoverRow={setHighlightedKey}
             />
         </>
     );

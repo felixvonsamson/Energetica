@@ -8,7 +8,7 @@ import {
     PieChart,
     Funnel,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
     NetProfitViewMode,
@@ -115,6 +115,8 @@ const NET_PROFIT_VIEW_MODE_OPTIONS = [
 ] as const;
 
 function RevenuesOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
         "energetica:chart:cashflow:viewMode",
@@ -377,6 +379,7 @@ function RevenuesOverviewContent() {
                     viewMode={viewMode}
                     revenueType={revenueType}
                     netProfitViewMode={netProfitViewMode}
+                    highlightedKey={highlightedKey}
                 />
 
                 <CashFlowOverviewTable
@@ -385,6 +388,7 @@ function RevenuesOverviewContent() {
                     revenueType={revenueType}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
+                    onHoverRow={setHighlightedKey}
                 />
             </ChartCard>
         </div>

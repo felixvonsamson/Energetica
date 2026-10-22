@@ -65,6 +65,8 @@ interface PowerChartProps {
     onTickClick?: (tick: number) => void;
     zoom?: ZoomRange;
     onZoomChange?: (zoom: ZoomRange) => void;
+    /** The series to highlight, with the others faded. */
+    highlightedKey?: string | null;
 }
 
 // Stable label renderer — defined outside the component so it never causes
@@ -95,6 +97,7 @@ export function PowerChart({
     onTickClick,
     zoom,
     onZoomChange,
+    highlightedKey,
 }: PowerChartProps) {
     const getAssetColor = useAssetColorGetter();
     const getColor = getColorProp ?? getAssetColor;
@@ -165,6 +168,7 @@ export function PowerChart({
         onTickClick,
         zoom,
         onZoomChange,
+        highlightedKey,
     };
     return timeAxis ? (
         <TimeSeriesChart {...chartProps} timeAxis={timeAxis} />
@@ -181,6 +185,11 @@ interface PowerOverviewTableProps {
     resolution: number;
     hiddenFacilities: Set<string>;
     onToggleFacility: (facilityType: string) => void;
+    /**
+     * Called with a row's series key when the player hovers the row, and with
+     * null when the pointer leaves the table.
+     */
+    onHoverRow?: (key: string | null) => void;
 }
 
 interface FacilityRow {
@@ -199,6 +208,7 @@ export function PowerOverviewTable({
     resolution,
     hiddenFacilities,
     onToggleFacility,
+    onHoverRow,
 }: PowerOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("energy");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -411,7 +421,7 @@ export function PowerOverviewTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sortedRows.map((row) => {
                         const isVisible = !hiddenFacilities.has(
                             row.facilityType,
@@ -419,6 +429,9 @@ export function PowerOverviewTable({
                         return (
                             <tr
                                 key={row.facilityType}
+                                onMouseEnter={() =>
+                                    onHoverRow?.(row.facilityType)
+                                }
                                 className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
