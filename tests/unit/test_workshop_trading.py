@@ -616,32 +616,40 @@ def test_the_engine_reports_each_day_it_has_cleared(trading_format: TradingForma
     assert cleared_day_count("spring", RoundFormat(trading_format=trading_format)) == days
 
 
-def test_the_peak_demand_is_the_highest_must_serve_demand_at_one_settlement_point() -> None:
-    # Demand is half as high again in the second half of each day. The gas burner asks too much for the flexible
-    # tiers, so the market clears only must-serve demand, and the peak is what it clears at its highest.
-    curve = DemandCurve((1.0, 1.5) * DAYS_PER_YEAR)
-    outcome = simulate_trading_period(
-        [_bidder(WIND, GAS, sell={WIND: 1_000.0, GAS: 1_000.0})],
+# Demand is half as high again in the second half of each day.
+_RISING = DemandCurve((1.0, 1.5) * DAYS_PER_YEAR)
+
+
+def _peak_outcome(bidder: Bidder, share: float) -> TradingOutcome:
+    return simulate_trading_period(
+        [bidder],
         round_number=1,
         season="spring",
         round_format=RoundFormat(),
         amplitude=_AMPLITUDE,
-        curve=curve,
-        weather=steady(1.0),
+        curve=_RISING,
+        weather=steady(share),
     )
 
+
+def test_the_peak_demand_is_the_highest_must_serve_demand_at_one_settlement_point() -> None:
+    # The wind and the gas burner sell cheap enough to serve flexible demand too, but the peak counts only must-serve.
+    outcome = _peak_outcome(_bidder(WIND, GAS, sell={WIND: 0.0, GAS: 100.0}), share=1.0)
+
     assert not outcome.blackout
-    assert outcome.peak_demand == pytest.approx(1.5 * _AMPLITUDE * demand_scale("spring", RoundFormat(), curve))
-    assert outcome.peak_demand == pytest.approx(float(np.nanmax(outcome.record.quantity)))
+    peak = 1.5 * _AMPLITUDE * demand_scale("spring", RoundFormat(), _RISING)
+    assert outcome.peak_demand == pytest.approx(peak)
+    assert float(np.nanmax(outcome.record.quantity)) > peak
 
 
 def test_a_blackout_does_not_lower_the_peak_demand() -> None:
-    # The wind's 13.5 MW cannot meet the 30 MW must-serve demand, so the grid goes down at the first clearing. The
-    # peak is the must-serve demand all the same, not what the market managed to clear.
-    outcome = _simulate(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
+    # The wind's 13.5 MW cannot meet the 30 MW must-serve demand, so the grid goes down at the first clearing, in the
+    # first half of the day. The peak still counts the higher demand of the second half, after the blackout.
+    outcome = _peak_outcome(_bidder(WIND, sell={WIND: 0.0}), share=0.3)
 
     assert outcome.blackout
-    assert outcome.peak_demand == pytest.approx(_AMPLITUDE)
+    assert outcome.record.blackout_at == 0
+    assert outcome.peak_demand == pytest.approx(1.5 * _AMPLITUDE * demand_scale("spring", RoundFormat(), _RISING))
 
 
 # Representative-week mode (#1198, ADR-0008).

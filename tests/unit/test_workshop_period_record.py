@@ -2,7 +2,7 @@
 
 The engine keeps, beside each player's result, the time series and the merit order of each settlement
 point it cleared. These tests use a flat demand curve and steady weather, as the engine's tests do. With
-an amplitude of 40 MW, the demand block bids 40 MW at any price (must-serve), then 12 MW each up to 250,
+an amplitude of 30 MW, the demand block bids 30 MW at any price (must-serve), then 9 MW each up to 250,
 140, 80, 40 and 10.
 """
 
