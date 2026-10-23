@@ -217,7 +217,12 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
                         className="absolute inset-y-0 transition-all duration-700"
                         style={{
                             left: pct(room.controllable),
-                            width: pct(weatherDependent),
+                            width: pct(
+                                Math.max(
+                                    0,
+                                    Math.min(weatherDependent, scaleMax - room.controllable),
+                                ),
+                            ),
                             background: `repeating-linear-gradient(135deg, ${THEME.weather[0]} 0 10px, ${THEME.weather[1]} 10px 20px)`,
                         }}
                     />
