@@ -7,7 +7,7 @@
  * in the same theme.
  */
 
-import { readableTextColor, resolveCSSVar } from "@/lib/charts/color-utils";
+import { resolveCSSVar } from "@/lib/charts/color-utils";
 
 export interface CrTheme {
     name: "light" | "dark";
@@ -94,9 +94,4 @@ export const THEMES: Record<"light" | "dark", CrTheme> = {
  */
 export function assetColor(asset: string): string {
     return resolveCSSVar(`--asset-color-${asset}`);
-}
-
-/** Black or white, whichever reads best over `fill`. */
-export function contrastOn(fill: string): string {
-    return readableTextColor(fill);
 }
