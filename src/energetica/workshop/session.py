@@ -89,6 +89,7 @@ from pydantic import BaseModel, Field
 from energetica.kernel.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.control_room import (
+    FUEL_HISTORY_POINTS,
     HISTORY_SEASONS,
     CarbonTaxStatus,
     ControlRoom,
@@ -122,6 +123,7 @@ from energetica.workshop.fuel import (
     burned_fuels,
     capped_order,
     default_orders,
+    fuel_price_history,
     next_fuel_price,
     season_need,
 )
@@ -1495,6 +1497,8 @@ class WorkshopSession:
             started = not isinstance(self.checkpoint, NotStarted)
             vote_open = self.investment_open() and self.vote_held()
             current_round = self.current_round()
+            # Every Trading period opened so far set the fuel prices, with any shock that landed in it.
+            opened_shocks = [fuel_shocks(self.fired_events, period.round, period.season) for period in priced]
             fuels = [
                 FuelQuote(
                     fuel=fuel,
@@ -1502,6 +1506,12 @@ class WorkshopSession:
                     price=self.fuel_price(fuel),
                     change=None if (price := self.fuel_prices.get(fuel)) is None else price.change,
                     shocked=price is not None and price.shocked,
+                    history=fuel_price_history(
+                        fuel,
+                        seed=self.weather_seed,
+                        shocks=[shocks.get(fuel) for shocks in opened_shocks],
+                        points=FUEL_HISTORY_POINTS,
+                    ),
                 )
                 for fuel in Fuel
             ]

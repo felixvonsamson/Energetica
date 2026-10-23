@@ -9,7 +9,7 @@ import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
-from energetica.workshop.control_room import HISTORY_SEASONS, PowerSource
+from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, PowerSource
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES
 from energetica.workshop.round_plan import LeverChanges
@@ -74,6 +74,7 @@ def test_a_session_that_has_not_started_shows_only_the_fuel_catalog_prices(tmp_p
     ]
     assert not room.carbon_tax.vote_open
     assert room.carbon_tax.since is None
+    assert all(fuel.history[-1] == CATALOG_FUEL_PRICES[fuel.fuel] for fuel in room.fuels)
 
 
 def test_a_settled_season_shows_its_prices_generation_and_duration_curve(tmp_path: Path) -> None:
@@ -155,3 +156,16 @@ def test_an_open_vote_shows_in_the_carbon_tax_status_and_the_alarms(tmp_path: Pa
     assert room.carbon_tax.vote_open
     assert room.alarms[0].kind == "vote"
     assert [emissions.complete for emissions in room.emissions] == [True, False]
+
+
+def test_each_fuels_history_ends_with_this_seasons_price(tmp_path: Path) -> None:
+    session = _investing(tmp_path / "session.json")
+    _settle_next(session)
+    session.advance()  # Summer opens.
+
+    room = session.control_room()
+
+    for fuel in room.fuels:
+        assert len(fuel.history) == FUEL_HISTORY_POINTS
+        assert fuel.history[-1] == pytest.approx(session.fuel_prices[fuel.fuel].price)
+        assert fuel.history[-2] == pytest.approx(session.fuel_prices[fuel.fuel].previous_price)

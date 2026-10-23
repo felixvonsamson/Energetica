@@ -388,6 +388,8 @@ export function RoomPriceBoxes({ periods }: { periods: RoomPrices[] }) {
 }
 
 const MIN_BOX_HEIGHT = 6;
+// White, so the median still shows on a flat box, or on the panel inside an open period's hollow box.
+const MEDIAN_COLOR = "#ffffff";
 
 /** The power source whose colour each price box takes. */
 const GROUP_SOURCE: Record<PriceGroup, PowerSource> = {
@@ -547,7 +549,7 @@ function PriceBox({
                                         y2: yMedian,
                                     },
                                     style: {
-                                        stroke: live ? color : "#000000",
+                                        stroke: MEDIAN_COLOR,
                                         lineWidth: 2.5,
                                     },
                                 },
@@ -639,64 +641,99 @@ const FUEL_SOURCES: Record<ApiSchema<"Fuel">, PowerSource> = {
 export function Fuels({ fuels }: { fuels: ControlRoom["fuels"] }) {
     return (
         <div className="flex h-full flex-col">
-            {fuels.map((fuel) => {
-                const { value, unit } = fuelPrice(fuel.fuel, fuel.price);
-                const change = fuel.change;
-                return (
-                    <div
-                        key={fuel.fuel}
-                        className="flex min-h-0 flex-1 flex-col justify-center border-b px-1 last:border-b-0"
-                        style={{ borderColor: THEME.grid }}
-                    >
-                        <div
-                            className="flex items-baseline gap-3 text-lg leading-tight font-semibold tracking-wider uppercase"
+            {fuels.map((fuel) => (
+                <FuelRow key={fuel.fuel} fuel={fuel} />
+            ))}
+        </div>
+    );
+}
+
+/** A fuel's price and change, beside a chart of its last prices. */
+function FuelRow({ fuel }: { fuel: ControlRoom["fuels"][number] }) {
+    const source = FUEL_SOURCES[fuel.fuel];
+    const color = sourceColor(source);
+    const { value, unit } = fuelPrice(fuel.fuel, fuel.price);
+    const change = fuel.change;
+    const option = useMemo<ControlRoomChartOption>(() => {
+        const prices = fuel.history.map(
+            (price) => fuelPrice(fuel.fuel, price).value,
+        );
+        return {
+            grid: { left: 4, right: 10, top: 10, bottom: 8 },
+            xAxis: {
+                type: "category",
+                data: prices.map(String),
+                show: false,
+                boundaryGap: false,
+            },
+            yAxis: { type: "value", show: false, scale: true },
+            series: [
+                {
+                    type: "line",
+                    data: prices.map((price, i) => ({
+                        value: price,
+                        // A dot on this season's price.
+                        symbol: i === prices.length - 1 ? "circle" : "none",
+                        symbolSize: 10,
+                    })),
+                    lineStyle: { color, width: 3 },
+                    itemStyle: { color },
+                    areaStyle: { color, opacity: 0.15 },
+                },
+            ],
+        };
+    }, [fuel, color]);
+    return (
+        <div
+            className="flex min-h-0 flex-1 items-center gap-2 border-b px-1 last:border-b-0"
+            style={{ borderColor: THEME.grid }}
+        >
+            <div className="w-[48%] shrink-0">
+                <div
+                    className="flex items-baseline gap-3 text-lg leading-tight font-semibold tracking-wider uppercase"
+                    style={{ color: sourceTitleColor(source) }}
+                >
+                    {fuel.name}
+                    {change !== null && (
+                        <span
+                            className="font-mono font-normal tracking-normal"
                             style={{
-                                color: sourceTitleColor(
-                                    FUEL_SOURCES[fuel.fuel],
-                                ),
+                                color: change >= 0 ? THEME.up : THEME.down,
                             }}
                         >
-                            {fuel.name}
-                            {change !== null && (
-                                <span
-                                    className="font-mono font-normal tracking-normal"
-                                    style={{
-                                        color:
-                                            change >= 0 ? THEME.up : THEME.down,
-                                    }}
-                                >
-                                    {change >= 0 ? "▲" : "▼"}{" "}
-                                    {formatFixed(Math.abs(change) * 100, 1)}%
-                                </span>
-                            )}
-                            {fuel.shocked && (
-                                <span
-                                    className="rounded-sm border-2 px-1.5 font-mono text-sm font-bold tracking-normal"
-                                    style={{
-                                        borderColor: THEME.orange,
-                                        color: THEME.orange,
-                                    }}
-                                >
-                                    SHOCK
-                                </span>
-                            )}
-                        </div>
-                        <div
-                            className="flex items-center gap-1 font-mono text-[34px] leading-tight font-bold"
-                            style={{ color: THEME.ink }}
+                            {change >= 0 ? "▲" : "▼"}{" "}
+                            {formatFixed(Math.abs(change) * 100, 1)}%
+                        </span>
+                    )}
+                    {fuel.shocked && (
+                        <span
+                            className="rounded-sm border-2 px-1.5 font-mono text-sm font-bold tracking-normal"
+                            style={{
+                                borderColor: THEME.orange,
+                                color: THEME.orange,
+                            }}
                         >
-                            <CoinIcon className="size-7" />
-                            {formatFixed(value, 0)}
-                            <span
-                                className="text-lg font-normal"
-                                style={{ color: THEME.dim }}
-                            >
-                                {unit}
-                            </span>
-                        </div>
-                    </div>
-                );
-            })}
+                            SHOCK
+                        </span>
+                    )}
+                </div>
+                <div
+                    className="flex items-center gap-1 font-mono text-[34px] leading-tight font-bold"
+                    style={{ color: THEME.ink }}
+                >
+                    <CoinIcon className="size-7" />
+                    {formatFixed(value, 0)}
+                    <span
+                        className="text-lg font-normal"
+                        style={{ color: THEME.dim }}
+                    >
+                        {unit}
+                    </span>
+                </div>
+            </div>
+            <div className="min-h-0 min-w-0 flex-1 self-stretch">
+                <EChart option={option} />
+            </div>
         </div>
     );
 }

@@ -5551,6 +5551,11 @@ export interface components {
              * @description Whether a price shock landed this season
              */
             shocked: boolean;
+            /**
+             * History
+             * @description The last prices per kg, oldest first, ending with this season's. Those from before the session are made up
+             */
+            history: number[];
         };
         /**
          * Investment

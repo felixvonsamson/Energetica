@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 import random
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -152,6 +152,28 @@ def next_fuel_price(
         price=CATALOG_FUEL_PRICES[fuel] * drift * shock,
         previous_price=previous.price if previous is not None else None,
     )
+
+
+def fuel_price_history(fuel: Fuel, *, seed: int, shocks: Sequence[float | None], points: int) -> list[float]:
+    """``fuel``'s last ``points`` prices per kg, oldest first, for the control room (#1289).
+
+    Prices are worked out again from ``seed``, as :func:`next_fuel_price` set them, so none need keeping. ``shocks``
+    holds the shock that landed in each Trading period opened so far, in order, or None for a period without one.
+    The game has no prices from before the session, so when too few periods have opened, the history starts with
+    made-up ones: a random walk from the same seed, ending at the catalog price, which the first season moves from.
+    """
+    prices: list[float] = []
+    previous: FuelPrice | None = None
+    for index, shock in enumerate(shocks):
+        previous = next_fuel_price(fuel, previous, seed=seed, period_index=index, shock=shock)
+        prices.append(previous.price)
+    made_up: list[float] = []
+    before: FuelPrice | None = None
+    # Negative period indices, so the made-up steps never repeat a real season's.
+    for index in range(points - len(prices) - 1):
+        before = next_fuel_price(fuel, before, seed=seed, period_index=-1 - index)
+        made_up.append(before.price)
+    return [*made_up, CATALOG_FUEL_PRICES[fuel], *prices][-points:]
 
 
 def _operating(fleet: Iterable[OwnedFacility], current_round: int) -> list[OwnedFacility]:

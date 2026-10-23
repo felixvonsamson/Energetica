@@ -12,6 +12,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
+    fuel_price_history,
     FUEL_USE,
     MAX_SEASON_CHANGE,
     MAX_STEP,
@@ -237,3 +238,38 @@ def test_a_purchase_costs_its_quantity_at_its_price() -> None:
 
     assert purchase.cost == 500.0
     assert math.isfinite(purchase.cost)
+
+
+# --- price history, for the control room (#1289) ------------------------------------------------
+
+
+def test_the_price_history_replays_each_season_with_its_shocks() -> None:
+    first = next_fuel_price(Fuel.GAS, None, seed=7, period_index=0)
+    second = next_fuel_price(Fuel.GAS, first, seed=7, period_index=1, shock=1.5)
+
+    history = fuel_price_history(Fuel.GAS, seed=7, shocks=[None, 1.5], points=2)
+
+    assert history == [first.price, second.price]
+
+
+def test_the_price_history_starts_with_made_up_prices_from_before_the_session() -> None:
+    history = fuel_price_history(Fuel.COAL, seed=7, shocks=[None], points=9)
+
+    assert len(history) == 9
+    # The last price before the session is the catalog price, which the first season moves from.
+    assert history[-2] == CATALOG_FUEL_PRICES[Fuel.COAL]
+    assert history[-1] == next_fuel_price(Fuel.COAL, None, seed=7, period_index=0).price
+    assert len(set(history[:-2])) > 1
+
+
+def test_before_the_session_the_price_history_ends_at_the_catalog_price() -> None:
+    history = fuel_price_history(Fuel.URANIUM, seed=7, shocks=[], points=9)
+
+    assert len(history) == 9
+    assert history[-1] == CATALOG_FUEL_PRICES[Fuel.URANIUM]
+
+
+def test_the_price_history_keeps_only_the_latest_prices() -> None:
+    history = fuel_price_history(Fuel.GAS, seed=7, shocks=[None] * 12, points=9)
+
+    assert history == fuel_price_history(Fuel.GAS, seed=7, shocks=[None] * 12, points=20)[-9:]

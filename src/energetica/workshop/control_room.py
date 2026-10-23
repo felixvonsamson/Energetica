@@ -14,6 +14,8 @@ out each panel.
 - **The room's prices** for each power source, as a box per Trading period: the lowest, the quartiles, the median
   and the highest price players set, pooled across tiers and players.
 - **The price-duration curve** of the last settled season: its clearing prices, highest first.
+- **Fuel prices**: each fuel's price this season and its last few prices, worked out again from the Run's seed, so
+  none are kept. Those from before the session are made up.
 
 Every chart over seasons shows at most the last :data:`HISTORY_SEASONS`, so a long session stays readable.
 """
@@ -41,6 +43,8 @@ from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome
 
 #: How many seasons each chart over seasons shows at most.
 HISTORY_SEASONS = 8
+#: How many prices each fuel's chart shows, those from before the session included.
+FUEL_HISTORY_POINTS = 9
 #: How many prices the price-duration curve keeps, spread evenly from the highest to the lowest.
 DURATION_POINTS = 200
 
@@ -414,6 +418,10 @@ class FuelQuote(BaseModel):
         description="The change since last season, as a share of last season's price, or null before the second season"
     )
     shocked: bool = Field(description="Whether a price shock landed this season")
+    history: list[float] = Field(
+        description="The last prices per kg, oldest first, ending with this season's. Those from before the session "
+        "are made up"
+    )
 
 
 class ControlRoom(BaseModel):
