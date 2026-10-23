@@ -67,6 +67,10 @@ session finishes.
 The session ranks the players by their score all game (#1017, #1250, :mod:`~energetica.workshop.score`). It
 counts the Rounds completed so far, so it changes as each Recap opens, and is final once the session is
 :class:`Finished`.
+
+The control room (#1289, :mod:`~energetica.workshop.control_room`) shows the whole room what the session has done so
+far. The clearing prices it summarises come from each period's record, so the session keeps each period's summary once
+worked out, from the record in memory as it settles or from the saved one the first time it is asked for.
 """
 
 from __future__ import annotations
@@ -84,7 +88,30 @@ from pydantic import BaseModel, Field
 
 from energetica.kernel.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
-from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
+from energetica.workshop.control_room import (
+    FUEL_HISTORY_POINTS,
+    HISTORY_SEASONS,
+    CapacityOutlook,
+    CarbonTaxStatus,
+    ControlRoom,
+    DurationCurve,
+    FuelQuote,
+    PriceSummary,
+    SeasonFigures,
+    alarms,
+    blackout_risk,
+    price_summary,
+    room_generation,
+    room_capacity,
+    room_prices,
+    round_emissions,
+)
+from energetica.workshop.demand_block import (
+    DEMAND_TIERS,
+    PER_PLAYER_BASE_AMPLITUDE,
+    national_demand_curve,
+    round_one_amplitude,
+)
 from energetica.workshop.demand_growth import growth_factor, growth_through
 from energetica.workshop.events import (
     FiredEvent,
@@ -92,17 +119,20 @@ from energetica.workshop.events import (
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
+    round_demand_factor,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
+    FUEL_NAMES,
     FuelPrice,
     FuelProcurement,
     FuelPurchase,
     burned_fuels,
     capped_order,
     default_orders,
+    fuel_price_history,
     next_fuel_price,
     season_need,
 )
@@ -126,7 +156,7 @@ from energetica.workshop.prices import (
     is_storage,
     quoted,
 )
-from energetica.workshop.recap import WorkshopRecap, emissions, recap
+from energetica.workshop.recap import WorkshopRecap, average_price, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
@@ -150,6 +180,7 @@ from energetica.workshop.trading import (
     TradingOutcome,
     TradingResult,
     cleared_day_count,
+    peak_demand_factor,
     simulate_trading_period,
 )
 from energetica.workshop.unlocks import (
@@ -160,8 +191,8 @@ from energetica.workshop.unlocks import (
     round_end_unlocks,
     unlock_threshold,
 )
-from energetica.workshop.votes import Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
-from energetica.workshop.weather import AverageOutput, representative_weather, season_output
+from energetica.workshop.votes import CARBON_TAX_RATE, Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
+from energetica.workshop.weather import AverageOutput, capacity_factor, representative_weather, season_output
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -695,6 +726,12 @@ class WorkshopSession:
         # Requests read records on worker threads. Apart from the session's lock, so reading a record
         # never holds up a change to the session.
         self._records_lock = threading.Lock()
+        # What each settled Trading period's clearing prices looked like, for the control room (#1289). Worked out once
+        # per period, as it settles or from its record the first time it is asked for, since a record is slow to read.
+        # None for a period whose record has no settled price, or that has no record.
+        self._price_summaries: dict[TradingPeriod, PriceSummary | None] = {}
+        # Held while a summary is worked out from a record, so that pages opening together read each record once.
+        self._summaries_lock = threading.Lock()
         # How far the Trading period being simulated has got, or None if none is. Not saved: a period
         # whose simulation a restart cut short is simulated again from the start.
         self.settlement: SettlementProgress | None = None
@@ -1412,45 +1449,213 @@ class WorkshopSession:
         Raises :class:`NoMarketPricesError` if ``period`` is neither, because it has not started.
         """
         with self._lock:
-            players = self.network.players()
-            ran_at = [
-                next(
-                    (locked.prices for locked in player.locked_prices if _period_key(locked) == _period_key(period)),
-                    None,
+            return self._market_prices(period)
+
+    def _market_prices(self, period: TradingPeriod) -> MarketPrices:
+        """:meth:`market_prices`. The caller holds the lock."""
+        players = self.network.players()
+        ran_at = [
+            next(
+                (locked.prices for locked in player.locked_prices if _period_key(locked) == _period_key(period)),
+                None,
+            )
+            for player in players
+        ]
+        if period in self.recorded_periods or any(sheet is not None for sheet in ran_at):
+            live = False
+            sheets = [PriceSheet(sell={}, buy={}) if sheet is None else sheet for sheet in ran_at]
+        elif self.checkpoint == period:
+            live = self.price_setting_open()
+            sheets = [
+                player.prices.only(
+                    {
+                        owned.facility
+                        for owned in player.owned_facilities
+                        if is_operating(owned, current_round=period.round)
+                    }
                 )
                 for player in players
             ]
-            if period in self.recorded_periods or any(sheet is not None for sheet in ran_at):
-                live = False
-                sheets = [PriceSheet(sell={}, buy={}) if sheet is None else sheet for sheet in ran_at]
-            elif self.checkpoint == period:
-                live = self.price_setting_open()
-                sheets = [
-                    player.prices.only(
-                        {
-                            owned.facility
-                            for owned in player.owned_facilities
-                            if is_operating(owned, current_round=period.round)
-                        }
-                    )
-                    for player in players
-                ]
-            else:
-                raise NoMarketPricesError(f"{period} has not started")
-            quotes = []
-            for player, sheet in zip(players, sheets, strict=True):
-                earlier = [locked for locked in player.locked_prices if _period_key(locked) < _period_key(period)]
-                sell, buy = quoted(sheet, earlier)
-                quotes.append(PlayerQuotes(account_id=player.account_id, username=player.username, sell=sell, buy=buy))
-            quoted_types = {facility for sheet in sheets for facility in [*sheet.sell, *sheet.buy]}
-            facilities = [
-                MarketFacility(id=facility, name=CATALOG[facility].name)
-                for facility in CATALOG
-                if facility in quoted_types
+        else:
+            raise NoMarketPricesError(f"{period} has not started")
+        quotes = []
+        for player, sheet in zip(players, sheets, strict=True):
+            earlier = [locked for locked in player.locked_prices if _period_key(locked) < _period_key(period)]
+            sell, buy = quoted(sheet, earlier)
+            quotes.append(PlayerQuotes(account_id=player.account_id, username=player.username, sell=sell, buy=buy))
+        quoted_types = {facility for sheet in sheets for facility in [*sheet.sell, *sheet.buy]}
+        facilities = [
+            MarketFacility(id=facility, name=CATALOG[facility].name) for facility in CATALOG if facility in quoted_types
+        ]
+        return MarketPrices(round=period.round, season=period.season, live=live, facilities=facilities, players=quotes)
+
+    def control_room(self) -> ControlRoom:
+        """Everything the control room shows (#1289), read in one step so its parts agree. Only the clearing prices
+        come from each period's record, read outside the lock the first time, since a record is slow to read.
+        """
+        with self._lock:
+            last = self.settled_period
+            settled = self._settled_periods()
+            history = settled[-HISTORY_SEASONS:]
+            # The current Trading period's prices show while they are being set, and until it is settled.
+            priced = list(settled)
+            if isinstance(self.checkpoint, TradingPeriod) and self.checkpoint != last:
+                priced.append(self.checkpoint)
+            players = self.network.players()
+            results = [result for player in players for result in player.trading_results]
+            purchases = [purchase for player in players for purchase in player.purchases]
+            started = not isinstance(self.checkpoint, NotStarted)
+            vote_open = self.investment_open() and self.vote_held()
+            current_round = self.current_round()
+            # Every Trading period opened so far set the fuel prices, with any shock that landed in it.
+            opened_shocks = [fuel_shocks(self.fired_events, period.round, period.season) for period in priced]
+            fuels = [
+                FuelQuote(
+                    fuel=fuel,
+                    name=FUEL_NAMES[fuel],
+                    price=self.fuel_price(fuel),
+                    change=None if (price := self.fuel_prices.get(fuel)) is None else price.change,
+                    shocked=price is not None and price.shocked,
+                    history=fuel_price_history(
+                        fuel,
+                        seed=self.weather_seed,
+                        shocks=[shocks.get(fuel) for shocks in opened_shocks],
+                        points=FUEL_HISTORY_POINTS,
+                    ),
+                )
+                for fuel in Fuel
             ]
-            return MarketPrices(
-                round=period.round, season=period.season, live=live, facilities=facilities, players=quotes
+            raised = alarms(
+                fired=self.fired_events,
+                settled=None if last is None else (last.round, last.season),
+                blackouts=self.blackouts,
+                unlocks=self.unlocks,
+                vote_outcomes=self.vote_outcomes,
+                vote_open=current_round if vote_open else None,
             )
+            emitted = round_emissions(
+                purchases,
+                results,
+                rounds=current_round if started else 0,
+                completed=completed_rounds(self.checkpoint, round_count=self.round_count),
+            )
+            carbon_tax = CarbonTaxStatus(rate=CARBON_TAX_RATE, since=self.carbon_tax_since(), vote_open=vote_open)
+            prices = [room_prices(market) for market in self._recent_market_prices(priced)]
+            capacity = self._capacity_outlook(current_round)
+        summaries = {period: self._price_summary(period) for period in history}
+        seasons = []
+        for period in history:
+            ran = [result for result in results if (result.round, result.season) == (period.round, period.season)]
+            summary = summaries[period]
+            seasons.append(
+                SeasonFigures(
+                    round=period.round,
+                    season=period.season,
+                    average_price=average_price(ran),
+                    price_low=None if summary is None else summary.low,
+                    price_high=None if summary is None else summary.high,
+                    generation=room_generation(ran),
+                )
+            )
+        curve = next(
+            (
+                DurationCurve(round=period.round, season=period.season, prices=summary.duration_curve)
+                for period in reversed(history)
+                if (summary := summaries[period]) is not None
+            ),
+            None,
+        )
+        return ControlRoom(
+            alarms=raised,
+            emissions=emitted,
+            carbon_tax=carbon_tax,
+            capacity=capacity,
+            seasons=seasons,
+            duration_curve=curve,
+            room_prices=prices,
+            fuels=fuels,
+        )
+
+    def _capacity_outlook(self, round_number: int) -> CapacityOutlook:
+        """The room's capacity in Round ``round_number`` against its must-serve peak (#1287). Facilities selected in its
+        open Investment phase count as if bought, and those still under construction do not. The peak leaves out
+        seasonal events, which players learn of only as a forecast, and rationing. The caller holds the lock.
+        """
+        players = self.network.players()
+        peak = (
+            self._base_amplitude()
+            * growth_through(self.demand_growth, round_number)
+            * round_demand_factor(self.fired_events, round_number)
+            * peak_demand_factor(self.plans[round_number - 1].levers.round_format)
+        )
+        selecting = self.checkpoint == Investment(round=round_number)
+        fleet = [
+            owned
+            for player in players
+            for owned in [
+                *player.owned_facilities,
+                *(
+                    OwnedFacility(facility=facility, built_round=round_number)
+                    for facility in (player.selection if selecting else [])
+                ),
+            ]
+        ]
+        facilities = [owned.facility for owned in fleet if is_operating(owned, current_round=round_number)]
+        capacity_factors = {
+            facility: factor
+            for facility in set(facilities)
+            if (factor := capacity_factor(self.weather_seed, facility)) is not None
+        }
+        capacity = room_capacity(facilities, capacity_factors)
+        return CapacityOutlook(
+            round=round_number,
+            must_serve_peak=peak,
+            all_tiers_peak=peak * sum(tier.share for tier in DEMAND_TIERS),
+            room=capacity,
+            risk=blackout_risk(peak, capacity),
+        )
+
+    def _base_amplitude(self) -> float:
+        """The demand block's Round-1 amplitude: kept once the first Trading period settles, and until then worked out
+        from the players who have entered. The caller holds the lock.
+        """
+        if self.demand_amplitude is not None:
+            return self.demand_amplitude
+        return round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(self.network.players()))
+
+    def _recent_market_prices(self, periods: list[TradingPeriod]) -> list[MarketPrices]:
+        """The room's prices in the last :data:`HISTORY_SEASONS` of ``periods`` that have any. A period settled
+        before records were kept, in which nobody had anything operating, has none. The caller holds the lock.
+        """
+        markets = []
+        for period in reversed(periods):
+            if len(markets) == HISTORY_SEASONS:
+                break
+            try:
+                markets.append(self._market_prices(period))
+            except NoMarketPricesError:
+                continue
+        return markets[::-1]
+
+    def _settled_periods(self) -> list[TradingPeriod]:
+        """Every Trading period settled so far, in order. The caller holds the lock."""
+        last = self.settled_period
+        if last is None:
+            return []
+        return [
+            period
+            for round_number in range(1, last.round + 1)
+            for season in SEASONS
+            if _period_key(period := TradingPeriod(round=round_number, season=season)) <= _period_key(last)
+        ]
+
+    def _price_summary(self, period: TradingPeriod) -> PriceSummary | None:
+        """What settled ``period``'s clearing prices looked like, worked out from its record the first time."""
+        with self._summaries_lock:
+            if period not in self._price_summaries:
+                record = self.period_record(period)
+                self._price_summaries[period] = None if record is None else price_summary(record.price)
+            return self._price_summaries[period]
 
     def scoreboard(self) -> Scoreboard:
         """Every player's score after the Rounds completed so far, highest first (#1017, #1250). Final once the
@@ -1699,9 +1904,7 @@ class WorkshopSession:
             ):
                 return None
             players = self.network.players()
-            base_amplitude = self.demand_amplitude
-            if base_amplitude is None:
-                base_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+            base_amplitude = self._base_amplitude()
             round_format = self.current_format()
             job = SettlementJob(
                 period=period,
@@ -1787,6 +1990,7 @@ class WorkshopSession:
         players = [self.network.members[bidder.player_id] for bidder in job.bidders]
         # Worked out before anything changes, so a failure here leaves the session as it was.
         tax_rate = revenue_tax_rate(self.fired_events, period.round, period.season)
+        summary = price_summary(outcome.record.price)
         # The carbon tax (#1015) charges construction in the Round's first Trading period, which always settles.
         first = period.season == SEASONS[0]
         traded = {player.account_id: outcome.results.get(player.account_id) for player in players}
@@ -1863,6 +2067,8 @@ class WorkshopSession:
             self.demand_amplitude, self.settled_period, self.blackouts = previous_amplitude, settled_period, blackouts
             self.recorded_periods, self.peak_demand = recorded_periods, peak_demand
             raise
+        with self._summaries_lock:
+            self._price_summaries[period] = summary
 
     def _fuel_held(self, player: WorkshopPlayer) -> dict[Fuel, float] | None:
         """The fuel ``player``'s facilities can burn in the Trading period being settled: under manual procurement,

@@ -6,8 +6,9 @@
  * console (#1011) on every other page, and a button that opens the latest Recap
  * over the page (#1013). A player gets a link to the facility page (#998) and
  * the button that opens the price-setting panel (#1002), which shows a clock
- * badge while the price-setting window is open. The account menu leads back to
- * the lobby and logs out (#1249).
+ * badge while the price-setting window is open. Everyone gets a small button
+ * that opens the control room, the projector's dashboard, in a new tab (#1289).
+ * The account menu leads back to the lobby and logs out (#1249).
  *
  * On a phone, the buttons on the right show only their icons, and the theme
  * toggle moves into the account menu, so the bar fits without scrolling.
@@ -21,6 +22,7 @@ import {
     Clock,
     Factory,
     LogOut,
+    MonitorPlay,
     SlidersHorizontal,
     Tags,
     TimerOff,
@@ -119,6 +121,7 @@ export function WorkshopTopBar({
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />
                 )}
+                <ControlRoomButton />
                 <ThemeToggle variant="icon-only" className="hidden md:flex" />
                 {entry && (
                     <AccountMenu
@@ -144,6 +147,26 @@ function HomeLink() {
                 <span className="font-titles text-lg">Workshop</span>
             </span>
         </Link>
+    );
+}
+
+/**
+ * Opens the control room in a new tab. Kept to an icon: the room watches it on
+ * the projector, and a player needs it only if they cannot see the screen.
+ */
+function ControlRoomButton() {
+    return (
+        <Button
+            variant="ghost"
+            size="icon-sm"
+            asChild
+            aria-label="Control room"
+            title="Control room"
+        >
+            <Link to="/app/workshop/control-room" target="_blank">
+                <MonitorPlay className="size-4" />
+            </Link>
+        </Button>
     );
 }
 

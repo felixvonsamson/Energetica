@@ -11,7 +11,9 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone.
+The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone. The
+control room (#1289) is open to everyone in the Run, and names no player. Its capacity counts every player's selection
+(#1287), so changing a selection tells every open page to re-read it.
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from energetica.identity.accounts import Account
 from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
+from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
@@ -35,7 +38,7 @@ from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, p
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, MarketPrices, PriceSide
-from energetica.workshop.realtime import invalidate_market_prices, invalidate_session
+from energetica.workshop.realtime import invalidate_control_room, invalidate_market_prices, invalidate_session
 from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
@@ -450,20 +453,26 @@ def get_selection(player: Player, session: Session) -> WorkshopSelectionOut:
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
 @router.post("/selection")
-async def add_to_selection(player: Player, session: Session, pick: WorkshopSelectionIn) -> WorkshopSelectionOut:
-    """Add one facility to the calling player's selection. Only while the Investment phase is open, and
-    only if the player can pay for the whole selection.
+async def add_to_selection(
+    request: Request, player: Player, session: Session, pick: WorkshopSelectionIn
+) -> WorkshopSelectionOut:
+    """Add one facility to the calling player's selection, and tell the control room. Only while the Investment phase
+    is open, and only if the player can pay for the whole selection.
     """
     await run_in_threadpool(session.select, player.account_id, pick.facility)
+    await invalidate_control_room(request.app)
     return _selection_out(player, session)
 
 
 @router.delete("/selection/{facility}")
-async def remove_from_selection(player: Player, session: Session, facility: FacilityId) -> WorkshopSelectionOut:
-    """Take one copy of ``facility`` out of the calling player's selection. Only while the Investment
-    phase is open.
+async def remove_from_selection(
+    request: Request, player: Player, session: Session, facility: FacilityId
+) -> WorkshopSelectionOut:
+    """Take one copy of ``facility`` out of the calling player's selection, and tell the control room. Only while the
+    Investment phase is open.
     """
     await run_in_threadpool(session.deselect, player.account_id, facility)
+    await invalidate_control_room(request.app)
     return _selection_out(player, session)
 
 
@@ -649,6 +658,16 @@ def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], sessio
     for everyone in the Run. Final once the session is over.
     """
     return session.scoreboard()
+
+
+# Reads a settled period's record the first time it is asked for, so it runs on a worker thread.
+@router.get("/control-room")
+def get_control_room(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> ControlRoom:
+    """Everything the control room dashboard shows the room, apart from where the session is: alarms, carbon, each
+    settled season's prices and generation, the room's prices without names, and fuel prices. The same for everyone
+    in the Run.
+    """
+    return session.control_room()
 
 
 def _vote_out(session: WorkshopSession, account_id: int) -> WorkshopVoteOut:

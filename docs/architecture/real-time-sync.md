@@ -275,7 +275,10 @@ A Workshop Run does not use `SocketProvider` or `GameTickContext`. Its server is
 opens its own socket and holds all of the Workshop's listeners:
 
 - `invalidate`: re-read the queries the message names, as in freeplay. The server sends it to
-  every open page when the facilitator changes the session.
+  every open page when the facilitator changes the session. Two player actions send it too, at most
+  twice a second each: a price change re-reads the room's prices and the control room (#1299,
+  #1289), and a selection change re-reads the control room, whose capacity counts every selection
+  (#1287).
 - `settlement_progress`: update the simulation progress in the cached session, while a Trading
   period is being simulated.
 - `connect`: re-read the session, since nothing is sent for changes made while the socket was down.

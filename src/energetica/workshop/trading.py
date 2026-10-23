@@ -63,6 +63,7 @@ import dataclasses
 import math
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import cache
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -84,6 +85,7 @@ from energetica.workshop.demand_block import (
     DemandCurve,
     SettlementPeriod,
     build_demand_block,
+    national_demand_curve,
     nominal_demand,
 )
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
@@ -91,7 +93,7 @@ from energetica.workshop.fleet import OwnedFacility, capacity_factor, is_operati
 from energetica.workshop.fuel import FUEL_USE, FuelPurchase
 from energetica.workshop.period_record import BidLine, Side, TradingPeriodRecord
 from energetica.workshop.prices import DUMP_COST, SCARCITY_PRICE, PriceSheet, is_storage
-from energetica.workshop.round_format import RoundFormat
+from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.seasons import SEASON_DAYS, SEASONS, Season, representative_week, season_days
 from energetica.workshop.weather import Shares, Weather
 
@@ -542,6 +544,29 @@ def demand_scale(season: Season, round_format: RoundFormat, curve: DemandCurve) 
         return sum(demands) / len(demands)
 
     return average(season_days(season)) / average(simulated_days(season, round_format))
+
+
+def peak_demand_factor(round_format: RoundFormat) -> float:
+    """The highest must-serve demand a Round in ``round_format`` clears, per W of the demand block's amplitude, before
+    seasonal events and rationing: what the engine records as the Round's peak (#1287).
+    """
+    return _peak_demand_factor(round_format.trading_format, round_format.clearings_per_day)
+
+
+# Worked out once per format, since it reads every clearing of the year.
+@cache
+def _peak_demand_factor(trading_format: TradingFormat, clearings: ClearingsPerDay) -> float:
+    round_format = RoundFormat(trading_format=trading_format, clearings_per_day=clearings)
+    curve = national_demand_curve()
+    return max(
+        demand_scale(season, round_format, curve)
+        * max(
+            nominal_demand(1.0, curve, SettlementPeriod(day, clearing, clearings))
+            for day in simulated_days(season, round_format)
+            for clearing in range(clearings)
+        )
+        for season in SEASONS
+    )
 
 
 @dataclass(slots=True)

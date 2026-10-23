@@ -20,6 +20,7 @@ import { Route as AppWorkshopIndexRouteImport } from './routes/app/workshop/inde
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
+import { Route as AppWorkshopControlRoomRouteImport } from './routes/app/workshop_.control-room'
 import { Route as AppWorkshopScoreboardRouteImport } from './routes/app/workshop/scoreboard'
 import { Route as AppWorkshopIntroRouteImport } from './routes/app/workshop/intro'
 import { Route as AppWorkshopFacilitiesRouteImport } from './routes/app/workshop/facilities'
@@ -107,6 +108,11 @@ const AppInternalIndexRoute = AppInternalIndexRouteImport.update({
 const AppFacilitatorIndexRoute = AppFacilitatorIndexRouteImport.update({
   id: '/app/facilitator/',
   path: '/app/facilitator/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWorkshopControlRoomRoute = AppWorkshopControlRoomRouteImport.update({
+  id: '/app/workshop_/control-room',
+  path: '/app/workshop/control-room',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWorkshopScoreboardRoute = AppWorkshopScoreboardRouteImport.update({
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/workshop/intro': typeof AppWorkshopIntroRoute
   '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
+  '/app/workshop/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/workshop/intro': typeof AppWorkshopIntroRoute
   '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
+  '/app/workshop/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
   '/app/workshop/intro': typeof AppWorkshopIntroRoute
   '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
+  '/app/workshop_/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
@@ -460,6 +469,7 @@ export interface FileRouteTypes {
     | '/app/workshop/facilities'
     | '/app/workshop/intro'
     | '/app/workshop/scoreboard'
+    | '/app/workshop/control-room'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/app/workshop/facilities'
     | '/app/workshop/intro'
     | '/app/workshop/scoreboard'
+    | '/app/workshop/control-room'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
@@ -551,6 +562,7 @@ export interface FileRouteTypes {
     | '/app/workshop/facilities'
     | '/app/workshop/intro'
     | '/app/workshop/scoreboard'
+    | '/app/workshop_/control-room'
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
@@ -593,6 +605,7 @@ export interface RootRouteChildren {
   AppOverviewsResourcesRoute: typeof AppOverviewsResourcesRoute
   AppOverviewsStorageRoute: typeof AppOverviewsStorageRoute
   AppWikiSlugRoute: typeof AppWikiSlugRoute
+  AppWorkshopControlRoomRoute: typeof AppWorkshopControlRoomRoute
   AppFacilitatorIndexRoute: typeof AppFacilitatorIndexRoute
   AppInternalIndexRoute: typeof AppInternalIndexRoute
   AppWikiIndexRoute: typeof AppWikiIndexRoute
@@ -675,6 +688,13 @@ declare module '@tanstack/react-router' {
       path: '/app/facilitator'
       fullPath: '/app/facilitator'
       preLoaderRoute: typeof AppFacilitatorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/workshop_/control-room': {
+      id: '/app/workshop_/control-room'
+      path: '/app/workshop/control-room'
+      fullPath: '/app/workshop/control-room'
+      preLoaderRoute: typeof AppWorkshopControlRoomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/workshop/scoreboard': {
@@ -981,6 +1001,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppOverviewsResourcesRoute: AppOverviewsResourcesRoute,
   AppOverviewsStorageRoute: AppOverviewsStorageRoute,
   AppWikiSlugRoute: AppWikiSlugRoute,
+  AppWorkshopControlRoomRoute: AppWorkshopControlRoomRoute,
   AppFacilitatorIndexRoute: AppFacilitatorIndexRoute,
   AppInternalIndexRoute: AppInternalIndexRoute,
   AppWikiIndexRoute: AppWikiIndexRoute,
