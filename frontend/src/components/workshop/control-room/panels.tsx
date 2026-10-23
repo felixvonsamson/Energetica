@@ -530,7 +530,7 @@ export function DurationCurve({
             },
             yAxis: {
                 ...valueAxis("per MWh"),
-                max: PRICE_CAP,
+                max: Math.max(PRICE_CAP, ...prices),
                 min: (extent: { min: number }) => Math.min(0, extent.min),
             },
             series: [
