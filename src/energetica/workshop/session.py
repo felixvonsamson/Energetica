@@ -97,7 +97,6 @@ from energetica.workshop.control_room import (
     PriceSummary,
     SeasonFigures,
     alarms,
-    average_price,
     price_summary,
     room_generation,
     room_prices,
@@ -146,7 +145,7 @@ from energetica.workshop.prices import (
     is_storage,
     quoted,
 )
-from energetica.workshop.recap import WorkshopRecap, emissions, recap
+from energetica.workshop.recap import WorkshopRecap, average_price, emissions, recap
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
@@ -1506,27 +1505,22 @@ class WorkshopSession:
                 )
                 for fuel in Fuel
             ]
-            partial = ControlRoom(
-                alarms=alarms(
-                    fired=self.fired_events,
-                    settled=None if last is None else (last.round, last.season),
-                    blackouts=self.blackouts,
-                    unlocks=self.unlocks,
-                    vote_outcomes=self.vote_outcomes,
-                    vote_open=current_round if vote_open else None,
-                ),
-                emissions=round_emissions(
-                    purchases,
-                    results,
-                    rounds=current_round if started else 0,
-                    completed=completed_rounds(self.checkpoint, round_count=self.round_count),
-                ),
-                carbon_tax=CarbonTaxStatus(rate=CARBON_TAX_RATE, since=self.carbon_tax_since(), vote_open=vote_open),
-                seasons=[],
-                duration_curve=None,
-                room_prices=[room_prices(market) for market in self._recent_market_prices(priced)],
-                fuels=fuels,
+            raised = alarms(
+                fired=self.fired_events,
+                settled=None if last is None else (last.round, last.season),
+                blackouts=self.blackouts,
+                unlocks=self.unlocks,
+                vote_outcomes=self.vote_outcomes,
+                vote_open=current_round if vote_open else None,
             )
+            emitted = round_emissions(
+                purchases,
+                results,
+                rounds=current_round if started else 0,
+                completed=completed_rounds(self.checkpoint, round_count=self.round_count),
+            )
+            carbon_tax = CarbonTaxStatus(rate=CARBON_TAX_RATE, since=self.carbon_tax_since(), vote_open=vote_open)
+            prices = [room_prices(market) for market in self._recent_market_prices(priced)]
         summaries = {period: self._price_summary(period) for period in history}
         seasons = []
         for period in history:
@@ -1550,7 +1544,15 @@ class WorkshopSession:
             ),
             None,
         )
-        return partial.model_copy(update={"seasons": seasons, "duration_curve": curve})
+        return ControlRoom(
+            alarms=raised,
+            emissions=emitted,
+            carbon_tax=carbon_tax,
+            seasons=seasons,
+            duration_curve=curve,
+            room_prices=prices,
+            fuels=fuels,
+        )
 
     def _recent_market_prices(self, periods: list[TradingPeriod]) -> list[MarketPrices]:
         """The room's prices in the last :data:`HISTORY_SEASONS` of ``periods`` that have any. A period settled

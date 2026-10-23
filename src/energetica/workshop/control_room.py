@@ -32,7 +32,7 @@ from energetica.workshop.blackout import Blackout
 from energetica.workshop.events import EVENTS, EventCategory, FiredEvent, effect_line
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
-from energetica.workshop.prices import MarketPrices, is_storage
+from energetica.workshop.prices import MarketPrices
 from energetica.workshop.recap import emissions
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RATIONING, TradingResult
@@ -143,19 +143,6 @@ def room_prices(market: MarketPrices) -> RoomPrices:
 
 
 # --- what each season did -------------------------------------------------------------------------
-
-
-def average_price(results: Iterable[TradingResult]) -> float | None:
-    """What generators earned per MWh they sold over ``results``, or None if they sold nothing. Storage resells
-    energy generated elsewhere, so it is left out, as in the Recap's figures.
-    """
-    sold = revenue = 0.0
-    for result in results:
-        for facility, performance in result.facilities.items():
-            if not is_storage(facility):
-                sold += performance.sold
-                revenue += performance.revenue
-    return revenue / (sold / 1e6) if sold > 0 else None
 
 
 def room_generation(results: Iterable[TradingResult]) -> dict[PowerSource, float]:
@@ -332,7 +319,9 @@ Alarm = Annotated[
 
 def _when(round_number: int, season: Season | None, within: float) -> tuple[int, int, float]:
     """Where an alarm falls in the session: its Round, its step in the Round (the Investment phase, then each season),
-    and ``within``, its order in that step.
+    and ``within``, its order in that step. Within a step, an unlock (-2, announced at the Recap before) comes first,
+    then what fires as the step opens (-1: an event, or a vote's result), then an open vote (0), then each blackout
+    by its place in the list, with its rationing just after it.
     """
     return round_number, 0 if season is None else 1 + SEASONS.index(season), within
 

@@ -164,6 +164,8 @@ export function fuelPrice(
         : { value: pricePerKg * 1000, unit: "/t" };
 }
 
+// Written out rather than read from the generated types: the server's `dict[PriceGroup, PriceBox]` comes out
+// as an index signature, whose keys are any string.
 export type PriceGroup =
     | "coal"
     | "gas"
@@ -277,7 +279,7 @@ export function controlRoomPhase(
 }
 
 /** A number with about three significant figures, such as 1.25, 82.4 or 540. */
-function short(value: number): string {
+function threeFigures(value: number): string {
     const digits = value < 10 ? 2 : value < 100 ? 1 : 0;
     return value.toFixed(digits);
 }
@@ -285,9 +287,9 @@ function short(value: number): string {
 /** A mass of CO₂ given in kg, as "1.25 Mt", "82.4 kt" or "540 t". */
 export function formatCo2(kg: number): string {
     const tonnes = kg / 1000;
-    if (tonnes >= 1e6) return `${short(tonnes / 1e6)} Mt`;
-    if (tonnes >= 1e3) return `${short(tonnes / 1e3)} kt`;
-    return `${short(tonnes)} t`;
+    if (tonnes >= 1e6) return `${threeFigures(tonnes / 1e6)} Mt`;
+    if (tonnes >= 1e3) return `${threeFigures(tonnes / 1e3)} kt`;
+    return `${threeFigures(tonnes)} t`;
 }
 
 /**

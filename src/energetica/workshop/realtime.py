@@ -59,9 +59,8 @@ async def invalidate_session(app: FastAPI) -> None:
 
 async def invalidate_market_prices(app: FastAPI) -> None:
     """Tell every open page to re-read the room's prices, and the control room that shows them, because a player
-    changed one (#1299, #1289). At most once
-    every :data:`MARKET_PRICES_INTERVAL_SECONDS`: a change soon after the last message is sent once that time has
-    passed, together with any other change made in between.
+    changed one (#1299, #1289). At most once every :data:`MARKET_PRICES_INTERVAL_SECONDS`: a change soon after the
+    last message is sent once that time has passed, together with any other change made in between.
     """
     throttle: _Throttle | None = getattr(app.state, "market_prices_throttle", None)
     # An app built only for its OpenAPI schema has no server.

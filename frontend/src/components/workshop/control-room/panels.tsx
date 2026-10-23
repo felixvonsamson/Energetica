@@ -37,7 +37,7 @@ const axisLabel = (fontSize: number) => ({
     fontFamily: MONO,
 });
 
-const number = (value: number, digits: number) =>
+const formatFixed = (value: number, digits: number) =>
     value.toLocaleString("en-US", {
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
@@ -666,7 +666,7 @@ export function Fuels({ fuels }: { fuels: ControlRoom["fuels"] }) {
                                     }}
                                 >
                                     {change >= 0 ? "▲" : "▼"}{" "}
-                                    {number(Math.abs(change) * 100, 1)}%
+                                    {formatFixed(Math.abs(change) * 100, 1)}%
                                 </span>
                             )}
                             {fuel.shocked && (
@@ -686,7 +686,7 @@ export function Fuels({ fuels }: { fuels: ControlRoom["fuels"] }) {
                             style={{ color: THEME.ink }}
                         >
                             <CoinIcon className="size-7" />
-                            {number(value, 0)}
+                            {formatFixed(value, 0)}
                             <span
                                 className="text-lg font-normal"
                                 style={{ color: THEME.dim }}

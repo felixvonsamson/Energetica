@@ -18,7 +18,6 @@ from energetica.workshop.control_room import (
     UnlockAlarm,
     VoteAlarm,
     alarms,
-    average_price,
     power_source,
     price_box,
     price_summary,
@@ -29,6 +28,7 @@ from energetica.workshop.control_room import (
 from energetica.workshop.events import EVENTS, FiredEvent, Severity, effect_line
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.recap import average_price
 from energetica.workshop.prices import MarketPrices, PlayerQuotes, QuotedPrice
 from energetica.workshop.round_plan import PlannedEvent
 from energetica.workshop.seasons import Season
