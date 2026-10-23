@@ -35,7 +35,7 @@ import {
     blackoutRisk,
 } from "./mock-data";
 import { clock, fmt, gw, useCountdown, useLiveCapacity } from "./panels";
-import { type CrTheme, THEMES, assetColor } from "./theme";
+import { type CrTheme, THEMES, assetColor, titleColor } from "./theme";
 
 // The theme of the page being rendered. Set by VariantD before its children render; the route
 // remounts the variant when the theme changes, so every memoised chart option picks it up.
@@ -696,7 +696,7 @@ function PriceBox({
         <div className="flex min-h-0 flex-col">
             <div
                 className="text-[16px] leading-tight font-semibold tracking-wide uppercase"
-                style={{ color }}
+                style={{ color: titleColor(type.asset, t) }}
             >
                 {type.name}
             </div>
@@ -815,7 +815,7 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
             <div className="w-[44%] shrink-0">
                 <div
                     className="text-lg leading-tight font-semibold tracking-wider uppercase"
-                    style={{ color }}
+                    style={{ color: titleColor(fuel.asset, t) }}
                 >
                     {fuel.name}
                     <span

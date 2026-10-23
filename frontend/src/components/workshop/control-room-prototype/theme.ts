@@ -33,6 +33,11 @@ export interface CrTheme {
     bar: string;
     barPartial: string;
     alarm: Record<"critical" | "warning" | "info", string>;
+    /**
+     * Coal's title colour, lighter than its facility grey so it reads on the
+     * panel.
+     */
+    coalTitle: string;
 }
 
 export const THEMES: Record<"light" | "dark", CrTheme> = {
@@ -60,6 +65,7 @@ export const THEMES: Record<"light" | "dark", CrTheme> = {
         bar: "#9aa7b8",
         barPartial: "#4a5568",
         alarm: { critical: "#ff3b3b", warning: "#ffb020", info: "#4fc3ff" },
+        coalTitle: "#b4b8bf",
     },
     light: {
         name: "light",
@@ -85,13 +91,32 @@ export const THEMES: Record<"light" | "dark", CrTheme> = {
         bar: "#7a8799",
         barPartial: "#c3ccd8",
         alarm: { critical: "#d61f1f", warning: "#c46a00", info: "#0b72c4" },
+        coalTitle: "#5b6470",
     },
 };
 
+let probe: CanvasRenderingContext2D | null = null;
+
 /**
  * A facility's colour in the theme the page is in, from the app's
- * `--asset-color-*` variable.
+ * `--asset-color-*` variable. Returned as `rgb(r, g, b)` whatever the variable
+ * is written in (the app uses `oklch()`), so the charts can add transparency.
  */
 export function assetColor(asset: string): string {
-    return resolveCSSVar(`--asset-color-${asset}`);
+    const color = resolveCSSVar(`--asset-color-${asset}`);
+    probe ??= Object.assign(document.createElement("canvas"), {
+        width: 1,
+        height: 1,
+    }).getContext("2d", { willReadFrequently: true });
+    if (!probe) return color;
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = color;
+    probe.fillRect(0, 0, 1, 1);
+    const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+/** The colour a facility's name is written in. */
+export function titleColor(asset: string, theme: CrTheme): string {
+    return asset === "coal-burner" ? theme.coalTitle : assetColor(asset);
 }
