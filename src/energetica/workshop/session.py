@@ -1582,11 +1582,8 @@ class WorkshopSession:
         seasonal events, which players learn of only as a forecast, and rationing. The caller holds the lock.
         """
         players = self.network.players()
-        amplitude = self.demand_amplitude
-        if amplitude is None:
-            amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
         peak = (
-            amplitude
+            self._base_amplitude()
             * growth_through(self.demand_growth, round_number)
             * round_demand_factor(self.fired_events, round_number)
             * peak_demand_factor(self.plans[round_number - 1].levers.round_format)
@@ -1614,9 +1611,17 @@ class WorkshopSession:
             round=round_number,
             must_serve_peak=peak,
             all_tiers_peak=peak * sum(tier.share for tier in DEMAND_TIERS),
-            capacity=capacity,
-            risk=blackout_risk(peak=peak, **capacity.model_dump()),
+            room=capacity,
+            risk=blackout_risk(peak, capacity),
         )
+
+    def _base_amplitude(self) -> float:
+        """The demand block's Round-1 amplitude: kept once the first Trading period settles, and until then worked out
+        from the players who have entered. The caller holds the lock.
+        """
+        if self.demand_amplitude is not None:
+            return self.demand_amplitude
+        return round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(self.network.players()))
 
     def _recent_market_prices(self, periods: list[TradingPeriod]) -> list[MarketPrices]:
         """The room's prices in the last :data:`HISTORY_SEASONS` of ``periods`` that have any. A period settled
@@ -1899,9 +1904,7 @@ class WorkshopSession:
             ):
                 return None
             players = self.network.players()
-            base_amplitude = self.demand_amplitude
-            if base_amplitude is None:
-                base_amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+            base_amplitude = self._base_amplitude()
             round_format = self.current_format()
             job = SettlementJob(
                 period=period,

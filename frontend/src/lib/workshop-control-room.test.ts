@@ -8,8 +8,8 @@ import {
     controlRoomPhase,
     energyScale,
     formatCo2,
-    formatPower,
-    formatStoredEnergy,
+    formatMegawatts,
+    formatMegawattHours,
     riskLabel,
     fuelPrice,
     periodLabel,
@@ -283,17 +283,17 @@ describe("energyScale", () => {
     });
 });
 
-describe("formatPower", () => {
+describe("formatMegawatts", () => {
     it("shows power in MW below a GW, and in GW above", () => {
-        expect(formatPower(620e6)).toBe("620 MW");
-        expect(formatPower(1.234e9)).toBe("1.23 GW");
+        expect(formatMegawatts(620e6)).toBe("620 MW");
+        expect(formatMegawatts(1.234e9)).toBe("1.23 GW");
     });
 });
 
-describe("formatStoredEnergy", () => {
+describe("formatMegawattHours", () => {
     it("shows stored energy in MWh below a GWh, and in GWh above", () => {
-        expect(formatStoredEnergy(450e6)).toBe("450 MWh");
-        expect(formatStoredEnergy(2.5e9)).toBe("2.50 GWh");
+        expect(formatMegawattHours(450e6)).toBe("450 MWh");
+        expect(formatMegawattHours(2.5e9)).toBe("2.50 GWh");
     });
 });
 

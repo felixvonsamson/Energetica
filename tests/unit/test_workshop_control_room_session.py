@@ -10,6 +10,7 @@ import pytest
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, BlackoutRisk, PowerSource
+from energetica.workshop.demand_block import DEMAND_TIERS
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES
 from energetica.workshop.round_plan import LeverChanges
@@ -185,27 +186,27 @@ def test_the_must_serve_peak_is_the_peak_the_engine_records(tmp_path: Path) -> N
 
     assert outlook.round == 1
     assert outlook.must_serve_peak == pytest.approx(session.peak_demand[1])
-    assert outlook.all_tiers_peak == pytest.approx(2.5 * outlook.must_serve_peak)
+    assert outlook.all_tiers_peak == pytest.approx(sum(tier.share for tier in DEMAND_TIERS) * outlook.must_serve_peak)
 
 
 def test_selected_facilities_count_towards_the_rounds_capacity(tmp_path: Path) -> None:
     session = _investing(tmp_path / "session.json")
     coal = CATALOG[FacilityId.COAL_BURNER].base_power_generation
-    before = session.control_room().capacity.capacity.controllable
+    before = session.control_room().capacity.room.controllable
 
     session.select(1, FacilityId.COAL_BURNER)
 
-    assert session.control_room().capacity.capacity.controllable == pytest.approx(before + coal)
+    assert session.control_room().capacity.room.controllable == pytest.approx(before + coal)
 
 
 def test_facilities_under_construction_do_not_count(tmp_path: Path) -> None:
     session = _investing(tmp_path / "session.json")
-    before = session.control_room().capacity.capacity
+    before = session.control_room().capacity.room
 
     # A nuclear reactor takes Rounds to build.
     session.select(1, FacilityId.NUCLEAR_REACTOR)
 
-    assert session.control_room().capacity.capacity == before
+    assert session.control_room().capacity.room == before
 
 
 def test_a_room_with_nothing_built_is_sure_to_black_out(tmp_path: Path) -> None:

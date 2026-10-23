@@ -306,14 +306,14 @@ export function energyScale(maxWh: number): {
 }
 
 /** Power given in W, as "620 MW" below a GW and "1.23 GW" above. */
-export function formatPower(watts: number): string {
+export function formatMegawatts(watts: number): string {
     return watts >= 1e9
         ? `${(watts / 1e9).toFixed(2)} GW`
         : `${Math.round(watts / 1e6)} MW`;
 }
 
 /** Energy given in Wh, as "450 MWh" below a GWh and "2.50 GWh" above. */
-export function formatStoredEnergy(wattHours: number): string {
+export function formatMegawattHours(wattHours: number): string {
     return wattHours >= 1e9
         ? `${(wattHours / 1e9).toFixed(2)} GWh`
         : `${Math.round(wattHours / 1e6)} MWh`;

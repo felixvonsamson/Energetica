@@ -315,22 +315,20 @@ def room_capacity(facilities: Iterable[FacilityId], capacity_factors: Mapping[Fa
     )
 
 
-def blackout_risk(
-    *, peak: float, controllable: float, total: float, weighted: float, storage_power: float, storage_energy: float
-) -> BlackoutRisk:
-    """How likely a blackout is at must-serve ``peak``, in W, given the room's capacity (:class:`RoomCapacity`).
+def blackout_risk(peak: float, capacity: RoomCapacity) -> BlackoutRisk:
+    """How likely a blackout is at must-serve ``peak``, in W, given the room's ``capacity``.
 
     Below the peak with everything running, a blackout is guaranteed. With enough controllable power, it is very
     unlikely, though a player can still run out of fuel. In between, storage decides: it is enough when the geometric
     mean of the weighted weather-dependent power and the storage power covers the gap. Storage counts only the power
     it can keep up for :data:`STORAGE_HOURS`.
     """
-    if total < peak:
+    if capacity.total < peak:
         return BlackoutRisk.GUARANTEED
-    if controllable >= peak:
+    if capacity.controllable >= peak:
         return BlackoutRisk.VERY_UNLIKELY
-    storage = min(storage_power, storage_energy / STORAGE_HOURS)
-    if math.sqrt(weighted * storage) > peak - controllable:
+    storage = min(capacity.storage_power, capacity.storage_energy / STORAGE_HOURS)
+    if math.sqrt(capacity.weighted * storage) > peak - capacity.controllable:
         return BlackoutRisk.UNLIKELY
     return BlackoutRisk.LIKELY
 
@@ -343,7 +341,7 @@ class CapacityOutlook(BaseModel):
         description="The highest must-serve demand of the Round, in W, before any seasonal event or rationing"
     )
     all_tiers_peak: float = Field(description="The highest demand counting every demand tier, in W")
-    capacity: RoomCapacity = Field(
+    room: RoomCapacity = Field(
         description="What the facilities working in the Round can produce: those owned and those selected to buy"
     )
     risk: BlackoutRisk

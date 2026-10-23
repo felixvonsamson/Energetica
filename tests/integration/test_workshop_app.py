@@ -29,7 +29,7 @@ from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
-from energetica.workshop.facilities import FacilityId, Fuel
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
@@ -2146,5 +2146,5 @@ def test_the_control_room_counts_selected_facilities_in_the_rounds_capacity(sess
     client.post(SELECTION_URL, json={"facility": "coal_burner"})
 
     after = client.get(CONTROL_ROOM_URL).json()["capacity"]
-    assert after["capacity"]["controllable"] > before["capacity"]["controllable"]
-    assert after["risk"] in {"guaranteed", "likely", "unlikely", "very_unlikely"}
+    coal = CATALOG[FacilityId.COAL_BURNER].base_power_generation
+    assert after["room"]["controllable"] == pytest.approx(before["room"]["controllable"] + coal)

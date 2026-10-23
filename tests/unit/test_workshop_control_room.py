@@ -12,6 +12,7 @@ from energetica.workshop.control_room import (
     HYDRO_GUARANTEED_SHARE,
     STORAGE_HOURS,
     BlackoutRisk,
+    RoomCapacity,
     blackout_risk,
     room_capacity,
     BlackoutAlarm,
@@ -362,16 +363,15 @@ PEAK = 1000e6
 
 
 def _risk(**overrides: float) -> BlackoutRisk:
-    arguments = {
-        "peak": PEAK,
+    capacity = {
         "controllable": 0.0,
         "total": 0.0,
         "weighted": 0.0,
         "storage_power": 0.0,
         "storage_energy": 0.0,
     }
-    arguments.update(overrides)
-    return blackout_risk(**arguments)
+    capacity.update(overrides)
+    return blackout_risk(PEAK, RoomCapacity(**capacity))
 
 
 def test_a_blackout_is_guaranteed_when_total_capacity_is_below_the_peak() -> None:

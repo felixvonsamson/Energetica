@@ -13,8 +13,8 @@ import {
     alarmLine,
     energyScale,
     formatCo2,
-    formatPower,
-    formatStoredEnergy,
+    formatMegawattHours,
+    formatMegawatts,
     fuelPrice,
     periodLabel,
     priceScales,
@@ -168,12 +168,12 @@ export function Alarms({ alarms }: { alarms: ControlRoom["alarms"] }) {
 const CAPACITY_HEADROOM = 1.08;
 
 export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
-    const { capacity, risk } = outlook;
+    const { room, risk } = outlook;
     const scaleMax = outlook.all_tiers_peak * CAPACITY_HEADROOM;
     const pct = (watts: number) =>
         `${(Math.min(watts, scaleMax) / scaleMax) * 100}%`;
-    const weatherDependent = capacity.total - capacity.controllable;
-    const storage = sourceColor("storage");
+    const weatherDependent = room.total - room.controllable;
+    const storageColor = sourceColor("storage");
     return (
         <div
             className="flex h-full flex-col gap-3 pb-2"
@@ -194,13 +194,13 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
                 <PeakLabel
                     at={pct(outlook.must_serve_peak)}
                     label="Must-serve peak"
-                    value={formatPower(outlook.must_serve_peak)}
+                    value={formatMegawatts(outlook.must_serve_peak)}
                     strong
                 />
                 <PeakLabel
                     at={pct(outlook.all_tiers_peak)}
                     label="All demand tiers"
-                    value={formatPower(outlook.all_tiers_peak)}
+                    value={formatMegawatts(outlook.all_tiers_peak)}
                 />
                 <div
                     className="absolute inset-x-0 bottom-0 h-14 rounded-sm"
@@ -209,14 +209,14 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
                     <div
                         className="absolute inset-y-0 left-0 transition-all duration-700"
                         style={{
-                            width: pct(capacity.controllable),
+                            width: pct(room.controllable),
                             background: THEME.accent,
                         }}
                     />
                     <div
                         className="absolute inset-y-0 transition-all duration-700"
                         style={{
-                            left: pct(capacity.controllable),
+                            left: pct(room.controllable),
                             width: pct(weatherDependent),
                             background: `repeating-linear-gradient(135deg, ${THEME.weather[0]} 0 10px, ${THEME.weather[1]} 10px 20px)`,
                         }}
@@ -239,29 +239,29 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
             </div>
 
             <div className="grid grid-cols-5 gap-2">
-                <Figure
+                <CapacityFigure
                     label="Controllable"
-                    value={formatPower(capacity.controllable)}
+                    value={formatMegawatts(room.controllable)}
                     swatch={THEME.accent}
                 />
-                <Figure
+                <CapacityFigure
                     label="Weather-dep."
-                    value={formatPower(weatherDependent)}
+                    value={formatMegawatts(weatherDependent)}
                     swatch={THEME.weather[0]}
                 />
-                <Figure
+                <CapacityFigure
                     label="Total gen."
-                    value={formatPower(capacity.total)}
+                    value={formatMegawatts(room.total)}
                 />
-                <Figure
+                <CapacityFigure
                     label="Storage power"
-                    value={formatPower(capacity.storage_power)}
-                    swatch={storage}
+                    value={formatMegawatts(room.storage_power)}
+                    swatch={storageColor}
                 />
-                <Figure
+                <CapacityFigure
                     label="Storage cap."
-                    value={formatStoredEnergy(capacity.storage_energy)}
-                    swatch={storage}
+                    value={formatMegawattHours(room.storage_energy)}
+                    swatch={storageColor}
                 />
             </div>
         </div>
@@ -308,7 +308,7 @@ function PeakLabel({
     );
 }
 
-function Figure({
+function CapacityFigure({
     label,
     value,
     swatch,

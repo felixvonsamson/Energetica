@@ -5357,7 +5357,7 @@ export interface components {
              */
             all_tiers_peak: number;
             /** @description What the facilities working in the Round can produce: those owned and those selected to buy */
-            capacity: components["schemas"]["RoomCapacity"];
+            room: components["schemas"]["RoomCapacity"];
             risk: components["schemas"]["BlackoutRisk"];
         };
         /**
