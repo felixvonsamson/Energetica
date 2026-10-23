@@ -1,8 +1,9 @@
 /**
  * PROTOTYPE (#1289) — throwaway route. Three layouts for the workshop's
  * control-room dashboard, with made-up data, at
- * `/app/workshop/control-room-prototype?variant=A|B|C|D`. For D, `?periods=0`
- * to `8` sets how many Trading periods have settled.
+ * `/app/workshop/control-room-prototype?variant=A|B|C|D1|D2|D3`. D1 to D3 show
+ * the same layout at three points of a session; `?periods=0` to `24` overrides
+ * how many Trading periods have settled.
  *
  * It renders outside the Workshop shell (the `_` in the file name), since the
  * projector page has no top bar, and opens in either Run mode without
@@ -19,6 +20,7 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { PrototypeSwitcher } from "@/components/prototype-switcher";
 import {
     MAX_PERIODS,
+    SCENES,
     scene,
 } from "@/components/workshop/control-room-prototype/history";
 import { VariantD } from "@/components/workshop/control-room-prototype/variant-d";
@@ -34,11 +36,14 @@ type Scale = "transform" | "zoom" | "none";
 export const Route = createFileRoute("/app/workshop_/control-room-prototype")({
     component: ControlRoomPrototype,
     validateSearch: (search: Record<string, unknown>) => ({
-        variant: typeof search.variant === "string" ? search.variant : "D",
-        periods: Math.min(
-            MAX_PERIODS,
-            Math.max(0, Math.round(Number(search.periods ?? MAX_PERIODS)) || 0),
-        ),
+        variant: typeof search.variant === "string" ? search.variant : "D2",
+        periods:
+            search.periods === undefined
+                ? undefined
+                : Math.min(
+                      MAX_PERIODS,
+                      Math.max(0, Math.round(Number(search.periods)) || 0),
+                  ),
         scale: (["transform", "zoom", "none"].includes(String(search.scale))
             ? search.scale
             : "transform") as Scale,
@@ -58,8 +63,14 @@ function ControlRoomPrototype() {
                 {variant === "A" && <VariantA />}
                 {variant === "B" && <VariantB />}
                 {variant === "C" && <VariantC />}
-                {variant === "D" && (
-                    <VariantD key={periods} scene={scene(periods)} />
+                {variant in SCENES && (
+                    <VariantD
+                        key={`${variant}-${periods}`}
+                        scene={scene(
+                            periods ?? SCENES[variant]!.settled,
+                            SCENES[variant]!.roundCount,
+                        )}
+                    />
                 )}
             </FixedCanvas>
             <PrototypeSwitcher

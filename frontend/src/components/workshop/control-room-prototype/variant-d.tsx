@@ -1,14 +1,13 @@
 /**
- * PROTOTYPE (#1289) — throwaway. Variant D: variant B reworked after the first
- * review.
+ * PROTOTYPE (#1289) — throwaway. Variant D: variant B reworked after two
+ * reviews, shown in three scenes (D1 to D3, see `SCENES` in `history.ts`).
  *
- * - Left: alarms, market price per season and the price duration curve, a third
+ * - Left: carbon, market price per season and the price duration curve, a third
  *   of the height each.
- * - Centre: capacity against demand, then the room's prices per facility type
- *   beside the room's generation per season.
- * - Right: Round, phase and the countdown together, then fuel prices and carbon.
- *
- * `?periods=0` to `8` sets how many Trading periods have settled.
+ * - Centre: alarms, capacity against demand, then the room's prices per facility
+ *   type.
+ * - Right: Round, phase and the countdown together, then fuel prices and the
+ *   room's generation per season.
  */
 
 import * as echarts from "echarts";
@@ -18,11 +17,15 @@ import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { cn } from "@energetica/ui/lib/utils";
 
 import { DIM, EChart, GRID_LINE, INK } from "./charts";
-import { GENERATION_SOURCES, PRICE_TYPES, type Scene } from "./history";
+import {
+    GENERATION_SOURCES,
+    PRICE_TYPES,
+    type PriceGroup,
+    type Scene,
+} from "./history";
 import {
     ALARM_COLOR,
     ALL_TIERS_PEAK,
-    CARBON_TAX,
     MUST_SERVE_PEAK,
     RISK_STYLE,
     type RoomCapacity,
@@ -47,7 +50,7 @@ const axisLabel = (fontSize: number) => ({
 function Empty({ children }: { children: string }) {
     return (
         <div
-            className="flex h-full items-center justify-center text-xl italic"
+            className="flex h-full items-center justify-center text-center text-xl italic"
             style={{ color: DIM }}
         >
             {children}
@@ -55,14 +58,16 @@ function Empty({ children }: { children: string }) {
     );
 }
 
+const NOTHING_SETTLED = "Fills in once the first season has settled";
+
 export function VariantD({ scene }: { scene: Scene }) {
     const seconds = useCountdown();
     const capacity = useLiveCapacity();
     return (
-        <div className="grid h-full grid-cols-[470px_1fr_600px] gap-2 p-3">
+        <div className="grid h-full grid-cols-[470px_1fr_540px] gap-2 p-3">
             <div className="grid min-h-0 grid-rows-3 gap-2">
-                <Panel title="Alarms">
-                    <Alarms scene={scene} />
+                <Panel title="Carbon" right={<CarbonTaxPill scene={scene} />}>
+                    <Carbon scene={scene} />
                 </Panel>
                 <Panel title="Market price per season">
                     <MarketPrices scene={scene} />
@@ -73,25 +78,26 @@ export function VariantD({ scene }: { scene: Scene }) {
             </div>
 
             <div className="flex min-h-0 flex-col gap-2">
+                <Panel title="Alarms" className="h-[250px] shrink-0">
+                    <Alarms scene={scene} />
+                </Panel>
                 <Panel
                     title="Capacity vs must-serve demand"
-                    className="h-[390px] shrink-0"
+                    className="h-[340px] shrink-0"
                 >
                     <CapacityD capacity={capacity} />
                 </Panel>
-                <div className="grid min-h-0 flex-1 grid-cols-[1.2fr_1fr] gap-2">
-                    <Panel title="Room prices per facility type">
-                        <PriceBoxes scene={scene} />
-                    </Panel>
-                    <Panel title="Room generation per season">
-                        <Generation scene={scene} />
-                    </Panel>
-                </div>
+                <Panel
+                    title="Room prices per facility type"
+                    className="min-h-0 flex-1"
+                >
+                    <PriceBoxes scene={scene} />
+                </Panel>
             </div>
 
             <div className="flex min-h-0 flex-col gap-2">
                 <div
-                    className="flex h-[170px] shrink-0 items-center justify-between px-2"
+                    className="flex h-[150px] shrink-0 items-center justify-between px-1"
                     style={{ color: INK }}
                 >
                     <div>
@@ -103,79 +109,72 @@ export function VariantD({ scene }: { scene: Scene }) {
                             </span>
                         </div>
                         <div
-                            className="mt-1 text-[28px] tracking-wide whitespace-nowrap uppercase"
+                            className="mt-1 text-[24px] tracking-wide whitespace-nowrap uppercase"
                             style={{ color: "#4fc3ff" }}
                         >
                             {scene.phase}
                         </div>
-                        <div className="mt-1 text-2xl" style={{ color: INK }}>
+                        <div className="mt-1 text-2xl whitespace-nowrap">
                             {scene.next}
                         </div>
                     </div>
-                    <Countdown seconds={seconds} className="text-[96px]" />
+                    <Countdown seconds={seconds} className="text-[88px]" />
                 </div>
-                <Panel title="Fuel prices" className="min-h-0 flex-[1.6]">
+                <Panel title="Fuel prices" className="min-h-0 flex-1">
                     <Fuels scene={scene} />
                 </Panel>
                 <Panel
-                    title="Carbon"
-                    className="min-h-0 flex-1"
-                    right={<CarbonTaxPill scene={scene} />}
+                    title="Room generation per season"
+                    className="min-h-0 flex-[1.35]"
                 >
-                    <Carbon scene={scene} />
+                    <Generation scene={scene} />
                 </Panel>
             </div>
         </div>
     );
 }
 
-// Alarms: the newest in full, on as many lines as they need; older ones on one short line.
+// Alarms: one line each. The newest give the full text; older ones only a word or two.
 
 const FULL_ALARMS = 4;
+const MAX_ALARMS = 5;
 
 function Alarms({ scene }: { scene: Scene }) {
     if (scene.alarms.length === 0) return <Empty>No alarms</Empty>;
     return (
         <div className="flex h-full flex-col gap-1 overflow-hidden font-mono">
-            {scene.alarms.map((alarm, i) =>
-                i < FULL_ALARMS ? (
+            {scene.alarms.slice(0, MAX_ALARMS).map((alarm, i) => {
+                const full = i < FULL_ALARMS;
+                return (
                     <div
                         key={`${alarm.when}-${alarm.tag}-${alarm.short}`}
-                        className="border-l-[6px] bg-[#0e1828] px-2 py-0.5 text-[16px] leading-snug"
-                        style={{
-                            borderColor: ALARM_COLOR[alarm.level],
-                            color: INK,
-                        }}
+                        className={cn(
+                            "flex shrink-0 items-baseline gap-3 border-l-[6px] px-2 whitespace-nowrap",
+                            full ? "bg-[#0e1828] py-0.5" : "",
+                        )}
+                        style={{ borderColor: ALARM_COLOR[alarm.level] }}
                     >
-                        <span style={{ color: DIM }}>{alarm.when}</span>{" "}
                         <span
-                            className="font-bold"
-                            style={{ color: ALARM_COLOR[alarm.level] }}
+                            className="w-[70px] shrink-0 text-[19px]"
+                            style={{ color: DIM }}
                         >
-                            {alarm.tag}
-                        </span>{" "}
-                        {alarm.text}
-                    </div>
-                ) : (
-                    <div
-                        key={`${alarm.when}-${alarm.tag}-${alarm.short}`}
-                        className="flex gap-2 border-l-[6px] px-2 text-[15px] leading-tight"
-                        style={{
-                            borderColor: ALARM_COLOR[alarm.level],
-                            color: DIM,
-                        }}
-                    >
-                        <span>{alarm.when}</span>
+                            {alarm.when}
+                        </span>
                         <span
-                            className="font-bold"
+                            className="w-[112px] shrink-0 text-[19px] font-bold"
                             style={{ color: ALARM_COLOR[alarm.level] }}
                         >
                             {alarm.tag}
                         </span>
-                        <span className="truncate">{alarm.short}</span>
+                        <span
+                            className="truncate text-[17px]"
+                            style={{ color: full ? INK : DIM }}
+                        >
+                            {full ? alarm.text : alarm.short}
+                        </span>
                     </div>
-                ),
-            )}
+                );
+            })}
         </div>
     );
 }
@@ -218,6 +217,7 @@ function MarketPrices({ scene }: { scene: Scene }) {
                     stack: "band",
                     data: scene.marketPrices.map((p) => p.p90 - p.p10),
                     barWidth: "55%",
+                    barMaxWidth: 50,
                     itemStyle: {
                         color: "rgba(79, 195, 255, 0.22)",
                         borderColor: "rgba(79,195,255,0.5)",
@@ -241,7 +241,8 @@ function MarketPrices({ scene }: { scene: Scene }) {
             ],
         };
     }, [scene]);
-    if (scene.settled === 0) return <Empty>No season settled yet</Empty>;
+    if (scene.marketPrices.length === 0)
+        return <Empty>{NOTHING_SETTLED}</Empty>;
     return <EChart option={option} />;
 }
 
@@ -282,7 +283,7 @@ function DurationCurve({ scene }: { scene: Scene }) {
         [scene],
     );
     if (scene.durationCurve.length === 0)
-        return <Empty>No season settled yet</Empty>;
+        return <Empty>{NOTHING_SETTLED}</Empty>;
     return <EChart option={option} />;
 }
 
@@ -307,7 +308,7 @@ function CapacityD({ capacity }: { capacity: RoomCapacity }) {
             </div>
 
             {/* The two peaks, each written up to its mark on the bar */}
-            <div className="relative h-[150px] shrink-0">
+            <div className="relative h-[140px] shrink-0">
                 <PeakLabel
                     at={pct(MUST_SERVE_PEAK)}
                     label="Must-serve peak"
@@ -447,29 +448,44 @@ function Figure({
     );
 }
 
-// Room prices: one small chart per type, all on the same price scale
+// Room prices: controllable types share a scale, as do renewables and storage. Above 300 the
+// whisker stops at the top with an arrow.
 
+const PRICE_CAP = 300;
 const WHISKER = "#8193ad";
 const MEDIAN = "#05080d";
 
 function niceMax(value: number) {
-    const step = value > 200 ? 50 : 25;
-    return Math.ceil(value / step) * step;
+    const step = value > 100 ? 50 : 20;
+    return Math.min(PRICE_CAP, Math.ceil(value / step) * step);
 }
 
 function PriceBoxes({ scene }: { scene: Scene }) {
-    const max = useMemo(
-        () =>
-            niceMax(
-                Math.max(1, ...scene.playerPrices.flat().map((box) => box[4]!)),
-            ),
-        [scene],
-    );
-    if (scene.priceLabels.length === 0) return <Empty>No prices set yet</Empty>;
+    const scales = useMemo(() => {
+        const out = {} as Record<PriceGroup, number>;
+        for (const group of ["controllable", "renewable", "storage"] as const) {
+            const tops = PRICE_TYPES.flatMap((type, i) =>
+                type.group === group
+                    ? scene.playerPrices[i]!.map((box) => box[4]!)
+                    : [],
+            );
+            out[group] = niceMax(Math.max(1, ...tops));
+        }
+        return out;
+    }, [scene]);
+    if (scene.priceLabels.length === 0)
+        return (
+            <Empty>Prices show once the first price-setting window opens</Empty>
+        );
     return (
-        <div className="grid h-full grid-cols-2 grid-rows-4 gap-x-3 gap-y-1">
+        <div className="grid h-full grid-cols-4 grid-rows-2 gap-x-4 gap-y-2">
             {PRICE_TYPES.map((type, i) => (
-                <PriceBox key={type.name} scene={scene} index={i} max={max} />
+                <PriceBox
+                    key={type.name}
+                    scene={scene}
+                    index={i}
+                    max={scales[type.group]}
+                />
             ))}
         </div>
     );
@@ -486,17 +502,26 @@ function PriceBox({
 }) {
     const type = PRICE_TYPES[index]!;
     const option = useMemo<echarts.EChartsOption>(() => {
-        const rows = scene.playerPrices[index]!.map((box, i) => [i, ...box]);
+        const rows = scene.playerPrices[index]!.map((box, i) => [
+            i,
+            ...box.map((v) => Math.min(v, max)),
+            box[4]!,
+        ]);
         const last = rows.length - 1;
         return {
-            grid: { left: 34, right: 4, top: 4, bottom: 4 },
-            xAxis: { type: "category", data: scene.priceLabels, show: false },
+            grid: { left: 36, right: 4, top: 12, bottom: 6 },
+            xAxis: {
+                type: "category",
+                data: scene.priceLabels,
+                show: false,
+                axisLine: { lineStyle: { color: GRID_LINE } },
+            },
             yAxis: {
                 type: "value",
                 min: 0,
                 max,
                 interval: max / 2,
-                axisLabel: axisLabel(11),
+                axisLabel: axisLabel(12),
                 splitLine: { lineStyle: { color: GRID_LINE } },
             },
             series: [
@@ -505,19 +530,18 @@ function PriceBox({
                     data: rows,
                     renderItem: (params, api) => {
                         const x = api.value(0) as number;
-                        const at = (v: number) => api.coord([x, v]);
-                        const [cx, yMin] = at(api.value(1) as number) as [
-                            number,
-                            number,
-                        ];
-                        const yQ1 = at(api.value(2) as number)[1]!;
-                        const yMed = at(api.value(3) as number)[1]!;
-                        const yQ3 = at(api.value(4) as number)[1]!;
-                        const yMax = at(api.value(5) as number)[1]!;
+                        const y = (v: number) => api.coord([x, v])[1]!;
+                        const cx = api.coord([x, 0])[0]!;
+                        const yMin = y(api.value(1) as number);
+                        const yQ1 = y(api.value(2) as number);
+                        const yMed = y(api.value(3) as number);
+                        const yQ3 = y(api.value(4) as number);
+                        const yMax = y(api.value(5) as number);
+                        const capped = (api.value(6) as number) > max;
                         const band = (api.size!([1, 0]) as number[])[0]!;
                         const w = Math.min(band * 0.6, 28);
                         const cap = w * 0.4;
-                        // The open period's prices are live: drawn hollow.
+                        // The open period's prices are live: drawn hollow and dashed.
                         const live =
                             scene.livePeriod && params.dataIndex === last;
                         const line = { stroke: WHISKER, lineWidth: 1.5 };
@@ -544,16 +568,28 @@ function PriceBox({
                                     },
                                     style: line,
                                 },
-                                {
-                                    type: "line",
-                                    shape: {
-                                        x1: cx - cap,
-                                        y1: yMax,
-                                        x2: cx + cap,
-                                        y2: yMax,
-                                    },
-                                    style: line,
-                                },
+                                capped
+                                    ? {
+                                          type: "polygon",
+                                          shape: {
+                                              points: [
+                                                  [cx, yMax - 8],
+                                                  [cx - 6, yMax + 3],
+                                                  [cx + 6, yMax + 3],
+                                              ],
+                                          },
+                                          style: { fill: "#ff8a1f" },
+                                      }
+                                    : {
+                                          type: "line",
+                                          shape: {
+                                              x1: cx - cap,
+                                              y1: yMax,
+                                              x2: cx + cap,
+                                              y2: yMax,
+                                          },
+                                          style: line,
+                                      },
                                 {
                                     type: "rect",
                                     shape: {
@@ -594,7 +630,7 @@ function PriceBox({
     return (
         <div className="flex min-h-0 flex-col">
             <div
-                className="text-[15px] leading-tight font-semibold tracking-wide uppercase"
+                className="text-[16px] leading-tight font-semibold tracking-wide uppercase"
                 style={{ color: type.color }}
             >
                 {type.name}
@@ -611,13 +647,13 @@ function PriceBox({
 function Generation({ scene }: { scene: Scene }) {
     const option = useMemo<echarts.EChartsOption>(
         () => ({
-            grid: { left: 52, right: 8, top: 74, bottom: 26 },
+            grid: { left: 44, right: 8, top: 62, bottom: 40 },
             legend: {
                 top: 0,
-                textStyle: { color: INK, fontSize: 13 },
+                textStyle: { color: INK, fontSize: 14 },
                 itemWidth: 12,
                 itemHeight: 12,
-                itemGap: 8,
+                itemGap: 10,
                 icon: "rect",
             },
             xAxis: {
@@ -647,21 +683,21 @@ function Generation({ scene }: { scene: Scene }) {
                 stack: "generation",
                 data: scene.generation[i],
                 barWidth: "62%",
-                barMaxWidth: 60,
+                barMaxWidth: 50,
                 itemStyle: { color: source.color },
             })),
         }),
         [scene],
     );
-    if (scene.settled === 0) return <Empty>No season settled yet</Empty>;
+    if (scene.periods.length === 0) return <Empty>{NOTHING_SETTLED}</Empty>;
     return <EChart option={option} />;
 }
 
-// Fuel prices
+// Fuel prices: always the last few prices, those from before the session included.
 
 function Fuels({ scene }: { scene: Scene }) {
     return (
-        <div className="flex h-full flex-col gap-2">
+        <div className="flex h-full flex-col gap-1">
             {scene.fuels.map((fuel) => (
                 <div
                     key={fuel.name}
@@ -681,7 +717,7 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
             grid: { left: 4, right: 8, top: 8, bottom: 6 },
             xAxis: {
                 type: "category",
-                data: fuel.labels,
+                data: fuel.prices.map(String),
                 show: false,
                 boundaryGap: false,
             },
@@ -703,6 +739,28 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
                             { offset: 1, color: "rgba(0,0,0,0)" },
                         ]),
                     },
+                    markArea:
+                        fuel.preSession > 0
+                            ? {
+                                  silent: true,
+                                  itemStyle: {
+                                      color: "rgba(255,255,255,0.04)",
+                                  },
+                                  label: {
+                                      show: true,
+                                      position: "insideTopLeft",
+                                      color: DIM,
+                                      fontSize: 12,
+                                      formatter: "before",
+                                  },
+                                  data: [
+                                      [
+                                          { xAxis: 0 },
+                                          { xAxis: fuel.preSession - 1 },
+                                      ],
+                                  ],
+                              }
+                            : undefined,
                     markPoint: {
                         symbol: "circle",
                         symbolSize: 10,
@@ -724,19 +782,25 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
         [fuel],
     );
     const now = fuel.prices[fuel.prices.length - 1]!;
-    const before = fuel.prices[fuel.prices.length - 2];
-    const change = before === undefined ? undefined : (now / before - 1) * 100;
+    const before = fuel.prices[fuel.prices.length - 2]!;
+    const change = (now / before - 1) * 100;
     return (
         <div className="flex h-full min-h-0 items-center gap-2">
-            <div className="w-[45%] shrink-0">
+            <div className="w-[44%] shrink-0">
                 <div
-                    className="text-lg font-semibold tracking-wider uppercase"
+                    className="text-lg leading-tight font-semibold tracking-wider uppercase"
                     style={{ color: fuel.color }}
                 >
                     {fuel.name}
+                    <span
+                        className="ml-3 font-mono text-lg font-normal tracking-normal"
+                        style={{ color: change >= 0 ? "#ff8a1f" : "#2fd67b" }}
+                    >
+                        {change >= 0 ? "▲" : "▼"} {fmt(Math.abs(change), 1)}%
+                    </span>
                 </div>
                 <div
-                    className="flex items-center gap-1 font-mono text-4xl font-bold"
+                    className="flex items-center gap-1 font-mono text-[34px] leading-tight font-bold"
                     style={{ color: INK }}
                 >
                     <CoinIcon className="size-7" />
@@ -748,21 +812,9 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
                         {fuel.unit}
                     </span>
                 </div>
-                {change !== undefined && (
-                    <div
-                        className="font-mono text-xl"
-                        style={{ color: change >= 0 ? "#ff8a1f" : "#2fd67b" }}
-                    >
-                        {change >= 0 ? "▲" : "▼"} {fmt(Math.abs(change), 1)}%
-                    </div>
-                )}
             </div>
             <div className="min-h-0 min-w-0 flex-1 self-stretch">
-                {fuel.prices.length > 1 ? (
-                    <EChart option={option} />
-                ) : (
-                    <Empty>History starts next season</Empty>
-                )}
+                <EChart option={option} />
             </div>
         </div>
     );
@@ -771,18 +823,16 @@ function FuelRow({ fuel }: { fuel: Scene["fuels"][number] }) {
 // Carbon
 
 function CarbonTaxPill({ scene }: { scene: Scene }) {
-    // The mock vote opens in Round 3, the first Round that holds one.
-    const status = scene.settled >= 8 ? CARBON_TAX.status : "off";
     const label =
-        status === "in-force"
-            ? `TAX ${CARBON_TAX.rate}/t`
-            : status === "vote-open"
+        scene.carbonTax === "in-force"
+            ? "TAX 40/t"
+            : scene.carbonTax === "vote-open"
               ? "TAX VOTE OPEN"
               : "NO TAX";
     const color =
-        status === "in-force"
+        scene.carbonTax === "in-force"
             ? "#2fd67b"
-            : status === "vote-open"
+            : scene.carbonTax === "vote-open"
               ? "#ffd21f"
               : DIM;
     return (
@@ -801,7 +851,7 @@ function Carbon({ scene }: { scene: Scene }) {
             grid: { left: 4, right: 4, top: 22, bottom: 22 },
             xAxis: {
                 type: "category",
-                data: scene.roundEmissions.map((_, i) => `R${i + 1}`),
+                data: scene.roundEmissions.map((r) => r.label),
                 axisLabel: axisLabel(13),
                 axisTick: { show: false },
                 axisLine: { lineStyle: { color: GRID_LINE } },
@@ -810,19 +860,15 @@ function Carbon({ scene }: { scene: Scene }) {
             series: [
                 {
                     type: "bar",
-                    data: scene.roundEmissions.map((v, i) => ({
-                        value: v,
+                    data: scene.roundEmissions.map((r) => ({
+                        value: r.value,
                         // The current Round is still running.
-                        itemStyle: {
-                            color:
-                                i * 4 + 4 > scene.settled
-                                    ? "#4a5568"
-                                    : "#9aa7b8",
-                        },
+                        itemStyle: { color: r.partial ? "#4a5568" : "#9aa7b8" },
                     })),
-                    barWidth: "50%",
+                    barWidth: "55%",
+                    barMaxWidth: 50,
                     label: {
-                        show: true,
+                        show: scene.roundEmissions.length <= 4,
                         position: "top",
                         color: INK,
                         fontSize: 13,
@@ -835,6 +881,7 @@ function Carbon({ scene }: { scene: Scene }) {
         }),
         [scene],
     );
+    if (scene.settled === 0) return <Empty>{NOTHING_SETTLED}</Empty>;
     return (
         <div className="flex h-full gap-4" style={{ color: INK }}>
             <div className="flex shrink-0 flex-col justify-center gap-3">
@@ -843,12 +890,17 @@ function Carbon({ scene }: { scene: Scene }) {
                         className="text-base tracking-wider uppercase"
                         style={{ color: DIM }}
                     >
-                        Last Round
+                        {scene.lastRoundEmissions === undefined
+                            ? "This Round so far"
+                            : "Last Round"}
                     </div>
                     <div className="font-mono text-4xl font-bold">
-                        {scene.lastRoundEmissions === undefined
-                            ? "—"
-                            : `${fmt(scene.lastRoundEmissions / 1e6, 2)} Mt`}
+                        {fmt(
+                            (scene.lastRoundEmissions ??
+                                scene.roundEmissions.at(-1)!.value) / 1e6,
+                            2,
+                        )}{" "}
+                        Mt
                         <span
                             className="text-xl font-normal"
                             style={{ color: DIM }}
@@ -871,7 +923,7 @@ function Carbon({ scene }: { scene: Scene }) {
                 </div>
             </div>
             <div className="min-h-0 min-w-0 flex-1">
-                {scene.roundEmissions.length > 0 && <EChart option={option} />}
+                <EChart option={option} />
             </div>
         </div>
     );

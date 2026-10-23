@@ -35,7 +35,9 @@ export const VARIANTS = [
     { key: "A", name: "Operator wall" },
     { key: "B", name: "Centre stage" },
     { key: "C", name: "Trend wall" },
-    { key: "D", name: "Centre stage, reworked" },
+    { key: "D1", name: "Reworked · R1 summer" },
+    { key: "D2", name: "Reworked · R3 investment" },
+    { key: "D3", name: "Reworked · R6 autumn" },
 ];
 
 function Fuels({ direction }: { direction: "row" | "column" }) {
