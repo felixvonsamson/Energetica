@@ -125,7 +125,7 @@ export function alarmLine(alarm: Alarm): AlarmLine {
                 when,
                 level: "info",
                 tag: "UNLOCK",
-                text: `${alarm.name} can be bought from now on`,
+                text: `${alarm.name} can be bought from Round ${alarm.round}`,
                 short: alarm.name,
             };
         case "vote":
