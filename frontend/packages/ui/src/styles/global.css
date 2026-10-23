@@ -537,7 +537,7 @@
         --asset-color-small-water-dam-fg:         var(--asset-fg-on-dark);
         --asset-color-large-water-dam-fg:         var(--asset-fg-on-dark);
         --asset-color-nuclear-reactor-fg:         var(--asset-fg-on-light);
-        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-dark);
+        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
         --asset-color-steam-engine-fg:            var(--asset-fg-on-light);
         --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
         --asset-color-modern-coal-plant-fg:       var(--asset-fg-on-dark);
