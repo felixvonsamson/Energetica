@@ -120,7 +120,7 @@ describe("alarmLine", () => {
             when: "R3 Inv",
             level: "info",
             tag: "UNLOCK",
-            text: "Offshore wind turbine can be bought from now on",
+            text: "Offshore wind turbine can be bought from Round 3",
             short: "Offshore wind turbine",
         });
     });

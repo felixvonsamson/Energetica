@@ -220,7 +220,10 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
                             width: pct(
                                 Math.max(
                                     0,
-                                    Math.min(weatherDependent, scaleMax - room.controllable),
+                                    Math.min(
+                                        weatherDependent,
+                                        scaleMax - room.controllable,
+                                    ),
                                 ),
                             ),
                             background: `repeating-linear-gradient(135deg, ${THEME.weather[0]} 0 10px, ${THEME.weather[1]} 10px 20px)`,
