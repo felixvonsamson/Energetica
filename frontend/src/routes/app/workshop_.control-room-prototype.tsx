@@ -3,7 +3,8 @@
  * control-room dashboard, with made-up data, at
  * `/app/workshop/control-room-prototype?variant=A|B|C|D1|D2|D3`. D1 to D3 show
  * the same layout at three points of a session; `?periods=0` to `24` overrides
- * how many Trading periods have settled.
+ * how many Trading periods have settled. `?theme=light|dark` (or the T key)
+ * picks the theme for D.
  *
  * It renders outside the Workshop shell (the `_` in the file name), since the
  * projector page has no top bar, and opens in either Run mode without
@@ -15,7 +16,13 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import {
+    type ReactNode,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from "react";
 
 import { PrototypeSwitcher } from "@/components/prototype-switcher";
 import {
@@ -47,6 +54,9 @@ export const Route = createFileRoute("/app/workshop_/control-room-prototype")({
         scale: (["transform", "zoom", "none"].includes(String(search.scale))
             ? search.scale
             : "transform") as Scale,
+        theme: (search.theme === "light" ? "light" : "dark") as
+            | "light"
+            | "dark",
     }),
     staticData: { title: "Control room (prototype)", runMode: "any" },
 });
@@ -55,17 +65,34 @@ const WIDTH = 1920;
 const HEIGHT = 1080;
 
 function ControlRoomPrototype() {
-    const { variant, scale, periods } = Route.useSearch();
+    const { variant, scale, periods, theme } = Route.useSearch();
     const navigate = Route.useNavigate();
+    const applied = useDocumentTheme(theme);
+    // The T key switches between the light and dark theme.
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== "t") return;
+            void navigate({
+                search: (prev) => ({
+                    ...prev,
+                    theme: prev.theme === "light" ? "dark" : "light",
+                }),
+                replace: true,
+            });
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [navigate]);
     return (
         <>
             <FixedCanvas mode={scale}>
                 {variant === "A" && <VariantA />}
                 {variant === "B" && <VariantB />}
                 {variant === "C" && <VariantC />}
-                {variant in SCENES && (
+                {variant in SCENES && applied === theme && (
                     <VariantD
-                        key={`${variant}-${periods}`}
+                        key={`${variant}-${periods}-${theme}`}
+                        theme={theme}
                         scene={scene(
                             periods ?? SCENES[variant]!.settled,
                             SCENES[variant]!.roundCount,
@@ -85,6 +112,28 @@ function ControlRoomPrototype() {
             />
         </>
     );
+}
+
+/**
+ * Puts the app in `theme` while the page is open, so the `--asset-color-*`
+ * variables give that theme's facility colours, and puts it back after. Returns
+ * the theme applied so far.
+ */
+function useDocumentTheme(theme: "light" | "dark") {
+    const [applied, setApplied] = useState<"light" | "dark" | null>(null);
+    useLayoutEffect(() => {
+        const root = document.documentElement;
+        const before = root.classList.contains("dark") ? "dark" : "light";
+        root.classList.remove("light", "dark");
+        root.classList.add(theme);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- render only once the class is on
+        setApplied(theme);
+        return () => {
+            root.classList.remove("light", "dark");
+            root.classList.add(before);
+        };
+    }, [theme]);
+    return applied;
 }
 
 /** The size of the element, kept up to date. */

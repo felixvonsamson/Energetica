@@ -36,76 +36,81 @@ export type PriceGroup = "controllable" | "renewable" | "storage";
  */
 export const PRICE_TYPES: {
     name: string;
-    color: string;
+    asset: string;
     base: number;
     group: PriceGroup;
 }[] = [
     {
         name: "Coal",
-        color: "rgb(150, 156, 164)",
+        asset: "coal-burner",
         base: 55,
         group: "controllable",
     },
     {
         name: "Gas",
-        color: "rgb(141, 176, 255)",
+        asset: "gas-burner",
         base: 78,
         group: "controllable",
     },
     {
         name: "Nuclear",
-        color: "rgb(206, 220, 80)",
+        asset: "nuclear-reactor",
         base: 30,
         group: "controllable",
     },
     {
         name: "Storage sell",
-        color: "rgb(199, 162, 133)",
+        asset: "lithium-ion-batteries",
         base: 120,
         group: "storage",
     },
-    { name: "Hydro", color: "rgb(80, 169, 222)", base: 42, group: "renewable" },
-    { name: "Wind", color: "rgb(103, 190, 150)", base: 18, group: "renewable" },
-    { name: "Solar", color: "rgb(255, 244, 80)", base: 12, group: "renewable" },
+    { name: "Hydro", asset: "small-water-dam", base: 42, group: "renewable" },
+    {
+        name: "Wind",
+        asset: "onshore-wind-turbine",
+        base: 18,
+        group: "renewable",
+    },
+    { name: "Solar", asset: "pv-solar", base: 12, group: "renewable" },
     {
         name: "Storage buy",
-        color: "rgb(158, 138, 126)",
+        asset: "lithium-ion-batteries",
         base: 35,
         group: "storage",
     },
 ];
 
 export const GENERATION_SOURCES = [
-    { name: "Nuclear", color: "rgb(206, 220, 80)" },
-    { name: "Hydro", color: "rgb(80, 169, 222)" },
-    { name: "Coal", color: "rgb(150, 156, 164)" },
-    { name: "Gas", color: "rgb(141, 176, 255)" },
-    { name: "Wind", color: "rgb(103, 190, 150)" },
-    { name: "Solar", color: "rgb(255, 244, 80)" },
-    { name: "Storage", color: "rgb(199, 162, 133)" },
+    { name: "Nuclear", asset: "nuclear-reactor" },
+    { name: "Hydro", asset: "small-water-dam" },
+    { name: "Coal", asset: "coal-burner" },
+    { name: "Gas", asset: "gas-burner" },
+    { name: "Wind", asset: "onshore-wind-turbine" },
+    { name: "Solar", asset: "pv-solar" },
+    { name: "Storage", asset: "lithium-ion-batteries" },
 ];
 
 const FUEL_DEFS = [
     {
         name: "Coal",
-        unit: "/kg",
-        color: "rgb(150, 156, 164)",
-        catalog: 0.1,
-        digits: 3,
+        unit: "/t",
+        asset: "coal-burner",
+        catalog: 100,
+        digits: 0,
         shockAt: -1,
     },
     {
         name: "Gas",
-        unit: "/kg",
-        color: "rgb(141, 176, 255)",
-        catalog: 0.25,
-        digits: 3,
+        unit: "/t",
+        asset: "gas-burner",
+        catalog: 250,
+        digits: 0,
         shockAt: PRE_SESSION + 7,
     },
     {
         name: "Uranium",
         unit: "/kg",
-        color: "rgb(206, 220, 80)",
+        asset: "nuclear-reactor",
         catalog: 250,
         digits: 0,
         shockAt: -1,
