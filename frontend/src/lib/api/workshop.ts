@@ -281,6 +281,15 @@ export const workshopApi = {
         ),
 
     /**
+     * Everything the control room shows the room (#1289), apart from where the
+     * session is. The same for everyone in the Run.
+     */
+    getControlRoom: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/control-room", "get">>(
+            "/workshop/control-room",
+        ),
+
+    /**
      * The current Round's carbon tax vote (#1014): whether it holds one, the
      * visitor's ballot, and once the Investment phase is over, whether it
      * passed.
