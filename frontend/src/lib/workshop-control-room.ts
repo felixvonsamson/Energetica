@@ -304,3 +304,31 @@ export function energyScale(maxWh: number): {
         ? { unit: "TWh", divisor: 1e12 }
         : { unit: "GWh", divisor: 1e9 };
 }
+
+/** Power given in W, as "620 MW" below a GW and "1.23 GW" above. */
+export function formatPower(watts: number): string {
+    return watts >= 1e9
+        ? `${(watts / 1e9).toFixed(2)} GW`
+        : `${Math.round(watts / 1e6)} MW`;
+}
+
+/** Energy given in Wh, as "450 MWh" below a GWh and "2.50 GWh" above. */
+export function formatStoredEnergy(wattHours: number): string {
+    return wattHours >= 1e9
+        ? `${(wattHours / 1e9).toFixed(2)} GWh`
+        : `${Math.round(wattHours / 1e6)} MWh`;
+}
+
+type BlackoutRisk = ApiSchema<"BlackoutRisk">;
+
+const RISK_LABELS: Record<BlackoutRisk, string> = {
+    guaranteed: "Blackout guaranteed",
+    likely: "Blackout likely",
+    unlikely: "Blackout unlikely",
+    very_unlikely: "Blackout very unlikely",
+};
+
+/** How the capacity panel names a band of blackout risk (#1287). */
+export function riskLabel(risk: BlackoutRisk): string {
+    return RISK_LABELS[risk];
+}

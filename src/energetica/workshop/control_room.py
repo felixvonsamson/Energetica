@@ -8,6 +8,8 @@ out each panel.
   carbon tax vote. A Round event shows as soon as it fires, since the Recap before it already told its exact effect. A
   seasonal event shows only once its season is settled, since the Recap only gave a vague forecast of it, and its
   figures would otherwise tell the room more while it sets its prices (#1289).
+- **Capacity against demand** (#1287): what the facilities working this Round can produce, those players have
+  selected to buy included, against the Round's must-serve peak, with how likely a blackout is.
 - **Carbon**: the CO₂ the room emitted in each Round, building and running its facilities.
 - **Each settled season**: its average market price with the spread of its clearing prices, and the room's
   generation by power source.
@@ -22,7 +24,8 @@ Every chart over seasons shows at most the last :data:`HISTORY_SEASONS`, so a lo
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+import math
 from enum import StrEnum
 from typing import Annotated, Literal, NamedTuple
 
@@ -247,6 +250,105 @@ class CarbonTaxStatus(BaseModel):
     vote_open: bool = Field(description="Whether players are voting on it now")
 
 
+# --- capacity against demand (#1287) -------------------------------------------------------------
+
+#: The share of its power a dam always produces: the lowest the river table gives. It counts as controllable.
+HYDRO_GUARANTEED_SHARE = 0.23
+#: How many hours storage must be able to keep up its power to count at full power. An arbitrary constant.
+STORAGE_HOURS = 16
+
+
+class BlackoutRisk(StrEnum):
+    """How likely the room's capacity is to leave must-serve demand unserved at the Round's peak."""
+
+    GUARANTEED = "guaranteed"
+    LIKELY = "likely"
+    UNLIKELY = "unlikely"
+    VERY_UNLIKELY = "very_unlikely"
+
+
+class RoomCapacity(BaseModel):
+    """What the room's facilities can produce in a Round, in W, and what its storage holds."""
+
+    model_config = ConfigDict(frozen=True)
+
+    controllable: float = Field(
+        description="Power that can be produced on demand: fossil plants, nuclear and hydro's guaranteed share, in W"
+    )
+    total: float = Field(description="Controllable power plus the rest of hydro, wind and solar, in W")
+    weighted: float = Field(
+        description="Weather-dependent power weighted by how much of it each type produces on average: hydro above "
+        "its guaranteed share, wind and solar, in W"
+    )
+    storage_power: float = Field(description="In W")
+    storage_energy: float = Field(description="In Wh")
+
+
+def room_capacity(facilities: Iterable[FacilityId], capacity_factors: Mapping[FacilityId, float]) -> RoomCapacity:
+    """The capacity of ``facilities``, one entry per facility. ``capacity_factors`` gives each weather-dependent
+    type's average output as a share of its power.
+    """
+    controllable = total = weighted = storage_power = storage_energy = 0.0
+    for facility in facilities:
+        entry = CATALOG[facility]
+        power = entry.base_power_generation
+        match power_source(facility):
+            case PowerSource.STORAGE:
+                storage_power += power
+                storage_energy += entry.base_storage_capacity or 0.0
+            case PowerSource.COAL | PowerSource.GAS | PowerSource.NUCLEAR:
+                controllable += power
+                total += power
+            case PowerSource.HYDRO:
+                controllable += power * HYDRO_GUARANTEED_SHARE
+                total += power
+                weighted += power * (capacity_factors[facility] - HYDRO_GUARANTEED_SHARE)
+            case PowerSource.WIND | PowerSource.SOLAR:
+                total += power
+                weighted += power * capacity_factors[facility]
+    return RoomCapacity(
+        controllable=controllable,
+        total=total,
+        weighted=weighted,
+        storage_power=storage_power,
+        storage_energy=storage_energy,
+    )
+
+
+def blackout_risk(
+    *, peak: float, controllable: float, total: float, weighted: float, storage_power: float, storage_energy: float
+) -> BlackoutRisk:
+    """How likely a blackout is at must-serve ``peak``, in W, given the room's capacity (:class:`RoomCapacity`).
+
+    Below the peak with everything running, a blackout is guaranteed. With enough controllable power, it is very
+    unlikely, though a player can still run out of fuel. In between, storage decides: it is enough when the geometric
+    mean of the weighted weather-dependent power and the storage power covers the gap. Storage counts only the power
+    it can keep up for :data:`STORAGE_HOURS`.
+    """
+    if total < peak:
+        return BlackoutRisk.GUARANTEED
+    if controllable >= peak:
+        return BlackoutRisk.VERY_UNLIKELY
+    storage = min(storage_power, storage_energy / STORAGE_HOURS)
+    if math.sqrt(weighted * storage) > peak - controllable:
+        return BlackoutRisk.UNLIKELY
+    return BlackoutRisk.LIKELY
+
+
+class CapacityOutlook(BaseModel):
+    """The room's capacity in a Round against the Round's must-serve peak, for the control room's capacity panel."""
+
+    round: int
+    must_serve_peak: float = Field(
+        description="The highest must-serve demand of the Round, in W, before any seasonal event or rationing"
+    )
+    all_tiers_peak: float = Field(description="The highest demand counting every demand tier, in W")
+    capacity: RoomCapacity = Field(
+        description="What the facilities working in the Round can produce: those owned and those selected to buy"
+    )
+    risk: BlackoutRisk
+
+
 # --- alarms ---------------------------------------------------------------------------------------
 
 
@@ -430,6 +532,7 @@ class ControlRoom(BaseModel):
     alarms: list[Alarm] = Field(description="Every alarm raised so far, newest first")
     emissions: list[RoundEmissions] = Field(description="Each Round's emissions, from Round 1 to the current one")
     carbon_tax: CarbonTaxStatus
+    capacity: CapacityOutlook
     seasons: list[SeasonFigures] = Field(description="The last settled seasons, oldest first")
     duration_curve: DurationCurve | None = Field(
         description="The last settled season's price-duration curve, or null if no season with a record has settled"

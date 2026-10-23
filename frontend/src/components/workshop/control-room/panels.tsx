@@ -13,9 +13,12 @@ import {
     alarmLine,
     energyScale,
     formatCo2,
+    formatPower,
+    formatStoredEnergy,
     fuelPrice,
     periodLabel,
     priceScales,
+    riskLabel,
     taxPerTonne,
 } from "@/lib/workshop-control-room";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -155,6 +158,182 @@ export function Alarms({ alarms }: { alarms: ControlRoom["alarms"] }) {
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+// --- capacity against demand (#1287) -------------------------------------------------------------
+
+/** The capacity bar runs a little past the peak of every demand tier. */
+const CAPACITY_HEADROOM = 1.08;
+
+export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
+    const { capacity, risk } = outlook;
+    const scaleMax = outlook.all_tiers_peak * CAPACITY_HEADROOM;
+    const pct = (watts: number) =>
+        `${(Math.min(watts, scaleMax) / scaleMax) * 100}%`;
+    const weatherDependent = capacity.total - capacity.controllable;
+    const storage = sourceColor("storage");
+    return (
+        <div
+            className="flex h-full flex-col gap-3 pb-2"
+            style={{ color: THEME.ink }}
+        >
+            <div
+                className={cn(
+                    "rounded-sm py-1.5 text-center text-[44px] font-black tracking-[0.1em] uppercase",
+                    risk === "guaranteed" && "animate-pulse",
+                )}
+                style={{ background: THEME.risk[risk], color: THEME.bg }}
+            >
+                {riskLabel(risk)}
+            </div>
+
+            {/* The two peaks, each written up to its mark on the bar. */}
+            <div className="relative h-[140px] shrink-0">
+                <PeakLabel
+                    at={pct(outlook.must_serve_peak)}
+                    label="Must-serve peak"
+                    value={formatPower(outlook.must_serve_peak)}
+                    strong
+                />
+                <PeakLabel
+                    at={pct(outlook.all_tiers_peak)}
+                    label="All demand tiers"
+                    value={formatPower(outlook.all_tiers_peak)}
+                />
+                <div
+                    className="absolute inset-x-0 bottom-0 h-14 rounded-sm"
+                    style={{ background: THEME.track }}
+                >
+                    <div
+                        className="absolute inset-y-0 left-0 transition-all duration-700"
+                        style={{
+                            width: pct(capacity.controllable),
+                            background: THEME.accent,
+                        }}
+                    />
+                    <div
+                        className="absolute inset-y-0 transition-all duration-700"
+                        style={{
+                            left: pct(capacity.controllable),
+                            width: pct(weatherDependent),
+                            background: `repeating-linear-gradient(135deg, ${THEME.weather[0]} 0 10px, ${THEME.weather[1]} 10px 20px)`,
+                        }}
+                    />
+                </div>
+                <div
+                    className="absolute top-0 -bottom-1.5"
+                    style={{
+                        left: pct(outlook.must_serve_peak),
+                        borderLeft: `4px solid ${THEME.ink}`,
+                    }}
+                />
+                <div
+                    className="absolute top-0 -bottom-1.5"
+                    style={{
+                        left: pct(outlook.all_tiers_peak),
+                        borderLeft: `2px dashed ${THEME.dim}`,
+                    }}
+                />
+            </div>
+
+            <div className="grid grid-cols-5 gap-2">
+                <Figure
+                    label="Controllable"
+                    value={formatPower(capacity.controllable)}
+                    swatch={THEME.accent}
+                />
+                <Figure
+                    label="Weather-dep."
+                    value={formatPower(weatherDependent)}
+                    swatch={THEME.weather[0]}
+                />
+                <Figure
+                    label="Total gen."
+                    value={formatPower(capacity.total)}
+                />
+                <Figure
+                    label="Storage power"
+                    value={formatPower(capacity.storage_power)}
+                    swatch={storage}
+                />
+                <Figure
+                    label="Storage cap."
+                    value={formatStoredEnergy(capacity.storage_energy)}
+                    swatch={storage}
+                />
+            </div>
+        </div>
+    );
+}
+
+function PeakLabel({
+    at,
+    label,
+    value,
+    strong,
+}: {
+    at: string;
+    label: string;
+    value: string;
+    strong?: boolean;
+}) {
+    return (
+        <div
+            className="absolute top-0 pr-3 text-right whitespace-nowrap"
+            style={{
+                right: `calc(100% - ${at})`,
+                color: strong ? THEME.ink : THEME.dim,
+            }}
+        >
+            <div
+                className={cn(
+                    "tracking-wider uppercase",
+                    strong ? "text-lg" : "text-base",
+                )}
+                style={{ color: THEME.dim }}
+            >
+                {label}
+            </div>
+            <div
+                className={cn(
+                    "font-mono leading-none",
+                    strong ? "text-5xl font-bold" : "text-2xl",
+                )}
+            >
+                {value}
+            </div>
+        </div>
+    );
+}
+
+function Figure({
+    label,
+    value,
+    swatch,
+}: {
+    label: string;
+    value: string;
+    swatch?: string;
+}) {
+    return (
+        <div>
+            <div
+                className="flex items-center gap-1.5 text-[15px] tracking-wide whitespace-nowrap uppercase"
+                style={{ color: THEME.dim }}
+            >
+                {swatch && (
+                    <span
+                        className="inline-block size-3 shrink-0"
+                        style={{ background: swatch }}
+                    />
+                )}
+                {label}
+            </div>
+            <div className="font-mono text-2xl font-semibold whitespace-nowrap">
+                {value}
+            </div>
         </div>
     );
 }

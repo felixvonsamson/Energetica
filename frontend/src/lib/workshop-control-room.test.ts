@@ -8,6 +8,9 @@ import {
     controlRoomPhase,
     energyScale,
     formatCo2,
+    formatPower,
+    formatStoredEnergy,
+    riskLabel,
     fuelPrice,
     periodLabel,
     priceScales,
@@ -277,5 +280,28 @@ describe("energyScale", () => {
 
     it("shows smaller rooms in GWh", () => {
         expect(energyScale(4e11)).toEqual({ unit: "GWh", divisor: 1e9 });
+    });
+});
+
+describe("formatPower", () => {
+    it("shows power in MW below a GW, and in GW above", () => {
+        expect(formatPower(620e6)).toBe("620 MW");
+        expect(formatPower(1.234e9)).toBe("1.23 GW");
+    });
+});
+
+describe("formatStoredEnergy", () => {
+    it("shows stored energy in MWh below a GWh, and in GWh above", () => {
+        expect(formatStoredEnergy(450e6)).toBe("450 MWh");
+        expect(formatStoredEnergy(2.5e9)).toBe("2.50 GWh");
+    });
+});
+
+describe("riskLabel", () => {
+    it("names each band of blackout risk", () => {
+        expect(riskLabel("guaranteed")).toBe("Blackout guaranteed");
+        expect(riskLabel("likely")).toBe("Blackout likely");
+        expect(riskLabel("unlikely")).toBe("Blackout unlikely");
+        expect(riskLabel("very_unlikely")).toBe("Blackout very unlikely");
     });
 });

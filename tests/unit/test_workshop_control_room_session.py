@@ -9,10 +9,11 @@ import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
-from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, PowerSource
-from energetica.workshop.facilities import FacilityId, Fuel
+from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, BlackoutRisk, PowerSource
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES
 from energetica.workshop.round_plan import LeverChanges
+from energetica.workshop.seasons import SEASONS
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(
@@ -169,3 +170,49 @@ def test_each_fuels_history_ends_with_this_seasons_price(tmp_path: Path) -> None
         assert len(fuel.history) == FUEL_HISTORY_POINTS
         assert fuel.history[-1] == pytest.approx(session.fuel_prices[fuel.fuel].price)
         assert fuel.history[-2] == pytest.approx(session.fuel_prices[fuel.fuel].previous_price)
+
+
+# --- capacity against demand (#1287) ------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("no_demand_growth")
+def test_the_must_serve_peak_is_the_peak_the_engine_records(tmp_path: Path) -> None:
+    session = _investing(tmp_path / "session.json")
+    for _ in SEASONS:
+        _settle_next(session)
+
+    outlook = session.control_room().capacity
+
+    assert outlook.round == 1
+    assert outlook.must_serve_peak == pytest.approx(session.peak_demand[1])
+    assert outlook.all_tiers_peak == pytest.approx(2.5 * outlook.must_serve_peak)
+
+
+def test_selected_facilities_count_towards_the_rounds_capacity(tmp_path: Path) -> None:
+    session = _investing(tmp_path / "session.json")
+    coal = CATALOG[FacilityId.COAL_BURNER].base_power_generation
+    before = session.control_room().capacity.capacity.controllable
+
+    session.select(1, FacilityId.COAL_BURNER)
+
+    assert session.control_room().capacity.capacity.controllable == pytest.approx(before + coal)
+
+
+def test_facilities_under_construction_do_not_count(tmp_path: Path) -> None:
+    session = _investing(tmp_path / "session.json")
+    before = session.control_room().capacity.capacity
+
+    # A nuclear reactor takes Rounds to build.
+    session.select(1, FacilityId.NUCLEAR_REACTOR)
+
+    assert session.control_room().capacity.capacity == before
+
+
+def test_a_room_with_nothing_built_is_sure_to_black_out(tmp_path: Path) -> None:
+    session = _open(tmp_path / "session.json")
+    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
+
+    outlook = session.control_room().capacity
+
+    assert outlook.must_serve_peak > 0
+    assert outlook.risk == BlackoutRisk.GUARANTEED

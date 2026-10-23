@@ -480,8 +480,8 @@ export interface paths {
         put?: never;
         /**
          * Add To Selection
-         * @description Add one facility to the calling player's selection. Only while the Investment phase is open, and
-         *     only if the player can pay for the whole selection.
+         * @description Add one facility to the calling player's selection, and tell the control room. Only while the Investment phase
+         *     is open, and only if the player can pay for the whole selection.
          */
         post: operations["add_to_selection_api_v1_workshop_selection_post"];
         delete?: never;
@@ -502,8 +502,8 @@ export interface paths {
         post?: never;
         /**
          * Remove From Selection
-         * @description Take one copy of ``facility`` out of the calling player's selection. Only while the Investment
-         *     phase is open.
+         * @description Take one copy of ``facility`` out of the calling player's selection, and tell the control room. Only while the
+         *     Investment phase is open.
          */
         delete: operations["remove_from_selection_api_v1_workshop_selection__facility__delete"];
         options?: never;
@@ -937,6 +937,33 @@ export interface components {
             minute: number;
         };
         /**
+         * BlackoutRisk
+         * @description How likely the room's capacity is to leave must-serve demand unserved at the Round's peak.
+         * @enum {string}
+         */
+        BlackoutRisk: "guaranteed" | "likely" | "unlikely" | "very_unlikely";
+        /**
+         * CapacityOutlook
+         * @description The room's capacity in a Round against the Round's must-serve peak, for the control room's capacity panel.
+         */
+        CapacityOutlook: {
+            /** Round */
+            round: number;
+            /**
+             * Must Serve Peak
+             * @description The highest must-serve demand of the Round, in W, before any seasonal event or rationing
+             */
+            must_serve_peak: number;
+            /**
+             * All Tiers Peak
+             * @description The highest demand counting every demand tier, in W
+             */
+            all_tiers_peak: number;
+            /** @description What the facilities working in the Round can produce: those owned and those selected to buy */
+            capacity: components["schemas"]["RoomCapacity"];
+            risk: components["schemas"]["BlackoutRisk"];
+        };
+        /**
          * CarbonTaxStatus
          * @description Whether the carbon tax is in force, or being voted on.
          */
@@ -973,6 +1000,7 @@ export interface components {
              */
             emissions: components["schemas"]["RoundEmissions"][];
             carbon_tax: components["schemas"]["CarbonTaxStatus"];
+            capacity: components["schemas"]["CapacityOutlook"];
             /**
              * Seasons
              * @description The last settled seasons, oldest first
@@ -1711,6 +1739,37 @@ export interface components {
              * @description What the proposed tax charges per kg of CO₂ emitted
              */
             tax_rate: number;
+        };
+        /**
+         * RoomCapacity
+         * @description What the room's facilities can produce in a Round, in W, and what its storage holds.
+         */
+        RoomCapacity: {
+            /**
+             * Controllable
+             * @description Power that can be produced on demand: fossil plants, nuclear and hydro's guaranteed share, in W
+             */
+            controllable: number;
+            /**
+             * Total
+             * @description Controllable power plus the rest of hydro, wind and solar, in W
+             */
+            total: number;
+            /**
+             * Weighted
+             * @description Weather-dependent power weighted by how much of it each type produces on average: hydro above its guaranteed share, wind and solar, in W
+             */
+            weighted: number;
+            /**
+             * Storage Power
+             * @description In W
+             */
+            storage_power: number;
+            /**
+             * Storage Energy
+             * @description In Wh
+             */
+            storage_energy: number;
         };
         /**
          * RoomFigures

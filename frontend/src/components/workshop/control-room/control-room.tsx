@@ -5,7 +5,8 @@
  *
  * - Left, a third each: carbon, the market price per season, and the last
  *   season's price-duration curve.
- * - Centre: alarms, then the room's prices per power source.
+ * - Centre: alarms, capacity against must-serve demand (#1287), then the room's
+ *   prices per power source.
  * - Right: the Round, phase and countdown, then fuel prices and the room's
  *   generation per season.
  */
@@ -28,6 +29,7 @@ import { cn } from "@energetica/ui/lib/utils";
 
 import {
     Alarms,
+    Capacity,
     Carbon,
     CarbonTaxPill,
     DurationCurve,
@@ -76,6 +78,12 @@ export function ControlRoom() {
             <div className="flex min-h-0 flex-col gap-2">
                 <Panel title="Alarms" className="h-[250px] shrink-0">
                     <Alarms alarms={room.alarms} />
+                </Panel>
+                <Panel
+                    title={`Capacity vs must-serve demand · Round ${room.capacity.round}`}
+                    className="h-[352px] shrink-0"
+                >
+                    <Capacity outlook={room.capacity} />
                 </Panel>
                 <Panel
                     title="Room prices per power source"

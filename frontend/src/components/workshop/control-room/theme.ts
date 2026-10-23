@@ -33,6 +33,14 @@ export const THEME = {
     bar: "#9aa7b8",
     barPartial: "#4a5568",
     alarm: { critical: "#ff3b3b", warning: "#ffb020", info: "#4fc3ff" },
+    track: "#111b2c",
+    weather: ["#2b6e8f", "#1f5470"],
+    risk: {
+        guaranteed: "#ff3b3b",
+        likely: "#ff8a1f",
+        unlikely: "#ffd21f",
+        very_unlikely: "#2fd67b",
+    },
 } as const;
 
 export const MONO = "ui-monospace, monospace";

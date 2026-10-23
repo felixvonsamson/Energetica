@@ -91,6 +91,7 @@ from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissio
 from energetica.workshop.control_room import (
     FUEL_HISTORY_POINTS,
     HISTORY_SEASONS,
+    CapacityOutlook,
     CarbonTaxStatus,
     ControlRoom,
     DurationCurve,
@@ -98,12 +99,19 @@ from energetica.workshop.control_room import (
     PriceSummary,
     SeasonFigures,
     alarms,
+    blackout_risk,
     price_summary,
     room_generation,
+    room_capacity,
     room_prices,
     round_emissions,
 )
-from energetica.workshop.demand_block import PER_PLAYER_BASE_AMPLITUDE, national_demand_curve, round_one_amplitude
+from energetica.workshop.demand_block import (
+    DEMAND_TIERS,
+    PER_PLAYER_BASE_AMPLITUDE,
+    national_demand_curve,
+    round_one_amplitude,
+)
 from energetica.workshop.demand_growth import growth_factor, growth_through
 from energetica.workshop.events import (
     FiredEvent,
@@ -111,6 +119,7 @@ from energetica.workshop.events import (
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
+    round_demand_factor,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
@@ -171,6 +180,7 @@ from energetica.workshop.trading import (
     TradingOutcome,
     TradingResult,
     cleared_day_count,
+    peak_demand_factor,
     simulate_trading_period,
 )
 from energetica.workshop.unlocks import (
@@ -182,7 +192,7 @@ from energetica.workshop.unlocks import (
     unlock_threshold,
 )
 from energetica.workshop.votes import CARBON_TAX_RATE, Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
-from energetica.workshop.weather import AverageOutput, representative_weather, season_output
+from energetica.workshop.weather import AverageOutput, capacity_factor, representative_weather, season_output
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -1531,6 +1541,7 @@ class WorkshopSession:
             )
             carbon_tax = CarbonTaxStatus(rate=CARBON_TAX_RATE, since=self.carbon_tax_since(), vote_open=vote_open)
             prices = [room_prices(market) for market in self._recent_market_prices(priced)]
+            capacity = self._capacity_outlook(current_round)
         summaries = {period: self._price_summary(period) for period in history}
         seasons = []
         for period in history:
@@ -1558,10 +1569,53 @@ class WorkshopSession:
             alarms=raised,
             emissions=emitted,
             carbon_tax=carbon_tax,
+            capacity=capacity,
             seasons=seasons,
             duration_curve=curve,
             room_prices=prices,
             fuels=fuels,
+        )
+
+    def _capacity_outlook(self, round_number: int) -> CapacityOutlook:
+        """The room's capacity in Round ``round_number`` against its must-serve peak (#1287). Facilities selected in its
+        open Investment phase count as if bought, and those still under construction do not. The peak leaves out
+        seasonal events, which players learn of only as a forecast, and rationing. The caller holds the lock.
+        """
+        players = self.network.players()
+        amplitude = self.demand_amplitude
+        if amplitude is None:
+            amplitude = round_one_amplitude(PER_PLAYER_BASE_AMPLITUDE, headcount=len(players))
+        peak = (
+            amplitude
+            * growth_through(self.demand_growth, round_number)
+            * round_demand_factor(self.fired_events, round_number)
+            * peak_demand_factor(self.plans[round_number - 1].levers.round_format)
+        )
+        selecting = self.checkpoint == Investment(round=round_number)
+        fleet = [
+            owned
+            for player in players
+            for owned in [
+                *player.owned_facilities,
+                *(
+                    OwnedFacility(facility=facility, built_round=round_number)
+                    for facility in (player.selection if selecting else [])
+                ),
+            ]
+        ]
+        facilities = [owned.facility for owned in fleet if is_operating(owned, current_round=round_number)]
+        capacity_factors = {
+            facility: factor
+            for facility in set(facilities)
+            if (factor := capacity_factor(self.weather_seed, facility)) is not None
+        }
+        capacity = room_capacity(facilities, capacity_factors)
+        return CapacityOutlook(
+            round=round_number,
+            must_serve_peak=peak,
+            all_tiers_peak=peak * sum(tier.share for tier in DEMAND_TIERS),
+            capacity=capacity,
+            risk=blackout_risk(peak=peak, **capacity.model_dump()),
         )
 
     def _recent_market_prices(self, periods: list[TradingPeriod]) -> list[MarketPrices]:

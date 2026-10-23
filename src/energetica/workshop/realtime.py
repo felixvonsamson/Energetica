@@ -45,6 +45,7 @@ def setup_socketio(app: FastAPI) -> None:
     app.state.market_prices_throttle = _Throttle(
         lambda: _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY, CONTROL_ROOM_QUERY_KEY]})
     )
+    app.state.control_room_throttle = _Throttle(lambda: _emit(app, "invalidate", {"queries": [CONTROL_ROOM_QUERY_KEY]}))
 
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
@@ -63,6 +64,16 @@ async def invalidate_market_prices(app: FastAPI) -> None:
     last message is sent once that time has passed, together with any other change made in between.
     """
     throttle: _Throttle | None = getattr(app.state, "market_prices_throttle", None)
+    # An app built only for its OpenAPI schema has no server.
+    if throttle is not None:
+        await throttle()
+
+
+async def invalidate_control_room(app: FastAPI) -> None:
+    """Tell every open page to re-read the control room, because a player changed their selection and with it the
+    room's capacity (#1287). Throttled like :func:`invalidate_market_prices`, for the same reason.
+    """
+    throttle: _Throttle | None = getattr(app.state, "control_room_throttle", None)
     # An app built only for its OpenAPI schema has no server.
     if throttle is not None:
         await throttle()

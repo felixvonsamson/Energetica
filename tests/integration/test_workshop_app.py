@@ -2122,3 +2122,29 @@ def test_everyone_in_the_run_reads_the_control_room_and_it_names_no_player(sessi
 
 def test_reading_the_control_room_needs_entry(session_path: Path) -> None:
     assert _client(session_path).get(CONTROL_ROOM_URL).status_code == 401
+
+
+def test_changing_a_selection_tells_every_open_page_to_reread_the_control_room(
+    session_path: Path, clock: _Clock
+) -> None:
+    _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
+    invalidate = ["invalidate", {"queries": [["workshop", "session", "control-room"]]}]
+
+    with client:
+        facilitator_sid, _ = socket.connect(client)
+        authenticate(client, alice)
+
+        assert client.post(SELECTION_URL, json={"facility": "coal_burner"}).status_code == 200
+        assert socket.poll(client, facilitator_sid) == [invalidate]
+
+
+def test_the_control_room_counts_selected_facilities_in_the_rounds_capacity(session_path: Path, clock: _Clock) -> None:
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    before = client.get(CONTROL_ROOM_URL).json()["capacity"]
+
+    client.post(SELECTION_URL, json={"facility": "coal_burner"})
+
+    after = client.get(CONTROL_ROOM_URL).json()["capacity"]
+    assert after["capacity"]["controllable"] > before["capacity"]["controllable"]
+    assert after["risk"] in {"guaranteed", "likely", "unlikely", "very_unlikely"}

@@ -9,6 +9,11 @@ import pytest
 
 from energetica.workshop.blackout import Blackout
 from energetica.workshop.control_room import (
+    HYDRO_GUARANTEED_SHARE,
+    STORAGE_HOURS,
+    BlackoutRisk,
+    blackout_risk,
+    room_capacity,
     BlackoutAlarm,
     EventAlarm,
     PowerSource,
@@ -31,9 +36,10 @@ from energetica.workshop.fleet import Purchase
 from energetica.workshop.recap import average_price
 from energetica.workshop.prices import MarketPrices, PlayerQuotes, QuotedPrice
 from energetica.workshop.round_plan import PlannedEvent
-from energetica.workshop.seasons import Season
+from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RATIONING, FacilityPerformance, TradingResult
 from energetica.workshop.unlocks import Unlock
+from energetica.workshop.weather import RunWeather, _hours
 from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome
 
 
@@ -348,3 +354,83 @@ def test_alarms_are_listed_newest_first() -> None:
         ("unlock", 2, None),
         ("event", 1, "summer"),
     ]
+
+
+# --- capacity against demand (#1287) ------------------------------------------------------------
+
+PEAK = 1000e6
+
+
+def _risk(**overrides: float) -> BlackoutRisk:
+    arguments = {
+        "peak": PEAK,
+        "controllable": 0.0,
+        "total": 0.0,
+        "weighted": 0.0,
+        "storage_power": 0.0,
+        "storage_energy": 0.0,
+    }
+    arguments.update(overrides)
+    return blackout_risk(**arguments)
+
+
+def test_a_blackout_is_guaranteed_when_total_capacity_is_below_the_peak() -> None:
+    assert _risk(controllable=500e6, total=999e6, weighted=10e9, storage_power=10e9, storage_energy=1e12) == (
+        BlackoutRisk.GUARANTEED
+    )
+
+
+def test_a_blackout_is_likely_when_controllable_capacity_is_short_and_storage_cannot_cover_it() -> None:
+    # The gap is 200 MW. sqrt(400 MW x 50 MW) is about 141 MW, short of it.
+    assert _risk(controllable=800e6, total=1500e6, weighted=400e6, storage_power=50e6, storage_energy=1e12) == (
+        BlackoutRisk.LIKELY
+    )
+
+
+def test_a_blackout_is_unlikely_when_storage_covers_the_controllable_gap() -> None:
+    # sqrt(400 MW x 160 MW) is 253 MW, more than the 200 MW gap.
+    assert _risk(controllable=800e6, total=1500e6, weighted=400e6, storage_power=160e6, storage_energy=1e12) == (
+        BlackoutRisk.UNLIKELY
+    )
+
+
+def test_storage_counts_no_more_power_than_it_can_hold_for_sixteen_hours() -> None:
+    # 160 MW of power, but only 16 h x 50 MW of energy: it counts as 50 MW.
+    assert _risk(
+        controllable=800e6, total=1500e6, weighted=400e6, storage_power=160e6, storage_energy=STORAGE_HOURS * 50e6
+    ) == (BlackoutRisk.LIKELY)
+
+
+def test_a_blackout_is_very_unlikely_when_controllable_capacity_covers_the_peak() -> None:
+    assert _risk(controllable=PEAK, total=PEAK) == BlackoutRisk.VERY_UNLIKELY
+
+
+def test_room_capacity_splits_controllable_weather_dependent_and_storage() -> None:
+    power = {facility: CATALOG[facility].base_power_generation for facility in CATALOG}
+    capacity_factors = {FacilityId.SMALL_WATER_DAM: 0.55, FacilityId.ONSHORE_WIND_TURBINE: 0.45}
+
+    capacity = room_capacity(
+        [
+            FacilityId.COAL_BURNER,
+            FacilityId.NUCLEAR_REACTOR,
+            FacilityId.SMALL_WATER_DAM,
+            FacilityId.ONSHORE_WIND_TURBINE,
+            FacilityId.LITHIUM_ION_BATTERIES,
+        ],
+        capacity_factors,
+    )
+
+    dam, wind = power[FacilityId.SMALL_WATER_DAM], power[FacilityId.ONSHORE_WIND_TURBINE]
+    controllable = power[FacilityId.COAL_BURNER] + power[FacilityId.NUCLEAR_REACTOR] + HYDRO_GUARANTEED_SHARE * dam
+    assert capacity.controllable == pytest.approx(controllable)
+    assert capacity.total == pytest.approx(controllable + (1 - HYDRO_GUARANTEED_SHARE) * dam + wind)
+    assert capacity.weighted == pytest.approx(dam * (0.55 - HYDRO_GUARANTEED_SHARE) + wind * 0.45)
+    assert capacity.storage_power == power[FacilityId.LITHIUM_ION_BATTERIES]
+    assert capacity.storage_energy == CATALOG[FacilityId.LITHIUM_ION_BATTERIES].base_storage_capacity
+
+
+def test_hydros_guaranteed_share_is_the_lowest_its_river_table_gives() -> None:
+    weather = RunWeather(seed=0)
+    hours = [t for season in SEASONS for day in _hours(season) for t in day]
+
+    assert min(weather.share(FacilityId.SMALL_WATER_DAM, t) for t in hours) == pytest.approx(HYDRO_GUARANTEED_SHARE)
