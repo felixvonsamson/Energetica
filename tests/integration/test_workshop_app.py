@@ -1526,7 +1526,10 @@ def test_setting_a_price_tells_every_open_page_to_reread_the_rooms_prices(sessio
 
         assert client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0}).status_code == 200
 
-        invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
+        invalidate = [
+            "invalidate",
+            {"queries": [["workshop", "session", "market-prices"], ["workshop", "session", "control-room"]]},
+        ]
         assert socket.poll(client, facilitator_sid) == [invalidate]
 
 
@@ -1534,7 +1537,10 @@ def test_a_burst_of_price_changes_rereads_the_rooms_prices_at_most_every_half_se
     session_path: Path, clock: _Clock
 ) -> None:
     client, facilitator, alice = _trading(session_path, clock)
-    invalidate = ["invalidate", {"queries": [["workshop", "session", "market-prices"]]}]
+    invalidate = [
+        "invalidate",
+        {"queries": [["workshop", "session", "market-prices"], ["workshop", "session", "control-room"]]},
+    ]
 
     with client:
         authenticate(client, facilitator)
@@ -2092,3 +2098,27 @@ def test_a_passed_carbon_tax_cannot_be_proposed_again(session_path: Path, clock:
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "WORKSHOP_CARBON_TAX_PASSED"
+
+
+# --- the control room (#1289) ---------------------------------------------------------------
+
+CONTROL_ROOM_URL = "/api/v1/workshop/control-room"
+
+
+def test_everyone_in_the_run_reads_the_control_room_and_it_names_no_player(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    client.put(f"{PRICES_URL}/gas_burner/sell", json={"price": 80.0})
+
+    for account in (alice, facilitator):
+        authenticate(client, account)
+        response = client.get(CONTROL_ROOM_URL)
+
+        assert response.status_code == 200
+        [prices] = response.json()["room_prices"]
+        assert prices["live"] is True
+        assert prices["boxes"]["gas"]["median"] == 80.0
+        assert "alice" not in response.text
+
+
+def test_reading_the_control_room_needs_entry(session_path: Path) -> None:
+    assert _client(session_path).get(CONTROL_ROOM_URL).status_code == 401

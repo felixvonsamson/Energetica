@@ -11,7 +11,8 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone.
+The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone. The
+control room (#1289) is open to everyone in the Run, and names no player.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from energetica.identity.accounts import Account
 from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
+from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
@@ -649,6 +651,16 @@ def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], sessio
     for everyone in the Run. Final once the session is over.
     """
     return session.scoreboard()
+
+
+# Reads a settled period's record the first time it is asked for, so it runs on a worker thread.
+@router.get("/control-room")
+def get_control_room(_: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> ControlRoom:
+    """Everything the control room dashboard shows the room, apart from where the session is: alarms, carbon, each
+    settled season's prices and generation, the room's prices without names, and fuel prices. The same for everyone
+    in the Run.
+    """
+    return session.control_room()
 
 
 def _vote_out(session: WorkshopSession, account_id: int) -> WorkshopVoteOut:

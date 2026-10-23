@@ -28,6 +28,9 @@ from energetica.workshop.session import SettlementProgress
 SESSION_QUERY_KEY = ["workshop", "session"]
 # The frontend's query key for every Trading period's room prices (``queryKeys.workshop.marketPrices``).
 MARKET_PRICES_QUERY_KEY = [*SESSION_QUERY_KEY, "market-prices"]
+# The frontend's query key for the control room (``queryKeys.workshop.controlRoom``), which shows the room's prices too
+# (#1289). It sits under the session's key, so every other change re-reads it with the session.
+CONTROL_ROOM_QUERY_KEY = [*SESSION_QUERY_KEY, "control-room"]
 #: The shortest time between two messages telling pages to re-read the room's prices. Each message makes every
 #: open page read the prices again, so near the end of a price-setting window, when many players change prices at
 #: once, sending one per change would grow with the square of the number of players (#1299).
@@ -40,7 +43,7 @@ def setup_socketio(app: FastAPI) -> None:
     app.mount("/socket.io", socketio.ASGIApp(sio))
     app.state.socketio = sio
     app.state.market_prices_throttle = _Throttle(
-        lambda: _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY]})
+        lambda: _emit(app, "invalidate", {"queries": [MARKET_PRICES_QUERY_KEY, CONTROL_ROOM_QUERY_KEY]})
     )
 
     @sio.event
@@ -55,7 +58,8 @@ async def invalidate_session(app: FastAPI) -> None:
 
 
 async def invalidate_market_prices(app: FastAPI) -> None:
-    """Tell every open page to re-read the room's prices, because a player changed one (#1299). At most once
+    """Tell every open page to re-read the room's prices, and the control room that shows them, because a player
+    changed one (#1299, #1289). At most once
     every :data:`MARKET_PRICES_INTERVAL_SECONDS`: a change soon after the last message is sent once that time has
     passed, together with any other change made in between.
     """
