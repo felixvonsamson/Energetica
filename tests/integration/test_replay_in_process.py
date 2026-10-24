@@ -27,7 +27,7 @@ from energetica.kernel import session
 from energetica import simulate as simulate_module
 from energetica.simulate import simulate
 
-from ._session_helpers import make_account
+from ._session_helpers import authenticate, make_account
 
 PROBE_PATH = "/probe/whoami"
 SLUG = "test-instance"
@@ -161,3 +161,25 @@ def test_a_crash_during_replay_prints_its_traceback(app: FastAPI, capsys: pytest
 
     assert not _replay(app, [crash])
     assert "RuntimeError: probe crashed" in capsys.readouterr().err
+
+
+def test_replay_sends_the_query_string_of_a_logged_request(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Some writes take their arguments in the query string, like ``facilities:upgrade-all`` (#1347)."""
+    received: list[str] = []
+
+    @app.post("/probe/query")
+    def _record_facility_type(facility_type: str) -> None:
+        received.append(facility_type)
+
+    logged: list[Action] = []
+    monkeypatch.setattr(engine, "log_action", logged.append)
+    engine.serve_local = False
+    client = TestClient(app)
+    authenticate(client, make_account("alice"))
+
+    assert client.post("/probe/query?facility_type=steam_engine", json={}).status_code == 200
+    assert [action.request.endpoint for action in logged if isinstance(action, ApiAction)] == [
+        "/probe/query?facility_type=steam_engine"
+    ]
+    assert _replay(app, list(logged))  # replay logs too, so iterate over a copy
+    assert received == ["steam_engine", "steam_engine"]

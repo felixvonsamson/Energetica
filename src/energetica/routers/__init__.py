@@ -168,7 +168,8 @@ def setup_routes(app: FastAPI) -> None:
                 action_type="request",
                 user_id=account.account_id,
                 request=ApiActionRequest(
-                    endpoint=request.url.path,
+                    # Some writes take their arguments in the query string, so replay needs it (#1347).
+                    endpoint=f"{path}?{request.url.query}" if request.url.query else path,
                     method=cast(Method, request.method),
                     content_type=request.headers.get("content-type"),
                     payload=request_payload,
