@@ -119,8 +119,10 @@ def _quotes(account_id: int, sell: dict[FacilityId, float], buy: dict[FacilityId
     return PlayerQuotes(
         account_id=account_id,
         username=f"p{account_id}",
-        sell={facility: QuotedPrice(price=price, previous=None) for facility, price in sell.items()},
-        buy={facility: QuotedPrice(price=price, previous=None) for facility, price in (buy or {}).items()},
+        sell={facility: QuotedPrice(price=price, previous=None, default=price) for facility, price in sell.items()},
+        buy={
+            facility: QuotedPrice(price=price, previous=None, default=price) for facility, price in (buy or {}).items()
+        },
     )
 
 

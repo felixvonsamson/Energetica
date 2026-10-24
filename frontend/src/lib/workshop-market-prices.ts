@@ -12,14 +12,19 @@ type QuotedPrice = ApiSchema<"QuotedPrice">;
 
 /**
  * How a price compares with the one its facility type ran at in the player's
- * last Trading period with it. A type that ran in no earlier period is new.
+ * last Trading period with it. A type that ran in no earlier period, as in the
+ * very first one, is compared with its default price instead.
  */
-export type PriceTrend = "up" | "down" | "unchanged" | "new";
+export type PriceTrend = "up" | "down" | "unchanged";
 
-export function priceTrend({ price, previous }: QuotedPrice): PriceTrend {
-    if (previous === null) return "new";
-    if (price > previous) return "up";
-    if (price < previous) return "down";
+export function priceTrend({
+    price,
+    previous,
+    default: base,
+}: QuotedPrice): PriceTrend {
+    const reference = previous ?? base;
+    if (price > reference) return "up";
+    if (price < reference) return "down";
     return "unchanged";
 }
 

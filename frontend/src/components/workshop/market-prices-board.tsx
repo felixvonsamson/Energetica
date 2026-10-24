@@ -7,7 +7,8 @@
  * Like a trading board, each price is green with an up arrow when it is higher
  * than the price the type ran at in the player's last Trading period, and red
  * with a down arrow when it is lower. Players sell, so a higher price is green.
- * A price that did not change, or a type the player did not have before, stays
+ * A type the player did not have before, as in the very first Trading period,
+ * is compared with its default price. A price that did not change stays
  * neutral.
  *
  * While the price-setting window is open, the board updates live as players
@@ -138,7 +139,8 @@ export function MarketPricesBoard({
             </div>
             <TypographyMuted className="text-xs">
                 Arrows compare each price with the one it ran at in the
-                player&apos;s last Trading period.
+                player&apos;s last Trading period, or with the default price if
+                there was none.
             </TypographyMuted>
         </div>
     );
@@ -217,7 +219,7 @@ function PriceCell({ quote }: { quote: QuotedPrice | undefined }) {
         <td
             title={
                 quote.previous === null
-                    ? "New this period"
+                    ? `Default price: ${formatMoney(quote.default)}/MWh`
                     : `Last period: ${formatMoney(quote.previous)}/MWh`
             }
             className={cn(

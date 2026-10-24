@@ -939,7 +939,7 @@ def test_a_settled_periods_room_prices_are_the_ones_it_ran_at(session_path: Path
 
     spring = client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json()
     assert not spring["live"]
-    assert spring["players"][0]["sell"] == {"gas_burner": {"price": 80.0, "previous": None}}
+    assert spring["players"][0]["sell"] == {"gas_burner": {"price": 80.0, "previous": None, "default": 90.0}}
 
 
 def test_everyone_in_the_run_reads_the_rooms_prices(session_path: Path, clock: _Clock) -> None:
@@ -952,7 +952,10 @@ def test_everyone_in_the_run_reads_the_rooms_prices(session_path: Path, clock: _
     assert client.get(MARKET_PRICES_URL.format(round=1, season="spring")).json() == alice_sees
     assert alice_sees["live"]
     [alice] = alice_sees["players"]
-    assert (alice["username"], alice["sell"]) == ("alice", {"gas_burner": {"price": 80.0, "previous": None}})
+    assert (alice["username"], alice["sell"]) == (
+        "alice",
+        {"gas_burner": {"price": 80.0, "previous": None, "default": 90.0}},
+    )
 
 
 def test_a_period_that_has_not_started_has_no_room_prices(session_path: Path, clock: _Clock) -> None:
