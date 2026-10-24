@@ -5,7 +5,7 @@
 
 import { useState, ReactNode } from "react";
 
-import { Button } from "./button";
+import { Button } from "#ui/components/button";
 import {
     Dialog,
     DialogClose,
@@ -14,9 +14,13 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "./dialog";
-import { Spinner } from "./spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+} from "#ui/components/dialog";
+import { Spinner } from "#ui/components/spinner";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "#ui/components/tooltip";
 
 interface ConfirmDialogProps {
     /** The trigger element (button) that opens the dialog */

@@ -1,7 +1,7 @@
 import { compile } from "@mdx-js/mdx";
 import { describe, expect, it } from "vitest";
 
-import remarkImageImports from "./remark-image-imports";
+import remarkImageImports from "#content/remark-image-imports";
 
 /** Compile MDX with the plugin, keeping JSX so the output stays readable. */
 async function compileMdx(source: string): Promise<string> {

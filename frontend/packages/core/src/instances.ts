@@ -10,7 +10,7 @@
  * Visibility & Access.
  */
 
-import { isSingleOriginHost } from "./single-origin";
+import { isSingleOriginHost } from "#core/single-origin";
 
 /**
  * Public projection of an instance. Mirrors the backend `InstanceFragment`

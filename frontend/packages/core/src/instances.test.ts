@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { derivePhase, isValidRunSlug, resolveLobbyBaseUrl } from "./instances";
+import {
+    derivePhase,
+    isValidRunSlug,
+    resolveLobbyBaseUrl,
+} from "#core/instances";
 
 const APEX = "energetica-game.org";
 const LOBBY_DEV = "http://localhost:5174";

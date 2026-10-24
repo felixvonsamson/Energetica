@@ -2,9 +2,8 @@
 
 import * as React from "react";
 
+import { Tabs, TabsList, TabsTrigger } from "#ui/components/tabs";
 import { cn } from "#ui/lib/utils";
-
-import { Tabs, TabsList, TabsTrigger } from "./tabs";
 
 interface SegmentedPickerProps<T extends string = string> {
     value: T;

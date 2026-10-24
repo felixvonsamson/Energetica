@@ -182,7 +182,9 @@ export default defineConfig([
     },
     // Shared packages import their own files through their own subpath imports,
     // such as `#ui/lib/utils`, declared under "imports" in the package's
-    // package.json. Same-folder `./` imports are fine, as in the apps. `@/` means
+    // package.json. Relative imports are not allowed, not even same-folder `./`
+    // ones: a Vite config that imports a package hands its files to Node, which
+    // only resolves an extensionless import through the "imports" map. `@/` means
     // "this app's src", so inside a package it would silently point at whichever
     // app is compiling it. A package importing itself by name only resolves
     // through the root package's node_modules, which the apps will not share.
@@ -194,8 +196,8 @@ export default defineConfig([
                 {
                     patterns: [
                         {
-                            group: ["../*"],
-                            message: `Relative parent imports are not allowed. Use this package's #${name}/ subpath imports instead.`,
+                            group: ["./*", "../*"],
+                            message: `Relative imports are not allowed in a shared package. Use this package's #${name}/ subpath imports instead.`,
                         },
                         {
                             group: ["@/*"],
