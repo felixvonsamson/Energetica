@@ -45,7 +45,7 @@ class ApiAction(BaseModel):
 
 
 class ApiActionRequest(BaseModel):
-    endpoint: str
+    endpoint: str  # the path, plus "?" and the query string when there is one (#1347)
     method: Method
     content_type: str | None
     payload: dict | Literal["unparsable or not JSON"] | None

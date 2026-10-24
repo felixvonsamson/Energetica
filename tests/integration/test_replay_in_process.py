@@ -168,7 +168,7 @@ def test_replay_sends_the_query_string_of_a_logged_request(app: FastAPI, monkeyp
     received: list[str] = []
 
     @app.post("/probe/query")
-    def _query(facility_type: str) -> None:
+    def _record_facility_type(facility_type: str) -> None:
         received.append(facility_type)
 
     logged: list[Action] = []
@@ -178,5 +178,8 @@ def test_replay_sends_the_query_string_of_a_logged_request(app: FastAPI, monkeyp
     authenticate(client, make_account("alice"))
 
     assert client.post("/probe/query?facility_type=steam_engine", json={}).status_code == 200
+    assert [action.request.endpoint for action in logged if isinstance(action, ApiAction)] == [
+        "/probe/query?facility_type=steam_engine"
+    ]
     assert _replay(app, list(logged))  # replay logs too, so iterate over a copy
     assert received == ["steam_engine", "steam_engine"]
