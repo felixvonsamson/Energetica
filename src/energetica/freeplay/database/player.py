@@ -88,7 +88,6 @@ class Player(DBModel):
     """
 
     username: str
-    pwhash: str
     account_id: int
     tile: HexTile
 

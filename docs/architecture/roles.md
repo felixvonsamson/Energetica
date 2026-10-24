@@ -81,7 +81,7 @@ object to materialise a role onto. Authority checks (`is_facilitator(account_id,
 and player checks both query `instance_membership` straight from the request. This also
 retires the persistent `User`/`Account` duplication tracked in
 [#905](https://github.com/felixvonsamson/Energetica/issues/905): the per-instance engine
-object (`Player`) now carries `username`/`pwhash`/`account_id` directly and exists only for
+object (`Player`) now carries `username`/`account_id` directly and exists only for
 an account that has actually settled — nothing is auto-provisioned on first visit, and a
 facilitator, who never settles, has no per-instance object at all.
 

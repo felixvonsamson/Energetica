@@ -25,7 +25,6 @@ class CreateUserAction(BaseModel):
     action_type: Literal["create_user"]
     user_id: int
     username: str
-    pw_hash: str
 
 
 class TickAction(BaseModel):
