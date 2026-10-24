@@ -2298,7 +2298,7 @@ export interface components {
             category: components["schemas"]["FacilityCategory"];
             /**
              * Base Price
-             * @description Price to build one
+             * @description What it costs before any price shock: its price for the session's length (#1306), which is lower than the catalog price for a long-lived facility in a short session
              */
             base_price: number;
             /**

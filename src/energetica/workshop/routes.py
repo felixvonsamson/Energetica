@@ -31,7 +31,7 @@ from energetica.identity.web import get_facilitator, get_role, resolve_entry_acc
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.events import EVENTS, suggested_severity
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
@@ -392,7 +392,8 @@ def get_facilities(
     owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
     return [
         WorkshopFacilityOut(
-            **facility.model_dump(),
+            **facility.model_dump(exclude={"base_price"}),
+            base_price=session_price(facility.id, session.price_round_count),
             for_sale=facility.id in for_sale,
             price=session.facility_price(facility.id),
             fuel_use=FUEL_USE.get(facility.id),
