@@ -27,7 +27,6 @@ deploy-instance.sh puts this file at scripts/drop_player_pwhash.py, as the servi
 from __future__ import annotations
 
 import argparse
-import os
 import pickle
 import shutil
 import sys
@@ -110,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     # Loading the pickle rebuilds real energetica objects, so run this with the interpreter the
     # project is installed into (on a server, `.venv/bin/python`).
     from energetica.freeplay import legacy_pickle
+    from energetica.kernel.atomic_file import open_atomically
 
     print(f"Loading pickle from {args.pickle}")
     with args.pickle.open("rb") as f:
@@ -130,12 +130,10 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copy2(args.pickle, backup_path)
         print(f"Backed up original pickle to {backup_path}")
 
-    # Write to a temp sibling and atomically replace the live pickle, so an interrupted dump
-    # leaves the original intact rather than half-written.
-    tmp_path = args.pickle.with_name(f"{args.pickle.name}.tmp-{os.getpid()}")
-    with tmp_path.open("wb") as f:
+    # The same atomic, flushed-to-disk write as engine.save(), so an interrupted dump or a power
+    # loss leaves the original intact rather than half-written.
+    with open_atomically(args.pickle) as f:
         pickle.dump(engine_state, f)
-    tmp_path.replace(args.pickle)
     print(f"Saved {args.pickle}")
     return 0
 
