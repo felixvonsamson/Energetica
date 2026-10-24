@@ -44,7 +44,7 @@ def _authenticated_client() -> tuple[TestClient, int]:
     drive the entry gate (``GET /auth/me``) so a local ``User`` is provisioned — the state a real
     browser is in by the time the in-run switcher calls my-runs. Returns the client + account_id.
     """
-    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev", port=PORT)
+    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
     engine.serve_local = False
     client = TestClient(app)
     account_id = make_account("alice")
@@ -54,7 +54,7 @@ def _authenticated_client() -> tuple[TestClient, int]:
 
 
 def test_my_runs_requires_authentication(landing_dir: Path) -> None:
-    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev", port=PORT)
+    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
     engine.serve_local = False
     response = TestClient(app).get(MY_RUNS_URL)
     assert response.status_code == 401
