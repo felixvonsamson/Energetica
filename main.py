@@ -154,6 +154,7 @@ if __name__ == "__main__":
 
     fastapi_log_level = kwargs.pop("fastapi_log_level")
     reload_enabled = not kwargs.pop("no_reload")
+    port = kwargs.pop("port")
 
     env = os.environ.copy()
     env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
@@ -171,7 +172,7 @@ if __name__ == "__main__":
         "--host",
         "0.0.0.0",
         "--port",
-        str(kwargs["port"]),
+        str(port),
         "--log-level",
         fastapi_log_level,
     ]

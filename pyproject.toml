@@ -14,6 +14,9 @@ dependencies = [
     "apscheduler",
     "bcrypt",
     "requests",
+    # fastapi[standard] pulls this in anyway, but replay imports it directly to call the app
+    # in-process, so it is declared here rather than relied on as a transitive dependency.
+    "httpx",
     "pandas",
     "pywebpush",
     # pywebpush pulls this in anyway, but we import it directly to generate the VAPID

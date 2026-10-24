@@ -25,7 +25,7 @@ def _reset_engine_health_state() -> None:
 
 
 def _make_client() -> TestClient:
-    app = create_app(rm_instance=True, env="dev", port=8001)
+    app = create_app(rm_instance=True, env="dev")
     engine.serve_local = False
     return TestClient(app)
 

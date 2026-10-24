@@ -51,7 +51,8 @@ _Avoid_: backup, save (a checkpoint contains a save but is not one).
 
 **Replay**:
 Re-executing **action log** entries that occur strictly after a known tick to bring
-restored state up to the present. Performed by `simulate.py`.
+restored state up to the present. Performed by `simulate.py`, which calls the app in-process as
+each logged account, without session cookies or the entry gate.
 
 **Loaded tick**:
 `engine.total_t` immediately after a **save**/**checkpoint** is loaded — the tick the

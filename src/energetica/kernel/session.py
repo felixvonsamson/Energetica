@@ -23,7 +23,6 @@ import secrets
 from datetime import timedelta
 
 import bcrypt
-import requests
 from fastapi import Request, Response
 from itsdangerous import URLSafeTimedSerializer
 
@@ -144,15 +143,3 @@ def add_session_cookie_to_response(
         domain=domain,
     )
     return response
-
-
-def add_session_cookie_to_session(session: requests.Session, identity: str) -> requests.Session:
-    token = serializer.dumps(identity)
-    session.cookies.set(
-        name=SESSION_COOKIE_NAME,
-        value=token,
-        path="/",
-        secure=False,
-        rest={"HttpOnly": True, "SameSite": "Lax"},
-    )
-    return session

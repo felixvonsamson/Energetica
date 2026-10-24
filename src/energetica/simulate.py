@@ -2,48 +2,68 @@
 
 from __future__ import annotations
 
+import asyncio
 import cProfile
 import pstats
 import secrets
-from time import sleep
-from typing import Any, cast
+import traceback
+from typing import Any
 
-import requests
+import httpx
+from fastapi import FastAPI
+from starlette.types import Receive, Scope, Send
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action
 from energetica.identity import accounts
-from energetica.kernel.session import add_session_cookie_to_session, generate_password_hash
+from energetica.identity.accounts import Account
+from energetica.identity.web import REPLAYED_ACCOUNT_SCOPE_KEY
+from energetica.kernel.session import generate_password_hash
 from energetica.utils import misc
 from energetica.utils.tick_execution import tick
 
 
-def create_user(username: str) -> requests.Session:
-    """Sign up a playing account named ``username`` and return a session logged in as it.
+def create_user(username: str) -> Account:
+    """Sign up a playing account named ``username``.
 
     The action log holds no password hash (#1341), so the account gets a random password nobody
-    knows. Replay never needs it: the session below logs in with a minted cookie.
+    knows. Replay never needs it, since it calls the app as the account directly.
     """
-    account = misc.signup_playing_user(None, username, generate_password_hash(secrets.token_urlsafe(32)))
-    session = requests.Session()
-    add_session_cookie_to_session(session, account.username)
-    return session
+    return misc.signup_playing_user(None, username, generate_password_hash(secrets.token_urlsafe(32)))
 
 
-def login_user(user_id: int) -> requests.Session:
-    """Login a user with the given user_id.
+def find_account(account_id: int) -> Account:
+    """The account a logged request came from, given the ``user_id`` it was logged with.
 
-    ``user_id`` is the account_id recorded as the ``user_id`` field of the ``CreateUserAction``
-    that originally signed this account up — an opaque correlation key within one
-    replay/simulation run, not a per-instance object id (there is no such thing any more; see
-    ADR-0004).
+    That ``user_id`` is the account_id, not a per-instance object id (there is no such thing any
+    more; see ADR-0004).
     """
-    account = accounts.get_account_by_id(user_id)
+    account = accounts.get_account_by_id(account_id)
     if account is None:
-        raise ValueError(f"Cannot log in user: account with id {user_id} does not exist")
-    session = requests.Session()
-    add_session_cookie_to_session(session, account.username)
-    return session
+        raise ValueError(f"Cannot replay a request: account with id {account_id} does not exist")
+    return account
+
+
+def client_as(app: FastAPI, account: Account) -> httpx.AsyncClient:
+    """A client that calls ``app`` in-process, as ``account``, without a session cookie (#1342).
+
+    Replay is the run talking to itself, so its requests do not pass the entry gate: they were
+    admitted when they were logged. The account travels in the request's ASGI scope, which only
+    in-process code can set (see :data:`~energetica.identity.web.REPLAYED_ACCOUNT_SCOPE_KEY`).
+    """
+
+    async def app_as_account(scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await app({**scope, REPLAYED_ACCOUNT_SCOPE_KEY: account}, receive, send)
+        except Exception:
+            # Over HTTP, uvicorn printed the traceback of a crash. In-process, nothing else does.
+            traceback.print_exc()
+            raise
+
+    # A crash in the app comes back as the 500 a real client would get, so that
+    # ``stop_on_server_error`` decides what happens next.
+    transport = httpx.ASGITransport(app=app_as_account, raise_app_exceptions=False)
+    return httpx.AsyncClient(transport=transport, base_url="http://replay")
 
 
 def verify() -> None:
@@ -67,7 +87,7 @@ def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: An
 
 
 def _simulate(
-    port: int,
+    app: FastAPI,
     actions: list[Action],
     simulating: bool,
     stop_on_mismatch: bool,
@@ -77,78 +97,62 @@ def _simulate(
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
     """Simulate the list of actions. Returns true if the simulation was successful, false otherwise."""
-    base_url = f"http://localhost:{port}"
-
     if checkpoint_ticks is None:
         checkpoint_ticks = []
 
-    # NOTE(mglst): I suspect that with FastAPI there are better ways to handle checking that the server is running
-    trials = 0
-    while True:
+    clients: dict[int, httpx.AsyncClient] = {}
+    # One event loop for the whole replay, so that each account's client is reused.
+    with asyncio.Runner() as runner:
         try:
-            requests.get(base_url, timeout=1)
-        except requests.exceptions.ConnectionError:
-            trials += 1
-            if trials == 10:
-                print("Server is not running.")
-                exit(1)
-            sleep(1)
-            continue
-        break
-    user_sessions: dict[int, requests.Session] = {}
-
-    for action in actions:
-        print(action)
-        if action.action_type == "tick":
-            tick()
-            if (
-                checkpoint_every_k_ticks
-                and action.total_t % checkpoint_every_k_ticks == 0
-                or action.total_t in checkpoint_ticks
-            ):
-                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
-        elif action.action_type == "create_user":
-            user_id = action.user_id
-            user_sessions[user_id] = create_user(action.username)
-        elif action.action_type == "request":
-            user_id = action.user_id
-            if user_id not in user_sessions:
-                user_sessions[user_id] = login_user(user_id)
-            session = cast(requests.Session, user_sessions[user_id])
-            url = f"{base_url}{action.request.endpoint}"
-            content_type = "json" if action.request.content_type == "application/json" else "data"
-            method = action.request.method
-            try:
-                method_func = getattr(session, method.lower())
-            except AttributeError:
-                raise ValueError(f"Cannot manage the following method: {method}")
-            response = method_func(
-                url,
-                **{content_type: action.request.payload},
-                allow_redirects=False,
-            )
-            if response.status_code != action.response.status_code:
-                print(
-                    f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                    f"""{action.response.status_code}.\033[0m""",
-                )
-                if stop_on_mismatch:
-                    break
-            if response.status_code != 200:
-                print(f"Status code: {response.status_code}")
-                if response.status_code // 100 == 4:
-                    print("\033[33m" + response.text + "\033[0m")
-                elif response.status_code // 100 == 5:
-                    print("\033[31mServer error, look at the stack above.\033[0m")
-                    if stop_on_server_error:
+            for action in actions:
+                print(action)
+                if action.action_type == "tick":
+                    tick()
+                    if (
+                        checkpoint_every_k_ticks
+                        and action.total_t % checkpoint_every_k_ticks == 0
+                        or action.total_t in checkpoint_ticks
+                    ):
+                        engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
+                elif action.action_type == "create_user":
+                    clients[action.user_id] = client_as(app, create_user(action.username))
+                elif action.action_type == "request":
+                    user_id = action.user_id
+                    if user_id not in clients:
+                        clients[user_id] = client_as(app, find_account(user_id))
+                    client, request = clients[user_id], action.request
+                    if request.content_type == "application/json":
+                        sent = client.request(request.method, request.endpoint, json=request.payload)
+                    elif isinstance(request.payload, dict):
+                        sent = client.request(request.method, request.endpoint, data=request.payload)
+                    else:
+                        sent = client.request(request.method, request.endpoint, content=request.payload)
+                    response = runner.run(sent)
+                    if response.status_code != action.response.status_code:
+                        print(
+                            f"""\033[31mStatus code {response.status_code} does not match expected status code """
+                            f"""{action.response.status_code}.\033[0m""",
+                        )
+                        if stop_on_mismatch:
+                            break
+                    if response.status_code != 200:
+                        print(f"Status code: {response.status_code}")
+                        if response.status_code // 100 == 4:
+                            print("\033[33m" + response.text + "\033[0m")
+                        elif response.status_code // 100 == 5:
+                            print("\033[31mServer error, look at the stack above.\033[0m")
+                            if stop_on_server_error:
+                                break
+                try:
+                    # After every tick and action, verify the state of the engine
+                    verify()
+                except AssertionError:
+                    print("\033[31mAssertion error.\033[0m")
+                    if stop_on_assertion_error:
                         break
-        try:
-            # After every tick and action, verify the state of the engine
-            verify()
-        except AssertionError:
-            print("\033[31mAssertion error.\033[0m")
-            if stop_on_assertion_error:
-                break
-    else:
-        return True
-    return False
+            else:
+                return True
+            return False
+        finally:
+            for client in clients.values():
+                runner.run(client.aclose())

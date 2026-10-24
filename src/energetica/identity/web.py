@@ -23,13 +23,29 @@ from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 
 logger = logging.getLogger(__name__)
 
+REPLAYED_ACCOUNT_SCOPE_KEY = "energetica.replayed_account"
+"""The ASGI scope key under which replay passes the account a logged request came from (#1342).
+
+Replay calls the app in-process (:mod:`energetica.simulate`) and sets this key itself. The server
+builds the scope of a real request from the connection and never sets it, so no client can.
+"""
+
+
+def replayed_account(request: Request) -> Account | None:
+    """The account a replayed request came from, or ``None`` for a real request."""
+    return request.scope.get(REPLAYED_ACCOUNT_SCOPE_KEY)
+
 
 def get_current_account(request: Request) -> Account | None:
     """Resolve the SSO cookie to a server-wide :class:`Account`, or ``None``.
 
     A missing/invalid cookie, or a cookie for an account since deleted from the server-wide
-    store, both read as ``None`` here.
+    store, both read as ``None`` here. A replayed request has no cookie and resolves to the account
+    it was logged for.
     """
+    account = replayed_account(request)
+    if account is not None:
+        return account
     token = request.cookies.get(SESSION_COOKIE_NAME)
     if not token:
         return None
@@ -127,7 +143,12 @@ def resolve_entry_account(request: Request) -> Account:
 
     Access is enforced on *every* entry — the analog of the old per-login check — so a private
     instance that is locked down after an account last visited still denies it on the next load.
+    A replayed request skips the gate: it was admitted when it was logged, and the access policy
+    or membership may have changed since.
     """
+    account = replayed_account(request)
+    if account is not None:
+        return account
     return _resolve_entry_token(request.cookies.get(SESSION_COOKIE_NAME))
 
 

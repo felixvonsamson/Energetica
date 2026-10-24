@@ -41,7 +41,7 @@ def configured(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def _client() -> TestClient:
-    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev", port=PORT)
+    app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
     engine.serve_local = False
     return TestClient(app)
 
