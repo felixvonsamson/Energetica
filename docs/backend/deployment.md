@@ -147,7 +147,7 @@ From your local machine:
 
 Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
 subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
-`export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
+`drop_player_pwhash.py`, `export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
 `grant-facilitator.py`, `whitelist-run.py` — both touch the shared `accounts.db`, so they
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
@@ -230,6 +230,47 @@ at fault, and leaves the server as it was. The instance is still stopped at that
 file and deploy again.
 
 The reaper needs nothing. It reads `ended_at` with `jq` and no schema, so it works on either shape.
+
+## Dropping `Player.pwhash` from saved runs (#1341)
+
+Do this once per instance, after the first deploy that includes #1341.
+
+Each `Player` used to keep a copy of its account's password hash, which nothing read. #1341 removes
+the field from the code, but a run saved before that still carries the hash in its pickle. The new
+code loads such a pickle without trouble and never reads the hash, so this step only removes it.
+The old code cannot load a migrated pickle safely, so to roll back past #1341, restore the backup
+the script writes.
+
+**1. Deploy as usual.** The instance restarts on the new code with the hashes still in its state.
+
+```bash
+SLUG=autumn-2025
+./scripts/deploy-instance.sh --server energetica-game --instance "$SLUG" --domain energetica-game.org
+```
+
+**2. Stop the instance and run the script.** On the VPS, as root. The script refuses to run while
+it can see the instance running, because the next save would write the hashes back. Check with
+`--dry-run` first: it prints how many players carry a hash.
+
+```bash
+SLUG=autumn-2025   # set again: this runs on the VPS
+cd "/var/www/energetica-$SLUG"
+systemctl stop "energetica-$SLUG"
+sudo -u energetica .venv/bin/python scripts/drop_player_pwhash.py --pickle instance/engine_data.pck --dry-run
+sudo -u energetica .venv/bin/python scripts/drop_player_pwhash.py --pickle instance/engine_data.pck
+systemctl start "energetica-$SLUG"
+```
+
+Stopping loses nothing. As on any restart, the instance replays the action log from its last save.
+
+**3. Remove the copies that still hold hashes**, once the instance is healthy again:
+
+- the backup the script wrote, `instance/engine_data.pck.bak-<timestamp>`;
+- any older pickle kept by hand in `instance/`, such as `engine_data.pck.pre-main`.
+
+`checkpoints/last_checkpoint.tar.gz` still holds the hashes until the next checkpoint replaces it,
+at most 6 hours later. The action logs hold none: at the time of #1341, no live instance's log has
+a `create_user` line, the only kind that recorded a hash.
 
 ## Changing an instance's Apache vhost
 

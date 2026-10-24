@@ -18,6 +18,7 @@ from energetica.freeplay.schemas.simulate import (
     ApiAction,
     ApiActionRequest,
     ApiActionResponse,
+    CreateUserAction,
     InitEngineAction,
     TickAction,
 )
@@ -187,3 +188,30 @@ def test_read_init_action_accepts_a_log_predating_disable_signups_removal(tmp_pa
     assert "disable_signups" not in kwargs
     accepted = set(inspect.signature(GameEngine.init_instance).parameters) - {"self"}
     assert set(kwargs) <= accepted
+
+
+def test_a_create_user_line_predating_the_pw_hash_removal_still_replays(tmp_path: Path) -> None:
+    """A log written before #1341 still replays, and the hash it carries is dropped on parse.
+
+    ``pw_hash`` was removed from ``CreateUserAction``, but the ``create_user`` lines in existing
+    logs still carry it. Like ``disable_signups`` above, this relies on Pydantic ignoring unknown
+    fields.
+    """
+    import json
+
+    legacy = {
+        "timestamp": _TS.isoformat(),
+        "ip": "127.0.0.1",
+        "action_type": "create_user",
+        "user_id": 5,
+        "username": "alice",
+        "pw_hash": "$2b$12$legacy-hash",
+    }
+    log = tmp_path / "actions_history.log"
+    log.write_text(_init().model_dump_json() + "\n" + json.dumps(legacy) + "\n", encoding="utf-8")
+
+    (create_user,) = stream_actions_after_tick(log, loaded_tick=0)
+
+    assert isinstance(create_user, CreateUserAction)
+    assert create_user.username == "alice"
+    assert "pw_hash" not in create_user.model_dump()

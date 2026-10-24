@@ -44,7 +44,7 @@ def test_seed_determinism() -> None:
             engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
 
             engine.random_seed = {seed}
-            player = Player(username="player1", pwhash="pwhash", account_id=1, tile=HexTile.getitem(1))
+            player = Player(username="player1", account_id=1, tile=HexTile.getitem(1))
             result = {{
                 "bid": player.network_prices.bid_prices,
                 "ask": player.network_prices.ask_prices,

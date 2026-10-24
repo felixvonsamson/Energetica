@@ -52,7 +52,6 @@ def signup_playing_user(request: Request | None, username: str, pwhash: str) -> 
         action_type="create_user",
         user_id=account.account_id,
         username=account.username,
-        pw_hash=account.pwhash,
     )
     engine.log_action(log_entry)
 
@@ -262,7 +261,6 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
 
     player = Player(
         username=account.username,
-        pwhash=account.pwhash,
         account_id=account.account_id,
         tile=tile,
         created_at=settled_at,
