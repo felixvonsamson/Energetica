@@ -11,9 +11,10 @@ from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, BlackoutRisk, PowerSource
 from energetica.workshop.demand_block import DEMAND_TIERS
+from energetica.workshop.events import EVENTS
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES
-from energetica.workshop.round_plan import LeverChanges
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent
 from energetica.workshop.seasons import SEASONS
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 
@@ -177,16 +178,58 @@ def test_each_fuels_history_ends_with_this_seasons_price(tmp_path: Path) -> None
 
 
 @pytest.mark.usefixtures("no_demand_growth")
-def test_the_must_serve_peak_is_the_peak_the_engine_records(tmp_path: Path) -> None:
+def test_the_peak_is_each_seasons_in_its_trading_period_and_else_the_rounds(tmp_path: Path) -> None:
     session = _investing(tmp_path / "session.json")
+    round_peak = session.control_room().capacity
+    season_peaks = []
     for _ in SEASONS:
         _settle_next(session)
+        season_peaks.append(session.control_room().capacity)
 
-    outlook = session.control_room().capacity
+    assert (round_peak.round, round_peak.season) == (1, None)
+    assert [outlook.season for outlook in season_peaks] == list(SEASONS)
+    # The engine records the highest must-serve demand it cleared in the Round.
+    assert round_peak.must_serve_peak == pytest.approx(session.peak_demand[1])
+    assert round_peak.must_serve_peak == pytest.approx(max(outlook.must_serve_peak for outlook in season_peaks))
+    for outlook in [round_peak, *season_peaks]:
+        assert outlook.all_tiers_peak == pytest.approx(
+            sum(tier.share for tier in DEMAND_TIERS) * outlook.must_serve_peak
+        )
+        assert outlook.round_all_tiers_peak == pytest.approx(round_peak.all_tiers_peak)
 
-    assert outlook.round == 1
-    assert outlook.must_serve_peak == pytest.approx(session.peak_demand[1])
-    assert outlook.all_tiers_peak == pytest.approx(sum(tier.share for tier in DEMAND_TIERS) * outlook.must_serve_peak)
+
+def _advance_to(session: WorkshopSession, checkpoint: Investment | TradingPeriod) -> None:
+    """Advance to ``checkpoint``, settling each Trading period on the way."""
+    while session.checkpoint != checkpoint:
+        if isinstance(session.checkpoint, TradingPeriod) and session.settled_period != session.checkpoint:
+            session.advance()
+            job = session.start_settlement()
+            assert job is not None
+            session.finish_settlement(job, session.run_settlement(job))
+        session.advance()
+
+
+@pytest.mark.usefixtures("no_demand_growth")
+def test_a_seasonal_event_counts_towards_the_peak_while_planned_and_alarms_once_it_fires(tmp_path: Path) -> None:
+    calm = _investing(tmp_path / "calm.json")
+    cold = _investing(tmp_path / "cold.json")
+    cold.plan_event(2, PlannedEvent(event="climate.cold_snap", severity="major", season="winter"))
+    magnitude = EVENTS["climate.cold_snap"].magnitude["major"]
+    for session in (calm, cold):
+        _advance_to(session, Investment(round=2))
+
+    # Winter has the Round's highest demand, so a cold snap then raises the Round's peak by its whole magnitude.
+    planned = cold.control_room()
+    assert planned.capacity.must_serve_peak == pytest.approx(calm.control_room().capacity.must_serve_peak * magnitude)
+    assert not any(alarm.kind == "event" and alarm.season == "winter" for alarm in planned.alarms)
+
+    _advance_to(cold, TradingPeriod(round=2, season="winter"))
+    fired = cold.control_room()
+
+    assert fired.capacity.season == "winter"
+    assert fired.capacity.must_serve_peak == pytest.approx(planned.capacity.must_serve_peak)
+    assert fired.alarms[0].kind == "event"
+    assert fired.alarms[0].season == "winter"
 
 
 def test_selected_facilities_count_towards_the_rounds_capacity(tmp_path: Path) -> None:

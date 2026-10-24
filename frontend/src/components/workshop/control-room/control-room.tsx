@@ -5,8 +5,9 @@
  *
  * - Left, a third each: carbon, the market price per season, and the last
  *   season's price-duration curve.
- * - Centre: alarms, capacity against must-serve demand (#1287), then the room's
- *   prices per power source.
+ * - Centre: alarms, capacity against must-serve demand (#1287): the Round's peak,
+ *   or in a Trading period its season's, then the room's prices per power
+ *   source.
  * - Right: the Round, phase and countdown, then fuel prices and the room's
  *   generation per season.
  */
@@ -19,7 +20,11 @@ import {
     useWorkshopControlRoom,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import { controlRoomPhase, periodLabel } from "@/lib/workshop-control-room";
+import {
+    controlRoomPhase,
+    peakPeriod,
+    periodLabel,
+} from "@/lib/workshop-control-room";
 import {
     formatCountdown,
     isFinalMinute,
@@ -80,7 +85,7 @@ export function ControlRoom() {
                     <Alarms alarms={room.alarms} />
                 </Panel>
                 <Panel
-                    title={`Capacity vs must-serve demand · Round ${room.capacity.round}`}
+                    title={`Capacity vs must-serve demand · ${peakPeriod(room.capacity.round, room.capacity.season)}`}
                     className="h-[352px] shrink-0"
                 >
                     <Capacity outlook={room.capacity} />

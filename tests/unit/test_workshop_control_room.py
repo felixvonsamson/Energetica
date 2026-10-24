@@ -260,7 +260,6 @@ def test_a_session_that_has_not_started_has_no_rounds_of_emissions() -> None:
 def _alarms(**overrides: object) -> list:
     arguments: dict = {
         "fired": [],
-        "settled": None,
         "blackouts": [],
         "unlocks": [],
         "vote_outcomes": [],
@@ -284,11 +283,10 @@ def test_a_round_event_raises_an_alarm_as_soon_as_it_fires() -> None:
     ]
 
 
-def test_a_seasonal_event_raises_an_alarm_only_once_its_season_is_settled() -> None:
+def test_a_seasonal_event_raises_an_alarm_with_its_exact_effect_as_soon_as_it_fires() -> None:
     fired = _fired("climate.heatwave", "major", round_number=2, season="summer")
 
-    assert _alarms(fired=[fired], settled=(2, "spring")) == []
-    [alarm] = _alarms(fired=[fired], settled=(2, "summer"))
+    [alarm] = _alarms(fired=[fired])
     assert alarm == EventAlarm(
         round=2, season="summer", category="climate", name="Heatwave", effect="Demand +18% for the summer"
     )
@@ -300,7 +298,7 @@ def test_each_blackout_raises_an_alarm_and_another_for_the_rationing_it_leaves()
         Blackout(round=1, season="winter", day=320, minute=1080),
     ]
 
-    assert _alarms(blackouts=blackouts, settled=(1, "winter")) == [
+    assert _alarms(blackouts=blackouts) == [
         RationingAlarm(round=1, season="winter", rationing=RATIONING**2),
         BlackoutAlarm(round=1, season="winter", day=320, minute=1080),
         RationingAlarm(round=1, season="summer", rationing=RATIONING),
@@ -340,7 +338,6 @@ def test_alarms_are_listed_newest_first() -> None:
             _fired("demand.ev_tipping_point", round_number=2),
             _fired("climate.heatwave", "moderate", round_number=1, season="summer"),
         ],
-        settled=(2, "spring"),
         blackouts=[Blackout(round=2, season="spring", day=60, minute=0)],
         unlocks=[Unlock(facility=FacilityId.OFFSHORE_WIND_TURBINE, round=2, trigger="investment_threshold")],
         vote_outcomes=[VoteOutcome(round=2, passed=False)],

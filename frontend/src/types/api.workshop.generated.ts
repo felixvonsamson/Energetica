@@ -944,14 +944,20 @@ export interface components {
         BlackoutRisk: "guaranteed" | "likely" | "unlikely" | "very_unlikely";
         /**
          * CapacityOutlook
-         * @description The room's capacity in a Round against the Round's must-serve peak, for the control room's capacity panel.
+         * @description The room's capacity in a Round against its must-serve peak, for the control room's capacity panel: the peak of
+         *     the season whose Trading period the session is in, or else of the whole Round.
          */
         CapacityOutlook: {
             /** Round */
             round: number;
             /**
+             * Season
+             * @description The season the peak is for, in its Trading period, or null when it is the whole Round's
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
              * Must Serve Peak
-             * @description The highest must-serve demand of the Round, in W, before any seasonal event or rationing
+             * @description The highest must-serve demand of the season or the Round, in W, with its events, planned ones included, and before any rationing
              */
             must_serve_peak: number;
             /**
@@ -959,6 +965,11 @@ export interface components {
              * @description The highest demand counting every demand tier, in W
              */
             all_tiers_peak: number;
+            /**
+             * Round All Tiers Peak
+             * @description The Round's highest demand counting every demand tier, in W, so a season's peaks can be drawn on the Round's scale. The same as ``all_tiers_peak`` outside a Trading period
+             */
+            round_all_tiers_peak: number;
             /** @description What the facilities working in the Round can produce: those owned and those selected to buy */
             room: components["schemas"]["RoomCapacity"];
             risk: components["schemas"]["BlackoutRisk"];

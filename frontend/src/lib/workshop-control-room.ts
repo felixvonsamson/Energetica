@@ -51,6 +51,16 @@ export function periodLabel(round: number, season: Season | null): string {
     return `R${round} ${season === null ? "Inv" : SEASON_SHORT[season]}`;
 }
 
+/**
+ * What the capacity panel's peak covers: in a Trading period its season, as
+ * "Winter of Round 3", and otherwise the whole Round, as "Round 3".
+ */
+export function peakPeriod(round: number, season: Season | null): string {
+    return season === null
+        ? `Round ${round}`
+        : `${SEASON_LABELS[season]} of Round ${round}`;
+}
+
 export type AlarmLevel = "critical" | "warning" | "info";
 
 /** An alarm as the panel lists it. */
