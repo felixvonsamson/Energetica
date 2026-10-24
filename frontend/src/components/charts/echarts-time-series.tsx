@@ -683,12 +683,15 @@ export function TimeSeriesChart({
         // blackout to the first tick the grid is back at, drawn on the first
         // series like the marker. A region that runs past the last tick is
         // left open, so ECharts runs it to the plot's right edge rather than
-        // to the middle of the last bar.
+        // to the middle of the last bar. On bars, ECharts puts a region's end
+        // at the right edge of the bar it is given, so it is given the last
+        // bar the grid is down at.
         const blackoutAreas = (blackouts ?? []).flatMap(({ start, end }) => {
             const from = ticks.findIndex((tick) => tick >= start);
             if (from < 0 || (ticks[from] ?? Infinity) >= end) return [];
             const to = ticks.findIndex((tick) => tick >= end);
-            return [[{ xAxis: from }, to < 0 ? {} : { xAxis: to }]];
+            if (to < 0) return [[{ xAxis: from }, {}]];
+            return [[{ xAxis: from }, { xAxis: isBar ? to - 1 : to }]];
         });
         const markArea: MarkAreaComponentOption | undefined =
             blackoutAreas.length === 0
@@ -859,7 +862,11 @@ export function TimeSeriesChart({
                         0,
                     hideOverlap: true,
                 },
-                axisTick: { show: false },
+                // On bars, ECharts places a blackout region's edges on the
+                // axis ticks, halfway between two ticks when there is none at
+                // the edge. A tick at every category, hidden like the rest,
+                // puts each edge exactly on its bar.
+                axisTick: { show: false, interval: 0 },
                 splitLine: { show: false },
             },
             yAxis: {
