@@ -119,6 +119,16 @@ describe("frontend boundaries", () => {
         ).toContain("no-restricted-imports");
     });
 
+    // Node, which loads a package that a Vite config imports, cannot resolve it.
+    it("rejects a same-folder relative import inside a shared package", async () => {
+        expect(
+            await violatedRules(
+                "packages/ui/src/components/example.tsx",
+                'import { Button } from "./button";\nexport const x = Button;\n',
+            ),
+        ).toContain("no-restricted-imports");
+    });
+
     it("allows a shared package's own subpath imports", async () => {
         expect(
             await violatedRules(

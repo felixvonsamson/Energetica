@@ -63,10 +63,11 @@ const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 /**
  * One segment of a TanStack file-based route path. Either kebab-case, or one of
  * the framework's sigils: `$param` / `$` (splat), `_layout` (pathless layout),
- * `__root` (the root route).
+ * `segment_` (a path segment whose route does not nest inside that segment's
+ * layout), `__root` (the root route).
  */
 const ROUTE_SEGMENT =
-    /^(__root|_[a-z0-9]+(-[a-z0-9]+)*|\$[a-z0-9]*|[a-z0-9]+(-[a-z0-9]+)*)$/;
+    /^(__root|_[a-z0-9]+(-[a-z0-9]+)*|\$[a-z0-9]*|[a-z0-9]+(-[a-z0-9]+)*_?)$/;
 
 /** Tracked `.ts` / `.tsx` files under the scanned prefixes, repo-relative. */
 function trackedSources(): string[] {
@@ -105,7 +106,7 @@ for (const file of trackedSources()) {
     if (!ok) {
         violations.push(
             inRouteTree
-                ? `${file}  — route path segments must be kebab-case, \`$param\`, \`_layout\` or \`__root\``
+                ? `${file}  — route path segments must be kebab-case, \`$param\`, \`_layout\`, \`segment_\` or \`__root\``
                 : `${file}  — expected a kebab-case name, e.g. \`${toKebab(stem)}\``,
         );
     }

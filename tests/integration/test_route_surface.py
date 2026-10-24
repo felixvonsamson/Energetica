@@ -186,6 +186,7 @@ WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
     "GET /api/v1/workshop/rounds/{round_number}/balance-sheet",
     "GET /api/v1/workshop/rounds/{round_number}/recap",
     "GET /api/v1/workshop/scoreboard",
+    "GET /api/v1/workshop/control-room",
     "GET /api/v1/workshop/loan",
     "POST /api/v1/workshop/loan",
     "DELETE /api/v1/workshop/loan",

@@ -196,6 +196,19 @@ def emissions(purchases: Iterable[Purchase], results: Iterable[TradingResult]) -
     return built + ran
 
 
+def average_price(results: Iterable[TradingResult]) -> float | None:
+    """What generators earned per MWh they sold over ``results``, or None if they sold nothing. Storage resells
+    energy generated elsewhere, so it is left out.
+    """
+    sold = revenue = 0.0
+    for result in results:
+        for facility, performance in result.facilities.items():
+            if not is_storage(facility):
+                sold += performance.sold
+                revenue += performance.revenue
+    return revenue / (sold / 1e6) if sold > 0 else None
+
+
 def _figures(round_number: int, *, purchases: Sequence[Purchase], results: Sequence[TradingResult]) -> RoomFigures:
     # Storage resells energy generated elsewhere, so only generators count towards what was sold.
     sold = [
@@ -206,7 +219,6 @@ def _figures(round_number: int, *, purchases: Sequence[Purchase], results: Seque
         if not is_storage(facility)
     ]
     energy = sum(performance.sold for _, performance in sold)
-    revenue = sum(performance.revenue for _, performance in sold)
     renewable = sum(
         performance.sold for facility, performance in sold if CATALOG[facility].category in RENEWABLE_CATEGORIES
     )
@@ -223,7 +235,7 @@ def _figures(round_number: int, *, purchases: Sequence[Purchase], results: Seque
             CATALOG[purchase.facility].base_power_generation for purchase in purchases if purchase.round == round_number
         ),
         energy_sold=energy,
-        average_price=revenue / (energy / 1e6) if energy > 0 else None,
+        average_price=average_price(result for result in results if result.round == round_number),
         renewable_share=renewable / energy if energy > 0 else None,
     )
 

@@ -480,8 +480,8 @@ export interface paths {
         put?: never;
         /**
          * Add To Selection
-         * @description Add one facility to the calling player's selection. Only while the Investment phase is open, and
-         *     only if the player can pay for the whole selection.
+         * @description Add one facility to the calling player's selection, and tell the control room. Only while the Investment phase
+         *     is open, and only if the player can pay for the whole selection.
          */
         post: operations["add_to_selection_api_v1_workshop_selection_post"];
         delete?: never;
@@ -502,8 +502,8 @@ export interface paths {
         post?: never;
         /**
          * Remove From Selection
-         * @description Take one copy of ``facility`` out of the calling player's selection. Only while the Investment
-         *     phase is open.
+         * @description Take one copy of ``facility`` out of the calling player's selection, and tell the control room. Only while the
+         *     Investment phase is open.
          */
         delete: operations["remove_from_selection_api_v1_workshop_selection__facility__delete"];
         options?: never;
@@ -743,6 +743,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/control-room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Control Room
+         * @description Everything the control room dashboard shows the room, apart from where the session is: alarms, carbon, each
+         *     settled season's prices and generation, the room's prices without names, and fuel prices. The same for everyone
+         *     in the Run.
+         */
+        get: operations["get_control_room_api_v1_workshop_control_room_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/vote": {
         parameters: {
             query?: never;
@@ -887,6 +909,117 @@ export interface components {
             minute: number;
         };
         /**
+         * BlackoutAlarm
+         * @description The grid going down.
+         */
+        BlackoutAlarm: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "blackout";
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Day
+             * @description The day of the year it happened on, from 0
+             */
+            day: number;
+            /**
+             * Minute
+             * @description The minute of the day it happened at, from 0
+             */
+            minute: number;
+        };
+        /**
+         * BlackoutRisk
+         * @description How likely the room's capacity is to leave must-serve demand unserved at the Round's peak.
+         * @enum {string}
+         */
+        BlackoutRisk: "guaranteed" | "likely" | "unlikely" | "very_unlikely";
+        /**
+         * CapacityOutlook
+         * @description The room's capacity in a Round against the Round's must-serve peak, for the control room's capacity panel.
+         */
+        CapacityOutlook: {
+            /** Round */
+            round: number;
+            /**
+             * Must Serve Peak
+             * @description The highest must-serve demand of the Round, in W, before any seasonal event or rationing
+             */
+            must_serve_peak: number;
+            /**
+             * All Tiers Peak
+             * @description The highest demand counting every demand tier, in W
+             */
+            all_tiers_peak: number;
+            /** @description What the facilities working in the Round can produce: those owned and those selected to buy */
+            room: components["schemas"]["RoomCapacity"];
+            risk: components["schemas"]["BlackoutRisk"];
+        };
+        /**
+         * CarbonTaxStatus
+         * @description Whether the carbon tax is in force, or being voted on.
+         */
+        CarbonTaxStatus: {
+            /**
+             * Rate
+             * @description What the tax charges, or would charge, per kg of CO₂
+             */
+            rate: number;
+            /**
+             * Since
+             * @description The Round whose vote put it in force, or null if none passed
+             */
+            since: number | null;
+            /**
+             * Vote Open
+             * @description Whether players are voting on it now
+             */
+            vote_open: boolean;
+        };
+        /**
+         * ControlRoom
+         * @description Everything the control room shows, apart from where the session is, which the session's own answer gives.
+         */
+        ControlRoom: {
+            /**
+             * Alarms
+             * @description Every alarm raised so far, newest first
+             */
+            alarms: (components["schemas"]["EventAlarm"] | components["schemas"]["BlackoutAlarm"] | components["schemas"]["RationingAlarm"] | components["schemas"]["UnlockAlarm"] | components["schemas"]["VoteAlarm"])[];
+            /**
+             * Emissions
+             * @description Each Round's emissions, from Round 1 to the current one
+             */
+            emissions: components["schemas"]["RoundEmissions"][];
+            carbon_tax: components["schemas"]["CarbonTaxStatus"];
+            capacity: components["schemas"]["CapacityOutlook"];
+            /**
+             * Seasons
+             * @description The last settled seasons, oldest first
+             */
+            seasons: components["schemas"]["SeasonFigures"][];
+            /** @description The last settled season's price-duration curve, or null if no season with a record has settled */
+            duration_curve: components["schemas"]["DurationCurve"] | null;
+            /**
+             * Room Prices
+             * @description The room's prices in the last Trading periods, oldest first, the current one included
+             */
+            room_prices: components["schemas"]["RoomPrices"][];
+            /**
+             * Fuels
+             * @description Every fuel's price this season, or its catalog price before the first season
+             */
+            fuels: components["schemas"]["FuelQuote"][];
+        };
+        /**
          * DemandOutlook
          * @description How peak must-serve demand moves from this Round to the next, through demand growth and the Round events that
          *     last.
@@ -902,6 +1035,54 @@ export interface components {
              * @description This Round's peak grown by next Round's demand growth and moved by the demand shifts that start next Round, in W: a forecast
              */
             peak_next_round: number;
+        };
+        /**
+         * DurationCurve
+         * @description The last settled season's clearing prices, from the highest to the lowest.
+         */
+        DurationCurve: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Prices
+             * @description Prices per MWh, evenly spread over the period's settlement points
+             */
+            prices: number[];
+        };
+        /**
+         * EventAlarm
+         * @description An event that fired.
+         */
+        EventAlarm: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "event";
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @description The Trading period it fired at, or null for one that fired with the Round
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "climate" | "price_shock_geopolitical" | "demand_shift" | "tech_unlock" | "vote";
+            /** Name */
+            name: string;
+            /**
+             * Effect
+             * @description What it does, in one short line of plain numbers, as the Recap prints it
+             */
+            effect: string;
         };
         /**
          * FacilitatorAccessOut
@@ -1018,6 +1199,35 @@ export interface components {
             price: number;
             /** Cost */
             cost: number;
+        };
+        /**
+         * FuelQuote
+         * @description A fuel's price this season.
+         */
+        FuelQuote: {
+            fuel: components["schemas"]["Fuel"];
+            /** Name */
+            name: string;
+            /**
+             * Price
+             * @description The price per kg
+             */
+            price: number;
+            /**
+             * Change
+             * @description The change since last season, as a share of last season's price, or null before the second season
+             */
+            change: number | null;
+            /**
+             * Shocked
+             * @description Whether a price shock landed this season
+             */
+            shocked: boolean;
+            /**
+             * History
+             * @description The last prices per kg, oldest first, ending with this season's. Those from before the session are made up
+             */
+            history: number[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1373,6 +1583,29 @@ export interface components {
             };
         };
         /**
+         * PowerSource
+         * @description What the dashboard groups facilities by: the fuel or the weather they run on. A base tier and its upgrade
+         *     share one, and so do coal and gas plants of every tier.
+         * @enum {string}
+         */
+        PowerSource: "coal" | "gas" | "nuclear" | "hydro" | "wind" | "solar" | "storage";
+        /**
+         * PriceBox
+         * @description The spread of the prices players set, per MWh, as a box plot draws it.
+         */
+        PriceBox: {
+            /** Low */
+            low: number;
+            /** Q1 */
+            q1: number;
+            /** Median */
+            median: number;
+            /** Q3 */
+            q3: number;
+            /** High */
+            high: number;
+        };
+        /**
          * QuotedPrice
          * @description One price a player offers, next to the one it ran at in their last Trading period (#1299).
          */
@@ -1384,6 +1617,29 @@ export interface components {
              * @description The price the facility type ran at in the player's last Trading period with it, if any
              */
             previous: number | null;
+        };
+        /**
+         * RationingAlarm
+         * @description Demand cut once more after a blackout, until the end of the Round.
+         */
+        RationingAlarm: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "rationing";
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Rationing
+             * @description What demand is cut to for the rest of the Round, 0.81 for 81%
+             */
+            rationing: number;
         };
         /**
          * Recap
@@ -1485,6 +1741,37 @@ export interface components {
             tax_rate: number;
         };
         /**
+         * RoomCapacity
+         * @description What the room's facilities can produce in a Round, in W, and what its storage holds.
+         */
+        RoomCapacity: {
+            /**
+             * Controllable
+             * @description Power that can be produced on demand: fossil plants, nuclear and hydro's guaranteed share, in W
+             */
+            controllable: number;
+            /**
+             * Total
+             * @description Controllable power plus the rest of hydro, wind and solar, in W
+             */
+            total: number;
+            /**
+             * Weighted
+             * @description Weather-dependent power weighted by how much of it each type produces on average: hydro above its guaranteed share, wind and solar, in W
+             */
+            weighted: number;
+            /**
+             * Storage Power
+             * @description In W
+             */
+            storage_power: number;
+            /**
+             * Storage Energy
+             * @description In Wh
+             */
+            storage_energy: number;
+        };
+        /**
          * RoomFigures
          * @description The whole room's figures for one Round.
          */
@@ -1521,6 +1808,31 @@ export interface components {
             renewable_share: number | null;
         };
         /**
+         * RoomPrices
+         * @description The room's prices in one Trading period, by power source, with no names.
+         */
+        RoomPrices: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Live
+             * @description Whether the price-setting window is open, so the prices can still change
+             */
+            live: boolean;
+            /**
+             * Boxes
+             * @description The box of each power source someone has a price for. Storage has one for the price it sells at and one for the price it buys at
+             */
+            boxes: {
+                [key: string]: components["schemas"]["PriceBox"];
+            };
+        };
+        /**
          * RosterAddIn
          * @description Request body to add an existing account to the roster.
          */
@@ -1541,6 +1853,24 @@ export interface components {
              * @description Existing accounts' usernames starting with the search prefix.
              */
             usernames: string[];
+        };
+        /**
+         * RoundEmissions
+         * @description The CO₂ the room emitted in one Round, building its facilities and running them.
+         */
+        RoundEmissions: {
+            /** Round */
+            round: number;
+            /**
+             * Emissions
+             * @description In kg
+             */
+            emissions: number;
+            /**
+             * Complete
+             * @description Whether the Round is over: its Recap has opened
+             */
+            complete: boolean;
         };
         /**
          * RoundFormat
@@ -1662,6 +1992,41 @@ export interface components {
             scores: components["schemas"]["Score"][];
         };
         /**
+         * SeasonFigures
+         * @description What a settled Trading period did across the whole room.
+         */
+        SeasonFigures: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /**
+             * Average Price
+             * @description What generators earned per MWh sold, as in the Recap. Null if nothing sold
+             */
+            average_price: number | null;
+            /**
+             * Price Low
+             * @description The 10th percentile of the clearing prices, per MWh. Null if the period has no record
+             */
+            price_low: number | null;
+            /**
+             * Price High
+             * @description The 90th percentile of the clearing prices, per MWh
+             */
+            price_high: number | null;
+            /**
+             * Generation
+             * @description The energy the room generated by power source, in Wh
+             */
+            generation: {
+                [key: string]: number;
+            };
+        };
+        /**
          * SeasonSheet
          * @description One season's column of the balance sheet.
          */
@@ -1739,6 +2104,27 @@ export interface components {
              */
             trigger: "investment_threshold" | "round_gate" | "format_lever";
         };
+        /**
+         * UnlockAlarm
+         * @description A facility players can buy from a Round on.
+         */
+        UnlockAlarm: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "unlock";
+            /**
+             * Round
+             * @description The first Round it can be bought in
+             */
+            round: number;
+            /** Season */
+            season?: null;
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1760,6 +2146,34 @@ export interface components {
              * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
              */
             membership: ("player" | "facilitator") | null;
+        };
+        /**
+         * VoteAlarm
+         * @description A carbon tax vote: open, or with its result.
+         */
+        VoteAlarm: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "vote";
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @description Spring for a result, which is announced as the Round's first Trading period opens. Null while the vote is open in the Investment phase
+             */
+            season: ("spring" | "summer" | "autumn" | "winter") | null;
+            /**
+             * Passed
+             * @description Whether the tax passed, or null while the vote is open
+             */
+            passed: boolean | null;
+            /**
+             * Tax Rate
+             * @description What the tax charges, or would charge, per kg of CO₂
+             */
+            tax_rate: number;
         };
         /**
          * WorkshopBallotIn
@@ -3739,6 +4153,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Scoreboard"];
+                };
+            };
+        };
+    };
+    get_control_room_api_v1_workshop_control_room_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlRoom"];
                 };
             };
         };

@@ -7,10 +7,9 @@
 
 import { formatMoney } from "@energetica/core/format-utils";
 
+import { CoinIcon } from "#ui/components/coin-icon";
+import { DataValue } from "#ui/components/typography";
 import { cn } from "#ui/lib/utils";
-
-import { CoinIcon } from "./coin-icon";
-import { DataValue } from "./typography";
 
 interface MoneyProps {
     /** The monetary value to display */

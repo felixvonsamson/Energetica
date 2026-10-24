@@ -5,8 +5,9 @@
  * Trading period's price-setting window (#1002), reviewing a settled Trading
  * period (#1007), voting on a carbon tax (#1014), and following technology
  * unlocks and planning each Round's levers, events and phase timers as the
- * facilitator (#1011, #1012, #1018, #1190), and sending players to the page
- * they need when a phase starts or ends (#1251).
+ * facilitator (#1011, #1012, #1018, #1190), sending players to the page they
+ * need when a phase starts or ends (#1251), and reading the control room
+ * (#1289).
  */
 
 import {
@@ -722,6 +723,17 @@ export function useWorkshopScoreboard() {
         queryKey: queryKeys.workshop.scoreboard,
         queryFn: workshopApi.getScoreboard,
         retry: false,
+    });
+}
+
+/**
+ * Everything the control room shows (#1289). Read again whenever the session
+ * changes, and whenever a player changes a price.
+ */
+export function useWorkshopControlRoom() {
+    return useQuery({
+        queryKey: queryKeys.workshop.controlRoom,
+        queryFn: workshopApi.getControlRoom,
     });
 }
 

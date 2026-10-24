@@ -15,7 +15,8 @@
         "#content/components/*": "./src/components/*.tsx",
         "#content/content-links": "./src/content-links.ts",
         "#content/content-page": "./src/content-page.tsx",
-        "#content/host-context": "./src/host-context.ts"
+        "#content/host-context": "./src/host-context.ts",
+        "#content/remark-image-imports": "./src/remark-image-imports.ts"
     },
     "scripts": {
         "test": "vitest run",
