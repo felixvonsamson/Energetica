@@ -1,4 +1,4 @@
-"""The lobby service client turns a service it cannot reach into a 503 (ADR-0009)."""
+"""The lobby service client turns a service it cannot reach, or cannot understand, into a 503 (ADR-0009)."""
 
 from __future__ import annotations
 
@@ -7,9 +7,10 @@ import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
 import pytest
 
-from energetica.identity.lobby_service_client import LobbyServiceClient, LobbyServiceUnavailable
+from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient, LobbyServiceUnavailable
 
 
 @pytest.fixture
@@ -39,3 +40,19 @@ def test_a_service_that_does_not_answer_in_time_is_a_503(socket_dir: Path) -> No
             client.healthz()
 
     assert raised.value.status_code == 503
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(400, text="Bad Request"),  # not JSON, such as from uvicorn itself
+        httpx.Response(400, json={"detail": "SOMETHING_NEW"}),  # not a code this client knows
+        httpx.Response(500, json={"detail": "Internal Server Error"}),
+    ],
+)
+def test_an_answer_the_api_does_not_document_is_a_503(response: httpx.Response) -> None:
+    transport = httpx.MockTransport(lambda request: response)
+    client = LobbyServiceClient(httpx.Client(transport=transport, base_url=BASE_URL))
+
+    with pytest.raises(LobbyServiceUnavailable):
+        client.get_account(1)

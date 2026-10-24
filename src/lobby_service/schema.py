@@ -1,4 +1,5 @@
-"""The ``lobby.db`` schema and its migrations.
+"""
+The ``lobby.db`` schema and its migrations.
 
 The database's state version lives in SQLite's ``PRAGMA user_version``. A database that has never
 been stamped is at version 0. :func:`upgrade_database` runs at service start-up, before the service
@@ -66,7 +67,8 @@ class SchemaTooNewError(Exception):
 
 
 def load_steps() -> list[Step]:
-    """The ``migrate`` function of every module in ``lobby_service/migrations/``, in order.
+    """
+    The ``migrate`` function of every module in ``lobby_service/migrations/``, in order.
 
     Fails loudly if the numbering has a gap or a duplicate, since a step would then be skipped or
     run at the wrong version.
@@ -91,7 +93,8 @@ def backup_path(path: Path) -> Path:
 
 
 def upgrade_database(path: Path, *, steps: Sequence[Step] | None = None) -> None:
-    """Bring the database at ``path`` up to the latest state version, creating it if absent.
+    """
+    Bring the database at ``path`` up to the latest state version, creating it if absent.
 
     ``steps`` defaults to the real migration steps. Tests pass their own to append one.
     """
@@ -127,7 +130,8 @@ def upgrade_database(path: Path, *, steps: Sequence[Step] | None = None) -> None
 
 
 def _back_up(source: Path, destination: Path) -> None:
-    """Copy the database to ``destination`` with SQLite's online backup, replacing any older copy.
+    """
+    Copy the database to ``destination`` with SQLite's online backup, replacing any older copy.
 
     The caller holds the write lock, so nothing changes while the copy is taken. The copy reads
     through a second connection because SQLite refuses to back up through a connection that holds

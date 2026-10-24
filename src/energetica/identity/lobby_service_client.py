@@ -1,4 +1,5 @@
-"""The client for the lobby service's internal API (``/internal/v1``, ADR-0009).
+"""
+The client for the lobby service's internal API (``/internal/v1``, ADR-0009).
 
 Shared by the lobby backend, runs and the operator scripts. It talks HTTP over the service's Unix
 socket, names its caller in ``X-Energetica-Caller``, and gives up after about 5 seconds. A service
@@ -18,10 +19,13 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, TypeAdapter
 
 from energetica.identity.schemas.lobby_service import (
+    API_PREFIX,
+    CALLER_HEADER,
     AccountOut,
     CreatedAccount,
     HealthOut,
@@ -41,8 +45,7 @@ _DEFAULT_SOCKET_PATH = "instance/lobby-service.sock"
 _SOCKET_ENV_VAR = "ENERGETICA_LOBBY_SERVICE_SOCKET"
 _DEFAULT_TIMEOUT_SECONDS = 5.0
 # The host part of the URL means nothing over a Unix socket, but HTTP needs one.
-_BASE_URL = "http://lobby-service/internal/v1"
-CALLER_HEADER = "X-Energetica-Caller"
+BASE_URL = f"http://lobby-service{API_PREFIX}"
 
 
 def default_socket_path() -> Path:
@@ -66,11 +69,42 @@ class LobbyServiceRefusal(Exception):
         self.code = code
 
 
+def install_refusal_handler(app: FastAPI) -> None:
+    """
+    Answer a :class:`LobbyServiceRefusal` that no route handled with a 503, like any other
+    failure of the lobby service.
+
+    A route catches the refusals it expects, such as a wrong password, and re-raises the rest. A
+    refusal it did not expect means the service and the route disagree about the API, which is a
+    fault on this server, not something the player did.
+    """
+
+    @app.exception_handler(LobbyServiceRefusal)
+    def unexpected_refusal(request: Request, exc: LobbyServiceRefusal) -> JSONResponse:
+        logger.error("unexpected lobby service refusal %s for %s %s", exc.code, request.method, request.url.path)
+        return JSONResponse(
+            {"detail": SharedErrorCode.LOBBY_SERVICE_UNAVAILABLE}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
+
+def _error_detail(response: httpx.Response) -> object:
+    """
+    The ``detail`` of an error response, or ``None`` if the body is not the JSON object the
+    service sends, such as an error page from uvicorn itself.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    return body.get("detail") if isinstance(body, dict) else None
+
+
 class LobbyServiceClient:
     """One method per endpoint of the internal API."""
 
     def __init__(self, http: httpx.Client) -> None:
-        """Wrap ``http``, whose base URL must point at ``/internal/v1``. Tests pass a FastAPI
+        """
+        Wrap ``http``, whose base URL must point at ``/internal/v1``. Tests pass a FastAPI
         ``TestClient`` over the service app; everything else uses :meth:`connect`.
         """
         self._http = http
@@ -79,21 +113,23 @@ class LobbyServiceClient:
     def connect(
         cls, caller: str, *, socket_path: Path | None = None, timeout: float = _DEFAULT_TIMEOUT_SECONDS
     ) -> LobbyServiceClient:
-        """A client for the service on its Unix socket. ``caller`` names the calling program, such
+        """
+        A client for the service on its Unix socket. ``caller`` names the calling program, such
         as ``lobby-backend``; the deployed commit is appended to it.
         """
         path = socket_path if socket_path is not None else default_socket_path()
         version = backend_version() or {}
         http = httpx.Client(
             transport=httpx.HTTPTransport(uds=str(path)),
-            base_url=_BASE_URL,
+            base_url=BASE_URL,
             timeout=timeout,
             headers={CALLER_HEADER: f"{caller}@{version.get('commit_short', 'unknown')}"},
         )
         return cls(http)
 
     def _request(self, method: str, path: str, *, expected: tuple[int, ...], **kwargs: Any) -> httpx.Response:
-        """Send a request. A documented refusal raises :class:`LobbyServiceRefusal`; anything else
+        """
+        Send a request. A documented refusal raises :class:`LobbyServiceRefusal`; anything else
         that is not in ``expected`` raises :class:`LobbyServiceUnavailable`.
         """
         try:
@@ -104,7 +140,7 @@ class LobbyServiceClient:
         if response.status_code in expected:
             return response
         if 400 <= response.status_code < 500:
-            detail = response.json().get("detail")
+            detail = _error_detail(response)
             if detail in LobbyServiceErrorCode.__members__.values():
                 raise LobbyServiceRefusal(LobbyServiceErrorCode(detail))
         logger.error("lobby service answered %s %s with %s: %s", method, path, response.status_code, response.text)
@@ -129,7 +165,8 @@ class LobbyServiceClient:
         return SessionToken.model_validate(response.json()).token
 
     def resolve_session(self, token: str, *, run: str | None = None) -> SessionOut | None:
-        """The account behind ``token`` and its standing in ``run``, or ``None`` if the token is
+        """
+        The account behind ``token`` and its standing in ``run``, or ``None`` if the token is
         missing, invalid, expired, or for an account that no longer exists.
         """
         try:
@@ -190,7 +227,7 @@ class LobbyServiceClient:
         self._request("PUT", f"/runs/{slug}/members/{account_id}", expected=(204,))
 
     def remove_run_member(self, slug: str, account_id: int) -> None:
-        """Idempotent."""
+        """Removing an account that is not a member does nothing. Refusal: ``ACCOUNT_NOT_FOUND``."""
         self._request("DELETE", f"/runs/{slug}/members/{account_id}", expected=(204,))
 
     def grant_facilitator(self, account_id: int, *, slug: str | None) -> None:

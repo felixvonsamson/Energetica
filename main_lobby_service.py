@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python3 -u
-"""Entry point for the lobby service (ADR-0009), the one process that opens ``lobby.db``.
+"""
+Entry point for the lobby service (ADR-0009), the one process that opens ``lobby.db``.
 
 Brings the database up to date first, then serves the internal API. Connections that arrive while
 migrations run wait in the socket's queue, so the service never answers on an old schema.

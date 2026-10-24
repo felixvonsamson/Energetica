@@ -28,7 +28,7 @@ from fastapi.testclient import TestClient
 
 from energetica.freeplay.globals import engine
 from energetica.identity.accounts.db import _reset_initialised_paths
-from energetica.identity.lobby_service_client import LobbyServiceClient
+from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient
 from lobby_service.app import create_service_app
 from lobby_service.schema import upgrade_database
 
@@ -73,7 +73,7 @@ def lobby_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> LobbyServi
     db_path = tmp_path / "lobby.db"
     monkeypatch.setenv("ENERGETICA_LOBBY_DB_PATH", str(db_path))
     upgrade_database(db_path)
-    return LobbyServiceClient(TestClient(create_service_app(), base_url="http://lobby-service/internal/v1"))
+    return LobbyServiceClient(TestClient(create_service_app(), base_url=BASE_URL))
 
 
 @pytest.fixture

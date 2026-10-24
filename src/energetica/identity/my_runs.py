@@ -16,8 +16,7 @@ from datetime import datetime, timezone
 
 from energetica.identity import instance_config
 from energetica.identity.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
-from energetica.identity.schemas.lobby_service import FacilitatedRun as FacilitatorGrant
-from energetica.identity.schemas.lobby_service import JoinedRun, MembershipsOut
+from energetica.identity.schemas.lobby_service import GrantedRun, JoinedRun, MembershipsOut
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
             if m.slug is not None
         ],
         facilitated_runs=[
-            FacilitatorGrant(slug=g.slug, granted_at=g.created_at)
+            GrantedRun(slug=g.slug, granted_at=g.created_at)
             for g in accounts.get_facilitator_grants(account_id=account_id)
             if g.slug is not None
         ],

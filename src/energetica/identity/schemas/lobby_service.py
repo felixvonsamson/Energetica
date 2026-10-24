@@ -1,4 +1,5 @@
-"""The bodies of the lobby service's internal API (``/internal/v1``, ADR-0009).
+"""
+The bodies of the lobby service's internal API (``/internal/v1``, ADR-0009).
 
 Shared by the service (:mod:`lobby_service.app`) and its client
 (:mod:`energetica.identity.lobby_service_client`), so the two cannot drift apart. The API only grows
@@ -12,14 +13,21 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+API_PREFIX = "/internal/v1"
+"""The path every endpoint of the current API version is under."""
+
 API_VERSIONS = ["v1"]
 """The API versions the service serves, reported by ``healthz``."""
+
+CALLER_HEADER = "X-Energetica-Caller"
+"""The request header a client names itself in, for the service's logs. Never used for trust."""
 
 MIN_PASSWORD_LENGTH = 7
 
 
 class LobbyServiceErrorCode(StrEnum):
-    """The ``detail`` of an error response from the service, so a client can tell errors that
+    """
+    The ``detail`` of an error response from the service, so a client can tell errors that
     share a status code apart.
     """
 
@@ -57,7 +65,8 @@ class AccountOut(BaseModel):
 
 
 class SessionOut(AccountOut):
-    """The account a session token belongs to, and its standing in one run.
+    """
+    The account a session token belongs to, and its standing in one run.
 
     With a run, ``role`` is ``"facilitator"`` if a grant covers that run, and ``joined`` says whether
     the account has joined it as a player. Without a run, ``role`` is ``"facilitator"`` only for a
@@ -78,18 +87,19 @@ class JoinedRun(BaseModel):
     joined_at: str
 
 
-class FacilitatedRun(BaseModel):
+class GrantedRun(BaseModel):
     slug: str
     granted_at: str
 
 
 class MembershipsOut(BaseModel):
-    """An account's player memberships and run-scoped facilitator grants, most recent first. Runs
+    """
+    An account's player memberships and run-scoped facilitator grants, most recent first. Runs
     since deleted are included; the caller drops them.
     """
 
     runs: list[JoinedRun]
-    facilitated_runs: list[FacilitatedRun]
+    facilitated_runs: list[GrantedRun]
 
 
 class RunMember(BaseModel):
@@ -98,7 +108,7 @@ class RunMember(BaseModel):
     joined_at: str
 
 
-class FacilitatorGrant(BaseModel):
+class FacilitatorGrantRequest(BaseModel):
     """The body of ``PUT facilitator-grants/{account_id}``. No slug means a server-wide grant."""
 
     slug: str | None = None

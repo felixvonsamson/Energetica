@@ -1,6 +1,8 @@
-"""The SQL behind the lobby service's API: accounts, memberships and facilitator grants in ``lobby.db``.
+"""
+The SQL behind the lobby service's API: accounts, memberships and facilitator grants in ``lobby.db``.
 
-Connection-per-call, with WAL so readers never wait on a writer. The schema is the one
+Each function opens its own connection. Connections use SQLite's write-ahead log (WAL), a journal
+mode in which reads never wait for a write to finish. The schema is the one
 :func:`lobby_service.schema.upgrade_database` brought the file to at start-up; this module never
 creates or changes tables.
 
@@ -33,7 +35,8 @@ class Account:
 
 @dataclass(frozen=True)
 class Membership:
-    """A player membership or a run-scoped facilitator grant. ``created_at`` is when the account
+    """
+    A player membership or a run-scoped facilitator grant. ``created_at`` is when the account
     joined, or when the grant was made.
     """
 
@@ -42,7 +45,7 @@ class Membership:
 
 
 @dataclass(frozen=True)
-class RunMember:
+class Member:
     account_id: int
     username: str
     joined_at: str
@@ -53,7 +56,8 @@ class UsernameTakenError(Exception):
 
 
 class MembershipRoleConflictError(Exception):
-    """Raised when a write would give one account two roles for the same run. Player and
+    """
+    Raised when a write would give one account two roles for the same run. Player and
     facilitator are mutually exclusive (ADR-0004); an account that wants both uses a second account.
     """
 
@@ -114,7 +118,8 @@ def get_account_by_username(username: str) -> Account | None:
 
 
 def search_accounts(*, prefix: str, limit: int) -> list[Account]:
-    """Accounts whose username starts with ``prefix``, alphabetical, at most ``limit`` of them.
+    """
+    Accounts whose username starts with ``prefix``, alphabetical, at most ``limit`` of them.
 
     Exact-case, like :func:`get_account_by_username`. The prefix's own ``%`` and ``_`` are escaped
     so they match literally.
@@ -137,7 +142,8 @@ def update_password(*, account_id: int, pwhash: str) -> None:
 
 
 def _has_facilitator_grant(conn: sqlite3.Connection, *, account_id: int, slug: str | None) -> bool:
-    """Whether a facilitator grant covers ``slug``: one scoped to it, or a server-wide one. With
+    """
+    Whether a facilitator grant covers ``slug``: one scoped to it, or a server-wide one. With
     ``slug=None``, only a server-wide grant counts.
     """
     return (
@@ -166,7 +172,8 @@ def has_joined(*, account_id: int, slug: str) -> bool:
 
 
 def add_member(*, account_id: int, slug: str) -> None:
-    """Record that ``account_id`` has joined run ``slug``. Idempotent: joining again leaves the
+    """
+    Record that ``account_id`` has joined run ``slug``. Idempotent: joining again leaves the
     existing row alone.
 
     Raises :class:`MembershipRoleConflictError` if a facilitator grant covers ``slug``. The check
@@ -192,7 +199,8 @@ def add_member(*, account_id: int, slug: str) -> None:
 
 
 def remove_member(*, account_id: int, slug: str) -> None:
-    """Remove ``account_id``'s player membership in run ``slug``. Idempotent. Never touches a
+    """
+    Remove ``account_id``'s player membership in run ``slug``. Idempotent. Never touches a
     facilitator grant.
     """
     with _connect() as conn:
@@ -203,7 +211,7 @@ def remove_member(*, account_id: int, slug: str) -> None:
         conn.commit()
 
 
-def get_run_members(*, slug: str) -> list[RunMember]:
+def get_run_members(*, slug: str) -> list[Member]:
     """Every account that has joined run ``slug`` as a player, most recently joined first."""
     with _connect() as conn:
         rows = conn.execute(
@@ -212,11 +220,12 @@ def get_run_members(*, slug: str) -> list[RunMember]:
             "WHERE m.slug = ? AND m.role = 'player' ORDER BY m.created_at DESC",
             (slug,),
         ).fetchall()
-    return [RunMember(account_id=row[0], username=row[1], joined_at=row[2]) for row in rows]
+    return [Member(account_id=row[0], username=row[1], joined_at=row[2]) for row in rows]
 
 
 def grant_facilitator(*, account_id: int, slug: str | None) -> None:
-    """Grant ``account_id`` facilitator authority over run ``slug``, or over every run if ``slug``
+    """
+    Grant ``account_id`` facilitator authority over run ``slug``, or over every run if ``slug``
     is ``None``. Idempotent at the same scope.
 
     Raises :class:`MembershipRoleConflictError` if the account is a player in that run, or, for a
@@ -255,7 +264,8 @@ def grant_facilitator(*, account_id: int, slug: str | None) -> None:
 
 
 def get_memberships(*, account_id: int, role: Role) -> list[Membership]:
-    """The runs ``account_id`` has joined (``role="player"``) or holds a run-scoped grant for
+    """
+    The runs ``account_id`` has joined (``role="player"``) or holds a run-scoped grant for
     (``role="facilitator"``), most recent first. A server-wide grant is not tied to a run, so it is
     left out. Rows for runs since deleted are included; callers drop them.
     """

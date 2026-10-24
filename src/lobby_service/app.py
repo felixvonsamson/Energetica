@@ -1,4 +1,5 @@
-"""The lobby service's internal API, ``/internal/v1`` (ADR-0009).
+"""
+The lobby service's internal API, ``/internal/v1`` (ADR-0009).
 
 Reached only over a Unix socket, so access to the socket file is the only check. Callers name
 themselves in ``X-Energetica-Caller``, which is logged with every request so the deployed-versions
@@ -18,13 +19,15 @@ from typing import Annotated
 from fastapi import APIRouter, FastAPI, Header, HTTPException, Request, Response, status
 
 from energetica.identity.schemas.lobby_service import (
+    API_PREFIX,
     API_VERSIONS,
+    CALLER_HEADER,
     MIN_PASSWORD_LENGTH,
     AccountOut,
     CreatedAccount,
     Credentials,
-    FacilitatedRun,
-    FacilitatorGrant,
+    GrantedRun,
+    FacilitatorGrantRequest,
     HealthOut,
     JoinedRun,
     LobbyServiceErrorCode,
@@ -45,9 +48,7 @@ from lobby_service.schema import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
 
-CALLER_HEADER = "X-Energetica-Caller"
-
-router = APIRouter(prefix="/internal/v1")
+router = APIRouter(prefix=API_PREFIX)
 
 
 def _account_out(account: store.Account) -> AccountOut:
@@ -84,7 +85,8 @@ def create_session(credentials: Credentials) -> SessionToken:
 
 @router.get("/session")
 def resolve_session(authorization: Annotated[str | None, Header()] = None, run: str | None = None) -> SessionOut:
-    """The account a session token belongs to, and its standing in ``run`` if one is given.
+    """
+    The account a session token belongs to, and its standing in ``run`` if one is given.
 
     A missing, tampered or expired token, or one for an account that no longer exists, is a 401.
     """
@@ -155,7 +157,7 @@ def get_memberships(account_id: int) -> MembershipsOut:
             for m in store.get_memberships(account_id=account_id, role="player")
         ],
         facilitated_runs=[
-            FacilitatedRun(slug=m.slug, granted_at=m.created_at)
+            GrantedRun(slug=m.slug, granted_at=m.created_at)
             for m in store.get_memberships(account_id=account_id, role="facilitator")
         ],
     )
@@ -186,14 +188,16 @@ def add_run_member(slug: str, account_id: int) -> Response:
 
 @router.delete("/runs/{slug}/members/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_run_member(slug: str, account_id: int) -> Response:
-    """Remove ``account_id`` from ``slug``. Idempotent."""
+    """Remove ``account_id`` from ``slug``. Removing an account that is not a member does nothing."""
+    _require_account(account_id)
     store.remove_member(account_id=account_id, slug=slug)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/facilitator-grants/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-def grant_facilitator(account_id: int, grant: FacilitatorGrant) -> Response:
-    """Grant facilitator authority over one run, or every run if no slug is given. Idempotent. A 409
+def grant_facilitator(account_id: int, grant: FacilitatorGrantRequest) -> Response:
+    """
+    Grant facilitator authority over one run, or every run if no slug is given. Idempotent. A 409
     if the account is a player where the grant would apply.
     """
     _require_account(account_id)

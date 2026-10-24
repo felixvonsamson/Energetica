@@ -1,4 +1,5 @@
-"""Tests for the lobby service's schema migrations (``lobby_service.schema.upgrade_database``).
+"""
+Tests for the lobby service's schema migrations (``lobby_service.schema.upgrade_database``).
 
 The state version lives in SQLite's ``PRAGMA user_version``. A new database is created at the
 current schema and stamped at the latest version. An older one runs every pending step, and the
@@ -47,6 +48,8 @@ _ACCOUNTS_TABLE = """
     )
 """
 _LEGACY_SHAPES = {
+    # Before memberships existed. Old code created the missing table on its next start.
+    "before-memberships": "",
     # Before the role column: every row was a settled player.
     "before-role": """
         CREATE TABLE instance_membership (
@@ -70,7 +73,8 @@ _LEGACY_SHAPES = {
 
 
 def _shape(path: Path) -> dict[str, object]:
-    """Each table's columns and each index's definition: what must match between a migrated
+    """
+    Each table's columns and each index's definition: what must match between a migrated
     database and a new one. The ``CREATE TABLE`` text itself may differ (comments, spacing).
     """
     with sqlite3.connect(path) as conn:
@@ -89,7 +93,8 @@ def _legacy_database(path: Path, membership_table: str) -> None:
     with sqlite3.connect(path) as conn:
         conn.execute("PRAGMA journal_mode=WAL")  # as old code set it, so the backup copes with a -wal file
         conn.execute(_ACCOUNTS_TABLE)
-        conn.execute(membership_table)
+        if membership_table:
+            conn.execute(membership_table)
         conn.execute(
             "INSERT INTO accounts (username, pwhash, created_at) VALUES ('alice', 'hash', '2026-01-01T00:00:00+00:00')"
         )
@@ -107,6 +112,21 @@ def test_every_legacy_shape_migrates_to_the_shape_of_a_new_database(tmp_path: Pa
 
         assert _user_version(legacy) == SCHEMA_VERSION, name
         assert _shape(legacy) == _shape(new), name
+
+
+@pytest.mark.parametrize("start", range(SCHEMA_VERSION))
+def test_the_steps_run_from_every_older_version_to_the_latest(tmp_path: Path, start: int) -> None:
+    new = tmp_path / "new.db"
+    upgrade_database(new)
+    path = tmp_path / "lobby.db"
+    _legacy_database(path, _LEGACY_SHAPES["before-role"])
+    upgrade_database(path, steps=load_steps()[:start])  # the database as code at version `start` left it
+    assert _user_version(path) == start
+
+    upgrade_database(path)
+
+    assert _user_version(path) == SCHEMA_VERSION
+    assert _shape(path) == _shape(new)
 
 
 def test_migration_keeps_rows_and_backfills_them_as_settled_players(tmp_path: Path) -> None:

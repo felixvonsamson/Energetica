@@ -1,4 +1,5 @@
-"""FastAPI dependencies: the lobby service client, and the account behind the session cookie.
+"""
+FastAPI dependencies: the lobby service client, and the account behind the session cookie.
 
 The lobby backend has no game ``User`` and no database. It hands the session cookie to the lobby
 service, which checks it and answers with the account (ADR-0009).

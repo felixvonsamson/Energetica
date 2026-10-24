@@ -1,4 +1,5 @@
-"""Integration tests for the lobby service's internal API (``/internal/v1``, ADR-0009).
+"""
+Integration tests for the lobby service's internal API (``/internal/v1``, ADR-0009).
 
 Each test talks to the real service app in-process, over a fresh ``lobby.db`` migrated to the
 latest schema, the way the service is at start-up.
@@ -178,8 +179,9 @@ def test_removing_a_member(service: TestClient) -> None:
     assert service.get("/runs/spring/members").json() == []
 
 
-def test_joining_an_unknown_account_is_404(service: TestClient) -> None:
+def test_joining_or_removing_an_unknown_account_is_404(service: TestClient) -> None:
     assert service.put("/runs/spring/members/999").status_code == 404
+    assert service.delete("/runs/spring/members/999").status_code == 404
 
 
 def test_a_run_scoped_grant(service: TestClient) -> None:

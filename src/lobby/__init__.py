@@ -1,4 +1,5 @@
-"""The lobby backend: the server-wide front door (``lobby.{apex}``).
+"""
+The lobby backend: the server-wide front door (``lobby.{apex}``).
 
 An instance-independent FastAPI app — signup, login, change-password, logout, and ``my-runs``. It
 holds no database and no signing secret: it is a client of the lobby service

@@ -12,10 +12,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica.identity.lobby_service_client import LobbyServiceClient
+from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient
 from energetica.identity.schemas.auth import LoginRequest, SignupRequest
 from energetica.kernel.session import SESSION_COOKIE_NAME, decode_session_token
 from lobby import create_lobby_app
@@ -324,6 +325,32 @@ def test_login_is_a_503_while_the_lobby_service_is_down() -> None:
     )
 
     resp = TestClient(app).post(f"{BASE}/auth/login", json={"username": "alice", "password": "correct-password"})
+
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "LOBBY_SERVICE_UNAVAILABLE"
+
+
+def test_a_refusal_the_route_does_not_expect_is_a_503() -> None:
+    """Here the account behind a valid session is gone by the time its password is changed."""
+
+    def service(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/session"):
+            session = {"account_id": 1, "username": "alice", "email": None, "created_at": "2026-01-01T00:00:00+00:00"}
+            return httpx.Response(200, json={**session, "role": "player", "joined": None})
+        return httpx.Response(404, json={"detail": "ACCOUNT_NOT_FOUND"})
+
+    app = create_lobby_app()
+    app.dependency_overrides[get_lobby_service] = lambda: LobbyServiceClient(
+        httpx.Client(transport=httpx.MockTransport(service), base_url=BASE_URL)
+    )
+    client = TestClient(app, raise_server_exceptions=False)
+    client.cookies.set(SESSION_COOKIE_NAME, "a-token")
+
+    resp = client.post(
+        f"{BASE}/auth/change-password-form",
+        data={"old_password": "correct-password", "new_password": "brand-new-password"},
+        follow_redirects=False,
+    )
 
     assert resp.status_code == 503
     assert resp.json()["detail"] == "LOBBY_SERVICE_UNAVAILABLE"

@@ -1,4 +1,5 @@
-"""The session cookie: its name, its lifetime, and setting it on a response.
+"""
+The session cookie: its name, its lifetime, and setting it on a response.
 
 Kept apart from :mod:`energetica.kernel.session`, which loads the signing secret when imported. The
 lobby backend sets the cookie to a token the lobby service minted, so it needs this module and must
@@ -24,7 +25,8 @@ COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a com
 
 
 def set_session_cookie(response: Response, token: str, request: Request, *, domain: str | None = None) -> Response:
-    """Set the session cookie to ``token`` on ``response``.
+    """
+    Set the session cookie to ``token`` on ``response``.
 
     ``Secure`` is set when the reverse proxy reports HTTPS. ``domain`` scopes the cookie: an
     instance leaves it ``None`` (host-only), the lobby passes ``.{apex}`` so one session spans every

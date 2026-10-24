@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
+from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from lobby.routers import auth_router, lobby_router
@@ -25,6 +26,7 @@ def create_lobby_app(*, schema_only: bool = False) -> FastAPI:
     app = FastAPI(title="Energetica Lobby")
 
     install_error_handlers(app)
+    install_refusal_handler(app)
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict:

@@ -1,4 +1,5 @@
-"""The ``lobby.db`` schema migration steps.
+"""
+The ``lobby.db`` schema migration steps.
 
 Each step is a module named ``NNNN_<slug>.py``, numbered from 0001 with no gaps, holding one
 ``migrate(conn)`` function. Step N takes a database from state version N - 1 to N.
