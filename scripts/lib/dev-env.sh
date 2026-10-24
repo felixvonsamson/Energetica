@@ -18,6 +18,12 @@ DEV_SCRATCH="$DEV_REPO_ROOT/.energetica-dev"
 DEV_LANDING_DIR="$DEV_SCRATCH/landing"
 
 export ENERGETICA_ACCOUNTS_DB_PATH="$DEV_SCRATCH/accounts.db"
+# The lobby service owns the same file runs still open directly, until they switch to its API
+# (ADR-0009). The lobby backend reaches the service on this socket. The path is relative to the
+# repo root, which every script that sources this file cds into, because a Unix socket path must
+# stay under about 104 characters on macOS and a worktree's absolute path does not.
+export ENERGETICA_LOBBY_DB_PATH="$ENERGETICA_ACCOUNTS_DB_PATH"
+export ENERGETICA_LOBBY_SERVICE_SOCKET=".energetica-dev/lobby-service.sock"
 export ENERGETICA_SERVER_CONFIG_PATH="$DEV_SCRATCH/server.json"
 export ENERGETICA_LANDING_DIR="$DEV_LANDING_DIR"
 export ENERGETICA_SHARED_SECRET_PATH="$DEV_SCRATCH/secret_key.txt"
@@ -45,6 +51,21 @@ if [ ! -s "$ENERGETICA_SHARED_SECRET_PATH" ]; then
     rm -f "$_secret_tmp"
     unset _secret_tmp
 fi
+
+# Start the lobby service in the background, from the repo root, and return once it listens, so the
+# lobby backend's first request does not race its start-up. The caller tracks the PID ($!) for
+# cleanup. Run after seed_dev_data, which still writes the database directly.
+start_lobby_service() {
+    rm -f "$ENERGETICA_LOBBY_SERVICE_SOCKET"
+    "$DEV_REPO_ROOT/.venv/bin/python" main_lobby_service.py --uds "$ENERGETICA_LOBBY_SERVICE_SOCKET" &
+    local _
+    for _ in $(seq 50); do
+        [ -S "$ENERGETICA_LOBBY_SERVICE_SOCKET" ] && return 0
+        sleep 0.2
+    done
+    echo "lobby service did not start listening on $ENERGETICA_LOBBY_SERVICE_SOCKET" >&2
+    return 1
+}
 
 # Seed a demo account + sample runs so every picker state is reachable. Idempotent. The lobby owns
 # accounts, so only the lobby-side entry points (dev-lobby.sh, dev.sh) call this:

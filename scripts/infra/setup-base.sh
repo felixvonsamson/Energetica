@@ -151,10 +151,10 @@ fi
 # --- Server-wide accounts dir ---------------------------------------------------
 log_section "SHARED STATE DIRECTORIES"
 
-# accounts.db itself is created lazily by the first instance backend (or the migration
-# script) on first connect — an empty/absent file is a valid fresh SQLite db. The dir
-# is group-writable + setgid so the service user (which connects as energetica) owns the
-# created db with the right group. See src/energetica/identity/accounts/db.py.
+# accounts.db itself is created by the lobby service on its first start (src/lobby_service/schema.py),
+# or by a run on code from before the lobby service, which opens it directly. An empty/absent file
+# is a valid fresh SQLite db. The dir is group-writable + setgid so the
+# service user (which connects as energetica) owns the created db with the right group.
 install -d -o energetica -g energetica -m 2770 /var/lib/energetica
 log_success "/var/lib/energetica (2770 energetica:energetica)"
 
@@ -165,9 +165,9 @@ install -d -o root -g energetica -m 0750 /etc/energetica
 log_success "/etc/energetica (0750 root:energetica)"
 
 # Server-wide cookie-signing secret (ADR-0002): minted once per server, read by the lobby
-# and — from the Phase C cutover — every instance, so a session minted by the lobby
-# validates everywhere. root:energetica 0640 → services read via group, only an admin
-# rotates it. Never overwritten on re-run (rotating it invalidates every live session).
+# service, which mints and checks every session (ADR-0009), and by runs until they switch to its
+# API. root:energetica 0640 → services read via group, only an admin rotates it. Never
+# overwritten on re-run (rotating it invalidates every live session).
 if [ -s /var/lib/energetica/secret_key.txt ]; then
     log_success "Shared secret already exists — leaving it untouched"
 else
@@ -214,6 +214,27 @@ systemctl daemon-reload
 # Enable the TIMER, not the service — the service is the oneshot the timer triggers.
 systemctl enable --now energetica-reaper.timer >/dev/null
 log_success "energetica-reaper.timer enabled (sweeps every 5 min; 'systemctl list-timers energetica-*' to check)"
+
+# --- Lobby service (ADR-0009) ---------------------------------------------------
+log_section "LOBBY SERVICE"
+# The one process that opens accounts.db, reached by the lobby backend, every run and the operator
+# scripts over /run/energetica/lobby-service.sock. Installed here, not in setup-lobby.sh, because
+# runs depend on it too. Its code ships with the lobby (/var/www/energetica-lobby), so until the
+# first deploy-lobby.sh a connection to the socket starts a service that fails; nothing connects
+# before then.
+#
+# Only the socket is enabled: it starts the service on the first connection. The socket is never
+# restarted here, since that would drop connections queued on it; a changed service unit is picked
+# up by restarting the service, which deploy-lobby.sh also does on every deploy.
+install -m 0644 "$SCRIPT_DIR/energetica-lobby-service.socket" /etc/systemd/system/energetica-lobby-service.socket
+install -m 0644 "$SCRIPT_DIR/energetica-lobby-service.service" /etc/systemd/system/energetica-lobby-service.service
+systemctl daemon-reload
+systemctl enable --now energetica-lobby-service.socket >/dev/null
+if systemctl is-active --quiet energetica-lobby-service.service; then
+    systemctl restart energetica-lobby-service.service
+    log_success "energetica-lobby-service restarted with the installed unit"
+fi
+log_success "energetica-lobby-service.socket enabled (/run/energetica/lobby-service.sock, 0660 energetica:energetica)"
 
 # --- Firewall -------------------------------------------------------------------
 log_section "FIREWALL"

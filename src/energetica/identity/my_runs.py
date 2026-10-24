@@ -1,11 +1,12 @@
 """The shared ``my-runs`` read: an account's joined runs, joined against on-disk fragments.
 
 Both origins serve this identical logic from their own backend — the instance (``GET
-/lobby/my-runs``, for the in-run switcher) and the lobby service (for the picker) — so neither
-frontend makes a cross-origin call. Factored here so it is literally one function, not two copies.
+/lobby/my-runs``, for the in-run switcher) and the lobby backend (for the picker) — so neither
+frontend makes a cross-origin call. :func:`build_my_runs` is the shared part: it takes the
+memberships, from wherever the caller got them, and joins them with the fragments.
 
-Depends only on the accounts store and the fragment reader; it does not touch the game engine, so
-the lobby imports it freely (ADR-0002, lobby Phase B).
+The lobby backend gets the memberships from the lobby service's API. Runs still read them from the
+accounts store (:func:`resolve_my_runs`) until they switch to the API too (ADR-0009).
 """
 
 from __future__ import annotations
@@ -13,8 +14,10 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from energetica.identity import accounts, instance_config
+from energetica.identity import instance_config
 from energetica.identity.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
+from energetica.identity.schemas.lobby_service import FacilitatedRun as FacilitatorGrant
+from energetica.identity.schemas.lobby_service import JoinedRun, MembershipsOut
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,28 @@ def _parse_aware(raw: str | None) -> datetime | None:
 
 
 def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
+    """:func:`build_my_runs`, with the memberships read straight from the accounts store."""
+    # Imported here so the lobby backend, which imports this module for build_my_runs, never loads
+    # the accounts store.
+    from energetica.identity import accounts
+
+    memberships = MembershipsOut(
+        runs=[
+            JoinedRun(slug=m.slug, joined_at=m.created_at)
+            for m in accounts.get_memberships(account_id=account_id)
+            # A player's slug is never NULL; only a server-wide facilitator grant has none (ADR-0004).
+            if m.slug is not None
+        ],
+        facilitated_runs=[
+            FacilitatorGrant(slug=g.slug, granted_at=g.created_at)
+            for g in accounts.get_facilitator_grants(account_id=account_id)
+            if g.slug is not None
+        ],
+    )
+    return build_my_runs(username, memberships)
+
+
+def build_my_runs(username: str, memberships: MembershipsOut) -> MyRunsResponse:
     """The account's joined runs — settled or not (#1030) — joined with each run's on-disk
     fragment for name / starts_at, most recently joined first. Stale memberships (run since
     deleted → no fragment) are dropped, and an account's own *unadvertised* runs are surfaced
@@ -50,24 +75,21 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
     rather than re-read from the store.
 
     Also joins the account's instance-scoped facilitator grants against the same fragments, into
-    ``facilitated_runs`` (#1032) — a server-wide grant is excluded (see
-    :func:`accounts.get_facilitator_grants`). Both origins that call this function get the new
-    field; only the lobby picker's UI reads it today.
+    ``facilitated_runs`` (#1032) — a server-wide grant is not tied to a run, so ``memberships``
+    never holds one. Both origins that call this function get the field; only the lobby picker's
+    UI reads it today.
     """
     runs: list[MyRun] = []
-    for membership in accounts.get_memberships(account_id=account_id):
-        # get_memberships only returns role="player" rows, and a player's slug is never NULL
-        # (only a server-wide facilitator grant can have one) — see ADR-0004.
-        assert membership.slug is not None
+    for membership in memberships.runs:
         fragment = instance_config.load_fragment(membership.slug)
         if fragment is None:
             continue
-        joined_at = _parse_aware(membership.created_at)
+        joined_at = _parse_aware(membership.joined_at)
         if joined_at is None:
             logger.warning(
-                "skipping membership with unparseable created_at %r (account_id=%s, slug=%s)",
-                membership.created_at,
-                account_id,
+                "skipping membership with unparseable joined_at %r (username=%s, slug=%s)",
+                membership.joined_at,
+                username,
                 membership.slug,
             )
             continue
@@ -84,18 +106,16 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
         )
 
     facilitated_runs: list[FacilitatedRun] = []
-    for grant in accounts.get_facilitator_grants(account_id=account_id):
-        # get_facilitator_grants excludes slug IS NULL (server-wide) rows by construction.
-        assert grant.slug is not None
+    for grant in memberships.facilitated_runs:
         fragment = instance_config.load_fragment(grant.slug)
         if fragment is None:
             continue
-        granted_at = _parse_aware(grant.created_at)
+        granted_at = _parse_aware(grant.granted_at)
         if granted_at is None:
             logger.warning(
-                "skipping facilitator grant with unparseable created_at %r (account_id=%s, slug=%s)",
-                grant.created_at,
-                account_id,
+                "skipping facilitator grant with unparseable granted_at %r (username=%s, slug=%s)",
+                grant.granted_at,
+                username,
                 grant.slug,
             )
             continue

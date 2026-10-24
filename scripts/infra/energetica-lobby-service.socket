@@ -1,0 +1,20 @@
+# The lobby service's Unix socket (ADR-0009). systemd holds it open, so callers queue on it
+# while the service restarts instead of failing, and the first connection starts the service.
+#
+# Installed once per VPS by scripts/infra/setup-base.sh into
+# /etc/systemd/system/energetica-lobby-service.socket, and enabled there.
+#
+# Access to this file is the only check on who may call the service: mode 0660, group
+# energetica, so the lobby backend, every run and the operator scripts can, and nothing else.
+
+[Unit]
+Description=Energetica lobby service socket
+
+[Socket]
+ListenStream=/run/energetica/lobby-service.sock
+SocketUser=energetica
+SocketGroup=energetica
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

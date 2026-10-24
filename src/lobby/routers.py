@@ -3,75 +3,81 @@
 Mounted under ``/api/v1`` by :func:`lobby.app.create_lobby_app`. Request/response schemas are the
 identity layer's (``energetica.identity.schemas.auth`` / ``energetica.identity.schemas.lobby``) so the
 frontend's generated types cover the lobby unchanged. Unlike the instance, signup here is
-**account-only** — one ``accounts`` row, no ``User``/``Player``/instance (ADR-0003) — and is gated
-by the server-wide ``server.json`` toggle, not any per-instance policy.
+**account-only** — one account, no ``User``/``Player``/instance (ADR-0003) — and is gated by the
+server-wide ``server.json`` toggle, not any per-instance policy.
+
+Every account, password and membership operation is a call to the lobby service, which owns
+``lobby.db`` and mints session tokens (ADR-0009). These routes translate its answers into the
+responses the lobby frontend expects.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from energetica.identity import accounts, instance_config, server_config
-from energetica.identity.accounts import Account
-from energetica.identity.my_runs import resolve_my_runs
+from energetica.identity import instance_config, server_config
+from energetica.identity.lobby_service_client import LobbyServiceRefusal
+from energetica.identity.my_runs import build_my_runs
 from energetica.identity.schemas.auth import LoginRequest, SignupRequest
 from energetica.identity.schemas.lobby import MyRunsResponse
+from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode, SessionOut
 from energetica.kernel.game_error import GameError, SharedErrorCode
-from energetica.kernel.session import check_password_hash, generate_password_hash
-from lobby.deps import require_current_account
+from lobby.deps import LobbyService, require_current_account
 from lobby.game_error import LobbyErrorCode
 from lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 lobby_router = APIRouter(prefix="/lobby", tags=["Lobby"])
 
-# Mirrors SignupRequest.password's floor — kept in sync by hand since the form endpoint below
-# validates raw Form fields, not the pydantic model.
-MIN_PASSWORD_LENGTH = 7
+CurrentAccount = Annotated[SessionOut, Depends(require_current_account)]
 
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
-def login(request: Request, request_data: LoginRequest) -> Response:
-    """Verify credentials against the server-wide accounts store and mint the parent-domain
-    session cookie (signed with the shared secret, carrying the account_id).
+def login(request: Request, request_data: LoginRequest, service: LobbyService) -> Response:
+    """Have the lobby service check the credentials and mint a session, then set it as the
+    parent-domain session cookie.
     """
-    account = accounts.get_account_by_username(request_data.username)
-    if account is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.USER_NOT_FOUND)
-    if not check_password_hash(plain_password=request_data.password, hashed_password=account.pwhash):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, LobbyErrorCode.INVALID_PASSWORD)
+    try:
+        token = service.create_session(username=request_data.username, password=request_data.password)
+    except LobbyServiceRefusal as refusal:
+        if refusal.code == LobbyServiceErrorCode.USER_NOT_FOUND:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.USER_NOT_FOUND)
+        if refusal.code == LobbyServiceErrorCode.INVALID_PASSWORD:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, LobbyErrorCode.INVALID_PASSWORD)
+        raise
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
-    return set_lobby_session_cookie(response, account.account_id, request)
+    return set_lobby_session_cookie(response, token, request)
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-def signup(request: Request, request_data: SignupRequest) -> Response:
+def signup(request: Request, request_data: SignupRequest, service: LobbyService) -> Response:
     """Create a server-wide account (only) and auto-log-in. Gated by the server-wide signup toggle;
     joining a run is a later, separate act gated at the instance's entry gate (ADR-0003).
     """
     if not server_config.signups_enabled():
         raise GameError(LobbyErrorCode.SIGNUP_DISABLED)
 
-    pwhash = generate_password_hash(request_data.password)
     try:
-        account_id = accounts.create_account(username=request_data.username, pwhash=pwhash)
-    except accounts.UsernameTakenError:
-        raise HTTPException(status.HTTP_409_CONFLICT, LobbyErrorCode.USERNAME_TAKEN)
+        created = service.create_account(username=request_data.username, password=request_data.password)
+    except LobbyServiceRefusal as refusal:
+        if refusal.code == LobbyServiceErrorCode.USERNAME_TAKEN:
+            raise HTTPException(status.HTTP_409_CONFLICT, LobbyErrorCode.USERNAME_TAKEN)
+        raise
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED)
-    return set_lobby_session_cookie(response, account_id, request)
+    return set_lobby_session_cookie(response, created.token, request)
 
 
 @auth_router.post("/change-password-form", include_in_schema=False)
 def change_password_form(
-    account: Annotated[Account, Depends(require_current_account)],
+    account: CurrentAccount,
     old_password: Annotated[str, Form()],
     new_password: Annotated[str, Form()],
+    service: LobbyService,
 ) -> Response:
     """Change the authenticated account's password via a **native form submission** (Post/Redirect/Get).
 
@@ -85,30 +91,34 @@ def change_password_form(
 
     Password-manager detection needs the *navigation*, so client-side validation (match, min length)
     runs first and only the server-only check — is the old password correct — can reach here in the
-    normal flow; ``too-short`` is a defensive fallback for a submit that bypassed the client.
+    normal flow; ``too-short`` is a defensive fallback for a submit that bypassed the client. The
+    lobby service makes both checks, in that order.
     """
-    if not check_password_hash(plain_password=old_password, hashed_password=account.pwhash):
-        return RedirectResponse("/account?pw=old-incorrect", status_code=status.HTTP_303_SEE_OTHER)
-    if len(new_password) < MIN_PASSWORD_LENGTH:
-        return RedirectResponse("/account?pw=too-short", status_code=status.HTTP_303_SEE_OTHER)
-    accounts.update_password(username=account.username, new_pwhash=generate_password_hash(new_password))
+    try:
+        service.change_password(account.account_id, old_password=old_password, new_password=new_password)
+    except LobbyServiceRefusal as refusal:
+        if refusal.code == LobbyServiceErrorCode.OLD_PASSWORD_INCORRECT:
+            return RedirectResponse("/account?pw=old-incorrect", status_code=status.HTTP_303_SEE_OTHER)
+        if refusal.code == LobbyServiceErrorCode.PASSWORD_TOO_SHORT:
+            return RedirectResponse("/account?pw=too-short", status_code=status.HTTP_303_SEE_OTHER)
+        raise
     return RedirectResponse("/account?pw=changed", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(account: Annotated[Account, Depends(require_current_account)]) -> Response:
+def logout(account: CurrentAccount) -> Response:
     """Global logout: clear the single parent-domain cookie → logged out of every run."""
     return clear_lobby_session_cookie(Response(status_code=status.HTTP_204_NO_CONTENT))
 
 
 @lobby_router.get("/my-runs")
-def get_my_runs(account: Annotated[Account, Depends(require_current_account)]) -> MyRunsResponse:
+def get_my_runs(account: CurrentAccount, service: LobbyService) -> MyRunsResponse:
     """The authenticated account's joined runs (same read the instance serves in-run)."""
-    return resolve_my_runs(account.account_id, account.username)
+    return build_my_runs(account.username, service.get_memberships(account.account_id))
 
 
 @lobby_router.post("/runs/{slug}/join", status_code=status.HTTP_204_NO_CONTENT)
-def join_run(slug: str, account: Annotated[Account, Depends(require_current_account)]) -> Response:
+def join_run(slug: str, account: CurrentAccount, service: LobbyService) -> Response:
     """The picker's explicit two-click join (#1030): record that ``account`` has joined the
     public run ``slug``, straight from the lobby, before it ever visits that run's own origin.
     Idempotent — joining twice is a no-op.
@@ -124,9 +134,11 @@ def join_run(slug: str, account: Annotated[Account, Depends(require_current_acco
     if fragment.private:
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     try:
-        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
-    except accounts.MembershipRoleConflictError:
-        # account is this run's facilitator (or server-wide) — a facilitator administers a run,
-        # it doesn't also join one as a player (ADR-0004).
-        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
+        service.add_run_member(slug, account.account_id)
+    except LobbyServiceRefusal as refusal:
+        if refusal.code == LobbyServiceErrorCode.ROLE_CONFLICT:
+            # account is this run's facilitator (or server-wide) — a facilitator administers a run,
+            # it doesn't also join one as a player (ADR-0004).
+            raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
+        raise
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -76,6 +76,10 @@ fi
 # two backends racing on the same sqlite file). The lobby owns accounts.
 seed_dev_data
 
+# Both stacks need the lobby service: the lobby backend logs in and reads memberships through it.
+start_lobby_service
+pids+=("$!")
+
 case "$TARGET" in
 app)
     echo "[dev] app stack → app http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"

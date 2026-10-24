@@ -1,0 +1,38 @@
+# The lobby service (ADR-0009): the one process that opens lobby.db. It owns accounts, sessions,
+# memberships and the session-signing secret, and serves them over the socket in
+# energetica-lobby-service.socket. It has no network port.
+#
+# Installed once per VPS by scripts/infra/setup-base.sh into
+# /etc/systemd/system/energetica-lobby-service.service. Not enabled on its own: the socket starts
+# it on the first connection. The code ships with the lobby, from /var/www/energetica-lobby, and
+# scripts/deploy-lobby.sh restarts this unit.
+#
+# On start it runs any pending schema migrations before serving. Connections that arrive
+# meanwhile wait on the socket.
+#
+# The Environment= lines are the contract with src/lobby_service/config.py and
+# src/energetica/kernel/session.py:
+#   * ENERGETICA_LOBBY_DB_PATH points at the existing accounts.db until the rename to lobby.db,
+#     which happens in the deploy of "Remove database access from runs" (#1284). Runs on old code
+#     open the same file until then.
+#   * ENERGETICA_SHARED_SECRET_PATH is the session-signing secret. Only this service needs it
+#     once every run is switched to the lobby service's API.
+
+[Unit]
+Description=Energetica lobby service (accounts, sessions, memberships)
+Requires=energetica-lobby-service.socket
+After=energetica-lobby-service.socket
+
+[Service]
+Type=simple
+User=energetica
+Group=energetica
+WorkingDirectory=/var/www/energetica-lobby
+
+Environment=ENERGETICA_LOBBY_DB_PATH=/var/lib/energetica/accounts.db
+Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica/secret_key.txt
+
+# systemd passes the listening socket as file descriptor 3.
+ExecStart=/var/www/energetica-lobby/.venv/bin/python main_lobby_service.py --fd 3
+Restart=on-failure
+RestartSec=5
