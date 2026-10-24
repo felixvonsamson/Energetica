@@ -11,7 +11,7 @@ from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, Ap
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
-from energetica.identity.web import get_current_account
+from energetica.identity.web import get_current_account, replayed_account
 from energetica.kernel.error_envelope import install_error_handlers
 
 from .achievements import router as achievements_router
@@ -73,10 +73,11 @@ def setup_routes(app: FastAPI) -> None:
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-        # Restrict access to the API during the simulation.
+        # Restrict access to the API during the simulation. Replay's own requests are let through.
         if (
             engine.serve_local
             and request.method != "GET"
+            and replayed_account(request) is None
             and request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "")
             != "127.0.0.1"
         ):

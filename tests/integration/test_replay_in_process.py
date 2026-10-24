@@ -8,10 +8,12 @@ logged.
 from __future__ import annotations
 
 import json
+from functools import partial
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
+import httpx
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
@@ -22,6 +24,7 @@ from energetica.freeplay.schemas.simulate import Action, ApiAction, ApiActionReq
 from energetica.identity.accounts import Account
 from energetica.identity.web import resolve_entry_account
 from energetica.kernel import session
+from energetica import simulate as simulate_module
 from energetica.simulate import simulate
 
 from ._session_helpers import make_account
@@ -97,9 +100,7 @@ def _replay(app: FastAPI, actions: list[Action]) -> bool:
     )
 
 
-def test_replay_admits_an_account_no_longer_on_the_roster(
-    app: FastAPI, admitted: list[int], private_instance: None
-) -> None:
+def test_replay_admits_an_account_not_on_the_roster(app: FastAPI, admitted: list[int], private_instance: None) -> None:
     account_id = make_account("alice")
 
     assert _replay(app, [_logged_request(account_id)])
@@ -133,4 +134,18 @@ def test_a_request_from_outside_is_still_gated_after_a_replay(app: FastAPI, admi
     response = TestClient(app).post(PROBE_PATH, json={})
 
     assert response.status_code == 401
+    assert admitted == [account_id]
+
+
+def test_replay_is_served_while_the_run_only_serves_local_writes(
+    app: FastAPI, admitted: list[int], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Replay runs while ``serve_local`` refuses writes from anyone else. It must not depend on
+    the transport happening to report a local client address.
+    """
+    account_id = make_account("alice")
+    engine.serve_local = True
+    monkeypatch.setattr(simulate_module.httpx, "ASGITransport", partial(httpx.ASGITransport, client=("203.0.113.7", 0)))
+
+    assert _replay(app, [_logged_request(account_id)])
     assert admitted == [account_id]

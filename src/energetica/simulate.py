@@ -31,16 +31,15 @@ def create_user(username: str) -> Account:
     return misc.signup_playing_user(None, username, generate_password_hash(secrets.token_urlsafe(32)))
 
 
-def find_account(user_id: int) -> Account:
-    """The account a logged request came from.
+def find_account(account_id: int) -> Account:
+    """The account a logged request came from, given the ``user_id`` it was logged with.
 
-    ``user_id`` is the account_id the request was logged with — an opaque correlation key within
-    one replay/simulation run, not a per-instance object id (there is no such thing any more; see
-    ADR-0004).
+    That ``user_id`` is the account_id, not a per-instance object id (there is no such thing any
+    more; see ADR-0004).
     """
-    account = accounts.get_account_by_id(user_id)
+    account = accounts.get_account_by_id(account_id)
     if account is None:
-        raise ValueError(f"Cannot replay a request: account with id {user_id} does not exist")
+        raise ValueError(f"Cannot replay a request: account with id {account_id} does not exist")
     return account
 
 
