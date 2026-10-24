@@ -29,7 +29,7 @@ from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import season_need
 from energetica.workshop import session as session_module
@@ -455,6 +455,19 @@ def test_the_catalog_gives_a_capacity_factor_for_renewable_facilities_only(sessi
         assert 0 < factors[renewable] < 1
     for other in ("coal_burner", "gas_burner", "nuclear_reactor", "lithium_ion_batteries"):
         assert factors[other] is None
+
+
+def test_the_catalog_prices_a_long_lived_facility_for_the_sessions_length_without_a_price_shock(
+    session_path: Path,
+) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    nuclear = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "nuclear_reactor")
+
+    # A short session's lower price is not a price shock, so the price before shocks is the same.
+    assert nuclear["price"] == session_price(FacilityId.NUCLEAR_REACTOR, 3)
+    assert nuclear["base_price"] == nuclear["price"]
 
 
 def test_a_new_players_fleet_is_empty(session_path: Path) -> None:

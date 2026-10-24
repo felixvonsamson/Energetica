@@ -117,6 +117,10 @@ class WorkshopSessionOut(BaseModel):
 class WorkshopFacilityOut(WorkshopFacility):
     """A facility the calling player can buy, or already owns."""
 
+    base_price: float = Field(
+        description="What it costs before any price shock: its price for the session's length (#1306), which is "
+        "lower than the catalog price for a long-lived facility in a short session"
+    )
     for_sale: bool = Field(
         description="Whether players can buy it in the current Round. A facility the player owns but can no "
         "longer buy, such as storage the Round's storage lever leaves out, is still listed, so that it can be shown"
