@@ -73,6 +73,17 @@ if ! ssh "$SSH" "systemctl is-enabled --quiet energetica-lobby-service.socket"; 
 fi
 log_success "Lobby service socket installed"
 
+# setup-lobby.sh renders the lobby backend's unit, and only a unit rendered since the lobby service
+# existed tells the backend where the service's socket is. Without it the new backend looks for a
+# dev socket and answers every login with a 503. Re-running setup-lobby.sh re-renders the unit.
+log_step "Checking that the lobby backend's unit knows the lobby service socket..."
+if ! ssh "$SSH" "systemctl show --property=Environment energetica-lobby | grep -q ENERGETICA_LOBBY_SERVICE_SOCKET="; then
+    log_error "energetica-lobby.service does not set ENERGETICA_LOBBY_SERVICE_SOCKET."
+    echo "Re-run setup-lobby.sh on the server (it is idempotent) to install the current unit, then deploy again."
+    exit 1
+fi
+log_success "Lobby backend unit is current"
+
 # --- 2. Build ---------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building lobby bundle..."

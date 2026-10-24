@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import logging
 import os
+from urllib.parse import quote
 from pathlib import Path
 from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from energetica.identity.schemas.lobby_service import (
     API_PREFIX,
@@ -85,6 +86,15 @@ def install_refusal_handler(app: FastAPI) -> None:
         return JSONResponse(
             {"detail": SharedErrorCode.LOBBY_SERVICE_UNAVAILABLE}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
         )
+
+
+def _parse[T](response: httpx.Response, shape: type[T]) -> T:
+    """Read a successful reply as ``shape``. A body that does not match is a 503, like any other failure."""
+    try:
+        return TypeAdapter(shape).validate_json(response.content)
+    except ValidationError as exc:
+        logger.error("lobby service sent a malformed reply to %s: %s", response.request.url.path, exc)
+        raise LobbyServiceUnavailable(f"malformed reply: {exc}") from exc
 
 
 def _error_detail(response: httpx.Response) -> object:
@@ -153,7 +163,7 @@ class LobbyServiceClient:
             if refusal.code == LobbyServiceErrorCode.ACCOUNT_NOT_FOUND:
                 return None
             raise
-        return model.model_validate(response.json())
+        return _parse(response, model)
 
     # --- sessions --------------------------------------------------------------------------------
 
@@ -162,7 +172,7 @@ class LobbyServiceClient:
         response = self._request(
             "POST", "/sessions", expected=(201,), json={"username": username, "password": password}
         )
-        return SessionToken.model_validate(response.json()).token
+        return _parse(response, SessionToken).token
 
     def resolve_session(self, token: str, *, run: str | None = None) -> SessionOut | None:
         """
@@ -181,7 +191,7 @@ class LobbyServiceClient:
             if refusal.code == LobbyServiceErrorCode.INVALID_SESSION:
                 return None
             raise
-        return SessionOut.model_validate(response.json())
+        return _parse(response, SessionOut)
 
     # --- accounts --------------------------------------------------------------------------------
 
@@ -190,17 +200,19 @@ class LobbyServiceClient:
         response = self._request(
             "POST", "/accounts", expected=(201,), json={"username": username, "password": password}
         )
-        return CreatedAccount.model_validate(response.json())
+        return _parse(response, CreatedAccount)
 
     def get_account(self, account_id: int) -> AccountOut | None:
         return self._get_or_none(f"/accounts/{account_id}", AccountOut)
 
     def get_account_by_username(self, username: str) -> AccountOut | None:
-        return self._get_or_none(f"/accounts/by-username/{username}", AccountOut)
+        # Signup accepts any characters, so encode them all, "/" included: "alice?team" must not
+        # be read as "alice" followed by a query string.
+        return self._get_or_none(f"/accounts/by-username/{quote(username, safe='')}", AccountOut)
 
     def search_accounts(self, *, prefix: str, limit: int = 20) -> list[AccountOut]:
         response = self._request("GET", "/accounts", expected=(200,), params={"prefix": prefix, "limit": limit})
-        return TypeAdapter(list[AccountOut]).validate_python(response.json())
+        return _parse(response, list[AccountOut])
 
     def change_password(self, account_id: int, *, old_password: str, new_password: str) -> None:
         """Refusals: ``OLD_PASSWORD_INCORRECT``, ``PASSWORD_TOO_SHORT``, ``ACCOUNT_NOT_FOUND``."""
@@ -214,13 +226,13 @@ class LobbyServiceClient:
     def get_memberships(self, account_id: int) -> MembershipsOut:
         """Refusal: ``ACCOUNT_NOT_FOUND``."""
         response = self._request("GET", f"/accounts/{account_id}/memberships", expected=(200,))
-        return MembershipsOut.model_validate(response.json())
+        return _parse(response, MembershipsOut)
 
     # --- run members and facilitator grants ------------------------------------------------------
 
     def get_run_members(self, slug: str) -> list[RunMember]:
         response = self._request("GET", f"/runs/{slug}/members", expected=(200,))
-        return TypeAdapter(list[RunMember]).validate_python(response.json())
+        return _parse(response, list[RunMember])
 
     def add_run_member(self, slug: str, account_id: int) -> None:
         """Join ``account_id`` to ``slug``. Idempotent. Refusals: ``ROLE_CONFLICT``, ``ACCOUNT_NOT_FOUND``."""
@@ -238,4 +250,4 @@ class LobbyServiceClient:
 
     def healthz(self) -> HealthOut:
         response = self._request("GET", "/healthz", expected=(200,))
-        return HealthOut.model_validate(response.json())
+        return _parse(response, HealthOut)

@@ -53,17 +53,21 @@ if [ ! -s "$ENERGETICA_SHARED_SECRET_PATH" ]; then
 fi
 
 # Start the lobby service in the background, from the repo root, and return once it listens, so the
-# lobby backend's first request does not race its start-up. The caller tracks the PID ($!) for
-# cleanup. Run after seed_dev_data, which still writes the database directly.
+# lobby backend's first request does not race its start-up. Sets LOBBY_SERVICE_PID for the caller's
+# cleanup. If the service does not listen in time, it is stopped before this returns failure, so
+# nothing is left running. Run after seed_dev_data, which still writes the database directly.
 start_lobby_service() {
     rm -f "$ENERGETICA_LOBBY_SERVICE_SOCKET"
     "$DEV_REPO_ROOT/.venv/bin/python" main_lobby_service.py --uds "$ENERGETICA_LOBBY_SERVICE_SOCKET" &
+    LOBBY_SERVICE_PID=$!
     local _
     for _ in $(seq 50); do
         [ -S "$ENERGETICA_LOBBY_SERVICE_SOCKET" ] && return 0
         sleep 0.2
     done
     echo "lobby service did not start listening on $ENERGETICA_LOBBY_SERVICE_SOCKET" >&2
+    kill "$LOBBY_SERVICE_PID" 2>/dev/null || true
+    wait "$LOBBY_SERVICE_PID" 2>/dev/null || true
     return 1
 }
 

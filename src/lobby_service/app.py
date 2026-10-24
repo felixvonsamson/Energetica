@@ -119,8 +119,14 @@ def create_account(credentials: Credentials) -> CreatedAccount:
     return CreatedAccount(account_id=account_id, token=mint_session_token(account_id))
 
 
-@router.get("/accounts/by-username/{username}")
+@router.get("/accounts/by-username/{username:path}")
 def get_account_by_username(username: str) -> AccountOut:
+    """
+    Look up an account by its exact username.
+
+    ``:path`` lets the username contain ``/``, which signup allows. The client percent-encodes the
+    username, and the server decodes it before matching the route.
+    """
     account = store.get_account_by_username(username)
     if account is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, LobbyServiceErrorCode.ACCOUNT_NOT_FOUND)

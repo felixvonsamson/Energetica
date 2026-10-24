@@ -78,7 +78,7 @@ seed_dev_data
 
 # Both stacks need the lobby service: the lobby backend logs in and reads memberships through it.
 start_lobby_service
-pids+=("$!")
+pids+=("$LOBBY_SERVICE_PID")
 
 case "$TARGET" in
 app)

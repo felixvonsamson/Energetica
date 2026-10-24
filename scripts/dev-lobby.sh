@@ -37,7 +37,6 @@ seed_dev_data
 # The lobby backend is a client of the lobby service (ADR-0009). Run it alongside, and stop it with
 # the backend.
 start_lobby_service
-LOBBY_SERVICE_PID=$!
 trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
 
 echo

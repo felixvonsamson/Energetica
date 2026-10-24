@@ -146,7 +146,9 @@ From your local machine:
   restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
   migrations on `accounts.db` before serving, and checks its `healthz` over the socket.
   Last, it restarts the lobby backend (`energetica-lobby`) and health-checks the vhost.
-  It refuses to deploy to a box whose `setup-base.sh` predates the lobby service's units.
+  It refuses to deploy to a box whose `setup-base.sh` predates the lobby service's units, or whose
+  `setup-lobby.sh` rendered the lobby backend's unit before it knew the service's socket. Re-run
+  whichever it names; both are idempotent.
   Callers do not fail while the lobby service restarts: systemd holds its socket open, so
   their requests wait.
 

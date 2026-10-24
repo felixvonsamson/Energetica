@@ -48,6 +48,8 @@ def test_a_service_that_does_not_answer_in_time_is_a_503(socket_dir: Path) -> No
         httpx.Response(400, text="Bad Request"),  # not JSON, such as from uvicorn itself
         httpx.Response(400, json={"detail": "SOMETHING_NEW"}),  # not a code this client knows
         httpx.Response(500, json={"detail": "Internal Server Error"}),
+        httpx.Response(200, text="not json"),  # a success whose body is not JSON
+        httpx.Response(200, json={"account_id": 1}),  # a success missing fields
     ],
 )
 def test_an_answer_the_api_does_not_document_is_a_503(response: httpx.Response) -> None:
@@ -56,3 +58,11 @@ def test_an_answer_the_api_does_not_document_is_a_503(response: httpx.Response) 
 
     with pytest.raises(LobbyServiceUnavailable):
         client.get_account(1)
+
+
+def test_a_malformed_session_token_reply_is_a_503() -> None:
+    transport = httpx.MockTransport(lambda request: httpx.Response(201, json={"no_token": "here"}))
+    client = LobbyServiceClient(httpx.Client(transport=transport, base_url=BASE_URL))
+
+    with pytest.raises(LobbyServiceUnavailable):
+        client.create_session(username="alice", password="correct-password")

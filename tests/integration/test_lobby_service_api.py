@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from energetica.identity.lobby_service_client import LobbyServiceClient
 from energetica.kernel.session import decode_session_token, mint_session_token
 from lobby_service.app import create_service_app
 from lobby_service.schema import SCHEMA_VERSION, upgrade_database
@@ -120,6 +121,19 @@ def test_accounts_can_be_looked_up_by_id_username_and_prefix(service: TestClient
     assert "pwhash" not in by_id
     assert [account["username"] for account in by_prefix] == ["alfred", "alice"]
     assert service.get("/accounts", params={"prefix": "al", "limit": 1}).json()[0]["username"] == "alfred"
+
+
+@pytest.mark.parametrize("username", ["alice?team", "alice#1", "a/b", "50%", "al ice"])
+def test_a_username_lookup_finds_exactly_that_username(service: TestClient, username: str) -> None:
+    """Signup accepts any characters, and a lookup must not read part of the name as URL syntax."""
+    _create_account(service, "alice")
+    target = _create_account(service, username)
+    client = LobbyServiceClient(service)
+
+    account = client.get_account_by_username(username)
+
+    assert account is not None
+    assert account.account_id == target["account_id"]
 
 
 def test_unknown_accounts_are_404(service: TestClient) -> None:
