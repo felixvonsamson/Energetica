@@ -33,7 +33,7 @@ _WEEK_HOURS = 7 * 24
 
 GAS = FacilityId.GAS_BURNER  # 38 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 45 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 30 MW, 100 MWh, 90% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 90 MW, 300 MWh, 90% efficient
 
 
 def _bidder(
