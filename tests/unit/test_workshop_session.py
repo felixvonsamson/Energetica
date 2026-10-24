@@ -1123,8 +1123,8 @@ def test_an_advance_that_fails_to_save_keeps_no_prices(
 # --- the room's prices (#1299) ----------------------------------------------------------------
 
 
-def _quote(price: float, previous: float | None = None) -> QuotedPrice:
-    return QuotedPrice(price=price, previous=previous)
+def _quote(price: float, previous: float | None = None, *, default: float) -> QuotedPrice:
+    return QuotedPrice(price=price, previous=previous, default=default)
 
 
 def test_the_room_sees_every_players_live_prices_for_the_types_they_have_operating(path: Path, clock: _Clock) -> None:
@@ -1139,8 +1139,8 @@ def test_the_room_sees_every_players_live_prices_for_the_types_they_have_operati
         PlayerQuotes(
             account_id=1,
             username="alice",
-            sell={GAS: _quote(80.0), BATTERIES: _quote(150.0)},
-            buy={BATTERIES: _quote(60.0)},
+            sell={GAS: _quote(80.0, default=90.0), BATTERIES: _quote(150.0, default=150.0)},
+            buy={BATTERIES: _quote(60.0, default=60.0)},
         ),
         PlayerQuotes(account_id=2, username="bob", sell={}, buy={}),
     ]
@@ -1168,8 +1168,11 @@ def test_each_price_is_compared_with_the_one_the_last_period_ran_at(path: Path, 
     session.set_price(1, GAS, "sell", 150.0)
     [alice] = session.market_prices(TradingPeriod(round=1, season="summer")).players
 
-    assert alice.sell == {GAS: _quote(150.0, previous=90.0), BATTERIES: _quote(150.0, previous=150.0)}
-    assert alice.buy == {BATTERIES: _quote(60.0, previous=60.0)}
+    assert alice.sell == {
+        GAS: _quote(150.0, previous=90.0, default=90.0),
+        BATTERIES: _quote(150.0, previous=150.0, default=150.0),
+    }
+    assert alice.buy == {BATTERIES: _quote(60.0, previous=60.0, default=60.0)}
 
 
 def test_a_settled_period_shows_the_prices_it_ran_at(path: Path, clock: _Clock) -> None:
@@ -1184,7 +1187,7 @@ def test_a_settled_period_shows_the_prices_it_ran_at(path: Path, clock: _Clock) 
 
     assert not room.live
     [alice] = room.players
-    assert alice.sell[GAS] == _quote(120.0, previous=90.0)
+    assert alice.sell[GAS] == _quote(120.0, previous=90.0, default=90.0)
 
 
 def test_prices_stop_being_live_when_the_window_closes(path: Path, clock: _Clock) -> None:
@@ -1194,7 +1197,7 @@ def test_prices_stop_being_live_when_the_window_closes(path: Path, clock: _Clock
     room = session.market_prices(TradingPeriod(round=1, season="spring"))
 
     assert not room.live
-    assert room.players[0].sell[GAS] == _quote(DEFAULT_PRICES.sell[GAS])
+    assert room.players[0].sell[GAS] == _quote(DEFAULT_PRICES.sell[GAS], default=DEFAULT_PRICES.sell[GAS])
 
 
 def test_a_period_that_has_not_started_has_no_prices(path: Path, clock: _Clock) -> None:

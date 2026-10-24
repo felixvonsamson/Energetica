@@ -79,7 +79,9 @@ class LockedPrices(BaseModel):
 
 
 class QuotedPrice(BaseModel):
-    """One price a player offers, next to the one it ran at in their last Trading period (#1299)."""
+    """One price a player offers, next to the one it ran at in their last Trading period (#1299), and the
+    default price every player starts from, which it is compared with when there is no earlier period.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -87,6 +89,7 @@ class QuotedPrice(BaseModel):
     previous: float | None = Field(
         description="The price the facility type ran at in the player's last Trading period with it, if any"
     )
+    default: float = Field(description="The facility type's default price, which every player starts from")
 
 
 class PlayerQuotes(BaseModel):
@@ -128,7 +131,7 @@ Quotes = dict[FacilityId, QuotedPrice]
 
 def quoted(prices: PriceSheet, earlier: Sequence[LockedPrices]) -> tuple[Quotes, Quotes]:
     """``prices``' sell and buy prices, each next to the price it ran at in the latest of the ``earlier``
-    periods, oldest first, that had it.
+    periods, oldest first, that had it, and next to its default price.
     """
 
     def side(pick: Callable[[PriceSheet], dict[FacilityId, float]]) -> Quotes:
@@ -139,7 +142,8 @@ def quoted(prices: PriceSheet, earlier: Sequence[LockedPrices]) -> tuple[Quotes,
             )
 
         return {
-            facility: QuotedPrice(price=price, previous=previous(facility)) for facility, price in pick(prices).items()
+            facility: QuotedPrice(price=price, previous=previous(facility), default=pick(DEFAULT_PRICES)[facility])
+            for facility, price in pick(prices).items()
         }
 
     return side(lambda sheet: sheet.sell), side(lambda sheet: sheet.buy)

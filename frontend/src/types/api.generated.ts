@@ -5938,7 +5938,8 @@ export interface components {
         };
         /**
          * QuotedPrice
-         * @description One price a player offers, next to the one it ran at in their last Trading period (#1299).
+         * @description One price a player offers, next to the one it ran at in their last Trading period (#1299), and the
+         *     default price every player starts from, which it is compared with when there is no earlier period.
          */
         QuotedPrice: {
             /** Price */
@@ -5948,6 +5949,11 @@ export interface components {
              * @description The price the facility type ran at in the player's last Trading period with it, if any
              */
             previous: number | null;
+            /**
+             * Default
+             * @description The facility type's default price, which every player starts from
+             */
+            default: number;
         };
         /**
          * RationingAlarm

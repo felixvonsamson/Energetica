@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { marketColumns, priceTrend } from "./workshop-market-prices";
 
-const quote = (price: number, previous: number | null = null) => ({
+const quote = (
+    price: number,
+    previous: number | null = null,
+    base: number = price,
+) => ({
     price,
     previous,
+    default: base,
 });
 
 const player = (
@@ -25,8 +30,14 @@ describe("priceTrend", () => {
         expect(priceTrend(quote(90, 90))).toBe("unchanged");
     });
 
-    it("is new when the facility type ran in no earlier period", () => {
-        expect(priceTrend(quote(90))).toBe("new");
+    it("compares with the default price when the type ran in no earlier period", () => {
+        expect(priceTrend(quote(120, null, 90))).toBe("up");
+        expect(priceTrend(quote(60, null, 90))).toBe("down");
+        expect(priceTrend(quote(90, null, 90))).toBe("unchanged");
+    });
+
+    it("compares with the last period's price over the default price", () => {
+        expect(priceTrend(quote(100, 120, 90))).toBe("down");
     });
 });
 
