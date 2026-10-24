@@ -3,8 +3,8 @@
 ## Context
 
 Private-run admission (#1019-#1022) already has an explicit, deliberate step: a facilitator
-adds an account to the roster, or a visitor follows a join link and confirms "Join *Instance
-Name*?". A public run had no equivalent — clicking it in the picker (or following a deep
+adds an account to the roster, or a visitor follows a join link and confirms "Join _Instance
+Name_?". A public run had no equivalent — clicking it in the picker (or following a deep
 link) landed straight on the settle page (tile picking) via the entry gate's silent
 auto-provision, with no confirmation in between.
 
@@ -28,7 +28,7 @@ asymmetry with private-run admission (both are now a deliberate, explicit act) a
 public and private runs a shared "joined" event to key membership on.
 
 **Membership means joined, not settled.** `instance_membership` gains `settled_at`, separate
-from the existing `created_at` (now `joined_at` for a player row): a row is written at *join*
+from the existing `created_at` (now `joined_at` for a player row): a row is written at _join_
 time, and `settled_at` is filled in later, at settle. The lobby's "your runs" is keyed on
 having a row at all, unsettled included; `settled_at` is display-only (a "Settle" vs
 "Continue" affordance, and a future settled-player count). This reverses the prior
@@ -39,7 +39,7 @@ because nothing writes a row on a bare, unclicked visit.
 **Scope of this PR: the public-run picker join only.** The write described above
 (`accounts.record_join`) is wired up here for the public-run two-click join
 (`POST /api/v1/lobby/runs/{slug}/join`). A private run's roster add and join-link confirm are
-*conceptually* the same deliberate "join" act — the reasoning above is why they belong on this
+_conceptually_ the same deliberate "join" act — the reasoning above is why they belong on this
 same table — but as of this PR they still write to `instance.json`'s `allowed_usernames`, the
 pre-existing mechanism, unchanged. Wiring those two paths onto `accounts.record_join` too is the
 explicit follow-up in Consequences below (done in ADR-0007/#1031) — until that lands, a joined
@@ -55,7 +55,7 @@ public runs. A private run's admission stays entirely instance-owned (the allowl
 isn't visible to the lobby, only whether one applies — see Consequences); this endpoint 403s
 on one.
 
-**A returning `?return=slug` deep link only bounces straight into an *already-joined* run.**
+**A returning `?return=slug` deep link only bounces straight into an _already-joined_ run.**
 Previously it bounced into any known run, joined or not — silently joining by side effect of a
 login redirect. Now an unjoined run's `?return=` stops on the picker like any other unjoined
 run, so "joined" means one consistent thing everywhere: the explicit click, never a redirect.

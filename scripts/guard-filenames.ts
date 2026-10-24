@@ -1,6 +1,6 @@
 /**
- * CI guard: every source file under `frontend/src`, `frontend/apps` and `frontend/packages` is named in kebab-case
- * (#971, decided in #942).
+ * CI guard: every source file under `frontend/src`, `frontend/apps` and
+ * `frontend/packages` is named in kebab-case (#971, decided in #942).
  *
  * This guard pins reality rather than imposing a preference. All 321 tracked
  * `.ts` / `.tsx` files under `frontend/src` already follow the grammar below;
@@ -17,10 +17,10 @@
  * 2. **Known compound suffixes are stripped before the stem is judged**: `.d.ts`
  *    (ambient declarations) and `.test.ts` / `.test.tsx` (vitest). Without
  *    this, `single-origin.test.ts` would fail on a dot it is required to have.
- * 3. **Inside the route trees, the stem is a TanStack file-based route path,
- *    not a plain name.** `runs.$slug.recap.tsx` is three route segments,
- *    `$slug.tsx` is a path parameter and `__root.tsx` is the root layout —
- *    framework syntax, not sloppy naming. Each dot-separated segment is checked
+ * 3. **Inside the route trees, the stem is a TanStack file-based route path, not a
+ *    plain name.** `runs.$slug.recap.tsx` is three route segments, `$slug.tsx`
+ *    is a path parameter and `__root.tsx` is the root layout — framework
+ *    syntax, not sloppy naming. Each dot-separated segment is checked
  *    individually, so `routes/app/DashboardCard.tsx` still fails.
  *
  * Run: `bun run guard:filenames` (from frontend/) or `bun

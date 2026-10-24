@@ -82,37 +82,37 @@
        ============================================ */
 
     /* Surfaces */
-    --color-surface-page:    var(--surface-page);
-    --color-surface-card:    var(--surface-card);
-    --color-surface-raised:  var(--surface-raised);
+    --color-surface-page: var(--surface-page);
+    --color-surface-card: var(--surface-card);
+    --color-surface-raised: var(--surface-raised);
     --color-surface-overlay: var(--surface-overlay);
-    --color-surface-sunken:  var(--surface-sunken);
-    --color-surface-topbar:  var(--surface-topbar);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-surface-topbar: var(--surface-topbar);
     --color-surface-highlight: var(--surface-highlight);
 
     /* Text / foreground */
-    --color-fg-base:         var(--fg-base);
-    --color-fg-muted:        var(--fg-muted);
-    --color-fg-subtle:       var(--fg-subtle);
-    --color-fg-on-brand:     var(--fg-on-brand);
-    --color-hyperlink:       var(--hyperlink);
+    --color-fg-base: var(--fg-base);
+    --color-fg-muted: var(--fg-muted);
+    --color-fg-subtle: var(--fg-subtle);
+    --color-fg-on-brand: var(--fg-on-brand);
+    --color-hyperlink: var(--hyperlink);
 
     /* Borders */
-    --color-border-subtle:   var(--border-subtle);
-    --color-border-brand:    var(--border-brand);
+    --color-border-subtle: var(--border-subtle);
+    --color-border-brand: var(--border-brand);
     --color-border-highlight: var(--border-highlight);
 
     /* Brand */
-    --color-brand:           var(--brand);
-    --color-brand-secondary:  var(--brand-secondary);
-    --color-brand-fg:        var(--brand-fg);
+    --color-brand: var(--brand);
+    --color-brand-secondary: var(--brand-secondary);
+    --color-brand-fg: var(--brand-fg);
 
     /* Feedback (--color-info/warning/success already bridged above; adding new names) */
-    --color-error:           var(--error);
-    --color-error-fg:        var(--error-fg);
-    --color-warning-fg:      var(--warning-fg);
-    --color-success-fg:      var(--success-fg);
-    --color-info-fg:         var(--info-fg);
+    --color-error: var(--error);
+    --color-error-fg: var(--error-fg);
+    --color-warning-fg: var(--warning-fg);
+    --color-success-fg: var(--success-fg);
+    --color-info-fg: var(--info-fg);
 
     /* Fonts */
     --font-main: "Baloo 2", system-ui, sans-serif;
@@ -171,41 +171,57 @@
         /* ── New semantic tokens (light mode) ────────────────────────── */
 
         /* Surfaces — lightest to darkest within the UI stack */
-        --surface-page:   var(--color-pine-200);   /* app background */
-        --surface-card:   var(--color-bone-100);   /* cards, panels */
-        --surface-raised: var(--color-bone-50);    /* popovers, dropdowns (above card) */
-        --surface-overlay: var(--color-bone-50);   /* lightest bone surface, interactive elements */
-        --surface-sunken: var(--color-bone-150);   /* table rows, inset areas (below card) */
-        --surface-topbar: var(--color-pine-100);   /* top navigation bar */
-        --surface-highlight: var(--color-bone-300); /* sand marker, e.g. the current step when another is selected */
+        --surface-page: var(--color-pine-200); /* app background */
+        --surface-card: var(--color-bone-100); /* cards, panels */
+        --surface-raised: var(
+            --color-bone-50
+        ); /* popovers, dropdowns (above card) */
+        --surface-overlay: var(
+            --color-bone-50
+        ); /* lightest bone surface, interactive elements */
+        --surface-sunken: var(
+            --color-bone-150
+        ); /* table rows, inset areas (below card) */
+        --surface-topbar: var(--color-pine-100); /* top navigation bar */
+        --surface-highlight: var(
+            --color-bone-300
+        ); /* sand marker, e.g. the current step when another is selected */
 
         /* Text */
-        --fg-base:        var(--color-pine-700);   /* primary body text */
-        --fg-muted:       var(--color-pine-500);   /* secondary text, labels */
-        --fg-subtle:      var(--color-bone-600);   /* disabled, placeholder, tertiary */
-        --fg-on-brand:    #ffffff;                 /* text on brand-coloured backgrounds */
-        --hyperlink:      var(--color-blue-600);        /* links */
+        --fg-base: var(--color-pine-700); /* primary body text */
+        --fg-muted: var(--color-pine-500); /* secondary text, labels */
+        --fg-subtle: var(
+            --color-bone-600
+        ); /* disabled, placeholder, tertiary */
+        --fg-on-brand: #ffffff; /* text on brand-coloured backgrounds */
+        --hyperlink: var(--color-blue-600); /* links */
 
         /* Borders */
-        --border-subtle:  var(--color-bone-300);   /* dividers, subtle separators */
-        --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
-        --border-highlight: var(--color-bone-600); /* border of a surface-highlight element */
+        --border-subtle: var(
+            --color-bone-300
+        ); /* dividers, subtle separators */
+        --border-brand: var(
+            --color-pine-700
+        ); /* brand-coloured input/widget borders */
+        --border-highlight: var(
+            --color-bone-600
+        ); /* border of a surface-highlight element */
         /* --border (default) is already defined above */
 
         /* Brand — the pine-green action colour */
-        --brand:    var(--color-pine-700);
+        --brand: var(--color-pine-700);
         --brand-secondary: var(--color-pine-500);
         --brand-fg: #ffffff;
 
         /* Feedback */
-        --error:         var(--color-red-500);
-        --error-fg:      #ffffff;
-        --warning:       oklch(65.215% 0.17687 48.246);
-        --warning-fg:    #000000;
-        --success:       rgb(22, 163, 74);
-        --success-fg:    #ffffff;
-        --info:          rgb(37, 99, 235);
-        --info-fg:       #ffffff;
+        --error: var(--color-red-500);
+        --error-fg: #ffffff;
+        --warning: oklch(65.215% 0.17687 48.246);
+        --warning-fg: #000000;
+        --success: rgb(22, 163, 74);
+        --success-fg: #ffffff;
+        --info: rgb(37, 99, 235);
+        --info-fg: #ffffff;
 
         /* Chart colors (light mode) */
         --chart-1: oklch(0.646 0.222 41.116);
@@ -310,47 +326,47 @@
            based on the luminance of its fill color. Used by FacilityGauge to
            keep labels legible on the filled portion of the bar. */
         --asset-fg-on-light: #000000;
-        --asset-fg-on-dark:  #ffffff;
+        --asset-fg-on-dark: #ffffff;
 
         /* Asset colour foregrounds (light mode) — picked from the asset's
            light-mode fill colour. */
-        --asset-color-watermill-fg:               var(--asset-fg-on-light);
-        --asset-color-small-water-dam-fg:         var(--asset-fg-on-dark);
-        --asset-color-large-water-dam-fg:         var(--asset-fg-on-dark);
-        --asset-color-nuclear-reactor-fg:         var(--asset-fg-on-light);
-        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
-        --asset-color-steam-engine-fg:            var(--asset-fg-on-dark);
-        --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
-        --asset-color-modern-coal-plant-fg:       var(--asset-fg-on-dark);
-        --asset-color-gas-burner-fg:              var(--asset-fg-on-light);
-        --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
-        --asset-color-windmill-fg:                var(--asset-fg-on-light);
-        --asset-color-onshore-wind-turbine-fg:    var(--asset-fg-on-dark);
-        --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
-        --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
-        --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
-        --asset-color-multi-layer-pv-fg:          var(--asset-fg-on-light);
-        --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-dark);
-        --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
-        --asset-color-pumped-hydro-fg:            var(--asset-fg-on-dark);
-        --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
-        --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-dark);
-        --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);
-        --asset-color-hydrogen-storage-fg:        var(--asset-fg-on-light);
-        --asset-color-coal-mine-fg:               var(--asset-fg-on-dark);
-        --asset-color-gas-drilling-site-fg:       var(--asset-fg-on-light);
-        --asset-color-uranium-mine-fg:            var(--asset-fg-on-light);
-        --asset-color-coal-fg:                    var(--asset-fg-on-dark);
-        --asset-color-gas-fg:                     var(--asset-fg-on-light);
-        --asset-color-uranium-fg:                 var(--asset-fg-on-light);
-        --asset-color-imports-fg:                 var(--asset-fg-on-dark);
-        --asset-color-exports-fg:                 var(--asset-fg-on-light);
-        --asset-color-dumping-fg:                 var(--asset-fg-on-dark);
-        --asset-color-industry-fg:                var(--asset-fg-on-dark);
-        --asset-color-research-fg:                var(--asset-fg-on-light);
-        --asset-color-construction-fg:            var(--asset-fg-on-dark);
-        --asset-color-transport-fg:               var(--asset-fg-on-dark);
-        --asset-color-carbon-capture-fg:          var(--asset-fg-on-light);
+        --asset-color-watermill-fg: var(--asset-fg-on-light);
+        --asset-color-small-water-dam-fg: var(--asset-fg-on-dark);
+        --asset-color-large-water-dam-fg: var(--asset-fg-on-dark);
+        --asset-color-nuclear-reactor-fg: var(--asset-fg-on-light);
+        --asset-color-nuclear-reactor-gen4-fg: var(--asset-fg-on-light);
+        --asset-color-steam-engine-fg: var(--asset-fg-on-dark);
+        --asset-color-coal-burner-fg: var(--asset-fg-on-dark);
+        --asset-color-modern-coal-plant-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-burner-fg: var(--asset-fg-on-light);
+        --asset-color-combined-cycle-fg: var(--asset-fg-on-dark);
+        --asset-color-windmill-fg: var(--asset-fg-on-light);
+        --asset-color-onshore-wind-turbine-fg: var(--asset-fg-on-dark);
+        --asset-color-offshore-wind-turbine-fg: var(--asset-fg-on-dark);
+        --asset-color-csp-solar-fg: var(--asset-fg-on-light);
+        --asset-color-pv-solar-fg: var(--asset-fg-on-light);
+        --asset-color-multi-layer-pv-fg: var(--asset-fg-on-light);
+        --asset-color-small-pumped-hydro-fg: var(--asset-fg-on-dark);
+        --asset-color-large-pumped-hydro-fg: var(--asset-fg-on-dark);
+        --asset-color-pumped-hydro-fg: var(--asset-fg-on-dark);
+        --asset-color-lithium-ion-batteries-fg: var(--asset-fg-on-dark);
+        --asset-color-solid-state-batteries-fg: var(--asset-fg-on-dark);
+        --asset-color-molten-salt-fg: var(--asset-fg-on-dark);
+        --asset-color-hydrogen-storage-fg: var(--asset-fg-on-light);
+        --asset-color-coal-mine-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-drilling-site-fg: var(--asset-fg-on-light);
+        --asset-color-uranium-mine-fg: var(--asset-fg-on-light);
+        --asset-color-coal-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-fg: var(--asset-fg-on-light);
+        --asset-color-uranium-fg: var(--asset-fg-on-light);
+        --asset-color-imports-fg: var(--asset-fg-on-dark);
+        --asset-color-exports-fg: var(--asset-fg-on-light);
+        --asset-color-dumping-fg: var(--asset-fg-on-dark);
+        --asset-color-industry-fg: var(--asset-fg-on-dark);
+        --asset-color-research-fg: var(--asset-fg-on-light);
+        --asset-color-construction-fg: var(--asset-fg-on-dark);
+        --asset-color-transport-fg: var(--asset-fg-on-dark);
+        --asset-color-carbon-capture-fg: var(--asset-fg-on-light);
 
         /* Map tile colours */
         --map-selected-tile-hover: var(--color-pine-800);
@@ -401,40 +417,42 @@
         /* ── New semantic tokens (dark mode) ─────────────────────────── */
 
         /* Surfaces */
-        --surface-page:   #0a0a0a;
-        --surface-card:   #2d2d2d;
-        --surface-raised: #383838;   /* above card: popovers, dropdowns */
-        --surface-overlay: #454545;  /* lightest surface, interactive elements */
-        --surface-sunken: #1e1e1e;   /* below card: table rows, inset areas */
+        --surface-page: #0a0a0a;
+        --surface-card: #2d2d2d;
+        --surface-raised: #383838; /* above card: popovers, dropdowns */
+        --surface-overlay: #454545; /* lightest surface, interactive elements */
+        --surface-sunken: #1e1e1e; /* below card: table rows, inset areas */
         --surface-topbar: var(--color-pine-900);
         --surface-highlight: var(--color-bone-800);
 
         /* Text */
-        --fg-base:        oklch(100% 0 0);   /* white */
-        --fg-muted:       #b7b7b7;
-        --fg-subtle:      #606060;
-        --fg-on-brand:    #ffffff;
-        --hyperlink:      var(--color-blue-400);        /* links */
+        --fg-base: oklch(100% 0 0); /* white */
+        --fg-muted: #b7b7b7;
+        --fg-subtle: #606060;
+        --fg-on-brand: #ffffff;
+        --hyperlink: var(--color-blue-400); /* links */
 
         /* Borders */
-        --border-subtle:  #525252;
-        --border-brand:   var(--color-pine-500);   /* brand-coloured input/widget borders */
+        --border-subtle: #525252;
+        --border-brand: var(
+            --color-pine-500
+        ); /* brand-coloured input/widget borders */
         --border-highlight: var(--color-bone-600);
 
         /* Brand */
-        --brand:    var(--color-pine-500);
+        --brand: var(--color-pine-500);
         --brand-secondary: var(--color-pine-700);
         --brand-fg: #ffffff;
 
         /* Feedback */
-        --error:         oklch(52.816% 0.21229 29.916);
-        --error-fg:      #ffffff;
-        --warning:       rgb(251, 191, 36);
-        --warning-fg:    #000000;
-        --success:       rgb(74, 222, 128);
-        --success-fg:    #000000;
-        --info:          rgb(96, 165, 250);
-        --info-fg:       #000000;
+        --error: oklch(52.816% 0.21229 29.916);
+        --error-fg: #ffffff;
+        --warning: rgb(251, 191, 36);
+        --warning-fg: #000000;
+        --success: rgb(74, 222, 128);
+        --success-fg: #000000;
+        --info: rgb(96, 165, 250);
+        --info-fg: #000000;
 
         /* Chart colors (dark mode) */
         --chart-1: oklch(0.488 0.243 264.376);
@@ -446,7 +464,7 @@
 
         /* Player colors (dark mode) */
         --chart-self: var(--primary);
-        --chart-others-from: oklch(0.50 0.012 60);
+        --chart-others-from: oklch(0.5 0.012 60);
         --chart-others-to: oklch(0.86 0.018 75);
 
         /* Sidebar colors (dark mode) */
@@ -471,15 +489,15 @@
            (OKLCH: lower lightness, higher chroma than light mode; variations step in lightness within a family) */
         --asset-color-watermill: oklch(0.74 0.12 220);
         --asset-color-small-water-dam: oklch(0.62 0.15 242);
-        --asset-color-large-water-dam: oklch(0.50 0.16 262);
+        --asset-color-large-water-dam: oklch(0.5 0.16 262);
 
         /* Asset colours - Power facilities (nuclear) */
-        --asset-color-nuclear-reactor: oklch(0.70 0.19 128);
-        --asset-color-nuclear-reactor-gen4: oklch(0.60 0.17 142);
+        --asset-color-nuclear-reactor: oklch(0.7 0.19 128);
+        --asset-color-nuclear-reactor-gen4: oklch(0.6 0.17 142);
 
         /* Asset colours - Power facilities (fossil) */
         --asset-color-steam-engine: oklch(0.68 0.03 255);
-        --asset-color-coal-burner: oklch(0.50 0.012 70);
+        --asset-color-coal-burner: oklch(0.5 0.012 70);
         --asset-color-modern-coal-plant: oklch(0.58 0.015 250);
         --asset-color-gas-burner: oklch(0.66 0.15 285);
         --asset-color-combined-cycle: oklch(0.54 0.15 300);
@@ -487,7 +505,7 @@
         /* Asset colours - Power facilities (wind) */
         --asset-color-windmill: oklch(0.76 0.12 155);
         --asset-color-onshore-wind-turbine: oklch(0.64 0.13 172);
-        --asset-color-offshore-wind-turbine: oklch(0.53 0.10 195);
+        --asset-color-offshore-wind-turbine: oklch(0.53 0.1 195);
 
         /* Asset colours - Power facilities (solar) */
         --asset-color-csp-solar: oklch(0.73 0.17 62);
@@ -497,21 +515,21 @@
         /* Asset colours - Storage facilities */
         --asset-color-small-pumped-hydro: oklch(0.68 0.13 228);
         --asset-color-large-pumped-hydro: oklch(0.52 0.15 255);
-        --asset-color-pumped-hydro: oklch(0.60 0.14 240);
+        --asset-color-pumped-hydro: oklch(0.6 0.14 240);
         --asset-color-lithium-ion-batteries: oklch(0.58 0.08 45);
         --asset-color-solid-state-batteries: oklch(0.69 0.09 60);
         --asset-color-molten-salt: oklch(0.55 0.14 35);
-        --asset-color-hydrogen-storage: oklch(0.80 0.11 195);
+        --asset-color-hydrogen-storage: oklch(0.8 0.11 195);
 
         /* Asset colours - Extraction facilities */
         --asset-color-coal-mine: oklch(0.56 0.012 250);
         --asset-color-gas-drilling-site: oklch(0.72 0.13 225);
-        --asset-color-uranium-mine: oklch(0.80 0.17 110);
+        --asset-color-uranium-mine: oklch(0.8 0.17 110);
 
         /* Asset colours - Resources */
-        --asset-color-coal: oklch(0.50 0.012 70);
+        --asset-color-coal: oklch(0.5 0.012 70);
         --asset-color-gas: oklch(0.66 0.15 285);
-        --asset-color-uranium: oklch(0.70 0.19 128);
+        --asset-color-uranium: oklch(0.7 0.19 128);
         --asset-color-imports: oklch(0.66 0.18 18);
         --asset-color-exports: oklch(0.74 0.18 135);
         --asset-color-dumping: oklch(0.58 0.21 27);
@@ -526,50 +544,50 @@
         /* Asset colours - Functional facilities */
         --asset-color-industry: oklch(0.66 0.14 55);
         --asset-color-research: oklch(0.88 0 0);
-        --asset-color-construction: oklch(0.70 0.17 50);
+        --asset-color-construction: oklch(0.7 0.17 50);
         --asset-color-transport: oklch(0.58 0.22 295);
         --asset-color-carbon-capture: oklch(0.66 0.015 250);
 
         /* Asset colour foregrounds (dark mode) — picked from the asset's
            dark-mode fill colour. --asset-fg-on-light/-on-dark are inherited
            from :root. */
-        --asset-color-watermill-fg:               var(--asset-fg-on-light);
-        --asset-color-small-water-dam-fg:         var(--asset-fg-on-dark);
-        --asset-color-large-water-dam-fg:         var(--asset-fg-on-dark);
-        --asset-color-nuclear-reactor-fg:         var(--asset-fg-on-light);
-        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
-        --asset-color-steam-engine-fg:            var(--asset-fg-on-light);
-        --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
-        --asset-color-modern-coal-plant-fg:       var(--asset-fg-on-dark);
-        --asset-color-gas-burner-fg:              var(--asset-fg-on-dark);
-        --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
-        --asset-color-windmill-fg:                var(--asset-fg-on-light);
-        --asset-color-onshore-wind-turbine-fg:    var(--asset-fg-on-dark);
-        --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
-        --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
-        --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
-        --asset-color-multi-layer-pv-fg:          var(--asset-fg-on-light);
-        --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-light);
-        --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
-        --asset-color-pumped-hydro-fg:            var(--asset-fg-on-dark);
-        --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
-        --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-light);
-        --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);
-        --asset-color-hydrogen-storage-fg:        var(--asset-fg-on-light);
-        --asset-color-coal-mine-fg:               var(--asset-fg-on-dark);
-        --asset-color-gas-drilling-site-fg:       var(--asset-fg-on-light);
-        --asset-color-uranium-mine-fg:            var(--asset-fg-on-light);
-        --asset-color-coal-fg:                    var(--asset-fg-on-dark);
-        --asset-color-gas-fg:                     var(--asset-fg-on-dark);
-        --asset-color-uranium-fg:                 var(--asset-fg-on-light);
-        --asset-color-imports-fg:                 var(--asset-fg-on-dark);
-        --asset-color-exports-fg:                 var(--asset-fg-on-light);
-        --asset-color-dumping-fg:                 var(--asset-fg-on-dark);
-        --asset-color-industry-fg:                var(--asset-fg-on-dark);
-        --asset-color-research-fg:                var(--asset-fg-on-light);
-        --asset-color-construction-fg:            var(--asset-fg-on-light);
-        --asset-color-transport-fg:               var(--asset-fg-on-dark);
-        --asset-color-carbon-capture-fg:          var(--asset-fg-on-dark);
+        --asset-color-watermill-fg: var(--asset-fg-on-light);
+        --asset-color-small-water-dam-fg: var(--asset-fg-on-dark);
+        --asset-color-large-water-dam-fg: var(--asset-fg-on-dark);
+        --asset-color-nuclear-reactor-fg: var(--asset-fg-on-light);
+        --asset-color-nuclear-reactor-gen4-fg: var(--asset-fg-on-light);
+        --asset-color-steam-engine-fg: var(--asset-fg-on-light);
+        --asset-color-coal-burner-fg: var(--asset-fg-on-dark);
+        --asset-color-modern-coal-plant-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-burner-fg: var(--asset-fg-on-dark);
+        --asset-color-combined-cycle-fg: var(--asset-fg-on-dark);
+        --asset-color-windmill-fg: var(--asset-fg-on-light);
+        --asset-color-onshore-wind-turbine-fg: var(--asset-fg-on-dark);
+        --asset-color-offshore-wind-turbine-fg: var(--asset-fg-on-dark);
+        --asset-color-csp-solar-fg: var(--asset-fg-on-light);
+        --asset-color-pv-solar-fg: var(--asset-fg-on-light);
+        --asset-color-multi-layer-pv-fg: var(--asset-fg-on-light);
+        --asset-color-small-pumped-hydro-fg: var(--asset-fg-on-light);
+        --asset-color-large-pumped-hydro-fg: var(--asset-fg-on-dark);
+        --asset-color-pumped-hydro-fg: var(--asset-fg-on-dark);
+        --asset-color-lithium-ion-batteries-fg: var(--asset-fg-on-dark);
+        --asset-color-solid-state-batteries-fg: var(--asset-fg-on-light);
+        --asset-color-molten-salt-fg: var(--asset-fg-on-dark);
+        --asset-color-hydrogen-storage-fg: var(--asset-fg-on-light);
+        --asset-color-coal-mine-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-drilling-site-fg: var(--asset-fg-on-light);
+        --asset-color-uranium-mine-fg: var(--asset-fg-on-light);
+        --asset-color-coal-fg: var(--asset-fg-on-dark);
+        --asset-color-gas-fg: var(--asset-fg-on-dark);
+        --asset-color-uranium-fg: var(--asset-fg-on-light);
+        --asset-color-imports-fg: var(--asset-fg-on-dark);
+        --asset-color-exports-fg: var(--asset-fg-on-light);
+        --asset-color-dumping-fg: var(--asset-fg-on-dark);
+        --asset-color-industry-fg: var(--asset-fg-on-dark);
+        --asset-color-research-fg: var(--asset-fg-on-light);
+        --asset-color-construction-fg: var(--asset-fg-on-light);
+        --asset-color-transport-fg: var(--asset-fg-on-dark);
+        --asset-color-carbon-capture-fg: var(--asset-fg-on-dark);
 
         /* Map tile colours - same as light mode */
         --map-selected-tile-hover: var(--color-bone-100);
@@ -600,7 +618,12 @@
         width: 100%;
     }
 
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
         font-family: var(--font-titles);
         font-weight: 600;
     }

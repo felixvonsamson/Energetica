@@ -70,18 +70,18 @@ import YourPage from "./YourPage";
 import { scenarios } from "@/data/dummyFacilities";
 
 const meta = {
-    component: YourPage,
-    parameters: { layout: "fullscreen" },
+  component: YourPage,
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof YourPage>;
 
 export default meta;
 
 export const BestCase: StoryObj = {
-    args: { facilities: scenarios["best-case"] },
+  args: { facilities: scenarios["best-case"] },
 };
 
 export const WorstCase: StoryObj = {
-    args: { facilities: scenarios["worst-case"] },
+  args: { facilities: scenarios["worst-case"] },
 };
 ```
 
@@ -96,8 +96,8 @@ Run: `bun x storybook dev`
 
 Automatically set by Vite (don't manually configure):
 
--   `true` when running `bun dev`
--   `false` when running `bun build`
+- `true` when running `bun dev`
+- `false` when running `bun build`
 
 ### Custom Environment Variables
 
@@ -117,8 +117,8 @@ Access in code: `import.meta.env.VITE_SCENARIO`
 
 ## Best Practices
 
--   Keep dummy data organized by feature (`dummyFacilities.ts`, `dummyProjects.ts`, etc.)
--   Use TypeScript types from actual schemas to keep dummy data in sync
--   Create multiple scenarios: best-case, worst-case, edge cases (empty, very long names, etc.)
--   Use HMR advantage: change dummy data, save, see instant result in browser
--   Delete dummy files or wrap in dev checks before shipping to production
+- Keep dummy data organized by feature (`dummyFacilities.ts`, `dummyProjects.ts`, etc.)
+- Use TypeScript types from actual schemas to keep dummy data in sync
+- Create multiple scenarios: best-case, worst-case, edge cases (empty, very long names, etc.)
+- Use HMR advantage: change dummy data, save, see instant result in browser
+- Delete dummy files or wrap in dev checks before shipping to production

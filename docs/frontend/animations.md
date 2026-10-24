@@ -110,7 +110,7 @@ className = "bg-green-600 text-white"; // Harsh on eyes
 
 // ✅ GOOD - Muted backgrounds
 className =
-    "bg-green-50 dark:bg-green-900/20 border-2 border-green-600 text-green-800";
+  "bg-green-50 dark:bg-green-900/20 border-2 border-green-600 text-green-800";
 ```
 
 **Pattern for feedback states:**
@@ -195,7 +195,7 @@ className = "transition-[colors,shadow] duration-300";
 
 // ✅ BETTER - Use transform for movement
 className =
-    "transform translate-x-0 hover:translate-x-2 transition-transform duration-300";
+  "transform translate-x-0 hover:translate-x-2 transition-transform duration-300";
 ```
 
 ## Animation Checklist

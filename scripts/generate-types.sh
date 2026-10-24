@@ -28,17 +28,12 @@ echo "📋 Generating OpenAPI schemas from backend..."
 }
 
 # Generate TypeScript types: the merged schema, then each app's.
-OUTPUTS=("$TYPES_DIR/api.generated.ts")
-bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.json" -o "$PROJECT_ROOT/frontend/${OUTPUTS[0]}"
+bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.json" -o "$PROJECT_ROOT/frontend/$TYPES_DIR/api.generated.ts"
 for app in freeplay workshop lobby; do
-    output="$TYPES_DIR/api.$app.generated.ts"
-    bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.$app.json" -o "$PROJECT_ROOT/frontend/$output"
-    OUTPUTS+=("$output")
+    bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.$app.json" -o "$PROJECT_ROOT/frontend/$TYPES_DIR/api.$app.generated.ts"
 done
 echo "✓ Types generated in frontend/$TYPES_DIR"
-
-# Format
-echo "🎨 Formatting generated types..."
-(cd "$PROJECT_ROOT/frontend" && bunx prettier --write "${OUTPUTS[@]}")
+# No Prettier pass: .prettierignore lists the generated files, so they stay as openapi-typescript
+# writes them (#1325).
 
 echo "✨ Done!"

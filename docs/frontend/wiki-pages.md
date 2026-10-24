@@ -2,8 +2,8 @@
 
 Wiki pages are hosted in two places:
 
--   In the game: `/app/wiki/introduction`
--   On the landing page: `/wiki/introduction`
+- In the game: `/app/wiki/introduction`
+- On the landing page: `/wiki/introduction`
 
 Both render the same pages, written in MDX to combine markdown with React components.
 
@@ -45,8 +45,8 @@ Regular markdown content with **bold** and _italic_.
 
 ## Sections work normally
 
--   Lists work
--   As expected
+- Lists work
+- As expected
 
 You can use React components inline:
 
@@ -96,10 +96,10 @@ Complex elements (tables, charts) should be React components in
 ```tsx
 // components/wind-table.tsx
 export function WindTable() {
-    const data = {
-        /* ... */
-    };
-    return <table>{/* ... */}</table>;
+  const data = {
+    /* ... */
+  };
+  return <table>{/* ... */}</table>;
 }
 ```
 
@@ -118,11 +118,11 @@ can do depends on the app rendering the page. The package asks the app through a
 port: an interface the package declares and each app implements. The port is
 `ContentHost` in `content-links.ts`:
 
--   `wikiPagePath(slug)`: where a wiki page lives in this app, such as `/app/wiki/map`
-    in the game and `/wiki/map` on the landing page.
--   `servesGame`: whether this app has the game's pages, the paths under `/app/`.
--   `useHasCapability(capability)`: a hook saying whether the reader has unlocked a
-    capability, such as `has_network`.
+- `wikiPagePath(slug)`: where a wiki page lives in this app, such as `/app/wiki/map`
+  in the game and `/wiki/map` on the landing page.
+- `servesGame`: whether this app has the game's pages, the paths under `/app/`.
+- `useHasCapability(capability)`: a hook saying whether the reader has unlocked a
+  capability, such as `has_network`.
 
 Every page takes its app's host as a required prop, `<Content host={contentHost} />`,
 so an app cannot render a page without one. Each app defines its host in
@@ -131,10 +131,10 @@ which the page provides, so no app provides that context itself.
 
 Write links the usual way and the package resolves them against the host:
 
--   `[Map](./map.mdx#hydro)` goes to that wiki page in this app.
--   `[Power facilities](/app/facilities/power)` goes to the game page where the app
-    serves the game. On the landing page it shows as text, marked as a page of the game.
--   Anything else, such as an external URL or a `#heading`, is left as it is.
+- `[Map](./map.mdx#hydro)` goes to that wiki page in this app.
+- `[Power facilities](/app/facilities/power)` goes to the game page where the app
+  serves the game. On the landing page it shows as text, marked as a page of the game.
+- Anything else, such as an external URL or a `#heading`, is left as it is.
 
 Markdown links pass through `ContentLink` automatically. A link written as JSX does
 not, so write `<ContentLink href="...">` (imported from
@@ -156,9 +156,9 @@ module path, not by URL. Both markdown and JSX syntax work:
 ![Probability distribution of heatwaves](#content/assets/wiki/heatwave_probability_distribution.webp)
 
 <img
-    className="h-75"
-    src="#content/assets/wiki/cloud_coverage.webp"
-    alt="Cloud coverage over a year"
+  className="h-75"
+  src="#content/assets/wiki/cloud_coverage.webp"
+  alt="Cloud coverage over a year"
 />
 ```
 
@@ -176,12 +176,12 @@ The `prose` classes from `@tailwindcss/typography` automatically style all markd
 
 **What prose handles:**
 
--   Headings (`h1`-`h6`) - Bold, proper spacing, sizing
--   Links (`a`) - Blue color, hover underline
--   Code - Gray background, proper padding, no backticks
--   Tables - Borders, header background, centred text
--   Lists - Proper bullets/numbers, spacing
--   Blockquotes - Left border, background
+- Headings (`h1`-`h6`) - Bold, proper spacing, sizing
+- Links (`a`) - Blue color, hover underline
+- Code - Gray background, proper padding, no backticks
+- Tables - Borders, header background, centred text
+- Lists - Proper bullets/numbers, spacing
+- Blockquotes - Left border, background
 
 **Dark mode:**
 
@@ -193,7 +193,7 @@ Use `not-prose` for custom components that shouldn't inherit prose styles:
 
 ```mdx
 <div className="not-prose">
-    <CustomComponent />
+  <CustomComponent />
 </div>
 ```
 
@@ -211,10 +211,10 @@ Or customize globally in `frontend/packages/ui/src/styles/global.css` in the pro
 
 **Dependencies:**
 
--   `@mdx-js/rollup` - MDX compiler
--   `@tailwindcss/typography` - Prose styling
--   `remark-gfm` - Tables, strikethrough, task lists
--   `remark-math` + `rehype-katex` - Math equations
+- `@mdx-js/rollup` - MDX compiler
+- `@tailwindcss/typography` - Prose styling
+- `remark-gfm` - Tables, strikethrough, task lists
+- `remark-math` + `rehype-katex` - Math equations
 
 **Configuration in `vite.config.ts`:**
 
@@ -225,11 +225,11 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
 plugins: [
-    mdx({
-        remarkPlugins: [remarkGfm, remarkMath],
-        rehypePlugins: [rehypeKatex],
-    }),
-    // ... other plugins
+  mdx({
+    remarkPlugins: [remarkGfm, remarkMath],
+    rehypePlugins: [rehypeKatex],
+  }),
+  // ... other plugins
 ];
 ```
 
@@ -242,9 +242,9 @@ The typography plugin is imported and configured with custom prose styles:
 
 /* Custom prose styles in @layer base */
 .prose {
-    --tw-prose-body: var(--text-foreground);
-    --tw-prose-headings: var(--text-foreground);
-    /* ... etc */
+  --tw-prose-body: var(--text-foreground);
+  --tw-prose-headings: var(--text-foreground);
+  /* ... etc */
 }
 ```
 
@@ -252,14 +252,14 @@ See `frontend/packages/ui/src/styles/global.css` for full configuration.
 
 **Additional resources:**
 
--   KaTeX CSS is loaded in `index.html` for math rendering`
+- KaTeX CSS is loaded in `index.html` for math rendering`
 
 ### Dynamic Route
 
 Each app's `$slug.tsx` route maps URL slugs to MDX files through `wikiPages`:
 
--   `/wiki/introduction` → `packages/content/src/wiki/introduction.mdx`
--   `/wiki/power-facilities` → `packages/content/src/wiki/power-facilities.mdx`
+- `/wiki/introduction` → `packages/content/src/wiki/introduction.mdx`
+- `/wiki/power-facilities` → `packages/content/src/wiki/power-facilities.mdx`
 
 Add new pages by:
 
@@ -270,8 +270,8 @@ Add new pages by:
 
 ## Best Practices
 
--   **Keep MDX simple** - Use markdown for content, components for interactivity
--   **Extract complex markup** - Tables/charts → React components
--   **Use game UI components** - `<Money />`, `<AssetName />` for consistency
--   **Follow naming conventions** - URL slugs use kebab-case (`power-facilities`)
--   **Use `not-prose` for custom components** - Prevents prose from interfering with component styles
+- **Keep MDX simple** - Use markdown for content, components for interactivity
+- **Extract complex markup** - Tables/charts → React components
+- **Use game UI components** - `<Money />`, `<AssetName />` for consistency
+- **Follow naming conventions** - URL slugs use kebab-case (`power-facilities`)
+- **Use `not-prose` for custom components** - Prevents prose from interfering with component styles

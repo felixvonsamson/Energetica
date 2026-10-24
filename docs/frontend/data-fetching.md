@@ -44,10 +44,10 @@ Energetica uses a three-layer data fetching architecture:
 
 **Key architectural decisions:**
 
--   **Centralized query keys**: All query keys defined in `lib/query-client.ts`
--   **Type safety**: TypeScript types generated from OpenAPI schema
--   **Separation of concerns**: API calls separated from query logic
--   **Cache synchronization**: Backend-driven invalidation via Socket.IO
+- **Centralized query keys**: All query keys defined in `lib/query-client.ts`
+- **Type safety**: TypeScript types generated from OpenAPI schema
+- **Separation of concerns**: API calls separated from query logic
+- **Cache synchronization**: Backend-driven invalidation via Socket.IO
 
 ## TanStack Query
 
@@ -79,9 +79,9 @@ Mutations are not retried by default. If a write reached the server but its resp
 
 ```ts
 useMutation({
-    mutationFn: settingsApi.updateSettings,
-    // Safe to repeat: it sets the value outright.
-    retry: 1,
+  mutationFn: settingsApi.updateSettings,
+  // Safe to repeat: it sets the value outright.
+  retry: 1,
 });
 ```
 
@@ -93,10 +93,10 @@ import { queryKeys } from "@/lib/query-client";
 import { playerApi } from "@/lib/api/player";
 
 function usePlayerMoney() {
-    return useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: playerApi.getMoney,
-    });
+  return useQuery({
+    queryKey: queryKeys.players.money,
+    queryFn: playerApi.getMoney,
+  });
 }
 ```
 
@@ -104,12 +104,12 @@ function usePlayerMoney() {
 
 ```tsx
 function WalletDisplay() {
-    const { data: money, isLoading, error } = usePlayerMoney();
+  const { data: money, isLoading, error } = usePlayerMoney();
 
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
-    return <div>Balance: ${money.balance}</div>;
+  return <div>Balance: ${money.balance}</div>;
 }
 ```
 
@@ -119,11 +119,11 @@ Type-safe HTTP wrapper with automatic error handling.
 
 ### Features
 
--   **Automatic JSON parsing**: Responses parsed automatically
--   **Cookie credentials**: Authentication cookies included
--   **Type safety**: Full TypeScript support
--   **Error handling**: Errors wrapped in `ApiClientError`
--   **Query parameters**: Easy URL parameter building
+- **Automatic JSON parsing**: Responses parsed automatically
+- **Cookie credentials**: Authentication cookies included
+- **Type safety**: Full TypeScript support
+- **Error handling**: Errors wrapped in `ApiClientError`
+- **Query parameters**: Easy URL parameter building
 
 ### Methods
 
@@ -147,7 +147,7 @@ await apiClient.delete("/asks/456");
 
 // With query parameters
 const data = await apiClient.get("/endpoint", {
-    params: { page: 1, limit: 10 },
+  params: { page: 1, limit: 10 },
 });
 ```
 
@@ -158,15 +158,15 @@ API functions are organized by domain in `lib/api/`:
 ```ts
 // lib/api/player.ts
 export const playerApi = {
-    getMoney: () =>
-        apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
-            "/players/me/money"
-        ),
+  getMoney: () =>
+    apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
+      "/players/me/money",
+    ),
 
-    getResources: () =>
-        apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
-            "/players/me/resources"
-        ),
+  getResources: () =>
+    apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
+      "/players/me/resources",
+    ),
 };
 ```
 
@@ -180,11 +180,11 @@ For basic data fetching:
 
 ```ts
 export function usePlayerMoney() {
-    return useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: playerApi.getMoney,
-        staleTime: 60 * 1000, // 1 minute
-    });
+  return useQuery({
+    queryKey: queryKeys.players.money,
+    queryFn: playerApi.getMoney,
+    staleTime: 60 * 1000, // 1 minute
+  });
 }
 ```
 
@@ -194,21 +194,21 @@ For queries that depend on parameters:
 
 ```ts
 export function useCalculateDeliveryTime(askId: number) {
-    return useQuery({
-        queryKey: queryKeys.resourceMarket.deliveryTime(askId),
-        queryFn: () => resourceMarketApi.calculateDeliveryTime(askId),
-        staleTime: 60 * 1000,
-        // Only run if askId is valid
-        enabled: askId > 0,
-    });
+  return useQuery({
+    queryKey: queryKeys.resourceMarket.deliveryTime(askId),
+    queryFn: () => resourceMarketApi.calculateDeliveryTime(askId),
+    staleTime: 60 * 1000,
+    // Only run if askId is valid
+    enabled: askId > 0,
+  });
 }
 ```
 
 **Key points:**
 
--   Query key includes the parameter: `deliveryTime(askId)`
--   Arrow function captures the parameter in `queryFn`
--   Use `enabled` to conditionally run the query
+- Query key includes the parameter: `deliveryTime(askId)`
+- Arrow function captures the parameter in `queryFn`
+- Use `enabled` to conditionally run the query
 
 ### Conditional Query
 
@@ -216,11 +216,11 @@ For queries that should only run under certain conditions:
 
 ```ts
 export function usePlayerProfile(playerId: number | null) {
-    return useQuery({
-        queryKey: queryKeys.players.byId(playerId!),
-        queryFn: () => playerApi.getById(playerId!),
-        enabled: playerId !== null, // Only fetch if ID is available
-    });
+  return useQuery({
+    queryKey: queryKeys.players.byId(playerId!),
+    queryFn: () => playerApi.getById(playerId!),
+    enabled: playerId !== null, // Only fetch if ID is available
+  });
 }
 ```
 
@@ -230,13 +230,13 @@ For data that changes rarely (configs, catalogs):
 
 ```ts
 export function useTechnologiesCatalog() {
-    return useQuery({
-        queryKey: queryKeys.projects.catalog.technologies,
-        queryFn: projectsApi.getTechnologiesCatalog,
-        staleTime: 10 * 60 * 1000, // 10 minutes
-        gcTime: 15 * 60 * 1000,
-        refetchOnWindowFocus: false, // Don't refetch on focus
-    });
+  return useQuery({
+    queryKey: queryKeys.projects.catalog.technologies,
+    queryFn: projectsApi.getTechnologiesCatalog,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false, // Don't refetch on focus
+  });
 }
 ```
 
@@ -248,14 +248,14 @@ For simple actions without cache updates:
 
 ```ts
 export function useUpdateSettings() {
-    return useMutation({
-        mutationFn: settingsApi.updateSettings,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.players.settings,
-            });
-        },
-    });
+  return useMutation({
+    mutationFn: settingsApi.updateSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.players.settings,
+      });
+    },
+  });
 }
 ```
 
@@ -263,20 +263,20 @@ export function useUpdateSettings() {
 
 ```tsx
 function SettingsForm() {
-    const { mutate, isPending, error } = useUpdateSettings();
+  const { mutate, isPending, error } = useUpdateSettings();
 
-    const handleSubmit = (data: SettingsUpdate) => {
-        mutate(data, {
-            onSuccess: () => {
-                toast.success("Settings updated");
-            },
-            onError: (error) => {
-                toast.error(error.message);
-            },
-        });
-    };
+  const handleSubmit = (data: SettingsUpdate) => {
+    mutate(data, {
+      onSuccess: () => {
+        toast.success("Settings updated");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+  };
 
-    return <form onSubmit={handleSubmit}>...</form>;
+  return <form onSubmit={handleSubmit}>...</form>;
 }
 ```
 
@@ -286,23 +286,23 @@ For actions that affect multiple data sources:
 
 ```ts
 export function useQueueProject() {
-    return useMutation({
-        mutationFn: projectsApi.queueProject,
-        onSuccess: () => {
-            // Invalidate projects list (new project added)
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
-            // Invalidate money (construction costs money)
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.players.money,
-            });
-            // Invalidate workers (may affect available workers)
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.players.workers,
-            });
-        },
-    });
+  return useMutation({
+    mutationFn: projectsApi.queueProject,
+    onSuccess: () => {
+      // Invalidate projects list (new project added)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.projects.all,
+      });
+      // Invalidate money (construction costs money)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.players.money,
+      });
+      // Invalidate workers (may affect available workers)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.players.workers,
+      });
+    },
+  });
 }
 ```
 
@@ -312,50 +312,46 @@ For immediate UI feedback before server confirmation:
 
 ```ts
 export function useUpdateAsk() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: resourceMarketApi.updateAsk,
-        // Before mutation starts
-        onMutate: async (variables) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({
-                queryKey: queryKeys.resourceMarket.asks,
-            });
+  return useMutation({
+    mutationFn: resourceMarketApi.updateAsk,
+    // Before mutation starts
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.resourceMarket.asks,
+      });
 
-            // Snapshot previous value
-            const previousAsks = queryClient.getQueryData(
-                queryKeys.resourceMarket.asks
-            );
+      // Snapshot previous value
+      const previousAsks = queryClient.getQueryData(
+        queryKeys.resourceMarket.asks,
+      );
 
-            // Optimistically update cache
-            queryClient.setQueryData(
-                queryKeys.resourceMarket.asks,
-                (old: Ask[]) =>
-                    old.map((ask) =>
-                        ask.id === variables.askId
-                            ? { ...ask, ...variables.updates }
-                            : ask
-                    )
-            );
+      // Optimistically update cache
+      queryClient.setQueryData(queryKeys.resourceMarket.asks, (old: Ask[]) =>
+        old.map((ask) =>
+          ask.id === variables.askId ? { ...ask, ...variables.updates } : ask,
+        ),
+      );
 
-            // Return context with snapshot
-            return { previousAsks };
-        },
-        // On error, rollback
-        onError: (err, variables, context) => {
-            queryClient.setQueryData(
-                queryKeys.resourceMarket.asks,
-                context?.previousAsks
-            );
-        },
-        // Always refetch after success or error
-        onSettled: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.resourceMarket.asks,
-            });
-        },
-    });
+      // Return context with snapshot
+      return { previousAsks };
+    },
+    // On error, rollback
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(
+        queryKeys.resourceMarket.asks,
+        context?.previousAsks,
+      );
+    },
+    // Always refetch after success or error
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.resourceMarket.asks,
+      });
+    },
+  });
 }
 ```
 
@@ -424,9 +420,9 @@ Called after mutations to update related queries:
 ```ts
 // In mutation hook
 onSuccess: () => {
-    queryClient.invalidateQueries({
-        queryKey: queryKeys.projects.all,
-    });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.projects.all,
+  });
 };
 ```
 
@@ -435,20 +431,20 @@ onSuccess: () => {
 ```ts
 // Invalidate exact query
 queryClient.invalidateQueries({
-    queryKey: queryKeys.players.money,
+  queryKey: queryKeys.players.money,
 });
 
 // Invalidate all queries in a domain
 queryClient.invalidateQueries({
-    queryKey: queryKeys.facilities.all,
+  queryKey: queryKeys.facilities.all,
 });
 
 // Invalidate multiple related queries
 queryClient.invalidateQueries({
-    queryKey: queryKeys.players.money,
+  queryKey: queryKeys.players.money,
 });
 queryClient.invalidateQueries({
-    queryKey: queryKeys.players.resources,
+  queryKey: queryKeys.players.resources,
 });
 ```
 
@@ -471,10 +467,10 @@ player.emit("invalidate", {
 ```ts
 // GameTickContext listens for invalidation events
 useSocketEvent<InvalidateEventData>("invalidate", (data) => {
-    console.log(`Invalidate event received for ${data.queries.length} queries`);
-    data.queries.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-    });
+  console.log(`Invalidate event received for ${data.queries.length} queries`);
+  data.queries.forEach((queryKey) => {
+    queryClient.invalidateQueries({ queryKey });
+  });
 });
 ```
 
@@ -490,15 +486,15 @@ For data that updates every game tick (60 seconds):
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 export function usePlayerMoney() {
-    // Register this query to refetch on each tick
-    useTickQuery(queryKeys.players.money);
+  // Register this query to refetch on each tick
+  useTickQuery(queryKeys.players.money);
 
-    return useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: playerApi.getMoney,
-        // Keep fresh for full tick duration
-        staleTime: 60 * 1000,
-    });
+  return useQuery({
+    queryKey: queryKeys.players.money,
+    queryFn: playerApi.getMoney,
+    // Keep fresh for full tick duration
+    staleTime: 60 * 1000,
+  });
 }
 ```
 
@@ -511,11 +507,11 @@ export function usePlayerMoney() {
 
 **When to use tick queries:**
 
--   ✅ Production values (changes every tick)
--   ✅ Time-based state (projects progress, storage levels)
--   ✅ Resource amounts (extracted/consumed each tick)
--   ❌ User actions (use server invalidation events)
--   ❌ Static data (configs, catalogs)
+- ✅ Production values (changes every tick)
+- ✅ Time-based state (projects progress, storage levels)
+- ✅ Resource amounts (extracted/consumed each tick)
+- ❌ User actions (use server invalidation events)
+- ❌ Static data (configs, catalogs)
 
 ### Tick Context API
 
@@ -537,15 +533,15 @@ All API errors are wrapped in `ApiClientError`:
 
 ```ts
 export class ApiClientError extends Error {
-    constructor(
-        message: string,
-        public status: number, // HTTP status code
-        public detail?: ApiErrorResponse // Structured error details
-    ) {}
+  constructor(
+    message: string,
+    public status: number, // HTTP status code
+    public detail?: ApiErrorResponse, // Structured error details
+  ) {}
 
-    getErrorMessage(): string {
-        // Returns user-friendly error message
-    }
+  getErrorMessage(): string {
+    // Returns user-friendly error message
+  }
 }
 ```
 
@@ -555,7 +551,7 @@ export class ApiClientError extends Error {
 
 ```ts
 {
-    detail: "Not found";
+  detail: "Not found";
 }
 ```
 
@@ -582,21 +578,25 @@ export class ApiClientError extends Error {
 ### Type Guards
 
 ```ts
-import { isHttpError, isGameError, isValidationError } from "@energetica/core/api-client";
+import {
+  isHttpError,
+  isGameError,
+  isValidationError,
+} from "@energetica/core/api-client";
 
 function handleError(error: unknown) {
-    if (error instanceof ApiClientError) {
-        if (isGameError(error.detail)) {
-            // Handle game-specific errors
-            console.log(error.detail.game_exception_type);
-        } else if (isValidationError(error.detail)) {
-            // Handle validation errors
-            error.detail.detail.forEach((e) => console.log(e.msg));
-        } else if (isHttpError(error.detail)) {
-            // Handle HTTP errors
-            console.log(error.detail.detail);
-        }
+  if (error instanceof ApiClientError) {
+    if (isGameError(error.detail)) {
+      // Handle game-specific errors
+      console.log(error.detail.game_exception_type);
+    } else if (isValidationError(error.detail)) {
+      // Handle validation errors
+      error.detail.detail.forEach((e) => console.log(e.msg));
+    } else if (isHttpError(error.detail)) {
+      // Handle HTTP errors
+      console.log(error.detail.detail);
     }
+  }
 }
 ```
 
@@ -604,18 +604,18 @@ function handleError(error: unknown) {
 
 ```tsx
 function MoneyDisplay() {
-    const { data, error, isLoading } = usePlayerMoney();
+  const { data, error, isLoading } = usePlayerMoney();
 
-    if (error) {
-        if (error instanceof ApiClientError) {
-            return <ErrorMessage>{error.getErrorMessage()}</ErrorMessage>;
-        }
-        return <ErrorMessage>An unexpected error occurred</ErrorMessage>;
+  if (error) {
+    if (error instanceof ApiClientError) {
+      return <ErrorMessage>{error.getErrorMessage()}</ErrorMessage>;
     }
+    return <ErrorMessage>An unexpected error occurred</ErrorMessage>;
+  }
 
-    if (isLoading) return <Skeleton />;
+  if (isLoading) return <Skeleton />;
 
-    return <div>${data.balance}</div>;
+  return <div>${data.balance}</div>;
 }
 ```
 
@@ -623,24 +623,24 @@ function MoneyDisplay() {
 
 ```tsx
 function CreateProjectButton() {
-    const { mutate, error, isPending } = useQueueProject();
+  const { mutate, error, isPending } = useQueueProject();
 
-    const handleClick = () => {
-        mutate(projectData, {
-            onError: (error) => {
-                if (error instanceof ApiClientError) {
-                    if (isGameError(error.detail)) {
-                        // Show game-specific error
-                        toast.error(error.detail.game_exception_type);
-                    } else {
-                        toast.error(error.getErrorMessage());
-                    }
-                }
-            },
-        });
-    };
+  const handleClick = () => {
+    mutate(projectData, {
+      onError: (error) => {
+        if (error instanceof ApiClientError) {
+          if (isGameError(error.detail)) {
+            // Show game-specific error
+            toast.error(error.detail.game_exception_type);
+          } else {
+            toast.error(error.getErrorMessage());
+          }
+        }
+      },
+    });
+  };
 
-    return <button onClick={handleClick}>Create Project</button>;
+  return <button onClick={handleClick}>Create Project</button>;
 }
 ```
 
@@ -665,68 +665,68 @@ function CreateProjectButton() {
 
 **✅ Do:**
 
--   Use centralized query keys from `lib/query-client.ts`
--   Make keys hierarchical: `["players", "me", "money"]`
--   Include parameters in keys: `deliveryTime(askId)`
+- Use centralized query keys from `lib/query-client.ts`
+- Make keys hierarchical: `["players", "me", "money"]`
+- Include parameters in keys: `deliveryTime(askId)`
 
 **❌ Don't:**
 
--   Hardcode query keys in hooks: `["players"]`
--   Use inconsistent key structures
--   Forget to update backend invalidation events when changing keys
+- Hardcode query keys in hooks: `["players"]`
+- Use inconsistent key structures
+- Forget to update backend invalidation events when changing keys
 
 ### Caching Strategy
 
 **✅ Do:**
 
--   Set appropriate `staleTime` based on data volatility
--   Use tick queries for time-based data
--   Disable `refetchOnWindowFocus` for static data
+- Set appropriate `staleTime` based on data volatility
+- Use tick queries for time-based data
+- Disable `refetchOnWindowFocus` for static data
 
 **❌ Don't:**
 
--   Use same `staleTime` for all queries
--   Over-invalidate (hurts performance)
--   Under-invalidate (stale data)
+- Use same `staleTime` for all queries
+- Over-invalidate (hurts performance)
+- Under-invalidate (stale data)
 
 ### Mutations
 
 **✅ Do:**
 
--   Invalidate all affected queries in `onSuccess`
--   Handle errors at component level for better UX
--   Use optimistic updates for instant feedback
+- Invalidate all affected queries in `onSuccess`
+- Handle errors at component level for better UX
+- Use optimistic updates for instant feedback
 
 **❌ Don't:**
 
--   Forget to invalidate related queries
--   Show generic error messages
--   Over-use optimistic updates (complex rollback logic)
+- Forget to invalidate related queries
+- Show generic error messages
+- Over-use optimistic updates (complex rollback logic)
 
 ### API Layer
 
 **✅ Do:**
 
--   Keep API functions separate from hooks
--   Use typed responses with `ApiResponse` helper
--   Group API functions by domain (`playerApi`, `projectsApi`)
+- Keep API functions separate from hooks
+- Use typed responses with `ApiResponse` helper
+- Group API functions by domain (`playerApi`, `projectsApi`)
 
 **❌ Don't:**
 
--   Call `apiClient` directly in hooks
--   Duplicate API functions across files
--   Mix API logic with component logic
+- Call `apiClient` directly in hooks
+- Duplicate API functions across files
+- Mix API logic with component logic
 
 ### Error Handling
 
 **✅ Do:**
 
--   Use type guards to narrow error types
--   Show user-friendly error messages
--   Log errors for debugging
+- Use type guards to narrow error types
+- Show user-friendly error messages
+- Log errors for debugging
 
 **❌ Don't:**
 
--   Show raw error messages to users
--   Ignore errors silently
--   Catch all errors without type checking
+- Show raw error messages to users
+- Ignore errors silently
+- Catch all errors without type checking

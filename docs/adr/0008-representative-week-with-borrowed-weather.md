@@ -78,13 +78,13 @@ day of the season. The code and full tables are in `prototypes/rep_day_1164/` on
 `prototype-1197-rep-week-eval` branch, which is not merged. Ranges cover every fleet except gas and coal,
 whose true profit is close to zero.
 
-| Method | Profit bias | Error per season | Pairs ranked right |
-| --- | --- | --- | --- |
-| Middle day | −2 to +7% | 52–62% | 86% |
-| Three matched days | −1 to +6% | 6–14% | 99% |
-| Best 7-day run, whole | −2 to +4% | 10–16% | 98% |
-| Representative week, own demand | +3 to +5% | 12–19% | 99% |
-| Representative week, scaled demand | −0.3 to +2.1% | 4–14% | 99% |
+| Method                             | Profit bias   | Error per season | Pairs ranked right |
+| ---------------------------------- | ------------- | ---------------- | ------------------ |
+| Middle day                         | −2 to +7%     | 52–62%           | 86%                |
+| Three matched days                 | −1 to +6%     | 6–14%            | 99%                |
+| Best 7-day run, whole              | −2 to +4%     | 10–16%           | 98%                |
+| Representative week, own demand    | +3 to +5%     | 12–19%           | 99%                |
+| Representative week, scaled demand | −0.3 to +2.1% | 4–14%            | 99%                |
 
 With its own demand, the representative week missed the bar on bias (+5.2% for solar and CCGT) and on
 error per season (18–19% for the wind fleets). The cause was the fixed demand offset: a winter week with

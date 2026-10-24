@@ -3,12 +3,12 @@
 ## Vocabulary
 
 - **Order**: <>
-    - **Supply order**: aka generation offer, sell order
-    - **Demand order**: aka consumption bid, buy order
+  - **Supply order**: aka generation offer, sell order
+  - **Demand order**: aka consumption bid, buy order
 - **Settlement period**: there is a market every tick, each market has a specific settlement period
 - Market clearing: The process that matches bids and asks. For each settlement period, determines:
-    - **Clearing price**: (market price)
-    - **Cleared volume**: <> aka matched volume
+  - **Clearing price**: (market price)
+  - **Cleared volume**: <> aka matched volume
 
 Others:
 

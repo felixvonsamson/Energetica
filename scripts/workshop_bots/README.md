@@ -9,13 +9,13 @@ past Trading periods, and nothing else.
 
 ## The personas
 
-| Bot        | Plays as                                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| Bot        | Plays as                                                                                                                                                                                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `coalking` | Old-energy incumbent. Five coal burners, then more than his share of the peak. Prices at fuel cost (and carbon tax) plus a markup tuned by how much he sold. Orders the fuel he burned last season plus 15%. Takes the loan in Round 2 to build coal before the tax. Votes against the carbon tax and switches to gas once it passes. |
-| `greenie`  | Idealist. Wind and sun only, never borrows. Gives power away in Round 1, then asks 40. Adds batteries in Round 2 and CSP and pumped hydro once allowed. Votes for the tax. |
-| `trader`   | Speculator. Gas peakers and a battery. Tries several markups and keeps the best. Buys less fuel when its price rises. In a season the Recap warned about, he raises his prices and buys no fuel at all, until a blackout in such a season teaches him otherwise. Takes the loan in Round 2. |
-| `nuke`     | Planner. Takes the loan in Round 1 for a reactor that runs from Round 2, with gas burners to bridge the wait. Prices nuclear just above fuel cost. In the last Round, where a reactor would not run, buys gas and a dam. |
-| `gambler`  | Copycat. Takes the loan at once. Guesses in Round 1, then buys whatever earned most per euro, among what he can still buy. Erratic prices, sometimes wild ones (500 or the 1,000 ceiling). Forgets his fuel order half the time. Votes at random. |
+| `greenie`  | Idealist. Wind and sun only, never borrows. Gives power away in Round 1, then asks 40. Adds batteries in Round 2 and CSP and pumped hydro once allowed. Votes for the tax.                                                                                                                                                            |
+| `trader`   | Speculator. Gas peakers and a battery. Tries several markups and keeps the best. Buys less fuel when its price rises. In a season the Recap warned about, he raises his prices and buys no fuel at all, until a blackout in such a season teaches him otherwise. Takes the loan in Round 2.                                           |
+| `nuke`     | Planner. Takes the loan in Round 1 for a reactor that runs from Round 2, with gas burners to bridge the wait. Prices nuclear just above fuel cost. In the last Round, where a reactor would not run, buys gas and a dam.                                                                                                              |
+| `gambler`  | Copycat. Takes the loan at once. Guesses in Round 1, then buys whatever earned most per euro, among what he can still buy. Erratic prices, sometimes wild ones (500 or the 1,000 ceiling). Forgets his fuel order half the time. Votes at random.                                                                                     |
 
 Each bot writes its reasoning to the log, for example `trader: R2 winter: the Recap warned about this season:
 buys no gas, betting that scarcity pays`.

@@ -18,12 +18,12 @@ Guidelines for styling components with Tailwind CSS and the project's theme syst
 
 **Available colors:**
 
--   `bone` - #e5d9b6 (background, cards)
--   `tan-green` - #a4be7b (buttons, accents)
--   `brand-green` - #5f8d4e (primary actions)
--   `pine` - #285430 (text, dark backgrounds)
--   `alert-red` - #f44336 (errors, warnings)
--   `alert-orange` - #f59f00 (warnings)
+- `bone` - #e5d9b6 (background, cards)
+- `tan-green` - #a4be7b (buttons, accents)
+- `brand-green` - #5f8d4e (primary actions)
+- `pine` - #285430 (text, dark backgrounds)
+- `alert-red` - #f44336 (errors, warnings)
+- `alert-orange` - #f59f00 (warnings)
 
 ## Color and Text Management
 
@@ -115,15 +115,15 @@ import { Home, Settings, User } from "lucide-react";
 
 **Advantages:**
 
--   Tree-shakeable (only bundle icons you use)
--   Consistent sizing
--   Themeable with Tailwind classes
--   TypeScript support
+- Tree-shakeable (only bundle icons you use)
+- Consistent sizing
+- Themeable with Tailwind classes
+- TypeScript support
 
 **Avoid:**
 
--   Emojis (inconsistent across platforms)
--   Font Awesome (requires loading entire font)
+- Emojis (inconsistent across platforms)
+- Font Awesome (requires loading entire font)
 
 ## Asset Colors
 
@@ -153,7 +153,7 @@ className = "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg";
 
 // Card with hover effect
 className =
-    "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg transition-shadow duration-150 hover:shadow-md";
+  "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg transition-shadow duration-150 hover:shadow-md";
 ```
 
 ### Buttons
@@ -161,15 +161,15 @@ className =
 ```ts
 // Primary button
 className =
-    "bg-brand hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
+  "bg-brand hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Secondary button
 className =
-    "bg-tan-green hover:bg-brand text-white px-4 py-2 rounded transition-colors duration-150";
+  "bg-tan-green hover:bg-brand text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Disabled state
 className =
-    "bg-brand text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
+  "bg-brand text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
 ```
 
 ### Input Fields
@@ -177,11 +177,11 @@ className =
 ```ts
 // Standard input
 className =
-    "border-2 border-pine rounded px-3 py-2 focus:border-brand-green focus:outline-none";
+  "border-2 border-pine rounded px-3 py-2 focus:border-brand-green focus:outline-none";
 
 // With dark mode
 className =
-    "border-2 border-pine dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-pine dark:text-white";
+  "border-2 border-pine dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-pine dark:text-white";
 ```
 
 ### Text Styles
@@ -275,7 +275,7 @@ className = "bg-white text-black border-gray-300";
 
 // ✅ GOOD
 className =
-    "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600";
+  "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600";
 ```
 
 ### 3. Overusing `transition-all`
@@ -294,16 +294,16 @@ See [animations.md](animations.md) for animation best practices.
 
 Before committing styled components:
 
--   [ ] Uses theme colors from tailwind.config
--   [ ] Includes dark mode variants
--   [ ] Uses semantic color variables where appropriate
--   [ ] Follows mobile-first responsive design
--   [ ] Uses lucide-react for icons
--   [ ] No hardcoded hex colors
--   [ ] Proper contrast ratios for accessibility
+- [ ] Uses theme colors from tailwind.config
+- [ ] Includes dark mode variants
+- [ ] Uses semantic color variables where appropriate
+- [ ] Follows mobile-first responsive design
+- [ ] Uses lucide-react for icons
+- [ ] No hardcoded hex colors
+- [ ] Proper contrast ratios for accessibility
 
 ## See Also
 
--   [animations.md](animations.md) - Animation and transition guidelines
--   [asset-colours.md](asset-colours.md) - Asset-specific color system
--   [best-practices.md](best-practices.md) - General React patterns
+- [animations.md](animations.md) - Animation and transition guidelines
+- [asset-colours.md](asset-colours.md) - Asset-specific color system
+- [best-practices.md](best-practices.md) - General React patterns

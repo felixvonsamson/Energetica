@@ -33,11 +33,11 @@ verbatim, and `src/service-worker.ts` is built by `bun build`. Both name it by U
    `scripts/guard-image-weight.ts` enforces the result in CI.
 2. Import it and use the imported value:
 
-    ```tsx
-    import liveDemoPhoto from "@/assets/live_demo_photo.webp";
+   ```tsx
+   import liveDemoPhoto from "@/assets/live_demo_photo.webp";
 
-    <img src={liveDemoPhoto} alt="Students playing Energetica in a classroom" />;
-    ```
+   <img src={liveDemoPhoto} alt="Students playing Energetica in a classroom" />;
+   ```
 
 In MDX, write the module path in the `src` and a remark plugin turns it into an
 import for you — see [Wiki Pages](wiki-pages.md#figures).

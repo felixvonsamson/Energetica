@@ -22,14 +22,16 @@ repos:
       # DIRECTLY (pre-commit passes the staged filenames and re-stages), rather than via lint-staged:
       # lint-staged does its own git-stash dance, and nested inside pre-commit (which already stashes)
       # the two collide, so lint-staged's fixes never reached the staged blob and misformatted code
-      # slipped through to CI. pre-commit hands us repo-root-relative paths, so strip the leading
-      # `frontend/` after cd-ing in. --write/--fix (not --check): mirror ruff — auto-fix, and
+      # slipped through to CI. --write/--fix (not --check): mirror ruff — auto-fix, and
       # pre-commit fails the commit when files change so you re-stage.
+      # Prettier covers the whole repo (#1325), so this hook passes every staged file and lets
+      # .prettierignore and --ignore-unknown decide what to skip. That keeps the scope in one
+      # place, shared with `bun run format:check` in CI. It runs from the repo root so Prettier
+      # finds the root .prettierignore.
       - id: prettier
         name: prettier
-        entry: bash -c 'cd frontend && npx prettier --write "${@#frontend/}"' --
+        entry: frontend/node_modules/.bin/prettier --write --ignore-unknown
         language: system
-        files: ^frontend/.*\.(ts|tsx)$
       # --no-warn-ignored: naming a file eslint's config ignores (src/service-worker.ts) makes
       # it emit a "File ignored because of a matching ignore pattern" warning, which
       # --max-warnings 0 then turns into a failed commit. `bun run lint` never hits this — it

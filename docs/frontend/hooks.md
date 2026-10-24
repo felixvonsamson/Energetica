@@ -8,35 +8,34 @@ Guide for integrating backend API calls with automatic type generation.
 
 1. **Generate types**: `bun generate-types`
 2. **Add API method** in `src/lib/*-api.ts`:
-    ```ts
-    export const myApi = {
-        getData: () =>
-            apiClient.get<ApiResponse<"/api/v1/path", "get">>("/path"),
-    };
-    ```
+   ```ts
+   export const myApi = {
+     getData: () => apiClient.get<ApiResponse<"/api/v1/path", "get">>("/path"),
+   };
+   ```
 3. **Add query key** in `src/lib/query-client.ts`:
-    ```ts
-    queryKeys: {
-        myFeature: {
-            data: ["my-feature", "data"] as const;
-        }
-    }
-    ```
+   ```ts
+   queryKeys: {
+     myFeature: {
+       data: ["my-feature", "data"] as const;
+     }
+   }
+   ```
 4. **Create hook** in `src/hooks/useMyData.ts`:
-    ```ts
-    export function useMyData() {
-        useTickQuery(queryKeys.myFeature.data); // If data changes every tick
-        return useQuery({
-            queryKey: queryKeys.myFeature.data,
-            queryFn: myApi.getData,
-            staleTime: 60 * 1000,
-        });
-    }
-    ```
+   ```ts
+   export function useMyData() {
+     useTickQuery(queryKeys.myFeature.data); // If data changes every tick
+     return useQuery({
+       queryKey: queryKeys.myFeature.data,
+       queryFn: myApi.getData,
+       staleTime: 60 * 1000,
+     });
+   }
+   ```
 5. **Use in component**:
-    ```ts
-    const { data, isLoading, error } = useMyData();
-    ```
+   ```ts
+   const { data, isLoading, error } = useMyData();
+   ```
 
 **Reference implementations:** See `usePlayerMoney.ts`, `usePlayerWorkers.ts`, or `useWeather.ts` for complete examples.
 
@@ -144,34 +143,34 @@ If the feature requires POST/PUT/DELETE (like submitting a quiz answer):
 ```ts
 // src/lib/daily-quiz-api.ts
 export const dailyQuizApi = {
-    getToday: () =>
-        apiClient.get<ApiResponse<"/api/v1/daily-quiz", "get">>("/daily-quiz"),
+  getToday: () =>
+    apiClient.get<ApiResponse<"/api/v1/daily-quiz", "get">>("/daily-quiz"),
 
-    submitAnswer: (questionId: number, answerIndex: number) =>
-        apiClient.post<
-            ApiResponse<"/api/v1/daily-quiz/{question_id}/answer", "post">
-        >(`/daily-quiz/${questionId}/answer`, { answer_index: answerIndex }),
+  submitAnswer: (questionId: number, answerIndex: number) =>
+    apiClient.post<
+      ApiResponse<"/api/v1/daily-quiz/{question_id}/answer", "post">
+    >(`/daily-quiz/${questionId}/answer`, { answer_index: answerIndex }),
 };
 
 // src/hooks/useDailyQuiz.ts
 export function useSubmitQuizAnswer() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: ({
-            questionId,
-            answerIndex,
-        }: {
-            questionId: number;
-            answerIndex: number;
-        }) => dailyQuizApi.submitAnswer(questionId, answerIndex),
-        onSuccess: () => {
-            // Invalidate to refetch with new state
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.dailyQuiz.today,
-            });
-        },
-    });
+  return useMutation({
+    mutationFn: ({
+      questionId,
+      answerIndex,
+    }: {
+      questionId: number;
+      answerIndex: number;
+    }) => dailyQuizApi.submitAnswer(questionId, answerIndex),
+    onSuccess: () => {
+      // Invalidate to refetch with new state
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyQuiz.today,
+      });
+    },
+  });
 }
 ```
 
@@ -213,7 +212,7 @@ return templates.TemplateResponse("dashboard.jinja", {
 ```html
 <!-- dashboard.jinja -->
 <script>
-    window.__INITIAL_DATA__ = {{ initial_data | safe }};
+  window.__INITIAL_DATA__ = {{ initial_data | safe }};
 </script>
 ```
 
@@ -224,10 +223,10 @@ const initialData = (window as any).__INITIAL_DATA__;
 
 ⚠️ **This approach is discouraged** because:
 
--   Loses benefits of React SPA (no data refresh)
--   Harder to maintain
--   Mixing rendering paradigms
--   Defeats purpose of migration
+- Loses benefits of React SPA (no data refresh)
+- Harder to maintain
+- Mixing rendering paradigms
+- Defeats purpose of migration
 
 **Always prefer creating proper APIs (Option A).**
 
@@ -257,25 +256,25 @@ energetica/schemas/[feature].py
 
 **Example - Dashboard weather section:**
 
--   Template: `energetica/templates/dashboard.jinja` (lines 45-50)
--   JavaScript: `energetica/static/dashboard.js` (complete implementation)
--   Router: `energetica/routers/weather.py`
--   Schema: `energetica/schemas/weather.py`
+- Template: `energetica/templates/dashboard.jinja` (lines 45-50)
+- JavaScript: `energetica/static/dashboard.js` (complete implementation)
+- Router: `energetica/routers/weather.py`
+- Schema: `energetica/schemas/weather.py`
 
 ### Step 2: Analyze the Legacy Behaviour
 
 **Check the JavaScript for:**
 
--   API endpoint it calls (e.g., `fetch("/api/v1/weather")`)
--   Data transformation logic (e.g., `Math.round(data.value)`)
--   Visual behaviour (e.g., progress bars, calculations)
--   Update frequency (e.g., Socket.io listeners, interval polling)
+- API endpoint it calls (e.g., `fetch("/api/v1/weather")`)
+- Data transformation logic (e.g., `Math.round(data.value)`)
+- Visual behaviour (e.g., progress bars, calculations)
+- Update frequency (e.g., Socket.io listeners, interval polling)
 
 **Check the Jinja template for:**
 
--   DOM structure and styling
--   Conditional rendering (e.g., `{% if user.achievements.network %}`)
--   Server-side data passed in (e.g., `{{ user.username }}`)
+- DOM structure and styling
+- Conditional rendering (e.g., `{% if user.achievements.network %}`)
+- Server-side data passed in (e.g., `{{ user.username }}`)
 
 **Example from `dashboard.js`:**
 
@@ -285,10 +284,10 @@ energetica/schemas/[feature].py
 // 2. Fields: month_number, year_progress, solar_irradiance [W/m2] (max=950), wind_speed [km/h], river_flow_speed [m/s] (max = 2.5)
 // 3. Display: Progress bars with specific widths
 fetch("/api/v1/weather")
-    .then((response) => response.json())
-    .then((weather_data) => {
-        // ... implementation shows visual requirements
-    });
+  .then((response) => response.json())
+  .then((weather_data) => {
+    // ... implementation shows visual requirements
+  });
 ```
 
 ### Step 3: Implement in React
@@ -323,7 +322,7 @@ When you encounter duplicated logic (like month names), **extract to utilities:*
 ```ts
 // src/lib/date-utils.ts
 export function getMonthName(monthNumber: number): string {
-    return MONTH_NAMES[monthNumber - 1] || "Unknown";
+  return MONTH_NAMES[monthNumber - 1] || "Unknown";
 }
 ```
 
@@ -333,25 +332,25 @@ This solves TODOs from legacy code (e.g., the "move month list to separate file"
 
 **Visual parity checklist:**
 
--   [ ] Same data displayed
--   [ ] Same layout and spacing
--   [ ] Same colors and styling
--   [ ] Same responsive behaviour
--   [ ] Same calculations and rounding
--   [ ] Proper loading and error states (legacy often lacks these!)
+- [ ] Same data displayed
+- [ ] Same layout and spacing
+- [ ] Same colors and styling
+- [ ] Same responsive behaviour
+- [ ] Same calculations and rounding
+- [ ] Proper loading and error states (legacy often lacks these!)
 
 **Improvements you can add:**
 
--   ✨ Dark mode support
--   ✨ Smooth transitions
--   ✨ Better responsive design
--   ✨ Proper error boundaries
--   ✨ Loading skeletons
+- ✨ Dark mode support
+- ✨ Smooth transitions
+- ✨ Better responsive design
+- ✨ Proper error boundaries
+- ✨ Loading skeletons
 
 **Example - Weather section improvements:**
 
--   Legacy: No loading state, no dark mode
--   React: Loading spinner, dark mode bars, smooth transitions, responsive grid
+- Legacy: No loading state, no dark mode
+- React: Loading spinner, dark mode bars, smooth transitions, responsive grid
 
 ### Common Migration Patterns
 
@@ -425,10 +424,10 @@ const user: User = await apiClient.get("/auth/me");
 
 Run `bun generate-types` when:
 
--   Backend API endpoints change
--   Request/response schemas change
--   After pulling backend changes
--   Before committing frontend changes
+- Backend API endpoints change
+- Request/response schemas change
+- After pulling backend changes
+- Before committing frontend changes
 
 ## API Client Structure
 
@@ -440,15 +439,15 @@ import { apiClient } from "@energetica/core/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const playerApi = {
-    getMoney: () =>
-        apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
-            "/players/me/money"
-        ),
+  getMoney: () =>
+    apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
+      "/players/me/money",
+    ),
 
-    getResources: () =>
-        apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
-            "/players/me/resources"
-        ),
+  getResources: () =>
+    apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
+      "/players/me/resources",
+    ),
 };
 ```
 
@@ -460,13 +459,13 @@ Define in `src/lib/query-client.ts`:
 
 ```ts
 export const queryKeys = {
-    players: {
-        money: ["players", "me", "money"] as const,
-        resources: ["players", "me", "resources"] as const,
-    },
-    facilities: {
-        all: ["facilities", "all"] as const,
-    },
+  players: {
+    money: ["players", "me", "money"] as const,
+    resources: ["players", "me", "resources"] as const,
+  },
+  facilities: {
+    all: ["facilities", "all"] as const,
+  },
 } as const;
 ```
 
@@ -482,14 +481,14 @@ import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 export function usePlayerMoney() {
-    // Register for tick-based refetching
-    useTickQuery(queryKeys.players.money);
+  // Register for tick-based refetching
+  useTickQuery(queryKeys.players.money);
 
-    return useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: playerApi.getMoney,
-        staleTime: 60 * 1000, // 1 minute
-    });
+  return useQuery({
+    queryKey: queryKeys.players.money,
+    queryFn: playerApi.getMoney,
+    staleTime: 60 * 1000, // 1 minute
+  });
 }
 ```
 
@@ -503,14 +502,14 @@ For data that changes every tick (production, storage levels):
 
 ```ts
 export function useElectricityProduction() {
-    // Register for tick-based invalidation
-    useTickQuery(queryKeys.production.electricity);
+  // Register for tick-based invalidation
+  useTickQuery(queryKeys.production.electricity);
 
-    return useQuery({
-        queryKey: queryKeys.production.electricity,
-        queryFn: productionApi.getElectricity,
-        staleTime: 60 * 1000,
-    });
+  return useQuery({
+    queryKey: queryKeys.production.electricity,
+    queryFn: productionApi.getElectricity,
+    staleTime: 60 * 1000,
+  });
 }
 ```
 
@@ -535,12 +534,12 @@ player.emit("invalidate", {
 
 ```ts
 export function useFacilities() {
-    // No useTickQuery - relies on server events
-    return useQuery({
-        queryKey: queryKeys.facilities.all,
-        queryFn: facilitiesApi.getAll,
-        staleTime: 60 * 1000,
-    });
+  // No useTickQuery - relies on server events
+  return useQuery({
+    queryKey: queryKeys.facilities.all,
+    queryFn: facilitiesApi.getAll,
+    staleTime: 60 * 1000,
+  });
 }
 ```
 
@@ -556,9 +555,9 @@ export function useFacilities() {
 
 Invalidated queries only refetch if actively being used:
 
--   User on facilities page → refetch immediately
--   User on dashboard → mark stale, no refetch
--   User navigates to facilities → then refetch
+- User on facilities page → refetch immediately
+- User on dashboard → mark stale, no refetch
+- User navigates to facilities → then refetch
 
 This prevents wasteful network requests for data not being displayed.
 
@@ -577,12 +576,12 @@ bun generate-types
 ```ts
 // src/lib/player-api.ts
 export const playerApi = {
-    // ... existing methods
+  // ... existing methods
 
-    getResources: () =>
-        apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
-            "/players/me/resources"
-        ),
+  getResources: () =>
+    apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
+      "/players/me/resources",
+    ),
 };
 ```
 
@@ -591,10 +590,10 @@ export const playerApi = {
 ```ts
 // src/lib/query-client.ts
 export const queryKeys = {
-    players: {
-        // ... existing keys
-        resources: ["players", "me", "resources"] as const,
-    },
+  players: {
+    // ... existing keys
+    resources: ["players", "me", "resources"] as const,
+  },
 } as const;
 ```
 
@@ -608,13 +607,13 @@ import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 export function usePlayerResources() {
-    useTickQuery(queryKeys.players.resources);
+  useTickQuery(queryKeys.players.resources);
 
-    return useQuery({
-        queryKey: queryKeys.players.resources,
-        queryFn: playerApi.getResources,
-        staleTime: 60 * 1000,
-    });
+  return useQuery({
+    queryKey: queryKeys.players.resources,
+    queryFn: playerApi.getResources,
+    staleTime: 60 * 1000,
+  });
 }
 ```
 
@@ -645,13 +644,13 @@ For endpoints that modify data (POST, PUT, PATCH, DELETE):
 ```ts
 // src/lib/player-api.ts
 export const playerApi = {
-    updateSettings: (
-        data: ApiRequestBody<"/api/v1/players/me/settings", "patch">
-    ) =>
-        apiClient.patch<ApiResponse<"/api/v1/players/me/settings", "patch">>(
-            "/players/me/settings",
-            data
-        ),
+  updateSettings: (
+    data: ApiRequestBody<"/api/v1/players/me/settings", "patch">,
+  ) =>
+    apiClient.patch<ApiResponse<"/api/v1/players/me/settings", "patch">>(
+      "/players/me/settings",
+      data,
+    ),
 };
 
 // src/hooks/useUpdateSettings.ts
@@ -660,15 +659,15 @@ import { playerApi } from "@/lib/player-api";
 import { queryKeys } from "@/lib/query-client";
 
 export function useUpdateSettings() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: playerApi.updateSettings,
-        onSuccess: () => {
-            // Invalidate specific queries that depend on this data
-            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-        },
-    });
+  return useMutation({
+    mutationFn: playerApi.updateSettings,
+    onSuccess: () => {
+      // Invalidate specific queries that depend on this data
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+    },
+  });
 }
 ```
 
@@ -679,18 +678,18 @@ export function useUpdateSettings() {
 1. **Always use `useQueryClient()`** - Import and use the query client to invalidate queries after successful mutations
 2. **Invalidate specific queries** - Call `queryClient.invalidateQueries({ queryKey: ... })` with the specific keys that need to be refetched
 3. **Invalidate multiple queries if needed** - A single mutation might affect multiple parts of the UI:
-    ```ts
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-        queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
-    };
-    ```
+   ```ts
+   onSuccess: () => {
+     queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
+     queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+   };
+   ```
 4. **Use `setQueryData` for direct updates** - When the mutation response contains the updated data, you can update the cache directly instead of invalidating:
-    ```ts
-    onSuccess: (data) => {
-        queryClient.setQueryData(queryKeys.dailyQuiz.today, data);
-    };
-    ```
+   ```ts
+   onSuccess: (data) => {
+     queryClient.setQueryData(queryKeys.dailyQuiz.today, data);
+   };
+   ```
 5. **Rely on server-driven invalidation when possible** - For complex state changes, the backend can emit `invalidate` events that automatically handle cache invalidation
 
 ## Best Practices
@@ -748,7 +747,7 @@ if (isLoading) {
 ```ts
 const { data: facilities } = useFacilities();
 const { data: details } = useFacilityDetails(facilities?.[0]?.id, {
-    enabled: !!facilities?.[0]?.id,
+  enabled: !!facilities?.[0]?.id,
 });
 ```
 
@@ -756,13 +755,13 @@ const { data: details } = useFacilityDetails(facilities?.[0]?.id, {
 
 ```ts
 const queries = useQueries({
-    queries: [
-        { queryKey: queryKeys.players.money, queryFn: playerApi.getMoney },
-        {
-            queryKey: queryKeys.players.resources,
-            queryFn: playerApi.getResources,
-        },
-    ],
+  queries: [
+    { queryKey: queryKeys.players.money, queryFn: playerApi.getMoney },
+    {
+      queryKey: queryKeys.players.resources,
+      queryFn: playerApi.getResources,
+    },
+  ],
 });
 ```
 
@@ -786,5 +785,5 @@ Check `staleTime` is set appropriately (60s for tick-synced data).
 
 ## See Also
 
--   [Real-time Synchronisation](../architecture/real-time-sync.md) - SocketIO invalidation patterns (backend)
--   [overview.md](overview.md) - Foundation overview
+- [Real-time Synchronisation](../architecture/real-time-sync.md) - SocketIO invalidation patterns (backend)
+- [overview.md](overview.md) - Foundation overview

@@ -5,7 +5,7 @@
 Energetica's notion of an "admin" barely existed in code — a `UserRole = Literal["player",
 "admin"]` and an `is_admin` boolean on the per-instance engine `User`, plus a startup
 routine that minted a random-password `admin` account. Every actual admin power (spectating
-accounts, banning, `sudo`-style grants, a dashboard) was *wanted* across scattered issues,
+accounts, banning, `sudo`-style grants, a dashboard) was _wanted_ across scattered issues,
 none built. Meanwhile the real administrative work — freezing instances, editing whitelists,
 provisioning, deploys — happened out-of-band as root edits to `instance.json` and shell
 scripts. "Admin" and "moderator" were used interchangeably but neither was defined.
@@ -32,7 +32,7 @@ different context, not a distinct principal. `admin` is retired with no alias.
 
 **`sysadmin` is an out-of-band boundary, not a product role.** A sysadmin has a shell on
 the server. This authority is unauthorizable by our code by construction, so it is
-deliberately *not* modelled in the product: it is not a value of `UserRole` and cannot be
+deliberately _not_ modelled in the product: it is not a value of `UserRole` and cannot be
 conferred through the platform.
 
 **Authority is conferred by scoped grants, stored as lobby facts.** A facilitator grant is
@@ -61,20 +61,20 @@ gap outright.
 and Workshop Mode expose different facilitator capabilities. The grant confers the role;
 the format decides which capabilities are available.
 
-**The matrix catalogues non-diegetic authority only.** Acting *on* the system from outside
+**The matrix catalogues non-diegetic authority only.** Acting _on_ the system from outside
 the fiction (freeze, ban-for-abuse, spectate) is authority and is in scope. Mechanisms
-*inside* the fiction — players voting to embargo a market manipulator, in-game policy votes
+_inside_ the fiction — players voting to embargo a market manipulator, in-game policy votes
 — are game design, not authority, and are out of scope.
 
 ## Considered Options
 
 - **Multiple elevated roles (admin, moderator, operator, …).** Rejected. The distinctions
   people reached for — persistent-world admin versus Workshop moderator, server-wide versus
-  single-instance — are differences of *format* and *reach*, not of authority kind.
+  single-instance — are differences of _format_ and _reach_, not of authority kind.
   Modelling them as separate roles would multiply enforcement paths for one underlying
   actor. Format-gating plus grant-scope captures the same distinctions with one role.
 
-- **Scope as extra authority (a server-wide role that can do *more*).** Rejected. Conflating
+- **Scope as extra authority (a server-wide role that can do _more_).** Rejected. Conflating
   reach with power means "where" and "what" leak into each other and every capability check
   has to reason about both. Keeping scope as pure reach lets capability checks ask only
   "may this facilitator act on this instance," never "how powerful is their grant."
@@ -121,14 +121,14 @@ the fiction (freeze, ban-for-abuse, spectate) is authority and is in scope. Mech
   `"player"`); existing rows backfill as `"player"`, since that is the only thing that could
   have settled before this column existed. An authority check is a direct read of this
   table — `slug = this instance OR slug IS NULL`, `role = "facilitator"` — every request;
-  revocation is *eventual* (effective on the next request) since there is no live-session
+  revocation is _eventual_ (effective on the next request) since there is no live-session
   cache to invalidate, and an instant kick is deferred to the ban surface.
 - **The per-instance `User` object is retired entirely**, not just its `role` field —
   resolving [#905](https://github.com/felixvonsamson/Energetica/issues/905) as part of this
   work rather than deferring it. `User` carried exactly three things once `role` moves to
   the lobby table: `username`/`pwhash` (already duplicated from `Account`) and the optional
   `player` link. `Player` absorbs `username`/`pwhash`/`account_id` directly and becomes the
-  sole per-instance object — one that only ever exists for a *settled* account, since there
+  sole per-instance object — one that only ever exists for a _settled_ account, since there
   is no more reason to auto-provision anything on first visit. A facilitator, who never
   settles, has no per-instance object at all; every facilitator check reads `accounts.db`
   straight from the request, never the pickle.

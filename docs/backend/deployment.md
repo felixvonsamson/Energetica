@@ -11,7 +11,7 @@ the server.
 
 ## Initial Setup (One-Time)
 
-`scripts/infra/*` (the `setup-*.sh` scripts below) are never copied over to the 
+`scripts/infra/*` (the `setup-*.sh` scripts below) are never copied over to the
 server by the normal deploy scripts. Instead, push them from your machine first:
 
 ```bash
@@ -167,7 +167,7 @@ the change up on the next request — no restart.
 the backend lives under `src/` and is imported as an installed package, so a deploy that did
 not install it would leave the service unable to start.
 
-The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`, 
+The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`,
 `DEPLOY_DOMAIN`), so the scripts run unattended from CI.
 
 ## Adding the Run mode to existing instances (#1060)
@@ -310,10 +310,22 @@ read its own commit from git. Instead each half is stamped, and both are reporte
 `/healthz` reads both and returns a `version` block:
 
 ```json
-{ "status": "ok",
+{
+  "status": "ok",
   "version": {
-    "backend":  { "commit_short": "abc123def", "dirty": false, "deployed_by": "you", "source": "deploy" },
-    "frontend": { "commit_short": "abc123def", "dirty": false, "source": "build" } } }
+    "backend": {
+      "commit_short": "abc123def",
+      "dirty": false,
+      "deployed_by": "you",
+      "source": "deploy"
+    },
+    "frontend": {
+      "commit_short": "abc123def",
+      "dirty": false,
+      "source": "build"
+    }
+  }
+}
 ```
 
 The lobby now serves `/healthz` too (it previously had none). The landing is pure static and has

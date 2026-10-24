@@ -49,13 +49,13 @@ Use TanStack Query for server data. Custom hooks are located in `@/hooks/` and A
 ```ts
 // Create custom hook in @/hooks/
 export function usePlayerMoney() {
-    useTickQuery(queryKeys.players.money);
+  useTickQuery(queryKeys.players.money);
 
-    return useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: playerApi.getMoney,
-        staleTime: 60 * 1000,
-    });
+  return useQuery({
+    queryKey: queryKeys.players.money,
+    queryFn: playerApi.getMoney,
+    staleTime: 60 * 1000,
+  });
 }
 
 // Use in component
@@ -96,9 +96,9 @@ export function useTheme() {
 
 ```ts
 interface CardProps {
-    title: string;
-    children: ReactNode;
-    onClick?: () => void;
+  title: string;
+  children: ReactNode;
+  onClick?: () => void;
 }
 ```
 

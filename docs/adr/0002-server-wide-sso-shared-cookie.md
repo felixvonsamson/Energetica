@@ -8,7 +8,7 @@
 The instance-picker work (#810, part of #603) calls for true single-sign-on: a player
 authenticates once and roams between game instances (subdomains) without re-entering
 credentials, with a personalised "your runs" view. This requires an identity backend
-that outlives any single instance (instances are created and *deleted* per #603), so a
+that outlives any single instance (instances are created and _deleted_ per #603), so a
 new server-wide **home/accounts service** owns login, signup, and the session — fronted
 on the apex/a dedicated subdomain. This overturns the RFC's "apex is pure-static" goal.
 
@@ -18,7 +18,7 @@ Two code facts shaped the session choice (`energetica/utils/auth.py`):
   by one instance cannot be validated by another — cross-instance sessions were
   impossible by construction, not just by cookie scope.
 - The session payload is just the (server-wide-unique) `username`; each instance resolves
-  it against its own local `User`. So with a *shared* secret, one token already resolves
+  it against its own local `User`. So with a _shared_ secret, one token already resolves
   correctly everywhere.
 
 `docs/architecture/static-serving-and-deployment.md` argues at length for **per-subdomain
@@ -39,7 +39,7 @@ with the shared secret and auto-provisions a local `User` on first authenticated
 - **B — static apex, no SSO.** Apex stays pure-static; the "picker" only routes you to a
   chosen subdomain's existing login form; you re-authenticate (one shared password,
   re-entered) per instance. Preserves every RFC invariant and needs no new service.
-  Rejected: it structurally **cannot** show "the runs *you* have started" (the static apex
+  Rejected: it structurally **cannot** show "the runs _you_ have started" (the static apex
   is stateless and cannot query per-instance membership), which is the feature being asked
   for, and keeps the per-instance re-auth papercut #603 wants gone.
 - **A2 — token-handoff SSO (CAS/OAuth-style).** Home service holds the master session on
@@ -52,7 +52,7 @@ with the shared secret and auto-provisions a local `User` on first authenticated
 
 - **Cookie isolation is lost.** All instances share a registrable domain, so `SameSite=Lax`
   does not restrict cross-instance requests — a session leaked/ridden on one instance is
-  usable on all. The leak is only *exploitable* when (1) ≥2 concurrently-live public
+  usable on all. The leak is only _exploitable_ when (1) ≥2 concurrently-live public
   instances exist — **already true** — and (2) a stored-XSS vector exists. Today all UGC
   (chat, names) renders as React-escaped text, so **(2) is the sole remaining defense.**
 - **A CI guard is therefore part of shipping A1, not optional.** A repo-wide frontend
@@ -64,9 +64,9 @@ with the shared secret and auto-provisions a local `User` on first authenticated
   `components/chat/`. New raw-HTML renders are denied by default; adding one requires
   amending the allowlist, which forces a reviewer to confirm the input is not
   user-controlled. The day any UGC surface renders raw HTML, the cross-instance leak goes
-  live. *Implemented (#843) as `scripts/guard-no-raw-html.ts`, run in CI via the frontend
+  live. _Implemented (#843) as `scripts/guard-no-raw-html.ts`, run in CI via the frontend
   `guard:no-raw-html` script; the allowlist pins each permitted sink to its file and the
-  exact `__html` expression.*
+  exact `__html` expression._
 - **A2 is the committed hardening path** (#813), to land before any UGC surface gains a
   rich-content renderer (backstop re-evaluation: 2026-12). Reversing A1 later means a
   cookie/secret migration across every instance — hence recording it here.
@@ -88,12 +88,12 @@ impact (no forced re-login, no cookie reissue). No schema change is needed.
 **Phasing of the switch.** The payload is interpreted on both the minting and validating
 sides, so it flips per side at that side's cutover, never mid-air:
 
-- **Phase B:** the *lobby* mints `str(account_id)` and resolves it via
+- **Phase B:** the _lobby_ mints `str(account_id)` and resolves it via
   `accounts.get_account_by_id`. Instances are untouched and keep minting/reading `username`
   (their deployed pre-cutover code).
 - **Phase C:** the instance side flips to `account_id` (`get_user_from_token` →
   `User.filter_by(account_id=…)`), riding the already-planned one-time forced global
-  re-login — no *extra* re-login cost. The B→C window is safe because the lobby cookie and
+  re-login — no _extra_ re-login cost. The B→C window is safe because the lobby cookie and
   the per-instance cookies do not interoperate until C.
 
 The signing/cookie primitives (`serializer`, secret loading, password hashing, cookie

@@ -7,11 +7,11 @@
 
 With the lobby (ADR-0002) becoming the single server-wide front door, signup moves there.
 Previously signup was **per-instance**: `misc.signup_playing_user` created the server-wide
-**Account** *and* a pickle `User` on that instance in one act, and Phase 3 of
+**Account** _and_ a pickle `User` on that instance in one act, and Phase 3 of
 `docs/architecture/static-serving-and-deployment.md` deliberately gated signup behind each
-instance's access policy, justified as: *"Gating signup too closes the hole where a
+instance's access policy, justified as: _"Gating signup too closes the hole where a
 private/unadvertised instance reachable by URL would otherwise let anyone create a
-server-wide account."*
+server-wide account."_
 
 A single lobby cannot be gated by any one instance's allowlist — it is instance-independent
 by design. So the bundling has to break.

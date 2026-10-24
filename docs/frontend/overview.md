@@ -8,12 +8,12 @@ React foundation for the Jinja → React migration.
 
 The frontend uses:
 
--   React with TypeScript
--   TanStack Router for routing
--   TanStack Query for data fetching
--   Socket.IO for real-time updates
--   Cookie-based authentication
--   Type-safe API client with OpenAPI type generation
+- React with TypeScript
+- TanStack Router for routing
+- TanStack Query for data fetching
+- Socket.IO for real-time updates
+- Cookie-based authentication
+- Type-safe API client with OpenAPI type generation
 
 ## Socket.IO
 
@@ -35,8 +35,8 @@ function GameComponent() {
 
 **Available Hooks:**
 
--   `useSocket()` - Socket instance and connection status
--   `useSocketEvent(event, handler)` - Listen to events (auto cleanup)
+- `useSocket()` - Socket instance and connection status
+- `useSocketEvent(event, handler)` - Listen to events (auto cleanup)
 
 ## Protected Routes
 
@@ -81,10 +81,10 @@ bun install
 
 ### Hot Module Replacement (HMR) Not Working
 
--   Check browser console for HMR errors
--   Try hard refresh (Cmd/Ctrl + Shift + R)
--   Restart dev server
--   Check if file is being watched: `console.log()` in file should trigger HMR
+- Check browser console for HMR errors
+- Try hard refresh (Cmd/Ctrl + Shift + R)
+- Restart dev server
+- Check if file is being watched: `console.log()` in file should trigger HMR
 
 ### Production Build Issues
 
@@ -101,7 +101,7 @@ ls -la ../energetica/static/react/
 
 ## See Also
 
--   [quickstart.md](quickstart.md) - Fast setup guide
--   [data-fetching.md](data-fetching.md) - API integration & types
--   [offline.md](offline.md) - Offline handling
--   [Real-time Synchronisation](../architecture/real-time-sync.md) - SocketIO patterns (backend)
+- [quickstart.md](quickstart.md) - Fast setup guide
+- [data-fetching.md](data-fetching.md) - API integration & types
+- [offline.md](offline.md) - Offline handling
+- [Real-time Synchronisation](../architecture/real-time-sync.md) - SocketIO patterns (backend)

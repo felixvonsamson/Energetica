@@ -19,32 +19,32 @@ All contributions are made under the existing project license (AGPL-3.0+). By su
 
 ## Issues & Feature Requests
 
--   Search existing issues first to avoid duplicates.
--   When opening a new issue:
-    -   Clear, action-oriented title
-    -   Describe current behaviour vs expected behaviour
-    -   Include reproduction steps (commands, flags, test accounts, etc.)
-    -   Environment details (OS, Python version, branch)
-    -   Attach logs or minimal test code if helpful
--   Feature request? Explain the motivation, user impact, and rough implementation idea.
+- Search existing issues first to avoid duplicates.
+- When opening a new issue:
+  - Clear, action-oriented title
+  - Describe current behaviour vs expected behaviour
+  - Include reproduction steps (commands, flags, test accounts, etc.)
+  - Environment details (OS, Python version, branch)
+  - Attach logs or minimal test code if helpful
+- Feature request? Explain the motivation, user impact, and rough implementation idea.
 
 ## Branching & Workflow
 
--   Default branch: `main`
--   Use short-lived feature branches: `feature/<summary>`, `fix/<issue-id>-<summary>`, `refactor/...`, `docs/...`
--   For larger restructuring, sync frequently with `main` to reduce merge pain.
--   All PRs should target `main`.
--   Keep PRs focused and reasonably small (< ~600 LOC diff when possible).
+- Default branch: `main`
+- Use short-lived feature branches: `feature/<summary>`, `fix/<issue-id>-<summary>`, `refactor/...`, `docs/...`
+- For larger restructuring, sync frequently with `main` to reduce merge pain.
+- All PRs should target `main`.
+- Keep PRs focused and reasonably small (< ~600 LOC diff when possible).
 
 ## Commit Message Guidelines
 
 Use Conventional Commits. Examples:
 
--   `feat(engine): add dynamic pricing model`
--   `fix(api): correct auth token refresh bug`
--   `refactor(database): consolidate player session tables`
--   `test(projects): add coverage for project lifecycle`
--   `docs(readme): clarify local setup steps`
+- `feat(engine): add dynamic pricing model`
+- `fix(api): correct auth token refresh bug`
+- `refactor(database): consolidate player session tables`
+- `test(projects): add coverage for project lifecycle`
+- `docs(readme): clarify local setup steps`
 
 Format:
 
@@ -80,11 +80,11 @@ python main.py --env dev
 
 Helpful flags:
 
--   `--clock_time 5` (faster tick for local testing)
--   `--in_game_seconds_per_tick 240` (default) or adjust for simulations
--   `--run_init_test_players` (create players to test with)
--   `--rm_instance` (reset state)
--   `--simulate_file path/to/actions_history.log` (replay historical actions)
+- `--clock_time 5` (faster tick for local testing)
+- `--in_game_seconds_per_tick 240` (default) or adjust for simulations
+- `--run_init_test_players` (create players to test with)
+- `--rm_instance` (reset state)
+- `--simulate_file path/to/actions_history.log` (replay historical actions)
 
 A VS Code task "run server" is configured in `.vscode/tasks.json`—use Command Palette: `Tasks: Run Task`.
 
@@ -103,17 +103,17 @@ The React frontend is in active development; some legacy vanilla JS / p5.js + Ji
 
 We use `pytest`.
 
--   Place fast, isolated tests in `tests/unit/`
--   Cross-module/API/game-loop tests in `tests/integration/`
--   Name test files: `test_<thing>.py`
--   Write descriptive test function names.
--   Run full suite:
+- Place fast, isolated tests in `tests/unit/`
+- Cross-module/API/game-loop tests in `tests/integration/`
+- Name test files: `test_<thing>.py`
+- Write descriptive test function names.
+- Run full suite:
 
 ```
 pytest -q
 ```
 
--   Run a subset:
+- Run a subset:
 
 ```
 pytest tests/unit/test_player.py::test_new_player
@@ -123,16 +123,16 @@ Add tests for every new feature and bug fix.
 
 ### Test Helpers
 
--   Use existing sample tests as templates (`sample_unit_test.py`, etc.)
--   Consider adding factory helpers if object setup becomes repetitive.
+- Use existing sample tests as templates (`sample_unit_test.py`, etc.)
+- Consider adding factory helpers if object setup becomes repetitive.
 
 ## Linting & Formatting
 
 Configured via `pyproject.toml`.
 
--   Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
-    `tests/`, `scripts/`, `map_generation/`, `main.py`, `main_lobby.py` — and both run as
-    the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
+- Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
+  `tests/`, `scripts/`, `map_generation/`, `main.py`, `main_lobby.py` — and both run as
+  the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
 ruff check .          # lint
@@ -144,11 +144,11 @@ ruff format .         # format
 hook. From the repo root, `bun run ruff:check` and `bun run ruff:format` are shorthands for
 the fixing and formatting forms — both write to your files, neither is read-only.
 
--   Pylint (optional deeper static analysis): run in editors / CI if configured.
--   Max line length: 120
--   Docstring style: If docstring fits on one line, open & close quotes on that line; otherwise use multi-line form with triple quotes on their own lines.
--   JS: use VS Code default formatter / Prettier (see `.prettierrc.json`)
--   Jinja: use `djLint` for template formatting.
+- Pylint (optional deeper static analysis): run in editors / CI if configured.
+- Max line length: 120
+- Docstring style: If docstring fits on one line, open & close quotes on that line; otherwise use multi-line form with triple quotes on their own lines.
+- JS: use VS Code default formatter / Prettier (see `.prettierrc.json`)
+- Jinja: use `djLint` for template formatting.
 
 ### Pre-Commit Hooks
 
@@ -190,20 +190,20 @@ Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_
 
 ## Logging & Debugging
 
--   Prefer structured, minimal logs; avoid spamming per-tick unless investigating a bug.
--   Remove or gate heavy debug prints before merging (use a flag or environment variable if needed).
+- Prefer structured, minimal logs; avoid spamming per-tick unless investigating a bug.
+- Remove or gate heavy debug prints before merging (use a flag or environment variable if needed).
 
 ## Pull Request Checklist
 
 Before opening a PR, ensure:
 
--   [ ] Branch up to date with `main`
--   [ ] Tests pass locally (`pytest`)
--   [ ] New/changed code is covered by tests
--   [ ] Lint passes (`ruff check .`)
--   [ ] No stray `print` debugging left (unless intentional & documented)
--   [ ] Updated docs / comments where behavior changed
--   [ ] Large changes broken into logical commits
+- [ ] Branch up to date with `main`
+- [ ] Tests pass locally (`pytest`)
+- [ ] New/changed code is covered by tests
+- [ ] Lint passes (`ruff check .`)
+- [ ] No stray `print` debugging left (unless intentional & documented)
+- [ ] Updated docs / comments where behavior changed
+- [ ] Large changes broken into logical commits
 
 ## Review Process
 
@@ -228,10 +228,10 @@ See [Backend Style Guide](./docs/backend/style-guide.md) and [Frontend Style Gui
 
 ## Adding Dependencies
 
--   Justify the need (size, maintenance, security)
--   Prefer widely used, actively maintained libraries
--   Add it to `[project.dependencies]` in `pyproject.toml` (or `[project.optional-dependencies].dev` if it is only a development tool), and pin it if reproducibility matters
--   Avoid heavy frameworks for small utilities
+- Justify the need (size, maintenance, security)
+- Prefer widely used, actively maintained libraries
+- Add it to `[project.dependencies]` in `pyproject.toml` (or `[project.optional-dependencies].dev` if it is only a development tool), and pin it if reproducibility matters
+- Avoid heavy frameworks for small utilities
 
 ## Getting Help
 

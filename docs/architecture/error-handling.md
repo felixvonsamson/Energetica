@@ -5,6 +5,7 @@
 The backend produces three distinct error shapes. The API client in `@energetica/core/api-client` normalises all of them into `ApiClientError`.
 
 **HTTP errors** — most auth and request failures. `detail` is a plain string.
+
 ```json
 { "detail": "USERNAME_TAKEN" }
 ```
@@ -17,13 +18,13 @@ The backend produces three distinct error shapes. The API client in `@energetica
 
 Backend error codes are split by who can return them. Each group is an enum that subclasses `ErrorCode`, a `StrEnum` with no codes of its own in `energetica/kernel/game_error.py`:
 
-| Enum | Module | Holds |
-| --- | --- | --- |
-| `SharedErrorCode` | `energetica/kernel/game_error.py` | Codes every app can return, such as `NOT_AUTHENTICATED` |
+| Enum                | Module                              | Holds                                                                                           |
+| ------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `SharedErrorCode`   | `energetica/kernel/game_error.py`   | Codes every app can return, such as `NOT_AUTHENTICATED`                                         |
 | `IdentityErrorCode` | `energetica/identity/game_error.py` | Codes of the join and facilitator routes, which both Instance apps mount and the lobby does not |
-| `FreeplayErrorCode` | `energetica/freeplay/game_error.py` | The persistent world's own codes |
-| `WorkshopErrorCode` | `energetica/workshop/game_error.py` | Workshop's own codes |
-| `LobbyErrorCode` | `lobby/game_error.py` | The lobby's own codes |
+| `FreeplayErrorCode` | `energetica/freeplay/game_error.py` | The persistent world's own codes                                                                |
+| `WorkshopErrorCode` | `energetica/workshop/game_error.py` | Workshop's own codes                                                                            |
+| `LobbyErrorCode`    | `lobby/game_error.py`               | The lobby's own codes                                                                           |
 
 ```python
 class WorkshopErrorCode(ErrorCode):
@@ -36,6 +37,7 @@ Players receive a code's string value, so values are unique across all the enums
 The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). The frontend consumes it via `ApiSchema<"ErrorCode">`, re-exported as `ErrorCode` from `lib/game-messages.ts`.
 
 This creates a closed loop:
+
 - `GAME_ERROR_MESSAGES: Record<ErrorCode, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.
 - `isErrorType(error, errorType: ErrorCode)` — compile error at every call site using an unknown code.
 
@@ -71,15 +73,15 @@ Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.
 
 ```ts
 try {
-    await signup.mutateAsync({ username, password });
-    await refetchAuth();
-    navigate({ to: "/app/settle" });
+  await signup.mutateAsync({ username, password });
+  await refetchAuth();
+  navigate({ to: "/app/settle" });
 } catch (err) {
-    if (isErrorType(err, "USERNAME_TAKEN")) {
-        setUsernameError(getUserFriendlyError(err));
-    } else {
-        setGeneralError(getUserFriendlyError(err));
-    }
+  if (isErrorType(err, "USERNAME_TAKEN")) {
+    setUsernameError(getUserFriendlyError(err));
+  } else {
+    setGeneralError(getUserFriendlyError(err));
+  }
 }
 ```
 
@@ -105,7 +107,7 @@ Errors from form submissions fall into two categories:
 
 **Banner errors** — anything the user can't fix by editing a field: network failures, permission errors, unexpected server errors. `InfoBanner variant="error"` at the top of the form.
 
-Some field errors warrant a banner anyway when they carry meaningful context beyond "this field is wrong" — for example, `USER_NOT_FOUND` on login shows the server restart date, which explains *why* the account doesn't exist.
+Some field errors warrant a banner anyway when they carry meaningful context beyond "this field is wrong" — for example, `USER_NOT_FOUND` on login shows the server restart date, which explains _why_ the account doesn't exist.
 
 Clear all error state at the top of the submit handler, before validation.
 

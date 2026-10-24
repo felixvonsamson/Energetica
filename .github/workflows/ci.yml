@@ -15,9 +15,9 @@ jobs:
       - name: Install dependencies
         run: bun install
         working-directory: frontend
+      # Runs from the repo root: Prettier covers the whole repo, not just frontend/ (#1325).
       - name: Format check
         run: bun run format:check
-        working-directory: frontend
       - name: Typecheck
         run: bun run typecheck
         working-directory: frontend
@@ -53,8 +53,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           # Named explicitly: pyproject.toml is where the dependencies are declared.
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
@@ -78,8 +78,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           # Named explicitly: pyproject.toml is where the dependencies are declared.
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
@@ -137,8 +137,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           # Named explicitly: pyproject.toml is where the dependencies are declared.
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
@@ -170,8 +170,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Build the wheel
         run: |
@@ -222,7 +222,7 @@ jobs:
     # Regenerate every API types file (the merged api.generated.ts and one
     # api.<app>.generated.ts per app) and fail if any drifts from what's committed.
     # Generation boots the FastAPI apps to emit the OpenAPI schemas (needs Python
-    # + deps) then runs openapi-typescript + prettier (needs bun).
+    # + deps) then runs openapi-typescript (needs bun).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -230,8 +230,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           # Named explicitly: pyproject.toml is where the dependencies are declared.
           cache-dependency-path: pyproject.toml
       - name: Install Python dependencies

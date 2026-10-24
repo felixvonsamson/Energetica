@@ -27,7 +27,7 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - Added `energetica/instance_config.py`: reads `{ENERGETICA_INSTANCE_CONFIG_DIR}/{slug}/instance.json` (default dir `/etc/energetica`) fresh on every login/signup (no cache); slug + dirs are env-configurable (`ENERGETICA_INSTANCE_SLUG`, `ENERGETICA_INSTANCE_CONFIG_DIR`, `ENERGETICA_LANDING_DIR`) for hermetic tests
   - `auth.py` login **and** signup now enforce the access policy after the credential check: `public` (or unconfigured) allows any account; `private` allows only `allowed_usernames`. Denied → `403 INSTANCE_ACCESS_DENIED`. Gating signup too closes the hole where a private/unadvertised instance reachable by URL would otherwise let anyone create a server-wide account
   - On startup and on each allowed login, publishes the sanitised fragment (the `access` block stripped) to `{landing}/instances/{slug}.json` via atomic temp-write + `os.replace`, then re-aggregates `{landing}/instances.json` sorted by `starts_at` desc. Best-effort: a publish failure (e.g. unwritable landing dir) is logged and never breaks login
-  - The aggregate `instances.json` lists **only advertised** instances. A slug *is* a subdomain, and `instances.json` is world-readable, so emitting an unadvertised slug there would let anyone enumerate an otherwise-hidden instance. Unadvertised instances keep their on-disk fragment (reachable only by already knowing the slug) but never appear in the public manifest — a refinement of the RFC's original "frontend filters advertised entries" approach, moved server-side for defence in depth
+  - The aggregate `instances.json` lists **only advertised** instances. A slug _is_ a subdomain, and `instances.json` is world-readable, so emitting an unadvertised slug there would let anyone enumerate an otherwise-hidden instance. Unadvertised instances keep their on-disk fragment (reachable only by already knowing the slug) but never appear in the public manifest — a refinement of the RFC's original "frontend filters advertised entries" approach, moved server-side for defence in depth
   - Frontend (landing bundle): `useAdvertisedInstances()` + `AdvertisedRuns` fetch `/instances.json` and render advertised entries; the signup CTA links to each instance's `/app/sign-up` (`${slug}.${VITE_APEX_DOMAIN}` when the apex is set, same-origin relative in the interim). Degrades to nothing when no manifest is served yet
   - **Implementation choice** (identical observable output to the spec): aggregation is pure Python rather than a `jq` subprocess — testable, no runtime `jq` dependency on the login path, same `{instances: [...]}` shape sorted `starts_at` desc. Each `instances.json`/fragment write uses a unique `mkstemp` tmp file so two instance processes aggregating concurrently can't clobber a shared tmp mid-write
   - **Security choices:** (a) an absent `instance.json` reads as `public` (preserves the Phase-2 default and dev/test behaviour), but a present-but-unparseable file **fails closed** (`403`) rather than silently granting public access — this includes a half-edited config (a stray key inside the `access` block, via `extra="forbid"`); (b) `starts_at` must be timezone-aware (naive → fail closed), which also guarantees the aggregation sort never mixes naive/aware datetimes
@@ -46,21 +46,21 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - `templates.py` reduced to `/logout` only; `render_root` (`/`), `render_react_app` (`/app/*`), `render_landing_page` (`/landing-page`) and the `/sign-up` 301 removed. `__init__.py` drops the `StaticFiles` mount and the `serve_service_worker` (`/service-worker.js`) + `serve_manifest` (`/manifest.json`) `FileResponse` handlers — Apache now serves all three. FastAPI keeps only `/api`, `/socket.io`, `/logout` (plus `/healthz`)
   - **Frontend landing/app split completed.** Deleted the app-bundle landing duplicates `routes/{route.tsx (`/`), landing-page.tsx, about.tsx, for-educators.tsx}`. The app's non-game pages (login, sign-up, unauthenticated changelog, `internal/*`) moved off the shared marketing `HomeLayout` onto a new `components/layout/app-shell.tsx` (logo + theme toggle, no marketing nav). The marketing `header.tsx`/`footer.tsx`/`home-layout.tsx`/`landing-page.tsx`/`about-page.tsx`/`for-educators-page.tsx` are now **landing-only** and excluded from the app `tsconfig.json` (mirroring the existing `wiki-*-public` exclusions), so their `Link to="/landing-page"` keeps type-checking under the landing's loose router types while the app tree no longer carries those routes
   - **Cross-origin links.** Added `landingHref()` (`lib/instances.ts`), the mirror of `instanceSignupHref()`: app→landing links (the two "Learn more about Energetica" links) become `<a href>` to `https://${apex}/landing-page` in production, same-origin relative in dev. `deploy-instance.sh` and `deploy-landing.sh` now bake `VITE_APEX_DOMAIN="$DOMAIN"` into their builds (the latter gained a required `--domain`); without it both `landingHref` and `instanceSignupHref` would emit same-origin paths that 404 across the apex/subdomain boundary
-  - **Scripts.** Deleted the legacy single-instance `deploy.sh` and `verify-deploy.sh` (superseded by `deploy-instance.sh` + its `/healthz` poll). `download-instance.sh` is now instance-aware (`--server`/`--instance`, backs up `/var/www/energetica-{slug}/instance/`). `apache-instance.conf` gains `RedirectMatch ^/sign-up/?$ /app/sign-up` as an instance-local convenience (the FastAPI 301 is gone); preserving legacy *apex* `/sign-up` bookmarks needs instance selection and is deferred to #810. `docs/backend/deployment.md` drops the legacy single-instance flow
+  - **Scripts.** Deleted the legacy single-instance `deploy.sh` and `verify-deploy.sh` (superseded by `deploy-instance.sh` + its `/healthz` poll). `download-instance.sh` is now instance-aware (`--server`/`--instance`, backs up `/var/www/energetica-{slug}/instance/`). `apache-instance.conf` gains `RedirectMatch ^/sign-up/?$ /app/sign-up` as an instance-local convenience (the FastAPI 301 is gone); preserving legacy _apex_ `/sign-up` bookmarks needs instance selection and is deferred to #810. `docs/backend/deployment.md` drops the legacy single-instance flow
   - **The cutover is a coordinated deploy, not just a merge.** Removing the FastAPI static handlers means the app is only reachable once the Apache vhosts are serving. The production deploy must run `setup-landing.sh`/`setup-instance.sh` on the box and deploy both bundles in lockstep with merging this PR — see `docs/backend/deployment.md`. `bash -n` clean on all touched scripts; live `apache2ctl -t`/`certbot` checks are deferred to Phase 6
-- ⬜ **Phase 6 — Multi-instance validation.** Stand up a second subdomain on the same VPS; verify server-wide login, manifest per-instance, fragment + aggregation round-trip. **Note:** per-subdomain *cookie isolation* is **intentionally superseded** by the lobby's A1 session model (`lobby.md`, ADR-0002) and is no longer a pass criterion — validate the shared parent-domain session instead (one login reaches every instance subdomain).
+- ⬜ **Phase 6 — Multi-instance validation.** Stand up a second subdomain on the same VPS; verify server-wide login, manifest per-instance, fragment + aggregation round-trip. **Note:** per-subdomain _cookie isolation_ is **intentionally superseded** by the lobby's A1 session model (`lobby.md`, ADR-0002) and is no longer a pass criterion — validate the shared parent-domain session instead (one login reaches every instance subdomain).
 
 ### Phase 1 deployment notes
 
 - `scripts/deploy.sh` already targets the new `static/app/` path. No special migration needed.
 - After the first deploy, the old `/var/www/.../energetica/static/react/` directory on the VPS becomes orphaned (rsync's `--delete` only operates inside the new target). Clean up once with `ssh <host> 'sudo rm -rf /var/www/energetica/energetica/static/react'`.
 - Service worker does not precache anything under the renamed path; client caches recover on next page load.
-- External bookmarks to top-level `/sign-up` 404 after Phase 1. (Resolved differently in Phase 5: the FastAPI 301 was dropped; `apache-instance.conf` now redirects `/sign-up` on instance subdomains. Stale bookmarks to the *apex* `/sign-up` remain deferred to the instance-picker work, #810 — do not re-add a `templates.py` handler.)
+- External bookmarks to top-level `/sign-up` 404 after Phase 1. (Resolved differently in Phase 5: the FastAPI 301 was dropped; `apache-instance.conf` now redirects `/sign-up` on instance subdomains. Stale bookmarks to the _apex_ `/sign-up` remain deferred to the instance-picker work, #810 — do not re-add a `templates.py` handler.)
 - `dist-landing/` is built but not deployed by `deploy.sh` yet — landing files only ship in Phase 5.
 
 ### Phase 2 deployment notes
 
-Unlike Phase 1, Phase 2 changes the **auth path** and the **pickle shape**. The migration script must run on the VPS *before* the new code starts. Order:
+Unlike Phase 1, Phase 2 changes the **auth path** and the **pickle shape**. The migration script must run on the VPS _before_ the new code starts. Order:
 
 1. **Stop the instance service** — `sudo systemctl stop energetica-{instance}` — so the pickle is not mutated concurrently with the migration.
 2. **Create the accounts dir + DB** if it does not exist yet: `sudo mkdir -p /var/lib/energetica && sudo chown energetica:energetica /var/lib/energetica`. The script creates `accounts.db` on first connect; permissions on the file must allow the service user to read and write. (`scripts/vps-setup.sh` is slated for replacement in Phase 4; for now adjust manually.)
@@ -106,19 +106,19 @@ Subdomains also require less build configuration: subpaths need a per-instance V
 
 > **On shared credentials.** Server-wide accounts (introduced in [Server-Wide Accounts](#server-wide-accounts)) do **not** undo the cookie-isolation argument above. Credentials are shared via a server-side SQLite file; sessions are still per-subdomain. A user re-enters their password on each instance they visit and gets an independent session cookie for that origin. The cookie-leak class of bug remains structurally impossible.
 
-> **Exception — the ETHZ single-origin mirror.** One deployment deliberately serves the lobby + a *single* instance on one origin (`energetica.ethz.ch`), for VPN-blocked players who cannot reach `*.energetica-game.org` and where we cannot create subdomains. This is the subpath/single-origin arrangement argued against above, but the "most critical" cookie-leak reason is void there **because only one instance is ever exposed per origin** — there is no instance B to leak to. See the *ETHZ single-origin mirror* amendment in ADR-0002, `scripts/infra/apache-ethz-proxy.conf`, and `frontend/src/lib/single-origin.ts`. The constraint (at most one instance per proxy host) is what keeps it safe.
+> **Exception — the ETHZ single-origin mirror.** One deployment deliberately serves the lobby + a _single_ instance on one origin (`energetica.ethz.ch`), for VPN-blocked players who cannot reach `*.energetica-game.org` and where we cannot create subdomains. This is the subpath/single-origin arrangement argued against above, but the "most critical" cookie-leak reason is void there **because only one instance is ever exposed per origin** — there is no instance B to leak to. See the _ETHZ single-origin mirror_ amendment in ADR-0002, `scripts/infra/apache-ethz-proxy.conf`, and `frontend/src/lib/single-origin.ts`. The constraint (at most one instance per proxy host) is what keeps it safe.
 
 ---
 
 ## Terminology
 
-| Term | Definition |
-|------|------------|
-| **Server** | A VPS, identified by its SSH alias (e.g. `energetica-game`, `energetica-edu`, `energetica-ethz`) |
-| **Instance** | A single running game deployment on a server, identified by a kebab-case slug (e.g. `autumn-2025`, `spring-2026`). Also used for private university or business deployments. Player-facing copy may call this a "run". |
-| **Account** | A server-wide identity. One row in the server's `accounts.db` SQLite file, keyed by `account_id`. Holds credentials (`username`, `pwhash`, optional `email`). Independent of any instance. |
+| Term              | Definition                                                                                                                                                                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Server**        | A VPS, identified by its SSH alias (e.g. `energetica-game`, `energetica-edu`, `energetica-ethz`)                                                                                                                                         |
+| **Instance**      | A single running game deployment on a server, identified by a kebab-case slug (e.g. `autumn-2025`, `spring-2026`). Also used for private university or business deployments. Player-facing copy may call this a "run".                   |
+| **Account**       | A server-wide identity. One row in the server's `accounts.db` SQLite file, keyed by `account_id`. Holds credentials (`username`, `pwhash`, optional `email`). Independent of any instance.                                               |
 | **User** (pickle) | A per-instance record in the engine pickle (`energetica/database/user.py`), keyed by a local AutoIDDict id. Carries `account_id` as a foreign key to the server-wide account. Auto-provisioned on first successful login to an instance. |
-| **Player** | The game-side state of a user who has completed the settle flow. Distinct from `User`: a `User` may exist without a `Player`. |
+| **Player**        | The game-side state of a user who has completed the settle flow. Distinct from `User`: a `User` may exist without a `Player`.                                                                                                            |
 
 Subdomain pattern: `{instance}.{server-domain}` — e.g. `autumn-2025.energetica-game.org`.
 
@@ -129,14 +129,17 @@ The **apex domain always serves the landing page**, never an instance directly.
 **Note on path collisions.** Today the engine working directory is named `instance/` per Flask convention (`/var/www/energetica-{slug}/instance/engine_data.pck`). This is unrelated to the deployment-unit term `instance` and is left in place — the duplicate word in `energetica-{instance}/instance/engine_data.pck` is awkward but not ambiguous in context.
 
 ### Instance name constraints
+
 - Lowercase kebab-case only (`[a-z0-9][a-z0-9-]*[a-z0-9]`)
 - Reserved names: **`landing`** (used for the landing site directory)
 
 ### Username constraints
+
 - Globally unique per server (enforced by `accounts.username UNIQUE` in SQLite)
 - Per-server scope only; the same username on `energetica-game` and `energetica-edu` are unrelated accounts
 
 ### Instance discovery
+
 Canonical source of truth is systemd: `systemctl list-unit-files 'energetica-*.service'`. Filesystem enumeration of `/var/www/energetica-*/` is avoided since it would accidentally include `energetica-landing`.
 
 `energetica-lobby` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126). Keying on whether a unit has an `instance.env` (described below) would also drop instances provisioned before the port moved into that file.
@@ -145,7 +148,7 @@ An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.en
 
 The port is the reason this file exists. It used to have two rendered copies, the unit and the vhost, with no source of truth behind either, so anything that wanted to regenerate one had nowhere to read it from. Reading it is now unprivileged: the file is `0640 root:energetica` and the `deploy` user is in that group, so `list-instances.sh` discovers a port with no `sudo` at all.
 
-Regenerating the vhost is what that unblocked. `scripts/infra/update-instance-vhost.sh <slug> --domain <apex>` renders `apache-instance.conf` for an instance that is already running, reading the port from `instance.env` rather than taking it as an argument (#1071). It is the only renderer of that template — `setup-instance.sh` calls it too — so a vhost change is now one rerunnable command per instance instead of a hand edit on every server. It stays a *manual*, root-run command on purpose: writing `/etc/apache2/sites-available/` and reloading Apache is equivalent to root, so handing it to `deploy-instance.sh` would dissolve the least-privilege split `setup-base.sh` sets up. See `docs/backend/deployment.md` § Changing an instance's Apache vhost.
+Regenerating the vhost is what that unblocked. `scripts/infra/update-instance-vhost.sh <slug> --domain <apex>` renders `apache-instance.conf` for an instance that is already running, reading the port from `instance.env` rather than taking it as an argument (#1071). It is the only renderer of that template — `setup-instance.sh` calls it too — so a vhost change is now one rerunnable command per instance instead of a hand edit on every server. It stays a _manual_, root-run command on purpose: writing `/etc/apache2/sites-available/` and reloading Apache is equivalent to root, so handing it to `deploy-instance.sh` would dissolve the least-privilege split `setup-base.sh` sets up. See `docs/backend/deployment.md` § Changing an instance's Apache vhost.
 
 The `EnvironmentFile=` line has no `-` prefix, so a missing file stops the unit. See `scripts/infra/energetica.service` for why that is the behaviour worth having.
 
@@ -153,10 +156,10 @@ Two files now share one directory with opposite write rules, which is what the s
 
 Sticky narrows the rule to "only the file's owner may replace it", so each file's owner answers the question for that file alone:
 
-| file | owner | who can replace it |
-|---|---|---|
+| file            | owner        | who can replace it                     |
+| --------------- | ------------ | -------------------------------------- |
 | `instance.json` | `energetica` | the service, which is what rewrites it |
-| `instance.env` | `root` | root only |
+| `instance.env`  | `root`       | root only                              |
 
 That also makes the permissions state something that was already true and previously unsaid: the service replaces `instance.json` routinely, and used to do it through directory write permission on a file it did not own.
 
@@ -283,7 +286,7 @@ SQLite is opened by every instance backend with WAL mode (concurrent readers, se
 
 ### Why credentials shared but sessions not
 
-Per-subdomain cookie isolation is preserved as a security property (see [Rationale: Subdomains vs Subpaths](#rationale-subdomains-vs-subpaths)). Sharing the *credentials store* is what users actually want ("one account on the site"); sharing *sessions* across subdomains would require a parent-domain cookie and reintroduce the cross-instance cookie-leak class of bug. The cost of the chosen design is a second password prompt when a user first visits a new instance — accepted as worth the security simplification.
+Per-subdomain cookie isolation is preserved as a security property (see [Rationale: Subdomains vs Subpaths](#rationale-subdomains-vs-subpaths)). Sharing the _credentials store_ is what users actually want ("one account on the site"); sharing _sessions_ across subdomains would require a parent-domain cookie and reintroduce the cross-instance cookie-leak class of bug. The cost of the chosen design is a second password prompt when a user first visits a new instance — accepted as worth the security simplification.
 
 ---
 
@@ -314,9 +317,9 @@ Both axes are declared per-instance in a single file the instance backend owns:
       "run": { "mode": "freeplay" } }
 ```
 
-*(`access.allowed_usernames` shown in earlier drafts of this file is deprecated — who may access
+_(`access.allowed_usernames` shown in earlier drafts of this file is deprecated — who may access
 a private instance now lives in `accounts.db`, not this file. See ADR-0007 and § Why outside the
-vhost DocumentRoot below.)*
+vhost DocumentRoot below.)_
 
 `slug` is **not** stored in the file — it is the directory name under `/etc/energetica/`, mirroring the canonical slug from [Instance discovery](#instance-discovery). Subdomain is **not** stored either — the landing composes `${slug}.${apex}` at render time, where `apex` is a Vite build-time constant.
 
@@ -341,7 +344,7 @@ Each instance process, on start and whenever it reloads `instance.json`, writes 
     "starts_at": "2025-09-15T00:00:00Z" }
 ```
 
-The `access` block (including the join token) is **stripped before write** — the landing dir is served statically by Apache, and a leaked join token or (historically) allowlist would defeat the point of gating the instance at all. `starts_at` is preserved (it is public information). `private: bool` — whether *some* policy applies, not who it admits — is the one thing from this block published, so the lobby can keep a private run out of its freely-joinable picker list (#1030, ADR-0005/0006).
+The `access` block (including the join token) is **stripped before write** — the landing dir is served statically by Apache, and a leaked join token or (historically) allowlist would defeat the point of gating the instance at all. `starts_at` is preserved (it is public information). `private: bool` — whether _some_ policy applies, not who it admits — is the one thing from this block published, so the lobby can keep a private run out of its freely-joinable picker list (#1030, ADR-0005/0006).
 
 Writes are atomic: write to `{slug}.json.tmp` then `rename(2)` over the target. No locking required across instance processes since each writes to a unique filename.
 
@@ -361,11 +364,11 @@ Two concurrent aggregations may interleave; last-writer-wins is harmless because
 
 The landing fetches `/instances.json` and renders advertised entries. Apache serves it with `Cache-Control: max-age=60` so admin changes propagate within a minute without explicit cache-busting.
 
-Unadvertised instances that are public are reachable by direct URL — a user who knows the subdomain may sign up and play. Unadvertised + private instances are reachable only by URL *and* require allowlisted credentials.
+Unadvertised instances that are public are reachable by direct URL — a user who knows the subdomain may sign up and play. Unadvertised + private instances are reachable only by URL _and_ require allowlisted credentials.
 
 ### Recap publication (lifecycle tombstone)
 
-At the `active → freeze` transition (the sim's own clock passing `freeze_at`), the instance mints a **recap** — a frozen JSON tombstone of its final leaderboard — and publishes it *beside* the fragment:
+At the `active → freeze` transition (the sim's own clock passing `freeze_at`), the instance mints a **recap** — a frozen JSON tombstone of its final leaderboard — and publishes it _beside_ the fragment:
 
 ```
 /var/www/energetica-landing/recaps/{slug}.json
@@ -380,9 +383,9 @@ At the `active → freeze` transition (the sim's own clock passing `freeze_at`),
 
 - **Curated projection, not a live dump** — one income-ranked table plus a small totals header (see `energetica/identity/schemas/recap.py`), sized for a single payload (~15 KB), so the lobby renders it with no live backend. Reads by attribute via a `RecapPlayer` protocol, so the schema stays free of the game ORM.
 - **Same atomic-write mechanism** as the fragment (`_atomic_write_json`: tmp-sibling → `chmod 0o640` → `os.replace`), but a **separate file** — the recap is **not** aggregated into `instances.json` (heavyweight-per-instance, read rarely; folding it in would bloat the manifest the picker downloads on every visit).
-- **Mint-once, re-runnable** — a *readable* recap on disk is the "already minted" flag (`instance_config.load_recap` returning non-`None`, not `recap_exists`), so the repeated freeze-phase ticks and a process restart in freeze don't re-photograph it — while a corrupt artifact reads back as `None` and self-heals by re-minting. **Admin regenerate is the manual delete/regenerate path**: an admin deletes `recaps/{slug}.json` and the next freeze tick re-mints it (scripts suffice for the baseline, as with force-freeze). `energetica.utils.recap.mint_recap` is the underlying unconditional force-overwrite primitive that a future admin control (the deferred admin dashboard, #279) can call directly. Re-minting is reproducible: ties break on the immutable `account_id`, so a regenerate yields the identical ranking.
+- **Mint-once, re-runnable** — a _readable_ recap on disk is the "already minted" flag (`instance_config.load_recap` returning non-`None`, not `recap_exists`), so the repeated freeze-phase ticks and a process restart in freeze don't re-photograph it — while a corrupt artifact reads back as `None` and self-heals by re-minting. **Admin regenerate is the manual delete/regenerate path**: an admin deletes `recaps/{slug}.json` and the next freeze tick re-mints it (scripts suffice for the baseline, as with force-freeze). `energetica.utils.recap.mint_recap` is the underlying unconditional force-overwrite primitive that a future admin control (the deferred admin dashboard, #279) can call directly. Re-minting is reproducible: ties break on the immutable `account_id`, so a regenerate yields the identical ranking.
 - **Visibility is phase-derived, not a flag** — reveal-at-freeze-start == publish-at-mint; the lobby offers "View recap" ⟺ the fragment's `freeze_at` has passed (no new discovery field).
-- **Survives teardown** — the artifact lives on the landing dir, not in the instance process, so it outlives the reap at `ended_at`. Both the reap and `teardown-instance.sh` leave the recap alone, and the lobby vhost serves it from the shared landing dir (`Alias /recaps`), so it stays reachable after the instance vhost is gone. Teardown keeps the *fragment* too when a recap exists — see [Reap and teardown](#reap-and-teardown).
+- **Survives teardown** — the artifact lives on the landing dir, not in the instance process, so it outlives the reap at `ended_at`. Both the reap and `teardown-instance.sh` leave the recap alone, and the lobby vhost serves it from the shared landing dir (`Alias /recaps`), so it stays reachable after the instance vhost is gone. Teardown keeps the _fragment_ too when a recap exists — see [Reap and teardown](#reap-and-teardown).
 
 ### Operational notes
 
@@ -406,9 +409,9 @@ Why a periodic sweep rather than a timer armed at each `ended_at`: it keeps the 
 
 **Teardown (manual).** `scripts/infra/teardown-instance.sh <slug> --domain <apex>` is the deliberate second act: stop and remove the unit, remove the vhost, archive the pickle (`--archive-to`), delete `/var/www/energetica-{slug}` and `/etc/energetica/{slug}`, retire the fragment, and release the certificate (`--keep-cert` to keep it). It is confirm-gated on typing the slug back, and refuses the reserved `landing`/`lobby` names.
 
-**What teardown must not strand.** `recaps/{slug}.json` is never touched — it is the artifact the whole lifecycle exists to produce. The fragment is subtler. It is not only the "run on offer" billboard: it is the *only* pointer by which either lobby surface finds a run at all — `my-runs` joins membership rows against it (`load_fragment`), and the picker reads it through `instances.json`. Deleting the fragment of a run that has a recap would therefore leave that recap on disk, served, and linked from nowhere. So:
+**What teardown must not strand.** `recaps/{slug}.json` is never touched — it is the artifact the whole lifecycle exists to produce. The fragment is subtler. It is not only the "run on offer" billboard: it is the _only_ pointer by which either lobby surface finds a run at all — `my-runs` joins membership rows against it (`load_fragment`), and the picker reads it through `instances.json`. Deleting the fragment of a run that has a recap would therefore leave that recap on disk, served, and linked from nowhere. So:
 
-> **A recap promotes the fragment from billboard to headstone.** Teardown keeps the fragment whenever a *loadable* recap exists; only a run that never froze — and so left nothing worth pointing at — loses it.
+> **A recap promotes the fragment from billboard to headstone.** Teardown keeps the fragment whenever a _loadable_ recap exists; only a run that never froze — and so left nothing worth pointing at — loses it.
 
 "Loadable", not "present": the guard is `load_recap`, the same validating read the mint-once guard uses. A truncated or schema-invalid artifact is one the lobby cannot render, so holding the fragment open for it would leave the card advertising "View recap" over a file that never loads.
 
@@ -426,10 +429,10 @@ Accounts and `instance_membership` rows are server-wide and survive teardown. A 
 
 ### Route split
 
-| Bundle | Routes |
-|--------|--------|
+| Bundle      | Routes                                                                        |
+| ----------- | ----------------------------------------------------------------------------- |
 | **Landing** | `/`, `/landing-page`, `/about`, `/for-educators`, `/wiki/$slug`, `/changelog` |
-| **App** | `/app/*` (including `/app/sign-up`, moved from top-level `/sign-up`) |
+| **App**     | `/app/*` (including `/app/sign-up`, moved from top-level `/sign-up`)          |
 
 ### Directory structure
 
@@ -462,19 +465,19 @@ frontend/src/
 
 Two separate config files:
 
-| File | Bundle | `base` | Output dir |
-|------|--------|--------|------------|
-| `vite.config.ts` | app | `/static/app/` | `frontend/dist-app/` |
-| `apps/landing/vite.config.ts` | landing | `/` | `frontend/apps/landing/dist/` |
+| File                          | Bundle  | `base`         | Output dir                    |
+| ----------------------------- | ------- | -------------- | ----------------------------- |
+| `vite.config.ts`              | app     | `/static/app/` | `frontend/dist-app/`          |
+| `apps/landing/vite.config.ts` | landing | `/`            | `frontend/apps/landing/dist/` |
 
 ✅ Both configs land in Phase 1. Since #1176 the landing is its own workspace app, `frontend/apps/landing`, with its own `vite.config.ts` and `tsconfig.json`; the rest of this paragraph describes Phase 1. The landing bundle uses a separate `tsconfig.landing.json` (eslint sees both via `parserOptions.project: [...]`). Because shared components (`landing-page.tsx`, `wiki-sidebar.tsx`, etc.) link into `/app/*` routes that don't exist in the landing route tree, `main-landing.tsx` deliberately does **not** declare a `Register` module augmentation — typed `to` props fall back to `string`. This is acceptable during the interim; when Apache moves the landing to the apex domain, those links become explicit cross-origin `<a href>` and the loose typing is no longer load-bearing.
 
 Both build outputs are **gitignored** and deployed via rsync:
 
-| Bundle | Output dir | Gitignored | Deployed to |
-|--------|-----------|------------|-------------|
-| app | `frontend/dist-app/` | yes | `server:/var/www/energetica-{instance}/dist-app/` |
-| landing | `frontend/apps/landing/dist/` | yes | `server:/var/www/energetica-landing/` |
+| Bundle  | Output dir                    | Gitignored | Deployed to                                       |
+| ------- | ----------------------------- | ---------- | ------------------------------------------------- |
+| app     | `frontend/dist-app/`          | yes        | `server:/var/www/energetica-{instance}/dist-app/` |
+| landing | `frontend/apps/landing/dist/` | yes        | `server:/var/www/energetica-landing/`             |
 
 `.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`. ✅ (Phase 1)
 
@@ -549,7 +552,7 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 1. Build app bundle (`bun run build:app`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts). `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
-4. `rsync` app bundle to server (`frontend/dist-app/` → `{instance dir}/dist-app/`). The service worker is inside it: since #1064 `build:sw` writes `dist-app/service-worker.js`, so there is no second rsync. That step must always run *after* the production build, which deletes the output directory before writing it — `build:app` chains them in that order.
+4. `rsync` app bundle to server (`frontend/dist-app/` → `{instance dir}/dist-app/`). The service worker is inside it: since #1064 `build:sw` writes `dist-app/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — `build:app` chains them in that order.
 5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
 7. Health check
@@ -570,7 +573,7 @@ No service restart — landing is pure static. `instances.json` and `instances/`
 - **CI/CD** — deployment is via local scripts for now. Scripts are CI-compatible by design (all inputs via args/env vars, `--yes` flag, deterministic exit codes). Wiring to GitHub Actions or equivalent is a future decision.
 - **Admin dashboard** — currently stubbed. The server-side role gate in `templates.py` will be dropped along with all other `FileResponse` handlers. A proper frontend route guard and admin UI are a separate workstream.
 - **Service worker on multiple instances** — currently scoped to `/`. Per-instance scoping implications (e.g. `autumn-2025.energetica-game.org/service-worker.js`) are not an architectural concern but should be tested when the first subdomain instance goes live.
-- **`instances.json` schema expansion** — current schema is `{slug, name, advertised, starts_at, freeze_at, ended_at}`. `freeze_at`/`ended_at` (nullable) are the lifecycle boundaries; `phase ∈ {announced, active, freeze, ended}` is *derived* from `now` vs the three timestamps (never stored — the fragment is served statically for the life of the run), by `derive_phase` in `energetica/identity/instance_config.py` and its mirror `derivePhase` in `frontend/src/lib/instances.ts`. Further fields like `description` or `thumbnail` will be added when an instance-picker UI needs them (YAGNI until then).
+- **`instances.json` schema expansion** — current schema is `{slug, name, advertised, starts_at, freeze_at, ended_at}`. `freeze_at`/`ended_at` (nullable) are the lifecycle boundaries; `phase ∈ {announced, active, freeze, ended}` is _derived_ from `now` vs the three timestamps (never stored — the fragment is served statically for the life of the run), by `derive_phase` in `energetica/identity/instance_config.py` and its mirror `derivePhase` in `frontend/src/lib/instances.ts`. Further fields like `description` or `thumbnail` will be added when an instance-picker UI needs them (YAGNI until then).
 - **Instance-picker UI** — landing currently sends the signup CTA to the most recent advertised instance (`instances.json` is sorted by `starts_at` desc; first `advertised: true` entry wins). Lateral navigation between active instances (a picker page or persistent header element — UI form factor TBD) is a frontend workstream that consumes the existing `instances.json` data and may motivate schema additions above.
 - **Password reset via email** — `accounts.email` is in the SQLite schema (nullable, unique) but not yet collected at signup. Adding the signup field and the reset-by-email flow (which requires an SMTP/transactional-mail dependency the project does not yet have) is a follow-up.
 - **Cross-instance session invalidation on password change** — changing the password updates `pwhash` in SQLite but does not invalidate session cookies already issued by other instance subdomains (see [Password change](#flows) flow). Fixing this would require either a `session_version` column on `accounts` (bumped on password change, checked on every request) or a short server-issued session-validity window combined with a periodic re-check against SQLite. Deferred until there is a concrete security-response use case driving the cost.
