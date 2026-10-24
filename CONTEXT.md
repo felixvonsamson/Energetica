@@ -353,9 +353,8 @@ facilities produce less, and the next window notes that it ran out (#1010). Eith
 when a price shock lands.
 
 **Season need** (#1009):
-The fuel a player's operating facilities burn running at full output for a whole season. The first
-manual order of a fuel defaults to half of it (#1224). After that, an order defaults to what the player bought
-last time.
+The fuel a player's operating facilities burn running at full output for a whole season. A manual order
+of a fuel defaults to it, less the stock the player already holds, or to nothing once the stock covers it.
 
 **Stockpile limit** (#1009):
 The most fuel of one type a player may hold: 3 times its season need. An order that would go over it is

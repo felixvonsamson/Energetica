@@ -14,13 +14,12 @@
  * their facilities burn running at full output all season), the season's price
  * with its change since last season (in red, with a note, when a price shock
  * landed), and under manual procurement the quantity to buy with what it costs.
- * The quantity starts at a default the server sets: half the maximum
- * consumption the first time the player buys a fuel (#1224), then what they
- * bought last time. A quantity that would take the stock over the stockpile
- * limit is cut down to fit. A fuel the player does not burn shows its price,
- * with a note saying so in place of the stock. A note under the stock says when
- * the fuel ran out last season, which held back the output of the facilities
- * burning it (#1010).
+ * The quantity starts at a default the server sets: the maximum consumption
+ * less the stock, or nothing when the stock already covers it. A quantity that
+ * would take the stock over the stockpile limit is cut down to fit. A fuel the
+ * player does not burn shows its price, with a note saying so in place of the
+ * stock. A note under the stock says when the fuel ran out last season, which
+ * held back the output of the facilities burning it (#1010).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
