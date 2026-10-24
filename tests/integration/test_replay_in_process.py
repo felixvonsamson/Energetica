@@ -149,3 +149,15 @@ def test_replay_is_served_while_the_run_only_serves_local_writes(
 
     assert _replay(app, [_logged_request(account_id)])
     assert admitted == [account_id]
+
+
+def test_a_crash_during_replay_prints_its_traceback(app: FastAPI, capsys: pytest.CaptureFixture[str]) -> None:
+    @app.post("/probe/crash")
+    def _crash() -> None:
+        raise RuntimeError("probe crashed")
+
+    crash = _logged_request(make_account("alice"))
+    crash.request.endpoint = "/probe/crash"
+
+    assert not _replay(app, [crash])
+    assert "RuntimeError: probe crashed" in capsys.readouterr().err

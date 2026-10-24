@@ -6,6 +6,7 @@ import asyncio
 import cProfile
 import pstats
 import secrets
+import traceback
 from typing import Any
 
 import httpx
@@ -52,7 +53,12 @@ def client_as(app: FastAPI, account: Account) -> httpx.AsyncClient:
     """
 
     async def app_as_account(scope: Scope, receive: Receive, send: Send) -> None:
-        await app({**scope, REPLAYED_ACCOUNT_SCOPE_KEY: account}, receive, send)
+        try:
+            await app({**scope, REPLAYED_ACCOUNT_SCOPE_KEY: account}, receive, send)
+        except Exception:
+            # Over HTTP, uvicorn printed the traceback of a crash. In-process, nothing else does.
+            traceback.print_exc()
+            raise
 
     # A crash in the app comes back as the 500 a real client would get, so that
     # ``stop_on_server_error`` decides what happens next.
