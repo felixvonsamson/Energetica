@@ -5,11 +5,11 @@ in the Run can open it, and it names no player. Pure: the session gathers what i
 out each panel.
 
 - **Alarms**, newest first: the events that fired, each blackout and the rationing it left, each unlock, and the
-  carbon tax vote. A Round event shows as soon as it fires, since the Recap before it already told its exact effect. A
-  seasonal event shows only once its season is settled, since the Recap only gave a vague forecast of it, and its
-  figures would otherwise tell the room more while it sets its prices (#1289).
+  carbon tax vote. Every event shows with its exact effect as soon as it fires: a Round event when the Investment
+  phase opens, and a seasonal event when its Trading period opens, so the room knows it while it sets its prices.
 - **Capacity against demand** (#1287): what the facilities working this Round can produce, those players have
-  selected to buy included, against the Round's must-serve peak, with how likely a blackout is.
+  selected to buy included, against the must-serve peak: the Round's, or in a Trading period, its season's. Either
+  way, with how likely a blackout is.
 - **Carbon**: the CO₂ the room emitted in each Round, building and running its facilities.
 - **Each settled season**: its average market price with the spread of its clearing prices, and the room's
   generation by power source.
@@ -334,13 +334,23 @@ def blackout_risk(peak: float, capacity: RoomCapacity) -> BlackoutRisk:
 
 
 class CapacityOutlook(BaseModel):
-    """The room's capacity in a Round against the Round's must-serve peak, for the control room's capacity panel."""
+    """The room's capacity in a Round against its must-serve peak, for the control room's capacity panel: the peak of
+    the season whose Trading period the session is in, or else of the whole Round.
+    """
 
     round: int
+    season: Season | None = Field(
+        description="The season the peak is for, in its Trading period, or null when it is the whole Round's"
+    )
     must_serve_peak: float = Field(
-        description="The highest must-serve demand of the Round, in W, before any seasonal event or rationing"
+        description="The highest must-serve demand of the season or the Round, in W, with its events, planned ones "
+        "included, and before any rationing"
     )
     all_tiers_peak: float = Field(description="The highest demand counting every demand tier, in W")
+    round_all_tiers_peak: float = Field(
+        description="The Round's highest demand counting every demand tier, in W, so a season's peaks can be drawn "
+        "on the Round's scale. The same as ``all_tiers_peak`` outside a Trading period"
+    )
     room: RoomCapacity = Field(
         description="What the facilities working in the Round can produce: those owned and those selected to buy"
     )
@@ -433,19 +443,13 @@ def _when(round_number: int, season: Season | None, within: float) -> tuple[int,
 def alarms(
     *,
     fired: Iterable[FiredEvent],
-    settled: tuple[int, Season] | None,
     blackouts: Iterable[Blackout],
     unlocks: Iterable[Unlock],
     vote_outcomes: Iterable[VoteOutcome],
     vote_open: int | None,
 ) -> list[Alarm]:
-    """Every alarm raised so far, newest first. ``settled`` is the last Trading period settled, as its Round and
-    season, and ``vote_open`` the Round whose carbon tax vote is open now, if any.
-    """
+    """Every alarm raised so far, newest first. ``vote_open`` is the Round whose carbon tax vote is open now, if any."""
     raised: list[tuple[tuple[int, int, float], Alarm]] = []
-
-    def is_settled(round_number: int, season: Season) -> bool:
-        return settled is not None and (round_number, SEASONS.index(season)) <= (settled[0], SEASONS.index(settled[1]))
 
     for unlock in unlocks:
         # Announced at the Recap before, so before anything else in its Round.
@@ -456,8 +460,6 @@ def alarms(
             )
         )
     for event in fired:
-        if event.season is not None and not is_settled(event.round, event.season):
-            continue
         catalog = EVENTS.get(event.event)
         if catalog is None:
             continue

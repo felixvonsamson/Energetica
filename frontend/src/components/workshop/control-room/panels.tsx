@@ -21,6 +21,7 @@ import {
     riskLabel,
     taxPerTonne,
 } from "@/lib/workshop-control-room";
+import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { cn } from "@energetica/ui/lib/utils";
@@ -164,12 +165,15 @@ export function Alarms({ alarms }: { alarms: ControlRoom["alarms"] }) {
 
 // --- capacity against demand (#1287) -------------------------------------------------------------
 
-/** The capacity bar runs a little past the peak of every demand tier. */
+/**
+ * The capacity bar runs a little past the Round's peak of every demand tier, so
+ * in a Trading period the season's peaks move on a scale that stays put.
+ */
 const CAPACITY_HEADROOM = 1.08;
 
 export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
     const { room, risk } = outlook;
-    const scaleMax = outlook.all_tiers_peak * CAPACITY_HEADROOM;
+    const scaleMax = outlook.round_all_tiers_peak * CAPACITY_HEADROOM;
     const pct = (watts: number) =>
         `${(Math.min(watts, scaleMax) / scaleMax) * 100}%`;
     const weatherDependent = room.total - room.controllable;
@@ -193,7 +197,7 @@ export function Capacity({ outlook }: { outlook: ControlRoom["capacity"] }) {
             <div className="relative h-[140px] shrink-0">
                 <PeakLabel
                     at={pct(outlook.must_serve_peak)}
-                    label="Must-serve peak"
+                    label={`${outlook.season === null ? "Round" : SEASON_LABELS[outlook.season]} must-serve peak`}
                     value={formatMegawatts(outlook.must_serve_peak)}
                     strong
                 />

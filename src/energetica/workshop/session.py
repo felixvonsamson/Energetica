@@ -119,7 +119,6 @@ from energetica.workshop.events import (
     facility_price_factor,
     fuel_shocks,
     revenue_tax_rate,
-    round_demand_factor,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
 from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
@@ -1527,7 +1526,6 @@ class WorkshopSession:
             ]
             raised = alarms(
                 fired=self.fired_events,
-                settled=None if last is None else (last.round, last.season),
                 blackouts=self.blackouts,
                 unlocks=self.unlocks,
                 vote_outcomes=self.vote_outcomes,
@@ -1577,17 +1575,35 @@ class WorkshopSession:
         )
 
     def _capacity_outlook(self, round_number: int) -> CapacityOutlook:
-        """The room's capacity in Round ``round_number`` against its must-serve peak (#1287). Facilities selected in its
-        open Investment phase count as if bought, and those still under construction do not. The peak leaves out
-        seasonal events, which players learn of only as a forecast, and rationing. The caller holds the lock.
+        """The room's capacity in Round ``round_number`` against its must-serve peak (#1287): the peak of the season
+        whose Trading period the session is in, or else the highest of the Round's seasons. Facilities selected in its
+        open Investment phase count as if bought, and those still under construction do not. The peak counts the
+        Round's events, those still planned too, and leaves out rationing. The caller holds the lock.
         """
         players = self.network.players()
-        peak = (
-            self._base_amplitude()
-            * growth_through(self.demand_growth, round_number)
-            * round_demand_factor(self.fired_events, round_number)
-            * peak_demand_factor(self.plans[round_number - 1].levers.round_format)
-        )
+        plan = self.plans[round_number - 1]
+        # The Round's events that are still to fire count as if they had.
+        events = [
+            *self.fired_events,
+            *(
+                FiredEvent.of(planned, round_number=round_number, season=planned.season)
+                for planned in plan.events
+                if event_status(planned, round_number, fired=self.fired_events) == "planned"
+            ),
+        ]
+        amplitude = self._base_amplitude() * growth_through(self.demand_growth, round_number)
+
+        def season_peak(season: Season) -> float:
+            return (
+                amplitude
+                * demand_factor(events, round_number, season)
+                * peak_demand_factor(plan.levers.round_format, season)
+            )
+
+        round_peak = max(season_peak(season) for season in SEASONS)
+        season = self.checkpoint.season if isinstance(self.checkpoint, TradingPeriod) else None
+        peak = round_peak if season is None else season_peak(season)
+        tiers = sum(tier.share for tier in DEMAND_TIERS)
         selecting = self.checkpoint == Investment(round=round_number)
         fleet = [
             owned
@@ -1609,8 +1625,10 @@ class WorkshopSession:
         capacity = room_capacity(facilities, capacity_factors)
         return CapacityOutlook(
             round=round_number,
+            season=season,
             must_serve_peak=peak,
-            all_tiers_peak=peak * sum(tier.share for tier in DEMAND_TIERS),
+            all_tiers_peak=peak * tiers,
+            round_all_tiers_peak=round_peak * tiers,
             room=capacity,
             risk=blackout_risk(peak, capacity),
         )

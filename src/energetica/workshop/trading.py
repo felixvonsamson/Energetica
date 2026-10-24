@@ -546,26 +546,22 @@ def demand_scale(season: Season, round_format: RoundFormat, curve: DemandCurve) 
     return average(season_days(season)) / average(simulated_days(season, round_format))
 
 
-def peak_demand_factor(round_format: RoundFormat) -> float:
-    """The highest must-serve demand a Round in ``round_format`` clears, per W of the demand block's amplitude, before
-    seasonal events and rationing: what the engine records as the Round's peak (#1287).
+def peak_demand_factor(round_format: RoundFormat, season: Season) -> float:
+    """The highest must-serve demand a Trading period in ``season`` clears under ``round_format``, per W of the demand
+    block's amplitude, before events and rationing (#1287).
     """
-    return _peak_demand_factor(round_format.trading_format, round_format.clearings_per_day)
+    return _peak_demand_factor(round_format.trading_format, round_format.clearings_per_day, season)
 
 
-# Worked out once per format, since it reads every clearing of the year.
+# Worked out once per format and season, since it reads every clearing of the season.
 @cache
-def _peak_demand_factor(trading_format: TradingFormat, clearings: ClearingsPerDay) -> float:
+def _peak_demand_factor(trading_format: TradingFormat, clearings: ClearingsPerDay, season: Season) -> float:
     round_format = RoundFormat(trading_format=trading_format, clearings_per_day=clearings)
     curve = national_demand_curve()
-    return max(
-        demand_scale(season, round_format, curve)
-        * max(
-            nominal_demand(1.0, curve, SettlementPeriod(day, clearing, clearings))
-            for day in simulated_days(season, round_format)
-            for clearing in range(clearings)
-        )
-        for season in SEASONS
+    return demand_scale(season, round_format, curve) * max(
+        nominal_demand(1.0, curve, SettlementPeriod(day, clearing, clearings))
+        for day in simulated_days(season, round_format)
+        for clearing in range(clearings)
     )
 
 
