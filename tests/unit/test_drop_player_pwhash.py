@@ -10,7 +10,10 @@ from __future__ import annotations
 import importlib.util
 import pickle
 from pathlib import Path
+from collections.abc import Iterator
 from types import ModuleType
+
+import pytest
 
 from energetica.freeplay import engine
 from energetica.freeplay.app import create_app
@@ -21,6 +24,14 @@ from energetica.utils.map_helpers import confirm_location
 
 _SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "instance" / "drop_player_pwhash.py"
 _PICKLE = Path("instance/engine_data.pck")
+
+
+@pytest.fixture(autouse=True)
+def _remove_backups() -> Iterator[None]:
+    """Delete the backups the script writes next to the repo's ``instance/`` pickle, even on failure."""
+    yield
+    for backup in _PICKLE.parent.glob(f"{_PICKLE.name}.bak-*"):
+        backup.unlink()
 
 
 def _load_script() -> ModuleType:
@@ -116,7 +127,6 @@ def test_the_script_backs_up_the_pickle_before_overwriting_it() -> None:
     backups = list(_PICKLE.parent.glob(f"{_PICKLE.name}.bak-*"))
     assert len(backups) == 1
     assert backups[0].read_bytes() == before
-    backups[0].unlink()
 
 
 def test_a_second_run_reports_nothing_to_do_and_leaves_the_pickle_alone() -> None:
@@ -129,4 +139,4 @@ def test_a_second_run_reports_nothing_to_do_and_leaves_the_pickle_alone() -> Non
 
     assert _PICKLE.read_bytes() == after_first_run
     assert list(_PICKLE.parent.glob(f"{_PICKLE.name}.bak-*")) == []
-    assert pickle.loads(after_first_run)["db_model_instances"]["Player"]
+    assert [p.username for p in pickle.loads(after_first_run)["db_model_instances"]["Player"].values()] == ["alice"]

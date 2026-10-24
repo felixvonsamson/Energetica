@@ -18,8 +18,8 @@ from energetica.utils import misc
 from energetica.utils.tick_execution import tick
 
 
-def create_user(user_id: int, username: str) -> requests.Session:
-    """Create a user with the given user_id.
+def create_user(username: str) -> requests.Session:
+    """Sign up a playing account named ``username`` and return a session logged in as it.
 
     The action log holds no password hash (#1341), so the account gets a random password nobody
     knows. Replay never needs it: the session below logs in with a minted cookie.
@@ -109,7 +109,7 @@ def _simulate(
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
         elif action.action_type == "create_user":
             user_id = action.user_id
-            user_sessions[user_id] = create_user(user_id, action.username)
+            user_sessions[user_id] = create_user(action.username)
         elif action.action_type == "request":
             user_id = action.user_id
             if user_id not in user_sessions:

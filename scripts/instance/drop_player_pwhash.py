@@ -72,7 +72,8 @@ def drop_player_pwhash(engine_state: dict[str, Any]) -> tuple[int, int]:
     players = engine_state["db_model_instances"].get("Player", {})
     dropped = 0
     for player in players.values():
-        if player.__dict__.pop("pwhash", None) is not None:
+        if "pwhash" in player.__dict__:
+            del player.__dict__["pwhash"]
             dropped += 1
     return dropped, len(players) - dropped
 
