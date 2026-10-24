@@ -252,23 +252,23 @@ _FACILITIES = [
     # solid-state five.
     _storage(
         FacilityId.LITHIUM_ION_BATTERIES, "Lithium-ion batteries", FacilityCategory.BATTERIES,
-        price=3_000_000, power=30_000_000, capacity=100_000_000, efficiency=0.90, lifetime=1, om_per_round=50_000,
+        price=3_000_000, power=90_000_000, capacity=300_000_000, efficiency=0.90, lifetime=1, om_per_round=50_000,
         construction_pollution=8_000_000, ramping_time=180,
     ),
     _storage(
         FacilityId.SOLID_STATE_BATTERIES, "Solid-state batteries", FacilityCategory.BATTERIES,
-        price=6_000_000, power=50_000_000, capacity=250_000_000, efficiency=0.95, lifetime=1, om_per_round=80_000,
+        price=6_000_000, power=150_000_000, capacity=750_000_000, efficiency=0.95, lifetime=1, om_per_round=80_000,
         construction_pollution=6_000_000, ramping_time=180,
     ),
     _storage(
         FacilityId.HYDROGEN_STORAGE, "Hydrogen storage", FacilityCategory.HYDROGEN_STORAGE,
-        price=10_000_000, power=20_000_000, capacity=5_000_000_000, efficiency=0.40, lifetime=3, om_per_round=100_000,
+        price=5_000_000, power=60_000_000, capacity=15_000_000_000, efficiency=0.40, lifetime=3, om_per_round=30_000,
         construction_pollution=2_400_000, ramping_time=480,
     ),
     # Between the persistent world's small and large pumped hydro, which Workshop does not split.
     _storage(
         FacilityId.PUMPED_HYDRO, "Pumped hydro", FacilityCategory.PUMPED_HYDRO,
-        price=25_000_000, power=60_000_000, capacity=4_000_000_000, efficiency=0.80, lifetime=6, om_per_round=200_000,
+        price=15_000_000, power=180_000_000, capacity=12_000_000_000, efficiency=0.80, lifetime=6, om_per_round=200_000,
         construction_pollution=1_200_000, ramping_time=720,
     ),
 ]  # fmt: skip

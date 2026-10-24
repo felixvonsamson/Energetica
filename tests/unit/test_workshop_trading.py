@@ -44,7 +44,7 @@ GAS = FacilityId.GAS_BURNER  # 38 MW
 COMBINED_CYCLE = FacilityId.COMBINED_CYCLE  # 60 MW
 WIND = FacilityId.ONSHORE_WIND_TURBINE  # 45 MW
 OFFSHORE_WIND = FacilityId.OFFSHORE_WIND_TURBINE  # 100 MW
-BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 30 MW, 100 MWh, 90% efficient
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES  # 90 MW, 300 MWh, 90% efficient
 REACTOR = FacilityId.NUCLEAR_REACTOR  # one Round to build
 
 _BATTERY_CAPACITY = CATALOG[BATTERIES].base_storage_capacity or 0.0
@@ -163,28 +163,28 @@ def test_a_renewable_produces_what_the_weather_gives_it() -> None:
 
 
 def test_storage_discharges_what_it_sells_and_keeps_the_rest() -> None:
-    # Two full batteries offer at 0 and discharge at their full 60 MW, short of the 75 MW willing to pay at
-    # least 0. Their buy price sits at the floor, below the clearing price, so they never charge.
-    full = 2 * _BATTERY_CAPACITY
+    # Full batteries offer at 0 and discharge 75 MW, all that is willing to pay at least 0, short of their full
+    # 90 MW. Their buy price sits at the floor, below the clearing price, so they never charge.
+    full = _BATTERY_CAPACITY
     outcome = _simulate(
-        _bidder(BATTERIES, BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full}),
+        _bidder(BATTERIES, sell={BATTERIES: 0.0}, buy={BATTERIES: -25.0}, stored_energy={BATTERIES: full}),
         trading_format="full_season",
     )
 
-    assert outcome.record.generation[0, 0] == pytest.approx(60e6)
-    drawn = 60e6 / math.sqrt(_BATTERY_EFFICIENCY)
+    assert outcome.record.generation[0, 0] == pytest.approx(75e6)
+    drawn = 75e6 / math.sqrt(_BATTERY_EFFICIENCY)
     assert outcome.record.stored[0, 0] == pytest.approx(full - drawn)
 
 
 def test_storage_charges_what_it_buys_and_stores_it_for_the_next_period() -> None:
-    # 140 MW of wind at -25 floods the market, which clears at -25. The empty batteries bid 100 for their
-    # whole 30 MW, so they charge at full power, and are paid for it.
+    # 200 MW of wind at -25 floods the market, which clears at -25. The empty batteries bid 100 for their
+    # whole 90 MW, so they charge at full power, and are paid for it.
     outcome = _simulate(
         _bidder(OFFSHORE_WIND, OFFSHORE_WIND, BATTERIES, sell={OFFSHORE_WIND: -25.0}, buy={BATTERIES: 100.0}),
         trading_format="full_season",
     )
 
-    assert outcome.record.charged[1, 0] == pytest.approx(30e6)
+    assert outcome.record.charged[1, 0] == pytest.approx(90e6)
     assert outcome.results[1].facilities[BATTERIES].purchase_cost < 0
     assert outcome.stored_energy[1] == {BATTERIES: pytest.approx(_BATTERY_CAPACITY)}
 

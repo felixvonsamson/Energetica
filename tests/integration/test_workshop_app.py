@@ -582,7 +582,7 @@ def _investing_after(
     session_path: Path, clock: _Clock, trading_format: TradingFormat
 ) -> tuple[FastAPI, TestClient, int]:
     """An app in Round 2's Investment phase after a Round 1 played in ``trading_format``, with Alice entered,
-    signed in, and holding 2,000,000 and 500,000,000 Wh of battery energy her facilities cannot hold.
+    signed in, and holding 100,000,000 and 450,000,000 Wh of battery energy her facilities cannot hold.
 
     Returns the app, the client, and Alice's account id.
     """
@@ -594,7 +594,7 @@ def _investing_after(
     session.checkpoint = Investment(round=2)
     player = session.player(alice)
     assert player is not None
-    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 150_000_000.0
+    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 450_000_000.0
     player.money = 100_000_000.0
     authenticate(client, alice)
     return app, client, alice
@@ -603,9 +603,9 @@ def _investing_after(
 def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
     _, client, _ = _investing_after(session_path, clock, "full_season")
 
-    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 150_000_000.0}
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 450_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
-    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 50_000_000.0}
+    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 150_000_000.0}
     response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
     assert response.json()["stored_energy_at_risk"] == {}
 
