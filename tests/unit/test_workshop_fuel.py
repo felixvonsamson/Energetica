@@ -21,7 +21,6 @@ from energetica.workshop.fuel import (
     FuelPurchase,
     burned_fuels,
     capped_order,
-    DEFAULT_ORDER_SHARE,
     default_orders,
     next_fuel_price,
     season_need,
@@ -200,37 +199,36 @@ def test_an_order_is_capped_so_the_stock_stays_within_the_limit() -> None:
     assert capped_order(100.0, stock=200.0, need=50.0) == 0.0
 
 
-def test_the_first_default_buys_half_a_season_at_full_output() -> None:
-    assert DEFAULT_ORDER_SHARE == 0.5
-    assert default_orders({}, needs={Fuel.COAL: 80_000.0}, stocks={}) == {Fuel.COAL: 40_000.0}
+def test_the_default_buys_a_season_at_full_output() -> None:
+    assert default_orders({Fuel.COAL: 80_000.0}, stocks={}) == {Fuel.COAL: 80_000.0}
 
 
-def test_the_first_default_rounds_coal_and_gas_up_to_whole_tonnes_but_not_uranium() -> None:
-    orders = default_orders({}, needs={Fuel.COAL: 80_000.8, Fuel.GAS: 1_200.0, Fuel.URANIUM: 41.7}, stocks={})
+def test_the_default_rounds_coal_and_gas_up_to_whole_tonnes_but_not_uranium() -> None:
+    orders = default_orders({Fuel.COAL: 80_000.8, Fuel.GAS: 1_200.0, Fuel.URANIUM: 41.7}, stocks={})
 
-    assert orders == {Fuel.COAL: 41_000.0, Fuel.GAS: 1_000.0, Fuel.URANIUM: 20.85}
+    assert orders == {Fuel.COAL: 81_000.0, Fuel.GAS: 2_000.0, Fuel.URANIUM: 41.7}
 
 
 def test_a_rounded_default_is_still_capped_by_the_stockpile_limit() -> None:
-    assert default_orders({}, needs={Fuel.COAL: 100.0}, stocks={}) == {Fuel.COAL: 300.0}
+    assert default_orders({Fuel.COAL: 100.0}, stocks={}) == {Fuel.COAL: 300.0}
 
 
-def test_after_that_the_default_repeats_the_last_purchase() -> None:
-    orders = default_orders({Fuel.COAL: 30.0}, needs={Fuel.COAL: 80.0}, stocks={Fuel.COAL: 50.0})
+def test_the_default_buys_the_season_need_less_the_stock() -> None:
+    orders = default_orders({Fuel.COAL: 80_000.0}, stocks={Fuel.COAL: 50_000.0})
 
-    assert orders == {Fuel.COAL: 30.0}
-
-
-def test_a_newly_burned_fuel_defaults_to_half_its_season_need_and_a_fuel_no_longer_burned_is_dropped() -> None:
-    orders = default_orders({Fuel.COAL: 30.0}, needs={Fuel.GAS: 40_000.0}, stocks={Fuel.COAL: 10.0})
-
-    assert orders == {Fuel.GAS: 20_000.0}
+    assert orders == {Fuel.COAL: 30_000.0}
 
 
-def test_a_default_is_capped_by_the_stockpile_limit() -> None:
-    orders = default_orders({Fuel.COAL: 100.0}, needs={Fuel.COAL: 50.0}, stocks={Fuel.COAL: 120.0})
+def test_the_default_buys_nothing_when_the_stock_covers_the_season_need() -> None:
+    orders = default_orders({Fuel.COAL: 50_000.0}, stocks={Fuel.COAL: 120_000.0})
 
-    assert orders == {Fuel.COAL: 30.0}
+    assert orders == {Fuel.COAL: 0.0}
+
+
+def test_a_fuel_no_longer_burned_is_dropped() -> None:
+    orders = default_orders({Fuel.GAS: 40_000.0}, stocks={Fuel.COAL: 10_000.0})
+
+    assert orders == {Fuel.GAS: 40_000.0}
 
 
 def test_a_purchase_costs_its_quantity_at_its_price() -> None:

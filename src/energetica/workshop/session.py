@@ -1328,9 +1328,7 @@ class WorkshopSession:
         }
         if procurement == "manual":
             for player in players:
-                player.fuel_order = default_orders(
-                    player.fuel_order, needs=self.fuel_needs(player, period.round), stocks=player.fuel_stock
-                )
+                player.fuel_order = default_orders(self.fuel_needs(player, period.round), stocks=player.fuel_stock)
 
         def undo() -> None:
             self.fuel_prices = before

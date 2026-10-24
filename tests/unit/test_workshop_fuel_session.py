@@ -117,8 +117,8 @@ def _buy_a_season(session: WorkshopSession) -> None:
 
 
 def _first_default(kg: float) -> float:
-    """Half of the season need ``kg``, rounded up to whole tonnes, as a first default order of coal or gas is."""
-    return math.ceil(kg / 2 / 1_000) * 1_000.0
+    """``kg`` rounded up to whole tonnes, as a default order of coal or gas is."""
+    return math.ceil(kg / 1_000) * 1_000.0
 
 
 # --- the lever and the prices -----------------------------------------------------------------------
@@ -170,7 +170,7 @@ def test_a_planned_shock_lands_at_its_trading_period_only(path: Path) -> None:
 # --- ordering -----------------------------------------------------------------------------------
 
 
-def test_the_first_window_orders_half_a_season_at_full_output(path: Path) -> None:
+def test_the_first_window_orders_a_season_at_full_output(path: Path) -> None:
     session = _trading(path, facilities=(GAS, GAS))
 
     assert session.network.members[1].fuel_order == {Fuel.GAS: _first_default(_need(session))}
@@ -314,17 +314,20 @@ def test_a_period_opened_before_fuel_had_prices_settles_at_the_catalog_price(pat
     assert purchase.price == CATALOG_FUEL_PRICES[Fuel.GAS]
 
 
-def test_the_next_window_repeats_the_last_order(path: Path) -> None:
+def test_the_next_window_buys_the_season_need_less_the_stock(path: Path) -> None:
     session = _trading(path)
-    session.set_fuel_order(1, Fuel.GAS, 1_000.0)
+    alice = session.network.members[1]
+    session.set_fuel_order(1, Fuel.GAS, _need(session) / 2)
 
     _close_and_settle(session)
     session.advance()
 
-    assert session.network.members[1].fuel_order == {Fuel.GAS: 1_000.0}
+    stock = alice.fuel_stock.get(Fuel.GAS, 0.0)
+    assert stock < _need(session)
+    assert alice.fuel_order == {Fuel.GAS: _first_default(_need(session) - stock)}
 
 
-def test_the_next_windows_default_is_capped_by_the_stock(path: Path) -> None:
+def test_the_next_window_buys_nothing_when_the_stock_covers_the_season_need(path: Path) -> None:
     session = _trading(path)
     alice = session.network.members[1]
     session.set_fuel_order(1, Fuel.GAS, 3 * _need(session))
@@ -332,7 +335,8 @@ def test_the_next_windows_default_is_capped_by_the_stock(path: Path) -> None:
     _close_and_settle(session)
     session.advance()
 
-    assert alice.fuel_order[Fuel.GAS] == pytest.approx(3 * _need(session) - alice.fuel_stock[Fuel.GAS])
+    assert alice.fuel_stock[Fuel.GAS] >= _need(session)
+    assert alice.fuel_order == {Fuel.GAS: 0.0}
 
 
 def test_automatic_procurement_pays_for_what_was_burned(path: Path) -> None:
