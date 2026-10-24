@@ -51,9 +51,9 @@ UPGRADES: dict[FacilityId, FacilityId] = {
 #: The first Round Concentrated solar power can be bought in. It has no base tier to invest in.
 CSP_UNLOCK_ROUND = 3
 
-#: The unlock threshold as a share of every player's starting budget combined. Checked by the first recalibration
-#: (#1227): in a 6-player room it takes 17 coal burners, 19 gas burners, 2 nuclear reactors or 4 small dams.
-THRESHOLD_SHARE = 0.5
+#: The unlock threshold as a share of every player's starting budget combined. At base prices, a 6-player room
+#: needs 12 coal burners, 15 gas burners, 2 nuclear reactors or 5 small dams.
+THRESHOLD_SHARE = 0.4
 
 UnlockTrigger = Literal["investment_threshold", "round_gate", "format_lever"]
 

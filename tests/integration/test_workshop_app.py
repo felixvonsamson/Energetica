@@ -1739,8 +1739,8 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 
     assert response.status_code == 200
     body = response.json()
-    # Half of two starting budgets of 50,000,000.
-    assert body["threshold"] == 50_000_000.0
+    # Two fifths of two starting budgets of 50,000,000.
+    assert body["threshold"] == 40_000_000.0
     assert body["csp_unlock_round"] == 3
     assert body["unlocks"] == []
     technologies = {technology["base"]: technology for technology in body["technologies"]}

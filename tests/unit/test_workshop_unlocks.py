@@ -83,8 +83,8 @@ def test_spend_on_upgrades_and_standalone_facilities_counts_toward_nothing() -> 
     assert set(spent.values()) == {0.0}
 
 
-def test_the_threshold_is_half_of_every_players_starting_budget() -> None:
-    assert unlock_threshold(player_count=4) == 2 * WORKSHOP_STARTING_BUDGET
+def test_the_threshold_is_two_fifths_of_every_players_starting_budget() -> None:
+    assert unlock_threshold(player_count=5) == 2 * WORKSHOP_STARTING_BUDGET
 
 
 def _round_end(
