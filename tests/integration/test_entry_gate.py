@@ -20,7 +20,8 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
 from energetica.identity import web
 from energetica.identity.lobby_service_client import LobbyServiceClient
-from energetica.kernel.session import SESSION_COOKIE_NAME, mint_session_token
+from energetica.kernel.session_cookie import SESSION_COOKIE_NAME
+from lobby_service.session import mint_session_token
 
 from ._session_helpers import authenticate, make_account
 

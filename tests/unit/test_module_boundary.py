@@ -1,9 +1,10 @@
 """The lobby is an instance-independent service: it reuses the server-wide identity layer
-(``energetica.identity``) and the signing primitives, but must be able to import them **without
-dragging in the game domain or its running services** (ADR-0002, lobby Phase B).
-``energetica.kernel.session`` is a game-model-free leaf, and the heavy game graph (routers,
-socketio, tick loop, domain models) is imported lazily inside ``create_app`` rather than at
-``energetica`` import.
+(``energetica.identity``), but must be able to import it **without dragging in the game domain or
+its running services** (ADR-0002, lobby Phase B). The heavy game graph (routers, socketio, tick
+loop, domain models) is imported lazily inside ``create_app`` rather than at ``energetica`` import.
+
+The database and the signing secret belong to the lobby service (ADR-0009), so neither the runs nor
+the lobby backend may load any of ``lobby_service``.
 
 The persistent world's game engine is built when ``energetica.freeplay`` is imported, not when
 ``energetica`` is (#1055). So ``energetica.freeplay`` itself is a leak marker: if it is loaded, the
@@ -40,9 +41,13 @@ _ENGINE_MARKERS = (
 
 
 def _modules_after_importing(module: str) -> set[str]:
-    """Import ``module`` in a clean interpreter and return the ``energetica.*`` modules it loaded."""
+    """
+    Import ``module`` in a clean interpreter and return the ``energetica.*`` and ``lobby_service.*``
+    modules it loaded.
+    """
     code = (
-        f"import {module}, sys, json\nprint(json.dumps(sorted(m for m in sys.modules if m.startswith('energetica'))))\n"
+        f"import {module}, sys, json\n"
+        "print(json.dumps(sorted(m for m in sys.modules if m.startswith(('energetica', 'lobby_service')))))\n"
     )
     # Import from this checkout's src/, as pytest itself does (`pythonpath` in pyproject.toml).
     # Otherwise a git worktree's shared .venv would resolve `energetica` to the main checkout.
@@ -61,18 +66,6 @@ def _modules_after_importing(module: str) -> set[str]:
     import json
 
     return set(json.loads(result.stdout.strip().splitlines()[-1]))
-
-
-def test_importing_accounts_does_not_load_the_game_engine() -> None:
-    loaded = _modules_after_importing("energetica.identity.accounts")
-    leaked = loaded.intersection(_ENGINE_MARKERS)
-    assert not leaked, f"importing energetica.identity.accounts leaked the game engine: {sorted(leaked)}"
-
-
-def test_importing_session_leaf_does_not_load_the_game_engine() -> None:
-    loaded = _modules_after_importing("energetica.kernel.session")
-    leaked = loaded.intersection(_ENGINE_MARKERS)
-    assert not leaked, f"importing energetica.kernel.session leaked the game engine: {sorted(leaked)}"
 
 
 def test_importing_the_error_envelope_does_not_load_the_game_engine() -> None:
@@ -94,13 +87,14 @@ def test_importing_the_lobby_backend_does_not_load_the_game_engine() -> None:
     assert not leaked, f"importing the lobby backend leaked the game engine: {sorted(leaked)}"
 
 
-def test_the_lobby_backend_loads_neither_the_database_code_nor_the_signing_secret() -> None:
+def test_the_lobby_backend_loads_none_of_the_lobby_service() -> None:
     """The lobby backend is a client of the lobby service like every run: it never opens the
-    database and does not hold the signing secret, which the session module loads on import (ADR-0009).
+    database and does not hold the signing secret, which ``lobby_service.session`` loads on import
+    (ADR-0009).
     """
     loaded = _modules_after_importing("lobby")
-    leaked = loaded.intersection({"energetica.identity.accounts.db", "energetica.kernel.session"})
-    assert not leaked, f"importing the lobby backend loaded {sorted(leaked)}"
+    leaked = sorted(m for m in loaded if m.startswith("lobby_service"))
+    assert not leaked, f"importing the lobby backend loaded {leaked}"
 
 
 @pytest.mark.parametrize(
@@ -115,14 +109,14 @@ def test_the_lobby_backend_loads_neither_the_database_code_nor_the_signing_secre
         "energetica.workshop.routes",
     ],
 )
-def test_the_run_apps_load_neither_the_database_code_nor_the_signing_secret(module: str) -> None:
+def test_the_run_apps_load_none_of_the_lobby_service(module: str) -> None:
     """
     Runs are clients of the lobby service: they reach accounts, sessions and membership only
     through its API, so they never open the database and do not hold the signing secret (ADR-0009).
     """
     loaded = _modules_after_importing(module)
-    leaked = loaded.intersection({"energetica.identity.accounts.db", "energetica.kernel.session"})
-    assert not leaked, f"importing {module} loaded {sorted(leaked)}"
+    leaked = sorted(m for m in loaded if m.startswith("lobby_service"))
+    assert not leaked, f"importing {module} loaded {leaked}"
 
 
 def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:

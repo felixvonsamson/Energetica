@@ -313,7 +313,7 @@ else
 fi
 echo
 echo "Not touched (server-wide, shared by every run):"
-echo "  /var/lib/energetica/accounts.db — accounts and instance_membership rows persist."
+echo "  /var/lib/energetica-lobby-service/lobby.db — accounts and instance_membership rows persist."
 echo "  A membership row for a torn-down run with no recap now has no fragment to join against,"
 echo "  so my-runs filters it out. Harmless; purging those rows is a separate chore."
 echo

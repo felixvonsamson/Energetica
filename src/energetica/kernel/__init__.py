@@ -1,7 +1,7 @@
 """The kernel layer: domain-neutral utilities at the bottom of the dependency order.
 
-The game's error types (:mod:`~energetica.kernel.game_error`), session signing and cookie
-handling (:mod:`~energetica.kernel.session`), stable hashing (:mod:`~energetica.kernel.hashing`),
+The game's error types (:mod:`~energetica.kernel.game_error`), session cookie
+handling (:mod:`~energetica.kernel.session_cookie`), stable hashing (:mod:`~energetica.kernel.hashing`),
 deployed-version reporting (:mod:`~energetica.kernel.version`), number formatting
 (:mod:`~energetica.kernel.formatting`), and the error envelope every app answers errors in
 (:mod:`~energetica.kernel.error_envelope`) live here (see #1052, #1134).

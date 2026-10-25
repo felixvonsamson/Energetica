@@ -23,7 +23,7 @@ from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action, ApiAction, ApiActionRequest, ApiActionResponse
 from energetica.identity.account import Account
 from energetica.identity.web import resolve_entry_account
-from energetica.kernel import session
+from lobby_service import session
 from energetica import simulate as simulate_module
 from energetica.simulate import simulate
 

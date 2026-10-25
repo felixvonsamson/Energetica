@@ -1,9 +1,9 @@
 # scripts/lib/dev-env.sh — shared local-dev environment (sourced, never executed directly).
 #
-# Points a local app backend (main.py) and the local lobby backend (main_lobby.py) at ONE
-# signing secret + accounts store, so an SSO cookie the lobby mints validates against the
-# instance's entry gate (docs/architecture/lobby.md, docs/getting-started/local-development.md).
-# Without this the two backends sign with different secrets and every authed request 401s.
+# Points every local lobby service (dev.sh, dev-app.sh and dev-lobby.sh each start one) at ONE signing
+# secret + lobby.db, so an SSO cookie the lobby mints validates against the instance's entry gate
+# (docs/architecture/lobby.md, docs/getting-started/local-development.md). Without this the two
+# services sign with different secrets and every authed request 401s.
 #
 # The scratch lives at .energetica-dev/ (repo root, gitignored) — deliberately OUTSIDE instance/,
 # so `--rm_instance` (which rmtree's instance/) resets only game/engine state and leaves identity
@@ -17,12 +17,11 @@ DEV_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEV_SCRATCH="$DEV_REPO_ROOT/.energetica-dev"
 DEV_LANDING_DIR="$DEV_SCRATCH/landing"
 
-export ENERGETICA_ACCOUNTS_DB_PATH="$DEV_SCRATCH/accounts.db"
-# The lobby service owns the same file, which seed_dev_data still writes directly (ADR-0009). The
-# lobby backend and the app backend reach the service on this socket. The path is relative to the
-# repo root, which every script that sources this file cds into, because a Unix socket path must
-# stay under about 104 characters on macOS and a worktree's absolute path does not.
-export ENERGETICA_LOBBY_DB_PATH="$ENERGETICA_ACCOUNTS_DB_PATH"
+# The lobby service is the only process that opens the database (ADR-0009). The lobby backend, the
+# app backend and seed_dev_data reach it on this socket. The path is relative to the repo root,
+# which every script that sources this file cds into, because a Unix socket path must stay under
+# about 104 characters on macOS and a worktree's absolute path does not.
+export ENERGETICA_LOBBY_DB_PATH="$DEV_SCRATCH/lobby.db"
 export ENERGETICA_LOBBY_SERVICE_SOCKET=".energetica-dev/lobby-service.sock"
 export ENERGETICA_SERVER_CONFIG_PATH="$DEV_SCRATCH/server.json"
 export ENERGETICA_LANDING_DIR="$DEV_LANDING_DIR"
@@ -30,6 +29,17 @@ export ENERGETICA_SHARED_SECRET_PATH="$DEV_SCRATCH/secret_key.txt"
 # ENERGETICA_APEX_DOMAIN deliberately unset → host-only cookie, which is what localhost needs.
 
 mkdir -p "$DEV_LANDING_DIR/instances"
+
+# The database was accounts.db until #1284. Keep a scratch from before then, rather than start over
+# with no accounts. The lobby service brings it up to the current schema when it starts.
+if [ -f "$DEV_SCRATCH/accounts.db" ] && [ ! -e "$ENERGETICA_LOBBY_DB_PATH" ]; then
+    for _suffix in "" -wal -shm; do
+        if [ -e "$DEV_SCRATCH/accounts.db$_suffix" ]; then
+            mv "$DEV_SCRATCH/accounts.db$_suffix" "$ENERGETICA_LOBBY_DB_PATH$_suffix"
+        fi
+    done
+    unset _suffix
+fi
 
 # Server-wide signup toggle: on by default so the signup flow is testable. First-write only —
 # edit .energetica-dev/server.json directly to test the signups-disabled flow without it being
@@ -55,7 +65,7 @@ fi
 # Start the lobby service in the background, from the repo root, and return once it listens, so the
 # lobby backend's first request does not race its start-up. Sets LOBBY_SERVICE_PID for the caller's
 # cleanup. If the service does not listen in time, it is stopped before this returns failure, so
-# nothing is left running. Run after seed_dev_data, which still writes the database directly.
+# nothing is left running. Run before seed_dev_data, which goes through the service.
 start_lobby_service() {
     rm -f "$ENERGETICA_LOBBY_SERVICE_SOCKET"
     "$DEV_REPO_ROOT/.venv/bin/python" main_lobby_service.py --uds "$ENERGETICA_LOBBY_SERVICE_SOCKET" &
@@ -71,8 +81,9 @@ start_lobby_service() {
     return 1
 }
 
-# Seed a demo account + sample runs so every picker state is reachable. Idempotent. The lobby owns
-# accounts, so only the lobby-side entry points (dev-lobby.sh, dev.sh) call this:
+# Seed a demo account + sample runs so every picker state is reachable. Idempotent. The account and
+# its memberships go through the lobby service, so call start_lobby_service first. Only the
+# lobby-side entry points (dev-lobby.sh, dev.sh) call this:
 #   login as demo / demo1234  → "your runs" (poc-3 + private-beta) + "other runs to join" (summer-2026)
 #   logged out                → advertised runs only (poc-3 + summer-2026)
 #   fresh signup (signups on) → "No runs joined yet"
@@ -82,8 +93,8 @@ seed_dev_data() {
 import json
 from pathlib import Path
 
-from energetica.identity import accounts, instance_config
-from energetica.kernel.session import generate_password_hash
+from energetica.identity import instance_config
+from energetica.identity.lobby_service_client import LobbyServiceClient
 
 landing = instance_config._landing_dir()
 frag_dir = landing / "instances"
@@ -105,11 +116,11 @@ for slug, name, advertised, starts_at in runs:
 instance_config.aggregate_instances()
 
 # Demo account, member of one advertised + one unadvertised run.
-account_id = accounts.get_or_create_account_id(
-    username="demo", pwhash=generate_password_hash("demo1234")
-)
-accounts.record_settlement(account_id=account_id, slug="poc-3", settled_at="2026-03-06T10:00:00+00:00")
-accounts.record_settlement(account_id=account_id, slug="private-beta", settled_at="2026-07-02T10:00:00+00:00")
+service = LobbyServiceClient.connect("dev-seed")
+demo = service.get_account_by_username("demo")
+account_id = demo.account_id if demo else service.create_account(username="demo", password="demo1234").account_id
+service.add_run_member("poc-3", account_id)
+service.add_run_member("private-beta", account_id)
 
 # The dev frontend serves /instances.json from frontend/public/ (Apache aliases it in prod).
 # Symlink it to the live landing aggregate rather than copying: a one-time copy goes stale the

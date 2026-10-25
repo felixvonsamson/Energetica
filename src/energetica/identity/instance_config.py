@@ -72,8 +72,8 @@ def derive_phase(
 
     The boundaries are always tz-aware (``AwareDatetime``), so a naive ``now`` — the ``datetime.now()``
     footgun — would raise ``TypeError`` on the first comparison and turn a phase read into a request
-    failure. Recover it as UTC (matching ``_parse_settled_at``'s write-side convention) rather than
-    crash: a phase read must always yield a phase. Callers should still pass aware UTC.
+    failure. Recover it as UTC rather than crash: a phase read must always yield a phase. Callers
+    should still pass aware UTC.
     """
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)

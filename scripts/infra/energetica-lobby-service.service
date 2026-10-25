@@ -10,13 +10,14 @@
 # On start it runs any pending schema migrations before serving. Connections that arrive
 # meanwhile wait on the socket.
 #
+# It runs as its own user, created by setup-base.sh, which alone can read lobby.db and the signing
+# secret in /var/lib/energetica-lobby-service (0700). The supplementary group energetica lets it
+# read its code, which the deploy user owns with group energetica.
+#
 # The Environment= lines are the contract with src/lobby_service/config.py and
-# src/energetica/kernel/session.py:
-#   * ENERGETICA_LOBBY_DB_PATH points at the existing accounts.db until the rename to lobby.db,
-#     which happens in the deploy of "Remove database access from runs" (#1284). Runs on old code
-#     open the same file until then.
-#   * ENERGETICA_SHARED_SECRET_PATH is the session-signing secret. Only this service needs it
-#     once every run is switched to the lobby service's API.
+# src/lobby_service/session.py. Both secret paths name the same private file. The second is the
+# fallback the code creates a secret at when the first is missing; its default is instance/ under
+# WorkingDirectory, which the energetica user can write to, so it must not be used here.
 
 [Unit]
 Description=Energetica lobby service (accounts, sessions, memberships)
@@ -25,12 +26,14 @@ After=energetica-lobby-service.socket
 
 [Service]
 Type=simple
-User=energetica
-Group=energetica
+User=energetica-lobby-service
+Group=energetica-lobby-service
+SupplementaryGroups=energetica
 WorkingDirectory=/var/www/energetica-lobby
 
-Environment=ENERGETICA_LOBBY_DB_PATH=/var/lib/energetica/accounts.db
-Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica/secret_key.txt
+Environment=ENERGETICA_LOBBY_DB_PATH=/var/lib/energetica-lobby-service/lobby.db
+Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica-lobby-service/secret_key.txt
+Environment=ENERGETICA_INSTANCE_SECRET_PATH=/var/lib/energetica-lobby-service/secret_key.txt
 
 # systemd passes the listening socket as file descriptor 3.
 ExecStart=/var/www/energetica-lobby/.venv/bin/python main_lobby_service.py --fd 3

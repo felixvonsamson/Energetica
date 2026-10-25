@@ -13,9 +13,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from energetica.identity.lobby_service_client import LobbyServiceClient
-from energetica.kernel.session import decode_session_token, mint_session_token
 from lobby_service.app import create_service_app
 from lobby_service.schema import SCHEMA_VERSION, upgrade_database
+from lobby_service.session import decode_session_token, mint_session_token
 
 BASE = "http://lobby-service/internal/v1"
 
@@ -54,8 +54,8 @@ def test_a_new_account_comes_with_a_session(service: TestClient) -> None:
     assert body["joined"] is None
 
 
-def test_the_tokens_are_the_ones_runs_on_old_code_accept(service: TestClient) -> None:
-    """During the switch-over, runs on old code check cookies themselves, so the format must not change."""
+def test_the_tokens_keep_the_cookie_format(service: TestClient) -> None:
+    """Session cookies last 60 days, so tokens minted before a deploy must keep working after it."""
     created = _create_account(service)
     assert decode_session_token(created["token"]) == str(created["account_id"])
 

@@ -46,7 +46,6 @@ def create_current_schema(conn: sqlite3.Connection) -> None:
             role       TEXT    NOT NULL DEFAULT 'player',
             created_at TEXT    NOT NULL,             -- ISO-8601 UTC; joined_at for a player,
                                                       -- granted_at for a facilitator
-            settled_at TEXT,                         -- vestigial: written only by runs on old code
             PRIMARY KEY (account_id, slug)
         )
         """

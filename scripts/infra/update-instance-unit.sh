@@ -20,7 +20,9 @@ set -euo pipefail
 #    above all, are left exactly as they are. Today that is ENERGETICA_LOBBY_SERVICE_SOCKET, which
 #    tells the run where the lobby service listens (ADR-0009). Without it the run looks for a dev
 #    socket and answers every request that needs an account with a 503.
-# 3. Reloads systemd. It does not restart the instance: the next deploy does that, and
+# 3. Removes each variable the code no longer reads. Today that is ENERGETICA_ACCOUNTS_DB_PATH,
+#    which pointed code from before #1283 at the database it opened itself (#1284).
+# 4. Reloads systemd. It does not restart the instance: the next deploy does that, and
 #    deploy-instance.sh refuses to deploy until this script has run.
 #
 # Deliver it the way the other infra scripts are delivered — there is no git on the server:
@@ -69,6 +71,19 @@ for variable in "${FIXED_VARIABLES[@]}"; do
     log_success "Added $line to $ENV_FILE"
 done
 
-# --- 3. Reload ------------------------------------------------------------------
+# --- 3. Retired variables --------------------------------------------------------
+# Only the variable's own line goes. A comment above it, such as the one the template carried,
+# stays: it is harmless, and telling it apart from an operator's own comment is not.
+RETIRED_VARIABLES=(ENERGETICA_ACCOUNTS_DB_PATH)
+for variable in "${RETIRED_VARIABLES[@]}"; do
+    if grep -q "^$variable=" "$ENV_FILE"; then
+        sed -i "/^$variable=/d" "$ENV_FILE"
+        log_success "Removed $variable from $ENV_FILE"
+    else
+        log_success "$ENV_FILE already lacks $variable"
+    fi
+done
+
+# --- 4. Reload ------------------------------------------------------------------
 systemctl daemon-reload
 log_success "systemd reloaded. Deploy $INSTANCE (deploy-instance.sh) to restart it with the new settings."

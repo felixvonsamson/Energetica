@@ -142,7 +142,7 @@ lobby's "your runs" view is keyed on this, not on settling. See the flagged ambi
 **Settled**:
 An account that has picked a tile — has a **Player** in that run's engine. A later, separate
 step from joining, and a freeplay engine act only: the **lobby service** does not record it
-(ADR-0009; `instance_membership`'s `settled_at` is vestigial and being removed).
+(ADR-0009; the vestigial `settled_at` column was dropped in #1284).
 
 **Server-wide session**:
 The single authenticated session a player gets from the lobby, carried to every run on the

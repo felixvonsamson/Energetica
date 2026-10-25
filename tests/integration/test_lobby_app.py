@@ -18,7 +18,8 @@ from fastapi.testclient import TestClient
 
 from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient
 from energetica.identity.schemas.auth import LoginRequest, SignupRequest
-from energetica.kernel.session import SESSION_COOKIE_NAME, decode_session_token
+from energetica.kernel.session_cookie import SESSION_COOKIE_NAME
+from lobby_service.session import decode_session_token
 from lobby import create_lobby_app
 from lobby.deps import get_lobby_service
 

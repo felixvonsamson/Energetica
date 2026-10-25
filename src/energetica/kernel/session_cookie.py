@@ -1,9 +1,9 @@
 """
 The session cookie: its name, its lifetime, and setting it on a response.
 
-Kept apart from :mod:`energetica.kernel.session`, which loads the signing secret when imported. The
-lobby backend sets the cookie to a token the lobby service minted, so it needs this module and must
-not hold the secret (ADR-0009).
+The signing secret and the tokens themselves belong to the lobby service
+(:mod:`lobby_service.session`). The lobby backend sets the cookie to a token the service minted,
+and runs read it to hand it to the service, so neither holds the secret (ADR-0009).
 """
 
 from __future__ import annotations

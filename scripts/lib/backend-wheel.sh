@@ -64,7 +64,7 @@ build_backend_wheel() {
     }
     BACKEND_WHEEL="$(basename "$dist_dir"/*.whl)"
 
-    # The server installs the wheel as the `energetica` service user, but the instance tree is
+    # An instance installs the wheel as the `energetica` service user, but the instance tree is
     # 2750 deploy:energetica — so the service user reaches the wheel through the group bit only.
     # `rsync -a` preserves local permissions, so a developer with a restrictive umask (pip writes
     # the wheel 0600 under umask 077) would ship a file the service user cannot read, failing
@@ -76,7 +76,14 @@ build_backend_wheel() {
     log_success "Backend wheel built ($BACKEND_WHEEL)"
 }
 
-# Install the wheel that the code rsync carried to <remote-path>/dist, as the service user.
+# Install the wheel that the code rsync carried to <remote-path>/dist, as the venv's owner.
+#
+#   install_backend_wheel <ssh-target> <remote-path> [--as-deploy-user]
+#
+# An instance's venv belongs to the `energetica` service user, so pip runs through sudo. The
+# lobby's venv belongs to the deploy user (setup-lobby.sh), so pass --as-deploy-user: the lobby
+# service runs from it as a more trusted user than `energetica`, which must not be able to change
+# what it imports.
 install_backend_wheel() {
     local ssh_target="$1" remote_path="$2"
     [ -n "$BACKEND_WHEEL" ] || {
@@ -84,7 +91,15 @@ install_backend_wheel() {
         exit 1
     }
 
+    # The umask is set only for the deploy user's install. Its files must stay readable to the
+    # energetica group, through which both lobby processes import them, whatever umask the SSH
+    # session has. 027 also keeps them unwritable by that group.
+    local umask_prefix=""
     local pip="sudo -u energetica $remote_path/.venv/bin/pip"
+    if [ "${3:-}" = "--as-deploy-user" ]; then
+        umask_prefix="umask 027 && "
+        pip="$remote_path/.venv/bin/pip"
+    fi
     local wheel="$remote_path/dist/$BACKEND_WHEEL"
 
     log_step "Installing the backend into the server venv..."
@@ -102,7 +117,7 @@ install_backend_wheel() {
     # requirements.txt-based step did not. Note that `pip check` reports any broken requirement in
     # the venv, not just ours, so a pre-existing conflict makes this take the slow path every time
     # — slower, never wrong.
-    ssh "$ssh_target" "$pip install -q --force-reinstall --no-deps $wheel && { $pip check >/dev/null || $pip install -q --force-reinstall $wheel; }" || {
+    ssh "$ssh_target" "$umask_prefix$pip install -q --force-reinstall --no-deps $wheel && { $pip check >/dev/null || $pip install -q --force-reinstall $wheel; }" || {
         log_error "Installing the backend into $remote_path/.venv failed — not restarting the service."
         exit 1
     }

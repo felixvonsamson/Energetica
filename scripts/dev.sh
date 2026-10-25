@@ -72,13 +72,13 @@ if [ -n "${BACKEND:-}" ]; then
     exit 0
 fi
 
-# Local stack: seed the shared accounts store + sample runs once, before any server starts (avoids
-# two backends racing on the same sqlite file). The lobby owns accounts.
-seed_dev_data
-
 # Both stacks need the lobby service: the lobby backend logs in and reads memberships through it.
 start_lobby_service
 pids+=("$LOBBY_SERVICE_PID")
+
+# Local stack: seed the demo account + sample runs once, through the lobby service, before any
+# backend starts.
+seed_dev_data
 
 case "$TARGET" in
 app)
