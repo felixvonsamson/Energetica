@@ -48,3 +48,7 @@ Default vocabulary — label strings match the canonical role names. See `docs/a
 ### Domain docs
 
 Single-context: root `CONTEXT.md` (context-indexed glossary), `docs/adr/`, and a topic-organized `docs/` tree. See `docs/agents/domain.md`.
+
+### Code review
+
+Greptile, an AI code reviewer, reviews each PR when it is opened. See `docs/agents/greptile.md`.
