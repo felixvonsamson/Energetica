@@ -28,12 +28,13 @@ done
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
 # Remote: enumerate energetica-*.service unit files and report slug/port/active/enabled.
-# energetica-lobby and energetica-reaper share the prefix but are not game instances, so they
-# are dropped by name. deployed-versions.sh applies the same exclusion; keep the two in step.
+# energetica-lobby, energetica-lobby-service and energetica-reaper share the prefix but are not
+# game instances, so they are dropped by name. deployed-versions.sh applies the same exclusion;
+# tests/unit/test_reserved_unit_names.py keeps both in step with the units in scripts/infra.
 REMOTE_SCRIPT='
 for unit in $(systemctl list-unit-files --no-legend "energetica-*.service" | awk "{print \$1}" | grep "^energetica-.*\.service$"); do
     slug=${unit#energetica-}; slug=${slug%.service}
-    case "$slug" in lobby|reaper) continue ;; esac
+    case "$slug" in lobby|lobby-service|reaper) continue ;; esac
     state=$(systemctl is-active "$unit" 2>/dev/null || true)
     enabled=$(systemctl is-enabled "$unit" 2>/dev/null || true)
     # No instance.env means an instance provisioned before the port moved there, so the miss

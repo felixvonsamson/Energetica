@@ -9,8 +9,9 @@ set -euo pipefail
 # Reads each component's public /healthz (added for the lobby in the same change that added
 # this script) and prints its stamped backend commit, frontend commit, dirty flags, and a
 # BEHIND / up-to-date / dirty verdict against the reference. The landing has no backend, so
-# its build-info.json is fetched from the apex instead. Instances are enumerated from
-# systemd, the same source of truth as list-instances.sh.
+# its build-info.json is fetched from the apex instead. The lobby service has no public URL,
+# so its healthz is read over its socket on the server (see probe_lobby_service). Instances are
+# enumerated from systemd, the same source of truth as list-instances.sh.
 #
 # This is a read-only diagnostic — it deploys nothing. Requires git (locally) and jq.
 
@@ -47,10 +48,11 @@ echo
 
 # Enumerate instance slugs from systemd (same source of truth as list-instances.sh), then
 # probe the landing and the lobby too.
-# energetica-lobby and energetica-reaper share the prefix but are not game instances, so they
-# are dropped from SLUGS by name (the lobby is probed separately below). list-instances.sh
-# applies the same exclusion; keep the two in step.
-SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -vE "^(lobby|reaper)$"' || true)
+# energetica-lobby, energetica-lobby-service and energetica-reaper share the prefix but are not
+# game instances, so they are dropped from SLUGS by name (the lobby and the lobby service get
+# their own rows below). list-instances.sh applies the same exclusion;
+# tests/unit/test_reserved_unit_names.py keeps both in step with the units in scripts/infra.
+SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -vE "^(lobby|lobby-service|reaper)$"' || true)
 
 # Classify a deployed backend commit against the reference by git ancestry, so a deploy that is
 # ahead of or diverged from the reference is not mislabelled "behind". Needs the commit object
@@ -119,15 +121,54 @@ probe_landing() {
     echo "landing|$url|-|$fe|$verdict"
 }
 
+# The lobby service has no public URL: it listens only on a Unix socket, which the deploy user may
+# reach as a member of the energetica group. Its healthz reports the accounts.db schema version but
+# no commit, so the commit comes from the stamp of the lobby checkout it runs from, the same file
+# the lobby backend reports. The schema version is printed below the table rather than in a column
+# of its own, since no other row has one. Both are read here, outside the piped block below,
+# because that block runs in a subshell and could not hand SCHEMA_NOTE back.
+LOBBY_SERVICE_SOCKET=/run/energetica/lobby-service.sock
+LOBBY_SERVICE_HEALTH=$(ssh "$SSH" "curl -fsS --max-time 8 --unix-socket $LOBBY_SERVICE_SOCKET http://lobby-service/internal/v1/healthz" 2>/dev/null || true)
+LOBBY_SERVICE_STAMP=$(ssh "$SSH" "cat /var/www/energetica-lobby/DEPLOYED_VERSION.json" 2>/dev/null || true)
+SCHEMA_NOTE="lobby-service: unreachable, accounts.db schema version unknown."
+if [ -n "$LOBBY_SERVICE_HEALTH" ]; then
+    schema=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '.schema_version // "?"' 2>/dev/null || echo "?")
+    api=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '(.api_versions // []) | join(",")' 2>/dev/null || echo "?")
+    SCHEMA_NOTE="lobby-service: accounts.db schema version $schema, API ${api:-?}."
+fi
+
+probe_lobby_service() {
+    local url="unix:$LOBBY_SERVICE_SOCKET"
+    local be_full be be_dirty verdict
+    if [ -z "$LOBBY_SERVICE_HEALTH" ]; then
+        echo "lobby-service|$url|unreachable|-|UNREACHABLE"; return
+    fi
+    be_full=$(echo "$LOBBY_SERVICE_STAMP" | jq -r '.commit // ""' 2>/dev/null || echo "")
+    be=$(echo "$LOBBY_SERVICE_STAMP" | jq -r '.commit_short // "?"' 2>/dev/null || echo "?")
+    be_dirty=$(echo "$LOBBY_SERVICE_STAMP" | jq -r '.dirty // false' 2>/dev/null || echo false)
+    [ "$be_dirty" = "true" ] && be="$be*"
+
+    if [ -z "$be_full" ]; then
+        verdict="no-stamp"
+    elif [ "$be_dirty" = "true" ]; then
+        verdict="DIRTY"
+    else
+        verdict=$(classify "$be_full")
+    fi
+    echo "lobby-service|$url|$be|-|$verdict"
+}
+
 {
     echo "COMPONENT|URL|BACKEND|FRONTEND|VS-REF"
     probe_landing "https://$DOMAIN"
     probe "lobby" "https://lobby.$DOMAIN"
+    probe_lobby_service
     for slug in $SLUGS; do
         probe "$slug" "https://$slug.$DOMAIN"
     done
 } | column -t -s '|'
 
 echo
+echo "$SCHEMA_NOTE"
 echo "* = built/deployed from a tree with uncommitted changes (commit is not the whole truth)."
 echo "VS-REF: up-to-date | BEHIND | ahead | DIVERGED (vs $REF); differs? = commit not fetched locally."

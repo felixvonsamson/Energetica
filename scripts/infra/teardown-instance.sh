@@ -68,9 +68,11 @@ if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
     log_error "Instance slug must be lowercase kebab-case, max 63 chars (a DNS label): '$INSTANCE'"
     exit 1
 fi
-# The same reserved names setup-instance.sh refuses to create. Tearing either of these down with
-# this script would delete the apex landing site or the lobby service out from under every run.
-if [ "$INSTANCE" = "landing" ] || [ "$INSTANCE" = "lobby" ]; then
+# The same reserved names setup-instance.sh refuses to create. Tearing one of these down with
+# this script would delete the apex landing site, the lobby or a server-wide unit out from under
+# every run.
+if [ "$INSTANCE" = "landing" ] || [ "$INSTANCE" = "lobby" ] || [ "$INSTANCE" = "lobby-service" ] \
+    || [ "$INSTANCE" = "reaper" ]; then
     log_error "'$INSTANCE' is reserved — this script tears down game instances only"
     exit 1
 fi

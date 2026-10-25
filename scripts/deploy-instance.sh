@@ -246,6 +246,16 @@ log_success "App bundle synced"
 # --- 5. Install the backend into the server venv --------------------------------
 install_backend_wheel "$SSH" "$REMOTE_PATH"
 
+# --- 5b. Stamp the deployed backend version -------------------------------------
+# The server has no .git (rsync excludes it), so the commit is captured here on the deploy machine
+# and written to the instance root as DEPLOYED_VERSION.json, read by
+# src/energetica/kernel/version.py. Written before the restart because the backend also reads it,
+# once per process on first use, to name itself in the X-Energetica-Caller header it sends the
+# lobby service. Stamped after the restart, a run would name the previous deploy's commit until
+# its next restart (#1356). The cost is that /healthz reports the new commit from here on even if
+# the restart below fails, but then the deploy fails loudly.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
+
 # --- 6. Restart (first deploy: starts) -----------------------------------------
 log_step "Restarting energetica-$INSTANCE..."
 if ! ssh "$SSH" "sudo systemctl restart energetica-$INSTANCE"; then
@@ -340,14 +350,6 @@ if [ "$HEALTH_OK" != true ]; then
     exit 1
 fi
 log_success "/healthz status=ok, app and its bundle load"
-
-# --- 8. Stamp the deployed backend version -------------------------------------
-# Written only now — after the new process is confirmed serving — so /healthz never reports a
-# commit that failed to activate. The server has no .git (rsync excludes it), so the commit is
-# captured here on the deploy machine and written to the instance root as DEPLOYED_VERSION.json.
-# It is excluded from the rsync --delete above, so between restart and this write /healthz keeps
-# reporting the *previous* commit rather than a wrong one. Read by src/energetica/kernel/version.py.
-stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed $INSTANCE → https://$FQDN"

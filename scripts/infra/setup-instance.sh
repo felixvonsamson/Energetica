@@ -102,6 +102,10 @@ if [ "$INSTANCE" = "lobby" ]; then
     log_error "'lobby' is reserved for the lobby service (setup-lobby.sh)"
     exit 1
 fi
+if [ "$INSTANCE" = "lobby-service" ]; then
+    log_error "'lobby-service' is reserved for the lobby service unit (energetica-lobby-service.service)"
+    exit 1
+fi
 if [ "$INSTANCE" = "reaper" ]; then
     log_error "'reaper' is reserved for the lifecycle reaper unit (energetica-reaper.service)"
     exit 1

@@ -142,7 +142,7 @@ The **apex domain always serves the landing page**, never an instance directly.
 
 Canonical source of truth is systemd: `systemctl list-unit-files 'energetica-*.service'`. Filesystem enumeration of `/var/www/energetica-*/` is avoided since it would accidentally include `energetica-landing`.
 
-`energetica-lobby` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126). Keying on whether a unit has an `instance.env` (described below) would also drop instances provisioned before the port moved into that file.
+`energetica-lobby`, `energetica-lobby-service` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126, #1356), and `setup-instance.sh` and `teardown-instance.sh` refuse them as slugs. `tests/unit/test_reserved_unit_names.py` checks all four scripts against the units in `scripts/infra`. Keying on whether a unit has an `instance.env` (described below) would also drop instances provisioned before the port moved into that file.
 
 An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.env`, the unit's `EnvironmentFile` (#1072): the env contract (`ENERGETICA_INSTANCE_SLUG` and the three path variables) plus the port and the two clock values, which the unit expands into `main.py` flags. The unit carries nothing but the slug, so every instance's unit is the same file with one name changed.
 
@@ -407,7 +407,7 @@ Everything else is left standing: the vhost, the certificate, the pickle, `/etc/
 
 Why a periodic sweep rather than a timer armed at each `ended_at`: it keeps the same "re-read the config, no restart" contract as the freeze clock and the whitelist, and leaves no per-instance systemd state to leak at teardown. Five minutes is coarse on purpose — `ended_at` is a wind-down boundary, not a starting gun, and the delay costs only a few extra minutes of an already read-only backend.
 
-**Teardown (manual).** `scripts/infra/teardown-instance.sh <slug> --domain <apex>` is the deliberate second act: stop and remove the unit, remove the vhost, archive the pickle (`--archive-to`), delete `/var/www/energetica-{slug}` and `/etc/energetica/{slug}`, retire the fragment, and release the certificate (`--keep-cert` to keep it). It is confirm-gated on typing the slug back, and refuses the reserved `landing`/`lobby` names.
+**Teardown (manual).** `scripts/infra/teardown-instance.sh <slug> --domain <apex>` is the deliberate second act: stop and remove the unit, remove the vhost, archive the pickle (`--archive-to`), delete `/var/www/energetica-{slug}` and `/etc/energetica/{slug}`, retire the fragment, and release the certificate (`--keep-cert` to keep it). It is confirm-gated on typing the slug back, and refuses the reserved `landing`, `lobby`, `lobby-service` and `reaper` names.
 
 **What teardown must not strand.** `recaps/{slug}.json` is never touched — it is the artifact the whole lifecycle exists to produce. The fragment is subtler. It is not only the "run on offer" billboard: it is the _only_ pointer by which either lobby surface finds a run at all — `my-runs` joins membership rows against it (`load_fragment`), and the picker reads it through `instances.json`. Deleting the fragment of a run that has a recap would therefore leave that recap on disk, served, and linked from nowhere. So:
 

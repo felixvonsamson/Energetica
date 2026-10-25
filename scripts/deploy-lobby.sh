@@ -158,6 +158,16 @@ log_success "Lobby bundle synced"
 # --- 6. Install the backend into the server venv --------------------------------------
 install_backend_wheel "$SSH" "$REMOTE_PATH"
 
+# --- 6b. Stamp the deployed backend version ----------------------------------------
+# The server has no .git (rsync excludes it), so the commit is captured here on the deploy machine
+# and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
+# processes run from this checkout and report this stamp. Written before the restarts because the
+# lobby backend also reads it, once per process on first use, to name itself in the
+# X-Energetica-Caller header it sends the lobby service. Stamped after the restarts, it would name
+# the previous deploy's commit until its next restart (#1356). The cost is that /healthz reports
+# the new commit from here on even if a restart below fails, but then the deploy fails loudly.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
+
 # --- 7. Restart the lobby service, then check it over its socket -------------------
 # It runs pending schema migrations before serving, so a failed migration shows up here as a
 # service that does not stay up. The deploy user is in the energetica group, so it may connect.
@@ -226,13 +236,6 @@ if [ "$HEALTH_OK" != true ]; then
     exit 1
 fi
 log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, lobby service reachable)"
-
-# Stamp the deployed backend version — only now, after the new lobby is confirmed serving, so
-# /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes
-# it), so the commit is captured here on the deploy machine. Excluded from the rsync --delete
-# above, so between restart and this write /healthz keeps reporting the previous commit rather
-# than a wrong one. Read by src/energetica/kernel/version.py. See scripts/lib/version-stamp.sh.
-stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed lobby → https://$FQDN"
