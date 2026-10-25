@@ -13,7 +13,7 @@ import pytest
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.utils.map_helpers import confirm_location
 
 
@@ -21,7 +21,7 @@ from energetica.utils.map_helpers import confirm_location
 def player() -> Player:
     """A fresh player settled on a fresh engine + map (Player construction needs both)."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    account = Account(account_id=1, username="emitter", pwhash="pwhash", email=None, created_at="")
+    account = Account(account_id=1, username="emitter")
     return confirm_location(account, HexTile.getitem(1))
 
 

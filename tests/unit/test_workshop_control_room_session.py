@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, BlackoutRisk, PowerSource
 from energetica.workshop.demand_block import DEMAND_TIERS
@@ -44,7 +44,7 @@ def _investing(path: Path, round_count: int = 3) -> WorkshopSession:
     keep the lights on.
     """
     session = _open(path, round_count)
-    account = Account(account_id=1, username="p1", pwhash="hash", email=None, created_at="")
+    account = Account(account_id=1, username="p1")
     session.join(account).money = 1_000_000_000.0
     session.advance()
     for _ in range(6):
@@ -254,7 +254,7 @@ def test_facilities_under_construction_do_not_count(tmp_path: Path) -> None:
 
 def test_a_room_with_nothing_built_is_sure_to_black_out(tmp_path: Path) -> None:
     session = _open(tmp_path / "session.json")
-    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
+    session.join(Account(account_id=1, username="p1"))
 
     outlook = session.control_room().capacity
 

@@ -234,10 +234,6 @@ def create_app(
 
         scheduler.start()
 
-        from energetica.identity import accounts
-
-        accounts.init_db()
-
         # There is no more auto-provisioned admin account (ADR-0004): a facilitator is granted
         # out-of-band by a sysadmin via scripts/lobby/grant-facilitator.py, never minted at startup.
 

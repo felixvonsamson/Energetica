@@ -13,9 +13,9 @@ Every caller, game side included, imports these primitives from here. The reques
 built on them live in ``energetica.identity.web`` (account and role checks) and
 ``energetica.utils.auth`` (the ``Player``-coupled ones); neither re-exports anything from this module.
 
-The cookie payload is the immutable ``str(account_id)`` (ADR-0002 amendment): the lobby mints it
-and every instance validates it with the shared secret and resolves it against ``accounts.db``
-(role) and, for a settled player, its local ``Player`` (ADR-0004). This module signs/decodes the
+The cookie payload is the immutable ``str(account_id)`` (ADR-0002 amendment): the lobby service
+mints and checks it (ADR-0009), and runs hand the cookie to the lobby service rather than import
+this module, so they hold no secret. This module signs/decodes the
 bare string; interpretation happens where the token is decoded.
 """
 

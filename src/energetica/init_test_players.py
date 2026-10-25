@@ -20,9 +20,9 @@ from energetica.freeplay.database.ongoing_shipment import OngoingShipment
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
-from energetica.identity import accounts
+from energetica.identity.account import Account
+from energetica.identity.web import lobby_service
 from energetica.kernel.game_error import GameError
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 from energetica.utils.projects import complete_project, queue_project
@@ -50,10 +50,13 @@ def init_test_players() -> None:
         if player:
             engine.log(f"create_player: player {username} already exists")
             return player
-        pwhash = generate_password_hash(password)
-        account_id = accounts.get_or_create_account_id(username=username, pwhash=pwhash)
-        account = accounts.get_account_by_id(account_id)
-        assert account is not None
+        existing = lobby_service().get_account_by_username(username)
+        account_id = (
+            existing.account_id
+            if existing is not None
+            else lobby_service().create_account(username=username, password=password).account_id
+        )
+        account = Account(account_id=account_id, username=username)
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:

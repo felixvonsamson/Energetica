@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from energetica.workshop.player import WorkshopPlayer
 
 if TYPE_CHECKING:
-    from energetica.identity.accounts import Account
+    from energetica.identity.account import Account
     from energetica.workshop.facilities import FacilityId, Fuel
     from energetica.workshop.fleet import OwnedFacility, Purchase
     from energetica.workshop.loan import Loan

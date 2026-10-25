@@ -4,7 +4,7 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.kernel.game_error import GameError
 from energetica.utils.misc import initialize_player
 

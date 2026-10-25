@@ -27,6 +27,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from energetica.freeplay.globals import engine
+from energetica.identity import web
 from energetica.identity.accounts.db import _reset_initialised_paths
 from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient
 from lobby_service.app import create_service_app
@@ -69,11 +70,17 @@ def _isolated_accounts_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> It
 
 @pytest.fixture
 def lobby_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> LobbyServiceClient:
-    """A client for a real lobby service app, called in-process, over a fresh ``lobby.db``."""
+    """
+    A client for a real lobby service app, called in-process, over a fresh ``lobby.db``.
+
+    Runs use it too: it replaces the client in :mod:`energetica.identity.web` for the test.
+    """
     db_path = tmp_path / "lobby.db"
     monkeypatch.setenv("ENERGETICA_LOBBY_DB_PATH", str(db_path))
     upgrade_database(db_path)
-    return LobbyServiceClient(TestClient(create_service_app(), base_url=BASE_URL))
+    client = LobbyServiceClient(TestClient(create_service_app(), base_url=BASE_URL))
+    monkeypatch.setattr(web, "_lobby_service", client)
+    return client
 
 
 @pytest.fixture

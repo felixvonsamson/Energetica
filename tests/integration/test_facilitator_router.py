@@ -3,14 +3,13 @@
 Builds on #1019's plumbing (``get_facilitator``, ``instance_config``'s private-access write path
 for the join link/toggle) — these tests exercise it through a real HTTP request against
 ``/api/v1/facilitator/access``, the way the facilitator page (#1020) will call it. The roster
-itself (#1022) lives in ``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007), not
+itself (#1022) is the run's membership in the lobby service (ADR-0007, ADR-0009), not
 ``instance.json`` — see ``_join`` below.
 """
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -18,9 +17,9 @@ from fastapi.testclient import TestClient
 
 from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
-from energetica.identity import accounts
+from energetica.identity import web
 
-from ._session_helpers import authenticate, make_account
+from ._session_helpers import authenticate, grant_facilitator, join, make_account
 
 PORT = 8000
 ACCESS_URL = f"http://localhost:{PORT}/api/v1/facilitator/access"
@@ -43,10 +42,14 @@ PUBLIC_JSON = {
 
 
 def _join(account_id: int) -> None:
-    """Record account_id as having joined this test's instance (accounts.db) — the equivalent of
-    the pre-#1030 fixture that allowlisted "alice" directly in instance.json.
+    """Record account_id as having joined this test's instance — the equivalent of the pre-#1030
+    fixture that allowlisted "alice" directly in instance.json.
     """
-    accounts.record_join(account_id=account_id, slug=SLUG, joined_at=datetime.now(timezone.utc).isoformat())
+    join(account_id, SLUG)
+
+
+def _has_joined(account_id: int) -> bool:
+    return any(member.account_id == account_id for member in web.lobby_service().get_run_members(SLUG))
 
 
 @pytest.fixture
@@ -77,8 +80,8 @@ def _client() -> TestClient:
 def _facilitator_client(instance_json: Path) -> TestClient:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("prof")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
     return client
 
@@ -93,7 +96,7 @@ def test_rejects_unauthenticated(instance_json: Path) -> None:
 def test_rejects_a_player_account(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("alice", "pw")
+    account_id = make_account("alice")
     authenticate(client, account_id)
 
     assert client.get(ACCESS_URL).status_code == 403
@@ -132,7 +135,7 @@ def test_patch_flips_join_open_and_persists(instance_json: Path) -> None:
 def test_patch_rejects_a_non_admin(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("alice", "pw")
+    account_id = make_account("alice")
     authenticate(client, account_id)
 
     assert client.patch(ACCESS_URL, json={"join_open": True}).status_code == 403
@@ -142,8 +145,8 @@ def test_get_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -
     """A facilitator route only makes sense on a privately-configured instance."""
     _write(instance_json, PUBLIC_JSON)
     client = _client()
-    account_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("prof")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
 
     response = client.get(ACCESS_URL)
@@ -163,7 +166,7 @@ def _candidates_url(prefix: str) -> str:
 def test_roster_rejects_a_non_admin(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("alice", "pw")
+    account_id = make_account("alice")
     authenticate(client, account_id)
 
     assert client.get(ROSTER_URL).status_code == 403
@@ -177,15 +180,15 @@ def test_roster_lists_members_whether_or_not_they_have_settled(instance_json: Pa
     The roster is one allowlist, so both are listed the same way.
     """
     from energetica.freeplay.database.map.hex_tile import HexTile
-    from energetica.identity.accounts import Account
+    from energetica.identity.account import Account
     from energetica.utils.map_helpers import confirm_location
 
     client = _facilitator_client(instance_json)
-    alice_id = make_account("alice", "pw")
+    alice_id = make_account("alice")
     confirm_location(
-        Account(account_id=alice_id, username="alice", pwhash="unused", email=None, created_at=""), HexTile.getitem(1)
+        Account(account_id=alice_id, username="alice"), HexTile.getitem(1)
     )  # settling with no prior join step still records an already-settled membership row
-    make_account("bob", "pw")  # server-wide account exists, but has never settled
+    make_account("bob")  # server-wide account exists, but has never settled
     assert client.post(ROSTER_URL, json={"username": "bob"}).status_code == 204
 
     response = client.get(ROSTER_URL)
@@ -197,8 +200,8 @@ def test_roster_lists_members_whether_or_not_they_have_settled(instance_json: Pa
 def test_roster_get_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
     _write(instance_json, PUBLIC_JSON)
     client = _client()
-    account_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("prof")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
 
     response = client.get(ROSTER_URL)
@@ -209,9 +212,9 @@ def test_roster_get_on_a_public_instance_fails_with_a_game_error(instance_json: 
 
 def test_roster_candidates_returns_matching_accounts(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
-    make_account("carol", "pw")
-    make_account("caroline", "pw")
-    make_account("dave", "pw")
+    make_account("carol")
+    make_account("caroline")
+    make_account("dave")
 
     response = client.get(_candidates_url("car"))
 
@@ -226,10 +229,10 @@ def test_roster_candidates_does_not_require_a_private_instance(instance_json: Pa
     """
     _write(instance_json, PUBLIC_JSON)
     client = _client()
-    account_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("prof")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
-    make_account("carol", "pw")
+    make_account("carol")
 
     response = client.get(_candidates_url("car"))
 
@@ -239,14 +242,14 @@ def test_roster_candidates_does_not_require_a_private_instance(instance_json: Pa
 
 def test_roster_post_adds_an_existing_account_to_the_roster(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
-    alice_id = make_account("alice", "pw")
+    alice_id = make_account("alice")
     _join(alice_id)  # already on the roster, unsettled
-    carol_id = make_account("carol", "pw")
+    carol_id = make_account("carol")
 
     response = client.post(ROSTER_URL, json={"username": "carol"})
 
     assert response.status_code == 204
-    assert accounts.has_joined(account_id=carol_id, slug=SLUG) is True
+    assert _has_joined(carol_id) is True
     assert client.get(ROSTER_URL).json()["members"] == ["carol", "alice"]
 
 
@@ -258,16 +261,16 @@ def test_roster_post_rejects_a_username_with_no_matching_account(instance_json: 
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "USER_NOT_FOUND"
-    assert [entry.username for entry in accounts.get_run_roster(slug=SLUG)] == []
+    assert [member.username for member in web.lobby_service().get_run_members(SLUG)] == []
 
 
 def test_roster_post_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
     _write(instance_json, PUBLIC_JSON)
     client = _client()
-    account_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("prof")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
-    make_account("carol", "pw")
+    make_account("carol")
 
     response = client.post(ROSTER_URL, json={"username": "carol"})
 
@@ -277,13 +280,13 @@ def test_roster_post_on_a_public_instance_fails_with_a_game_error(instance_json:
 
 def test_roster_delete_removes_from_the_allowlist(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
-    alice_id = make_account("alice", "pw")
+    alice_id = make_account("alice")
     _join(alice_id)
 
     response = client.delete(f"{ROSTER_URL}/alice")
 
     assert response.status_code == 204
-    assert accounts.has_joined(account_id=alice_id, slug=SLUG) is False
+    assert _has_joined(alice_id) is False
 
 
 def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(instance_json: Path) -> None:
@@ -293,9 +296,9 @@ def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(insta
     """
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    admin_id = make_account("prof", "pw")
-    accounts.grant_facilitator(account_id=admin_id, slug=SLUG)
-    carol_id = make_account("carol", "pw")
+    admin_id = make_account("prof")
+    grant_facilitator(admin_id, SLUG)
+    carol_id = make_account("carol")
 
     authenticate(client, admin_id)
     assert client.post(ROSTER_URL, json={"username": "carol"}).status_code == 204

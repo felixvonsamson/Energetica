@@ -15,10 +15,8 @@ from starlette.types import Receive, Scope, Send
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action
-from energetica.identity import accounts
-from energetica.identity.accounts import Account
-from energetica.identity.web import REPLAYED_ACCOUNT_SCOPE_KEY
-from energetica.kernel.session import generate_password_hash
+from energetica.identity.account import Account
+from energetica.identity.web import REPLAYED_ACCOUNT_SCOPE_KEY, lobby_service
 from energetica.utils import misc
 from energetica.utils.tick_execution import tick
 
@@ -29,7 +27,7 @@ def create_user(username: str) -> Account:
     The action log holds no password hash (#1341), so the account gets a random password nobody
     knows. Replay never needs it, since it calls the app as the account directly.
     """
-    return misc.signup_playing_user(None, username, generate_password_hash(secrets.token_urlsafe(32)))
+    return misc.signup_playing_user(None, username, secrets.token_urlsafe(32))
 
 
 def find_account(account_id: int) -> Account:
@@ -38,10 +36,10 @@ def find_account(account_id: int) -> Account:
     That ``user_id`` is the account_id, not a per-instance object id (there is no such thing any
     more; see ADR-0004).
     """
-    account = accounts.get_account_by_id(account_id)
+    account = lobby_service().get_account(account_id)
     if account is None:
         raise ValueError(f"Cannot replay a request: account with id {account_id} does not exist")
-    return account
+    return Account(account_id=account.account_id, username=account.username)
 
 
 def client_as(app: FastAPI, account: Account) -> httpx.AsyncClient:

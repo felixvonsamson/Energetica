@@ -83,8 +83,8 @@ class Player(DBModel):
     ``Player`` is now the sole per-instance identity object (there is no separate ``User`` — see
     ADR-0004): it only exists for an account that has actually settled, carrying ``account_id`` as
     the foreign key back to the lobby-owned ``Account``. A facilitator, who never settles, has no
-    per-instance object at all; every facilitator/player authority check reads ``accounts.db``
-    directly instead.
+    per-instance object at all; every facilitator/player authority check asks the lobby service
+    instead.
     """
 
     username: str

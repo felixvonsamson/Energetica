@@ -19,8 +19,9 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import CreateUserAction
-from energetica.identity import accounts, instance_config
-from energetica.identity.accounts import Account
+from energetica.identity import instance_config
+from energetica.identity.account import Account
+from energetica.identity.web import lobby_service
 from energetica.kernel.game_error import GameError
 from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.weather import WeatherOut
@@ -29,20 +30,18 @@ from energetica.sim.renewables import calculate_river_speed, calculate_solar_irr
 # Helper functions and data initialization utilities
 
 
-def signup_playing_user(request: Request | None, username: str, pwhash: str) -> Account:
+def signup_playing_user(request: Request | None, username: str, password: str) -> Account:
     """
     Sign up an account with the player role.
 
-    Writes the credentials to the server-wide SQLite accounts store. There is no per-instance
-    object to create at signup time any more (see ADR-0004) — a ``Player`` is only created later,
-    at settle.
+    Creates the account through the lobby service. There is no per-instance object to create at
+    signup time any more (see ADR-0004) — a ``Player`` is only created later, at settle.
 
     Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
     corresponding request object.
     """
-    account_id = accounts.create_account(username=username, pwhash=pwhash)
-    account = accounts.get_account_by_id(account_id)
-    assert account is not None
+    created = lobby_service().create_account(username=username, password=password)
+    account = Account(account_id=created.account_id, username=username)
 
     log_entry = CreateUserAction(
         timestamp=datetime.now(),
@@ -237,27 +236,29 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
-    # Settling is what makes this run appear under the account's "your runs" in the lobby and the
-    # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
+    # Settling joins the account to the run, so the run appears under its "your runs" in the lobby
+    # and the in-run switcher even if it never joined through the lobby (a public run). The join is
+    # idempotent, so an account that already joined is left as it was. No-op without a slug (dev /
+    # unconfigured), where there is no lobby anyway.
     #
-    # This write happens BEFORE any of the engine mutation below, and is deliberately left
+    # This call happens BEFORE any of the engine mutation below, and is deliberately left
     # uncaught: everything from here down (tile claim, Player creation, chat join, facility,
     # rolling history) is in-memory engine state that is hard to cleanly undo once touched — the
-    # tile claim especially is a shared resource other players immediately see as taken. A DB
-    # failure (e.g. SQLITE_BUSY on the shared accounts.db) must abort BEFORE any of that happens,
-    # not after: a request that mutated the engine and then 500'd would leave the player settled
-    # in-engine with no way to retry (the tile is already claimed, CHOICE_UNMODIFIABLE fires on
-    # retry) and no membership row to show for it — worse than just failing outright up front.
-    # Letting the exception propagate here, before any mutation, means a transient failure is a
-    # clean no-op: nothing happened, the client gets a 500, and a retry is always safe.
+    # tile claim especially is a shared resource other players immediately see as taken. A lobby
+    # service failure must abort BEFORE any of that happens, not after: a request that mutated the
+    # engine and then failed would leave the player settled in-engine with no way to retry (the
+    # tile is already claimed, CHOICE_UNMODIFIABLE fires on retry) and no membership to show for
+    # it — worse than just failing outright up front. Letting the exception propagate here, before
+    # any mutation, means a transient failure is a clean no-op: nothing happened, the client gets
+    # a 503, and a retry is always safe.
     #
-    # MembershipRoleConflictError also propagates uncaught: get_playing_account already rejects a
-    # facilitator before they ever reach settle, so this should be unreachable — if it ever fires,
-    # that invariant broke and the 500 should surface loudly, not be treated as a transient hiccup.
+    # A ROLE_CONFLICT refusal also propagates uncaught, as a 503 with an error in the log:
+    # get_playing_account already rejects a facilitator before they ever reach settle, so this
+    # should be unreachable — if it ever fires, that invariant broke and it should surface loudly.
     slug = instance_config.instance_slug()
-    settled_at = datetime.now(timezone.utc)
     if slug is not None:
-        accounts.record_settlement(account_id=account.account_id, slug=slug, settled_at=settled_at.isoformat())
+        lobby_service().add_run_member(slug, account.account_id)
+    settled_at = datetime.now(timezone.utc)
 
     player = Player(
         username=account.username,

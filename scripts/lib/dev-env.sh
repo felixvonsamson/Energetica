@@ -18,8 +18,8 @@ DEV_SCRATCH="$DEV_REPO_ROOT/.energetica-dev"
 DEV_LANDING_DIR="$DEV_SCRATCH/landing"
 
 export ENERGETICA_ACCOUNTS_DB_PATH="$DEV_SCRATCH/accounts.db"
-# The lobby service owns the same file runs still open directly, until they switch to its API
-# (ADR-0009). The lobby backend reaches the service on this socket. The path is relative to the
+# The lobby service owns the same file, which seed_dev_data still writes directly (ADR-0009). The
+# lobby backend and the app backend reach the service on this socket. The path is relative to the
 # repo root, which every script that sources this file cds into, because a Unix socket path must
 # stay under about 104 characters on macOS and a worktree's absolute path does not.
 export ENERGETICA_LOBBY_DB_PATH="$ENERGETICA_ACCOUNTS_DB_PATH"
@@ -69,6 +69,20 @@ start_lobby_service() {
     kill "$LOBBY_SERVICE_PID" 2>/dev/null || true
     wait "$LOBBY_SERVICE_PID" 2>/dev/null || true
     return 1
+}
+
+# Start the lobby service unless one already listens on the socket, for instance one that
+# `bun run serve:lobby` started in another terminal. Sets LOBBY_SERVICE_PID to the service it
+# started, or to nothing if it reused a running one, so the caller stops only its own.
+ensure_lobby_service() {
+    LOBBY_SERVICE_PID=""
+    if [ -S "$ENERGETICA_LOBBY_SERVICE_SOCKET" ] \
+        && "$DEV_REPO_ROOT/.venv/bin/python" -c 'import socket, sys; socket.socket(socket.AF_UNIX).connect(sys.argv[1])' \
+            "$ENERGETICA_LOBBY_SERVICE_SOCKET" 2>/dev/null; then
+        echo "→ Reusing the lobby service already listening on $ENERGETICA_LOBBY_SERVICE_SOCKET"
+        return 0
+    fi
+    start_lobby_service
 }
 
 # Seed a demo account + sample runs so every picker state is reachable. Idempotent. The lobby owns

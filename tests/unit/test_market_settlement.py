@@ -12,7 +12,7 @@ import pytest
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.production_update import market_logic
 from energetica.sim.market import init_market, place_ask, place_bid, place_must_run_ask
 from energetica.utils.map_helpers import confirm_location
@@ -26,7 +26,7 @@ MIN_PRICE = -5
 def players() -> tuple[Player, Player]:
     """Two players settled on a fresh engine + map."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    accounts = [Account(account_id=i, username=f"p{i}", pwhash="pwhash", email=None, created_at="") for i in (1, 2)]
+    accounts = [Account(account_id=i, username=f"p{i}") for i in (1, 2)]
     a = confirm_location(accounts[0], HexTile.getitem(1))
     b = confirm_location(accounts[1], HexTile.getitem(40))
     return a, b

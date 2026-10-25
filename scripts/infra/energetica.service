@@ -6,7 +6,7 @@
 # differ in this file only by name.
 #
 # The EnvironmentFile= line is load-bearing. It carries the contract between the deployment and
-# src/energetica/identity/instance_config.py + src/energetica/identity/accounts/db.py, and it
+# src/energetica/identity/instance_config.py + src/energetica/identity/lobby_service_client.py, and it
 # supplies the three values ExecStart expands into main.py flags. It has no `-` prefix, so a
 # missing or unreadable file stops the unit rather than starting an instance with no
 # ENERGETICA_INSTANCE_SLUG — which would treat itself as public, never read its own instance.json
@@ -14,10 +14,16 @@
 # User=energetica below.
 # See scripts/infra/instance.env.tmpl and
 # docs/architecture/static-serving-and-deployment.md § What FastAPI gains.
+#
+# Changes to this template reach a provisioned instance through update-instance-unit.sh.
 
 [Unit]
 Description=Energetica game instance (@INSTANCE@)
-After=network.target
+# The run reaches accounts and sessions only through the lobby service (ADR-0009). Its socket is
+# held open by systemd, so wanting the socket, not the service, is enough: the first request starts
+# the service, and requests made while it restarts wait instead of failing.
+Wants=energetica-lobby-service.socket
+After=network.target energetica-lobby-service.socket
 
 [Service]
 Type=simple

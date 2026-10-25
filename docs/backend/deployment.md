@@ -59,7 +59,8 @@ Two files, both in `/etc/energetica/{slug}/`, both `0640` and readable by the `e
   Read fresh on every login, and written back to by the service for private-access changes. An admin can edit it at any time; no restart needed.
   Owned by `energetica`, because the service is what rewrites it.
 - **`instance.env`** — how the service runs: the environment contract
-  (`ENERGETICA_INSTANCE_SLUG` plus the three path variables) and the port and two clock values.
+  (`ENERGETICA_INSTANCE_SLUG`, the path variables and the lobby service's socket,
+  `ENERGETICA_LOBBY_SERVICE_SOCKET`) and the port and two clock values.
   The unit reads it with `EnvironmentFile=` and expands the last three into `main.py` flags, so
   the unit differs between instances only by name. Edits take effect on the next restart. There
   is no fallback if the file goes missing: the unit refuses to start rather than run an instance
@@ -312,6 +313,28 @@ vhost fails `apache2ctl configtest` it puts the previous file back and does not 
 matters because Apache's configuration is server-wide: a vhost that fails the test would fail
 every later reload on that box, including the certbot renewal hook's, and cost every instance
 its TLS renewal.
+
+### Updating an existing instance's unit and `instance.env`
+
+`setup-instance.sh` renders the systemd unit and `instance.env` once, and deploys never touch
+either, since both belong to root. A change to `scripts/infra/energetica.service` or
+`scripts/infra/instance.env.tmpl` reaches a running instance through `update-instance-unit.sh`,
+pushed and run the same way as the vhost script above:
+
+```bash
+sudo bash /tmp/update-instance-unit.sh autumn-2025
+```
+
+It re-renders the unit, adds to `instance.env` any variable the template gained whose value is
+the same on every instance, leaves every existing line alone, and reloads systemd. It does not
+restart the instance; the next deploy does. It is safe to rerun.
+
+Runs reach accounts and sessions through the lobby service since #1283, so every instance set up
+before then needs this once: its `instance.env` lacks `ENERGETICA_LOBBY_SERVICE_SOCKET` and its
+unit does not want `energetica-lobby-service.socket`. `deploy-instance.sh` checks both and
+refuses to deploy until the script has run, since the new code would otherwise answer every
+request that needs an account with a 503. Deploy the lobby first (`deploy-lobby.sh`), so the
+service is running before any run depends on it.
 
 ## SSH Configuration
 

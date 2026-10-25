@@ -16,11 +16,10 @@ from fastapi.testclient import TestClient
 
 from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
-from energetica.identity import accounts
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.web import get_facilitator
 
-from ._session_helpers import authenticate, make_account
+from ._session_helpers import authenticate, grant_facilitator, make_account
 
 PORT = 8000
 ADMIN_ONLY_URL = f"http://localhost:{PORT}/api/v1/_test/admin-only"
@@ -47,7 +46,7 @@ def test_admin_only_route_rejects_unauthenticated() -> None:
 
 def test_admin_only_route_rejects_a_player_account() -> None:
     client = _client()
-    account_id = make_account("alice", "pw")
+    account_id = make_account("alice")
     authenticate(client, account_id)
 
     assert client.get(ADMIN_ONLY_URL).status_code == 403
@@ -55,8 +54,8 @@ def test_admin_only_route_rejects_a_player_account() -> None:
 
 def test_admin_only_route_allows_a_facilitator_account() -> None:
     client = _client()
-    account_id = make_account("alice", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=None)
+    account_id = make_account("alice")
+    grant_facilitator(account_id, None)
     authenticate(client, account_id)
 
     response = client.get(ADMIN_ONLY_URL)

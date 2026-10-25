@@ -7,9 +7,8 @@ from energetica.enums import (
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.resource_market import create_ask, purchase_resource, store_import
 
@@ -17,9 +16,7 @@ from energetica.utils.resource_market import create_ask, purchase_resource, stor
 def test_store_import() -> None:
     """Test upgrading active facilities."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user1 = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player1 = confirm_location(user1, hex_tile)
 
@@ -45,12 +42,8 @@ def test_store_import() -> None:
 def test_purchase_resource() -> None:
     """Test purchasing a resource off the resource market."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = Account(
-        account_id=1, username="user1", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
-    user2 = Account(
-        account_id=2, username="user2", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user1 = Account(account_id=1, username="user1")
+    user2 = Account(account_id=2, username="user2")
     player1 = confirm_location(user1, HexTile.getitem(1))
     player2 = confirm_location(user2, HexTile.getitem(2))
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)

@@ -79,8 +79,9 @@ checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
   and the password hashes (ADR-0009). It has no network port: it serves a versioned internal
   API (`/internal/v1`) on `/run/energetica/lobby-service.sock`, which only the `energetica`
   group may connect to. Its clients use `energetica.identity.lobby_service_client`, which
-  times out after about 5 seconds and answers a failure with a 503. Runs still open the
-  database directly until "Switch runs to the lobby service API" (#1283).
+  times out after about 5 seconds and answers a failure with a 503. Runs are clients too
+  (#1283): they hold no database access and no signing secret, and resolve each request's session
+  with one call to the service.
 - **Frontend bundle** (sibling to the landing bundle): login, signup, and the picker
   page with all logged-in/out states.
 
@@ -97,9 +98,10 @@ The apex landing stays **pure-static** marketing; its CTAs link to the lobby.
 
 Single-sign-on via a **server-wide shared signing secret** + a **parent-domain session
 cookie** (`domain=.{apex}`). On login, the lobby service mints the token and the lobby
-backend sets it as the cookie; every instance validates it with the shared secret (until
-#1283, after which runs hand it to the lobby service instead). The session payload is the immutable **`account_id`** (ADR-0002
-amendment), so each instance resolves it against its own local `User` by `account_id`.
+backend sets it as the cookie; every instance hands the cookie to the lobby service, which
+checks it and answers with the account and its role and membership in that run (`GET
+session?run=<slug>`). The session payload is the immutable **`account_id`** (ADR-0002
+amendment), which a settled `Player` references.
 
 The SSO cookie is named **`energetica_session`**, deliberately _not_ `session`: pre-cutover
 instances minted a host-only `session` cookie that lingers in browsers for the cookie's whole
@@ -169,12 +171,13 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 );
 ```
 
-- A player row is written at **join** time (`record_join`) — the lobby's explicit two-click
-  join for a public run, or a private run's roster add / join-link confirm (#1030) — and
-  `settled_at` is filled in later by `record_settlement` when a `Player` is actually created.
-  A run entered without ever going through a join step (a dev/legacy instance with no lobby)
-  still settles straight into an already-settled row, same as before #1030. Both writes are
-  idempotent. A facilitator row is written only by the sysadmin grant script (ADR-0004).
+- A player row is written at **join** time (the lobby service's idempotent `PUT
+runs/{slug}/members/{account_id}`) — the lobby's explicit two-click join for a public run, a
+  private run's roster add / join-link confirm (#1030), or settling, which joins an account that
+  never went through a join step. Runs no longer write `settled_at` (#1283), and nothing reads it;
+  a later migration drops the column. Whether an account has settled is a fact of the run: a
+  `Player` with its `account_id`. A facilitator row is written only by the sysadmin grant script
+  (ADR-0004).
 - The lobby's "your runs" = membership rows (joined **or** settled) joined against the on-disk
   fragments (`/var/www/energetica-landing/instances/{slug}.json`) for name / `starts_at`. This
   surfaces an account's **unadvertised** runs to that account (the public manifest can't).
@@ -300,7 +303,7 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
 - **Email / password reset** — lobby is the eventual home.
 - **A2 session isolation** (#813) — see Security.
 - **Membership cleanup on run teardown** — `teardown-instance.sh` leaves the rows behind. They
-  are inert: `resolve_my_runs` drops any membership whose fragment is gone. Purging them is a
+  are inert: `build_my_runs` drops any membership whose fragment is gone. Purging them is a
   chore, not a blocker.
 - **Cross-server identity** — accounts stay per-VPS (RFC).
 - **Personalized / invited run visibility** ("advertise a run to _specific accounts_ only")

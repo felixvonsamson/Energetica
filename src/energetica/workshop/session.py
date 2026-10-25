@@ -194,7 +194,7 @@ from energetica.workshop.votes import CARBON_TAX_RATE, Ballot, VoteOutcome, carb
 from energetica.workshop.weather import AverageOutput, capacity_factor, representative_weather, season_output
 
 if TYPE_CHECKING:
-    from energetica.identity.accounts import Account
+    from energetica.identity.account import Account
     from energetica.identity.instance_config import InstanceConfig
     from energetica.workshop.player import WorkshopPlayer
 

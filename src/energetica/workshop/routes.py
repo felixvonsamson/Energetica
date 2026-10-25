@@ -25,9 +25,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.game_error import IdentityErrorCode
-from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
+from energetica.identity.web import Standing, get_facilitator, resolve_entry, resolve_entry_account
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.events import EVENTS, suggested_severity
@@ -141,13 +141,13 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
 
 
 @router.post("/enter")
-def enter(account: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> WorkshopEntryOut:
+def enter(standing: Annotated[Standing, Depends(resolve_entry)], session: Session) -> WorkshopEntryOut:
     """Enter the Run. A player is placed into its shared Network the first time and gets the same
     player every time after. A facilitator runs the session rather than plays, so is placed nowhere.
     """
-    if get_role(account.account_id) == "facilitator":
+    if standing.role == "facilitator":
         return WorkshopEntryOut(role="facilitator", player=None)
-    player = session.join(account)
+    player = session.join(standing.account)
     return WorkshopEntryOut(
         role="player",
         player=WorkshopPlayerOut(account_id=player.account_id, username=player.username, money=player.money),

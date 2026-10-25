@@ -3,10 +3,8 @@
 Both origins serve this identical logic from their own backend — the instance (``GET
 /lobby/my-runs``, for the in-run switcher) and the lobby backend (for the picker) — so neither
 frontend makes a cross-origin call. :func:`build_my_runs` is the shared part: it takes the
-memberships, from wherever the caller got them, and joins them with the fragments.
-
-The lobby backend gets the memberships from the lobby service's API. Runs still read them from the
-accounts store (:func:`resolve_my_runs`) until they switch to the API too (ADR-0009).
+memberships, which both get from the lobby service's API (ADR-0009), and joins them with the
+fragments.
 """
 
 from __future__ import annotations
@@ -16,7 +14,7 @@ from datetime import datetime, timezone
 
 from energetica.identity import instance_config
 from energetica.identity.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
-from energetica.identity.schemas.lobby_service import GrantedRun, JoinedRun, MembershipsOut
+from energetica.identity.schemas.lobby_service import MembershipsOut
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +36,6 @@ def _parse_aware(raw: str | None) -> datetime | None:
     except ValueError:
         return None
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
-
-
-def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
-    """:func:`build_my_runs`, with the memberships read straight from the accounts store."""
-    # Imported here so the lobby backend, which imports this module for build_my_runs, never loads
-    # the accounts store.
-    from energetica.identity import accounts
-
-    memberships = MembershipsOut(
-        runs=[
-            JoinedRun(slug=m.slug, joined_at=m.created_at)
-            for m in accounts.get_memberships(account_id=account_id)
-            # A player's slug is never NULL; only a server-wide facilitator grant has none (ADR-0004).
-            if m.slug is not None
-        ],
-        facilitated_runs=[
-            GrantedRun(slug=g.slug, granted_at=g.created_at)
-            for g in accounts.get_facilitator_grants(account_id=account_id)
-            if g.slug is not None
-        ],
-    )
-    return build_my_runs(username, memberships)
 
 
 def build_my_runs(username: str, memberships: MembershipsOut) -> MyRunsResponse:

@@ -103,6 +103,27 @@ def test_the_lobby_backend_loads_neither_the_database_code_nor_the_signing_secre
     assert not leaked, f"importing the lobby backend loaded {sorted(leaked)}"
 
 
+@pytest.mark.parametrize(
+    "module",
+    [
+        "energetica.freeplay.app",
+        "energetica.routers",
+        "energetica.socketio",
+        "energetica.simulate",
+        "energetica.init_test_players",
+        "energetica.workshop.app",
+        "energetica.workshop.routes",
+    ],
+)
+def test_the_run_apps_load_neither_the_database_code_nor_the_signing_secret(module: str) -> None:
+    """Runs are clients of the lobby service: they reach accounts, sessions and membership only
+    through its API, so they never open the database and do not hold the signing secret (ADR-0009).
+    """
+    loaded = _modules_after_importing(module)
+    leaked = loaded.intersection({"energetica.identity.accounts.db", "energetica.kernel.session"})
+    assert not leaked, f"importing {module} loaded {sorted(leaked)}"
+
+
 def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
     loaded = _modules_after_importing("lobby_service.app")
     leaked = loaded.intersection(_ENGINE_MARKERS)

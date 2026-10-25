@@ -2,8 +2,8 @@
 
 The lobby (a separate service) owns signup/login/session. Each instance additionally serves
 ``my-runs`` from its **own** origin so the in-run switcher makes no cross-origin call: identical
-read logic (``energetica.identity.my_runs.resolve_my_runs``, shared with the lobby service),
-deployed in every service. Serves only the cookie-authenticated account's runs.
+read logic (``energetica.identity.my_runs.build_my_runs``, shared with the lobby backend), over
+the memberships the lobby service reports, deployed in every service. Serves only the cookie-authenticated account's runs.
 """
 
 from __future__ import annotations
@@ -12,11 +12,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.kernel.game_error import SharedErrorCode
-from energetica.identity.my_runs import resolve_my_runs
+from energetica.identity.my_runs import build_my_runs
 from energetica.identity.schemas.lobby import MyRunsResponse
-from energetica.identity.web import get_current_account
+from energetica.identity.web import get_current_account, lobby_service
 
 router = APIRouter(prefix="/lobby", tags=["Lobby"])
 
@@ -30,4 +30,4 @@ def get_my_runs(account: Annotated[Account | None, Depends(get_current_account)]
     if account is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
 
-    return resolve_my_runs(account.account_id, account.username)
+    return build_my_runs(account.username, lobby_service().get_memberships(account.account_id))

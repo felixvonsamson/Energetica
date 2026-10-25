@@ -10,9 +10,8 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.ongoing_project import OngoingProject
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.kernel.game_error import GameError
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.projects import (
     cancel_project,
@@ -143,9 +142,7 @@ def test_swap_waiting_and_ongoing_constructions() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
@@ -168,9 +165,7 @@ def test_cancel_construction() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
@@ -190,9 +185,7 @@ def test_pause_construction() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
@@ -214,9 +207,7 @@ def test_queue_two_pause_one() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
@@ -236,9 +227,7 @@ def test_three_constructions_with_pause() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
@@ -260,9 +249,7 @@ def test_add_two_and_cancel_one() -> None:
     """Setup: queue(1), queue(2), cancel(1)."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
@@ -284,9 +271,7 @@ def test_technologies_pausing_propagates_requirements() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
@@ -312,9 +297,7 @@ def test_math_and_building_tech() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
@@ -341,9 +324,7 @@ def test_swapping_waiting_and_paused_researches() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
@@ -381,9 +362,7 @@ def test_increasing_priority_of_paused_and_blocked_research() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    user = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000

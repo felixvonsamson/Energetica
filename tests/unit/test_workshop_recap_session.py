@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_plan import PlannedEvent
@@ -43,7 +43,7 @@ def _session(path: Path) -> WorkshopSession:
     wind turbine to keep the lights on.
     """
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=2, clock=_Clock())
-    account = Account(account_id=1, username="p1", pwhash="hash", email=None, created_at="")
+    account = Account(account_id=1, username="p1")
     session.join(account).money = 1_000_000_000.0
     session.advance()
     for _ in range(6):
@@ -134,7 +134,7 @@ def test_the_recap_tells_the_weather_of_each_season_the_round_played(tmp_path: P
 def test_the_recap_tells_every_seasons_weather_and_blackouts_after_a_blackout(tmp_path: Path) -> None:
     # A player who owns nothing cannot meet the demand they bring, so the grid goes down in every season.
     session = WorkshopSession.open(WORKSHOP_CONFIG, tmp_path / "session.json", round_count=2, clock=_Clock())
-    session.join(Account(account_id=1, username="p1", pwhash="hash", email=None, created_at=""))
+    session.join(Account(account_id=1, username="p1"))
     session.advance()
     _to_recap(session)
     recap = session.recap(1)

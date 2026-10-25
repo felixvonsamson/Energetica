@@ -13,7 +13,7 @@ from energetica.enums import ControllableFacilityType, Fuel
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
 from energetica.production_update import resources_and_pollution
 from energetica.utils.map_helpers import confirm_location
@@ -26,7 +26,7 @@ STOCK = 1000.0
 @pytest.fixture
 def player() -> Player:
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    account = Account(account_id=1, username="fuel", pwhash="pwhash", email=None, created_at="")
+    account = Account(account_id=1, username="fuel")
     p = confirm_location(account, HexTile.getitem(1))
     for facility in (COAL, NUCLEAR):
         add_asset(p, facility, 1)

@@ -8,9 +8,8 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.facilities import dismantle_facility
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
@@ -19,9 +18,7 @@ STORAGE_TYPE = StorageFacilityType.LITHIUM_ION_BATTERIES
 
 
 def _make_player(username: str) -> Player:
-    user = Account(
-        account_id=1, username=username, pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user = Account(account_id=1, username=username)
     hex_tile = HexTile.getitem(1)
     return confirm_location(user, hex_tile)
 

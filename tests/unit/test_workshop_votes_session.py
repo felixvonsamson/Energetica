@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.carbon_tax import construction_emissions
 from energetica.workshop.facilities import FacilityId
@@ -55,7 +55,7 @@ def _session(path: Path, *, round_count: int = 3, players: int = 3, clock: _Cloc
     """A session before Round 1, with ``players`` players who each hold plenty of money and own nothing yet."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=clock or _Clock())
     for account_id in range(1, players + 1):
-        account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
+        account = Account(account_id=account_id, username=f"p{account_id}")
         session.join(account).money = 1_000_000_000.0
     return session
 

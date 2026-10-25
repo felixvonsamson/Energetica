@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, Purchase
@@ -124,7 +124,7 @@ def _advance(session: WorkshopSession) -> Checkpoint:
 
 
 def _account(account_id: int, username: str) -> Account:
-    return Account(account_id=account_id, username=username, pwhash="hash", email=None, created_at="")
+    return Account(account_id=account_id, username=username)
 
 
 def _one_round(round_number: int) -> list[Checkpoint]:

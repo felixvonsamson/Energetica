@@ -10,8 +10,9 @@ from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
+from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.identity.run import run_router
-from energetica.identity.web import get_current_account, replayed_account
+from energetica.identity.web import get_standing, replayed_account
 from energetica.kernel.error_envelope import install_error_handlers
 
 from .achievements import router as achievements_router
@@ -70,6 +71,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 def setup_routes(app: FastAPI) -> None:
     install_error_handlers(app)
+    install_refusal_handler(app)
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
@@ -154,9 +156,13 @@ def setup_routes(app: FastAPI) -> None:
             except Exception:
                 response_payload = "unparsable or not JSON"
 
-            account = get_current_account(request)
-            if account is None:
+            # Only players' requests change the world, so only they are logged and replayed. A
+            # facilitator's writes change instance.json and the lobby, which replay must not redo,
+            # and replay acts as a player (identity.web.get_standing).
+            standing = get_standing(request)
+            if standing is None or standing.role != "player":
                 return new_response
+            account = standing.account
 
             log_entry = ApiAction(
                 timestamp=start,

@@ -21,7 +21,7 @@ from energetica.enums import (
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
 from energetica.production_update import calculate_generation_with_market, calculate_generation_without_market
 from energetica.sim.market import init_market
@@ -42,7 +42,7 @@ def player() -> Player:
     so it has a non-zero must-run output as well as headroom.
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    account = Account(account_id=1, username="offers", pwhash="pwhash", email=None, created_at="")
+    account = Account(account_id=1, username="offers")
     p = confirm_location(account, HexTile.getitem(1))
     for facility in (COAL, STEAM, BATTERY):
         add_asset(p, facility, 1)
