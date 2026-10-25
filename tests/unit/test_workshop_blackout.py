@@ -10,7 +10,9 @@ from energetica.workshop.seasons import Season
 
 
 @pytest.mark.parametrize(("count", "share"), [(0, 0.0), (1, 0.3), (2, 0.51), (3, 0.657), (4, 1 - 0.7**4)])
-def test_each_blackout_costs_thirty_percent_of_the_operating_profit_the_ones_before_it_left(count: int, share: float) -> None:
+def test_each_blackout_costs_thirty_percent_of_the_operating_profit_the_ones_before_it_left(
+    count: int, share: float
+) -> None:
     assert blackout_cost_share(count) == pytest.approx(share)
     assert blackout_cost(100_000_000.0, count) == pytest.approx(100_000_000.0 * share)
 
