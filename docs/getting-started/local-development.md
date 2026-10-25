@@ -116,7 +116,7 @@ Prefer separate terminals (independent logs, hot-reload per server)? Run the pie
 
 ```bash
 bun run serve:lobby                 # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
-bun run serve:app                   # app backend    :8000  (shares the lobby's secret + accounts)
+bun run serve:app                   # app backend    :8000  + its own lobby service
 cd frontend && bun run dev:lobby    # lobby frontend :5174
 cd frontend && bun run dev:app      # app frontend   :5173
 ```

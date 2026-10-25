@@ -25,7 +25,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
 
-from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
@@ -41,7 +40,7 @@ from energetica.workshop.trading import TradingOutcome
 from energetica.workshop.votes import CARBON_TAX_RATE
 
 from . import _socketio_helpers as socket
-from ._session_helpers import authenticate, make_account
+from ._session_helpers import authenticate, grant_facilitator, join, make_account
 
 SLUG = "workshop-autumn"
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -90,14 +89,14 @@ def _client(session_path: Path) -> TestClient:
 
 def _player(client: TestClient, username: str) -> int:
     account_id = make_account(username)
-    accounts.record_join(account_id=account_id, slug=SLUG, joined_at=datetime.now(timezone.utc).isoformat())
+    join(account_id, SLUG)
     authenticate(client, account_id)
     return account_id
 
 
 def _facilitator(client: TestClient) -> int:
     account_id = make_account("prof")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
     return account_id
 

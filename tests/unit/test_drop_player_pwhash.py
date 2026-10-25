@@ -19,7 +19,7 @@ from energetica.freeplay import engine
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.utils.map_helpers import confirm_location
 
 _SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "instance" / "drop_player_pwhash.py"
@@ -85,7 +85,7 @@ def test_drop_player_pwhash_handles_a_run_with_no_players() -> None:
 def _save_a_pickle_with_a_pwhash() -> int:
     """Save a run whose one player carries ``pwhash``, as a pickle written before #1341 does."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    account = Account(account_id=1, username="alice", pwhash="hash-a", email=None, created_at="")
+    account = Account(account_id=1, username="alice")
     player = confirm_location(account, HexTile.getitem(1))
     player.__dict__["pwhash"] = "hash-a"
     engine.save()

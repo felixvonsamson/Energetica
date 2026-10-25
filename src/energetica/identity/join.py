@@ -3,27 +3,27 @@
 Reachable by anyone holding a valid token — no ``get_facilitator``/``get_settled_player`` gate here,
 the unguessable token in the URL *is* the authorization. Resolves a token to this instance's name
 and open/closed state (``GET``, safe to call before the visitor is access-allowed or even signed
-in), and lets an already-signed-in visitor confirm joining (``POST``), which records the join in
-``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007) — the same write
-``accounts.record_join`` the public-run picker join and the facilitator roster's add both use.
-Entry into the game itself still goes through the existing, unmodified entry gate (``/auth/me`` →
-``resolve_entry_account`` / ``_enforce_instance_access`` in ``identity.web``), which now reads
-that same table.
+in), and lets an already-signed-in visitor confirm joining (``POST``), which joins them to the run
+through the lobby service (ADR-0007, ADR-0009) — the same idempotent join the public-run picker and
+the facilitator roster's add both use. Entry into the game itself still goes through the entry gate
+(``/auth/me`` → ``resolve_entry`` / ``_enforce_instance_access`` in ``identity.web``), which reads
+that same membership.
 
 Both the persistent world and Workshop serve these routes (#1138).
 """
 
 import secrets
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.identity import accounts, instance_config
-from energetica.identity.accounts import Account
+from energetica.identity import instance_config
 from energetica.identity.game_error import IdentityErrorCode
+from energetica.identity.lobby_service_client import LobbyServiceRefusal
 from energetica.identity.schemas.join import JoinLinkOut, Viewer
-from energetica.identity.web import get_current_account
+from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode
+from energetica.identity.web import Standing, get_current_account, get_standing, lobby_service
+from energetica.identity.account import Account
 from energetica.kernel.game_error import GameError, SharedErrorCode
 
 router = APIRouter(prefix="/join", tags=["Join"])
@@ -50,26 +50,24 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
 
 
 @router.get("/{token}")
-def get_join_link(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> JoinLinkOut:
+def get_join_link(token: str, standing: Annotated[Standing | None, Depends(get_standing)]) -> JoinLinkOut:
     """What this join link offers, and whether the visitor already has a session to join with."""
     instance_name, access = _resolve(token)
     viewer = None
-    if account is not None:
-        slug = instance_config.instance_slug()
-        assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
-        if accounts.is_facilitator(account_id=account.account_id, slug=slug):
+    if standing is not None:
+        if standing.role == "facilitator":
             membership = "facilitator"
-        elif accounts.has_joined(account_id=account.account_id, slug=slug):
+        elif standing.joined:
             membership = "player"
         else:
             membership = None
-        viewer = Viewer(username=account.username, membership=membership)
+        viewer = Viewer(username=standing.account.username, membership=membership)
     return JoinLinkOut(instance_name=instance_name, join_open=access.join_open, viewer=viewer)
 
 
 @router.post("/{token}", status_code=204)
 def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
-    """Confirm joining: record the signed-in visitor's join in ``accounts.db``.
+    """Confirm joining: join the signed-in visitor to this run through the lobby service.
 
     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
@@ -90,8 +88,10 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:
-        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
-    except accounts.MembershipRoleConflictError:
+        lobby_service().add_run_member(slug, account.account_id)
+    except LobbyServiceRefusal as refusal:
+        if refusal.code != LobbyServiceErrorCode.ROLE_CONFLICT:
+            raise
         # account is this run's facilitator (or server-wide) — a facilitator administers a run,
         # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
         # (a facilitator has no reason to visit their own join link), but fail closed rather than

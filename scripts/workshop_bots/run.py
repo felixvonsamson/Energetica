@@ -12,7 +12,6 @@ import argparse
 import json
 import os
 import random
-import subprocess
 import sys
 import threading
 import time
@@ -31,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 PLANS = HERE / "plans"
 SLUG = os.environ.get("ENERGETICA_INSTANCE_SLUG", "workshop-demo")
 # Run from the repo root, like the local-development docs.
-ACCOUNTS_DB = os.environ.get("ENERGETICA_ACCOUNTS_DB_PATH", ".energetica-dev/accounts.db")
+LOBBY_SERVICE_SOCKET = os.environ.get("ENERGETICA_LOBBY_SERVICE_SOCKET", ".energetica-dev/lobby-service.sock")
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
@@ -255,23 +254,27 @@ def setup(args: argparse.Namespace) -> None:
     ]
     if remote:
         sys.exit(
-            f"setup only works on a local Run, but {' and '.join(remote)}. It writes into a local accounts.db and "
+            f"setup only works on a local Run, but {' and '.join(remote)}. It creates accounts through the local lobby service and "
             "gives every account the password <name>1234, including the facilitator. On a deployed Run, an operator "
             "creates the accounts on the server with random passwords; pass those to the bots with "
             "ENERGETICA_BOT_PASSWORDS."
         )
-    os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = ACCOUNTS_DB
-    from energetica.identity import accounts  # noqa: PLC0415 - only this command needs the backend
-    from energetica.kernel.session import generate_password_hash  # noqa: PLC0415
+    # Only this command needs the backend.
+    from energetica.identity.lobby_service_client import LobbyServiceClient  # noqa: PLC0415
 
+    service = LobbyServiceClient.connect("workshop-bots", socket_path=Path(LOBBY_SERVICE_SOCKET))
     names = [args.facilitator, args.player, *PERSONAS]
+    account_ids = {}
     for name in names:
-        accounts.get_or_create_account_id(username=name, pwhash=generate_password_hash(f"{name}1234"))
-    lobby_scripts = HERE.parent / "lobby"
-    run = [sys.executable, str(lobby_scripts / "grant-facilitator.py"), "--username", args.facilitator]
-    subprocess.run([*run, "--slug", SLUG, "--accounts-db", ACCOUNTS_DB], check=True)
-    run = [sys.executable, str(lobby_scripts / "whitelist-run.py"), SLUG, "add", args.player, *PERSONAS]
-    subprocess.run([*run, "--accounts-db", ACCOUNTS_DB], check=True)
+        account = service.get_account_by_username(name)
+        account_ids[name] = (
+            account.account_id
+            if account is not None
+            else service.create_account(username=name, password=f"{name}1234").account_id
+        )
+    service.grant_facilitator(account_ids[args.facilitator], slug=SLUG)
+    for name in [args.player, *PERSONAS]:
+        service.add_run_member(SLUG, account_ids[name])
     log(f"accounts ready, each with the password <name>1234: {', '.join(names)}")
 
 

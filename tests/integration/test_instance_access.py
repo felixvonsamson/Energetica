@@ -2,9 +2,8 @@
 
 Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a
 login POST (which no longer exists). A public (or unconfigured) instance admits any server-wide
-account; a private instance admits only accounts that have joined it (``accounts.db``'s
-``instance_membership``, #1030 follow-up, ADR-0007 — ``instance.json`` carries no allowlist any
-more). The policy file is read fresh on every entry, so a lockdown takes effect even for an
+account; a private instance admits only accounts that have joined it (the run's membership in
+the lobby service, ADR-0007, ADR-0009 — ``instance.json`` carries no allowlist any more). The policy file is read fresh on every entry, so a lockdown takes effect even for an
 account that has already settled (#817, ADR-0003). There is nothing to auto-provision any more
 (ADR-0004): entry never creates a ``Player`` — only settling does.
 """
@@ -12,7 +11,6 @@ account that has already settled (#817, ADR-0003). There is nothing to auto-prov
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -21,10 +19,9 @@ from fastapi.testclient import TestClient
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
-from energetica.identity import accounts
 
 from . import _socketio_helpers as socket
-from ._session_helpers import authenticate, make_account
+from ._session_helpers import authenticate, grant_facilitator, join, make_account
 
 PORT = 8000
 ME_URL = f"http://localhost:{PORT}/api/v1/auth/me"
@@ -59,14 +56,14 @@ def _write_policy(config_dir: Path, access: dict | None, *, run: dict | None = N
 
 def _enter(client: TestClient, username: str) -> int:
     """Create an account, authenticate the client as it, and return its account_id."""
-    account_id = make_account(username, "pw")
+    account_id = make_account(username)
     authenticate(client, account_id)
     return account_id
 
 
 def _join(account_id: int) -> None:
-    """Record account_id as having joined this test's private instance (accounts.db)."""
-    accounts.record_join(account_id=account_id, slug=SLUG, joined_at=datetime.now(timezone.utc).isoformat())
+    """Record account_id as having joined this test's private instance."""
+    join(account_id, SLUG)
 
 
 def test_entry_allowed_on_public_instance(configured: Path) -> None:
@@ -215,7 +212,7 @@ def test_socket_still_refuses_a_facilitator(configured: Path) -> None:
     """The gate lets a facilitator in, but the persistent world's socket only serves players."""
     _write_policy(configured, {"policy": "private"})
     client = _client()
-    accounts.grant_facilitator(account_id=_enter(client, "prof"), slug=SLUG)
+    grant_facilitator(_enter(client, "prof"), SLUG)
 
     _, answer = socket.connect(client)
 

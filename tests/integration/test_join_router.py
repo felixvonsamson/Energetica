@@ -1,8 +1,8 @@
 """Integration tests for the public join-link routes (#1021): ``GET/POST /api/v1/join/{token}``.
 
 The visitor-facing counterpart to #1020's facilitator page — reachable by anyone holding the
-token, not just the instance's admin. Confirming records the join in ``accounts.db``'s
-``instance_membership`` (``accounts.record_join``, #1030 follow-up, ADR-0007) the same way
+token, not just the instance's admin. Confirming joins the visitor to the run through the lobby
+service (ADR-0007, ADR-0009) the same way
 ``test_facilitator_router.py``'s roster-add does, built on ``get_or_create_join_token`` /
 ``set_join_open`` for the token/toggle themselves.
 """
@@ -18,9 +18,9 @@ from fastapi.testclient import TestClient
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
-from energetica.identity import accounts
+from energetica.identity import web
 
-from ._session_helpers import authenticate, make_account
+from ._session_helpers import authenticate, grant_facilitator, join, make_account
 
 PORT = 8000
 SLUG = "autumn-2025"
@@ -73,8 +73,8 @@ def _client() -> TestClient:
 
 
 def _joined_usernames() -> list[str]:
-    """Usernames that have joined this test's instance, per accounts.db."""
-    return [entry.username for entry in accounts.get_run_roster(slug=SLUG)]
+    """Usernames that have joined this test's instance, per the lobby service."""
+    return [member.username for member in web.lobby_service().get_run_members(SLUG)]
 
 
 # --- GET: resolving the link -------------------------------------------------------------------
@@ -140,7 +140,7 @@ def test_get_reports_the_viewer_for_a_signed_in_visitor_with_no_player(instance_
     """
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
+    account_id = make_account("carol")
     authenticate(client, account_id)
     assert next(Player.filter_by(account_id=account_id), None) is None
 
@@ -156,8 +156,8 @@ def test_get_reports_the_viewer_for_a_signed_in_visitor_with_no_player(instance_
 def test_get_reports_player_membership_for_a_visitor_who_already_joined(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
-    accounts.record_join(account_id=account_id, slug=SLUG, joined_at="2026-01-01T00:00:00Z")
+    account_id = make_account("carol")
+    join(account_id, SLUG)
     authenticate(client, account_id)
 
     response = client.get(_join_url(TOKEN))
@@ -171,8 +171,8 @@ def test_get_reports_facilitator_membership_for_a_visitor_who_administers_this_r
 ) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
-    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    account_id = make_account("carol")
+    grant_facilitator(account_id, SLUG)
     authenticate(client, account_id)
 
     response = client.get(_join_url(TOKEN))
@@ -196,7 +196,7 @@ def test_post_rejects_an_unauthenticated_visitor(instance_json: Path) -> None:
 def test_post_rejects_an_unknown_token(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
+    account_id = make_account("carol")
     authenticate(client, account_id)
 
     response = client.post(_join_url("wrong-token"))
@@ -210,7 +210,7 @@ def test_post_rejects_when_join_is_closed_and_does_not_modify_the_allowlist(inst
     closed = {**PRIVATE_JSON, "access": {**PRIVATE_JSON["access"], "join_open": False}}
     _write(instance_json, closed)
     client = _client()
-    account_id = make_account("carol", "pw")
+    account_id = make_account("carol")
     authenticate(client, account_id)
 
     response = client.post(_join_url(TOKEN))
@@ -226,7 +226,7 @@ def test_post_adds_the_visitor_to_the_roster_and_the_entry_gate_then_admits_them
     """
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
+    account_id = make_account("carol")
     authenticate(client, account_id)
 
     # Blocked before confirming, exactly like any other not-yet-joined account.
@@ -246,7 +246,7 @@ def test_post_adds_the_visitor_to_the_roster_and_the_entry_gate_then_admits_them
 def test_post_is_idempotent_for_an_already_joined_username(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
-    account_id = make_account("alice", "pw")
+    account_id = make_account("alice")
     authenticate(client, account_id)
     client.post(_join_url(TOKEN))  # already joined once
 
@@ -259,7 +259,7 @@ def test_post_is_idempotent_for_an_already_joined_username(instance_json: Path) 
 def test_post_rejects_a_token_on_a_public_instance(instance_json: Path) -> None:
     _write(instance_json, PUBLIC_JSON)
     client = _client()
-    account_id = make_account("carol", "pw")
+    account_id = make_account("carol")
     authenticate(client, account_id)
 
     response = client.post(_join_url(TOKEN))

@@ -92,6 +92,22 @@ if ! ssh "$SSH" "grep -qF '$DATA_DENY' '$VHOST_FILE'"; then
     exit 1
 fi
 
+# The run reaches accounts and sessions only through the lobby service (#1283, ADR-0009), on the
+# socket instance.env names. instance.env is rendered once by setup-instance.sh and never touched by
+# deploys, so an instance set up before #1283 lacks the variable, and the new code would look for a
+# dev socket and answer every request that needs an account with a 503. The unit must also want the
+# service's socket. instance.env is group-readable by deploy, so this needs no sudo.
+ENV_FILE="/etc/energetica/$INSTANCE/instance.env"
+if ! ssh "$SSH" "grep -q '^ENERGETICA_LOBBY_SERVICE_SOCKET=' '$ENV_FILE'" \
+    || ! ssh "$SSH" "systemctl show --property=Wants energetica-$INSTANCE | grep -q energetica-lobby-service.socket"; then
+    log_error "$INSTANCE's instance.env or unit does not know about the lobby service yet."
+    echo "Bring both up to date before deploying:"
+    echo "  ./scripts/push-bootstrap.sh --server $REMOTE_HOST"
+    echo "  then on $REMOTE_HOST, as root (not as $REMOTE_USER — it has no sudo for this):"
+    echo "    sudo bash /tmp/update-instance-unit.sh $INSTANCE"
+    exit 1
+fi
+
 # The instance's instance.json must parse under the backend this deploy ships. The instance reads
 # it on every login and fails closed, so a file the new code rejects locks every player out, even
 # on a public Run. That is what happens to a file an operator forgot to migrate by hand (#1060

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.balance_sheet import balance_sheet
 from energetica.workshop.facilities import FacilityId
@@ -77,7 +77,7 @@ def clock() -> _Clock:
 def _session(path: Path, clock: _Clock, *, round_count: int = 3) -> WorkshopSession:
     """A session in Round 1's Investment phase, with Alice (account 1) owning ``FLEET`` and the starting budget."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=clock)
-    account = Account(account_id=1, username="alice", pwhash="hash", email=None, created_at="")
+    account = Account(account_id=1, username="alice")
     session.join(account).owned_facilities.extend(FLEET)
     session.advance()
     assert session.checkpoint == Investment(round=1)

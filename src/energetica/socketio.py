@@ -12,7 +12,7 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
-from energetica.identity.web import admit_socket_connection, get_role
+from energetica.identity.web import admit_socket_connection
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -26,9 +26,10 @@ def setup_socketio(app: FastAPI) -> None:
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
         """Admit a connecting player through the same entry gate as the HTTP routes."""
-        account = admit_socket_connection(environ)
-        if get_role(account.account_id) != "player":
+        standing = admit_socket_connection(environ)
+        if standing.role != "player":
             raise ConnectionRefusedError("authentication failed: not a player")
+        account = standing.account
 
         # Allow unsettled players to connect so they can receive broadcasts (e.g., map updates)
         # Only track socketio_clients if player exists (for targeted player.emit())

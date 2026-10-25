@@ -10,7 +10,7 @@ from energetica.enums import ControllableFacilityType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.globals import engine
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.utils.map_helpers import confirm_location
 
 
@@ -20,8 +20,8 @@ def test_price_randomization() -> None:
     # test ran before it (it settles tiles 1 & 2, which a prior test may have already occupied).
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
     engine.random_seed = 0
-    account_a = Account(account_id=1, username="player1", pwhash="pwhash", email=None, created_at="")
-    account_b = Account(account_id=2, username="player2", pwhash="pwhash", email=None, created_at="")
+    account_a = Account(account_id=1, username="player1")
+    account_b = Account(account_id=2, username="player2")
     player_a = confirm_location(account_a, HexTile.getitem(1))
     player_b = confirm_location(account_b, HexTile.getitem(2))
     assert (

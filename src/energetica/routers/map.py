@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.schemas.map import HexTileOut, SettleRequest, SettleResponse
 from energetica.utils import map_helpers
 from energetica.identity.web import get_playing_account

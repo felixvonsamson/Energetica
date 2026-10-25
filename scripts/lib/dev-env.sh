@@ -18,8 +18,8 @@ DEV_SCRATCH="$DEV_REPO_ROOT/.energetica-dev"
 DEV_LANDING_DIR="$DEV_SCRATCH/landing"
 
 export ENERGETICA_ACCOUNTS_DB_PATH="$DEV_SCRATCH/accounts.db"
-# The lobby service owns the same file runs still open directly, until they switch to its API
-# (ADR-0009). The lobby backend reaches the service on this socket. The path is relative to the
+# The lobby service owns the same file, which seed_dev_data still writes directly (ADR-0009). The
+# lobby backend and the app backend reach the service on this socket. The path is relative to the
 # repo root, which every script that sources this file cds into, because a Unix socket path must
 # stay under about 104 characters on macOS and a worktree's absolute path does not.
 export ENERGETICA_LOBBY_DB_PATH="$ENERGETICA_ACCOUNTS_DB_PATH"

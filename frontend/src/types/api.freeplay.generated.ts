@@ -908,7 +908,7 @@ export interface paths {
          *
          *     Revocation is eventual — it takes effect on the account's next entry check, not an instant
          *     kick of a live session (out of scope here, #677 if ever built) — and does not touch any
-         *     ``Player`` already created; see :func:`accounts.remove_membership`. A no-op (still 204) if
+         *     ``Player`` already created. A no-op (still 204) if
          *     ``username`` names no account, or isn't on the roster — matching the old allowlist's
          *     idempotency.
          */
@@ -1080,7 +1080,7 @@ export interface paths {
         put?: never;
         /**
          * Confirm Join
-         * @description Confirm joining: record the signed-in visitor's join in ``accounts.db``.
+         * @description Confirm joining: join the signed-in visitor to this run through the lobby service.
          *
          *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
          *     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but

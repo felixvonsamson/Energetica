@@ -7,9 +7,8 @@ from energetica.enums import (
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.facilities import upgrade_facility
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
@@ -22,9 +21,7 @@ def test_upgrading_active_facilities() -> None:
     See https://github.com/felixvonsamson/Energetica/issues/371
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    user1 = Account(account_id=1, username="username")
     hex_tile = HexTile.getitem(1)
     player1 = confirm_location(user1, hex_tile)
 

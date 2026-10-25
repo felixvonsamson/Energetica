@@ -6,8 +6,7 @@ from energetica.enums import TechnologyType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.globals import engine
-from energetica.identity.accounts import Account
-from energetica.kernel.session import generate_password_hash
+from energetica.identity.account import Account
 from energetica.technology_effects import (
     construction_power,
     construction_time,
@@ -32,9 +31,7 @@ def test_technology_total_energy_scales_with_spillover(n_researchers: int) -> No
     reduces total energy by f = 0.98^n.
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    account = Account(
-        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
-    )
+    account = Account(account_id=1, username="username")
     player = confirm_location(account, HexTile.getitem(1))
 
     technology = TechnologyType.MATHEMATICS

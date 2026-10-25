@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.score import ranked, residual_value, score
@@ -37,7 +37,7 @@ def network() -> WorkshopNetwork:
 
 
 def _player(network: WorkshopNetwork, account_id: int, username: str) -> WorkshopPlayer:
-    account = Account(account_id=account_id, username=username, pwhash="hash", email=None, created_at="")
+    account = Account(account_id=account_id, username=username)
     return network.join(account)
 
 

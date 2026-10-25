@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity.accounts import Account
+from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_plan import LeverChanges
@@ -55,7 +55,7 @@ def _session(path: Path, *, round_count: int = 3) -> WorkshopSession:
     """A session in Round 1's Investment phase, with ``PLAYERS`` players who each hold plenty of money."""
     session = WorkshopSession.open(WORKSHOP_CONFIG, path, round_count=round_count, clock=_Clock())
     for account_id in range(1, PLAYERS + 1):
-        account = Account(account_id=account_id, username=f"p{account_id}", pwhash="hash", email=None, created_at="")
+        account = Account(account_id=account_id, username=f"p{account_id}")
         session.join(account).money = 1_000_000_000.0
     session.advance()
     return session

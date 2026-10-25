@@ -1,6 +1,7 @@
 """The identity layer: server-wide accounts and configuration, shared by the lobby and every instance.
 
-The accounts store (:mod:`~energetica.identity.accounts`), instance configuration and the landing
+The run-side account type (:mod:`~energetica.identity.account`), the lobby service client
+(:mod:`~energetica.identity.lobby_service_client`), instance configuration and the landing
 dir it publishes to (:mod:`~energetica.identity.instance_config`), server configuration
 (:mod:`~energetica.identity.server_config`), my-runs resolution
 (:mod:`~energetica.identity.my_runs`), and the request dependencies that resolve the caller's

@@ -1,6 +1,6 @@
 """Request dependencies that need the persistent world.
 
-The account and role checks (``get_current_account``, ``get_role``, ``get_facilitator`` and the
+The account and role checks (``get_current_account``, ``get_standing``, ``get_facilitator`` and the
 rest) read nothing from any mode's world, so they live in :mod:`energetica.identity.web` where
 Workshop can use them too. This module keeps the two that cannot move: resolving a settled
 ``Player``, and refusing game-state writes once the instance is frozen (freeze is a persistent-world
@@ -15,7 +15,7 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.identity import instance_config
 from energetica.identity.game_error import IdentityErrorCode
-from energetica.identity.web import get_current_account, get_role
+from energetica.identity.web import get_standing
 from energetica.kernel.game_error import SharedErrorCode
 
 
@@ -48,12 +48,12 @@ def reject_when_frozen() -> None:
 
 
 def get_settled_player(request: Request) -> Player:
-    account = get_current_account(request)
-    if account is None:
+    standing = get_standing(request)
+    if standing is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=SharedErrorCode.NOT_AUTHENTICATED)
-    if get_role(account.account_id) != "player":
+    if standing.role != "player":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=IdentityErrorCode.USER_IS_NOT_A_PLAYER)
-    player = next(Player.filter_by(account_id=account.account_id), None)
+    player = next(Player.filter_by(account_id=standing.account.account_id), None)
     if player is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=FreeplayErrorCode.PLAYER_NOT_SET_UP)
     if player.last_connection is None or (datetime.now(timezone.utc) - player.last_connection).total_seconds() > 300:

@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run the local app (instance/game) backend for development, wired to share the lobby's signing
-# secret + accounts store so a lobby-minted SSO cookie logs you in. Any extra args are forwarded
-# to main.py. See docs/getting-started/local-development.md.
+# Run the local app (instance/game) backend for development, with the lobby service it reaches
+# accounts and sessions through (ADR-0009), on the shared dev scratch, so a lobby-minted SSO cookie
+# logs you in. Any extra args are forwarded to main.py. See docs/getting-started/local-development.md.
 #
-#   bun run serve:app                 # this script — app backend on :8000
+#   bun run serve:app                 # this script — app backend on :8000, plus the lobby service
 #   bun run serve:lobby               # the lobby backend it authenticates against (:8001)
 #   cd frontend && bun run dev:app    # the app frontend, in another terminal
 #
@@ -20,7 +20,14 @@ cd "$REPO_ROOT"
 # shellcheck source=scripts/lib/dev-env.sh
 source scripts/lib/dev-env.sh
 
+# The app backend gets a lobby service of its own, on its own socket, so it starts and stops
+# independently of the one `bun run serve:lobby` runs in another terminal. Both serve the same dev
+# database, which SQLite lets two processes share. (`bun run dev` runs one service for both.)
+export ENERGETICA_LOBBY_SERVICE_SOCKET=".energetica-dev/lobby-service-app.sock"
+start_lobby_service
+trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
+
 echo "→ App backend on http://localhost:8000 — shared dev scratch: $DEV_SCRATCH"
 echo "  Need a session? Log in via the lobby, or run: bash scripts/dev-login.sh"
 echo
-exec .venv/bin/python main.py --env dev "$@"
+.venv/bin/python main.py --env dev "$@"

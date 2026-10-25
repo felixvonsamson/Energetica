@@ -20,10 +20,11 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
-from energetica.identity import accounts, instance_config
+from energetica.identity import instance_config
 from energetica.identity.instance_config import InstanceConfig
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
+from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
@@ -71,6 +72,7 @@ def create_workshop_app(
     """
     app = FastAPI(title="Energetica Workshop", lifespan=_lifespan)
     install_error_handlers(app)
+    install_refusal_handler(app)
     app.include_router(run_router("workshop"), prefix="/api/v1")
     # A private Run admits accounts through the join link and the facilitator's roster.
     app.include_router(join_router, prefix="/api/v1")
@@ -106,7 +108,6 @@ def create_workshop_app(
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    accounts.init_db()
     # Publish this Run's public fragment so the lobby can list it, as the persistent world does.
     instance_config.publish_on_startup()
     # An app built only for its OpenAPI schema has no session, so nothing to buy or settle.
