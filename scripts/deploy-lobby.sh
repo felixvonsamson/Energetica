@@ -163,8 +163,9 @@ install_backend_wheel "$SSH" "$REMOTE_PATH"
 # and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
 # processes run from this checkout and report this stamp. Written before the restarts because the
 # lobby backend also reads it, once per process on first use, to name itself in the
-# X-Energetica-Caller header it sends the lobby service. Stamped after the restarts, it would name
-# the previous deploy's commit until its next restart (#1356). The cost is that /healthz reports
+# X-Energetica-Caller header it sends the lobby service. If the stamp were written after the
+# restarts, the lobby backend would name the previous deploy's commit until its next restart
+# (#1356). The cost is that /healthz reports
 # the new commit from here on even if a restart below fails, but then the deploy fails loudly.
 stamp_deployed_version "$SSH" "$REMOTE_PATH"
 

@@ -67,9 +67,22 @@ classify() {
     echo "DIVERGED"
 }
 
-# One /healthz probe → one table row. Verdict precedence: unreachable > no stamp > dirty >
-# ancestry (behind / ahead / diverged / up-to-date). "dirty" (either half) wins over the ancestry
-# verdict because a dirty deploy's commit is not fully trustworthy in the first place.
+# The VS-REF verdict for a stamped commit. Precedence: no stamp > dirty > ancestry (behind /
+# ahead / diverged / up-to-date). "dirty" wins over the ancestry verdict because a dirty deploy's
+# commit is not fully trustworthy in the first place. Callers handle "unreachable" first.
+#   verdict_for <full-commit-or-empty> <dirty: true|false>
+verdict_for() {
+    local commit="$1" dirty="$2"
+    if [ -z "$commit" ]; then
+        echo "no-stamp"
+    elif [ "$dirty" = "true" ]; then
+        echo "DIRTY"
+    else
+        classify "$commit"
+    fi
+}
+
+# One /healthz probe → one table row. Either half being dirty makes the row DIRTY.
 probe() {
     local label="$1" url="$2"
     local body be_full be fe be_dirty fe_dirty verdict
@@ -85,13 +98,9 @@ probe() {
     [ "$be_dirty" = "true" ] && be="$be*"
     [ "$fe_dirty" = "true" ] && fe="$fe*"
 
-    if [ -z "$be_full" ]; then
-        verdict="no-stamp"
-    elif [ "$be_dirty" = "true" ] || [ "$fe_dirty" = "true" ]; then
-        verdict="DIRTY"
-    else
-        verdict=$(classify "$be_full")
-    fi
+    local dirty=false
+    if [ "$be_dirty" = "true" ] || [ "$fe_dirty" = "true" ]; then dirty=true; fi
+    verdict=$(verdict_for "$be_full" "$dirty")
     echo "$label|$url|$be|$fe|$verdict"
 }
 
@@ -111,13 +120,7 @@ probe_landing() {
     fe_dirty=$(echo "$body" | jq -r '.dirty // false' 2>/dev/null || echo false)
     [ "$fe_dirty" = "true" ] && fe="$fe*"
 
-    if [ -z "$fe_full" ]; then
-        verdict="no-stamp"
-    elif [ "$fe_dirty" = "true" ]; then
-        verdict="DIRTY"
-    else
-        verdict=$(classify "$fe_full")
-    fi
+    verdict=$(verdict_for "$fe_full" "$fe_dirty")
     echo "landing|$url|-|$fe|$verdict"
 }
 
@@ -126,15 +129,15 @@ probe_landing() {
 # no commit, so the commit comes from the stamp of the lobby checkout it runs from, the same file
 # the lobby backend reports. The schema version is printed below the table rather than in a column
 # of its own, since no other row has one. Both are read here, outside the piped block below,
-# because that block runs in a subshell and could not hand SCHEMA_NOTE back.
+# because that block runs in a subshell and could not hand LOBBY_SERVICE_NOTE back.
 LOBBY_SERVICE_SOCKET=/run/energetica/lobby-service.sock
 LOBBY_SERVICE_HEALTH=$(ssh "$SSH" "curl -fsS --max-time 8 --unix-socket $LOBBY_SERVICE_SOCKET http://lobby-service/internal/v1/healthz" 2>/dev/null || true)
 LOBBY_SERVICE_STAMP=$(ssh "$SSH" "cat /var/www/energetica-lobby/DEPLOYED_VERSION.json" 2>/dev/null || true)
-SCHEMA_NOTE="lobby-service: unreachable, accounts.db schema version unknown."
+LOBBY_SERVICE_NOTE="lobby-service: unreachable, accounts.db schema version unknown."
 if [ -n "$LOBBY_SERVICE_HEALTH" ]; then
-    schema=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '.schema_version // "?"' 2>/dev/null || echo "?")
-    api=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '(.api_versions // []) | join(",")' 2>/dev/null || echo "?")
-    SCHEMA_NOTE="lobby-service: accounts.db schema version $schema, API ${api:-?}."
+    lobby_service_schema=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '.schema_version // "?"' 2>/dev/null || echo "?")
+    lobby_service_api=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '(.api_versions // []) | join(",")' 2>/dev/null || echo "?")
+    LOBBY_SERVICE_NOTE="lobby-service: accounts.db schema version $lobby_service_schema, API ${lobby_service_api:-?}."
 fi
 
 probe_lobby_service() {
@@ -148,13 +151,7 @@ probe_lobby_service() {
     be_dirty=$(echo "$LOBBY_SERVICE_STAMP" | jq -r '.dirty // false' 2>/dev/null || echo false)
     [ "$be_dirty" = "true" ] && be="$be*"
 
-    if [ -z "$be_full" ]; then
-        verdict="no-stamp"
-    elif [ "$be_dirty" = "true" ]; then
-        verdict="DIRTY"
-    else
-        verdict=$(classify "$be_full")
-    fi
+    verdict=$(verdict_for "$be_full" "$be_dirty")
     echo "lobby-service|$url|$be|-|$verdict"
 }
 
@@ -169,6 +166,6 @@ probe_lobby_service() {
 } | column -t -s '|'
 
 echo
-echo "$SCHEMA_NOTE"
+echo "$LOBBY_SERVICE_NOTE"
 echo "* = built/deployed from a tree with uncommitted changes (commit is not the whole truth)."
 echo "VS-REF: up-to-date | BEHIND | ahead | DIVERGED (vs $REF); differs? = commit not fetched locally."

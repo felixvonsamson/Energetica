@@ -99,7 +99,7 @@ if [ "$INSTANCE" = "landing" ]; then
     exit 1
 fi
 if [ "$INSTANCE" = "lobby" ]; then
-    log_error "'lobby' is reserved for the lobby service (setup-lobby.sh)"
+    log_error "'lobby' is reserved for the lobby backend (setup-lobby.sh)"
     exit 1
 fi
 if [ "$INSTANCE" = "lobby-service" ]; then

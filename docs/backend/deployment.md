@@ -388,7 +388,7 @@ read its own commit from git. Instead each half is stamped, and both are reporte
 - **Backend** — `deploy-instance.sh` / `deploy-lobby.sh` write `DEPLOYED_VERSION.json` to the
   deploy root just before the restart, capturing the commit, branch, dirty flag, deployer, and
   timestamp. It goes in before the restart because a backend also names its commit in the
-  `X-Energetica-Caller` header it sends the lobby service, and it reads the stamp only once.
+  `X-Energetica-Caller` header it sends the lobby service, and the backend reads the stamp only once.
 - **Frontend** — the vite build writes `build-info.json` into the bundle it emits.
 
 `/healthz` reads both and returns a `version` block:
