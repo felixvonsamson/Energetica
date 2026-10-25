@@ -34,12 +34,10 @@ source scripts/lib/dev-env.sh
 
 seed_dev_data
 
-# The lobby backend is a client of the lobby service (ADR-0009). Run it alongside, unless
-# `bun run serve:app` already does, and stop it with the backend.
-ensure_lobby_service
-if [ -n "$LOBBY_SERVICE_PID" ]; then
-    trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
-fi
+# The lobby backend is a client of the lobby service (ADR-0009). Run it alongside, and stop it with
+# the backend.
+start_lobby_service
+trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
 
 echo
 echo "→ Lobby backend on http://127.0.0.1:$PORT, lobby service on $ENERGETICA_LOBBY_SERVICE_SOCKET"

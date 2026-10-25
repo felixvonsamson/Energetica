@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Awaitable, Callable, cast
 
 from fastapi import FastAPI, Request, Response, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from energetica.freeplay.globals import engine
@@ -110,9 +111,10 @@ def setup_routes(app: FastAPI) -> None:
         # replay acts as a player (identity.web.get_standing). The caller is resolved before the
         # route runs, so a lobby service that cannot be reached refuses the write with nothing
         # changed, rather than failing after the change without logging it. The route reuses the
-        # answer.
+        # answer. The lookup is a blocking call to the lobby service, so it runs in a worker thread,
+        # where it cannot stall the event loop and every other request with it.
         try:
-            standing = get_standing(request)
+            standing = await run_in_threadpool(get_standing, request)
         except LobbyServiceUnavailable as exc:
             return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 

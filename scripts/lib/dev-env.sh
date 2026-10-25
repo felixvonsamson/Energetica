@@ -71,20 +71,6 @@ start_lobby_service() {
     return 1
 }
 
-# Start the lobby service unless one already listens on the socket, for instance one that
-# `bun run serve:lobby` started in another terminal. Sets LOBBY_SERVICE_PID to the service it
-# started, or to nothing if it reused a running one, so the caller stops only its own.
-ensure_lobby_service() {
-    LOBBY_SERVICE_PID=""
-    if [ -S "$ENERGETICA_LOBBY_SERVICE_SOCKET" ] \
-        && "$DEV_REPO_ROOT/.venv/bin/python" -c 'import socket, sys; socket.socket(socket.AF_UNIX).connect(sys.argv[1])' \
-            "$ENERGETICA_LOBBY_SERVICE_SOCKET" 2>/dev/null; then
-        echo "→ Reusing the lobby service already listening on $ENERGETICA_LOBBY_SERVICE_SOCKET"
-        return 0
-    fi
-    start_lobby_service
-}
-
 # Seed a demo account + sample runs so every picker state is reachable. Idempotent. The lobby owns
 # accounts, so only the lobby-side entry points (dev-lobby.sh, dev.sh) call this:
 #   login as demo / demo1234  → "your runs" (poc-3 + private-beta) + "other runs to join" (summer-2026)
