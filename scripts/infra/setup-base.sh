@@ -268,14 +268,12 @@ if [ -e "$LEGACY_STATE/accounts.db" ] || [ -e "$LEGACY_STATE/secret_key.txt" ]; 
             mv "$LEGACY_STATE/${move%%:*}" "$LOBBY_SERVICE_STATE/${move##*:}"
         fi
     done
-    chown -R "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE"
-    find "$LOBBY_SERVICE_STATE" -type f -exec chmod 0600 {} +
     if rmdir "$LEGACY_STATE" 2>/dev/null; then
         log_success "Removed the empty $LEGACY_STATE"
     else
         log_step "$LEGACY_STATE still holds other files; left it in place. Check what they are."
     fi
-    log_success "Moved them to $LOBBY_SERVICE_STATE (lobby.db, secret_key.txt; 0600 $LOBBY_SERVICE_USER)"
+    log_success "Moved them to $LOBBY_SERVICE_STATE (lobby.db, secret_key.txt)"
 fi
 
 # The server-wide session-signing secret (ADR-0002), minted once per server. Never overwritten on
@@ -287,6 +285,12 @@ else
     chown "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE/secret_key.txt"
     log_success "$LOBBY_SERVICE_STATE/secret_key.txt (0600 $LOBBY_SERVICE_USER)"
 fi
+
+# Every file in the dir must be the service's alone. This runs on every run, not only after a
+# move, so a re-run repairs a move that stopped before it got here.
+chown -R "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE"
+find "$LOBBY_SERVICE_STATE" -type f -exec chmod 0600 {} +
+log_success "Everything in $LOBBY_SERVICE_STATE is 0600 $LOBBY_SERVICE_USER"
 
 # Only the socket is enabled: it starts the service on the first connection. The socket is never
 # restarted here, since that would drop connections queued on it; a changed service unit is picked

@@ -105,17 +105,26 @@ log_section "DIRECTORIES & VENV"
 install -d -o "$DEPLOY_USER" -g energetica -m 2750 "$APP_DIR"
 log_success "$APP_DIR (code + bundle, deploy-owned)"
 
+# Unlike an instance's venv, this one belongs to the deploy user, like the code next to it, and
+# deploys install into it as that user. The lobby service imports from it while running as its own
+# user, which alone can read lobby.db and the signing secret, so the energetica user, which runs
+# every game instance, must not be able to write here: a .pth file planted in site-packages would
+# run as the service. The energetica group reads it, for the lobby backend and the service; setgid
+# directories keep the group on what pip adds.
 if [ -x "$APP_DIR/.venv/bin/python" ]; then
     log_success "venv already present at $APP_DIR/.venv"
 else
     log_step "Creating venv (populated by first deploy)..."
-    # Same least-privilege dance as setup-instance.sh: the venv is owned by the service
-    # user (which runs `sudo -u energetica pip install` during deploys) inside the
-    # deploy-owned code dir.
-    install -d -o energetica -g energetica -m 0750 "$APP_DIR/.venv"
-    sudo -u energetica python3 -m venv "$APP_DIR/.venv"
+    install -d -o "$DEPLOY_USER" -g energetica -m 2750 "$APP_DIR/.venv"
+    sudo -u "$DEPLOY_USER" python3 -m venv "$APP_DIR/.venv"
     log_success "venv at $APP_DIR/.venv"
 fi
+# Before #1284 the venv belonged to energetica. Re-running this hands it over; it is a no-op on a
+# venv that is already right.
+chown -R "$DEPLOY_USER:energetica" "$APP_DIR/.venv"
+chmod -R g-w,o-rwx "$APP_DIR/.venv"
+find "$APP_DIR/.venv" -type d -exec chmod g+s {} +
+log_success "$APP_DIR/.venv ($DEPLOY_USER:energetica, read-only to the group)"
 
 # Pre-create an energetica-owned instance/ subdir. This is probably no longer needed and can be
 # removed once a freshly provisioned lobby is confirmed to start without it (#1121).

@@ -331,11 +331,17 @@ sqlite3 /tmp/lobby-db-check/lobby.db.pre-migration 'SELECT count(*) FROM instanc
 The version should read 2, the table should have no `settled_at`, and the two row counts should
 match. Delete `/tmp/lobby-db-check` afterwards: it holds every password hash.
 
-**2. Re-run `setup-base.sh`.** On the VPS, as root, after `./scripts/push-bootstrap.sh`:
+**2. Re-run `setup-base.sh`, then `setup-lobby.sh`.** On the VPS, as root, after
+`./scripts/push-bootstrap.sh`:
 
 ```bash
 sudo bash /tmp/setup-base.sh
+sudo bash /tmp/setup-lobby.sh --domain energetica-game.org
 ```
+
+`setup-lobby.sh` hands the lobby's venv from `energetica` to the deploy user. The lobby service
+imports from it, so `energetica`, which runs every game instance, must not be able to write there.
+Deploys now install into it as the deploy user.
 
 It creates the user and its directory, stops the lobby service and its socket, moves
 `accounts.db` (with any `-wal`, `-shm` and `.pre-migration` files) to

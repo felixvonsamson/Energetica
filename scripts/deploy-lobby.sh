@@ -84,6 +84,18 @@ if [ "$(ssh "$SSH" "systemctl show --property=User --value energetica-lobby-serv
 fi
 log_success "Lobby service runs as its own user"
 
+# The lobby service imports from the lobby's venv, so the energetica user, which runs every game
+# instance, must not be able to write to it: a file planted in site-packages would run as the
+# service's user. setup-lobby.sh hands the venv to the deploy user; a box set up before needs a
+# re-run.
+log_step "Checking that the deploy user owns the lobby's venv..."
+if [ "$(ssh "$SSH" "stat -c %U $REMOTE_PATH/.venv")" != "$REMOTE_USER" ]; then
+    log_error "$REMOTE_PATH/.venv is not owned by $REMOTE_USER."
+    echo "Re-run setup-lobby.sh on the server (it is idempotent), then deploy again."
+    exit 1
+fi
+log_success "Lobby venv is the deploy user's"
+
 # setup-lobby.sh renders the lobby backend's unit, and only a unit rendered since the lobby service
 # existed tells the backend where the service's socket is. Without it the new backend looks for a
 # dev socket and answers every login with a 503. Re-running setup-lobby.sh re-renders the unit.
@@ -167,7 +179,7 @@ rsync -az --delete ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/
 log_success "Lobby bundle synced"
 
 # --- 6. Install the backend into the server venv --------------------------------------
-install_backend_wheel "$SSH" "$REMOTE_PATH"
+install_backend_wheel "$SSH" "$REMOTE_PATH" --as-deploy-user
 
 # --- 6b. Stamp the deployed backend version ----------------------------------------
 # The server has no .git (rsync excludes it), so the commit is captured here on the deploy machine
