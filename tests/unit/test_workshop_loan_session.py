@@ -318,7 +318,7 @@ def test_the_loan_counts_as_an_investment_of_its_cost(path: Path, clock: _Clock)
     session.take_loan(1)
     after = score(alice, completed_rounds=session.round_count, price_round_count=session.price_round_count)
 
-    assert LOAN_COST == 10_000_000.0
+    assert LOAN_COST == 20_000_000.0
     assert after.investments == before.investments + LOAN_COST
     assert after.score == before.score - LOAN_COST
 

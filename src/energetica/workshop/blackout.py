@@ -4,8 +4,9 @@ A blackout takes the grid down for a day (:mod:`~energetica.workshop.trading`). 
 rationed: demand is cut by :data:`~energetica.workshop.trading.RATIONING` for the rest of the Round, and again after
 each blackout that follows. The next Round starts with demand back at its full level.
 
-Each blackout in a Round also costs every player :data:`BLACKOUT_COST_SHARE` of their operating profit for the Round,
-up to all of it, charged when its Recap opens. Taking a share rather than a fixed sum costs the players earning most
+Each blackout in a Round also costs every player :data:`BLACKOUT_COST_SHARE` of the operating profit the blackouts
+before it left them, charged when its Recap opens: ``n`` blackouts leave them ``(1 - BLACKOUT_COST_SHARE) ** n`` of it.
+Compounding the cost this way keeps a Round with several blackouts from taking all of a player's profit. Taking a share rather than a fixed sum costs the players earning most
 the most, which closes the gap to the others. A player who made a loss pays nothing. The cost comes out of cash but
 is left out of the score (:mod:`~energetica.workshop.score`), like the floor top-up.
 """
@@ -19,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RATIONING
 
-#: The share of a Round's operating profit each blackout in it costs.
+#: The share of a Round's operating profit each blackout in it costs, on what the blackouts before it left.
 BLACKOUT_COST_SHARE = 0.3
 
 
@@ -53,7 +54,7 @@ def rationing(blackouts: Iterable[Blackout], round_number: int, season: Season) 
 
 def blackout_cost_share(count: int) -> float:
     """The share of a Round's operating profit that ``count`` blackouts in it cost, from 0 to 1."""
-    return min(1.0, BLACKOUT_COST_SHARE * count)
+    return 1.0 - (1.0 - BLACKOUT_COST_SHARE) ** count
 
 
 def blackout_cost(operating_profit: float, count: int) -> float:

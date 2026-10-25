@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 LOAN_AMOUNT = 50_000_000.0
 
 # What each payment takes back, and how many there are.
-LOAN_PAYMENT = 30_000_000.0
+LOAN_PAYMENT = 35_000_000.0
 LOAN_PAYMENTS = 2
 
 # What the loan costs over the session: the payments, less what it brought in.
