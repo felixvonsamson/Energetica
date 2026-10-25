@@ -386,7 +386,9 @@ The server has no git checkout (deploys rsync with `--exclude='.git'`), so a com
 read its own commit from git. Instead each half is stamped, and both are reported by `/healthz`:
 
 - **Backend** — `deploy-instance.sh` / `deploy-lobby.sh` write `DEPLOYED_VERSION.json` to the
-  deploy root at rsync time, capturing the commit, branch, dirty flag, deployer, and timestamp.
+  deploy root just before the restart, capturing the commit, branch, dirty flag, deployer, and
+  timestamp. It goes in before the restart because a backend also names its commit in the
+  `X-Energetica-Caller` header it sends the lobby service, and the backend reads the stamp only once.
 - **Frontend** — the vite build writes `build-info.json` into the bundle it emits.
 
 `/healthz` reads both and returns a `version` block:
@@ -412,7 +414,10 @@ read its own commit from git. Instead each half is stamped, and both are reporte
 
 The lobby now serves `/healthz` too (it previously had none). The landing is pure static and has
 no `/healthz`, so its stamp is read straight from `https://<apex>/build-info.json`; its row in
-the table below shows `-` for the backend. To see every component on a server
+the table below shows `-` for the backend. The lobby service has no public URL either: its
+`healthz` is read over its socket on the server, its commit is the stamp of the lobby checkout it
+runs from, and the `accounts.db` schema version it reports is printed below the table. To see
+every component on a server
 and how each compares to `origin/main` in one table:
 
 ```bash
