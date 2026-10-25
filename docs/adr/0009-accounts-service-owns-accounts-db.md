@@ -72,6 +72,9 @@ process, not a separate component.
 - **The guarantee is only as strong as Unix permissions.** Every service runs as the same Unix user,
   so a compromised run can call any endpoint, including the admin ones. Separating them needs a Unix
   user per run, which is separate hardening work.
+  _Update (#1284):_ the service itself now runs as its own Unix user, the only one that can read the
+  database and the secret, so a compromised run or lobby backend can no longer read them off disk.
+  It can still call every endpoint.
 - **Cutover needs a freeze.** Runs on old code keep opening the database until they are upgraded or
   torn down. Schema changes are frozen until the deployed-versions table shows none left.
 - **Vestigial fields go.** `settled_at` (no reader since #1138) and the freeplay `Player.pwhash` copy

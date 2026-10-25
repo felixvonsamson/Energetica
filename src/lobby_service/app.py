@@ -5,9 +5,8 @@ Reached only over a Unix socket, so access to the socket file is the only check.
 themselves in ``X-Energetica-Caller``, which is logged with every request so the deployed-versions
 table can tell which callers still use which API version. It is never used for trust.
 
-Sessions are minted and checked here only. A token is the same signed ``account_id`` the session
-cookie has always carried (:mod:`energetica.kernel.session`), so runs that still check cookies
-themselves accept the tokens this service issues.
+Sessions are minted and checked here only. A token is the signed ``account_id`` the session
+cookie carries (:mod:`lobby_service.session`).
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ from energetica.identity.schemas.lobby_service import (
     SessionOut,
     SessionToken,
 )
-from energetica.kernel.session import (
+from lobby_service.session import (
     account_id_from_token,
     check_password_hash,
     generate_password_hash,

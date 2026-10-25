@@ -240,8 +240,8 @@ def test_run_modes_lists_every_variant_tag() -> None:
 
 # --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------
 #
-# Who may access a private run lives in accounts.db (tests/unit/test_instance_membership.py:
-# has_joined / record_join / remove_membership / get_run_roster). No private instance had ever
+# Who may access a private run lives in lobby.db, behind the lobby service
+# (tests/integration/test_lobby_service_api.py). No private instance had ever
 # been deployed with real allowlist data at the time of that migration, so the field was removed
 # outright rather than kept around inert — see ADR-0007 and instance_config.PrivateAccess's
 # docstring. test_load_private_with_the_removed_allowlist_key_fails_closed above covers the

@@ -1,9 +1,7 @@
 """Shared pytest fixtures.
 
-The autouse `_isolated_accounts_db` fixture redirects the server-wide accounts SQLite store to a
-per-test temp file. Without it, any test that calls ``create_app`` (or otherwise touches
-``energetica.identity.accounts``) would write to the dev default ``instance/accounts.db`` in the
-repo, leaking state across tests and into the developer's working tree.
+The `lobby_service` fixture gives each test that needs accounts a real lobby service over a
+per-test ``lobby.db``, so no test touches the dev database.
 
 The autouse `_restore_serve_local` fixture puts ``engine.serve_local`` back after every test. The
 engine is a module-scope singleton, so a test that flips the flag changes it for every test that
@@ -28,7 +26,6 @@ from fastapi.testclient import TestClient
 
 from energetica.freeplay.globals import engine
 from energetica.identity import web
-from energetica.identity.accounts.db import _reset_initialised_paths
 from energetica.identity.lobby_service_client import BASE_URL, LobbyServiceClient
 from lobby_service.app import create_service_app
 from lobby_service.schema import upgrade_database
@@ -56,16 +53,6 @@ def _cheap_password_hashing(monkeypatch: pytest.MonkeyPatch) -> None:
         return real_gensalt(min(rounds, _TEST_BCRYPT_ROUNDS), prefix)
 
     monkeypatch.setattr(bcrypt, "gensalt", cheap_gensalt)
-
-
-@pytest.fixture(autouse=True)
-def _isolated_accounts_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
-    db_path = tmp_path / "accounts.db"
-    monkeypatch.setenv("ENERGETICA_ACCOUNTS_DB_PATH", str(db_path))
-    yield db_path
-    # Drop the per-path schema-bootstrap cache so a later test reusing a path can't hit a
-    # silent "no such table" from skipped schema creation.
-    _reset_initialised_paths()
 
 
 @pytest.fixture

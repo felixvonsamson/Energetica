@@ -18,7 +18,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 # skips it leaves the services unable to start.
 #
 # The lobby is two processes from the one checkout (ADR-0009): the lobby service
-# (energetica-lobby-service, which owns accounts.db and runs its schema migrations when it
+# (energetica-lobby-service, which owns lobby.db and runs its schema migrations when it
 # starts) and the lobby backend (energetica-lobby, the public web app). The service restarts
 # first. Its socket stays open across the restart, so runs and the lobby backend wait for it
 # rather than fail.
@@ -72,6 +72,17 @@ if ! ssh "$SSH" "systemctl is-enabled --quiet energetica-lobby-service.socket"; 
     exit 1
 fi
 log_success "Lobby service socket installed"
+
+# The lobby service runs as its own user and keeps lobby.db and the signing secret in a private
+# dir (#1284). setup-base.sh creates both and moves accounts.db there; a box set up before needs a
+# re-run. Deploying first would leave the database readable by every run.
+log_step "Checking that the lobby service runs as its own user..."
+if [ "$(ssh "$SSH" "systemctl show --property=User --value energetica-lobby-service")" != "energetica-lobby-service" ]; then
+    log_error "energetica-lobby-service does not run as the energetica-lobby-service user."
+    echo "Re-run setup-base.sh on the server (it is idempotent; see docs/backend/deployment.md), then deploy again."
+    exit 1
+fi
+log_success "Lobby service runs as its own user"
 
 # setup-lobby.sh renders the lobby backend's unit, and only a unit rendered since the lobby service
 # existed tells the backend where the service's socket is. Without it the new backend looks for a
@@ -207,7 +218,7 @@ log_success "Lobby backend is running"
 #   - SPA shell 200 → Apache serves the bundle;
 #   - unauthenticated my-runs 401 → vhost → proxy → uvicorn wiring is up;
 #   - login with a nonexistent user → 401 USER_NOT_FOUND proves the lobby backend reaches
-#     the lobby service and the service reads accounts.db (my-runs alone rejects at the
+#     the lobby service and the service reads lobby.db (my-runs alone rejects at the
 #     cookie check, before calling the service, so it cannot prove that — a broken path
 #     answers 503 or 500 here). The probe username is 22 chars, above signup's 18-char
 #     cap, so it can never be a real account.

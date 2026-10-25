@@ -129,7 +129,7 @@ def test_the_steps_run_from_every_older_version_to_the_latest(tmp_path: Path, st
     assert _shape(path) == _shape(new)
 
 
-def test_migration_keeps_rows_and_backfills_them_as_settled_players(tmp_path: Path) -> None:
+def test_migration_keeps_rows_and_backfills_them_as_players(tmp_path: Path) -> None:
     path = tmp_path / "lobby.db"
     _legacy_database(path, _LEGACY_SHAPES["before-role"])
     with sqlite3.connect(path) as conn:
@@ -138,10 +138,43 @@ def test_migration_keeps_rows_and_backfills_them_as_settled_players(tmp_path: Pa
     upgrade_database(path)
 
     with sqlite3.connect(path) as conn:
-        rows = conn.execute("SELECT account_id, slug, role, created_at, settled_at FROM instance_membership").fetchall()
+        rows = conn.execute("SELECT account_id, slug, role, created_at FROM instance_membership").fetchall()
         usernames = [row[0] for row in conn.execute("SELECT username FROM accounts")]
-    assert rows == [(1, "spring", "player", "2026-03-02T00:00:00+00:00", "2026-03-02T00:00:00+00:00")]
+    assert rows == [(1, "spring", "player", "2026-03-02T00:00:00+00:00")]
     assert usernames == ["alice"]
+
+
+def test_migration_2_drops_settled_at_and_keeps_every_membership(tmp_path: Path) -> None:
+    """
+    Nothing reads ``settled_at`` and, once every run uses the lobby service, nothing writes it. A
+    database migration 1 left, with joined, settled and facilitator rows, keeps all of them.
+    """
+    path = tmp_path / "lobby.db"
+    _legacy_database(path, _LEGACY_SHAPES["before-settled-at"])
+    upgrade_database(path, steps=load_steps()[:1])
+    with sqlite3.connect(path) as conn:
+        conn.executemany(
+            "INSERT INTO instance_membership (account_id, slug, role, created_at, settled_at) VALUES (?, ?, ?, ?, ?)",
+            [
+                (1, "spring", "player", "2026-03-01T00:00:00+00:00", "2026-03-02T00:00:00+00:00"),
+                (1, "summer", "player", "2026-06-01T00:00:00+00:00", None),
+                (2, None, "facilitator", "2026-01-01T00:00:00+00:00", None),
+            ],
+        )
+
+    upgrade_database(path)
+
+    with sqlite3.connect(path) as conn:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(instance_membership)")}
+        rows = conn.execute(
+            "SELECT account_id, slug, role, created_at FROM instance_membership ORDER BY created_at"
+        ).fetchall()
+    assert "settled_at" not in columns
+    assert rows == [
+        (2, None, "facilitator", "2026-01-01T00:00:00+00:00"),
+        (1, "spring", "player", "2026-03-01T00:00:00+00:00"),
+        (1, "summer", "player", "2026-06-01T00:00:00+00:00"),
+    ]
 
 
 def test_a_database_newer_than_the_code_refuses_to_start(tmp_path: Path) -> None:

@@ -25,8 +25,8 @@ later). Then, on the VPS, as root:
 ```bash
 sudo bash /tmp/setup-base.sh                                    # Apache, Python, certbot, firewall,
                                                                  # `energetica` group/user, shared dirs,
-                                                                 # shared secret + server.json,
-                                                                 # lobby service socket + unit
+                                                                 # server.json, lobby service user,
+                                                                 # signing secret, socket + unit
                                                                  # (the OS "deploy" user must already exist)
 sudo bash /tmp/setup-landing.sh --domain energetica-game.org    # apex vhost + TLS
 sudo bash /tmp/setup-lobby.sh --domain energetica-game.org      # lobby vhost+TLS+unit
@@ -145,11 +145,13 @@ From your local machine:
   its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
   `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
   restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
-  migrations on `accounts.db` before serving, and checks its `healthz` over the socket.
+  migrations on `lobby.db` before serving, and checks its `healthz` over the socket.
   Last, it restarts the lobby backend (`energetica-lobby`) and health-checks the vhost.
-  It refuses to deploy to a box whose `setup-base.sh` predates the lobby service's units, or whose
-  `setup-lobby.sh` rendered the lobby backend's unit before it knew the service's socket. Re-run
-  whichever it names; both are idempotent.
+  It refuses to deploy to a box whose `setup-base.sh` predates the lobby service's units or its
+  own Unix user, or whose `setup-lobby.sh` rendered the lobby backend's unit before it knew the
+  service's socket. Re-run whichever it names; both are idempotent. For a box set up before
+  #1284, see [Moving the lobby database to its own user](#moving-the-lobby-database-to-its-own-user-1284)
+  first.
   Callers do not fail while the lobby service restarts: systemd holds its socket open, so
   their requests wait.
 
@@ -280,6 +282,87 @@ Stopping loses nothing. As on any restart, the instance replays the action log f
 at most 6 hours later. The action logs hold none: at the time of #1341, no live instance's log has
 a `create_user` line, the only kind that recorded a hash.
 
+## Moving the lobby database to its own user (#1284)
+
+Do this once per server, as a short maintenance step. It needs no change to any instance's
+game state.
+
+Until #1284 the lobby service ran as `energetica`, and the database
+(`/var/lib/energetica/accounts.db`) and the signing secret sat where every process in the
+`energetica` group could read them, because runs on old code opened the database and checked
+cookies themselves. #1284 removes the last of that code. The lobby service now runs as its own
+user, `energetica-lobby-service`, and keeps both in `/var/lib/energetica-lobby-service/` (0700),
+the database renamed to `lobby.db`. Its first start on the new code also runs migration 2, which
+drops the vestigial `instance_membership.settled_at` column.
+
+**0. Check that no running instance is on code from before #1283.** Such code opens
+`accounts.db` itself, and writes `settled_at` when a player settles. Every instance's backend
+commit must include #1283 (merged as `2ae46483`):
+
+```bash
+git fetch origin main
+./scripts/deployed-versions.sh --server energetica-game --domain energetica-game.org
+```
+
+Redeploy any instance that is older, after running `update-instance-unit.sh` for it (see
+[below](#updating-an-existing-instances-unit-and-instanceenv)). `setup-base.sh` also refuses to
+move the files while a running instance's `instance.env` lacks `ENERGETICA_LOBBY_SERVICE_SOCKET`,
+which is a sure sign of old code, but it cannot see an instance whose `instance.env` was updated
+and that was then never redeployed.
+
+**1. Try the migration on a copy of the production database.** Take the copy with SQLite's
+online backup, which is safe while the service is running. On the VPS, as root:
+
+```bash
+sudo python3 -c 'import sqlite3; sqlite3.connect("file:/var/lib/energetica/accounts.db?mode=ro", uri=True).backup(sqlite3.connect("/tmp/accounts-copy.db"))'
+sudo chown deploy /tmp/accounts-copy.db && sudo chmod 0600 /tmp/accounts-copy.db
+```
+
+Then on your machine, from the checkout, with the copy in a new, empty directory:
+
+```bash
+mkdir /tmp/lobby-db-check
+scp energetica-game:/tmp/accounts-copy.db /tmp/lobby-db-check/lobby.db && ssh energetica-game 'rm /tmp/accounts-copy.db'
+.venv/bin/python -c 'from pathlib import Path; from lobby_service.schema import upgrade_database; upgrade_database(Path("/tmp/lobby-db-check/lobby.db"))'
+sqlite3 /tmp/lobby-db-check/lobby.db 'PRAGMA user_version; PRAGMA table_info(instance_membership); SELECT count(*) FROM instance_membership;'
+sqlite3 /tmp/lobby-db-check/lobby.db.pre-migration 'SELECT count(*) FROM instance_membership;'
+```
+
+The version should read 2, the table should have no `settled_at`, and the two row counts should
+match. Delete `/tmp/lobby-db-check` afterwards: it holds every password hash.
+
+**2. Re-run `setup-base.sh`.** On the VPS, as root, after `./scripts/push-bootstrap.sh`:
+
+```bash
+sudo bash /tmp/setup-base.sh
+```
+
+It creates the user and its directory, stops the lobby service and its socket, moves
+`accounts.db` (with any `-wal`, `-shm` and `.pre-migration` files) to
+`/var/lib/energetica-lobby-service/lobby.db` and the secret next to it, installs the new unit and
+starts the socket again. A clean stop folds SQLite's `-wal` file back into the database. While
+the socket is stopped, runs and the lobby answer requests that need an account with a 503, for a
+few seconds. The service then starts on the code already deployed, which reads both paths from
+the unit, so nothing else changes yet.
+
+**3. Deploy the lobby.** The service restarts on the new code and runs migration 2, keeping a copy
+of the database from just before at `lobby.db.pre-migration`:
+
+```bash
+./scripts/deploy-lobby.sh --server energetica-game --domain energetica-game.org
+```
+
+**4. Remove the retired variable from each instance.** `ENERGETICA_ACCOUNTS_DB_PATH` is no longer
+read by anything, so this is tidying, and the instance picks it up at its next deploy:
+
+```bash
+sudo bash /tmp/update-instance-unit.sh autumn-2025
+```
+
+**Rolling back** past step 3 means restoring `lobby.db.pre-migration`: code from before #1284
+refuses to start on a database at version 2. Anything written since step 3 (new accounts,
+password changes, joins) is lost.
+
 ## Changing an instance's Apache vhost
 
 Deploys never write `/etc/apache2/sites-available/`. Writing an Apache config and reloading
@@ -326,7 +409,8 @@ sudo bash /tmp/update-instance-unit.sh autumn-2025
 ```
 
 It re-renders the unit, adds to `instance.env` any variable the template gained whose value is
-the same on every instance, leaves every existing line alone, and reloads systemd. It does not
+the same on every instance, removes any variable the code no longer reads (today
+`ENERGETICA_ACCOUNTS_DB_PATH`), leaves every other line alone, and reloads systemd. It does not
 restart the instance; the next deploy does. It is safe to rerun.
 
 Runs reach accounts and sessions through the lobby service since #1283, so every instance set up
@@ -356,10 +440,11 @@ Download an instance's game state (the `instance/` dir):
 ./scripts/download-instance.sh --server energetica-game --instance autumn-2025
 ```
 
-`accounts.db` (`/var/lib/energetica/accounts.db`) is shared by every instance on the VPS —
-back it up alongside the per-instance state. Before each schema migration, the lobby service
-also keeps one copy of it from just before, at `/var/lib/energetica/accounts.db.pre-migration`,
-replaced at the next migration.
+`lobby.db` (`/var/lib/energetica-lobby-service/lobby.db`) holds the accounts and memberships of
+every instance on the VPS — back it up alongside the per-instance state. Only root and the lobby
+service's user can read it. Before each schema migration, the lobby service also keeps one copy
+of it from just before, at `/var/lib/energetica-lobby-service/lobby.db.pre-migration`, replaced
+at the next migration.
 
 ## Monitoring
 
@@ -416,7 +501,7 @@ The lobby now serves `/healthz` too (it previously had none). The landing is pur
 no `/healthz`, so its stamp is read straight from `https://<apex>/build-info.json`; its row in
 the table below shows `-` for the backend. The lobby service has no public URL either: its
 `healthz` is read over its socket on the server, its commit is the stamp of the lobby checkout it
-runs from, and the `accounts.db` schema version it reports is printed below the table. To see
+runs from, and the `lobby.db` schema version it reports is printed below the table. To see
 every component on a server
 and how each compares to `origin/main` in one table:
 

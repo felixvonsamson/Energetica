@@ -5,9 +5,6 @@ Each function opens its own connection. Connections use SQLite's write-ahead log
 mode in which reads never wait for a write to finish. The schema is the one
 :func:`lobby_service.schema.upgrade_database` brought the file to at start-up; this module never
 creates or changes tables.
-
-Ported from ``energetica.identity.accounts.db``, which runs still use until they switch to this
-service's API (ADR-0009). That copy is deleted once no run opens the database.
 """
 
 from __future__ import annotations

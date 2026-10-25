@@ -52,12 +52,12 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 **User**, **Player** — are defined in `static-serving-and-deployment.md` § Terminology and
 `CONTEXT.md` § Accounts & users. This design adds:
 
-| Term                    | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lobby**               | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session.                                                                                                                                                                                                                                                               |
-| **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie.                                                                                                                                                                                                                                                                                                                                                    |
-| **Membership**          | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A player's row is written at **join** time — the lobby's explicit two-click join for a public run, or a private run's roster add / join-link confirm (#1030) — and its `settled_at` filled in later, at settle; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
-| **Entry gate**          | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives.                                                                               |
+| Term                    | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lobby**               | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session.                                                                                                                                                                                                                                                  |
+| **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie.                                                                                                                                                                                                                                                                                                                                       |
+| **Membership**          | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A player's row is written at **join** time — the lobby's explicit two-click join for a public run, or a private run's roster add / join-link confirm (#1030), or at settle if it is not there yet; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
+| **Entry gate**          | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives.                                                                  |
 
 ---
 
@@ -75,10 +75,11 @@ checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
   account, session and membership operation is a call to the lobby service.
 - **Lobby service** (`src/lobby_service/`, `main_lobby_service.py`; the
   `energetica-lobby-service` unit, socket-activated): the one process that opens the
-  server-wide database (`accounts.db`, to be renamed `lobby.db`) and holds the signing secret
-  and the password hashes (ADR-0009). It has no network port: it serves a versioned internal
-  API (`/internal/v1`) on `/run/energetica/lobby-service.sock`, which only the `energetica`
-  group may connect to. Its clients use `energetica.identity.lobby_service_client`, which
+  server-wide database (`lobby.db`) and holds the signing secret and the password hashes
+  (ADR-0009). It runs as its own Unix user, `energetica-lobby-service`, the only one that can
+  read `/var/lib/energetica-lobby-service/`, where the database and the secret live (#1284). It
+  has no network port: it serves a versioned internal API (`/internal/v1`) on
+  `/run/energetica/lobby-service.sock`, which only the `energetica` group may connect to. Its clients use `energetica.identity.lobby_service_client`, which
   times out after about 5 seconds and answers a failure with a 503. Runs are clients too
   (#1283): they hold no database access and no signing secret, and resolve each request's session
   with one call to the service.
@@ -113,8 +114,8 @@ This deliberately gives up the RFC's per-subdomain cookie isolation. The isolati
 preserving alternative (A2, token-handoff) is deferred to #813; its only live defence today
 is that all UGC renders as escaped text — guarded by a CI tripwire (see Security).
 
-- **Shared secret:** `/var/lib/energetica/secret_key.txt` (next to `accounts.db`), created
-  by `setup-base.sh`, group-readable by `energetica`. Replaces per-instance
+- **Signing secret:** `/var/lib/energetica-lobby-service/secret_key.txt` (next to `lobby.db`),
+  created by `setup-base.sh` and readable by the lobby service's user only. Replaces per-instance
   `instance/secret_key.txt`.
 
 ### Endpoint ownership after cutover
@@ -157,16 +158,15 @@ instead of being answered with `index.html` as a 200.
 
 ## Data model
 
-### `instance_membership` (table in `accounts.db`)
+### `instance_membership` (table in `lobby.db`)
 
 ```sql
-CREATE TABLE IF NOT EXISTS instance_membership (
+CREATE TABLE instance_membership (
     account_id  INTEGER NOT NULL,
     slug        TEXT,                        -- NULL = server-wide (facilitator only)
     role        TEXT    NOT NULL DEFAULT 'player',
     created_at  TEXT    NOT NULL,             -- ISO-8601 UTC; joined_at for a player,
                                                -- granted_at for a facilitator
-    settled_at  TEXT,                         -- ISO-8601 UTC; null until a player settles
     PRIMARY KEY (account_id, slug)
 );
 ```
@@ -174,8 +174,8 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 - A player row is written at **join** time (the lobby service's idempotent
   `PUT runs/{slug}/members/{account_id}`) — the lobby's explicit two-click join for a public run, a
   private run's roster add / join-link confirm (#1030), or settling, which joins an account that
-  never went through a join step. Runs no longer write `settled_at` (#1283), and nothing reads it;
-  a later migration drops the column. Whether an account has settled is a fact of the run: a
+  never went through a join step. The row does not record settling: migration 2 dropped the
+  vestigial `settled_at` column (#1284). Whether an account has settled is a fact of the run: a
   `Player` with its `account_id`. A facilitator row is written only by the sysadmin grant script
   (ADR-0004).
 - The lobby's "your runs" = player membership rows joined against the on-disk
@@ -195,8 +195,8 @@ fresh by the lobby, never by a per-instance allowlist. This is the only switch g
 account creation. A closed-enrollment deployment turns the toggle on while its players sign
 up, then turns it off again; neither flip needs a restart. See ADR-0003.
 
-**Login (lobby).** Verify credentials against `accounts.db`; set the `domain=.{apex}`
-session cookie (shared secret). Redirect to the picker, or to `?return=` if present.
+**Login (lobby).** The lobby service verifies the credentials and mints the token; the lobby
+backend sets it as the `domain=.{apex}` session cookie. Redirect to the picker, or to `?return=` if present.
 
 **Enter a run.** The player clicks a run (or follows a deep link). The cookie is already
 present on `{slug}.{apex}`. The **entry gate** validates it and, if the run's access policy
@@ -215,19 +215,18 @@ unsettled `instance_membership` row straight from the lobby (no instance round-t
 what makes a run appear under "your runs," _before_ the account has settled. A private run is
 excluded from this endpoint (403) — its admission stays instance-owned (roster / join-link).
 
-**Settle.** Unchanged game-side, plus a write to `instance_membership` — fills in `settled_at`
-on the row from the join step above, or inserts an already-settled row if there wasn't one
-(private runs, and dev/legacy instances with no lobby).
+**Settle.** Unchanged game-side, plus the lobby service's idempotent join, so the account has a
+membership row even if it never went through a join step.
 
 **In-run switcher.** Top-right dropdown next to Logout. Lists your settled runs (current
 one marked) as cross-origin `<a href>` to `{slug}.{apex}/app` (`instanceAppHref`), plus an
-"Open lobby" item. Data from the **instance's own backend** (`my-runs` read of
-`accounts.db`) — same origin, no CORS; serves only the cookie-authenticated account.
+"Open lobby" item. Data from the **instance's own backend** (`my-runs`, read through the
+lobby service) — same origin, no CORS; serves only the cookie-authenticated account.
 
 **Logout (global).** Clears the single `domain=.{apex}` cookie → logged out of every run.
 Per-run logout is not expressible with a shared cookie and is not offered.
 
-**Password change.** At the lobby; writes `accounts.db`. (Existing sessions on other
+**Password change.** At the lobby, through the lobby service. (Existing sessions on other
 subdomains are not invalidated — see RFC limitation; unchanged.)
 
 ---
@@ -247,8 +246,9 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
 
 ## Infrastructure
 
-- `setup-base.sh` — also create the shared `/var/lib/energetica/secret_key.txt` and an
-  initial `/etc/energetica/server.json` (`{"signups_enabled": true}`).
+- `setup-base.sh` — also create the lobby service's user, its private
+  `/var/lib/energetica-lobby-service/` with the signing secret, and an initial
+  `/etc/energetica/server.json` (`{"signups_enabled": true}`).
 - `infra/setup-lobby.sh`, `infra/apache-lobby.conf`, `infra/energetica-lobby.service`,
   `deploy-lobby.sh` — mirror the landing/instance scripts; DNS for `lobby.{apex}`.
 - `setup-instance.sh` / `docs/backend/deployment.md` — repoint the instance-local `/sign-up` redirect at

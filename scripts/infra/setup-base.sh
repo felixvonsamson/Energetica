@@ -6,8 +6,8 @@ set -euo pipefail
 #   sudo bash scripts/infra/setup-base.sh [--yes]
 #
 # Installs Apache + modules, Python, certbot, jq and a firewall; creates the shared
-# `energetica` group and service user, the server-wide accounts dir, and the admin-owned
-# per-instance config dir. Idempotent: safe to re-run.
+# `energetica` group and service user, the admin-owned per-instance config dir, and the lobby
+# service with its own user and private state dir. Idempotent: safe to re-run.
 #
 # After this, run setup-landing.sh (apex vhost) then setup-instance.sh per instance.
 # Superseded scripts/vps-setup.sh (removed in this phase).
@@ -19,6 +19,12 @@ readonly DEPLOY_USER="deploy"
 # ~/.cache/pip and silently runs without one when HOME is unwritable (#1067). It lives under
 # /var/cache because a cache is all it holds.
 readonly SERVICE_HOME=/var/cache/energetica
+# The lobby service's own user and the private directory that holds lobby.db and the signing
+# secret (ADR-0009). Nothing else on the server can read, replace or delete either.
+readonly LOBBY_SERVICE_USER=energetica-lobby-service
+readonly LOBBY_SERVICE_STATE=/var/lib/energetica-lobby-service
+# Where both lived before #1284, readable by every process in the energetica group.
+readonly LEGACY_STATE=/var/lib/energetica
 AUTO_CONFIRM=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -126,7 +132,7 @@ if id "$DEPLOY_USER" &>/dev/null; then
     # deploy-instance.sh runs `sudo -u energetica <instance>/.venv/bin/pip install …` (into the
     # per-instance venv) and `sudo systemctl restart energetica-*` over SSH, so grant exactly
     # those. The (energetica) rule is scoped to the per-instance pip binary — NOT `ALL` — so the
-    # deploy user can't use the service account to read accounts.db or overwrite game state. The
+    # deploy user can't use the service account to overwrite game state. The
     # `*` in the pathname matches only the slug segment (sudoers wildcards do not cross `/` in a
     # pathname); the trailing `*` permits pip's arguments. `systemctl is-active` is a read-only
     # query that needs no root (deploy-instance.sh calls it without sudo), so it is not granted
@@ -148,33 +154,14 @@ else
     log_error "Deploy user '$DEPLOY_USER' does not exist — create it first; skipping"
 fi
 
-# --- Server-wide accounts dir ---------------------------------------------------
-log_section "SHARED STATE DIRECTORIES"
-
-# accounts.db itself is created by the lobby service on its first start (src/lobby_service/schema.py),
-# or by a run on code from before the lobby service, which opens it directly. An empty/absent file
-# is a valid fresh SQLite db. The dir is group-writable + setgid so the
-# service user (which connects as energetica) owns the created db with the right group.
-install -d -o energetica -g energetica -m 2770 /var/lib/energetica
-log_success "/var/lib/energetica (2770 energetica:energetica)"
+# --- Shared config dir -----------------------------------------------------------
+log_section "SHARED CONFIG DIRECTORIES"
 
 # Admin-owned per-instance config. setup-instance.sh creates /etc/energetica/{slug}/.
 # root:energetica 0750 → the service (group energetica) can read instance.json but only
 # an admin (root, via sudo) can edit it.
 install -d -o root -g energetica -m 0750 /etc/energetica
 log_success "/etc/energetica (0750 root:energetica)"
-
-# Server-wide cookie-signing secret (ADR-0002): minted once per server, read by the lobby
-# service, which mints and checks every session (ADR-0009), and by runs until they switch to its
-# API. root:energetica 0640 → services read via group, only an admin rotates it. Never
-# overwritten on re-run (rotating it invalidates every live session).
-if [ -s /var/lib/energetica/secret_key.txt ]; then
-    log_success "Shared secret already exists — leaving it untouched"
-else
-    (umask 037; python3 -c 'import secrets; print(secrets.token_hex(32))' > /var/lib/energetica/secret_key.txt)
-    chown root:energetica /var/lib/energetica/secret_key.txt
-    log_success "/var/lib/energetica/secret_key.txt (0640 root:energetica)"
-fi
 
 # Server-wide config: the lobby's signup toggle (src/energetica/identity/server_config.py — reads
 # fresh per request, fails closed when missing/malformed). Admin-edited like instance.json.
@@ -217,12 +204,77 @@ log_success "energetica-reaper.timer enabled (sweeps every 5 min; 'systemctl lis
 
 # --- Lobby service (ADR-0009) ---------------------------------------------------
 log_section "LOBBY SERVICE"
-# The one process that opens accounts.db, reached by the lobby backend, every run and the operator
+# The one process that opens lobby.db, reached by the lobby backend, every run and the operator
 # scripts over /run/energetica/lobby-service.sock. Installed here, not in setup-lobby.sh, because
 # runs depend on it too. Its code ships with the lobby (/var/www/energetica-lobby), so until the
 # first deploy-lobby.sh a connection to the socket starts a service that fails; nothing connects
 # before then.
 #
+# It runs as its own user, which alone can read lobby.db and the signing secret. The socket stays
+# energetica's, so its clients still reach it. Its supplementary group energetica lets it read
+# its code in /var/www/energetica-lobby.
+if ! getent group "$LOBBY_SERVICE_USER" >/dev/null; then
+    groupadd --system "$LOBBY_SERVICE_USER"
+fi
+if ! id "$LOBBY_SERVICE_USER" &>/dev/null; then
+    useradd --system --gid "$LOBBY_SERVICE_USER" --home-dir "$LOBBY_SERVICE_STATE" --no-create-home \
+        --shell /usr/sbin/nologin "$LOBBY_SERVICE_USER"
+    log_success "Created service user '$LOBBY_SERVICE_USER'"
+else
+    log_success "Service user '$LOBBY_SERVICE_USER' already exists"
+fi
+install -d -o "$LOBBY_SERVICE_USER" -g "$LOBBY_SERVICE_USER" -m 0700 "$LOBBY_SERVICE_STATE"
+log_success "$LOBBY_SERVICE_STATE (0700 $LOBBY_SERVICE_USER, holds lobby.db and the signing secret)"
+
+# Until #1284 the database was /var/lib/energetica/accounts.db and the secret sat next to it, both
+# readable by the energetica group, because runs opened the database and checked cookies
+# themselves. Move both into the private dir. The service must be stopped, socket included so no
+# request starts it again, and a clean stop folds SQLite's -wal file back into the database.
+#
+# A run still on code from before #1283 cannot work once they move. deploy-instance.sh refuses to
+# deploy that code's successor until instance.env names the lobby service's socket, so a running
+# instance whose instance.env lacks it is certainly on old code: refuse while there is one.
+if [ -e "$LEGACY_STATE/accounts.db" ] || [ -e "$LEGACY_STATE/secret_key.txt" ]; then
+    log_step "Moving accounts.db and the signing secret from $LEGACY_STATE to $LOBBY_SERVICE_STATE..."
+    if [ -e "$LOBBY_SERVICE_STATE/lobby.db" ] || [ -e "$LOBBY_SERVICE_STATE/secret_key.txt" ]; then
+        log_error "Both $LEGACY_STATE and $LOBBY_SERVICE_STATE hold a database or a secret. Decide which"
+        log_error "  to keep, remove the other, and re-run."
+        exit 1
+    fi
+    for env_file in /etc/energetica/*/instance.env; do
+        [ -f "$env_file" ] || continue
+        slug="$(basename "$(dirname "$env_file")")"
+        if systemctl is-active --quiet "energetica-$slug" && ! grep -q '^ENERGETICA_LOBBY_SERVICE_SOCKET=' "$env_file"; then
+            log_error "energetica-$slug is running on code that opens $LEGACY_STATE/accounts.db itself."
+            log_error "  Run update-instance-unit.sh and deploy-instance.sh for it, or stop it, then re-run."
+            exit 1
+        fi
+    done
+    systemctl stop energetica-lobby-service.socket energetica-lobby-service.service
+    for suffix in "" -wal -shm .pre-migration; do
+        if [ -e "$LEGACY_STATE/accounts.db$suffix" ]; then
+            mv "$LEGACY_STATE/accounts.db$suffix" "$LOBBY_SERVICE_STATE/lobby.db$suffix"
+        fi
+    done
+    if [ -e "$LEGACY_STATE/secret_key.txt" ]; then
+        mv "$LEGACY_STATE/secret_key.txt" "$LOBBY_SERVICE_STATE/secret_key.txt"
+    fi
+    chown -R "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE"
+    find "$LOBBY_SERVICE_STATE" -type f -exec chmod 0600 {} +
+    rmdir "$LEGACY_STATE" 2>/dev/null || log_error "$LEGACY_STATE is not empty after the move; check what else is in it"
+    log_success "Moved them to $LOBBY_SERVICE_STATE (lobby.db, secret_key.txt; 0600 $LOBBY_SERVICE_USER)"
+fi
+
+# The server-wide session-signing secret (ADR-0002), minted once per server. Never overwritten on
+# re-run: rotating it ends every live session.
+if [ -s "$LOBBY_SERVICE_STATE/secret_key.txt" ]; then
+    log_success "Signing secret already exists — leaving it untouched"
+else
+    (umask 077; python3 -c 'import secrets; print(secrets.token_hex(32))' > "$LOBBY_SERVICE_STATE/secret_key.txt")
+    chown "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE/secret_key.txt"
+    log_success "$LOBBY_SERVICE_STATE/secret_key.txt (0600 $LOBBY_SERVICE_USER)"
+fi
+
 # Only the socket is enabled: it starts the service on the first connection. The socket is never
 # restarted here, since that would drop connections queued on it; a changed service unit is picked
 # up by restarting the service, which deploy-lobby.sh also does on every deploy.

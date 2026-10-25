@@ -125,7 +125,7 @@ probe_landing() {
 }
 
 # The lobby service has no public URL: it listens only on a Unix socket, which the deploy user may
-# reach as a member of the energetica group. Its healthz reports the accounts.db schema version but
+# reach as a member of the energetica group. Its healthz reports the lobby.db schema version but
 # no commit, so the commit comes from the stamp of the lobby checkout it runs from, the same file
 # the lobby backend reports. The schema version is printed below the table rather than in a column
 # of its own, since no other row has one. Both are read here, outside the piped block below,
@@ -133,11 +133,11 @@ probe_landing() {
 LOBBY_SERVICE_SOCKET=/run/energetica/lobby-service.sock
 LOBBY_SERVICE_HEALTH=$(ssh "$SSH" "curl -fsS --max-time 8 --unix-socket $LOBBY_SERVICE_SOCKET http://lobby-service/internal/v1/healthz" 2>/dev/null || true)
 LOBBY_SERVICE_STAMP=$(ssh "$SSH" "cat /var/www/energetica-lobby/DEPLOYED_VERSION.json" 2>/dev/null || true)
-LOBBY_SERVICE_NOTE="lobby-service: unreachable, accounts.db schema version unknown."
+LOBBY_SERVICE_NOTE="lobby-service: unreachable, lobby.db schema version unknown."
 if [ -n "$LOBBY_SERVICE_HEALTH" ]; then
     lobby_service_schema=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '.schema_version // "?"' 2>/dev/null || echo "?")
     lobby_service_api=$(echo "$LOBBY_SERVICE_HEALTH" | jq -r '(.api_versions // []) | join(",")' 2>/dev/null || echo "?")
-    LOBBY_SERVICE_NOTE="lobby-service: accounts.db schema version $lobby_service_schema, API ${lobby_service_api:-?}."
+    LOBBY_SERVICE_NOTE="lobby-service: lobby.db schema version $lobby_service_schema, API ${lobby_service_api:-?}."
 fi
 
 probe_lobby_service() {

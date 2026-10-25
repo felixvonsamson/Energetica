@@ -101,7 +101,7 @@ Since the [lobby cutover](../architecture/lobby.md), the app server **no longer 
 it's a pure _entry gate_ that validates the SSO cookie the **lobby** issues and auto-provisions a
 local user on first visit. So a usable local app backend needs the **lobby running too**: the lobby
 backend and the **lobby service**, the process that owns accounts and mints sessions (ADR-0009). The
-lobby service and the app backend must share one signing secret + accounts store.
+lobby services the backends start must share one signing secret + `lobby.db`.
 `scripts/lib/dev-env.sh` wires that up under `.energetica-dev/` (gitignored, outside `instance/`), and
 the launcher starts everything:
 
@@ -393,8 +393,8 @@ bundle's "log in" bounce targets the lobby port; override with `VITE_LOBBY_URL` 
 
 - **`instance/`** — the app server's game state (engine pickle, checkpoints). `--rm_instance`
   (`serve:app:test`) wipes this.
-- **`.energetica-dev/`** — the shared identity scratch: signing secret, `accounts.db` (plus the
-  lobby service's `accounts.db.pre-migration` copy), the lobby service's socket, seeded runs.
+- **`.energetica-dev/`** — the shared identity scratch: signing secret, `lobby.db` (plus the
+  lobby service's `lobby.db.pre-migration` copy), the lobby service's socket, seeded runs.
   Deliberately outside `instance/` so resetting game state leaves your login intact — mirroring
   production, where accounts are server-wide and outlive any single run.
 

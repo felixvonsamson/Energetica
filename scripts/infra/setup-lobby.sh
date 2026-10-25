@@ -13,7 +13,7 @@ set -euo pipefail
 # the service.
 #
 # Requires DNS for lobby.{apex-domain} to already resolve here (for TLS issuance), and
-# the shared secret + server.json from setup-base.sh (re-run it first on a box that
+# the signing secret + server.json from setup-base.sh (re-run it first on a box that
 # predates them — it is idempotent).
 
 DOMAIN="${ENERGETICA_DOMAIN:-}"
@@ -58,7 +58,7 @@ getent group energetica >/dev/null || { log_error "group 'energetica' missing �
 # secret, and gates signup on server.json — all provisioned by setup-base.sh. A box set up before
 # they existed needs a (idempotent) re-run, so fail here with that pointer rather than starting a
 # lobby that cannot mint sessions / never accepts signups.
-[ -s /var/lib/energetica/secret_key.txt ] || { log_error "shared secret missing — re-run setup-base.sh first"; exit 1; }
+[ -s /var/lib/energetica-lobby-service/secret_key.txt ] || { log_error "signing secret missing — re-run setup-base.sh first"; exit 1; }
 [ -f /etc/energetica/server.json ] || { log_error "/etc/energetica/server.json missing — re-run setup-base.sh first"; exit 1; }
 [ -f /etc/systemd/system/energetica-lobby-service.socket ] || { log_error "lobby service units missing — re-run setup-base.sh first"; exit 1; }
 
@@ -123,8 +123,8 @@ fi
 # GameEngine, whose constructor runs `Path("instance").mkdir(exist_ok=True)` in the service's
 # WorkingDirectory. The code dir is deploy-owned (2750), so the service user could not create it
 # and the unit crash-looped. Since #1055 the lobby does not build the engine. The only remaining
-# writer is the per-instance secret-key fallback in energetica.kernel.session, which does not run
-# while the shared secret from setup-base.sh exists. deploy-lobby.sh excludes instance/ from its
+# writer is the local secret-key fallback in lobby_service.session, which does not run
+# while the signing secret from setup-base.sh exists. deploy-lobby.sh excludes instance/ from its
 # rsync, so the directory survives deploys.
 install -d -o energetica -g energetica -m 0750 "$APP_DIR/instance"
 log_success "$APP_DIR/instance (writable by the service user)"

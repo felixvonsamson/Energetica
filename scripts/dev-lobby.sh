@@ -32,12 +32,12 @@ cd "$REPO_ROOT"
 # shellcheck source=scripts/lib/dev-env.sh
 source scripts/lib/dev-env.sh
 
-seed_dev_data
-
 # The lobby backend is a client of the lobby service (ADR-0009). Run it alongside, and stop it with
-# the backend.
+# the backend. The seed goes through it too.
 start_lobby_service
 trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
+
+seed_dev_data
 
 echo
 echo "→ Lobby backend on http://127.0.0.1:$PORT, lobby service on $ENERGETICA_LOBBY_SERVICE_SOCKET"
