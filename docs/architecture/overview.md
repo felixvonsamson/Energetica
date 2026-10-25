@@ -7,9 +7,11 @@ Energetica/
 ├── docs/                 # This documentation
 ├── src/
 │   ├── energetica/       # Python/FastAPI backend — one game instance
-│   └── lobby/            # Python/FastAPI backend — the server-wide front door
+│   ├── lobby/            # Python/FastAPI backend — the server-wide front door
+│   └── lobby_service/    # The one process that opens accounts.db, behind an internal API
 ├── main.py               # Launcher for a game instance
-├── main_lobby.py         # Launcher for the lobby service
+├── main_lobby.py         # Launcher for the lobby backend
+├── main_lobby_service.py # Launcher for the lobby service (owns accounts.db)
 ├── tests/                # Backend unit/integration tests
 ├── frontend/             # React/TypeScript frontend
 ├── scripts/              # Deploy, provisioning and one-off operational scripts

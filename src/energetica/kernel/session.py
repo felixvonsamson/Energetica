@@ -1,10 +1,13 @@
 """Signed-session and credential primitives, free of any game-model dependency.
 
 These are the low-level pieces of authentication — cookie-signing secret resolution, the
-``itsdangerous`` serializer, password hashing, and the session-cookie read/write helpers — with
+``itsdangerous`` serializer, password hashing, and minting and decoding session tokens — with
 **no import of ``Player`` or the game engine**. That is deliberate: the server-wide identity
-layer (``energetica.identity.accounts``) and the instance-independent lobby service both import
-from here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
+layer (``energetica.identity.accounts``) and the lobby service both import from here, so this
+module must stay a leaf (see ADR-0002, lobby Phase B).
+
+Importing this module loads the signing secret. The lobby backend must not hold it (ADR-0009), so
+it sets the cookie through :mod:`energetica.kernel.session_cookie` instead.
 
 Every caller, game side included, imports these primitives from here. The request dependencies
 built on them live in ``energetica.identity.web`` (account and role checks) and
@@ -20,11 +23,12 @@ from __future__ import annotations
 
 import os
 import secrets
-from datetime import timedelta
 
 import bcrypt
-from fastapi import Request, Response
 from itsdangerous import URLSafeTimedSerializer
+
+# SESSION_COOKIE_NAME is re-exported: runs still import it from here.
+from energetica.kernel.session_cookie import COOKIE_MAX_AGE, SESSION_COOKIE_NAME  # noqa: F401
 
 
 def get_or_create_secret_key() -> str:
@@ -69,15 +73,6 @@ def _read_nonempty_secret(path: str) -> str:
 SECRET_KEY = get_or_create_secret_key()
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
-# The single-sign-on session cookie is deliberately **not** named ``session``. Pre-cutover the
-# instance minted a host-only ``session`` cookie signed with its per-instance secret; those legacy
-# cookies linger in browsers for the cookie's whole ``max_age`` (60 days). Naming the shared SSO
-# cookie distinctly means the post-cutover instance reads only this name and can never confuse a
-# stale host-only ``session`` (which would fail to validate against the shared secret) with the
-# valid ``.{apex}`` SSO cookie — RFC 6265 does not define which wins when two same-named cookies
-# match a request, so a shared name risks a redirect loop for returning players (#817, ADR-0002).
-SESSION_COOKIE_NAME = "energetica_session"
-
 
 def generate_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -89,7 +84,9 @@ def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
-COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
+def mint_session_token(account_id: int) -> str:
+    """Sign ``account_id`` into a session token, the value of the session cookie."""
+    return serializer.dumps(str(account_id))
 
 
 def decode_session_token(token: str) -> str | None:
@@ -118,28 +115,3 @@ def account_id_from_token(token: str) -> int | None:
         return int(payload)
     except ValueError:
         return None
-
-
-def add_session_cookie_to_response(
-    response: Response, identity: str, request: Request, *, domain: str | None = None
-) -> Response:
-    """Sign ``identity`` into the SSO session cookie on ``response``.
-
-    ``identity`` is the ``str(account_id)`` the session carries. ``Secure`` is set when the reverse
-    proxy reports HTTPS. ``domain`` scopes
-    the cookie: the instance leaves it ``None`` (host-only), the lobby passes ``.{apex}`` so one
-    session spans every run subdomain (ADR-0002).
-    """
-    token = serializer.dumps(identity)
-    # Check if behind reverse proxy with HTTPS
-    is_https = request.headers.get("X-Forwarded-Proto") == "https"
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=token,
-        httponly=True,
-        secure=is_https,
-        samesite="lax",
-        max_age=COOKIE_MAX_AGE,
-        domain=domain,
-    )
-    return response

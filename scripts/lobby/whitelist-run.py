@@ -1,16 +1,15 @@
 #!.venv/bin/python
 """Grow (or trim) a private run's roster from the shell (#1030 follow-up, ADR-0007).
 
-Run from the lobby directory (this script is deployed only there — it touches the shared
-accounts.db, not any single instance's engine).
+Run from the lobby directory (this script is deployed only there). It is a client of the lobby
+service's internal API (ADR-0009), so it never opens the database itself.
 
 Replaces ``scripts/infra/whitelist-instance.sh``, which edited ``instance.json``'s
-``allowed_usernames`` directly — the backend no longer reads that field. This is the same write
-path the in-app facilitator roster page (#1022) uses (``accounts.record_join`` /
-``remove_membership`` / ``get_run_roster``), just reachable from the shell for a sysadmin who
-would rather not (or cannot yet) go through the facilitator UI. Unlike the retired shell script,
-this does not touch or require a private ``access.policy`` — the roster itself lives in
-``accounts.db`` regardless of what a run's ``instance.json`` currently says, though it is only
+``allowed_usernames`` directly — the backend no longer reads that field. This makes the same
+membership changes the in-app facilitator roster page (#1022) makes, just reachable from the shell
+for a sysadmin who would rather not (or cannot yet) go through the facilitator UI. Unlike the
+retired shell script, this does not touch or require a private ``access.policy`` — the roster lives
+in the lobby service regardless of what a run's ``instance.json`` currently says, though it is only
 *consulted* by the entry gate for a privately-configured run.
 
 Usage (from /var/www/energetica-lobby):
@@ -18,21 +17,25 @@ Usage (from /var/www/energetica-lobby):
     ./scripts/whitelist-run.py <slug> add    <username> [<username> ...]
     ./scripts/whitelist-run.py <slug> remove <username> [<username> ...]
 
-    [--accounts-db <path>]
+    [--socket <path>]
 
-If --accounts-db is omitted it defaults to the production path /var/lib/energetica/accounts.db
-(this is a production-only tool, so it pins the prod path rather than inheriting db.py's dev
-default). Edits take effect on the next entry attempt — no restart, no redeploy (the entry gate
-reads accounts.db fresh on every request, same as it always re-read instance.json).
+If --socket is omitted it defaults to the production socket /run/energetica/lobby-service.sock
+(this is a production-only tool, so it pins the production path rather than inheriting the
+client's dev default). Edits take effect on the next entry attempt — no restart, no redeploy (the
+entry gate checks membership fresh on every request, same as it always re-read instance.json).
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
+
+from energetica.identity.lobby_service_client import (
+    LobbyServiceClient,
+    LobbyServiceRefusal,
+    LobbyServiceUnavailable,
+)
 
 
 def main() -> int:
@@ -41,10 +44,10 @@ def main() -> int:
     parser.add_argument("action", choices=["list", "add", "remove"])
     parser.add_argument("usernames", nargs="*", help="Usernames to add/remove (ignored for 'list').")
     parser.add_argument(
-        "--accounts-db",
+        "--socket",
         type=Path,
-        default=Path("/var/lib/energetica/accounts.db"),
-        help="Path to accounts.db (default: the production path /var/lib/energetica/accounts.db).",
+        default=Path("/run/energetica/lobby-service.sock"),
+        help="The lobby service's socket (default: the production path /run/energetica/lobby-service.sock).",
     )
     args = parser.parse_args()
 
@@ -52,45 +55,42 @@ def main() -> int:
         print(f"ERROR: '{args.action}' requires at least one username", file=sys.stderr)
         return 2
 
-    # Pin the resolved path into the env the accounts library reads, so this prod tool never
-    # inherits db.py's dev-oriented default.
-    os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
+    service = LobbyServiceClient.connect("whitelist-run", socket_path=args.socket)
+    try:
+        return _run(service, args.slug, args.action, args.usernames)
+    except LobbyServiceUnavailable as exc:
+        print(f"ERROR: cannot reach the lobby service at {args.socket}: {exc.reason}", file=sys.stderr)
+        return 1
 
-    from energetica.identity import accounts
 
-    if args.action == "list":
-        roster = accounts.get_run_roster(slug=args.slug)
-        if not roster:
-            print(f"No one on {args.slug!r}'s roster.")
+def _run(service: LobbyServiceClient, slug: str, action: str, usernames: list[str]) -> int:
+    if action == "list":
+        members = service.get_run_members(slug)
+        if not members:
+            print(f"No one on {slug!r}'s roster.")
             return 0
-        for entry in roster:
-            print(f"  {entry.username} (joined {entry.joined_at})")
+        for member in members:
+            print(f"  {member.username} (joined {member.joined_at})")
         return 0
 
-    if args.action == "add":
-        for username in args.usernames:
-            account = accounts.get_account_by_username(username)
+    for username in usernames:
+        account = service.get_account_by_username(username)
+        if action == "add":
             if account is None:
                 print(f"ERROR: no account found for username {username!r} — skipped", file=sys.stderr)
                 continue
             try:
-                accounts.record_join(
-                    account_id=account.account_id, slug=args.slug, joined_at=datetime.now(timezone.utc).isoformat()
-                )
-            except accounts.MembershipRoleConflictError as exc:
-                print(f"ERROR: {exc} — skipped", file=sys.stderr)
+                service.add_run_member(slug, account.account_id)
+            except LobbyServiceRefusal as refusal:
+                print(f"ERROR: the lobby service refused {username!r}: {refusal.code} — skipped", file=sys.stderr)
                 continue
-            print(f"Added {username!r} to {args.slug!r}'s roster.")
-        return 0
-
-    # remove
-    for username in args.usernames:
-        account = accounts.get_account_by_username(username)
-        if account is None:
-            print(f"{username!r} has no account — nothing to remove.")
-            continue
-        accounts.remove_membership(account_id=account.account_id, slug=args.slug)
-        print(f"Removed {username!r} from {args.slug!r}'s roster.")
+            print(f"Added {username!r} to {slug!r}'s roster.")
+        else:
+            if account is None:
+                print(f"{username!r} has no account — nothing to remove.")
+                continue
+            service.remove_run_member(slug, account.account_id)
+            print(f"Removed {username!r} from {slug!r}'s roster.")
     return 0
 
 

@@ -99,12 +99,14 @@ Two things to know:
 
 Since the [lobby cutover](../architecture/lobby.md), the app server **no longer mints sessions** —
 it's a pure _entry gate_ that validates the SSO cookie the **lobby** issues and auto-provisions a
-local user on first visit. So a usable local app backend needs the **lobby running too**, and both
-backends must share one signing secret + accounts store. `scripts/lib/dev-env.sh` wires that up under
-`.energetica-dev/` (gitignored, outside `instance/`), and the launcher starts everything:
+local user on first visit. So a usable local app backend needs the **lobby running too**: the lobby
+backend and the **lobby service**, the process that owns accounts and mints sessions (ADR-0009). The
+lobby service and the app backend must share one signing secret + accounts store.
+`scripts/lib/dev-env.sh` wires that up under `.energetica-dev/` (gitignored, outside `instance/`), and
+the launcher starts everything:
 
 ```bash
-bun run dev          # lobby + app backends (shared scratch) + lobby + app frontends; Ctrl-C stops all
+bun run dev          # lobby service + lobby and app backends (shared scratch) + lobby and app frontends; Ctrl-C stops all
 ```
 
 Then open **http://localhost:5173**, get bounced to the lobby (http://localhost:5174), log in as the
@@ -113,7 +115,7 @@ seeded **`demo` / `demo1234`**, and return to the app — the entry gate provisi
 Prefer separate terminals (independent logs, hot-reload per server)? Run the pieces yourself:
 
 ```bash
-bun run serve:lobby                 # lobby backend  :8001  (seeds the demo account + sample runs)
+bun run serve:lobby                 # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
 bun run serve:app                   # app backend    :8000  (shares the lobby's secret + accounts)
 cd frontend && bun run dev:lobby    # lobby frontend :5174
 cd frontend && bun run dev:app      # app frontend   :5173
@@ -153,26 +155,22 @@ A Workshop Run is always private, so only accounts on its roster can enter. You 
 a **facilitator**, who runs the session, and at least one **player**. One account cannot be both in
 the same Run.
 
-Start the lobby first (`bun run serve:lobby`, or `bun run dev`), so the seeded `demo` account exists.
-Create a second account by signing up on the lobby at http://localhost:5174 (sign-ups are on in local
-development), or from the shell:
+Start the lobby first (`bun run serve:lobby`, or `bun run dev`), so the seeded `demo` account exists
+and the lobby service is listening on `.energetica-dev/lobby-service.sock`. Create a second account
+by signing up on the lobby at http://localhost:5174 (sign-ups are on in local development), or from
+the shell, through the lobby service's internal API:
 
 ```bash
-ENERGETICA_ACCOUNTS_DB_PATH=.energetica-dev/accounts.db .venv/bin/python -c '
-from energetica.identity import accounts
-from energetica.kernel.session import generate_password_hash
-accounts.get_or_create_account_id(username="alice", pwhash=generate_password_hash("alice1234"))'
+curl --unix-socket .energetica-dev/lobby-service.sock -H 'Content-Type: application/json' \
+    -d '{"username": "alice", "password": "alice1234"}' http://lobby-service/internal/v1/accounts
 ```
 
-Setting `ENERGETICA_ACCOUNTS_DB_PATH` matters: without it, the account goes into
-`instance/accounts.db`, which the lobby does not read.
-
 Then make `demo` the facilitator and put `alice` on the roster. Both scripts default to the
-production accounts path, so point them at the dev one:
+production socket, so point them at the dev one:
 
 ```bash
-.venv/bin/python scripts/lobby/grant-facilitator.py --username demo --slug workshop-demo --accounts-db .energetica-dev/accounts.db
-.venv/bin/python scripts/lobby/whitelist-run.py workshop-demo add alice --accounts-db .energetica-dev/accounts.db
+.venv/bin/python scripts/lobby/grant-facilitator.py --username demo --slug workshop-demo --socket .energetica-dev/lobby-service.sock
+.venv/bin/python scripts/lobby/whitelist-run.py workshop-demo add alice --socket .energetica-dev/lobby-service.sock
 ```
 
 Once the Run is up, the facilitator can also add players from the roster page or with a join link.
@@ -231,14 +229,13 @@ and the app backend on :8000, started as in step 3. Run the app backend in its o
 **a. Create the accounts and give them access** (step 2, for a facilitator and two players):
 
 ```bash
-export ENERGETICA_ACCOUNTS_DB_PATH=.energetica-dev/accounts.db
-.venv/bin/python -c '
-from energetica.identity import accounts
-from energetica.kernel.session import generate_password_hash
-for name in ("prof", "alice", "bob"):
-    accounts.get_or_create_account_id(username=name, pwhash=generate_password_hash(name + "1234"))'
-.venv/bin/python scripts/lobby/grant-facilitator.py --username prof --slug workshop-demo --accounts-db "$ENERGETICA_ACCOUNTS_DB_PATH"
-.venv/bin/python scripts/lobby/whitelist-run.py workshop-demo add alice bob --accounts-db "$ENERGETICA_ACCOUNTS_DB_PATH"
+SOCKET=.energetica-dev/lobby-service.sock
+for name in prof alice bob; do  # a 409 means the account already exists, which is fine
+    curl -s --unix-socket "$SOCKET" -H 'Content-Type: application/json' \
+        -d "{\"username\": \"$name\", \"password\": \"${name}1234\"}" http://lobby-service/internal/v1/accounts; echo
+done
+.venv/bin/python scripts/lobby/grant-facilitator.py --username prof --slug workshop-demo --socket "$SOCKET"
+.venv/bin/python scripts/lobby/whitelist-run.py workshop-demo add alice bob --socket "$SOCKET"
 ```
 
 **b. Log each account in and enter the Run.** A player only exists in the session once they have entered:
@@ -380,13 +377,14 @@ bun run serve:app:test        # fresh instance + seeded test players/bots
 
 ## Ports
 
-| Service          | URL                   |
-| ---------------- | --------------------- |
-| app frontend     | http://localhost:5173 |
-| lobby frontend   | http://localhost:5174 |
-| landing frontend | http://localhost:5175 |
-| app backend      | http://localhost:8000 |
-| lobby backend    | http://localhost:8001 |
+| Service          | URL                                              |
+| ---------------- | ------------------------------------------------ |
+| app frontend     | http://localhost:5173                            |
+| lobby frontend   | http://localhost:5174                            |
+| landing frontend | http://localhost:5175                            |
+| app backend      | http://localhost:8000                            |
+| lobby backend    | http://localhost:8001                            |
+| lobby service    | Unix socket `.energetica-dev/lobby-service.sock` |
 
 Fixed per surface (in `frontend/vite.shared.ts`) so all three frontends can run at once. The app
 bundle's "log in" bounce targets the lobby port; override with `VITE_LOBBY_URL` if you change it.
@@ -395,7 +393,8 @@ bundle's "log in" bounce targets the lobby port; override with `VITE_LOBBY_URL` 
 
 - **`instance/`** — the app server's game state (engine pickle, checkpoints). `--rm_instance`
   (`serve:app:test`) wipes this.
-- **`.energetica-dev/`** — the shared identity scratch: signing secret, `accounts.db`, seeded runs.
+- **`.energetica-dev/`** — the shared identity scratch: signing secret, `accounts.db` (plus the
+  lobby service's `accounts.db.pre-migration` copy), the lobby service's socket, seeded runs.
   Deliberately outside `instance/` so resetting game state leaves your login intact — mirroring
   production, where accounts are server-wide and outlive any single run.
 

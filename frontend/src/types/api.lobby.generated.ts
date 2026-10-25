@@ -15,8 +15,8 @@ export interface paths {
         put?: never;
         /**
          * Login
-         * @description Verify credentials against the server-wide accounts store and mint the parent-domain
-         *     session cookie (signed with the shared secret, carrying the account_id).
+         * @description Have the lobby service check the credentials and mint a session, then set it as the
+         *     parent-domain session cookie.
          */
         post: operations["login_api_v1_auth_login_post"];
         delete?: never;
@@ -250,7 +250,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND";
     };
     responses: never;
     parameters: never;

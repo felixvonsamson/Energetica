@@ -44,6 +44,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     SIGNUP_DISABLED: "Sign-ups are currently disabled.",
     OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
     INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
+    LOBBY_SERVICE_UNAVAILABLE:
+        "Accounts are briefly unavailable. Please try again in a moment.",
     INSTANCE_NOT_PRIVATE:
         "This instance is not configured as private, so it has no join link.",
     JOIN_LINK_INVALID:

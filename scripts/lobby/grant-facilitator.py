@@ -2,27 +2,31 @@
 """Grant an existing account facilitator authority (ADR-0004).
 
 There is no in-app path to becoming a facilitator: this is the *only* way, run by a sysadmin
-over SSH, from the lobby directory (this script is deployed only there — it touches the shared
-accounts.db, not any single instance's engine). Grant-only by design — no revoke command yet
-(YAGNI: a deployment has roughly one long-lived facilitator per short-lived instance; add
-revoke the day it's actually needed).
+over SSH, from the lobby directory (this script is deployed only there). It is a client of the
+lobby service's internal API (ADR-0009), so it never opens the database itself. Grant-only by
+design — no revoke command yet (YAGNI: a deployment has roughly one long-lived facilitator per
+short-lived instance; add revoke the day it's actually needed).
 
 Usage (from /var/www/energetica-lobby):
-    ./scripts/grant-facilitator.py --username <username> [--slug <slug>] \
-        [--accounts-db <path>]
+    ./scripts/grant-facilitator.py --username <username> [--slug <slug>] [--socket <path>]
 
 If --slug is omitted, the grant is server-wide (facilitator over every instance) — see
-docs/architecture/roles.md § How elevated access is granted. If --accounts-db is omitted it
-defaults to the production path /var/lib/energetica/accounts.db (this is a production-only
-tool, so it pins the prod path rather than inheriting db.py's dev default).
+docs/architecture/roles.md § How elevated access is granted. If --socket is omitted it defaults to
+the production socket /run/energetica/lobby-service.sock (this is a production-only tool, so it
+pins the production path rather than inheriting the client's dev default).
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
+
+from energetica.identity.lobby_service_client import (
+    LobbyServiceClient,
+    LobbyServiceRefusal,
+    LobbyServiceUnavailable,
+)
 
 
 def main() -> int:
@@ -34,28 +38,25 @@ def main() -> int:
         help="Instance slug to scope the grant to. Omit for a server-wide grant (every instance).",
     )
     parser.add_argument(
-        "--accounts-db",
+        "--socket",
         type=Path,
-        default=Path("/var/lib/energetica/accounts.db"),
-        help="Path to accounts.db (default: the production path /var/lib/energetica/accounts.db).",
+        default=Path("/run/energetica/lobby-service.sock"),
+        help="The lobby service's socket (default: the production path /run/energetica/lobby-service.sock).",
     )
     args = parser.parse_args()
 
-    # Pin the resolved path into the env the accounts library reads, so this prod tool never
-    # inherits db.py's dev-oriented default.
-    os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
-
-    from energetica.identity import accounts
-
-    account = accounts.get_account_by_username(args.username)
-    if account is None:
-        print(f"ERROR: no account found for username {args.username!r}", file=sys.stderr)
-        return 1
-
+    service = LobbyServiceClient.connect("grant-facilitator", socket_path=args.socket)
     try:
-        accounts.grant_facilitator(account_id=account.account_id, slug=args.slug)
-    except accounts.MembershipRoleConflictError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        account = service.get_account_by_username(args.username)
+        if account is None:
+            print(f"ERROR: no account found for username {args.username!r}", file=sys.stderr)
+            return 1
+        service.grant_facilitator(account.account_id, slug=args.slug)
+    except LobbyServiceRefusal as refusal:
+        print(f"ERROR: the lobby service refused the grant: {refusal.code}", file=sys.stderr)
+        return 1
+    except LobbyServiceUnavailable as exc:
+        print(f"ERROR: cannot reach the lobby service at {args.socket}: {exc.reason}", file=sys.stderr)
         return 1
 
     scope = "server-wide (every instance)" if args.slug is None else f"instance {args.slug!r}"

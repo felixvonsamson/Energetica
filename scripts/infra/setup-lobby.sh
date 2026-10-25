@@ -54,12 +54,13 @@ if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ];
 fi
 getent group energetica >/dev/null || { log_error "group 'energetica' missing — run setup-base.sh first"; exit 1; }
 [ -d /var/www/energetica-landing/instances ] || { log_error "landing not set up — run setup-landing.sh first"; exit 1; }
-# The lobby signs the parent-domain cookie with the shared secret and gates signup on
-# server.json — both provisioned by setup-base.sh. A box set up before they existed needs
-# a (idempotent) re-run, so fail here with that pointer rather than starting a lobby that
-# cannot mint sessions / never accepts signups.
+# The lobby backend logs in through the lobby service, which signs sessions with the shared
+# secret, and gates signup on server.json — all provisioned by setup-base.sh. A box set up before
+# they existed needs a (idempotent) re-run, so fail here with that pointer rather than starting a
+# lobby that cannot mint sessions / never accepts signups.
 [ -s /var/lib/energetica/secret_key.txt ] || { log_error "shared secret missing — re-run setup-base.sh first"; exit 1; }
 [ -f /etc/energetica/server.json ] || { log_error "/etc/energetica/server.json missing — re-run setup-base.sh first"; exit 1; }
+[ -f /etc/systemd/system/energetica-lobby-service.socket ] || { log_error "lobby service units missing — re-run setup-base.sh first"; exit 1; }
 
 FQDN="lobby.$DOMAIN"
 VHOST=/etc/apache2/sites-available/energetica-lobby.conf
@@ -128,25 +129,11 @@ fi
 install -d -o energetica -g energetica -m 0750 "$APP_DIR/instance"
 log_success "$APP_DIR/instance (writable by the service user)"
 
-# --- Deploy-precondition sudo grant ------------------------------------------------
-log_section "DEPLOY SUDOERS"
-# deploy-lobby.sh hard-refuses to deploy while Phase A's instance_membership backfill has
-# not run (else the lobby would silently show every existing player zero runs), and only
-# the service user can read /var/lib/energetica/accounts.db — so the deploy user needs to
-# run that one read-only python check as energetica. `python3 -c *` as energetica grants
-# nothing the base pip rule doesn't already imply (pip installs execute arbitrary code as
-# energetica), and stays scoped to the service account — never root.
-SUDOERS_FILE=/etc/sudoers.d/energetica-deploy-lobby
-cat > "$SUDOERS_FILE" <<EOF
-$DEPLOY_USER ALL=(energetica) NOPASSWD: /usr/bin/python3 -c *, /bin/python3 -c *
-EOF
-chmod 440 "$SUDOERS_FILE"
-if visudo -cf "$SUDOERS_FILE" >/dev/null; then
-    log_success "Configured passwordless sudo for $DEPLOY_USER (python3 -c as energetica)"
-else
-    rm -f "$SUDOERS_FILE"
-    log_error "sudoers syntax invalid — removed $SUDOERS_FILE; deploy-lobby.sh's precondition check will fail closed"
-fi
+# --- Retired deploy sudo grant ----------------------------------------------------
+# deploy-lobby.sh used to read accounts.db as the service user to check a deploy precondition,
+# through a `python3 -c` sudo grant. Only the lobby service opens the database now (ADR-0009), so
+# the check and the grant are gone. Remove the grant from a box provisioned before.
+rm -f /etc/sudoers.d/energetica-deploy-lobby
 
 # --- Temporary HTTP vhost for ACME -------------------------------------------------
 log_section "TLS PROVISIONING"
@@ -194,6 +181,3 @@ log_success "energetica-lobby.service enabled (not started)"
 log_section "LOBBY PROVISIONED"
 echo "Ship code and start the service from your machine:"
 echo "  ./scripts/deploy-lobby.sh --server <ssh-host> --domain $DOMAIN"
-echo
-echo "Deploy precondition: Phase A (instance_membership table + backfill) must already be"
-echo "live in /var/lib/energetica/accounts.db — deploy-lobby.sh refuses otherwise."

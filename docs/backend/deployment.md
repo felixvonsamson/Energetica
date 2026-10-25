@@ -25,7 +25,8 @@ later). Then, on the VPS, as root:
 ```bash
 sudo bash /tmp/setup-base.sh                                    # Apache, Python, certbot, firewall,
                                                                  # `energetica` group/user, shared dirs,
-                                                                 # shared secret + server.json
+                                                                 # shared secret + server.json,
+                                                                 # lobby service socket + unit
                                                                  # (the OS "deploy" user must already exist)
 sudo bash /tmp/setup-landing.sh --domain energetica-game.org    # apex vhost + TLS
 sudo bash /tmp/setup-lobby.sh --domain energetica-game.org      # lobby vhost+TLS+unit
@@ -41,7 +42,9 @@ serves Workshop's app, with no game engine or tick loop, and saves its session t
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`
 and `instance.env`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not**
 start the service. The first deploy is what ships the backend and starts it. `setup-lobby.sh`
-works the same way for the lobby service.
+works the same way for the lobby backend. `setup-base.sh` installs the lobby service's units
+(`energetica-lobby-service.socket` and `.service`) and enables the socket; the service's code
+ships with the lobby, so it first runs after the first `deploy-lobby.sh`.
 
 Every service needs its own uvicorn port: the lobby defaults to **8002** (`--port`
 overrides), so give each instance a different one. `setup-lobby.sh` refuses a port
@@ -139,16 +142,20 @@ From your local machine:
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
   its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
-  `/var/www/energetica-lobby`, installs the backend wheel into the server venv, restarts
-  `energetica-lobby`, and health-checks the vhost. **Hard precondition:** it refuses to
-  deploy while the `instance_membership` table is absent from `accounts.db` — Phase A
-  (write-on-settle) must be live first, else the lobby silently shows every existing
-  player zero runs (`docs/architecture/lobby.md` § Phasing).
+  `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
+  restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
+  migrations on `accounts.db` before serving, and checks its `healthz` over the socket.
+  Last, it restarts the lobby backend (`energetica-lobby`) and health-checks the vhost.
+  It refuses to deploy to a box whose `setup-base.sh` predates the lobby service's units, or whose
+  `setup-lobby.sh` rendered the lobby backend's unit before it knew the service's socket. Re-run
+  whichever it names; both are idempotent.
+  Callers do not fail while the lobby service restarts: systemd holds its socket open, so
+  their requests wait.
 
 Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
 subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
 `drop_player_pwhash.py`, `export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
-`grant-facilitator.py`, `whitelist-run.py` — both touch the shared `accounts.db`, so they
+`grant-facilitator.py`, `whitelist-run.py` — both are clients of the lobby service, so they
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
 
@@ -327,7 +334,9 @@ Download an instance's game state (the `instance/` dir):
 ```
 
 `accounts.db` (`/var/lib/energetica/accounts.db`) is shared by every instance on the VPS —
-back it up alongside the per-instance state.
+back it up alongside the per-instance state. Before each schema migration, the lobby service
+also keeps one copy of it from just before, at `/var/lib/energetica/accounts.db.pre-migration`,
+replaced at the next migration.
 
 ## Monitoring
 
@@ -337,6 +346,15 @@ View logs / restart / health-check a single instance:
 ssh energetica-game 'sudo journalctl -u energetica-autumn-2025 -f'
 ssh energetica-game 'sudo systemctl restart energetica-autumn-2025'
 curl https://autumn-2025.energetica-game.org/healthz
+```
+
+The lobby service has no network port. Its log names the caller of each request
+(`X-Energetica-Caller`), and its `healthz` reports the schema version and the API versions it
+serves:
+
+```bash
+ssh energetica-game 'sudo journalctl -u energetica-lobby-service -f'
+ssh energetica-game 'curl -s --unix-socket /run/energetica/lobby-service.sock http://lobby-service/internal/v1/healthz'
 ```
 
 ## Checking what is deployed

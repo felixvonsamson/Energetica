@@ -1,33 +1,35 @@
-# systemd unit template for the lobby service (server-wide SSO + instance picker).
+# systemd unit template for the lobby backend (server-wide SSO + instance picker).
 #
 # Rendered by scripts/infra/setup-lobby.sh into /etc/systemd/system/energetica-lobby.service,
 # substituting @DOMAIN@ and @PORT@.
 #
 # The Environment= lines are load-bearing — they are the contract between the deployment
-# and src/lobby/config.py + src/energetica/{kernel/session.py,accounts/db.py,
+# and src/lobby/config.py + src/energetica/identity/{lobby_service_client.py,
 # instance_config.py,server_config.py}:
 #   * ENERGETICA_APEX_DOMAIN is MANDATORY in production. Without it the session cookie
 #     falls back to host-only scope (lobby.{apex} only) and never reaches the run
 #     subdomains — SSO silently doesn't happen (ADR-0002).
+#   * ENERGETICA_LOBBY_SERVICE_SOCKET is MANDATORY too: the client's default is a dev path.
 #   * The others match the code defaults, but are set explicitly so the unit is the
 #     single source of truth for where the lobby reads shared state.
-# See docs/architecture/lobby.md § The lobby service.
+# The lobby backend holds no database and no signing secret: it is a client of the lobby service
+# (energetica-lobby-service.service, ADR-0009) on the socket below.
+# See docs/architecture/lobby.md § The lobby backend and the lobby service.
 
 [Unit]
-Description=Energetica lobby service (server-wide SSO + picker)
-After=network.target
+Description=Energetica lobby backend (server-wide SSO + picker)
+After=network.target energetica-lobby-service.socket
+Wants=energetica-lobby-service.socket
 
 [Service]
 Type=simple
-# Runs as the shared service user so it can read the server-wide accounts.db and
-# secret_key.txt in /var/lib/energetica (group-scoped, no world access).
+# Runs as the shared service user, whose group may connect to the lobby service's socket.
 User=energetica
 Group=energetica
 WorkingDirectory=/var/www/energetica-lobby
 
 Environment=ENERGETICA_APEX_DOMAIN=@DOMAIN@
-Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica/secret_key.txt
-Environment=ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db
+Environment=ENERGETICA_LOBBY_SERVICE_SOCKET=/run/energetica/lobby-service.sock
 Environment=ENERGETICA_LANDING_DIR=/var/www/energetica-landing
 Environment=ENERGETICA_SERVER_CONFIG_PATH=/etc/energetica/server.json
 

@@ -87,9 +87,24 @@ def test_importing_instance_config_does_not_load_the_game_engine() -> None:
     assert not leaked, f"importing energetica.identity.instance_config leaked the game engine: {sorted(leaked)}"
 
 
-def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
+def test_importing_the_lobby_backend_does_not_load_the_game_engine() -> None:
     """The whole point: the lobby app imports with none of the game domain or its services."""
     loaded = _modules_after_importing("lobby")
+    leaked = loaded.intersection(_ENGINE_MARKERS)
+    assert not leaked, f"importing the lobby backend leaked the game engine: {sorted(leaked)}"
+
+
+def test_the_lobby_backend_loads_neither_the_database_code_nor_the_signing_secret() -> None:
+    """The lobby backend is a client of the lobby service like every run: it never opens the
+    database and does not hold the signing secret, which the session module loads on import (ADR-0009).
+    """
+    loaded = _modules_after_importing("lobby")
+    leaked = loaded.intersection({"energetica.identity.accounts.db", "energetica.kernel.session"})
+    assert not leaked, f"importing the lobby backend loaded {sorted(leaked)}"
+
+
+def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
+    loaded = _modules_after_importing("lobby_service.app")
     leaked = loaded.intersection(_ENGINE_MARKERS)
     assert not leaked, f"importing the lobby service leaked the game engine: {sorted(leaked)}"
 

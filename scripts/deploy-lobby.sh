@@ -13,16 +13,17 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 #
 # Builds the lobby bundle and the backend wheel locally, rsyncs the Python backend +
 # dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
-# restarts the service, and health-checks the live vhost. The install is not optional:
+# restarts both lobby processes, and health-checks them. The install is not optional:
 # the backend lives under src/ and is imported as an installed package, so a deploy that
-# skips it leaves the service unable to start.
+# skips it leaves the services unable to start.
 #
-# HARD PRECONDITION (checked before anything ships): the instance_membership table must
-# exist in the server-wide accounts.db — i.e. Phase A (write-on-settle + backfill) is
-# live on the box. Deploying the lobby before it means every existing player sees ZERO
-# runs with no error (docs/architecture/lobby.md § Phasing), so this refuses, not warns.
+# The lobby is two processes from the one checkout (ADR-0009): the lobby service
+# (energetica-lobby-service, which owns accounts.db and runs its schema migrations when it
+# starts) and the lobby backend (energetica-lobby, the public web app). The service restarts
+# first. Its socket stays open across the restart, so runs and the lobby backend wait for it
+# rather than fail.
 #
-# The first run after setup-lobby.sh is what actually STARTS the lobby.
+# The first run after setup-lobby.sh is what actually STARTS the lobby backend.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
 # Never varied across this server's history — hardcoded rather than a configurable
@@ -62,33 +63,26 @@ if ! ssh -o ConnectTimeout=5 "$SSH" exit 2>/dev/null; then
     exit 1
 fi
 
-# --- 1. Deploy precondition: Phase A backfill is live ----------------------------
-# Read-only sqlite check, run as the service user (the only non-root reader of
-# accounts.db; setup-lobby.sh grants exactly this). ANY failure — missing table,
-# missing db, missing sudo grant — refuses the deploy: an unverifiable precondition
-# is treated as an unmet one. /usr/bin/python3 is fully qualified to match the
-# sudoers grant exactly (an unqualified `python3` resolves via PATH and may not
-# match the granted pathname on every host).
-log_step "Checking deploy precondition (instance_membership table in accounts.db)..."
-if ! ssh "$SSH" 'sudo -u energetica /usr/bin/python3 -c '\''
-import sqlite3, sys
-try:
-    conn = sqlite3.connect("file:/var/lib/energetica/accounts.db?mode=ro", uri=True)
-    row = conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?",
-        ("table", "instance_membership"),
-    ).fetchone()
-except Exception as exc:
-    print(f"cannot read accounts.db: {exc}", file=sys.stderr)
-    sys.exit(2)
-sys.exit(0 if row else 1)
-'\'''; then
-    log_error "instance_membership is not present in /var/lib/energetica/accounts.db (or it could not be verified)."
-    echo "Phase A must be deployed first: its write-on-settle code creates the table. Without it"
-    echo "the lobby would show every existing player zero runs, silently. Refusing to deploy."
+# --- 1. Deploy precondition: the lobby service units are installed ----------------
+# setup-base.sh installs them. A box provisioned before the lobby service existed needs a re-run.
+log_step "Checking that the lobby service socket is installed..."
+if ! ssh "$SSH" "systemctl is-enabled --quiet energetica-lobby-service.socket"; then
+    log_error "energetica-lobby-service.socket is not enabled on the server."
+    echo "Re-run setup-base.sh on the server (it is idempotent), then deploy again."
     exit 1
 fi
-log_success "Phase A precondition met"
+log_success "Lobby service socket installed"
+
+# setup-lobby.sh renders the lobby backend's unit, and only a unit rendered since the lobby service
+# existed tells the backend where the service's socket is. Without it the new backend looks for a
+# dev socket and answers every login with a 503. Re-running setup-lobby.sh re-renders the unit.
+log_step "Checking that the lobby backend's unit knows the lobby service socket..."
+if ! ssh "$SSH" "systemctl show --property=Environment energetica-lobby | grep -q ENERGETICA_LOBBY_SERVICE_SOCKET="; then
+    log_error "energetica-lobby.service does not set ENERGETICA_LOBBY_SERVICE_SOCKET."
+    echo "Re-run setup-lobby.sh on the server (it is idempotent) to install the current unit, then deploy again."
+    exit 1
+fi
+log_success "Lobby backend unit is current"
 
 # --- 2. Build ---------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
@@ -107,7 +101,7 @@ echo
 log_step "Deployment summary:"
 echo "  Lobby:   https://$FQDN"
 echo "  Remote:  $SSH:$REMOTE_PATH"
-echo "  Steps:   rsync backend → rsync lobby bundle → install backend → restart → health check"
+echo "  Steps:   rsync backend → rsync lobby bundle → install backend → restart lobby service → restart lobby backend → health check"
 echo
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "Continue? (y/n) " -n 1 -r; echo
@@ -164,7 +158,24 @@ log_success "Lobby bundle synced"
 # --- 6. Install the backend into the server venv --------------------------------------
 install_backend_wheel "$SSH" "$REMOTE_PATH"
 
-# --- 7. Restart (first deploy: starts) -----------------------------------------------
+# --- 7. Restart the lobby service, then check it over its socket -------------------
+# It runs pending schema migrations before serving, so a failed migration shows up here as a
+# service that does not stay up. The deploy user is in the energetica group, so it may connect.
+log_step "Restarting energetica-lobby-service (runs pending migrations)..."
+if ! ssh "$SSH" "sudo systemctl restart energetica-lobby-service"; then
+    log_error "Restart command failed"
+    echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby-service -n 50'"
+    exit 1
+fi
+SERVICE_HEALTH=$(ssh "$SSH" "curl -s --max-time 30 --unix-socket /run/energetica/lobby-service.sock http://lobby-service/internal/v1/healthz" || true)
+if ! echo "$SERVICE_HEALTH" | grep -q '"status":"ok"'; then
+    log_error "lobby service is not healthy: ${SERVICE_HEALTH:-no answer}"
+    echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby-service -n 50'"
+    exit 1
+fi
+log_success "Lobby service healthy: $SERVICE_HEALTH"
+
+# --- 7b. Restart the lobby backend (first deploy: starts) ----------------------------
 log_step "Restarting energetica-lobby..."
 if ! ssh "$SSH" "sudo systemctl restart energetica-lobby"; then
     log_error "Restart command failed"
@@ -176,7 +187,7 @@ if ! ssh "$SSH" "systemctl is-active --quiet energetica-lobby"; then
     echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -n 50'"
     exit 1
 fi
-log_success "Service is running"
+log_success "Lobby backend is running"
 
 # --- 8. Health check ------------------------------------------------------------------
 # /healthz exists (and is now proxied — see apache-lobby.conf) but only reports the
@@ -184,15 +195,14 @@ log_success "Service is running"
 # correctly, so four probes cover that chain instead:
 #   - SPA shell 200 → Apache serves the bundle;
 #   - unauthenticated my-runs 401 → vhost → proxy → uvicorn wiring is up;
-#   - login with a nonexistent user → 401 USER_NOT_FOUND proves the accounts.db READ
-#     path works (my-runs alone rejects at the cookie check, before touching any shared
-#     state, so it cannot prove the db is reachable — a broken path answers 500 here).
-#     The probe username is 22 chars, above signup's 18-char cap, so it can never be a
-#     real account.
+#   - login with a nonexistent user → 401 USER_NOT_FOUND proves the lobby backend reaches
+#     the lobby service and the service reads accounts.db (my-runs alone rejects at the
+#     cookie check, before calling the service, so it cannot prove that — a broken path
+#     answers 503 or 500 here). The probe username is 22 chars, above signup's 18-char
+#     cap, so it can never be a real account.
 #   - instances.json 200 → the manifest Alias off the landing dir serves the picker's
-#     "open runs". The Phase A precondition implies at least one instance deployment
-#     already published the manifest, so a 404/403 means the Alias or the file's
-#     permissions are broken, not a fresh box.
+#     "open runs". Every instance deployment publishes the manifest, so on a box with a
+#     run a 404/403 means the Alias or the file's permissions are broken.
 log_step "Waiting for https://$FQDN to answer..."
 HEALTH_DEADLINE=$(( $(date +%s) + 120 ))
 HEALTH_OK=false
@@ -212,10 +222,10 @@ done
 if [ "$HEALTH_OK" != true ]; then
     log_error "lobby did not become healthy within 120s (spa=$SPA_CODE my-runs=$API_CODE manifest=$MANIFEST_CODE login=$LOGIN_BODY)"
     [ "$MANIFEST_CODE" = "200" ] || echo "instances.json is published by each instance backend on startup — if missing, restart an instance; if it 403s, check its permissions in /var/www/energetica-landing/."
-    echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f'"
+    echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f' (and -u energetica-lobby-service)"
     exit 1
 fi
-log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reachable)"
+log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, lobby service reachable)"
 
 # Stamp the deployed backend version — only now, after the new lobby is confirmed serving, so
 # /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes

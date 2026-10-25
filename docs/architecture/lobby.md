@@ -63,23 +63,42 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 
 ## Architecture
 
-### The lobby service
+### The lobby backend and the lobby service
 
-A new, instance-independent service on `lobby.{apex}`:
+The lobby is an instance-independent part of the server, on `lobby.{apex}`. It ships from one
+checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
 
-- **Backend** (uvicorn + Apache vhost + systemd unit): owns credential and session
-  endpoints — `signup`, `login`, `change-password`, `logout`, and `my-runs`. Reads/writes
-  the server-wide `accounts.db`; reads the on-disk instance fragments for run metadata.
+- **Lobby backend** (`src/lobby/`, `main_lobby.py`; uvicorn + Apache vhost + the
+  `energetica-lobby` unit): the public web app. It serves `signup`, `login`,
+  `change-password`, `logout`, `my-runs` and the public-run join, and reads the on-disk
+  instance fragments for run metadata. It holds no database and no signing secret: every
+  account, session and membership operation is a call to the lobby service.
+- **Lobby service** (`src/lobby_service/`, `main_lobby_service.py`; the
+  `energetica-lobby-service` unit, socket-activated): the one process that opens the
+  server-wide database (`accounts.db`, to be renamed `lobby.db`) and holds the signing secret
+  and the password hashes (ADR-0009). It has no network port: it serves a versioned internal
+  API (`/internal/v1`) on `/run/energetica/lobby-service.sock`, which only the `energetica`
+  group may connect to. Its clients use `energetica.identity.lobby_service_client`, which
+  times out after about 5 seconds and answers a failure with a 503. Runs still open the
+  database directly until "Switch runs to the lobby service API" (#1283).
 - **Frontend bundle** (sibling to the landing bundle): login, signup, and the picker
   page with all logged-in/out states.
+
+The lobby service runs its schema migrations when it starts, before it serves
+(`src/lobby_service/schema.py`). The state version is SQLite's `PRAGMA user_version`; steps live
+in `src/lobby_service/migrations/` as `NNNN_<slug>.py`, each with one `migrate(conn)`; all pending
+steps and the version bump share one transaction; and a database newer than the code stops the
+service from starting. Before migrating, it keeps one copy of the database at
+`<name>.pre-migration`.
 
 The apex landing stays **pure-static** marketing; its CTAs link to the lobby.
 
 ### Session model — A1 (ADR-0002)
 
 Single-sign-on via a **server-wide shared signing secret** + a **parent-domain session
-cookie** (`domain=.{apex}`). The lobby mints the cookie on login; every instance validates
-it with the shared secret. The session payload is the immutable **`account_id`** (ADR-0002
+cookie** (`domain=.{apex}`). On login, the lobby service mints the token and the lobby
+backend sets it as the cookie; every instance validates it with the shared secret (until
+#1283, after which runs hand it to the lobby service instead). The session payload is the immutable **`account_id`** (ADR-0002
 amendment), so each instance resolves it against its own local `User` by `account_id`.
 
 The SSO cookie is named **`energetica_session`**, deliberately _not_ `session`: pre-cutover
