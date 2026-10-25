@@ -91,8 +91,13 @@ install_backend_wheel() {
         exit 1
     }
 
+    # The umask is set only for the deploy user's install. Its files must stay readable to the
+    # energetica group, through which both lobby processes import them, whatever umask the SSH
+    # session has. 027 also keeps them unwritable by that group.
+    local umask_prefix=""
     local pip="sudo -u energetica $remote_path/.venv/bin/pip"
     if [ "${3:-}" = "--as-deploy-user" ]; then
+        umask_prefix="umask 027 && "
         pip="$remote_path/.venv/bin/pip"
     fi
     local wheel="$remote_path/dist/$BACKEND_WHEEL"
@@ -112,7 +117,7 @@ install_backend_wheel() {
     # requirements.txt-based step did not. Note that `pip check` reports any broken requirement in
     # the venv, not just ours, so a pre-existing conflict makes this take the slow path every time
     # — slower, never wrong.
-    ssh "$ssh_target" "$pip install -q --force-reinstall --no-deps $wheel && { $pip check >/dev/null || $pip install -q --force-reinstall $wheel; }" || {
+    ssh "$ssh_target" "$umask_prefix$pip install -q --force-reinstall --no-deps $wheel && { $pip check >/dev/null || $pip install -q --force-reinstall $wheel; }" || {
         log_error "Installing the backend into $remote_path/.venv failed — not restarting the service."
         exit 1
     }
