@@ -116,7 +116,8 @@ def test_the_lobby_backend_loads_neither_the_database_code_nor_the_signing_secre
     ],
 )
 def test_the_run_apps_load_neither_the_database_code_nor_the_signing_secret(module: str) -> None:
-    """Runs are clients of the lobby service: they reach accounts, sessions and membership only
+    """
+    Runs are clients of the lobby service: they reach accounts, sessions and membership only
     through its API, so they never open the database and do not hold the signing secret (ADR-0009).
     """
     loaded = _modules_after_importing(module)

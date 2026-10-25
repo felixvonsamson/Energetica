@@ -171,14 +171,14 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 );
 ```
 
-- A player row is written at **join** time (the lobby service's idempotent `PUT
-runs/{slug}/members/{account_id}`) — the lobby's explicit two-click join for a public run, a
+- A player row is written at **join** time (the lobby service's idempotent
+  `PUT runs/{slug}/members/{account_id}`) — the lobby's explicit two-click join for a public run, a
   private run's roster add / join-link confirm (#1030), or settling, which joins an account that
   never went through a join step. Runs no longer write `settled_at` (#1283), and nothing reads it;
   a later migration drops the column. Whether an account has settled is a fact of the run: a
   `Player` with its `account_id`. A facilitator row is written only by the sysadmin grant script
   (ADR-0004).
-- The lobby's "your runs" = membership rows (joined **or** settled) joined against the on-disk
+- The lobby's "your runs" = player membership rows joined against the on-disk
   fragments (`/var/www/energetica-landing/instances/{slug}.json`) for name / `starts_at`. This
   surfaces an account's **unadvertised** runs to that account (the public manifest can't).
 - Stale rows (run later deleted) are tolerated and filtered against existing fragments,

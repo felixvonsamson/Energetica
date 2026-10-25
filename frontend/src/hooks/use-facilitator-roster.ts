@@ -44,8 +44,7 @@ export function useRosterCandidates(prefix: string) {
 }
 
 /**
- * Add an existing account to the roster; it shows up under "Invited" until the
- * account's own next entry provisions its local `User`.
+ * Add an existing account to the roster.
  *
  * @example
  *     const { mutate: addToRoster } = useAddToRoster();

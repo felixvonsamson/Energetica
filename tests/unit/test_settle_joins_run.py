@@ -1,4 +1,5 @@
-"""Settling joins the account to the run through the lobby service (ADR-0009).
+"""
+Settling joins the account to the run through the lobby service (ADR-0009).
 
 Creating a ``Player`` is what makes a public run appear under the account's "your runs", so settle
 calls the lobby service's idempotent join before it touches the engine.
@@ -46,7 +47,8 @@ def test_settling_an_account_that_already_joined_keeps_its_one_membership(
 def test_settle_aborts_before_any_engine_mutation_when_the_lobby_service_fails(
     lobby_service: LobbyServiceClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The join happens before any engine mutation (tile claim, Player creation, chat join), so a
+    """
+    The join happens before any engine mutation (tile claim, Player creation, chat join), so a
     failure leaves nothing to undo and no in-engine player without a membership. The client gets
     a 503 and can safely retry, since the tile is still unclaimed.
     """
@@ -67,7 +69,8 @@ def test_settle_aborts_before_any_engine_mutation_when_the_lobby_service_fails(
 
 
 def test_settling_calls_no_lobby_service_when_slug_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    """In dev / unconfigured deployments there is no slug and no lobby, so settle must not need one.
+    """
+    In dev / unconfigured deployments there is no slug and no lobby, so settle must not need one.
 
     No ``lobby_service`` fixture here: any call would try the real socket and fail.
     """

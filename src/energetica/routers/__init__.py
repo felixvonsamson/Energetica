@@ -5,12 +5,13 @@ from datetime import datetime
 from typing import Awaitable, Callable, cast
 
 from fastapi import FastAPI, Request, Response, status
+from fastapi.responses import JSONResponse
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
-from energetica.identity.lobby_service_client import install_refusal_handler
+from energetica.identity.lobby_service_client import LobbyServiceUnavailable, install_refusal_handler
 from energetica.identity.run import run_router
 from energetica.identity.web import get_standing, replayed_account
 from energetica.kernel.error_envelope import install_error_handlers
@@ -104,6 +105,17 @@ def setup_routes(app: FastAPI) -> None:
 
         start = datetime.now()
 
+        # Only players' requests change the world, so only they are logged and replayed. A
+        # facilitator's writes change instance.json and the lobby, which replay must not redo, and
+        # replay acts as a player (identity.web.get_standing). The caller is resolved before the
+        # route runs, so a lobby service that cannot be reached refuses the write with nothing
+        # changed, rather than failing after the change without logging it. The route reuses the
+        # answer.
+        try:
+            standing = get_standing(request)
+        except LobbyServiceUnavailable as exc:
+            return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
         # Request body is read-once only - store it
         body_bytes = await request.body()
 
@@ -156,10 +168,6 @@ def setup_routes(app: FastAPI) -> None:
             except Exception:
                 response_payload = "unparsable or not JSON"
 
-            # Only players' requests change the world, so only they are logged and replayed. A
-            # facilitator's writes change instance.json and the lobby, which replay must not redo,
-            # and replay acts as a player (identity.web.get_standing).
-            standing = get_standing(request)
             if standing is None or standing.role != "player":
                 return new_response
             account = standing.account

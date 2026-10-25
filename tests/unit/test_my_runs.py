@@ -1,4 +1,5 @@
-"""Unit tests for the shared ``my-runs`` read (``energetica.identity.my_runs.build_my_runs``).
+"""
+Unit tests for the shared ``my-runs`` read (``energetica.identity.my_runs.build_my_runs``).
 
 This is the single join both the instance-side ``GET /lobby/my-runs`` and the lobby backend serve:
 an account's memberships, as the lobby service reports them (joined runs, settled or not, #1030,
@@ -72,7 +73,8 @@ def test_runs_carry_their_run_mode(instances: Path) -> None:
 
 
 def test_surfaces_unadvertised_runs(instances: Path) -> None:
-    """An account's own unadvertised run has an on-disk fragment, so it appears in *its* my-runs
+    """
+    An account's own unadvertised run has an on-disk fragment, so it appears in *its* my-runs
     even though it is absent from the public manifest.
     """
     _fragment(instances, slug="secret-run", name="Secret", starts_at="2026-01-01T00:00:00Z", advertised=False)

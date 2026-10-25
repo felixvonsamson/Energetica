@@ -34,8 +34,10 @@ builds the scope of a real request from the connection and never sets it, so no 
 """
 
 _STANDING_SCOPE_KEY = "energetica.standing"
-"""The ASGI scope key under which a request keeps its resolved :class:`Standing`, so the
-dependencies and the action log share one lobby service call per request."""
+"""
+The ASGI scope key under which a request keeps its resolved :class:`Standing`, so the
+dependencies and the action log share one lobby service call per request.
+"""
 
 _lobby_service: LobbyServiceClient | None = None
 
@@ -50,7 +52,8 @@ def lobby_service() -> LobbyServiceClient:
 
 @dataclass(frozen=True)
 class Standing:
-    """An account and its standing in this run, as the lobby service reported it for one request.
+    """
+    An account and its standing in this run, as the lobby service reported it for one request.
 
     ``role`` is ``"facilitator"`` only if a grant covers this run (server-wide or scoped to it,
     ADR-0004); ``"player"`` is the default for every other account, settled or not. ``joined`` says
@@ -69,7 +72,8 @@ def replayed_account(request: Request) -> Account | None:
 
 
 def _resolve_token(token: str | None) -> Standing | None:
-    """The standing of the account behind a session token, or ``None`` for a missing, invalid or
+    """
+    The standing of the account behind a session token, or ``None`` for a missing, invalid or
     expired token, or one for an account since deleted.
     """
     if not token:
@@ -85,10 +89,14 @@ def _resolve_token(token: str | None) -> Standing | None:
 
 
 def get_standing(request: Request) -> Standing | None:
-    """The caller's account and standing in this run, or ``None`` without a valid session.
+    """
+    The caller's account and standing in this run, or ``None`` without a valid session.
 
-    Resolved once per request and kept in its scope. A replayed request has no cookie: it acts as
-    the player it was logged for, since the action log only records players' requests.
+    Resolved once per request and kept in its scope. A replayed request has no cookie, so there is
+    no session to ask the lobby service about: it acts as the player it was logged for. That holds
+    only because the action log records nothing but players' requests (``routers.setup_routes``).
+    A facilitator request in a log written before that rule replays as a player's and is refused
+    with a 403, which changes nothing.
     """
     if _STANDING_SCOPE_KEY not in request.scope:
         account = replayed_account(request)
@@ -173,11 +181,9 @@ def resolve_entry(request: Request) -> Standing:
     or membership may have changed since.
     """
     standing = get_standing(request)
-    if standing is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
-    if replayed_account(request) is None:
-        _enforce_instance_access(standing)
-    return standing
+    if standing is not None and replayed_account(request) is not None:
+        return standing
+    return _admit(standing)
 
 
 def resolve_entry_account(request: Request) -> Account:
@@ -197,10 +203,14 @@ def admit_socket_connection(environ: dict[str, Any]) -> Standing:
     cookie = SimpleCookie(environ.get("HTTP_COOKIE", ""))
     morsel = cookie.get(SESSION_COOKIE_NAME)
     try:
-        standing = _resolve_token(morsel.value if morsel is not None else None)
-        if standing is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
-        _enforce_instance_access(standing)
+        return _admit(_resolve_token(morsel.value if morsel is not None else None))
     except HTTPException as exc:
         raise ConnectionRefusedError(str(exc.detail)) from exc
+
+
+def _admit(standing: Standing | None) -> Standing:
+    """The entry gate, given the caller's standing: a 401 without a session, else the access policy."""
+    if standing is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
+    _enforce_instance_access(standing)
     return standing

@@ -77,8 +77,9 @@ there (and the grant script rejects it); an account already a facilitator cannot
 a player. An account wanting both uses a second account.
 
 **No projection — every check reads the table directly.** There is no per-instance `User`
-object to materialise a role onto. Authority checks (`is_facilitator(account_id, slug)`)
-and player checks both query `instance_membership` straight from the request. This also
+object to materialise a role onto. On every request the run asks the lobby service for the
+account's role and membership in that run (`GET session?run=<slug>`, ADR-0009), which reads
+`instance_membership` directly. This also
 retires the persistent `User`/`Account` duplication tracked in
 [#905](https://github.com/felixvonsamson/Energetica/issues/905): the per-instance engine
 object (`Player`) now carries `username`/`account_id` directly and exists only for
