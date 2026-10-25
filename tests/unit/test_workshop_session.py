@@ -1920,7 +1920,7 @@ def _blacked_out_twice_in_winter(path: Path) -> WorkshopSession:
     return session
 
 
-def test_each_blackout_costs_every_player_thirty_percent_of_the_rounds_operating_profit_as_the_recap_opens(
+def test_each_blackout_costs_every_player_thirty_percent_of_the_rounds_remaining_operating_profit_as_the_recap_opens(
     path: Path,
 ) -> None:
     session = _blacked_out_twice_in_winter(path)
@@ -1932,7 +1932,7 @@ def test_each_blackout_costs_every_player_thirty_percent_of_the_rounds_operating
     assert session.advance() == Recap(round=1)
 
     assert [player.money for player in players] == pytest.approx(
-        [money - 0.6 * profit for money, profit in zip(before, profits, strict=True)]
+        [money - 0.51 * profit for money, profit in zip(before, profits, strict=True)]
     )
 
 

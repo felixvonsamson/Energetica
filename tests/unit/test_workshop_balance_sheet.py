@@ -241,9 +241,9 @@ def test_the_blackout_cost_is_a_share_of_the_operating_income_and_comes_off_the_
 
     operating = round_operating_profit([SPRING, SUMMER], 1)
     assert operating > 0
-    assert sheet.blackout_cost_share == pytest.approx(0.6)
-    assert sheet.blackout_cost == pytest.approx(0.6 * operating)
-    assert sheet.net_profit == pytest.approx(operating - 0.6 * operating)
+    assert sheet.blackout_cost_share == pytest.approx(0.51)
+    assert sheet.blackout_cost == pytest.approx(0.51 * operating)
+    assert sheet.net_profit == pytest.approx(operating - 0.51 * operating)
 
 
 def test_a_round_without_blackouts_has_no_blackout_cost() -> None:

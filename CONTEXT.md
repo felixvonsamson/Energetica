@@ -294,8 +294,8 @@ A blackout is a clearing that leaves must-serve demand unserved: the grid goes d
 end of the Trading period if that comes first. It then restarts with electricity rationed: demand is cut by
 10% for the rest of the Round, and by another 10% after each further blackout, which can happen in the same
 Trading period or a later one. The next Round starts with demand back at its full level. When the Recap
-opens, each blackout in the Round costs every player 30% of their operating profit for it, up to all of it;
-a player who made a loss pays nothing. The cost comes out of cash, and the balance sheet shows it below
+opens, each blackout in the Round costs every player 30% of the operating profit the blackouts before it left
+them, so `n` blackouts leave them 0.7^n of it; a player who made a loss pays nothing. The cost comes out of cash, and the balance sheet shows it below
 operating income, but it never changes a score.
 _Avoid_: blackout reset (removed in #1286).
 
@@ -323,8 +323,8 @@ leaves the prices as they were. One added before it starts prices for the new le
 Money a player borrows to invest more than their cash allows: 50M, once per session, taken in an open
 Investment phase in any Round but the last. It is added to their cash straight away, and they can cancel it
 until the phase closes, as long as their selection still fits without it. It is paid back in two payments of
-30M, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
-taken when the session ends. The final score counts the 10M it costs as an investment with no residual
+35M, taken as the next two Rounds start, before the floor top-up; a payment due after the last Round is
+taken when the session ends. The final score counts the 20M it costs as an investment with no residual
 value, whatever the floor top-up does to the payments.
 _Avoid_: credit, debt (a player's cash can go negative without a loan).
 

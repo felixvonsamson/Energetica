@@ -692,7 +692,7 @@ def test_a_player_takes_the_loan_and_cancels_it(session_path: Path, clock: _Cloc
     authenticate(client, alice)
     assert client.get(LOAN_URL).json() == {
         "amount": 50_000_000.0,
-        "payment": 30_000_000.0,
+        "payment": 35_000_000.0,
         "payment_count": 2,
         "available": True,
         "taken_round": None,
@@ -707,8 +707,8 @@ def test_a_player_takes_the_loan_and_cancels_it(session_path: Path, clock: _Cloc
     assert taken.json()["taken_round"] == 1
     assert taken.json()["cancellable"] is True
     assert taken.json()["payments"] == [
-        {"round": 2, "amount": 30_000_000.0, "paid": False},
-        {"round": 3, "amount": 30_000_000.0, "paid": False},
+        {"round": 2, "amount": 35_000_000.0, "paid": False},
+        {"round": 3, "amount": 35_000_000.0, "paid": False},
     ]
     assert client.get(SELECTION_URL).json()["money"] == 100_000_000.0
 

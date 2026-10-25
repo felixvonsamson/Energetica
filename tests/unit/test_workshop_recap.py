@@ -111,7 +111,7 @@ def test_the_year_in_review_lists_the_rounds_blackouts_with_what_they_cost() -> 
     told = _recap(2, blackouts=blackouts)
 
     assert told.blackouts == [first, second]
-    assert told.blackout_cost_share == pytest.approx(0.6)
+    assert told.blackout_cost_share == pytest.approx(0.51)
     assert told.rationing == pytest.approx(0.81)
 
 
