@@ -234,13 +234,22 @@ log_success "$LOBBY_SERVICE_STATE (0700 $LOBBY_SERVICE_USER, holds lobby.db and 
 # A run still on code from before #1283 cannot work once they move. deploy-instance.sh refuses to
 # deploy that code's successor until instance.env names the lobby service's socket, so a running
 # instance whose instance.env lacks it is certainly on old code: refuse while there is one.
+#
+# Each file moves on its own, so a re-run after a move that stopped halfway carries on with what is
+# left. A file present in both places is a conflict only a person can settle.
+LEGACY_MOVES=(
+    "accounts.db:lobby.db" "accounts.db-wal:lobby.db-wal" "accounts.db-shm:lobby.db-shm"
+    "accounts.db.pre-migration:lobby.db.pre-migration" "secret_key.txt:secret_key.txt"
+)
 if [ -e "$LEGACY_STATE/accounts.db" ] || [ -e "$LEGACY_STATE/secret_key.txt" ]; then
     log_step "Moving accounts.db and the signing secret from $LEGACY_STATE to $LOBBY_SERVICE_STATE..."
-    if [ -e "$LOBBY_SERVICE_STATE/lobby.db" ] || [ -e "$LOBBY_SERVICE_STATE/secret_key.txt" ]; then
-        log_error "Both $LEGACY_STATE and $LOBBY_SERVICE_STATE hold a database or a secret. Decide which"
-        log_error "  to keep, remove the other, and re-run."
-        exit 1
-    fi
+    for move in "${LEGACY_MOVES[@]}"; do
+        if [ -e "$LEGACY_STATE/${move%%:*}" ] && [ -e "$LOBBY_SERVICE_STATE/${move##*:}" ]; then
+            log_error "Both $LEGACY_STATE/${move%%:*} and $LOBBY_SERVICE_STATE/${move##*:} exist. Decide which"
+            log_error "  to keep, remove the other, and re-run."
+            exit 1
+        fi
+    done
     for env_file in /etc/energetica/*/instance.env; do
         [ -f "$env_file" ] || continue
         slug="$(basename "$(dirname "$env_file")")"
@@ -250,18 +259,22 @@ if [ -e "$LEGACY_STATE/accounts.db" ] || [ -e "$LEGACY_STATE/secret_key.txt" ]; 
             exit 1
         fi
     done
-    systemctl stop energetica-lobby-service.socket energetica-lobby-service.service
-    for suffix in "" -wal -shm .pre-migration; do
-        if [ -e "$LEGACY_STATE/accounts.db$suffix" ]; then
-            mv "$LEGACY_STATE/accounts.db$suffix" "$LOBBY_SERVICE_STATE/lobby.db$suffix"
+    # A box whose units predate the lobby service has nothing to stop.
+    if systemctl cat energetica-lobby-service.socket &>/dev/null; then
+        systemctl stop energetica-lobby-service.socket energetica-lobby-service.service
+    fi
+    for move in "${LEGACY_MOVES[@]}"; do
+        if [ -e "$LEGACY_STATE/${move%%:*}" ]; then
+            mv "$LEGACY_STATE/${move%%:*}" "$LOBBY_SERVICE_STATE/${move##*:}"
         fi
     done
-    if [ -e "$LEGACY_STATE/secret_key.txt" ]; then
-        mv "$LEGACY_STATE/secret_key.txt" "$LOBBY_SERVICE_STATE/secret_key.txt"
-    fi
     chown -R "$LOBBY_SERVICE_USER:$LOBBY_SERVICE_USER" "$LOBBY_SERVICE_STATE"
     find "$LOBBY_SERVICE_STATE" -type f -exec chmod 0600 {} +
-    rmdir "$LEGACY_STATE" 2>/dev/null || log_error "$LEGACY_STATE is not empty after the move; check what else is in it"
+    if rmdir "$LEGACY_STATE" 2>/dev/null; then
+        log_success "Removed the empty $LEGACY_STATE"
+    else
+        log_step "$LEGACY_STATE still holds other files; left it in place. Check what they are."
+    fi
     log_success "Moved them to $LOBBY_SERVICE_STATE (lobby.db, secret_key.txt; 0600 $LOBBY_SERVICE_USER)"
 fi
 

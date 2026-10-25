@@ -15,7 +15,9 @@
 # read its code, which the deploy user owns with group energetica.
 #
 # The Environment= lines are the contract with src/lobby_service/config.py and
-# src/lobby_service/session.py.
+# src/lobby_service/session.py. Both secret paths name the same private file. The second is the
+# fallback the code creates a secret at when the first is missing; its default is instance/ under
+# WorkingDirectory, which the energetica user can write to, so it must not be used here.
 
 [Unit]
 Description=Energetica lobby service (accounts, sessions, memberships)
@@ -31,6 +33,7 @@ WorkingDirectory=/var/www/energetica-lobby
 
 Environment=ENERGETICA_LOBBY_DB_PATH=/var/lib/energetica-lobby-service/lobby.db
 Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica-lobby-service/secret_key.txt
+Environment=ENERGETICA_INSTANCE_SECRET_PATH=/var/lib/energetica-lobby-service/secret_key.txt
 
 # systemd passes the listening socket as file descriptor 3.
 ExecStart=/var/www/energetica-lobby/.venv/bin/python main_lobby_service.py --fd 3

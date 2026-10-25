@@ -314,8 +314,8 @@ and that was then never redeployed.
 online backup, which is safe while the service is running. On the VPS, as root:
 
 ```bash
-sudo python3 -c 'import sqlite3; sqlite3.connect("file:/var/lib/energetica/accounts.db?mode=ro", uri=True).backup(sqlite3.connect("/tmp/accounts-copy.db"))'
-sudo chown deploy /tmp/accounts-copy.db && sudo chmod 0600 /tmp/accounts-copy.db
+sudo sh -c 'umask 077 && python3 -c "import sqlite3; sqlite3.connect(\"file:/var/lib/energetica/accounts.db?mode=ro\", uri=True).backup(sqlite3.connect(\"/tmp/accounts-copy.db\"))"'
+sudo chown deploy /tmp/accounts-copy.db
 ```
 
 Then on your machine, from the checkout, with the copy in a new, empty directory:
@@ -361,7 +361,20 @@ sudo bash /tmp/update-instance-unit.sh autumn-2025
 
 **Rolling back** past step 3 means restoring `lobby.db.pre-migration`: code from before #1284
 refuses to start on a database at version 2. Anything written since step 3 (new accounts,
-password changes, joins) is lost.
+password changes, joins) is lost. Stop the service and its socket first, so nothing writes while
+the file is replaced, and keep the file owned by the service's user. On the VPS, as root:
+
+```bash
+cd /var/lib/energetica-lobby-service
+systemctl stop energetica-lobby-service.socket energetica-lobby-service.service
+rm -f lobby.db-wal lobby.db-shm
+cp -p lobby.db.pre-migration lobby.db
+```
+
+Leave the socket stopped: a request would start the service on the new code, which would migrate
+the restored file again. Then deploy the older lobby with `deploy-lobby.sh`. Its restart of the
+service starts the socket too. The older code reads both paths from the unit, so it runs from the
+new location as it is.
 
 ## Changing an instance's Apache vhost
 

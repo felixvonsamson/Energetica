@@ -1,6 +1,6 @@
 # scripts/lib/dev-env.sh — shared local-dev environment (sourced, never executed directly).
 #
-# Points every local lobby service (dev-app.sh and dev-lobby.sh each start one) at ONE signing
+# Points every local lobby service (dev.sh, dev-app.sh and dev-lobby.sh each start one) at ONE signing
 # secret + lobby.db, so an SSO cookie the lobby mints validates against the instance's entry gate
 # (docs/architecture/lobby.md, docs/getting-started/local-development.md). Without this the two
 # services sign with different secrets and every authed request 401s.

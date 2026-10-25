@@ -35,9 +35,9 @@ def get_or_create_secret_key() -> str:
     signing cookies with a zero-entropy key (which ``URLSafeTimedSerializer`` would accept) — a
     truncated write or a cleared file must not silently make every session cookie forgeable.
     """
-    shared_path = os.environ.get("ENERGETICA_SHARED_SECRET_PATH", "/var/lib/energetica-lobby-service/secret_key.txt")
-    if os.path.exists(shared_path):
-        return _read_nonempty_secret(shared_path)
+    server_path = os.environ.get("ENERGETICA_SHARED_SECRET_PATH", "/var/lib/energetica-lobby-service/secret_key.txt")
+    if os.path.exists(server_path):
+        return _read_nonempty_secret(server_path)
 
     instance_path = os.environ.get("ENERGETICA_INSTANCE_SECRET_PATH", "instance/secret_key.txt")
     if os.path.exists(instance_path):
