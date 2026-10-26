@@ -16,12 +16,15 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import secrets
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, FastAPI, Header, HTTPException, Request, Response, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from energetica.identity.instance_config import derive_phase
@@ -243,6 +246,10 @@ def grant_facilitator(account_id: int, grant: FacilitatorGrantRequest) -> Respon
 # --- runs -------------------------------------------------------------------------------------
 
 
+# The run endpoints whose bad bodies or parameters are answered as INVALID_RUN.
+_RUN_WRITE_PATH = re.compile(rf"{re.escape(API_PREFIX)}/runs/[^/]+(/join-token)?")
+
+
 def _run_out(run: store.Run) -> RunOut:
     return RunOut(
         slug=run.slug,
@@ -409,6 +416,22 @@ def create_service_app() -> FastAPI:
     @app.exception_handler(Refusal)
     def refuse(request: Request, exc: Refusal) -> JSONResponse:
         return JSONResponse({"detail": exc.code, "message": exc.message}, status_code=exc.status_code)
+
+    @app.exception_handler(RequestValidationError)
+    async def refuse_invalid_run(request: Request, exc: RequestValidationError) -> Response:
+        """
+        Answer a run write whose body does not parse, such as a time with no time zone or a
+        ``PATCH`` naming ``mode``, as ``INVALID_RUN`` with a message, like any other invalid run.
+        Other endpoints keep FastAPI's own answer.
+        """
+        if _RUN_WRITE_PATH.fullmatch(request.url.path) is None:
+            return await request_validation_exception_handler(request, exc)
+        problems = "; ".join(
+            f"{'.'.join(str(part) for part in error['loc'][1:]) or 'body'}: {error['msg']}" for error in exc.errors()
+        )
+        return refuse(
+            request, Refusal(status.HTTP_422_UNPROCESSABLE_ENTITY, LobbyServiceErrorCode.INVALID_RUN, problems)
+        )
 
     app.include_router(router)
     return app

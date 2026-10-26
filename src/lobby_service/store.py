@@ -302,6 +302,9 @@ EDITABLE_RUN_FIELDS = frozenset(
 )
 """The fields a run write may change. ``slug`` and ``mode`` are fixed when the run is created."""
 
+_CLEARABLE_RUN_FIELDS = frozenset({"join_token", "freeze_at", "ended_at"})
+"""The editable fields a write may set to ``None``. Every other one always has a value."""
+
 # The rule ``setup-instance.sh`` applies. "landing" and "lobby" name the apex site and the lobby,
 # which share the namespace of run subdomains and directories.
 _SLUG_PATTERN = re.compile(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?")
@@ -511,6 +514,9 @@ def update_run(slug: str, changes: Mapping[str, Any]) -> tuple[Run, Run]:
     unknown = set(changes) - EDITABLE_RUN_FIELDS
     if unknown:
         raise InvalidRunError(f"cannot change {', '.join(sorted(unknown))}")
+    cleared = sorted(field for field, value in changes.items() if value is None and field not in _CLEARABLE_RUN_FIELDS)
+    if cleared:
+        raise InvalidRunError(f"cannot clear {', '.join(cleared)}")
     with _connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
         try:

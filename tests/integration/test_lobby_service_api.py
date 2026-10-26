@@ -337,8 +337,28 @@ def test_an_invalid_run_is_refused_with_a_message(
     assert service.get("/runs").json() == []
 
 
-def test_a_naive_timestamp_is_refused(service: TestClient) -> None:
-    assert service.put("/runs/spring", json=_run_body(starts_at="2026-03-01T12:00:00")).status_code == 422
+def test_a_naive_timestamp_is_refused_with_a_message(service: TestClient) -> None:
+    resp = service.put("/runs/spring", json=_run_body(starts_at="2026-03-01T12:00:00"))
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert "starts_at" in resp.json()["message"]
+
+
+def test_other_endpoints_keep_the_default_validation_error(service: TestClient) -> None:
+    resp = service.post("/accounts", json={"username": "alice"})
+
+    assert resp.status_code == 422
+    assert isinstance(resp.json()["detail"], list)
+
+
+@pytest.mark.parametrize("field", ["name", "advertised", "access_policy", "join_open", "starts_at"])
+def test_a_field_that_always_has_a_value_cannot_be_cleared(service: TestClient, field: str) -> None:
+    _create_run(service)
+
+    resp = service.patch("/runs/spring", json={field: None})
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert field in resp.json()["message"]
 
 
 def test_patch_changes_only_the_fields_it_names(service: TestClient) -> None:
@@ -373,7 +393,10 @@ def test_patch_checks_the_run_as_a_whole(service: TestClient) -> None:
 def test_slug_and_mode_cannot_change(service: TestClient, field: dict) -> None:
     _create_run(service)
 
-    assert service.patch("/runs/spring", json=field).status_code == 422
+    resp = service.patch("/runs/spring", json=field)
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert next(iter(field)) in resp.json()["message"]
     assert service.get("/runs/spring").json()["mode"] == "freeplay"
 
 

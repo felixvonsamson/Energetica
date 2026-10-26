@@ -105,10 +105,8 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = _parser()
     args = parser.parse_args()
-    if args.target == "list":
-        if args.action is not None:
-            parser.error("'list' takes no action")
-    elif args.action is None:
+    # `list` alone lists the runs. Followed by an action, it is a slug like any other.
+    if args.action is None and args.target != "list":
         parser.error("name an action: show, create, set or delete")
 
     service = LobbyServiceClient.connect("run-py", socket_path=args.socket)
@@ -123,7 +121,7 @@ def main() -> int:
 
 
 def _run(service: LobbyServiceClient, args: argparse.Namespace) -> int:
-    if args.target == "list":
+    if args.action is None:
         runs = service.list_runs()
         if not runs:
             print("No runs.")
