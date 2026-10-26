@@ -143,8 +143,7 @@ From your local machine:
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
   its own hostname at runtime), rsyncs `main_lobby.py`, `main_lobby_service.py`, the wheel and
-  `dist-lobby/` to
-  `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
+  `dist-lobby/` to `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
   restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
   migrations on `lobby.db` before serving, and checks its `healthz` over the socket.
   Last, it restarts the lobby backend (`energetica-lobby`) and health-checks the vhost.

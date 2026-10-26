@@ -84,7 +84,7 @@ fi
 # denies the old path. Refuse to deploy until it has been re-rendered. This runs before anything
 # is synced, so a refusal leaves the server exactly as it was.
 #
-# Since #1363 deploys ship no src/ at all, and the sync deletes the copy earlier deploys left. So
+# Since #1363, deploys ship no src/ at all, and the sync deletes the copy earlier deploys left. So
 # this guards only an instance that still carries that copy, and it can go once every instance
 # has been deployed since.
 VHOST_FILE="/etc/apache2/sites-available/energetica-$INSTANCE.conf"
@@ -225,8 +225,8 @@ log_success "App bundle synced"
 install_backend_wheel "$SSH" "$REMOTE_PATH"
 
 # --- 5b. Stamp the deployed backend version -------------------------------------
-# The server has no .git (the deploy ships no source tree), so the commit is captured here on the deploy machine
-# and written to the instance root as DEPLOYED_VERSION.json, read by
+# The server has no .git (the deploy ships no source tree), so the commit is captured here on the
+# deploy machine and written to the instance root as DEPLOYED_VERSION.json, read by
 # src/energetica/kernel/version.py. Written before the restart because the backend also reads it,
 # once per process on first use, to name itself in the X-Energetica-Caller header it sends the
 # lobby service. If the stamp were written after the restart, a run would name the previous

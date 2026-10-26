@@ -133,8 +133,8 @@ log_success "$APP_DIR/.venv ($DEPLOY_USER:energetica, read-only to the group)"
 # WorkingDirectory. The code dir is deploy-owned (2750), so the service user could not create it
 # and the unit crash-looped. Since #1055 the lobby does not build the engine. The only remaining
 # writer is the local secret-key fallback in lobby_service.session, which does not run
-# while the signing secret from setup-base.sh exists. deploy-lobby.sh excludes instance/ from its
-# rsync, so the directory survives deploys.
+# while the signing secret from setup-base.sh exists. deploy-lobby.sh protects instance/ from its
+# rsync's --delete, so the directory survives deploys.
 install -d -o energetica -g energetica -m 0750 "$APP_DIR/instance"
 log_success "$APP_DIR/instance (writable by the service user)"
 

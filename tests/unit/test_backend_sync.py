@@ -1,4 +1,5 @@
-"""Tests for `scripts/lib/backend-sync.sh`, which ships the backend to an instance or the lobby.
+"""
+Tests for `scripts/lib/backend-sync.sh`, which ships the backend to an instance or the lobby.
 
 Both deploy scripts used to rsync the whole working tree minus an exclude list, so anything else
 in the deployer's checkout reached the server, untracked files included (#1363). The helper now
@@ -49,6 +50,7 @@ def repo(tmp_path: Path) -> Path:
     for relative in [
         "main.py",
         "main_lobby.py",
+        "main_lobby_service.py",
         f"dist/{_WHEEL}",
         "dist/energetica-0.9-py3-none-any.whl",
         "src/energetica/__init__.py",
@@ -86,7 +88,7 @@ def _files(root: Path) -> set[str]:
 
 @pytest.mark.parametrize(
     ("bundle_dir", "entry_points"),
-    [("dist-app", ["main.py"]), ("dist-lobby", ["main_lobby.py"])],
+    [("dist-app", ["main.py"]), ("dist-lobby", ["main_lobby.py", "main_lobby_service.py"])],
 )
 def test_ships_only_the_entry_points_and_the_wheel(
     repo: Path, tmp_path: Path, bundle_dir: str, entry_points: list[str]
@@ -115,8 +117,9 @@ def test_deletes_stray_files_and_keeps_what_the_server_owns(repo: Path, tmp_path
 
 
 def test_shipped_files_stay_readable_by_the_group_under_a_restrictive_umask(repo: Path, tmp_path: Path) -> None:
-    """The service user reaches the code through the `energetica` group only, so a deployer whose
-    umask is 077 must not ship files that group cannot read. The target root itself keeps the mode
+    """
+    The service user reaches the code through the `energetica` group only, so a deployer whose
+    umask is 077 must not ship files that group cannot read. The target root itself gets the mode
     a default checkout gave it before, so Apache can still reach the bundle beneath it.
     """
     (repo / "main.py").chmod(0o600)
@@ -127,15 +130,16 @@ def test_shipped_files_stay_readable_by_the_group_under_a_restrictive_umask(repo
     result = _sync(repo, target, "dist-app", "main.py", umask="077")
 
     assert result.returncode == 0, result.stderr
-    for path in [target, target / "main.py", target / "dist", target / "dist" / _WHEEL]:
-        assert path.stat().st_mode & 0o040, f"{path} is not group-readable"
-    assert (target.stat().st_mode & 0o777) == 0o755
+    expected = {".": 0o755, "dist": 0o755, "main.py": 0o644, f"dist/{_WHEEL}": 0o644}
+    assert {relative: (target / relative).stat().st_mode & 0o777 for relative in expected} == expected
 
 
 def test_refuses_to_sync_before_the_wheel_is_built(repo: Path, tmp_path: Path) -> None:
     target = tmp_path / "server"
     _touch(target, "src/energetica/x.py")
+
     result = _sync(repo, target, "dist-app", "main.py", wheel="")
 
-    assert result.returncode != 0
+    assert result.returncode == 1
+    assert "before build_backend_wheel" in result.stderr
     assert _files(target) == {"src/energetica/x.py"}

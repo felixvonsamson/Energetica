@@ -13,8 +13,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
 #        [--yes] [--skip-build]
 #
-# Builds the lobby bundle and the backend wheel locally, rsyncs the two entry
-# points, the wheel and dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
+# Builds the lobby bundle and the backend wheel locally, rsyncs the two entry points, the wheel
+# and dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
 # restarts both lobby processes, and health-checks them. The install is not optional:
 # the backend lives under src/ and is imported as an installed package, so a deploy that
 # skips it leaves the services unable to start.
@@ -163,8 +163,8 @@ log_success "Lobby bundle synced"
 install_backend_wheel "$SSH" "$REMOTE_PATH" --as-deploy-user
 
 # --- 6b. Stamp the deployed backend version ----------------------------------------
-# The server has no .git (the deploy ships no source tree), so the commit is captured here on the deploy machine
-# and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
+# The server has no .git (the deploy ships no source tree), so the commit is captured here on the
+# deploy machine and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
 # processes run from this checkout and report this stamp. Written before the restarts because the
 # lobby backend also reads it, once per process on first use, to name itself in the
 # X-Energetica-Caller header it sends the lobby service. If the stamp were written after the
