@@ -5,14 +5,16 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
 # shellcheck source=lib/backend-wheel.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
+# shellcheck source=lib/backend-sync.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 
 # Energetica — deploy the lobby service (backend + SPA bundle, rsync only, no git).
 #
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
 #        [--yes] [--skip-build]
 #
-# Builds the lobby bundle and the backend wheel locally, rsyncs the Python backend +
-# dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
+# Builds the lobby bundle and the backend wheel locally, rsyncs the two entry
+# points, the wheel and dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
 # restarts both lobby processes, and health-checks them. The install is not optional:
 # the backend lives under src/ and is imported as an installed package, so a deploy that
 # skips it leaves the services unable to start.
@@ -132,31 +134,10 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 4. rsync backend code ----------------------------------------------------------
-# Ship the Python backend (src/energetica/ + src/lobby/ + main_lobby.py) and dist/, which
-# holds the wheel built above and installed in step 6. Same exclusions as deploy-instance.sh,
-# except that the bundle protected from --delete here is dist-lobby/ rather than dist-app/
-# (both are synced separately with --delete below, in their respective scripts).
-#
-# scripts/ is excluded here and synced separately (step 4b): only scripts/lobby/ belongs
-# in the lobby dir (export_instance_to_csv.py is instance-only; scripts/dev/, scripts/lib/,
-# scripts/infra/, scripts/*.ts never need to touch the server at all).
-log_step "Syncing backend code..."
-rsync -az --delete \
-    --exclude='.git' \
-    --exclude='.venv' \
-    --exclude='instance/' \
-    --exclude='checkpoints/' \
-    --exclude='frontend' \
-    --exclude='node_modules' \
-    --exclude='__pycache__' \
-    --exclude='*.pyc' \
-    --exclude='*.egg-info' \
-    --exclude='build/' \
-    --exclude='dist-lobby/' \
-    --exclude='DEPLOYED_VERSION.json' \
-    --exclude='scripts' \
-    ./ "$SSH:$REMOTE_PATH/" >/dev/null
-log_success "Backend synced"
+# Ships the two entry points the lobby units run, main_lobby.py and main_lobby_service.py, and the
+# wheel built above, which step 6 installs. Nothing else: see scripts/lib/backend-sync.sh for the
+# allowlist and for what --delete leaves alone.
+sync_backend "$SSH:$REMOTE_PATH" dist-lobby main_lobby.py main_lobby_service.py
 
 # --- 4b. rsync lobby-scoped scripts (flattened: scripts/lobby/* → scripts/*) --------------
 log_step "Syncing lobby scripts..."
@@ -182,7 +163,7 @@ log_success "Lobby bundle synced"
 install_backend_wheel "$SSH" "$REMOTE_PATH" --as-deploy-user
 
 # --- 6b. Stamp the deployed backend version ----------------------------------------
-# The server has no .git (rsync excludes it), so the commit is captured here on the deploy machine
+# The server has no .git (the deploy ships no source tree), so the commit is captured here on the deploy machine
 # and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
 # processes run from this checkout and report this stamp. Written before the restarts because the
 # lobby backend also reads it, once per process on first use, to name itself in the

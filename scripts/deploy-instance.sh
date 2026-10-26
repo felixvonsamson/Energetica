@@ -5,13 +5,15 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
 # shellcheck source=lib/backend-wheel.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
+# shellcheck source=lib/backend-sync.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 
 # Energetica — deploy a single instance (Option A: no git on the server, rsync only).
 #
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
 #        [--yes] [--skip-build]
 #
-# Builds the app bundle and the backend wheel locally, rsyncs the Python backend + bundle to
+# Builds the app bundle and the backend wheel locally, rsyncs main.py, the wheel and the bundle to
 # the instance dir, installs the project into the server-side venv, and restarts the service.
 # The install is not optional: the backend lives under src/ and is imported as an installed
 # package, so a deploy that skips it leaves the service unable to start. On restart the
@@ -81,6 +83,10 @@ fi
 # is root's work, see update-instance-vhost.sh), so a vhost rendered from an older template still
 # denies the old path. Refuse to deploy until it has been re-rendered. This runs before anything
 # is synced, so a refusal leaves the server exactly as it was.
+#
+# Since #1363 deploys ship no src/ at all, and the sync deletes the copy earlier deploys left. So
+# this guards only an instance that still carries that copy, and it can go once every instance
+# has been deployed since.
 VHOST_FILE="/etc/apache2/sites-available/energetica-$INSTANCE.conf"
 DATA_DENY="<Directory \"$REMOTE_PATH/src/energetica/freeplay/data\">"
 if ! ssh "$SSH" "grep -qF '$DATA_DENY' '$VHOST_FILE'"; then
@@ -196,37 +202,9 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 3. rsync backend code ------------------------------------------------------
-# Ship the Python backend, including dist/ — the wheel built above rides along with the rest of
-# the tree and is installed in step 5. Exclude local build artifacts, the local venv, the
-# frontend source, and — critically — instance/ and checkpoints/ (server-side game state) and
-# dist-app/ (the app bundle, synced separately with --delete below; it has no counterpart in
-# the local tree root, so without the exclude --delete would prune it every deploy). --delete
-# prunes removed backend files, including any stale wheel in dist/, but never touches the
-# excluded paths. checkpoints/ MUST be excluded: the service (user
-# `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
-# as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
-# overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
-#
-# scripts/ is excluded here and synced separately (step 3b): only scripts/instance/ belongs
-# in an instance dir (grant-facilitator.py/whitelist-run.py are lobby-only; scripts/dev/,
-# scripts/lib/, scripts/infra/, scripts/*.ts never need to touch the server at all).
-log_step "Syncing backend code..."
-rsync -az --delete \
-    --exclude='.git' \
-    --exclude='.venv' \
-    --exclude='instance/' \
-    --exclude='checkpoints/' \
-    --exclude='frontend' \
-    --exclude='node_modules' \
-    --exclude='__pycache__' \
-    --exclude='*.pyc' \
-    --exclude='dist-app/' \
-    --exclude='*.egg-info' \
-    --exclude='build/' \
-    --exclude='DEPLOYED_VERSION.json' \
-    --exclude='scripts' \
-    ./ "$SSH:$REMOTE_PATH/" >/dev/null
-log_success "Backend synced"
+# Ships main.py, which the unit runs, and the wheel built above, which step 5 installs. Nothing
+# else: see scripts/lib/backend-sync.sh for the allowlist and for what --delete leaves alone.
+sync_backend "$SSH:$REMOTE_PATH" dist-app main.py
 
 # --- 3b. rsync instance-scoped scripts (flattened: scripts/instance/* → scripts/*) --------
 log_step "Syncing instance scripts..."
@@ -247,7 +225,7 @@ log_success "App bundle synced"
 install_backend_wheel "$SSH" "$REMOTE_PATH"
 
 # --- 5b. Stamp the deployed backend version -------------------------------------
-# The server has no .git (rsync excludes it), so the commit is captured here on the deploy machine
+# The server has no .git (the deploy ships no source tree), so the commit is captured here on the deploy machine
 # and written to the instance root as DEPLOYED_VERSION.json, read by
 # src/energetica/kernel/version.py. Written before the restart because the backend also reads it,
 # once per process on first use, to name itself in the X-Energetica-Caller header it sends the
