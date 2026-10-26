@@ -1,11 +1,11 @@
 #!/bin/bash
 # Shared by deploy-instance.sh and deploy-lobby.sh: stamp the deployed backend version.
 #
-# The server carries no git checkout (deploys rsync with --exclude='.git'), so the running
-# backend cannot report its own commit. The deploy machine does have git, so we capture the
-# state here and write it to the deploy root as DEPLOYED_VERSION.json, which
-# src/energetica/kernel/version.py reads for /healthz. Both callers exclude this file from their
-# rsync --delete so it survives between deploys and is simply overwritten each time.
+# The server carries no git checkout (the backend sync ships only the entry points and the
+# wheel), so the running backend cannot report its own commit. The deploy machine does have git,
+# so we capture the state here and write it to the deploy root as DEPLOYED_VERSION.json, which
+# src/energetica/kernel/version.py reads for /healthz. sync_backend (backend-sync.sh) protects this
+# file from its rsync --delete, so it survives between deploys and is simply overwritten each time.
 #
 #   stamp_deployed_version <ssh-target> <remote-path>
 

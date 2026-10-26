@@ -128,22 +128,22 @@ From your local machine:
 ```
 
 - `deploy-instance.sh` builds the app bundle locally (baking `VITE_APEX_DOMAIN` so
-  cross-origin links resolve) and the backend wheel, rsyncs the Python backend + bundle,
+  cross-origin links resolve) and the backend wheel, rsyncs `main.py`, the wheel and the bundle,
   installs the wheel into the server venv, restarts the service, and polls `/healthz`. On
   restart the instance re-reads `instance.json` and re-publishes its landing fragment, so
   admin policy edits take effect. Before any of that, it checks the instance's `instance.json`
   against the backend it is about to ship, and refuses to deploy if the new code would reject it.
   Downtime is ~10-30 seconds while the restart happens — Apache and every other instance keep
   serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
-  directory, which the rsync step excludes.
+  directory, which the rsync step leaves alone.
 - `deploy-landing.sh` builds the landing bundle (also baking `VITE_APEX_DOMAIN` so the
   "Play now" / "Log In" CTAs target `lobby.{apex}`) and rsyncs `frontend/apps/landing/dist/`. It preserves
   the instance-owned `instances.json` and `instances/` dir. No service restart — the landing
   is pure static.
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
-  its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
-  `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
+  its own hostname at runtime), rsyncs `main_lobby.py`, `main_lobby_service.py`, the wheel and
+  `dist-lobby/` to `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
   restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
   migrations on `lobby.db` before serving, and checks its `healthz` over the socket.
   Last, it restarts the lobby backend (`energetica-lobby`) and health-checks the vhost.
@@ -161,6 +161,22 @@ subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (current
 `grant-facilitator.py`, `whitelist-run.py` — both are clients of the lobby service, so they
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
+
+### What a deploy ships
+
+`deploy-instance.sh` and `deploy-lobby.sh` ship an allowlist, not the working tree. The backend
+sync (`scripts/lib/backend-sync.sh`) copies two things into a temporary staging directory: the
+entry points the systemd units run, and the wheel just built in `dist/`. It then rsyncs that
+directory to the server with `--delete`. Everything else the services run comes from the
+installed wheel, so the server carries no `src/`, `docs/` or `tests/`, and nothing from the
+deployer's checkout that git does not track.
+
+`--delete` removes any file on the server that the payload does not contain, except for paths
+protected with rsync `P` filter rules. These are the paths the server owns or another step of
+the same deploy syncs: `instance/`, `checkpoints/`, `.venv/`, `scripts/`, the app bundle
+(`dist-app/` or `dist-lobby/`), `DEPLOYED_VERSION.json` and certbot's `.well-known/`. The deploy
+scripts used to sync the repo root minus an exclude list instead, which shipped every stray
+local file (#1363). The first deploy after that change removes what earlier deploys left behind.
 
 `instance.json` and `instance.env` live outside the deploy dir (`/etc/energetica/{instance}/`)
 and are admin-owned, so deploys never touch them. The server-wide `/etc/energetica/server.json`
@@ -486,7 +502,7 @@ ssh energetica-game 'curl -s --unix-socket /run/energetica/lobby-service.sock ht
 
 ## Checking what is deployed
 
-The server has no git checkout (deploys rsync with `--exclude='.git'`), so a component cannot
+The server has no git checkout (see [What a deploy ships](#what-a-deploy-ships)), so a component cannot
 read its own commit from git. Instead each half is stamped, and both are reported by `/healthz`:
 
 - **Backend** — `deploy-instance.sh` / `deploy-lobby.sh` write `DEPLOYED_VERSION.json` to the

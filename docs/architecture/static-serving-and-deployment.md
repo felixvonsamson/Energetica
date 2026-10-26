@@ -204,7 +204,9 @@ Apache served that directory until the disclosure fix #1070, which closed a path
 anyone who guessed it read the quiz answers. No URL maps into the Python package any more, but
 the vhost still denies the data directory outright, because Ubuntu's stock `apache2.conf`
 grants all of `/var/www/`, and the absence of an `Alias` is too weak a guarantee to rest a
-disclosure fix on. The deny moved to the new path along with the tables.
+disclosure fix on. The deny moved to the new path along with the tables. Since #1363, deploys no
+longer ship `src/` at all: the tables reach the server only inside the wheel, under `.venv/`. So
+the directory the deny names no longer exists, and the deny is a second line of defence.
 
 Images are not in that list either, and for a different reason: since #1078 there is no
 served image tree. Every image is imported from `frontend/src/assets/`, so Vite resolves it
@@ -551,7 +553,7 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 
 1. Build app bundle (`bun run build:app`)
 2. Confirm deployment summary (skipped with `--yes`)
-3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts). `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
+3. `rsync` the backend to the server. This ships an allowlist, not the working tree: `main.py`, which the systemd unit runs, and the backend wheel in `dist/`, which step 5 installs. The sync runs with `--delete`, so anything else in the instance dir is removed, except the paths the server owns or other steps sync. See `docs/backend/deployment.md` § What a deploy ships. `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
 4. `rsync` app bundle to server (`frontend/dist-app/` → `{instance dir}/dist-app/`). The service worker is inside it: since #1064 `build:sw` writes `dist-app/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — `build:app` chains them in that order.
 5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start

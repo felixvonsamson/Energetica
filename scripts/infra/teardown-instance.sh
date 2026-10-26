@@ -104,8 +104,9 @@ RECAP="$LANDING_DIR/recaps/$INSTANCE.json"
 # flat-layout branch once every deployed copy is past #1053.
 #
 # The layout is read from the package installed in the venv, because that is what the snippet
-# imports. The source tree is not a reliable guide: a deploy syncs the source before it installs
-# the wheel, so one that failed in between leaves the two disagreeing. The check looks at files
+# imports. The source tree is not a reliable guide: deploys before #1363 synced it before
+# installing the wheel, so one that failed in between left the two disagreeing, and later deploys
+# ship no source tree at all. The check looks at files
 # rather than asking the venv's interpreter, because it runs as root and the venv is writable by
 # the service user.
 venv_has() {
