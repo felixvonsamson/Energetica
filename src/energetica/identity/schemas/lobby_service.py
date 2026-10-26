@@ -8,10 +8,13 @@ by additions: a field can be added here, but renaming or removing one needs a ne
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
+
+from energetica.identity.instance_config import Phase, RunModeTag
 
 API_PREFIX = "/internal/v1"
 """The path every endpoint of the current API version is under."""
@@ -21,6 +24,12 @@ API_VERSIONS = ["v1"]
 
 CALLER_HEADER = "X-Energetica-Caller"
 """The request header a client names itself in, for the service's logs. Never used for trust."""
+
+ACTING_ACCOUNT_HEADER = "X-Energetica-Acting-Account"
+"""
+The request header naming the account a write is made for, such as the facilitator whose change a
+run relays. Only logged, with the run write it accompanies. Never used for trust.
+"""
 
 MIN_PASSWORD_LENGTH = 7
 
@@ -39,6 +48,10 @@ class LobbyServiceErrorCode(StrEnum):
     OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     ACCOUNT_NOT_FOUND = "ACCOUNT_NOT_FOUND"
     ROLE_CONFLICT = "ROLE_CONFLICT"
+    RUN_NOT_FOUND = "RUN_NOT_FOUND"
+    RUN_EXISTS = "RUN_EXISTS"
+    INVALID_RUN = "INVALID_RUN"
+    RUN_HAS_MEMBERS = "RUN_HAS_MEMBERS"
 
 
 class Credentials(BaseModel):
@@ -112,6 +125,70 @@ class FacilitatorGrantRequest(BaseModel):
     """The body of ``PUT facilitator-grants/{account_id}``. No slug means a server-wide grant."""
 
     slug: str | None = None
+
+
+AccessPolicyTag = Literal["public", "private"]
+
+
+class RunOut(BaseModel):
+    """
+    A run's config, and its ``phase`` at the time of the answer, derived from the three
+    timestamps with :func:`energetica.identity.instance_config.derive_phase`.
+    """
+
+    slug: str
+    name: str
+    mode: RunModeTag
+    advertised: bool
+    access_policy: AccessPolicyTag
+    join_token: str | None
+    join_open: bool
+    starts_at: datetime
+    freeze_at: datetime | None
+    ended_at: datetime | None
+    created_at: str
+    phase: Phase
+
+
+class RunCreate(BaseModel):
+    """
+    The body of ``PUT runs/{slug}``, which creates a run. ``join_token`` and ``join_open`` are
+    here so that a run's config can be copied in from its ``instance.json``.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    name: str
+    mode: RunModeTag
+    advertised: bool
+    access_policy: AccessPolicyTag
+    join_token: str | None = None
+    join_open: bool = False
+    starts_at: AwareDatetime
+    freeze_at: AwareDatetime | None = None
+    ended_at: AwareDatetime | None = None
+
+
+class RunUpdate(BaseModel):
+    """
+    The body of ``PATCH runs/{slug}``: the fields to change, and only those. A field sent as
+    ``null`` is cleared. ``slug`` and ``mode`` cannot change, so a body naming either is refused.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    name: str | None = None
+    advertised: bool | None = None
+    access_policy: AccessPolicyTag | None = None
+    join_token: str | None = None
+    join_open: bool | None = None
+    starts_at: AwareDatetime | None = None
+    freeze_at: AwareDatetime | None = None
+    ended_at: AwareDatetime | None = None
+
+
+class JoinTokenOut(BaseModel):
+    join_token: str
 
 
 class HealthOut(BaseModel):

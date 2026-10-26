@@ -7,12 +7,17 @@ latest schema, the way the service is at start-up.
 
 from __future__ import annotations
 
+import json
+import logging
+import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica.identity.lobby_service_client import LobbyServiceClient
+from energetica.identity.lobby_service_client import LobbyServiceClient, LobbyServiceRefusal
+from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode, RunCreate, RunUpdate
 from lobby_service.app import create_service_app
 from lobby_service.schema import SCHEMA_VERSION, upgrade_database
 from lobby_service.session import decode_session_token, mint_session_token
@@ -241,6 +246,244 @@ def test_player_and_facilitator_roles_conflict(service: TestClient) -> None:
 
 def test_granting_an_unknown_account_is_404(service: TestClient) -> None:
     assert service.put("/facilitator-grants/999", json={}).status_code == 404
+
+
+# --- runs ---------------------------------------------------------------------------------------
+
+
+def _run_body(**overrides: object) -> dict:
+    return {
+        "name": "Spring",
+        "mode": "freeplay",
+        "advertised": True,
+        "access_policy": "public",
+        "starts_at": "2026-03-01T12:00:00Z",
+        **overrides,
+    }
+
+
+def _create_run(service: TestClient, slug: str = "spring", **overrides: object) -> dict:
+    resp = service.put(f"/runs/{slug}", json=_run_body(**overrides))
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_a_created_run_reads_back_with_its_phase(service: TestClient) -> None:
+    created = _create_run(service, freeze_at="2026-06-01T14:00:00+02:00", ended_at="2099-01-01T00:00:00Z")
+
+    run = service.get("/runs/spring").json()
+
+    assert run == created
+    assert run["name"] == "Spring"
+    assert (run["access_policy"], run["join_token"], run["join_open"]) == ("public", None, False)
+    assert run["phase"] == "freeze"
+    assert service.get("/runs").json() == [run]
+
+
+def test_timestamps_are_stored_in_utc_to_the_second(service: TestClient, tmp_path: Path) -> None:
+    _create_run(service, starts_at="2026-03-01T13:00:00.75+01:00")
+
+    with sqlite3.connect(tmp_path / "lobby.db") as conn:
+        stored = conn.execute("SELECT starts_at FROM runs").fetchone()[0]
+
+    assert stored == "2026-03-01T12:00:00+00:00"
+
+
+def test_runs_are_listed_latest_start_first(service: TestClient) -> None:
+    _create_run(service, "old", starts_at="2025-01-01T00:00:00Z")
+    _create_run(service, "new", starts_at="2026-01-01T00:00:00Z")
+
+    assert [run["slug"] for run in service.get("/runs").json()] == ["new", "old"]
+
+
+def test_an_unknown_run_is_404(service: TestClient) -> None:
+    for resp in (
+        service.get("/runs/ghost"),
+        service.patch("/runs/ghost", json={"name": "Ghost"}),
+        service.post("/runs/ghost/join-token"),
+        service.delete("/runs/ghost"),
+    ):
+        assert (resp.status_code, resp.json()["detail"]) == (404, "RUN_NOT_FOUND")
+
+
+def test_a_taken_slug_conflicts(service: TestClient) -> None:
+    _create_run(service)
+    resp = service.put("/runs/spring", json=_run_body(name="Other"))
+    assert (resp.status_code, resp.json()["detail"]) == (409, "RUN_EXISTS")
+    assert service.get("/runs/spring").json()["name"] == "Spring"
+
+
+@pytest.mark.parametrize(
+    ("slug", "overrides", "message"),
+    [
+        ("spring", {"freeze_at": "2026-02-01T00:00:00Z"}, "freeze_at"),
+        ("spring", {"freeze_at": "2026-04-01T00:00:00Z", "ended_at": "2026-03-15T00:00:00Z"}, "ended_at"),
+        ("spring", {"ended_at": "2026-02-01T00:00:00Z"}, "ended_at"),
+        ("spring", {"join_open": True}, "private"),
+        ("spring", {"join_token": "abc"}, "private"),
+        ("spring", {"name": "  "}, "name"),
+        ("Spring", {}, "slug"),
+        ("-spring", {}, "slug"),
+        ("landing", {}, "reserved"),
+    ],
+)
+def test_an_invalid_run_is_refused_with_a_message(
+    service: TestClient, slug: str, overrides: dict, message: str
+) -> None:
+    resp = service.put(f"/runs/{slug}", json=_run_body(**overrides))
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert message in resp.json()["message"]
+    assert service.get("/runs").json() == []
+
+
+def test_a_naive_timestamp_is_refused(service: TestClient) -> None:
+    assert service.put("/runs/spring", json=_run_body(starts_at="2026-03-01T12:00:00")).status_code == 422
+
+
+def test_patch_changes_only_the_fields_it_names(service: TestClient) -> None:
+    _create_run(service, freeze_at="2026-06-01T00:00:00Z")
+
+    resp = service.patch("/runs/spring", json={"name": "Spring 2026", "advertised": False})
+
+    assert resp.status_code == 200
+    run = resp.json()
+    assert (run["name"], run["advertised"]) == ("Spring 2026", False)
+    assert run["freeze_at"] == "2026-06-01T00:00:00Z"
+
+
+def test_patch_clears_a_field_sent_as_null(service: TestClient) -> None:
+    _create_run(service, freeze_at="2026-06-01T00:00:00Z")
+
+    run = service.patch("/runs/spring", json={"freeze_at": None}).json()
+
+    assert run["freeze_at"] is None
+
+
+def test_patch_checks_the_run_as_a_whole(service: TestClient) -> None:
+    _create_run(service, freeze_at="2026-06-01T00:00:00Z")
+
+    resp = service.patch("/runs/spring", json={"starts_at": "2026-07-01T00:00:00Z"})
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert service.get("/runs/spring").json()["starts_at"] == "2026-03-01T12:00:00Z"
+
+
+@pytest.mark.parametrize("field", [{"mode": "workshop"}, {"slug": "summer"}])
+def test_slug_and_mode_cannot_change(service: TestClient, field: dict) -> None:
+    _create_run(service)
+
+    assert service.patch("/runs/spring", json=field).status_code == 422
+    assert service.get("/runs/spring").json()["mode"] == "freeplay"
+
+
+def test_a_private_run_gets_one_join_token(service: TestClient) -> None:
+    _create_run(service, access_policy="private")
+
+    first = service.post("/runs/spring/join-token")
+    second = service.post("/runs/spring/join-token")
+
+    assert first.status_code == 200
+    token = first.json()["join_token"]
+    assert len(token) >= 32
+    assert second.json()["join_token"] == token
+    assert service.get("/runs/spring").json()["join_token"] == token
+    assert service.patch("/runs/spring", json={"join_open": True}).json()["join_open"] is True
+
+
+def test_a_public_run_has_no_join_token(service: TestClient) -> None:
+    _create_run(service)
+
+    resp = service.post("/runs/spring/join-token")
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+
+
+def test_making_a_run_public_needs_its_join_link_cleared(service: TestClient) -> None:
+    _create_run(service, access_policy="private", join_token="the-token", join_open=True)
+
+    refused = service.patch("/runs/spring", json={"access_policy": "public"})
+    allowed = service.patch("/runs/spring", json={"access_policy": "public", "join_token": None, "join_open": False})
+
+    assert (refused.status_code, refused.json()["detail"]) == (422, "INVALID_RUN")
+    assert allowed.status_code == 200
+
+
+def test_two_runs_cannot_share_a_join_token(service: TestClient) -> None:
+    _create_run(service, "spring", access_policy="private", join_token="the-token")
+    _create_run(service, "summer", access_policy="private")
+
+    resp = service.patch("/runs/summer", json={"join_token": "the-token"})
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, "INVALID_RUN")
+    assert service.get("/runs/spring").json()["join_token"] == "the-token"
+
+
+def test_deleting_a_run(service: TestClient) -> None:
+    _create_run(service)
+
+    assert service.delete("/runs/spring").status_code == 204
+    assert service.get("/runs/spring").status_code == 404
+
+
+def test_deleting_a_run_with_members_needs_asking(service: TestClient) -> None:
+    _create_run(service)
+    player = _create_account(service, "player")["account_id"]
+    facilitator = _create_account(service, "facilitator")["account_id"]
+    service.put(f"/runs/spring/members/{player}")
+    service.put(f"/facilitator-grants/{facilitator}", json={"slug": "spring"})
+
+    refused = service.delete("/runs/spring")
+    deleted = service.delete("/runs/spring", params={"with_members": True})
+
+    assert (refused.status_code, refused.json()["detail"]) == (409, "RUN_HAS_MEMBERS")
+    assert "2 membership" in refused.json()["message"]
+    assert deleted.status_code == 204
+    assert service.get("/runs/spring/members").json() == []
+    assert service.get(f"/accounts/{facilitator}/memberships").json()["facilitated_runs"] == []
+
+
+def test_each_run_write_logs_one_line_without_the_join_token(
+    service: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    headers = {"X-Energetica-Caller": "run-py@abc", "X-Energetica-Acting-Account": "7"}
+    caplog.set_level(logging.INFO, logger="lobby_service.runs")
+
+    service.put("/runs/spring", json=_run_body(access_policy="private"), headers=headers)
+    service.patch("/runs/spring", json={"name": "Spring 2026", "join_open": True}, headers=headers)
+    service.patch("/runs/spring", json={"name": "Spring 2026"}, headers=headers)  # changes nothing
+    token = service.post("/runs/spring/join-token", headers=headers).json()["join_token"]
+    service.post("/runs/spring/join-token", headers=headers)  # changes nothing
+    service.delete("/runs/spring", headers=headers)
+
+    lines = [record.getMessage() for record in caplog.records if record.name == "lobby_service.runs"]
+    assert [line.split(" ", 2)[1] for line in lines] == ["create", "update", "update", "delete"]
+    entries = [json.loads(line.split(" ", 2)[2]) for line in lines]
+    assert all((e["slug"], e["caller"], e["acting_account"]) == ("spring", "run-py@abc", "7") for e in entries)
+    assert entries[0]["changes"]["starts_at"] == [None, "2026-03-01T12:00:00+00:00"]
+    assert entries[1]["changes"] == {"name": ["Spring", "Spring 2026"], "join_open": [False, True]}
+    assert entries[2]["changes"] == {"join_token": [None, "(redacted)"]}
+    assert all(token not in line for line in lines)
+
+
+def test_the_client_reads_and_writes_runs(service: TestClient) -> None:
+    client = LobbyServiceClient(service)
+
+    created = client.create_run("spring", RunCreate.model_validate(_run_body(access_policy="private")))
+    updated = client.update_run("spring", RunUpdate(join_open=True), acting_account_id=7)
+    token = client.get_or_create_join_token("spring")
+
+    assert created.slug == "spring"
+    assert updated.join_open is True
+    assert client.get_run("spring") == updated.model_copy(update={"join_token": token})
+    assert client.get_run("ghost") is None
+    assert [run.slug for run in client.list_runs()] == ["spring"]
+    with pytest.raises(LobbyServiceRefusal) as refusal:
+        client.update_run("spring", RunUpdate(freeze_at=datetime(2020, 1, 1, tzinfo=timezone.utc)))
+    assert refusal.value.code == LobbyServiceErrorCode.INVALID_RUN
+    assert refusal.value.message is not None and "freeze_at" in refusal.value.message
+    client.delete_run("spring")
+    assert client.list_runs() == []
 
 
 # --- health -------------------------------------------------------------------------------------

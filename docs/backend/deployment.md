@@ -158,7 +158,7 @@ From your local machine:
 Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
 subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
 `drop_player_pwhash.py`, `export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
-`grant-facilitator.py`, `whitelist-run.py` — both are clients of the lobby service, so they
+`grant-facilitator.py`, `run.py`, `whitelist-run.py` — all clients of the lobby service, so they
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
 

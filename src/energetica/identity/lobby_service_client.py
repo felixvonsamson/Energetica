@@ -25,14 +25,19 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from energetica.identity.schemas.lobby_service import (
+    ACTING_ACCOUNT_HEADER,
     API_PREFIX,
     CALLER_HEADER,
     AccountOut,
     CreatedAccount,
     HealthOut,
+    JoinTokenOut,
     LobbyServiceErrorCode,
     MembershipsOut,
+    RunCreate,
     RunMember,
+    RunOut,
+    RunUpdate,
     SessionOut,
     SessionToken,
 )
@@ -63,11 +68,15 @@ class LobbyServiceUnavailable(HTTPException):
 
 
 class LobbyServiceRefusal(Exception):
-    """The lobby service refused the request with one of its documented error codes."""
+    """
+    The lobby service refused the request with one of its documented error codes, and with a
+    message for a person if it sent one, as for an invalid run.
+    """
 
-    def __init__(self, code: LobbyServiceErrorCode) -> None:
-        super().__init__(code)
+    def __init__(self, code: LobbyServiceErrorCode, message: str | None = None) -> None:
+        super().__init__(code if message is None else f"{code}: {message}")
         self.code = code
+        self.message = message
 
 
 def install_refusal_handler(app: FastAPI) -> None:
@@ -97,16 +106,20 @@ def _parse[T](response: httpx.Response, shape: type[T]) -> T:
         raise LobbyServiceUnavailable(f"malformed reply: {exc}") from exc
 
 
-def _error_detail(response: httpx.Response) -> object:
+def _error_body(response: httpx.Response) -> dict[str, object]:
     """
-    The ``detail`` of an error response, or ``None`` if the body is not the JSON object the
-    service sends, such as an error page from uvicorn itself.
+    The body of an error response, or an empty one if it is not the JSON object the service
+    sends, such as an error page from uvicorn itself.
     """
     try:
         body = response.json()
     except ValueError:
-        return None
-    return body.get("detail") if isinstance(body, dict) else None
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
+def _acting_account_headers(account_id: int | None) -> dict[str, str]:
+    return {ACTING_ACCOUNT_HEADER: str(account_id)} if account_id is not None else {}
 
 
 class LobbyServiceClient:
@@ -150,17 +163,20 @@ class LobbyServiceClient:
         if response.status_code in expected:
             return response
         if 400 <= response.status_code < 500:
-            detail = _error_detail(response)
+            body = _error_body(response)
+            detail, message = body.get("detail"), body.get("message")
             if detail in LobbyServiceErrorCode.__members__.values():
-                raise LobbyServiceRefusal(LobbyServiceErrorCode(detail))
+                raise LobbyServiceRefusal(LobbyServiceErrorCode(detail), message if isinstance(message, str) else None)
         logger.error("lobby service answered %s %s with %s: %s", method, path, response.status_code, response.text)
         raise LobbyServiceUnavailable(f"unexpected status {response.status_code}")
 
-    def _get_or_none[T: BaseModel](self, path: str, model: type[T]) -> T | None:
+    def _get_or_none[T: BaseModel](
+        self, path: str, model: type[T], *, not_found: LobbyServiceErrorCode = LobbyServiceErrorCode.ACCOUNT_NOT_FOUND
+    ) -> T | None:
         try:
             response = self._request("GET", path, expected=(200,))
         except LobbyServiceRefusal as refusal:
-            if refusal.code == LobbyServiceErrorCode.ACCOUNT_NOT_FOUND:
+            if refusal.code == not_found:
                 return None
             raise
         return _parse(response, model)
@@ -245,6 +261,45 @@ class LobbyServiceClient:
     def grant_facilitator(self, account_id: int, *, slug: str | None) -> None:
         """Server-wide if ``slug`` is ``None``. Idempotent. Refusals: ``ROLE_CONFLICT``, ``ACCOUNT_NOT_FOUND``."""
         self._request("PUT", f"/facilitator-grants/{account_id}", expected=(204,), json={"slug": slug})
+
+    # --- runs ------------------------------------------------------------------------------------
+
+    def list_runs(self) -> list[RunOut]:
+        response = self._request("GET", "/runs", expected=(200,))
+        return _parse(response, list[RunOut])
+
+    def get_run(self, slug: str) -> RunOut | None:
+        return self._get_or_none(f"/runs/{slug}", RunOut, not_found=LobbyServiceErrorCode.RUN_NOT_FOUND)
+
+    def create_run(self, slug: str, run: RunCreate) -> RunOut:
+        """Refusals: ``RUN_EXISTS``, ``INVALID_RUN``."""
+        response = self._request("PUT", f"/runs/{slug}", expected=(201,), json=run.model_dump(mode="json"))
+        return _parse(response, RunOut)
+
+    def update_run(self, slug: str, changes: RunUpdate, *, acting_account_id: int | None = None) -> RunOut:
+        """
+        Change the fields ``changes`` sets, and only those. ``acting_account_id`` names the account
+        the change is made for, for the service's log. Refusals: ``RUN_NOT_FOUND``, ``INVALID_RUN``.
+        """
+        response = self._request(
+            "PATCH",
+            f"/runs/{slug}",
+            expected=(200,),
+            json=changes.model_dump(mode="json", exclude_unset=True),
+            headers=_acting_account_headers(acting_account_id),
+        )
+        return _parse(response, RunOut)
+
+    def get_or_create_join_token(self, slug: str, *, acting_account_id: int | None = None) -> str:
+        """A private run's join token, created on first use. Refusals: ``RUN_NOT_FOUND``, ``INVALID_RUN``."""
+        response = self._request(
+            "POST", f"/runs/{slug}/join-token", expected=(200,), headers=_acting_account_headers(acting_account_id)
+        )
+        return _parse(response, JoinTokenOut).join_token
+
+    def delete_run(self, slug: str, *, with_members: bool = False) -> None:
+        """Refusals: ``RUN_NOT_FOUND``, and ``RUN_HAS_MEMBERS`` unless ``with_members``."""
+        self._request("DELETE", f"/runs/{slug}", expected=(204,), params={"with_members": with_members})
 
     # --- health ----------------------------------------------------------------------------------
 
