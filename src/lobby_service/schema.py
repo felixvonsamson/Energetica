@@ -56,6 +56,25 @@ def create_current_schema(conn: sqlite3.Connection) -> None:
         "CREATE UNIQUE INDEX instance_membership_one_server_wide_row_per_account "
         "ON instance_membership (account_id) WHERE slug IS NULL"
     )
+    conn.execute(
+        """
+        CREATE TABLE runs (
+            slug          TEXT PRIMARY KEY,
+            name          TEXT NOT NULL,
+            mode          TEXT NOT NULL CHECK (mode IN ('freeplay', 'workshop')),
+            advertised    INTEGER NOT NULL,
+            access_policy TEXT NOT NULL CHECK (access_policy IN ('public', 'private')),
+            join_token    TEXT UNIQUE,              -- only on a private run
+            join_open     INTEGER NOT NULL DEFAULT 0,
+            starts_at     TEXT NOT NULL,            -- ISO-8601 UTC, in the one format the service
+            freeze_at     TEXT,                     -- writes, so the CHECKs below can compare
+            ended_at      TEXT,                     -- them as text
+            created_at    TEXT NOT NULL,
+            CHECK (freeze_at IS NULL OR freeze_at >= starts_at),
+            CHECK (ended_at IS NULL OR ended_at >= COALESCE(freeze_at, starts_at))
+        )
+        """
+    )
 
 
 Step = Callable[[sqlite3.Connection], None]

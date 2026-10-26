@@ -184,6 +184,42 @@ CREATE TABLE instance_membership (
 - Stale rows (run later deleted) are tolerated and filtered against existing fragments,
   matching the RFC's stale-fragment stance.
 
+### `runs` (table in `lobby.db`, ADR-0010)
+
+Each run's config, moving here from its `instance.json` (#1313). Migration 3 added the table. Until
+the readers switch over, it is written by `scripts/lobby/run.py` and read by nothing else.
+
+```sql
+CREATE TABLE runs (
+    slug          TEXT PRIMARY KEY,
+    name          TEXT NOT NULL,
+    mode          TEXT NOT NULL CHECK (mode IN ('freeplay', 'workshop')),
+    advertised    INTEGER NOT NULL,
+    access_policy TEXT NOT NULL CHECK (access_policy IN ('public', 'private')),
+    join_token    TEXT UNIQUE,              -- only on a private run
+    join_open     INTEGER NOT NULL DEFAULT 0,
+    starts_at     TEXT NOT NULL,
+    freeze_at     TEXT,
+    ended_at      TEXT,
+    created_at    TEXT NOT NULL,
+    CHECK (freeze_at IS NULL OR freeze_at >= starts_at),
+    CHECK (ended_at IS NULL OR ended_at >= COALESCE(freeze_at, starts_at))
+);
+```
+
+- The service writes every timestamp in one format, UTC to the second with a `+00:00` offset, so
+  the `CHECK`s can compare them as text.
+- `slug` and `mode` cannot change once the run exists.
+- The service's endpoints are `GET runs`, `GET runs/{slug}` (each with the run's derived
+  `phase`), `PUT runs/{slug}` (create), `PATCH runs/{slug}` (change some fields; `null` clears
+  one), `POST runs/{slug}/join-token` (create on first use) and `DELETE runs/{slug}` (refused
+  while the run has memberships or grants, unless `with_members=true` deletes them too).
+- Every write is checked whole, and an invalid one is refused with `INVALID_RUN` and a message
+  saying what is wrong.
+- Every write logs one line on the `lobby_service.runs` logger: the caller, the acting account
+  (`X-Energetica-Acting-Account`, if sent) and each changed field, old and new. The join token's
+  value is logged as `(redacted)`.
+
 ---
 
 ## Flows

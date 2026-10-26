@@ -105,12 +105,23 @@ _Avoid_: schema version (use it only for a SQL database's state version).
 
 ## Accounts & users
 
-The core identity terms — **Server**, **Instance** (player-facing: **Run**), **Account**,
-**User**, **Player** — are defined in the Terminology table of
-`docs/architecture/static-serving-and-deployment.md`. Pinned below are the terms this
-project's lobby / instance-picker work adds or sharpens.
+The core identity terms — **Server**, **Account**, **User**, **Player** — are defined in the
+Terminology table of `docs/architecture/static-serving-and-deployment.md`. Pinned below are the
+terms this project's lobby / instance-picker work adds or sharpens, including **Run** and
+**Instance**, which that table still treats as synonyms.
 
 ### Language
+
+**Run**:
+A game played on the server: its name, its mode, who may join it, its members and its schedule
+(when it starts, freezes and ends). A run is known by its slug. It **outlives its instance**: once
+its instance is torn down, a run with a recap stays in the lobby for good.
+
+**Instance**:
+The deployment a run is played on: its process, its subdomain, its certificate and its files on
+the server. Setting up an instance and tearing it down are infrastructure acts. **Reaping** ends a
+run; **teardown** removes an instance. Today each run has exactly one instance, with the same slug.
+_Avoid_: instance for the game itself (that is the run).
 
 **Lobby**:
 The server-wide part of Energetica that is not a run: where a player signs up, logs in (once,
@@ -127,7 +138,8 @@ The lobby's public HTTP app, behind `lobby.{apex}`. Like every run, it is a clie
 _Avoid_: lobby web.
 
 **Lobby service**:
-The one process that owns accounts, server-wide sessions and memberships, stored in `lobby.db`.
+The one process that owns accounts, server-wide sessions, memberships and each **run**'s config,
+stored in `lobby.db` (ADR-0010).
 It is reachable only from the same server. The **lobby backend**, every run and the operator
 scripts are its clients (ADR-0009). It knows whether an account has **joined a run**, but nothing
 about settling.
@@ -159,6 +171,11 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
   only to the run's engine (ADR-0009). A silently auto-provisioned account on a run it never
   explicitly joined still does **not** count as membership — the entry gate's auto-provision
   step itself writes nothing here.
+- **"Instance" vs "run".** The two were long used as synonyms, with "instance" the internal term
+  and "run" the player-facing one. Resolved (#1313): they are two related things. The **run** is
+  the game, which the lobby keeps; the **instance** is the deployment it is played on, which the
+  server keeps. Code and data about the game say "run" (`runs`, `run_membership`); code about the
+  deployment says "instance".
 
 ---
 

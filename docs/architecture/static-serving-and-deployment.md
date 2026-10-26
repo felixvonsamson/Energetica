@@ -115,7 +115,7 @@ Subdomains also require less build configuration: subpaths need a per-instance V
 | Term              | Definition                                                                                                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Server**        | A VPS, identified by its SSH alias (e.g. `energetica-game`, `energetica-edu`, `energetica-ethz`)                                                                                                                                         |
-| **Instance**      | A single running game deployment on a server, identified by a kebab-case slug (e.g. `autumn-2025`, `spring-2026`). Also used for private university or business deployments. Player-facing copy may call this a "run".                   |
+| **Instance**      | A single running game deployment on a server, identified by a kebab-case slug (e.g. `autumn-2025`, `spring-2026`). Also used for private university or business deployments. The game played on it is a **run** (see below).             |
 | **Account**       | A server-wide identity. One row in the server's `accounts.db` SQLite file, keyed by `account_id`. Holds credentials (`username`, `pwhash`, optional `email`). Independent of any instance.                                               |
 | **User** (pickle) | A per-instance record in the engine pickle (`energetica/database/user.py`), keyed by a local AutoIDDict id. Carries `account_id` as a foreign key to the server-wide account. Auto-provisioned on first successful login to an instance. |
 | **Player**        | The game-side state of a user who has completed the settle flow. Distinct from `User`: a `User` may exist without a `Player`.                                                                                                            |
@@ -124,7 +124,7 @@ Subdomain pattern: `{instance}.{server-domain}` — e.g. `autumn-2025.energetica
 
 The **apex domain always serves the landing page**, never an instance directly.
 
-**Internal vs player-facing terminology.** `instance` is the canonical term used throughout the codebase, configs, scripts, paths, and systemd units. Player-facing UI text may use **"run"** or **"instance"** interchangeably (frontend copy is a separate translation concern).
+**Run vs instance.** These were long used as synonyms, with "instance" the internal term and "run" the player-facing one. Since #1313 they are two related things: the **run** is the game (its name, mode, access, members and schedule), which the lobby service keeps in `lobby.db`, and the **instance** is the deployment it is played on (its process, subdomain, certificate and files), which the server keeps. Code and data about the game say "run"; configs, scripts, paths and systemd units about the deployment say "instance". See `CONTEXT.md` § Accounts & users.
 
 **Note on path collisions.** Today the engine working directory is named `instance/` per Flask convention (`/var/www/energetica-{slug}/instance/engine_data.pck`). This is unrelated to the deployment-unit term `instance` and is left in place — the duplicate word in `energetica-{instance}/instance/engine_data.pck` is awkward but not ambiguous in context.
 

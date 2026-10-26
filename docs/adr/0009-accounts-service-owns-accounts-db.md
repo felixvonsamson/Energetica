@@ -3,6 +3,7 @@
 **Status:** accepted
 **Date:** 2026-10-18
 **Decided in:** #1239, part of the automated-deployment map #889. **Amends:** ADR-0002.
+**Partly superseded by:** ADR-0010 (run config).
 
 ## Context
 
@@ -34,8 +35,10 @@ The lobby and every run are clients of its versioned HTTP API (`/internal/v1/...
 - **The service knows about membership only.** Settling is a freeplay engine act. When a player
   settles, the run calls the idempotent "join" endpoint to make sure their membership row exists.
 - **Schema migrations run once, in the service, at startup**, before it accepts connections.
-- **Run state is not its concern.** A run's access policy stays in the run's `instance.json`. The
-  service reports facts (joined or not) and the run decides.
+- ~~**Run state is not its concern.** A run's access policy stays in the run's `instance.json`. The
+  service reports facts (joined or not) and the run decides.~~
+  _Superseded by ADR-0010:_ the service owns each run's config, access policy included, in a `runs`
+  table. The run still decides who it lets in.
 
 The API only grows by additions. A breaking change gets a new version path, and the service keeps
 serving the old one until the deployed-versions table shows no caller left.

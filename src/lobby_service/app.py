@@ -7,17 +7,29 @@ table can tell which callers still use which API version. It is never used for t
 
 Sessions are minted and checked here only. A token is the signed ``account_id`` the session
 cookie carries (:mod:`lobby_service.session`).
+
+Every write to a run logs one structured line on the ``lobby_service.runs`` logger: who made it and
+each field it changed, old and new. The join token's value is never logged.
 """
 
 from __future__ import annotations
 
+import json
 import logging
+import re
+import secrets
 from collections.abc import Awaitable, Callable
-from typing import Annotated
+from datetime import datetime, timezone
+from typing import Annotated, Any
 
 from fastapi import APIRouter, FastAPI, Header, HTTPException, Request, Response, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
+from energetica.identity.instance_config import derive_phase
 from energetica.identity.schemas.lobby_service import (
+    ACTING_ACCOUNT_HEADER,
     API_PREFIX,
     API_VERSIONS,
     CALLER_HEADER,
@@ -29,10 +41,14 @@ from energetica.identity.schemas.lobby_service import (
     FacilitatorGrantRequest,
     HealthOut,
     JoinedRun,
+    JoinTokenOut,
     LobbyServiceErrorCode,
     MembershipsOut,
     PasswordChange,
+    RunCreate,
     RunMember,
+    RunOut,
+    RunUpdate,
     SessionOut,
     SessionToken,
 )
@@ -46,8 +62,22 @@ from lobby_service import store
 from lobby_service.schema import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
+run_journal = logging.getLogger("lobby_service.runs")
 
 router = APIRouter(prefix=API_PREFIX)
+
+
+class Refusal(Exception):
+    """
+    An error answered as ``{"detail": code, "message": message}``: the code for the client to
+    act on, as with any refusal, and a message saying what to fix, for a person to read.
+    """
+
+    def __init__(self, status_code: int, code: LobbyServiceErrorCode, message: str) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
 
 
 def _account_out(account: store.Account) -> AccountOut:
@@ -213,6 +243,152 @@ def grant_facilitator(account_id: int, grant: FacilitatorGrantRequest) -> Respon
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+# --- runs -------------------------------------------------------------------------------------
+
+
+# The run endpoints whose bad bodies or parameters are answered as INVALID_RUN.
+_RUN_WRITE_PATH = re.compile(rf"{re.escape(API_PREFIX)}/runs/[^/]+(/join-token)?")
+
+
+def _run_out(run: store.Run) -> RunOut:
+    return RunOut(
+        slug=run.slug,
+        name=run.name,
+        mode=run.mode,  # type: ignore[arg-type]  # the table's CHECK holds it to RunModeTag
+        advertised=run.advertised,
+        access_policy=run.access_policy,  # type: ignore[arg-type]  # likewise
+        join_token=run.join_token,
+        join_open=run.join_open,
+        starts_at=run.starts_at,
+        freeze_at=run.freeze_at,
+        ended_at=run.ended_at,
+        created_at=run.created_at,
+        phase=derive_phase(
+            datetime.now(timezone.utc), starts_at=run.starts_at, freeze_at=run.freeze_at, ended_at=run.ended_at
+        ),
+    )
+
+
+def _run_not_found(slug: str) -> Refusal:
+    return Refusal(status.HTTP_404_NOT_FOUND, LobbyServiceErrorCode.RUN_NOT_FOUND, f"no run is called {slug!r}")
+
+
+def _invalid_run(exc: store.InvalidRunError) -> Refusal:
+    return Refusal(status.HTTP_422_UNPROCESSABLE_ENTITY, LobbyServiceErrorCode.INVALID_RUN, str(exc))
+
+
+def _journal_value(field: str, value: Any) -> Any:
+    if field == "join_token" and value is not None:
+        return "(redacted)"
+    if isinstance(value, datetime):
+        return store.format_timestamp(value)
+    return value
+
+
+def _journal_run_write(
+    request: Request, action: str, slug: str, before: store.Run | None, after: store.Run | None
+) -> None:
+    """
+    Log one line for a write to ``slug``, naming its caller, the acting account and each field
+    that changed. An update that changed nothing is not logged.
+    """
+    changes = {
+        field: [_journal_value(field, old), _journal_value(field, new)]
+        for field, (old, new) in store.changed_run_fields(before, after).items()
+    }
+    if action == "update" and not changes:
+        return
+    run_journal.info(
+        "run %s %s",
+        action,
+        json.dumps(
+            {
+                "slug": slug,
+                "caller": request.headers.get(CALLER_HEADER, "unnamed"),
+                "acting_account": request.headers.get(ACTING_ACCOUNT_HEADER),
+                "changes": changes,
+            }
+        ),
+    )
+
+
+@router.get("/runs")
+def list_runs() -> list[RunOut]:
+    """Every run, the latest to start first."""
+    return [_run_out(run) for run in store.list_runs()]
+
+
+@router.get("/runs/{slug}")
+def get_run(slug: str) -> RunOut:
+    run = store.get_run(slug)
+    if run is None:
+        raise _run_not_found(slug)
+    return _run_out(run)
+
+
+@router.put("/runs/{slug}", status_code=status.HTTP_201_CREATED)
+def create_run(slug: str, body: RunCreate, request: Request) -> RunOut:
+    """Create a run. A 409 if the slug is taken: a run is changed with ``PATCH``, never replaced."""
+    try:
+        run = store.create_run(slug=slug, **body.model_dump())
+    except store.RunExistsError:
+        raise Refusal(status.HTTP_409_CONFLICT, LobbyServiceErrorCode.RUN_EXISTS, f"a run is already called {slug!r}")
+    except store.InvalidRunError as exc:
+        raise _invalid_run(exc)
+    _journal_run_write(request, "create", slug, None, run)
+    return _run_out(run)
+
+
+@router.patch("/runs/{slug}")
+def update_run(slug: str, body: RunUpdate, request: Request) -> RunOut:
+    """Change the fields the body names, and only those. A field sent as ``null`` is cleared."""
+    try:
+        before, after = store.update_run(slug, body.model_dump(exclude_unset=True))
+    except store.RunNotFoundError:
+        raise _run_not_found(slug)
+    except store.InvalidRunError as exc:
+        raise _invalid_run(exc)
+    _journal_run_write(request, "update", slug, before, after)
+    return _run_out(after)
+
+
+@router.post("/runs/{slug}/join-token")
+def get_or_create_join_token(slug: str, request: Request) -> JoinTokenOut:
+    """
+    A private run's join token, created on the first call and never rotated after. Refused for a
+    public run.
+    """
+    try:
+        before, after = store.get_or_create_join_token(slug, secrets.token_urlsafe(24))
+    except store.RunNotFoundError:
+        raise _run_not_found(slug)
+    except store.InvalidRunError as exc:
+        raise _invalid_run(exc)
+    _journal_run_write(request, "update", slug, before, after)
+    assert after.join_token is not None
+    return JoinTokenOut(join_token=after.join_token)
+
+
+@router.delete("/runs/{slug}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_run(slug: str, request: Request, with_members: bool = False) -> Response:
+    """
+    Delete a run. A 409 if anyone has joined it or holds a grant for it, unless ``with_members``,
+    which deletes those rows in the same transaction.
+    """
+    try:
+        run = store.delete_run(slug, with_members=with_members)
+    except store.RunNotFoundError:
+        raise _run_not_found(slug)
+    except store.RunHasMembersError as exc:
+        raise Refusal(
+            status.HTTP_409_CONFLICT,
+            LobbyServiceErrorCode.RUN_HAS_MEMBERS,
+            f"{exc}; delete them with the run by asking for that explicitly",
+        )
+    _journal_run_write(request, "delete", slug, run, None)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # --- health -----------------------------------------------------------------------------------
 
 
@@ -236,6 +412,26 @@ def create_service_app() -> FastAPI:
             response.status_code,
         )
         return response
+
+    @app.exception_handler(Refusal)
+    def refuse(request: Request, exc: Refusal) -> JSONResponse:
+        return JSONResponse({"detail": exc.code, "message": exc.message}, status_code=exc.status_code)
+
+    @app.exception_handler(RequestValidationError)
+    async def refuse_invalid_run(request: Request, exc: RequestValidationError) -> Response:
+        """
+        Answer a run write whose body does not parse, such as a time with no time zone or a
+        ``PATCH`` naming ``mode``, as ``INVALID_RUN`` with a message, like any other invalid run.
+        Other endpoints keep FastAPI's own answer.
+        """
+        if _RUN_WRITE_PATH.fullmatch(request.url.path) is None:
+            return await request_validation_exception_handler(request, exc)
+        problems = "; ".join(
+            f"{'.'.join(str(part) for part in error['loc'][1:]) or 'body'}: {error['msg']}" for error in exc.errors()
+        )
+        return refuse(
+            request, Refusal(status.HTTP_422_UNPROCESSABLE_ENTITY, LobbyServiceErrorCode.INVALID_RUN, problems)
+        )
 
     app.include_router(router)
     return app
