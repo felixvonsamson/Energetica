@@ -18,6 +18,9 @@ from pathlib import Path
 
 import pytest
 
+# The helper shells out to rsync, which is a deploy prerequisite rather than a Python dependency.
+pytestmark = pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync is not installed")
+
 _HELPER = Path(__file__).resolve().parents[2] / "scripts" / "lib" / "backend-sync.sh"
 _WHEEL = "energetica-1.0-py3-none-any.whl"
 
