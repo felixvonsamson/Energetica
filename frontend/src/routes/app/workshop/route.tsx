@@ -29,6 +29,7 @@ import { PricePanel } from "@/components/workshop/price-panel";
 import { SettlementProgress } from "@/components/workshop/settlement-progress";
 import { WorkshopTimeline } from "@/components/workshop/workshop-timeline";
 import { WorkshopTopBar } from "@/components/workshop/workshop-top-bar";
+import { PricePanelProvider } from "@/contexts/price-panel-context";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
     usePhaseRedirects,
@@ -85,7 +86,9 @@ function WorkshopLayout() {
                             wide ? "max-w-[1600px]" : "max-w-[1400px]",
                         )}
                     >
-                        <Outlet />
+                        <PricePanelProvider value={openPricePanel}>
+                            <Outlet />
+                        </PricePanelProvider>
                     </div>
                 </main>
                 {showPricePanel && (

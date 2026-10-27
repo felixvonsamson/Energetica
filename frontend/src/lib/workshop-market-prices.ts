@@ -50,3 +50,28 @@ export function marketColumns(
             .map((side) => ({ facility, side })),
     );
 }
+
+/**
+ * What happens when a player clicks their own row on the board (#1388). The
+ * board cannot be edited, so players who try are sent to the price panel. While
+ * the price-setting window is open, the panel opens and the message says where
+ * to find it again. Otherwise prices cannot be changed, and the message says
+ * so.
+ */
+export function ownRowClick(windowOpen: boolean): {
+    openPanel: boolean;
+    message: string;
+} {
+    if (windowOpen) {
+        return {
+            openPanel: true,
+            message:
+                "This board only shows prices. Set yours in the price panel, which opens with the Prices button at the top right of the screen.",
+        };
+    }
+    return {
+        openPanel: false,
+        message:
+            "The price-setting window is closed, so prices cannot be changed now. When it opens, set yours with the Prices button at the top right of the screen.",
+    };
+}
