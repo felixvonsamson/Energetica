@@ -25,13 +25,12 @@ export function credentialSlips(accounts: CredentialLine[]): CredentialSlip[] {
 }
 
 /**
- * A cell as CSV writes it. A cell holding a comma, a quote or a line break is
- * quoted. A cell starting with `=`, `+`, `-` or `@` gets a leading apostrophe,
- * so a spreadsheet shows it as text rather than running it as a formula.
+ * A cell as CSV writes it: quoted if it holds a comma, a quote or a line break.
+ * It is never changed otherwise, since the CSV must hold the exact usernames
+ * and passwords that log in.
  */
 function csvCell(value: string): string {
-    const text = /^[=+\-@]/.test(value) ? `'${value}` : value;
-    return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 }
 
 /** `team,username,password`, one line per account. */

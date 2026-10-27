@@ -13,8 +13,8 @@ import pytest
 
 from energetica.identity.account import Account
 from energetica.identity.instance_config import Team, WorkshopRun, read_instance_config
-from energetica.identity.lobby_service_client import LobbyServiceClient
-from energetica.identity.schemas.lobby_service import RunCreate
+from energetica.identity.lobby_service_client import LobbyServiceClient, LobbyServiceUnavailable
+from energetica.identity.schemas.lobby_service import CreatedAccount, RunCreate
 from energetica.workshop.credentials import read_credentials
 from energetica.workshop.session import WorkshopSession
 from energetica.workshop.team_setup import (
@@ -246,3 +246,25 @@ def test_a_set_up_account_enters_the_run_on_its_team(
     player = session.join(Account(account_id=account.account_id, username=account.username))
 
     assert player.team == "Romande Energie"
+
+
+def test_a_failure_partway_keeps_the_passwords_of_the_accounts_already_created(
+    lobby_service: LobbyServiceClient, setup: TeamSetup, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    create_account = lobby_service.create_account
+
+    def fail_on_romanel(*, username: str, password: str, expires_at: datetime | None = None) -> CreatedAccount:
+        if username == "Romanel":
+            raise LobbyServiceUnavailable("timed out")
+        return create_account(username=username, password=password, expires_at=expires_at)
+
+    monkeypatch.setattr(lobby_service, "create_account", fail_on_romanel)
+
+    with pytest.raises(LobbyServiceUnavailable):
+        set_up_teams(lobby_service, setup, TEAMS, expires_at=NOW + timedelta(days=7))
+
+    credentials = read_credentials(setup.credentials_path, now=NOW)
+    assert credentials is not None
+    assert [line.username for line in credentials.accounts] == ["Laufenbourg", "Regensdorf"]
+    for line in credentials.accounts:
+        assert lobby_service.create_session(username=line.username, password=line.password)

@@ -428,11 +428,10 @@ export function useWorkshopFuel() {
  * dropped from the cache as soon as no page uses them, so the passwords are not
  * kept in memory longer than needed.
  */
-export function useWorkshopCredentials({ enabled = true } = {}) {
+export function useWorkshopCredentials() {
     return useQuery({
         queryKey: queryKeys.workshop.credentials,
         queryFn: workshopApi.getCredentials,
-        enabled,
         staleTime: Infinity,
         gcTime: 0,
         refetchOnWindowFocus: false,

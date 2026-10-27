@@ -346,6 +346,17 @@ def test_expired_credentials_are_deleted_when_the_run_starts(session_path: Path)
     assert not session_path.with_name("workshop_credentials.json").exists()
 
 
+def test_a_run_with_an_unreadable_credentials_file_still_starts(session_path: Path) -> None:
+    path = session_path.with_name("workshop_credentials.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("not json", encoding="utf-8")
+
+    client = _client(session_path)
+    _player(client, "alice")
+
+    assert client.get(SESSION_URL).status_code == 200
+
+
 def test_credentials_that_expire_while_the_run_is_up_are_no_longer_served(session_path: Path, clock: _Clock) -> None:
     _write_credentials(session_path, clock.now + timedelta(days=7))
     config = load_instance_config()

@@ -341,16 +341,11 @@ def _landing_dir() -> Path:
     return Path(os.environ.get(_LANDING_DIR_ENV_VAR, _DEFAULT_LANDING_DIR))
 
 
-def instance_json_path(slug: str) -> Path:
-    """Where the run ``slug``'s ``instance.json`` lives."""
-    return _config_dir() / slug / "instance.json"
-
-
 def _instance_json_path() -> Path | None:
     slug = instance_slug()
     if slug is None:
         return None
-    return instance_json_path(slug)
+    return _config_dir() / slug / "instance.json"
 
 
 def load_instance_config() -> InstanceConfig | None:

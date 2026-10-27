@@ -90,7 +90,11 @@ def create_workshop_app(
     # The credentials file of a Run with teams (#1385) sits beside the session. Once its accounts have expired, it
     # holds passwords that are no use to anyone, so it goes.
     app.state.credentials_path = session_path.with_name(CREDENTIALS_PATH.name)
-    delete_expired_credentials(app.state.credentials_path, now=clock())
+    try:
+        delete_expired_credentials(app.state.credentials_path, now=clock())
+    except (OSError, ValueError):
+        # Only the facilitator's credentials card needs the file, so a broken one must not stop the Run.
+        logger.exception("Could not read the Workshop credentials at %s", app.state.credentials_path)
     # Set to check the phases now rather than at the next interval, such as when the facilitator
     # closes a price-setting window by advancing.
     app.state.phase_check = asyncio.Event()

@@ -191,21 +191,21 @@ def set_up_teams(
 ) -> WorkshopCredentials:
     """Create the accounts of ``teams``, add them to the Run's roster, and write the credentials and the teams.
 
-    Call :func:`setup_problems` first: this assumes there are none. The credentials are written before the teams, so
-    that if writing the teams fails, the passwords of the accounts just created are not lost.
+    Call :func:`setup_problems` first: this assumes there are none. The credentials file is rewritten as each account is
+    created, before anything else can fail, so that if a later step fails, the passwords of the accounts created so
+    far are not lost.
     """
-    lines = []
+    credentials = WorkshopCredentials(expires_at=expires_at, accounts=[])
     for team in teams:
         for username in team.members:
             password = generate_password()
             account = service.create_account(username=username, password=password, expires_at=expires_at)
+            credentials.accounts.append(CredentialLine(team=team.name, username=username, password=password))
+            write_credentials(setup.credentials_path, credentials)
             service.add_run_member(setup.slug, account.account_id)
-            lines.append(CredentialLine(team=team.name, username=username, password=password))
-    credentials = WorkshopCredentials(expires_at=expires_at, accounts=lines)
-    write_credentials(setup.credentials_path, credentials)
 
     config = read_instance_config(setup.config_path)
     assert isinstance(config.run, WorkshopRun)  # setup_problems checked it
-    run = WorkshopRun(mode="workshop", teams=teams)
+    run = config.run.model_copy(update={"teams": teams})
     write_instance_config(setup.config_path, InstanceConfig.model_validate({**config.model_dump(), "run": run}))
     return credentials

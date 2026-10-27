@@ -39,9 +39,9 @@ describe("credentialsCsv", () => {
         ).toBe('team,username,password\r\n"Axpo, ""Nord""",a,b\r\n');
     });
 
-    it("keeps a spreadsheet from reading a cell as a formula", () => {
+    it("leaves a cell that looks like a formula as it is", () => {
         expect(
-            credentialsCsv([{ team: "=1+1", username: "+a", password: "-b" }]),
-        ).toBe("team,username,password\r\n'=1+1,'+a,'-b\r\n");
+            credentialsCsv([{ team: "=1+1", username: "-a", password: "b" }]),
+        ).toBe("team,username,password\r\n=1+1,-a,b\r\n");
     });
 });

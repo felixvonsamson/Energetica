@@ -31,7 +31,7 @@ def open_atomically(path: Path, *, mode: int | None = None) -> Iterator[BinaryIO
     fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=f"{path.name}.", suffix=".tmp")
     try:
         # mkstemp makes the file owner-only, but scripts/download-instance.sh backs up instance/
-        # as another user, so it must stay readable to them.
+        # as another user, so unless the caller asks for a mode, it must stay readable to them.
         os.fchmod(fd, mode)
         with os.fdopen(fd, "wb") as tmp_file:
             yield tmp_file
