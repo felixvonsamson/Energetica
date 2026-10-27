@@ -200,28 +200,26 @@ function BoardRow({
         <tr
             onClick={isMe ? onOwnRowClick : undefined}
             className={cn(
-                "group border-t border-border/30",
-                isMe &&
-                    "cursor-pointer bg-primary/10 font-semibold hover:bg-primary/20",
+                "border-t border-border/30",
+                isMe && "bg-primary/10 font-semibold",
             )}
         >
             <td
                 className={cn(
                     "sticky left-0 py-2 px-4 whitespace-nowrap",
-                    isMe
-                        ? "bg-primary/10 group-hover:bg-primary/20"
-                        : "bg-background",
+                    isMe ? "bg-primary/10" : "bg-background",
                 )}
             >
                 {/*
                  * The button lets keyboard users reach the row. Its click bubbles
-                 * up to the row's handler.
+                 * up to the row's handler. Neither looks clickable, since the
+                 * board is not meant to be edited.
                  */}
                 {isMe ? (
                     <button
                         type="button"
                         aria-label="Change your prices"
-                        className="cursor-pointer rounded-sm"
+                        className="rounded-sm"
                     >
                         {player.username}
                     </button>

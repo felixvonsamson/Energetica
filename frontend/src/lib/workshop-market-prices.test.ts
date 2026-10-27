@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { GAME_ERROR_MESSAGES } from "./game-messages";
 import {
     marketColumns,
     ownRowClick,
@@ -90,9 +91,11 @@ describe("ownRowClick", () => {
         expect(click.message).toMatch(/Prices button/);
     });
 
-    it("leaves the panel shut and says the window is closed otherwise", () => {
+    it("leaves the panel shut and says prices are locked otherwise", () => {
         const click = ownRowClick(false);
         expect(click.openPanel).toBe(false);
-        expect(click.message).toMatch(/closed/);
+        expect(click.message).toBe(
+            GAME_ERROR_MESSAGES.WORKSHOP_PRICE_SETTING_CLOSED,
+        );
     });
 });
