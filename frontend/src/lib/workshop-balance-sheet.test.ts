@@ -44,6 +44,14 @@ const SPRING: PeriodSheet = {
     market_income: 392_570,
     energy_dumped: 310e6,
     dump_cost: 7_750,
+    dumped: [
+        {
+            facility: "onshore_wind_turbine",
+            name: "Onshore wind turbine",
+            energy: 310e6,
+            amount: 7_750,
+        },
+    ],
     om: [
         {
             facility: "onshore_wind_turbine",
@@ -63,6 +71,15 @@ const SPRING: PeriodSheet = {
             variable_full: 3_600,
             usage: 0.55,
         },
+        {
+            facility: "lithium_ion_batteries",
+            name: "Lithium-ion batteries",
+            count: 1,
+            om: 0,
+            fixed: 0,
+            variable_full: 0,
+            usage: 0.2,
+        },
     ],
     om_total: 10_380,
     fuel: [
@@ -75,6 +92,26 @@ const SPRING: PeriodSheet = {
         },
     ],
     fuel_total: 4_000,
+    // The coal burner burned 6 t of the 8 t bought: 2 t went into stock.
+    facility_fuel: [
+        {
+            facility: "coal_burner",
+            name: "Coal burner",
+            fuel: "coal",
+            quantity: 6_000,
+            cost: 3_000,
+            from_stock: 0,
+        },
+    ],
+    excess_fuel: [
+        {
+            fuel: "coal",
+            name: "Coal",
+            quantity: 2_000,
+            price: 0.5,
+            cost: 1_000,
+        },
+    ],
     revenue_tax: 0,
     taxable_revenue: 0,
     revenue_tax_rate: 0,
@@ -180,90 +217,202 @@ describe("formats", () => {
 });
 
 describe("balanceSheetRows", () => {
-    const rows = balanceSheetRows(SHEET);
+    const rows = balanceSheetRows(SHEET, true);
     const row = (id: string) => rows.find((r) => r.id === id)!;
+    const amount = (id: string, period: PeriodSheet = SPRING) =>
+        row(id).cell(period).amount!;
 
-    it("lists the lines in statement order", () => {
-        expect(rows.map((r) => r.id)).toEqual([
+    it("adds up the simple view by kind", () => {
+        expect(balanceSheetRows(SHEET, false).map((r) => r.id)).toEqual([
             "market",
-            "sold",
-            "sold-onshore_wind_turbine",
-            "sold-coal_burner",
-            "bought",
-            "bought-lithium_ion_batteries",
             "dump",
             "om",
-            "om-onshore_wind_turbine",
-            "om-coal_burner",
-            "om-coal_burner-fixed",
-            "om-coal_burner-variable",
             "fuel",
-            "fuel-coal",
+            "operating",
+            "investments",
+            "net",
+        ]);
+    });
+
+    it("groups the detailed view by facility type, in statement order", () => {
+        expect(rows.map((r) => r.id)).toEqual([
+            "facility-onshore_wind_turbine",
+            "onshore_wind_turbine-sold",
+            "onshore_wind_turbine-dumped",
+            "onshore_wind_turbine-om",
+            "facility-coal_burner",
+            "coal_burner-sold",
+            "coal_burner-om",
+            "coal_burner-om-fixed",
+            "coal_burner-om-variable",
+            "coal_burner-fuel",
+            "facility-lithium_ion_batteries",
+            "lithium_ion_batteries-bought",
+            "lithium_ion_batteries-om",
+            "excess-fuel",
+            "excess-fuel-coal",
             "operating",
             "investments",
             "investment-gas_burner",
             "net",
         ]);
+        expect(row("facility-onshore_wind_turbine").label).toBe(
+            "Onshore wind turbine ×2",
+        );
+    });
+
+    it("gives each facility type what it earned after its own costs", () => {
+        expect(amount("facility-onshore_wind_turbine")).toBe(
+            152_580 - 7_750 - 7_500,
+        );
+        expect(amount("facility-coal_burner")).toBe(260_000 - 2_880 - 3_000);
+        expect(amount("facility-lithium_ion_batteries")).toBe(-20_010);
+    });
+
+    it("adds the facility types and the excess fuel up to the operating income", () => {
+        const level0 = rows.slice(
+            0,
+            rows.findIndex((r) => r.id === "operating"),
+        );
+        const sum = level0
+            .filter((r) => r.level === 0)
+            .reduce((total, r) => total + r.cell(SPRING).amount!, 0);
+        expect(sum).toBeCloseTo(SPRING.operating_income);
     });
 
     it("shows energy as volume in MWh times an average rate", () => {
-        const sold = row("sold").cell(SPRING);
-        expect(sold.volume).toBeCloseTo(9_800);
+        const sold = row("onshore_wind_turbine-sold").cell(SPRING);
+        expect(sold.volume).toBeCloseTo(3_800);
         expect(sold.rate! * sold.volume!).toBeCloseTo(sold.amount!);
-        expect(row("bought").cell(SPRING).amount).toBe(-20_010);
-        expect(row("dump").cell(SPRING).rate).toBeCloseTo(25);
-    });
-
-    it("breaks energy sold and bought down by facility type, adding up to the totals", () => {
-        const wind = row("sold-onshore_wind_turbine");
-        expect(wind).toMatchObject({ label: "Onshore wind turbine", level: 2 });
-        expect(wind.unit).toBe("energy");
-        expect(wind.cell(SPRING).volume).toBeCloseTo(3_800);
-        const amount = (id: string) => row(id).cell(SPRING).amount!;
-        expect(
-            amount("sold-onshore_wind_turbine") + amount("sold-coal_burner"),
-        ).toBeCloseTo(amount("sold"));
-        expect(amount("bought-lithium_ion_batteries")).toBe(amount("bought"));
+        expect(amount("lithium_ion_batteries-bought")).toBe(-20_010);
+        const dumped = row("onshore_wind_turbine-dumped").cell(SPRING);
+        expect(dumped.rate).toBeCloseTo(25);
+        expect(dumped.amount).toBe(-7_750);
     });
 
     it("shows zero for a facility type a season did not sell from", () => {
         const summer = { ...SPRING, sold: SPRING.sold.slice(1) };
-        expect(row("sold-onshore_wind_turbine").cell(summer)).toEqual({
+        expect(row("onshore_wind_turbine-sold").cell(summer)).toEqual({
             amount: 0,
         });
     });
 
     it("splits variable O&M into usage times the full variable cost", () => {
-        const variable = row("om-coal_burner-variable").cell(SPRING);
+        const variable = row("coal_burner-om-variable").cell(SPRING);
         expect(variable.volume).toBeCloseTo(55);
         expect(variable.rate).toBe(3_600);
         expect(variable.amount).toBe(-(2_880 - 900));
-        expect(rows.some((r) => r.id === "om-onshore_wind_turbine-fixed")).toBe(
+        expect(rows.some((r) => r.id === "onshore_wind_turbine-om-fixed")).toBe(
             false,
         );
     });
 
-    it("shows each fuel as tonnes times the price per tonne", () => {
-        expect(row("fuel").cell(SPRING).amount).toBe(-4_000);
-        const coal = row("fuel-coal").cell(SPRING);
-        expect(coal).toEqual({ volume: 8, rate: 500, amount: -4_000 });
-        expect(row("fuel-coal").unit).toBe("fuel");
+    it("shows the fuel a facility type burned as tonnes times the price per tonne", () => {
+        const coal = row("coal_burner-fuel");
+        expect(coal).toMatchObject({ label: "Fuel (Coal)", unit: "fuel" });
+        expect(coal.cell(SPRING)).toEqual({
+            volume: 6,
+            rate: 500,
+            amount: -3_000,
+        });
     });
 
-    it("shows zero for a fuel a season did not buy", () => {
-        const summer = { ...SPRING, fuel: [], fuel_total: 0 };
-        expect(row("fuel-coal").cell(summer)).toEqual({ amount: 0 });
+    it("breaks the fuel burned from stock out of the fuel bought, at no cost", () => {
+        // In summer the coal burner burned 6 t: 4 t bought at 0.5 per kg, and
+        // 2 t from stock.
+        const summer: PeriodSheet = {
+            ...SPRING,
+            facility_fuel: [
+                {
+                    ...SPRING.facility_fuel[0]!,
+                    quantity: 4_000,
+                    cost: 2_000,
+                    from_stock: 2_000,
+                },
+            ],
+            excess_fuel: [],
+        };
+        const stocked = balanceSheetRows({ ...SHEET, total: summer }, true);
+        const cell = (id: string, period: PeriodSheet) =>
+            stocked.find((r) => r.id === id)!.cell(period);
+        const ids = stocked.map((r) => r.id);
+        expect(
+            ids.slice(
+                ids.indexOf("coal_burner-fuel"),
+                ids.indexOf("coal_burner-fuel") + 3,
+            ),
+        ).toEqual([
+            "coal_burner-fuel",
+            "coal_burner-fuel-bought",
+            "coal_burner-fuel-stock",
+        ]);
+        expect(cell("coal_burner-fuel", summer)).toEqual({
+            volume: 6,
+            amount: -2_000,
+        });
+        expect(cell("coal_burner-fuel-bought", summer)).toEqual({
+            volume: 4,
+            rate: 500,
+            amount: -2_000,
+        });
+        expect(cell("coal_burner-fuel-stock", summer)).toEqual({
+            volume: 2,
+            rate: 0,
+            amount: 0,
+        });
+        // Spring burned none from stock.
+        expect(cell("coal_burner-fuel-stock", SPRING).volume).toBe(0);
+    });
+
+    it("has no fuel from stock rows in a Round that burned none", () => {
+        expect(rows.some((r) => r.id === "coal_burner-fuel-stock")).toBe(false);
+    });
+
+    it("shows the fuel bought beyond what was burned as excess, by fuel", () => {
+        expect(amount("excess-fuel")).toBe(-1_000);
+        expect(row("excess-fuel-coal").cell(SPRING)).toEqual({
+            volume: 2,
+            rate: 500,
+            amount: -1_000,
+        });
+        const summer = { ...SPRING, excess_fuel: [] };
+        expect(row("excess-fuel").cell(summer).amount).toBe(-0);
+        expect(row("excess-fuel-coal").cell(summer)).toEqual({ amount: 0 });
+    });
+
+    it("has no excess fuel row in a Round that burned all it bought", () => {
+        const burnedAll = balanceSheetRows(
+            { ...SHEET, total: { ...SPRING, excess_fuel: [] } },
+            true,
+        );
+        expect(burnedAll.some((r) => r.id.startsWith("excess-fuel"))).toBe(
+            false,
+        );
+    });
+
+    it("adds up by kind in both views before any season is settled", () => {
+        const unsettled = { ...SHEET, total: null };
+        const aboveOperating = (detailed: boolean) => {
+            const ids = balanceSheetRows(unsettled, detailed).map((r) => r.id);
+            return ids.slice(0, ids.indexOf("operating"));
+        };
+        expect(aboveOperating(true)).toEqual(aboveOperating(false));
     });
 
     it("has no revenue tax line in a Round no disaster hit", () => {
         expect(rows.some((r) => r.id === "revenue-tax")).toBe(false);
     });
 
-    it("shows a revenue tax above fuel as taxable revenue times the rate", () => {
-        const taxed = balanceSheetRows({ ...SHEET, total: TAXED });
-        const ids = taxed.map((r) => r.id);
+    it("shows a revenue tax above fuel, or after the facility types in detail", () => {
+        const simple = balanceSheetRows({ ...SHEET, total: TAXED }, false);
+        const ids = simple.map((r) => r.id);
         expect(ids.indexOf("revenue-tax")).toBe(ids.indexOf("fuel") - 1);
-        const tax = taxed.find((r) => r.id === "revenue-tax")!;
+        const detailed = balanceSheetRows({ ...SHEET, total: TAXED }, true);
+        const detailedIds = detailed.map((r) => r.id);
+        expect(detailedIds.indexOf("revenue-tax")).toBe(
+            detailedIds.indexOf("excess-fuel") - 1,
+        );
+        const tax = detailed.find((r) => r.id === "revenue-tax")!;
         expect(tax.unit).toBe("tax");
         expect(tax.cell(TAXED)).toEqual({
             volume: 412_580,
@@ -278,7 +427,7 @@ describe("balanceSheetRows", () => {
     });
 
     it("breaks a carbon tax down below operating income", () => {
-        const taxed = balanceSheetRows({ ...SHEET, total: CARBON });
+        const taxed = balanceSheetRows({ ...SHEET, total: CARBON }, true);
         const ids = taxed.map((r) => r.id);
         expect(
             ids.slice(ids.indexOf("operating"), ids.indexOf("investments")),
@@ -306,7 +455,7 @@ describe("balanceSheetRows", () => {
     });
 
     it("leaves the construction tax empty in the seasons that do not charge it", () => {
-        const taxed = balanceSheetRows({ ...SHEET, total: CARBON });
+        const taxed = balanceSheetRows({ ...SHEET, total: CARBON }, true);
         const summer = {
             ...CARBON,
             construction_emissions: 0,
@@ -328,11 +477,10 @@ describe("balanceSheetRows", () => {
     });
 
     it("shows the blackout cost below operating income, in the Round only", () => {
-        const blackedOut = balanceSheetRows({
-            ...SHEET,
-            blackout_cost_share: 0.6,
-            blackout_cost: 222_264,
-        });
+        const blackedOut = balanceSheetRows(
+            { ...SHEET, blackout_cost_share: 0.6, blackout_cost: 222_264 },
+            true,
+        );
         const ids = blackedOut.map((r) => r.id);
         expect(
             ids.slice(ids.indexOf("operating"), ids.indexOf("operating") + 3),
@@ -341,12 +489,18 @@ describe("balanceSheetRows", () => {
         expect(cost.label).toBe(
             "Blackout cost (60% of operating income so far)",
         );
-        const final = balanceSheetRows({
-            ...SHEET,
-            seasons: SHEET.seasons.map((s) => ({ ...s, status: "settled" })),
-            blackout_cost_share: 0.6,
-            blackout_cost: 222_264,
-        });
+        const final = balanceSheetRows(
+            {
+                ...SHEET,
+                seasons: SHEET.seasons.map((s) => ({
+                    ...s,
+                    status: "settled",
+                })),
+                blackout_cost_share: 0.6,
+                blackout_cost: 222_264,
+            },
+            true,
+        );
         expect(final.find((r) => r.id === "blackout-cost")!.label).toBe(
             "Blackout cost (60% of operating income)",
         );
@@ -499,14 +653,14 @@ describe("financing", () => {
     };
 
     it("shows the loan below net profit, in the Round only", () => {
-        const ids = balanceSheetRows(withLoan).map((r) => r.id);
+        const ids = balanceSheetRows(withLoan, true).map((r) => r.id);
         expect(ids.slice(ids.indexOf("net"))).toEqual([
             "net",
             "financing",
             "financing-0",
             "financing-1",
         ]);
-        const financing = balanceSheetRows(withLoan).find(
+        const financing = balanceSheetRows(withLoan, true).find(
             (r) => r.id === "financing",
         )!;
         expect(financing.roundAmount).toBe(400_000);
@@ -521,8 +675,8 @@ describe("financing", () => {
     });
 
     it("has no financing rows without a loan", () => {
-        expect(balanceSheetRows(SHEET).some((r) => r.id === "financing")).toBe(
-            false,
-        );
+        expect(
+            balanceSheetRows(SHEET, true).some((r) => r.id === "financing"),
+        ).toBe(false);
     });
 });

@@ -5584,6 +5584,29 @@ export interface components {
          */
         FacilityCategory: "wind" | "conventional" | "hydro" | "nuclear" | "pv" | "csp" | "batteries" | "hydrogen_storage" | "pumped_hydro";
         /**
+         * FacilityFuelLine
+         * @description The part of a period's fuel bill that one facility type burned.
+         */
+        FacilityFuelLine: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            fuel: components["schemas"]["Fuel"];
+            /**
+             * Quantity
+             * @description In kg: what it burned of the fuel paid for in the period
+             */
+            quantity: number;
+            /** Cost */
+            cost: number;
+            /**
+             * From Stock
+             * @description In kg: what it burned from stock paid for in an earlier period, which costs nothing in this one
+             * @default 0
+             */
+            from_stock: number;
+        };
+        /**
          * FacilityId
          * @description Every facility in the Workshop catalog.
          * @enum {string}
@@ -5862,6 +5885,12 @@ export interface components {
             /** Dump Cost */
             dump_cost: number;
             /**
+             * Dumped
+             * @description One line per facility type that dumped energy, in catalog order. The amount is the dumping cost
+             * @default []
+             */
+            dumped: components["schemas"]["MarketLine"][];
+            /**
              * Om
              * @description One line per facility type that was operating, in catalog order
              */
@@ -5897,6 +5926,18 @@ export interface components {
              * @default 0
              */
             fuel_total: number;
+            /**
+             * Facility Fuel
+             * @description The fuel paid for split by the facility type that burned it, one line per type, in catalog order
+             * @default []
+             */
+            facility_fuel: components["schemas"]["FacilityFuelLine"][];
+            /**
+             * Excess Fuel
+             * @description The fuel paid for beyond what was burned, which went into stock, one line per fuel, in the order of the fuels
+             * @default []
+             */
+            excess_fuel: components["schemas"]["FuelLine"][];
             /**
              * Operating Income
              * @description Market income minus dumping cost, O&M, revenue tax and fuel
