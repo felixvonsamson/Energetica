@@ -242,11 +242,11 @@ function PriceRow({
                             range={range}
                             disabled={!open}
                         />
-                        {sell < buy && (
+                        {sell <= buy && (
                             <p className="flex items-start gap-1.5 text-xs text-warning">
                                 <AlertTriangle className="mt-px size-3.5 shrink-0" />
-                                Your sell price is below your buy price, so you
-                                may lose money on the energy you store.
+                                Your sell price is not above your buy price, so
+                                you may lose money on the energy you store.
                             </p>
                         )}
                     </>
