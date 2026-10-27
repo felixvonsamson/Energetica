@@ -17,7 +17,12 @@
 
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-import { useMarketPrices, useWorkshopEntry } from "@/hooks/use-workshop";
+import { PlayerName } from "@/components/workshop/player-name";
+import {
+    useMarketPrices,
+    useWorkshopEntry,
+    useWorkshopTeams,
+} from "@/hooks/use-workshop";
 import {
     type MarketColumn,
     marketColumns,
@@ -43,6 +48,7 @@ export function MarketPricesBoard({
 }) {
     const room = useMarketPrices(round, season);
     const { data: entry } = useWorkshopEntry();
+    const { teamOf } = useWorkshopTeams();
 
     if (room.isPending) return <Spinner />;
     if (room.isError) {
@@ -130,6 +136,7 @@ export function MarketPricesBoard({
                             <BoardRow
                                 key={player.account_id}
                                 player={player}
+                                team={teamOf(player.account_id)}
                                 columns={columns}
                                 isMe={player.account_id === me}
                             />
@@ -167,10 +174,12 @@ function BoardStatus({ live }: { live: boolean }) {
 
 function BoardRow({
     player,
+    team,
     columns,
     isMe,
 }: {
     player: PlayerQuotes;
+    team: string | null;
     columns: MarketColumn[];
     isMe: boolean;
 }) {
@@ -187,7 +196,7 @@ function BoardRow({
                     isMe ? "bg-primary/10" : "bg-background",
                 )}
             >
-                {player.username}
+                <PlayerName username={player.username} team={team} />
                 {isMe && (
                     <span className="ml-1 font-normal text-muted-foreground">
                         (you)

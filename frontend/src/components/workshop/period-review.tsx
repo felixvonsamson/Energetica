@@ -53,6 +53,7 @@ import {
 import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
+import { playerLabel } from "@/components/workshop/player-name";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePlayerColors } from "@/hooks/use-player-color-getter";
@@ -64,6 +65,7 @@ import {
     useWorkshopPeriod,
     useWorkshopPeriodWeek,
     useWorkshopSession,
+    useWorkshopTeams,
 } from "@/hooks/use-workshop";
 import {
     CONSUMERS,
@@ -140,7 +142,8 @@ function useLabels(): Labels {
         () => (players ?? []).map((player) => player.account_id),
         [players],
     );
-    const baseColor = usePlayerColors(me, playerIds);
+    const { teammateIds } = useWorkshopTeams();
+    const baseColor = usePlayerColors(me, playerIds, teammateIds);
 
     return useMemo(() => {
         const names = new Map(
@@ -149,7 +152,7 @@ function useLabels(): Labels {
         const usernames = new Map(
             (players ?? []).map((player) => [
                 player.account_id,
-                player.username,
+                playerLabel(player.username, player.team),
             ]),
         );
         return {

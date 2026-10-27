@@ -179,7 +179,7 @@ def test_a_player_entering_is_placed_into_the_shared_network(session_path: Path)
     assert response.status_code == 200
     assert response.json() == {
         "role": "player",
-        "player": {"account_id": account_id, "username": "alice", "money": 50_000_000.0},
+        "player": {"account_id": account_id, "username": "alice", "team": None, "money": 50_000_000.0},
     }
     assert [player["username"] for player in client.get(SESSION_URL).json()["players"]] == ["alice"]
 
@@ -236,6 +236,57 @@ def test_a_player_added_to_the_roster_can_enter(session_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.json()["player"]["account_id"] == account_id
+
+
+TEAMS = [
+    {"name": "Axpo", "members": ["laufenbourg", "regensdorf"]},
+    {"name": "Romande Energie", "members": ["romanel", "veytaux"]},
+]
+
+
+def _with_teams(session_path: Path) -> None:
+    """Rewrite the Run's config so it has :data:`TEAMS` (#1384)."""
+    instance_json = session_path.parent.parent / "etc" / SLUG / "instance.json"
+    instance_json.write_text(
+        json.dumps({**WORKSHOP_JSON, "run": {"mode": "workshop", "teams": TEAMS}}), encoding="utf-8"
+    )
+
+
+def test_a_player_enters_on_their_team_and_the_session_lists_the_teams(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _player(client, "romanel")
+
+    assert client.post(ENTER_URL).json()["player"]["team"] == "Romande Energie"
+    session = client.get(SESSION_URL).json()
+    assert [player["team"] for player in session["players"]] == ["Romande Energie"]
+    assert session["teams"] == TEAMS
+
+
+def test_an_account_on_no_team_cannot_enter_a_run_with_teams(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _player(client, "alice")
+
+    response = client.post(ENTER_URL)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NOT_ON_A_TEAM"
+
+
+def test_a_facilitator_on_no_team_enters_a_run_with_teams(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.post(ENTER_URL).json() == {"role": "facilitator", "player": None}
+
+
+def test_a_run_without_teams_lists_none(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    assert client.get(SESSION_URL).json()["teams"] is None
 
 
 # --- the session ----------------------------------------------------------------------------

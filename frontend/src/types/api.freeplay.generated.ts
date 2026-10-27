@@ -1082,7 +1082,7 @@ export interface paths {
          * Confirm Join
          * @description Confirm joining: join the signed-in visitor to this run through the lobby service.
          *
-         *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
+         *     Requires an SSO session (``get_standing``, not ``get_settled_player`` — the whole point
          *     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
          *     deliberately does not go through ``_enforce_instance_access``: granting access is this
          *     endpoint's job, not a precondition for reaching it. Checks identity before instance state

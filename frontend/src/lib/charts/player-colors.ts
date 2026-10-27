@@ -3,7 +3,9 @@
  *
  * The current player gets one reserved color. Every other player gets a shade
  * between two theme colors, so the others read as one group and the current
- * player stands out. A facilitator, who has no player, sees only the shades.
+ * player stands out. A facilitator, who has no player, sees only the shades. In
+ * a Workshop Run with teams (#1384), the current player's teammates get shades
+ * between two lighter greens instead, so they read as a third group.
  *
  * Shades are handed out by each player's position among all players sorted by
  * id, not by which players a chart happens to show, so a player keeps the same
@@ -56,6 +58,19 @@ export interface PlayerPalette {
     othersFrom: string;
     /** The other end of the other players' shades, as `oklch(L C H)`. */
     othersTo: string;
+    /** One end of the teammates' shades, as `oklch(L C H)`. */
+    teammatesFrom: string;
+    /** The other end of the teammates' shades, as `oklch(L C H)`. */
+    teammatesTo: string;
+}
+
+/**
+ * Where the `index`-th of `count` teammates falls between the two shade ends,
+ * 0–1. A team has few players, so they are spread over the whole range to be
+ * far apart, and a lone teammate sits in the middle.
+ */
+function teammatePosition(index: number, count: number): number {
+    return count === 1 ? 0.5 : index / (count - 1);
 }
 
 /**
@@ -67,21 +82,40 @@ export interface PlayerPalette {
  * worked out from its id alone, so every getter made from the same list gives
  * it the same shade, whatever order they are called in. `currentPlayerId` is
  * `null` for a viewer with no player, who sees every player as an other.
+ * `teammateIds` lists the current player's teammates, and is empty without
+ * teams or for a viewer with no player.
  */
 export function playerColorGetter(
     palette: PlayerPalette,
     currentPlayerId: number | null,
     playerIds: Iterable<number>,
+    teammateIds: Iterable<number> = [],
 ): (playerId: number) => string {
     const from = parseOklch(palette.othersFrom);
     const to = parseOklch(palette.othersTo);
-    const others = [...new Set(playerIds)]
+    const teammatesFrom = parseOklch(palette.teammatesFrom);
+    const teammatesTo = parseOklch(palette.teammatesTo);
+    const teammates = [...new Set(teammateIds)]
         .filter((id) => id !== currentPlayerId)
+        .sort((a, b) => a - b);
+    const teammatePositions = new Map(
+        teammates.map((id, index) => [
+            id,
+            teammatePosition(index, teammates.length),
+        ]),
+    );
+    const others = [...new Set(playerIds)]
+        .filter((id) => id !== currentPlayerId && !teammatePositions.has(id))
         .sort((a, b) => a - b);
     const positions = new Map(others.map((id, index) => [id, index]));
 
     return (playerId: number) => {
         if (playerId === currentPlayerId) return palette.self;
+        const teammate = teammatePositions.get(playerId);
+        if (teammate !== undefined) {
+            if (!teammatesFrom || !teammatesTo) return palette.teammatesFrom;
+            return mix(teammatesFrom, teammatesTo, teammate);
+        }
         if (!from || !to) return palette.othersFrom;
         const index = positions.get(playerId) ?? others.length + playerId;
         return mix(from, to, shadePosition(index));

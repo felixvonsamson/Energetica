@@ -149,6 +149,14 @@ cat > .energetica-dev/etc/workshop-demo/instance.json <<'EOF'
 EOF
 ```
 
+To try teams (#1384), give the `run` block a `teams` list. A Run with teams needs at least two, each
+with the same number of members, named by username. An account on no team cannot play, so put every
+player account on a team:
+
+```json
+"run": {"mode": "workshop", "teams": [{"name": "Axpo", "members": ["alice"]}, {"name": "Romande", "members": ["bob"]}]}
+```
+
 ### 2. Give two accounts access (once)
 
 A Workshop Run is always private, so only accounts on its roster can enter. You need two accounts:

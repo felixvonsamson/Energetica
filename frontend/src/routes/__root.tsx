@@ -13,6 +13,7 @@ import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
 import { useRunMode } from "@/hooks/use-run-mode";
 import { useWorkshopEntry } from "@/hooks/use-workshop";
+import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 import {
     computeRedirect,
     isAnnouncedTakeover,
@@ -68,6 +69,7 @@ function WorkshopRoot() {
         data: entry,
         isLoading,
         isError,
+        error,
         refetch,
     } = useWorkshopEntry({ enabled: !isSharedPage });
     const redirect =
@@ -82,6 +84,14 @@ function WorkshopRoot() {
 
     if (isLoading) return <FullPageSpinner />;
     if (isError) {
+        // An account on no team in a Run with teams (#1384) is refused for good, so trying again cannot help.
+        if (isErrorType(error, "WORKSHOP_NOT_ON_A_TEAM")) {
+            return (
+                <div className="flex min-h-screen items-center justify-center p-4 text-center">
+                    <p>{getUserFriendlyError(error)}</p>
+                </div>
+            );
+        }
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4">
                 <p>Could not enter the Workshop.</p>

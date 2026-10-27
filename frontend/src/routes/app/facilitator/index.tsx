@@ -17,6 +17,8 @@ import {
     useFacilitatorAccess,
     useSetJoinOpen,
 } from "@/hooks/use-facilitator-access";
+import { useRunMode } from "@/hooks/use-run-mode";
+import { useWorkshopSession } from "@/hooks/use-workshop";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { buildJoinUrl } from "@/lib/facilitator";
 import { Button } from "@energetica/ui/components/button";
@@ -64,15 +66,39 @@ export const Route = createFileRoute("/app/facilitator/")({
 });
 
 function FacilitatorPage() {
+    const { data: runMode } = useRunMode();
+    const { data: session } = useWorkshopSession({
+        enabled: runMode === "workshop",
+    });
+    // With teams (#1384), the join link could only add accounts on no team, which
+    // cannot enter, so the page does not offer it.
+    const hasTeams = !!session?.teams;
     return (
         <div className="flex min-h-svh flex-col">
             <FacilitatorHeader />
             <main className="flex-1 overflow-auto p-4 md:p-8">
                 <div className="max-w-xl mx-auto">
-                    <JoinLinkCard />
+                    {hasTeams ? <TeamsInsteadOfJoinLink /> : <JoinLinkCard />}
                 </div>
             </main>
         </div>
+    );
+}
+
+function TeamsInsteadOfJoinLink() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>
+                    <TypographyH2>Join link</TypographyH2>
+                </CardTitle>
+                <TypographyMuted>
+                    This Run plays in teams, so only the accounts on its team
+                    list can play. There is no join link: players log in with
+                    the accounts made for their team.
+                </TypographyMuted>
+            </CardHeader>
+        </Card>
     );
 }
 

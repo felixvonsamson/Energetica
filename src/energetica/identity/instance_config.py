@@ -37,7 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar, get_args
 
-from pydantic import AwareDatetime, BaseModel, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, Field, SerializerFunctionWrapHandler, model_serializer, model_validator
 
 if TYPE_CHECKING:
     from energetica.identity.schemas.recap import Recap
@@ -139,17 +139,53 @@ class FreeplayRun(BaseModel):
     mode: Literal["freeplay"]
 
 
+class Team(BaseModel):
+    """One team of a Workshop Run (#1384): its name and its members' usernames."""
+
+    model_config = {"extra": "forbid"}
+
+    name: str = Field(min_length=1)
+    members: list[str] = Field(min_length=1)
+
+
 class WorkshopRun(BaseModel):
     """A Workshop Run (#992).
 
-    Holds only settings fixed when the Run is provisioned, of which there are none yet. The levers
-    the facilitator changes during a session live in the Run's session state
-    (``energetica.workshop.session``), not here (#994).
+    Holds only settings fixed when the Run is provisioned. The levers the facilitator changes during a
+    session live in the Run's session state (``energetica.workshop.session``), not here (#994).
     """
 
     model_config = {"extra": "forbid"}
 
     mode: Literal["workshop"]
+    # The Run's teams (#1384), or None for a Run without teams. Members are named by username, since the file
+    # is written by hand or by the setup script. The facilitator cannot edit them.
+    teams: list[Team] | None = None
+
+    @model_validator(mode="after")
+    def _teams_well_formed(self) -> WorkshopRun:
+        """A Run with teams has at least two, of the same size, with unique names and no member on two."""
+        if self.teams is None:
+            return self
+        if len(self.teams) < 2:
+            raise ValueError("a Run with teams needs at least 2 teams")
+        if len({len(team.members) for team in self.teams}) > 1:
+            raise ValueError("every team must have the same number of members")
+        names = [team.name for team in self.teams]
+        if len(set(names)) < len(names):
+            raise ValueError("team names must be unique")
+        members = [member for team in self.teams for member in team.members]
+        if len(set(members)) < len(members):
+            raise ValueError("a username is listed more than once across the teams")
+        return self
+
+    @model_serializer(mode="wrap")
+    def _leave_out_missing_teams(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """Leave ``teams`` out of a Run without teams, so a facilitator's write keeps the file as it was written."""
+        data = handler(self)
+        if self.teams is None:
+            data.pop("teams", None)
+        return data
 
 
 RunMode = FreeplayRun | WorkshopRun

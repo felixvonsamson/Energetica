@@ -71,6 +71,7 @@ from energetica.workshop.schemas import (
     WorkshopSelectionOut,
     WorkshopSessionOut,
     WorkshopSettlementOut,
+    WorkshopTeamOut,
     WorkshopTechnologyProgressOut,
     WorkshopUnlocksOut,
     WorkshopVoteOut,
@@ -130,9 +131,12 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
         if phase_timer is None
         else WorkshopPhaseTimerOut(remaining_seconds=phase_timer.remaining(session.clock()).total_seconds()),
         players=[
-            WorkshopMemberOut(account_id=player.account_id, username=player.username)
+            WorkshopMemberOut(account_id=player.account_id, username=player.username, team=player.team)
             for player in session.network.players()
         ],
+        teams=None
+        if session.teams is None
+        else [WorkshopTeamOut(name=team.name, members=team.members) for team in session.teams],
         round_format=session.current_format(),
         settlement=None if settlement is None else WorkshopSettlementOut.from_progress(settlement),
         blackouts=session.blackouts,
@@ -143,14 +147,17 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
 @router.post("/enter")
 def enter(standing: Annotated[Standing, Depends(resolve_entry)], session: Session) -> WorkshopEntryOut:
     """Enter the Run. A player is placed into its shared Network the first time and gets the same
-    player every time after. A facilitator runs the session rather than plays, so is placed nowhere.
+    player every time after. A facilitator runs the session rather than plays, so is placed nowhere. In a Run with
+    teams, an account on no team is refused (#1384).
     """
     if standing.role == "facilitator":
         return WorkshopEntryOut(role="facilitator", player=None)
     player = session.join(standing.account)
     return WorkshopEntryOut(
         role="player",
-        player=WorkshopPlayerOut(account_id=player.account_id, username=player.username, money=player.money),
+        player=WorkshopPlayerOut(
+            account_id=player.account_id, username=player.username, team=player.team, money=player.money
+        ),
     )
 
 

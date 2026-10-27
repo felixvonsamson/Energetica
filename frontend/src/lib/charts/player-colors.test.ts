@@ -6,6 +6,8 @@ const palette = {
     self: "oklch(0.4 0.08 148)",
     othersFrom: "oklch(0.3 0.02 250)",
     othersTo: "oklch(0.7 0.06 230)",
+    teammatesFrom: "oklch(0.5 0.1 150)",
+    teammatesTo: "oklch(0.8 0.1 150)",
 };
 
 describe("parseOklch", () => {
@@ -92,5 +94,29 @@ describe("playerColorGetter", () => {
         );
 
         expect(color(2)).toBe("#888");
+    });
+
+    it("gives teammates shades of their own, far apart in lightness", () => {
+        const color = playerColorGetter(palette, 1, [1, 2, 3, 4, 5], [3, 5]);
+
+        expect(color(1)).toBe(palette.self);
+        expect(color(3)).toBe("oklch(0.5000 0.1000 150.00)");
+        expect(color(5)).toBe("oklch(0.8000 0.1000 150.00)");
+        const others = [2, 4].map(color);
+        expect(others).not.toContain(color(3));
+        expect(others).not.toContain(color(5));
+    });
+
+    it("puts a lone teammate in the middle of their shades", () => {
+        const color = playerColorGetter(palette, 1, [1, 2, 3], [2]);
+
+        expect(color(2)).toBe("oklch(0.6500 0.1000 150.00)");
+    });
+
+    it("leaves the other players' shades as they are without teammates", () => {
+        const without = playerColorGetter(palette, 1, [1, 2, 3]);
+        const withNone = playerColorGetter(palette, 1, [1, 2, 3], []);
+
+        expect([2, 3].map(withNone)).toEqual([2, 3].map(without));
     });
 });

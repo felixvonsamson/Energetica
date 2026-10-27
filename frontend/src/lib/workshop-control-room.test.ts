@@ -206,6 +206,7 @@ describe("controlRoomPhase", () => {
         settlement: null,
         blackouts: [],
         carbon_tax_since: null,
+        teams: null,
         ...overrides,
     });
 

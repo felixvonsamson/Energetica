@@ -1,6 +1,8 @@
 /**
  * Facilitator roster page (#1022): the private instance's allowlist, plus a
- * search-and-add control and a ban/remove action per row.
+ * search-and-add control and a ban/remove action per row. In a Workshop Run
+ * with teams (#1384), the accounts are grouped by team, each showing how many
+ * of its members have entered.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -13,7 +15,10 @@ import {
     useRemoveFromRoster,
     useRosterCandidates,
 } from "@/hooks/use-facilitator-roster";
+import { useRunMode } from "@/hooks/use-run-mode";
+import { useWorkshopSession } from "@/hooks/use-workshop";
 import { getUserFriendlyError } from "@/lib/error-utils";
+import type { ApiSchema } from "@/types/api-helpers";
 import { Button } from "@energetica/ui/components/button";
 import {
     Card,
@@ -152,6 +157,12 @@ function AddAccountCard() {
 
 function RosterCard() {
     const { data, isLoading, isError, error } = useFacilitatorRoster();
+    const { data: runMode } = useRunMode();
+    // Read as often as the roster, since this page does not follow the session's socket.
+    const { data: session } = useWorkshopSession({
+        enabled: runMode === "workshop",
+        refetchInterval: 5 * 1000,
+    });
     const {
         mutate: removeFromRoster,
         isPending,
@@ -174,14 +185,81 @@ function RosterCard() {
         );
     }
 
+    const pending = isPending ? pendingUsername : null;
+    if (session?.teams) {
+        return (
+            <TeamSections
+                teams={session.teams}
+                players={session.players}
+                members={data.members}
+                onBan={removeFromRoster}
+                pendingUsername={pending}
+            />
+        );
+    }
+
     return (
         <RosterSection
-            title="Members"
+            title={`Members (${data.members.length})`}
             usernames={data.members}
             emptyLabel="No one is on the roster yet."
             onBan={removeFromRoster}
-            pendingUsername={isPending ? pendingUsername : null}
+            pendingUsername={pending}
         />
+    );
+}
+
+/**
+ * One section per team, titled with how many of its members have entered, then
+ * any account on the roster but on no team. Only an account on the roster can
+ * be banned. A team can be incomplete when the session starts.
+ */
+function TeamSections({
+    teams,
+    players,
+    members,
+    onBan,
+    pendingUsername,
+}: {
+    teams: ApiSchema<"WorkshopTeamOut">[];
+    players: ApiSchema<"WorkshopMemberOut">[];
+    members: string[];
+    onBan: (username: string) => void;
+    pendingUsername: string | null;
+}) {
+    const entered = new Set(players.map((player) => player.username));
+    const onRoster = new Set(members);
+    const onTeam = new Set(teams.flatMap((team) => team.members));
+    const noTeam = members.filter((username) => !onTeam.has(username));
+    return (
+        <>
+            {teams.map((team) => {
+                const count = players.filter(
+                    (player) => player.team === team.name,
+                ).length;
+                return (
+                    <RosterSection
+                        key={team.name}
+                        title={`${team.name} ${count}/${team.members.length}`}
+                        usernames={team.members}
+                        emptyLabel=""
+                        entered={entered}
+                        canBan={(username) => onRoster.has(username)}
+                        onBan={onBan}
+                        pendingUsername={pendingUsername}
+                    />
+                );
+            })}
+            {noTeam.length > 0 && (
+                <RosterSection
+                    title={`On no team (${noTeam.length})`}
+                    usernames={noTeam}
+                    emptyLabel=""
+                    onBan={onBan}
+                    pendingUsername={pendingUsername}
+                />
+            )}
+        </>
     );
 }
 
@@ -189,12 +267,20 @@ function RosterSection({
     title,
     usernames,
     emptyLabel,
+    entered,
+    canBan = () => true,
     onBan,
     pendingUsername,
 }: {
     title: string;
     usernames: string[];
     emptyLabel: string;
+    /**
+     * The usernames that have entered the Run, marked as such. Unmarked when
+     * absent.
+     */
+    entered?: Set<string>;
+    canBan?: (username: string) => boolean;
     onBan: (username: string) => void;
     pendingUsername: string | null;
 }) {
@@ -202,9 +288,7 @@ function RosterSection({
         <Card>
             <CardHeader>
                 <CardTitle>
-                    <TypographyH2>
-                        {title} ({usernames.length})
-                    </TypographyH2>
+                    <TypographyH2>{title}</TypographyH2>
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -217,26 +301,37 @@ function RosterSection({
                                 key={username}
                                 className="flex items-center justify-between py-2"
                             >
-                                <span className="text-sm">{username}</span>
-                                <ConfirmDialog
-                                    trigger={
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            disabled={
-                                                pendingUsername === username
-                                            }
-                                        >
-                                            Ban
-                                        </Button>
-                                    }
-                                    title={`Ban ${username}?`}
-                                    description={`This removes ${username} from the allowlist. Their next entry attempt is denied — a session already in progress isn't interrupted.`}
-                                    confirmLabel="Ban"
-                                    variant="danger"
-                                    isPending={pendingUsername === username}
-                                    onConfirm={() => onBan(username)}
-                                />
+                                <span className="text-sm">
+                                    {username}
+                                    {entered && (
+                                        <span className="text-muted-foreground">
+                                            {entered.has(username)
+                                                ? " · entered"
+                                                : " · not entered"}
+                                        </span>
+                                    )}
+                                </span>
+                                {canBan(username) && (
+                                    <ConfirmDialog
+                                        trigger={
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                disabled={
+                                                    pendingUsername === username
+                                                }
+                                            >
+                                                Ban
+                                            </Button>
+                                        }
+                                        title={`Ban ${username}?`}
+                                        description={`This removes ${username} from the allowlist. Their next entry attempt is denied — a session already in progress isn't interrupted.`}
+                                        confirmLabel="Ban"
+                                        variant="danger"
+                                        isPending={pendingUsername === username}
+                                        onConfirm={() => onBan(username)}
+                                    />
+                                )}
                             </li>
                         ))}
                     </ul>
