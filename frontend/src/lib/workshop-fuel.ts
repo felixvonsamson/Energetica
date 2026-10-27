@@ -33,15 +33,17 @@ export const KG_PER_TONNE = 1_000;
 /**
  * The unit each fuel is shown and bought in, and how many decimals its order
  * field shows so that it counts to the nearest kg. Gas and coal are bought by
- * the thousand tonnes. Uranium is bought by the kg, since a season's uranium
- * is a small fraction of a tonne.
+ * the thousand tonnes. Uranium is bought by the kg, since a season's uranium is
+ * a small fraction of a tonne.
  */
-const FIELD_UNITS: Record<Fuel, { label: string; kg: number; decimals: number }> =
-    {
-        gas: { label: "kt", kg: 1_000_000, decimals: 3 },
-        coal: { label: "kt", kg: 1_000_000, decimals: 3 },
-        uranium: { label: "kg", kg: 1, decimals: 0 },
-    };
+const FIELD_UNITS: Record<
+    Fuel,
+    { label: string; kg: number; decimals: number }
+> = {
+    gas: { label: "kt", kg: 1_000_000, decimals: 3 },
+    coal: { label: "kt", kg: 1_000_000, decimals: 3 },
+    uranium: { label: "kg", kg: 1, decimals: 0 },
+};
 
 /** The unit beside a fuel's order field, "kt" or "kg". */
 export function fuelFieldUnit(fuel: Fuel): string {
@@ -79,8 +81,8 @@ export function fuelFieldText(kg: number, fuel: Fuel): string {
 
 /**
  * An amount of fuel in the fuel's unit, such as "34.2 kt" or "417 kg", for the
- * stock and the maximum consumption. Smaller numbers get more decimals, so
- * each shows about three significant digits.
+ * stock and the maximum consumption. Smaller numbers get more decimals, so each
+ * shows about three significant digits.
  */
 export function formatFuelAmount(kg: number, fuel: Fuel): string {
     const unit = FIELD_UNITS[fuel];
