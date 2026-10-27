@@ -12,9 +12,13 @@
  * negative amounts, so the four columns add up to the score. Everyone in the
  * Run sees the same table, and a player's own row is highlighted. A panel below
  * the table spells out the formula and each of its terms.
+ *
+ * In a Run with teams (#1384), a table of teams comes first, each scoring the
+ * sum of its members' scores, and the players' table gets a Team column.
  */
 
 import { Trophy } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -72,72 +76,183 @@ export function Scoreboard() {
                     </TypographyMuted>
                 )}
             </div>
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-secondary">
-                            <th className="py-2 px-4 text-right font-semibold">
-                                Rank
-                            </th>
-                            <th className="py-2 px-4 text-left font-semibold">
-                                Player
-                            </th>
-                            {COLUMNS.map((column) => (
-                                <th
-                                    key={column.key}
-                                    className="py-2 px-4 text-right font-semibold"
-                                >
-                                    {column.label}
-                                </th>
-                            ))}
-                            <th className="py-2 px-4 text-right font-bold tracking-wide">
-                                SCORE
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {scoreboard.data.scores.map((row, index) => (
-                            <tr
-                                key={row.account_id}
-                                className={cn(
-                                    "border-b border-border/30",
-                                    row.account_id === me && "bg-brand/10",
-                                )}
-                            >
-                                <td className="py-2 px-4 text-right font-mono">
-                                    {index + 1}
-                                </td>
-                                <td className="py-2 px-4 font-medium">
-                                    {row.username}
-                                    {row.account_id === me && (
-                                        <span className="text-muted-foreground">
-                                            {" "}
-                                            (you)
-                                        </span>
-                                    )}
-                                </td>
-                                {COLUMNS.map((column) => (
-                                    <td
-                                        key={column.key}
-                                        className="py-2 px-4 text-right"
-                                    >
-                                        <Money
-                                            amount={
-                                                column.sign * row[column.key]
-                                            }
-                                        />
-                                    </td>
-                                ))}
-                                <td className="py-2 px-4 text-right font-semibold">
-                                    <Money amount={row.score} />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {scoreboard.data.teams && (
+                <TeamTable
+                    teams={scoreboard.data.teams}
+                    scores={scoreboard.data.scores}
+                    me={me}
+                />
+            )}
+            <PlayerTable
+                scores={scoreboard.data.scores}
+                hasTeams={scoreboard.data.teams !== null}
+                me={me}
+            />
             <ScoreFormula />
         </div>
+    );
+}
+
+type Score = ApiSchema<"Score">;
+type TeamScore = ApiSchema<"TeamScore">;
+
+/** Every team ranked by the sum of its members' scores (#1384). */
+function TeamTable({
+    teams,
+    scores,
+    me,
+}: {
+    teams: TeamScore[];
+    scores: Score[];
+    me: number | undefined;
+}) {
+    const usernames = new Map(
+        scores.map((row) => [row.account_id, row.username]),
+    );
+    return (
+        <ScoreTable label="Team">
+            {teams.map((team, index) => {
+                const mine = me !== undefined && team.account_ids.includes(me);
+                return (
+                    <tr
+                        key={team.name}
+                        className={cn(
+                            "border-b border-border/30",
+                            mine && "bg-brand/10",
+                        )}
+                    >
+                        <td className="py-2 px-4 text-right font-mono">
+                            {index + 1}
+                        </td>
+                        <td className="py-2 px-4">
+                            <div className="font-medium">
+                                {team.name}
+                                {mine && (
+                                    <span className="text-muted-foreground">
+                                        {" "}
+                                        (your team)
+                                    </span>
+                                )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                {team.account_ids
+                                    .map((id) => usernames.get(id))
+                                    .join(", ")}
+                            </div>
+                        </td>
+                        <ScoreCells row={team} />
+                    </tr>
+                );
+            })}
+        </ScoreTable>
+    );
+}
+
+/** Every player ranked by score, with a Team column in a Run with teams. */
+function PlayerTable({
+    scores,
+    hasTeams,
+    me,
+}: {
+    scores: Score[];
+    hasTeams: boolean;
+    me: number | undefined;
+}) {
+    return (
+        <ScoreTable label="Player" teamColumn={hasTeams}>
+            {scores.map((row, index) => (
+                <tr
+                    key={row.account_id}
+                    className={cn(
+                        "border-b border-border/30",
+                        row.account_id === me && "bg-brand/10",
+                    )}
+                >
+                    <td className="py-2 px-4 text-right font-mono">
+                        {index + 1}
+                    </td>
+                    <td className="py-2 px-4 font-medium">
+                        {row.username}
+                        {row.account_id === me && (
+                            <span className="text-muted-foreground">
+                                {" "}
+                                (you)
+                            </span>
+                        )}
+                    </td>
+                    {hasTeams && (
+                        <td className="py-2 px-4 text-muted-foreground">
+                            {row.team}
+                        </td>
+                    )}
+                    <ScoreCells row={row} />
+                </tr>
+            ))}
+        </ScoreTable>
+    );
+}
+
+/**
+ * A ranking table's frame and header: rank, the ranked name, the four parts and
+ * the score.
+ */
+function ScoreTable({
+    label,
+    teamColumn = false,
+    children,
+}: {
+    label: string;
+    teamColumn?: boolean;
+    children: ReactNode;
+}) {
+    return (
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="bg-secondary">
+                        <th className="py-2 px-4 text-right font-semibold">
+                            Rank
+                        </th>
+                        <th className="py-2 px-4 text-left font-semibold">
+                            {label}
+                        </th>
+                        {teamColumn && (
+                            <th className="py-2 px-4 text-left font-semibold">
+                                Team
+                            </th>
+                        )}
+                        {COLUMNS.map((column) => (
+                            <th
+                                key={column.key}
+                                className="py-2 px-4 text-right font-semibold"
+                            >
+                                {column.label}
+                            </th>
+                        ))}
+                        <th className="py-2 px-4 text-right font-bold tracking-wide">
+                            SCORE
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>{children}</tbody>
+            </table>
+        </div>
+    );
+}
+
+/** The four parts of a score, the two costs as negative amounts, then the score. */
+function ScoreCells({ row }: { row: Score | TeamScore }) {
+    return (
+        <>
+            {COLUMNS.map((column) => (
+                <td key={column.key} className="py-2 px-4 text-right">
+                    <Money amount={column.sign * row[column.key]} />
+                </td>
+            ))}
+            <td className="py-2 px-4 text-right font-semibold">
+                <Money amount={row.score} />
+            </td>
+        </>
     );
 }
 

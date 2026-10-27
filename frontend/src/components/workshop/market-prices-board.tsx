@@ -22,11 +22,13 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 
+import { PlayerName } from "@/components/workshop/player-name";
 import { useOpenPricePanel } from "@/contexts/price-panel-context";
 import {
     useMarketPrices,
     usePriceSettingOpen,
     useWorkshopEntry,
+    useWorkshopTeams,
 } from "@/hooks/use-workshop";
 import {
     type MarketColumn,
@@ -54,6 +56,7 @@ export function MarketPricesBoard({
 }) {
     const room = useMarketPrices(round, season);
     const { data: entry } = useWorkshopEntry();
+    const { teamOf } = useWorkshopTeams();
     const windowOpen = usePriceSettingOpen();
     const openPricePanel = useOpenPricePanel();
 
@@ -149,6 +152,7 @@ export function MarketPricesBoard({
                             <BoardRow
                                 key={player.account_id}
                                 player={player}
+                                team={teamOf(player.account_id)}
                                 columns={columns}
                                 isMe={player.account_id === me}
                                 onOwnRowClick={handleOwnRowClick}
@@ -187,11 +191,13 @@ function BoardStatus({ live }: { live: boolean }) {
 
 function BoardRow({
     player,
+    team,
     columns,
     isMe,
     onOwnRowClick,
 }: {
     player: PlayerQuotes;
+    team: string | null;
     columns: MarketColumn[];
     isMe: boolean;
     onOwnRowClick: () => void;
@@ -221,10 +227,10 @@ function BoardRow({
                         aria-label="Change your prices"
                         className="rounded-sm"
                     >
-                        {player.username}
+                        <PlayerName username={player.username} team={team} />
                     </button>
                 ) : (
-                    player.username
+                    <PlayerName username={player.username} team={team} />
                 )}
                 {isMe && (
                     <span className="ml-1 font-normal text-muted-foreground">

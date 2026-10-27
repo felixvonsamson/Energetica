@@ -41,7 +41,7 @@ export interface paths {
          * Confirm Join
          * @description Confirm joining: join the signed-in visitor to this run through the lobby service.
          *
-         *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
+         *     Requires an SSO session (``get_standing``, not ``get_settled_player`` — the whole point
          *     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
          *     deliberately does not go through ``_enforce_instance_access``: granting access is this
          *     endpoint's job, not a precondition for reaching it. Checks identity before instance state
@@ -172,7 +172,8 @@ export interface paths {
         /**
          * Enter
          * @description Enter the Run. A player is placed into its shared Network the first time and gets the same
-         *     player every time after. A facilitator runs the session rather than plays, so is placed nowhere.
+         *     player every time after. A facilitator runs the session rather than plays, so is placed nowhere. In a Run with
+         *     teams, an account on no team is refused (#1384).
          */
         post: operations["enter_api_v1_workshop_enter_post"];
         delete?: never;
@@ -1965,6 +1966,11 @@ export interface components {
             /** Username */
             username: string;
             /**
+             * Team
+             * @description The player's team, or None in a Run without teams
+             */
+            team: string | null;
+            /**
              * Operating Profit
              * @description Operating profit over the Rounds completed so far
              */
@@ -1992,7 +1998,7 @@ export interface components {
         };
         /**
          * Scoreboard
-         * @description Every player's score after the Rounds completed so far, highest first.
+         * @description Every player's score after the Rounds completed so far, highest first, and every team's in a Run with teams.
          */
         Scoreboard: {
             /**
@@ -2007,6 +2013,11 @@ export interface components {
             final: boolean;
             /** Scores */
             scores: components["schemas"]["Score"][];
+            /**
+             * Teams
+             * @description Every team's score, highest first, or None without teams
+             */
+            teams: components["schemas"]["TeamScore"][] | null;
         };
         /**
          * SeasonFigures
@@ -2088,6 +2099,29 @@ export interface components {
              * @description The season's average solar output against a normal season's, as a change: -0.03 is 3% below normal
              */
             solar: number;
+        };
+        /**
+         * TeamScore
+         * @description One team's score (#1384): the sum of its members' scores, and of what they add up from.
+         */
+        TeamScore: {
+            /** Name */
+            name: string;
+            /**
+             * Account Ids
+             * @description The team's players, in the order they joined. A member who never entered has no player, so is left out
+             */
+            account_ids: number[];
+            /** Operating Profit */
+            operating_profit: number;
+            /** Investments */
+            investments: number;
+            /** Carbon Tax */
+            carbon_tax: number;
+            /** Residual Value */
+            residual_value: number;
+            /** Score */
+            score: number;
         };
         /**
          * TradingPeriod
@@ -2551,6 +2585,11 @@ export interface components {
             account_id: number;
             /** Username */
             username: string;
+            /**
+             * Team
+             * @description The player's team, or null in a Run without teams
+             */
+            team: string | null;
         };
         /**
          * WorkshopMeritOrderOut
@@ -2780,6 +2819,11 @@ export interface components {
             account_id: number;
             /** Username */
             username: string;
+            /**
+             * Team
+             * @description The player's team, or null in a Run without teams
+             */
+            team: string | null;
             /** Money */
             money: number;
         };
@@ -2983,6 +3027,11 @@ export interface components {
              * @description Everyone placed into the Run, in the order they entered
              */
             players: components["schemas"]["WorkshopMemberOut"][];
+            /**
+             * Teams
+             * @description The Run's teams, in the order its config lists them, or null in a Run without teams
+             */
+            teams: components["schemas"]["WorkshopTeamOut"][] | null;
             /** @description The current Round's format. Before Round 1 starts, the format it will start with */
             round_format: components["schemas"]["RoundFormat"];
             /** @description How far the simulation of the Trading period has got while it runs, or null when none is running. The session cannot advance while one is */
@@ -3013,6 +3062,19 @@ export interface components {
              * @description Days the simulation clears: 14 for a representative week, which is cleared twice for its cyclic start, and 91 for a full season
              */
             days_total: number;
+        };
+        /**
+         * WorkshopTeamOut
+         * @description One of the Run's teams, as its config lists it (#1384).
+         */
+        WorkshopTeamOut: {
+            /** Name */
+            name: string;
+            /**
+             * Members
+             * @description The usernames on the team, including any who have not entered
+             */
+            members: string[];
         };
         /**
          * WorkshopTechnologyProgressOut
@@ -3145,7 +3207,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN" | "WORKSHOP_NOT_ON_A_TEAM";
     };
     responses: never;
     parameters: never;

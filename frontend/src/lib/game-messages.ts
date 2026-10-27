@@ -107,6 +107,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "The loan can't be cancelled: your selection needs it. Remove facilities from your selection first.",
     WORKSHOP_LAST_RECAP_OPEN:
         "No Round can be added: the last Recap has opened and shown the final scores.",
+    WORKSHOP_NOT_ON_A_TEAM:
+        "This workshop plays in teams, and your account is not on any team. Ask the facilitator to check the team list.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

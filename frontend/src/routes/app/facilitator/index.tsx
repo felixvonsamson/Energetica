@@ -17,6 +17,8 @@ import {
     useFacilitatorAccess,
     useSetJoinOpen,
 } from "@/hooks/use-facilitator-access";
+import { useRunMode } from "@/hooks/use-run-mode";
+import { useWorkshopSession } from "@/hooks/use-workshop";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { buildJoinUrl } from "@/lib/facilitator";
 import { Button } from "@energetica/ui/components/button";
@@ -46,6 +48,10 @@ function FacilitatorHelp() {
                 shows a "contact the administrator" message instead of letting
                 anyone in.
             </p>
+            <p>
+                A Workshop Run that plays in teams has no join link: its players
+                log in with the accounts made for their team.
+            </p>
         </div>
     );
 }
@@ -69,10 +75,60 @@ function FacilitatorPage() {
             <FacilitatorHeader />
             <main className="flex-1 overflow-auto p-4 md:p-8">
                 <div className="max-w-xl mx-auto">
-                    <JoinLinkCard />
+                    <AccessCard />
                 </div>
             </main>
         </div>
+    );
+}
+
+/**
+ * The join link card, or in a Workshop Run with teams (#1384) a note in its
+ * place: the join link could only add accounts on no team, which cannot enter.
+ * Nothing is shown until the page knows whether the Run has teams, so a Run
+ * with teams never offers the link, even briefly.
+ */
+function AccessCard() {
+    const runMode = useRunMode();
+    const isWorkshop = runMode.data === "workshop";
+    const session = useWorkshopSession({ enabled: isWorkshop });
+
+    if (runMode.isPending || (isWorkshop && session.isPending)) {
+        return (
+            <div className="flex justify-center py-12">
+                <Spinner />
+            </div>
+        );
+    }
+    const error = runMode.error ?? (isWorkshop ? session.error : null);
+    if (error) {
+        return (
+            <InfoBanner variant="error">
+                {getUserFriendlyError(error)}
+            </InfoBanner>
+        );
+    }
+    return isWorkshop && session.data?.teams ? (
+        <TeamsInsteadOfJoinLink />
+    ) : (
+        <JoinLinkCard />
+    );
+}
+
+function TeamsInsteadOfJoinLink() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>
+                    <TypographyH2>Join link</TypographyH2>
+                </CardTitle>
+                <TypographyMuted>
+                    This Run plays in teams, so only the accounts on its team
+                    list can play. There is no join link: players log in with
+                    the accounts made for their team.
+                </TypographyMuted>
+            </CardHeader>
+        </Card>
     );
 }
 

@@ -27,8 +27,10 @@ import {
     Tags,
     TimerOff,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
+import { PlayerName } from "@/components/workshop/player-name";
 import { RecapButton } from "@/components/workshop/recap-view";
 import {
     useAdvanceSession,
@@ -126,7 +128,14 @@ export function WorkshopTopBar({
                 {entry && (
                     <AccountMenu
                         name={
-                            entry.player ? entry.player.username : "Facilitator"
+                            entry.player ? (
+                                <PlayerName
+                                    username={entry.player.username}
+                                    team={entry.player.team}
+                                />
+                            ) : (
+                                "Facilitator"
+                            )
                         }
                     />
                 )}
@@ -208,13 +217,13 @@ function Cash() {
  * leading back to the lobby or logging out. Logging out goes through the lobby,
  * which clears the session cookie every Run shares (ADR-0002).
  */
-function AccountMenu({ name }: { name: string }) {
+function AccountMenu({ name }: { name: ReactNode }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" aria-label="Account menu">
                     <CircleUser className="size-4" />
-                    <span className="hidden max-w-32 truncate sm:inline">
+                    <span className="hidden max-w-48 truncate sm:inline">
                         {name}
                     </span>
                 </Button>

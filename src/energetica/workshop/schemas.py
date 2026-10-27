@@ -36,6 +36,7 @@ class WorkshopPlayerOut(BaseModel):
 
     account_id: int
     username: str
+    team: str | None = Field(description="The player's team, or null in a Run without teams")
     money: float
 
 
@@ -53,6 +54,14 @@ class WorkshopMemberOut(BaseModel):
 
     account_id: int
     username: str
+    team: str | None = Field(description="The player's team, or null in a Run without teams")
+
+
+class WorkshopTeamOut(BaseModel):
+    """One of the Run's teams, as its config lists it (#1384)."""
+
+    name: str
+    members: list[str] = Field(description="The usernames on the team, including any who have not entered")
 
 
 class WorkshopPhaseTimerOut(BaseModel):
@@ -97,6 +106,9 @@ class WorkshopSessionOut(BaseModel):
         "at a checkpoint that has none"
     )
     players: list[WorkshopMemberOut] = Field(description="Everyone placed into the Run, in the order they entered")
+    teams: list[WorkshopTeamOut] | None = Field(
+        description="The Run's teams, in the order its config lists them, or null in a Run without teams"
+    )
     round_format: RoundFormat = Field(
         description="The current Round's format. Before Round 1 starts, the format it will start with"
     )

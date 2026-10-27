@@ -57,6 +57,9 @@ class WorkshopPlayer:
     username: str
     network: WorkshopNetwork
 
+    # The team the player is on (#1384), or None in a Run without teams. Set when they first enter, and never changed.
+    team: str | None = None
+
     money: float = WORKSHOP_STARTING_BUDGET
 
     owned_facilities: list[OwnedFacility] = field(default_factory=list)

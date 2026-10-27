@@ -35,6 +35,7 @@ from collections.abc import Iterable
 
 from pydantic import BaseModel, Field
 
+from energetica.identity.instance_config import Team
 from energetica.workshop.facilities import CATALOG, session_price
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.loan import LOAN_COST
@@ -47,6 +48,7 @@ class Score(BaseModel):
 
     account_id: int
     username: str
+    team: str | None = Field(description="The player's team, or None in a Run without teams")
     operating_profit: float = Field(description="Operating profit over the Rounds completed so far")
     investments: float = Field(
         description="What the player paid for every facility they bought, plus the cost of their loan if they took one"
@@ -82,6 +84,7 @@ def score(player: WorkshopPlayer, *, completed_rounds: int, price_round_count: i
     return Score(
         account_id=player.account_id,
         username=player.username,
+        team=player.team,
         operating_profit=operating_profit,
         investments=purchases + loan_cost,
         carbon_tax=carbon_tax,
@@ -90,12 +93,31 @@ def score(player: WorkshopPlayer, *, completed_rounds: int, price_round_count: i
     )
 
 
+# The parts of a score, and the score itself, which a team's score sums over its members.
+SCORE_PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value", "score")
+
+
+class TeamScore(BaseModel):
+    """One team's score (#1384): the sum of its members' scores, and of what they add up from."""
+
+    name: str
+    account_ids: list[int] = Field(
+        description="The team's players, in the order they joined. A member who never entered has no player, so is left out"
+    )
+    operating_profit: float
+    investments: float
+    carbon_tax: float
+    residual_value: float
+    score: float
+
+
 class Scoreboard(BaseModel):
-    """Every player's score after the Rounds completed so far, highest first."""
+    """Every player's score after the Rounds completed so far, highest first, and every team's in a Run with teams."""
 
     completed_rounds: int = Field(ge=0, description="How many Rounds the scores count")
     final: bool = Field(description="Whether the session is over, so the scores are final")
     scores: list[Score]
+    teams: list[TeamScore] | None = Field(description="Every team's score, highest first, or None without teams")
 
 
 def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int, price_round_count: int) -> list[Score]:
@@ -106,3 +128,16 @@ def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int, price_ro
         score(player, completed_rounds=completed_rounds, price_round_count=price_round_count) for player in players
     ]
     return sorted(scores, key=lambda player_score: player_score.score, reverse=True)
+
+
+def ranked_teams(teams: Iterable[Team], scores: Iterable[Score]) -> list[TeamScore]:
+    """Every team's score from its players' ``scores``, highest first (#1384). A member who never entered adds
+    nothing. Teams on the same score keep their order in ``teams``.
+    """
+    scores = list(scores)
+    team_scores = []
+    for team in teams:
+        members = [member for member in scores if member.team == team.name]
+        sums = {part: sum(getattr(member, part) for member in members) for part in SCORE_PARTS}
+        team_scores.append(TeamScore(name=team.name, account_ids=[member.account_id for member in members], **sums))
+    return sorted(team_scores, key=lambda team_score: team_score.score, reverse=True)

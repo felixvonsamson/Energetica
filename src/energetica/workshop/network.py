@@ -39,8 +39,8 @@ class WorkshopNetwork:
         """The Run's players, in the order they joined."""
         return list(self.members.values())
 
-    def join(self, account: Account) -> WorkshopPlayer:
-        """Place ``account`` into this Network, or return its existing player.
+    def join(self, account: Account, *, team: str | None = None) -> WorkshopPlayer:
+        """Place ``account`` into this Network on ``team``, or return its existing player, whose team stays as it was.
 
         Unlike the persistent world's ``join_network``, this is automatic and unconditional. It is
         also not subject to the persistent world's per-network member cap, which only gates that one
@@ -53,7 +53,7 @@ class WorkshopNetwork:
             existing = self.members.get(account.account_id)
             if existing is not None:
                 return existing
-            player = WorkshopPlayer(account_id=account.account_id, username=account.username, network=self)
+            player = WorkshopPlayer(account_id=account.account_id, username=account.username, network=self, team=team)
             self.members[account.account_id] = player
             return player
 
@@ -62,6 +62,7 @@ class WorkshopNetwork:
         *,
         account_id: int,
         username: str,
+        team: str | None,
         money: float,
         owned_facilities: list[OwnedFacility],
         purchases: list[Purchase],
@@ -83,6 +84,7 @@ class WorkshopNetwork:
                 account_id=account_id,
                 username=username,
                 network=self,
+                team=team,
                 money=money,
                 owned_facilities=owned_facilities,
                 purchases=purchases,

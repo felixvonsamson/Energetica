@@ -6,8 +6,8 @@
  * period (#1007), voting on a carbon tax (#1014), and following technology
  * unlocks and planning each Round's levers, events and phase timers as the
  * facilitator (#1011, #1012, #1018, #1190), sending players to the page they
- * need when a phase starts or ends (#1251), and reading the control room
- * (#1289).
+ * need when a phase starts or ends (#1251), reading the control room (#1289),
+ * and reading each player's team (#1384).
  */
 
 import {
@@ -17,7 +17,7 @@ import {
     useQuery,
 } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import io from "socket.io-client";
 import { toast } from "sonner";
 
@@ -81,11 +81,50 @@ export function useWorkshopEntry({ enabled = true } = {}) {
  * Where the session is. It is re-read when the server says it changed, through
  * the socket {@link useWorkshopSocket} opens.
  */
-export function useWorkshopSession() {
+export function useWorkshopSession({
+    enabled = true,
+    refetchInterval,
+}: { enabled?: boolean; refetchInterval?: number } = {}) {
     return useQuery({
         queryKey: queryKeys.workshop.session,
         queryFn: workshopApi.getSession,
+        enabled,
+        refetchInterval,
     });
+}
+
+/**
+ * Each player's team in a Run with teams (#1384), and the current player's
+ * teammates. Without teams, or for the facilitator, every team is `null` and
+ * there are no teammates.
+ */
+export function useWorkshopTeams() {
+    const { data: entry } = useWorkshopEntry();
+    const { data: session } = useWorkshopSession();
+    const players = session?.players;
+    const me = entry?.player ?? null;
+
+    return useMemo(() => {
+        const teams = new Map(
+            (players ?? []).map((player) => [player.account_id, player.team]),
+        );
+        const myTeam = me?.team ?? null;
+        const teammateIds =
+            myTeam === null
+                ? []
+                : (players ?? [])
+                      .filter(
+                          (player) =>
+                              player.team === myTeam &&
+                              player.account_id !== me?.account_id,
+                      )
+                      .map((player) => player.account_id);
+        return {
+            teamOf: (accountId: number): string | null =>
+                teams.get(accountId) ?? null,
+            teammateIds,
+        };
+    }, [players, me]);
 }
 
 /**

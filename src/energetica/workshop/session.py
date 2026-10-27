@@ -86,6 +86,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
+from energetica.identity.instance_config import Team, WorkshopRun
 from energetica.kernel.atomic_file import write_atomically
 from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
 from energetica.workshop.control_room import (
@@ -170,7 +171,7 @@ from energetica.workshop.round_plan import (
     with_levers,
     without_event,
 )
-from energetica.workshop.score import Scoreboard, ranked
+from energetica.workshop.score import Scoreboard, ranked, ranked_teams
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
@@ -263,6 +264,12 @@ class SessionFinishedError(WorkshopError):
     """Raised when advancing a session that is already :class:`Finished`."""
 
     code = WorkshopErrorCode.WORKSHOP_SESSION_FINISHED
+
+
+class NotOnATeamError(WorkshopError):
+    """Raised when an account on no team enters a Run with teams as a player (#1384)."""
+
+    code = WorkshopErrorCode.WORKSHOP_NOT_ON_A_TEAM
 
 
 class InvestmentClosedError(WorkshopError):
@@ -596,6 +603,7 @@ LOADED_RECORDS = 3
 class _SavedPlayer(BaseModel):
     account_id: int
     username: str
+    team: str | None
     money: float
     owned_facilities: list[OwnedFacility]
     purchases: list[Purchase]
@@ -669,11 +677,15 @@ class WorkshopSession:
         ballots: dict[int, Ballot] | None = None,
         vote_outcomes: list[VoteOutcome] | None = None,
         demand_growth: dict[int, float] | None = None,
+        teams: list[Team] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
             raise ValueError(f"a session needs at least one Round, not {round_count}")
         self.network = network
+        # The Run's teams from its config (#1384), or None for a Run without teams. Read when the session opens: a
+        # player's team is looked up from them when they first enter.
+        self.teams = teams
         self.path = path
         self.checkpoint: Checkpoint = checkpoint
         self.round_count = round_count
@@ -757,12 +769,14 @@ class WorkshopSession:
         Workshop Run. ``clock`` gives the current time that phase timers count from.
         """
         network = open_workshop_run(config)
+        teams = config.run.teams if isinstance(config.run, WorkshopRun) else None
         if not path.exists():
             session = cls(
                 network=network,
                 path=path,
                 checkpoint=NotStarted(),
                 round_count=round_count,
+                teams=teams,
                 clock=clock,
             )
             session._save(session.checkpoint, session.phase_timer)
@@ -772,6 +786,7 @@ class WorkshopSession:
             network.restore(
                 account_id=player.account_id,
                 username=player.username,
+                team=player.team,
                 money=player.money,
                 owned_facilities=player.owned_facilities,
                 purchases=player.purchases,
@@ -805,6 +820,7 @@ class WorkshopSession:
             ballots=saved.ballots,
             vote_outcomes=saved.vote_outcomes,
             demand_growth=saved.demand_growth,
+            teams=teams,
             clock=clock,
         )
 
@@ -1674,17 +1690,19 @@ class WorkshopSession:
             return self._price_summaries[period]
 
     def scoreboard(self) -> Scoreboard:
-        """Every player's score after the Rounds completed so far, highest first (#1017, #1250). Final once the
-        session is :class:`Finished`.
+        """Every player's score after the Rounds completed so far, highest first (#1017, #1250), and in a Run with
+        teams every team's (#1384). Final once the session is :class:`Finished`.
         """
         with self._lock:
             completed = completed_rounds(self.checkpoint, round_count=self.round_count)
+            scores = ranked(
+                self.network.players(), completed_rounds=completed, price_round_count=self.price_round_count
+            )
             return Scoreboard(
                 completed_rounds=completed,
                 final=isinstance(self.checkpoint, Finished),
-                scores=ranked(
-                    self.network.players(), completed_rounds=completed, price_round_count=self.price_round_count
-                ),
+                scores=scores,
+                teams=None if self.teams is None else ranked_teams(self.teams, scores),
             )
 
     def plans_view(self) -> PlansView:
@@ -2144,10 +2162,19 @@ class WorkshopSession:
         return price.price if price is not None else CATALOG_FUEL_PRICES[fuel]
 
     def join(self, account: Account) -> WorkshopPlayer:
-        """Place ``account`` into the Run's Network, or return its existing player."""
+        """Place ``account`` into the Run's Network, or return its existing player.
+
+        In a Run with teams, a new player is placed on the team their username is on, and an account on no team is
+        refused (#1384). A player who has entered keeps their team, even if their account is renamed.
+        """
         with self._lock:
             is_new = account.account_id not in self.network.members
-            player = self.network.join(account)
+            team = None
+            if is_new and self.teams is not None:
+                team = next((team.name for team in self.teams if account.username in team.members), None)
+                if team is None:
+                    raise NotOnATeamError(f"{account.username!r} is on no team")
+            player = self.network.join(account, team=team)
             if is_new:
                 try:
                     self._save(self.checkpoint, self.phase_timer)
@@ -2169,6 +2196,7 @@ class WorkshopSession:
                 _SavedPlayer(
                     account_id=player.account_id,
                     username=player.username,
+                    team=player.team,
                     money=player.money,
                     owned_facilities=player.owned_facilities,
                     purchases=player.purchases,
