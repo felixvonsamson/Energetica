@@ -66,7 +66,8 @@ session finishes.
 
 The session ranks the players by their score all game (#1017, #1250, :mod:`~energetica.workshop.score`). It
 counts the Rounds completed so far, so it changes as each Recap opens, and is final once the session is
-:class:`Finished`.
+:class:`Finished`. In a Run with teams, the facilitator can set each team's bonus multiplier on its score
+at any time, for example to reward a quiz held outside the game.
 
 The control room (#1289, :mod:`~energetica.workshop.control_room`) shows the whole room what the session has done so
 far. The clearing prices it summarises come from each period's record, so the session keeps each period's summary once
@@ -270,6 +271,12 @@ class NotOnATeamError(WorkshopError):
     """Raised when an account on no team enters a Run with teams as a player (#1384)."""
 
     code = WorkshopErrorCode.WORKSHOP_NOT_ON_A_TEAM
+
+
+class NoSuchTeamError(WorkshopError):
+    """Raised when setting a bonus multiplier for a team the Run does not have, or in a Run without teams."""
+
+    code = WorkshopErrorCode.WORKSHOP_NO_SUCH_TEAM
 
 
 class InvestmentClosedError(WorkshopError):
@@ -645,6 +652,8 @@ class _SavedSession(BaseModel):
     ballots: dict[int, Ballot] = {}
     vote_outcomes: list[VoteOutcome] = []
     demand_growth: dict[int, float]
+    # Each team's bonus multiplier, by team name. Empty for a session saved before bonus multipliers.
+    bonus_multipliers: dict[str, float] = {}
 
 
 class WorkshopSession:
@@ -678,6 +687,7 @@ class WorkshopSession:
         vote_outcomes: list[VoteOutcome] | None = None,
         demand_growth: dict[int, float] | None = None,
         teams: list[Team] | None = None,
+        bonus_multipliers: dict[str, float] | None = None,
         clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
@@ -686,6 +696,9 @@ class WorkshopSession:
         # The Run's teams from its config (#1384), or None for a Run without teams. Read when the session opens: a
         # player's team is looked up from them when they first enter.
         self.teams = teams
+        # Each team's bonus multiplier on its score, by team name, as the facilitator set it. A team left out is
+        # multiplied by 1.
+        self.bonus_multipliers = {} if bonus_multipliers is None else bonus_multipliers
         self.path = path
         self.checkpoint: Checkpoint = checkpoint
         self.round_count = round_count
@@ -821,6 +834,7 @@ class WorkshopSession:
             vote_outcomes=saved.vote_outcomes,
             demand_growth=saved.demand_growth,
             teams=teams,
+            bonus_multipliers=saved.bonus_multipliers,
             clock=clock,
         )
 
@@ -1702,7 +1716,7 @@ class WorkshopSession:
                 completed_rounds=completed,
                 final=isinstance(self.checkpoint, Finished),
                 scores=scores,
-                teams=None if self.teams is None else ranked_teams(self.teams, scores),
+                teams=None if self.teams is None else ranked_teams(self.teams, scores, self.bonus_multipliers),
             )
 
     def plans_view(self) -> PlansView:
@@ -1906,6 +1920,24 @@ class WorkshopSession:
             self.ballots, self.vote_outcomes, self.plans = ballots, outcomes, plans
 
         return undo
+
+    def set_bonus_multipliers(self, multipliers: dict[str, float]) -> None:
+        """Set the bonus multiplier of each team ``multipliers`` names, by team name. A team it leaves out keeps its
+        multiplier. Raises :class:`NoSuchTeamError` if it names a team the Run does not have, and changes nothing.
+        """
+        with self._lock:
+            names = set() if self.teams is None else {team.name for team in self.teams}
+            unknown = set(multipliers) - names
+            if unknown:
+                raise NoSuchTeamError(f"the Run has no team named {', '.join(sorted(unknown))}")
+            before = self.bonus_multipliers
+            self.bonus_multipliers = {**before, **multipliers}
+            try:
+                self._save(self.checkpoint, self.phase_timer)
+            except BaseException:
+                # Undo the change, so the session matches the file.
+                self.bonus_multipliers = before
+                raise
 
     def set_timers(self, timers: PhaseTimers) -> None:
         """Replace the phase timers with ``timers``. They apply to the next phase that opens."""
@@ -2224,5 +2256,6 @@ class WorkshopSession:
             ballots=self.ballots,
             vote_outcomes=self.vote_outcomes,
             demand_growth=self.demand_growth,
+            bonus_multipliers=self.bonus_multipliers,
         )
         write_atomically(self.path, saved.model_dump_json(indent=2))

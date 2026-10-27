@@ -290,6 +290,34 @@ export const workshopApi = {
         ),
 
     /**
+     * Set each named team's bonus multiplier on its score. Facilitator only.
+     * Returns the scoreboard after the change.
+     */
+    setBonusMultipliers: (multipliers: Record<string, number>) =>
+        apiClient.put<
+            ApiResponse<"/api/v1/workshop/scoreboard/bonus-multipliers", "put">
+        >("/workshop/scoreboard/bonus-multipliers", { multipliers }),
+
+    /**
+     * The feedback the visitor sent on the game, or null if they have not sent
+     * any. Players only.
+     */
+    getFeedback: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/feedback", "get">>(
+            "/workshop/feedback",
+        ),
+
+    /**
+     * Send the visitor's feedback on the game, in place of any they sent
+     * before. Players only, once the session is finished.
+     */
+    sendFeedback: (feedback: ApiSchema<"WorkshopFeedback">) =>
+        apiClient.put<ApiResponse<"/api/v1/workshop/feedback", "put">>(
+            "/workshop/feedback",
+            feedback,
+        ),
+
+    /**
      * Everything the control room shows the room (#1289), apart from where the
      * session is. The same for everyone in the Run.
      */

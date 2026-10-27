@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from energetica.identity.account import Account
-from energetica.identity.instance_config import InstanceConfig
+from energetica.identity.instance_config import InstanceConfig, Team
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.score import ranked, residual_value, score
+from energetica.workshop.score import Score, ranked, ranked_teams, residual_value, score
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.loan import LOAN_COST, Loan
 from energetica.workshop.network import WorkshopNetwork
@@ -217,3 +217,42 @@ def test_before_the_first_round_completes_everyone_scores_nothing(network: Works
     alice.purchases = [Purchase(facility=GAS, round=1, price=30_000.0)]
 
     assert score(alice, completed_rounds=0, price_round_count=ROUNDS).score == 0.0
+
+
+def _score(account_id: int, team: str, operating_profit: float) -> Score:
+    return Score(
+        account_id=account_id,
+        username=f"player{account_id}",
+        team=team,
+        operating_profit=operating_profit,
+        investments=0.0,
+        carbon_tax=0.0,
+        residual_value=0.0,
+        score=operating_profit,
+    )
+
+
+TEAMS = [Team(name="Axpo", members=["a", "b"]), Team(name="Romande Energie", members=["c", "d"])]
+
+
+def test_a_team_scores_the_sum_of_its_members_scores_times_its_bonus_multiplier() -> None:
+    scores = [_score(1, "Axpo", 100.0), _score(2, "Axpo", 50.0), _score(3, "Romande Energie", 120.0)]
+
+    teams = ranked_teams(TEAMS, scores, {"Romande Energie": 1.5})
+
+    assert [(team.name, team.bonus_multiplier, team.score) for team in teams] == [
+        ("Romande Energie", 1.5, 180.0),
+        ("Axpo", 1.0, 150.0),
+    ]
+    # The parts stay the plain sums, so they add up to the score before the multiplier.
+    assert teams[0].operating_profit == 120.0
+
+
+def test_a_bonus_multiplier_can_change_the_teams_ranking() -> None:
+    scores = [_score(1, "Axpo", 100.0), _score(3, "Romande Energie", 90.0)]
+
+    assert [team.name for team in ranked_teams(TEAMS, scores, {})] == ["Axpo", "Romande Energie"]
+    assert [team.name for team in ranked_teams(TEAMS, scores, {"Romande Energie": 1.2})] == [
+        "Romande Energie",
+        "Axpo",
+    ]

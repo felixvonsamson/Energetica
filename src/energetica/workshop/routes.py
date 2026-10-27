@@ -11,10 +11,11 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone. The
-credentials of a Run with teams (#1385) are the facilitator's alone. The control room (#1289) is open to everyone in
-the Run, and names no player. Its capacity counts every player's selection (#1287), so changing a selection tells
-every open page to re-read it.
+The scoreboard (#1017) is open to everyone in the Run all game (#1250), and only the facilitator sets the teams' bonus
+multipliers on it. A player's loan (#1225) is theirs alone. The credentials of a Run with teams (#1385) are the
+facilitator's alone. The control room (#1289) is open to everyone in the Run, and names no player. Its capacity counts
+every player's selection (#1287), so changing a selection tells every open page to re-read it. Once the session is
+finished, each player can send feedback on the game, and read back only their own.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.credentials import WorkshopCredentials, read_credentials
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
+from energetica.workshop.feedback import FeedbackNotOpenError, FeedbackStore, WorkshopFeedback
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
@@ -45,6 +47,7 @@ from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
     WorkshopBallotIn,
+    WorkshopBonusMultipliersIn,
     WorkshopEntryOut,
     WorkshopEventOut,
     WorkshopEventsOut,
@@ -81,6 +84,7 @@ from energetica.workshop.schemas import (
 from energetica.workshop.score import Scoreboard
 from energetica.workshop.seasons import WEEK_DAYS, Season
 from energetica.workshop.session import (
+    Finished,
     Investment,
     NoSuchRoundError,
     PhaseTimers,
@@ -680,6 +684,56 @@ def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], sessio
     for everyone in the Run. Final once the session is over.
     """
     return session.scoreboard()
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/scoreboard/bonus-multipliers")
+async def set_bonus_multipliers(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    bonus_multipliers: WorkshopBonusMultipliersIn,
+) -> Scoreboard:
+    """Set the bonus multiplier of each team named, which multiplies its score, and tell every open page. Only in a
+    Run with teams, and only for its teams.
+    """
+    await run_in_threadpool(session.set_bonus_multipliers, bonus_multipliers.multipliers)
+    await invalidate_session(request.app)
+    return session.scoreboard()
+
+
+def get_feedback_store(request: Request) -> FeedbackStore:
+    """The database of players' feedback, which :func:`~energetica.workshop.app.create_workshop_app` opens."""
+    return request.app.state.feedback_store
+
+
+FeedbackStoreDep = Annotated[FeedbackStore, Depends(get_feedback_store)]
+
+
+@router.get("/feedback")
+def get_feedback(player: Player, store: FeedbackStoreDep) -> WorkshopFeedback | None:
+    """The feedback the calling player sent, or null if they have not sent any. Players only."""
+    return store.get(player.account_id)
+
+
+# Writes the feedback database, so it runs on a worker thread.
+@router.put("/feedback")
+def send_feedback(
+    player: Player, session: Session, store: FeedbackStoreDep, feedback: WorkshopFeedback
+) -> WorkshopFeedback:
+    """Send the calling player's feedback on the game, in place of any they sent before. Only once the session is
+    finished.
+    """
+    if not isinstance(session.checkpoint, Finished):
+        raise FeedbackNotOpenError("the session is not finished")
+    store.save(
+        account_id=player.account_id,
+        username=player.username,
+        team=player.team,
+        feedback=feedback,
+        submitted_at=session.clock(),
+    )
+    return store.get(player.account_id) or feedback
 
 
 # Reads a settled period's record the first time it is asked for, so it runs on a worker thread.

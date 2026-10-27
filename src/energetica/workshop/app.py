@@ -29,6 +29,7 @@ from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from energetica.workshop.credentials import CREDENTIALS_PATH, delete_expired_credentials
+from energetica.workshop.feedback import FEEDBACK_PATH, FeedbackStore
 from energetica.workshop.realtime import invalidate_session, send_settlement_progress, setup_socketio
 from energetica.workshop.routes import router as workshop_router
 from energetica.workshop.session import (
@@ -95,6 +96,10 @@ def create_workshop_app(
     except (OSError, ValueError):
         # Only the facilitator's credentials card needs the file, so a broken one must not stop the Run.
         logger.exception("Could not read the Workshop credentials at %s", app.state.credentials_path)
+    # Players' feedback sits beside the session, in its own database, so starting the Run over keeps it.
+    app.state.feedback_store = FeedbackStore(
+        session_path.with_name(FEEDBACK_PATH.name), run_slug=instance_config.instance_slug()
+    )
     # Set to check the phases now rather than at the next interval, such as when the facilitator
     # closes a price-setting window by advancing.
     app.state.phase_check = asyncio.Event()

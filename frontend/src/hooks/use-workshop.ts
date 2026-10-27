@@ -7,7 +7,8 @@
  * unlocks and planning each Round's levers, events and phase timers as the
  * facilitator (#1011, #1012, #1018, #1190), sending players to the page they
  * need when a phase starts or ends (#1251), reading the control room (#1289),
- * and reading each player's team (#1384).
+ * reading each player's team (#1384), and sending feedback on the game once it
+ * is over.
  */
 
 import {
@@ -779,6 +780,45 @@ export function useWorkshopScoreboard() {
         queryKey: queryKeys.workshop.scoreboard,
         queryFn: workshopApi.getScoreboard,
         retry: false,
+    });
+}
+
+/**
+ * Set each named team's bonus multiplier on its score. The facilitator's
+ * scoreboard follows from the answer, and every other page re-reads it.
+ */
+export function useSetBonusMultipliers() {
+    return useMutation({
+        mutationFn: workshopApi.setBonusMultipliers,
+        // Safe to repeat: it sets the values outright.
+        retry: 1,
+        onSuccess: (scoreboard) => {
+            queryClient.setQueryData(queryKeys.workshop.scoreboard, scoreboard);
+        },
+    });
+}
+
+/**
+ * The feedback the visitor sent on the game, or null if they have not sent any.
+ * Players only.
+ */
+export function useWorkshopFeedback() {
+    return useQuery({
+        queryKey: queryKeys.workshop.feedback,
+        queryFn: workshopApi.getFeedback,
+    });
+}
+
+/** Send the visitor's feedback on the game, in place of any they sent before. */
+export function useSendFeedback() {
+    return useMutation({
+        mutationFn: workshopApi.sendFeedback,
+        onSuccess: (answer) => {
+            queryClient.setQueryData(queryKeys.workshop.feedback, answer);
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+        },
     });
 }
 

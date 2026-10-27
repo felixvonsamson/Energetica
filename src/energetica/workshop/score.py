@@ -27,11 +27,15 @@ of its lifetime it has left after the last completed Round: ``session_price × r
 lifetime_rounds``. The Rounds left are counted from the Round after it, so at the end of the session a facility that
 worked its final Round in the last Round is worth nothing. One still under construction keeps its whole lifetime, so it pays back its full price. Any price
 shock the player paid is left out. Only the facility counts: the energy a storage facility still holds is worth nothing.
+
+In a Run with teams (#1384), a team's score is the sum of its members' scores, times the team's bonus multiplier. The
+facilitator sets the multipliers, for example to reward a quiz held outside the game. A team without one is multiplied
+by 1. Players' own scores are never multiplied.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from pydantic import BaseModel, Field
 
@@ -93,12 +97,14 @@ def score(player: WorkshopPlayer, *, completed_rounds: int, price_round_count: i
     )
 
 
-# The parts of a score, and the score itself, which a team's score sums over its members.
-SCORE_PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value", "score")
+# The parts of a score, which a team's score sums over its members.
+PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value")
 
 
 class TeamScore(BaseModel):
-    """One team's score (#1384): the sum of its members' scores, and of what they add up from."""
+    """One team's score (#1384): the sum of its members' scores times the team's bonus multiplier, and what the sum
+    adds up from.
+    """
 
     name: str
     account_ids: list[int] = Field(
@@ -108,7 +114,10 @@ class TeamScore(BaseModel):
     investments: float
     carbon_tax: float
     residual_value: float
-    score: float
+    bonus_multiplier: float = Field(
+        description="What the facilitator multiplies the team's score by, such as a quiz bonus. 1 when none is set"
+    )
+    score: float = Field(description="The sum of the members' scores, times the bonus multiplier")
 
 
 class Scoreboard(BaseModel):
@@ -130,14 +139,26 @@ def ranked(players: Iterable[WorkshopPlayer], *, completed_rounds: int, price_ro
     return sorted(scores, key=lambda player_score: player_score.score, reverse=True)
 
 
-def ranked_teams(teams: Iterable[Team], scores: Iterable[Score]) -> list[TeamScore]:
+def ranked_teams(
+    teams: Iterable[Team], scores: Iterable[Score], bonus_multipliers: Mapping[str, float]
+) -> list[TeamScore]:
     """Every team's score from its players' ``scores``, highest first (#1384). A member who never entered adds
-    nothing. Teams on the same score keep their order in ``teams``.
+    nothing. Each team's score is multiplied by its multiplier in ``bonus_multipliers``, by team name, or by 1 if it
+    has none. Teams on the same score keep their order in ``teams``.
     """
     scores = list(scores)
     team_scores = []
     for team in teams:
         members = [member for member in scores if member.team == team.name]
-        sums = {part: sum(getattr(member, part) for member in members) for part in SCORE_PARTS}
-        team_scores.append(TeamScore(name=team.name, account_ids=[member.account_id for member in members], **sums))
+        sums = {part: sum(getattr(member, part) for member in members) for part in PARTS}
+        multiplier = bonus_multipliers.get(team.name, 1.0)
+        team_scores.append(
+            TeamScore(
+                name=team.name,
+                account_ids=[member.account_id for member in members],
+                bonus_multiplier=multiplier,
+                score=sum(member.score for member in members) * multiplier,
+                **sums,
+            )
+        )
     return sorted(team_scores, key=lambda team_score: team_score.score, reverse=True)

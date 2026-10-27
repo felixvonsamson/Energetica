@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -77,6 +77,14 @@ class WorkshopPhaseExtendIn(BaseModel):
     """The facilitator's "+N minutes" on the running phase."""
 
     minutes: int = Field(ge=1, le=60, description="How many minutes to add")
+
+
+class WorkshopBonusMultipliersIn(BaseModel):
+    """The bonus multiplier of each team named, by team name, which multiplies the team's score."""
+
+    multipliers: dict[str, Annotated[float, Field(gt=0, le=2, allow_inf_nan=False)]] = Field(
+        description="Each team's bonus multiplier, by team name. A team left out keeps its multiplier"
+    )
 
 
 class WorkshopSettlementOut(BaseModel):

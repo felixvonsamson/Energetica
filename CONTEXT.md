@@ -341,9 +341,15 @@ A fixed group of accounts, usually the computers at one table, set in the Run's 
 is provisioned. Teams are optional: a Run either has none, or puts every player on one, with the same number
 of accounts on each team. An account on no team cannot play in a Run with teams. A player's team is set when
 they first enter and never changes. The team score is the sum of its members' scores, even when a member never
-entered, and the **scoreboard** ranks teams above its ranking of players. Teams only label and score:
-teammates still trade as separate players.
+entered, times the team's **bonus multiplier**, and the **scoreboard** ranks teams above its ranking of players.
+Teams only label and score: teammates still trade as separate players.
 _Avoid_: table (the room's furniture, not a game term), group.
+
+**Bonus multiplier**:
+What a team's score is multiplied by, set by the facilitator at any time, for example to reward a quiz held
+outside the game. Every team starts at 1. The scoreboard shows the multipliers only once one differs from 1.
+Players' own scores are never multiplied.
+_Avoid_: bonus points, handicap.
 
 **Session-length price** (#1306):
 What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it starts with. Nuclear
