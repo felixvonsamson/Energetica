@@ -28,6 +28,7 @@ from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
+from energetica.workshop.feedback import FEEDBACK_PATH, FeedbackStore
 from energetica.workshop.realtime import invalidate_session, send_settlement_progress, setup_socketio
 from energetica.workshop.routes import router as workshop_router
 from energetica.workshop.session import (
@@ -86,6 +87,10 @@ def create_workshop_app(
     if rm_instance:
         session_path.unlink(missing_ok=True)
     app.state.workshop_session = WorkshopSession.open(config, session_path, clock=clock)
+    # Players' feedback sits beside the session, in its own database, so starting the Run over keeps it.
+    app.state.feedback_store = FeedbackStore(
+        session_path.with_name(FEEDBACK_PATH.name), run_slug=instance_config.instance_slug()
+    )
     # Set to check the phases now rather than at the next interval, such as when the facilitator
     # closes a price-setting window by advancing.
     app.state.phase_check = asyncio.Event()
