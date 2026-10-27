@@ -114,6 +114,7 @@ function PickerPage() {
             runs={myRuns.data.runs}
             facilitatedRuns={myRuns.data.facilitated_runs}
             advertised={advertised}
+            isTemporaryAccount={myRuns.data.expires_at !== null}
         />
     );
 }
@@ -177,20 +178,29 @@ function LoggedInPicker({
     runs,
     facilitatedRuns,
     advertised,
+    isTemporaryAccount,
 }: {
     runs: MyRun[];
     facilitatedRuns: FacilitatedRun[];
     advertised: InstanceFragment[];
+    isTemporaryAccount: boolean;
 }) {
     const myRunSlugs = new Set(runs.map((run) => run.slug));
     const facilitatedSlugs = new Set(facilitatedRuns.map((run) => run.slug));
     // A facilitator's own run can be public and advertised; without this exclusion it would show
     // up under "Open runs" with a "Join" button that would just fail server-side — player and
     // facilitator are mutually exclusive per (account_id, slug) (ADR-0004).
+    // A temporary account, made for one workshop, cannot join a freeplay run: it is deleted after
+    // the workshop and would leave a player behind with no account (#1383). The join route refuses
+    // it, so its "Join" button would only fail.
     const openRuns = advertised.filter(
         (instance) =>
             !myRunSlugs.has(instance.slug) &&
-            !facilitatedSlugs.has(instance.slug),
+            !facilitatedSlugs.has(instance.slug) &&
+            !(
+                isTemporaryAccount &&
+                (instance.mode ?? "freeplay") === "freeplay"
+            ),
     );
 
     return (

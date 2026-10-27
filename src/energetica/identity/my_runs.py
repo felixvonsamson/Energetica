@@ -38,7 +38,7 @@ def _parse_aware(raw: str | None) -> datetime | None:
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
 
-def build_my_runs(username: str, memberships: MembershipsOut) -> MyRunsResponse:
+def build_my_runs(username: str, memberships: MembershipsOut, *, expires_at: str | None = None) -> MyRunsResponse:
     """The account's joined runs — settled or not (#1030) — joined with each run's on-disk
     fragment for name / starts_at, most recently joined first. Stale memberships (run since
     deleted → no fragment) are dropped, and an account's own *unadvertised* runs are surfaced
@@ -53,6 +53,9 @@ def build_my_runs(username: str, memberships: MembershipsOut) -> MyRunsResponse:
     ``facilitated_runs`` (#1032) — a server-wide grant is not tied to a run, so ``memberships``
     never holds one. Both origins that call this function get the field; only the lobby picker's
     UI reads it today.
+
+    ``expires_at`` is the account's own, echoed back so the picker can hide freeplay Runs from a
+    temporary account, which cannot join one (#1383).
     """
     runs: list[MyRun] = []
     for membership in memberships.runs:
@@ -105,4 +108,9 @@ def build_my_runs(username: str, memberships: MembershipsOut) -> MyRunsResponse:
             )
         )
 
-    return MyRunsResponse(username=username, runs=runs, facilitated_runs=facilitated_runs)
+    return MyRunsResponse(
+        username=username,
+        runs=runs,
+        facilitated_runs=facilitated_runs,
+        expires_at=datetime.fromisoformat(expires_at) if expires_at is not None else None,
+    )

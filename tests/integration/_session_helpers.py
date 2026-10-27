@@ -9,6 +9,8 @@ tests need no lobby app.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
 
 from energetica.identity import web
@@ -17,9 +19,13 @@ from energetica.kernel.session_cookie import SESSION_COOKIE_NAME
 _tokens: dict[int, str] = {}
 
 
-def make_account(username: str = "alice", password: str = "correct-password") -> int:
-    """Create a server-wide account (as the lobby's signup would) and return its ``account_id``."""
-    created = web.lobby_service().create_account(username=username, password=password)
+def make_account(username: str = "alice", password: str = "correct-password", *, temporary: bool = False) -> int:
+    """
+    Create a server-wide account (as the lobby's signup would) and return its ``account_id``. With
+    ``temporary``, it is a temporary account that expires in a week, as workshop tooling makes.
+    """
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7) if temporary else None
+    created = web.lobby_service().create_account(username=username, password=password, expires_at=expires_at)
     _tokens[created.account_id] = created.token
     return created.account_id
 

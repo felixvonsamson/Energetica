@@ -48,3 +48,7 @@ class MyRunsResponse(BaseModel):
     facilitated_runs: list[FacilitatedRun] = Field(
         description="Runs this account facilitates via an instance-scoped grant, most recently granted first"
     )
+    expires_at: AwareDatetime | None = Field(
+        description="When this temporary account is deleted; null for a permanent account. "
+        "A temporary account cannot join a freeplay Run."
+    )

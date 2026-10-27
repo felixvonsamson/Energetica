@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime
 from urllib.parse import quote
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,7 @@ from energetica.identity.schemas.lobby_service import (
     JoinTokenOut,
     LobbyServiceErrorCode,
     MembershipsOut,
+    NewAccount,
     RunCreate,
     RunMember,
     RunOut,
@@ -211,11 +213,13 @@ class LobbyServiceClient:
 
     # --- accounts --------------------------------------------------------------------------------
 
-    def create_account(self, *, username: str, password: str) -> CreatedAccount:
-        """Sign up. Refusals: ``USERNAME_TAKEN``, ``PASSWORD_TOO_SHORT``."""
-        response = self._request(
-            "POST", "/accounts", expected=(201,), json={"username": username, "password": password}
-        )
+    def create_account(self, *, username: str, password: str, expires_at: datetime | None = None) -> CreatedAccount:
+        """
+        Create an account: a permanent one, as signup does, or a temporary one that the service
+        deletes after ``expires_at``. Refusals: ``USERNAME_TAKEN``, ``PASSWORD_TOO_SHORT``.
+        """
+        body = NewAccount(username=username, password=password, expires_at=expires_at)
+        response = self._request("POST", "/accounts", expected=(201,), json=body.model_dump(mode="json"))
         return _parse(response, CreatedAccount)
 
     def get_account(self, account_id: int) -> AccountOut | None:

@@ -12,22 +12,24 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.identity.account import Account
 from energetica.kernel.game_error import SharedErrorCode
 from energetica.identity.my_runs import build_my_runs
 from energetica.identity.schemas.lobby import MyRunsResponse
-from energetica.identity.web import get_current_account, lobby_service
+from energetica.identity.web import Standing, get_standing, lobby_service
 
 router = APIRouter(prefix="/lobby", tags=["Lobby"])
 
 
 @router.get("/my-runs")
-def get_my_runs(account: Annotated[Account | None, Depends(get_current_account)]) -> MyRunsResponse:
+def get_my_runs(standing: Annotated[Standing | None, Depends(get_standing)]) -> MyRunsResponse:
     """The authenticated account's settled runs, joined against on-disk fragments for name /
     starts_at, most recently settled first. Stale memberships (run since deleted → no fragment)
     are filtered out.
     """
-    if account is None:
+    if standing is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
 
-    return build_my_runs(account.username, lobby_service().get_memberships(account.account_id))
+    account = standing.account
+    return build_my_runs(
+        account.username, lobby_service().get_memberships(account.account_id), expires_at=standing.expires_at
+    )

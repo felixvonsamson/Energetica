@@ -229,6 +229,11 @@ export interface components {
              * @description Runs this account facilitates via an instance-scoped grant, most recently granted first
              */
             facilitated_runs: components["schemas"]["FacilitatedRun"][];
+            /**
+             * Expires At
+             * @description When this temporary account is deleted; null for a permanent account. A temporary account cannot join a freeplay Run.
+             */
+            expires_at: string | null;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -250,7 +255,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND";
     };
     responses: never;
     parameters: never;

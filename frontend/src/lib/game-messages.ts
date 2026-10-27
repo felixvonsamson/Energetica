@@ -46,6 +46,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
     INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
     LOBBY_SERVICE_UNAVAILABLE:
         "Accounts are briefly unavailable. Please try again in a moment.",
+    TEMPORARY_ACCOUNT_IN_FREEPLAY:
+        "This account was made for one workshop, so it can't join this run. Create your own account to play.",
     INSTANCE_NOT_PRIVATE:
         "This instance is not configured as private, so it has no join link.",
     JOIN_LINK_INVALID:

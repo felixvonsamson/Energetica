@@ -217,3 +217,62 @@ def test_socket_still_refuses_a_facilitator(configured: Path) -> None:
     _, answer = socket.connect(client)
 
     assert answer == {"message": "authentication failed: not a player"}
+
+
+# --- temporary accounts cannot play freeplay (#1383) ------------------------------------------
+
+
+def _enter_temporary(client: TestClient, username: str) -> int:
+    account_id = make_account(username, temporary=True)
+    authenticate(client, account_id)
+    return account_id
+
+
+def test_entry_refuses_a_temporary_account_on_a_freeplay_run(configured: Path) -> None:
+    _write_policy(configured, {"policy": "public"})
+    client = _client()
+    _enter_temporary(client, "table1-a")
+
+    response = client.get(ME_URL)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
+
+
+def test_entry_refuses_a_temporary_account_on_an_unconfigured_instance(configured: Path) -> None:
+    """An instance with no ``instance.json`` runs the persistent world, so it is freeplay too."""
+    client = _client()
+    _enter_temporary(client, "table1-a")
+
+    assert client.get(ME_URL).status_code == 403
+
+
+def test_entry_admits_a_temporary_account_on_a_workshop_run(configured: Path) -> None:
+    _write_policy(configured, None, run={"mode": "workshop"})
+    client = _client()
+    _join(_enter_temporary(client, "table1-a"))
+
+    assert client.get(ME_URL).status_code == 200
+
+
+def test_socket_refuses_a_temporary_account_on_a_freeplay_run(configured: Path) -> None:
+    _write_policy(configured, {"policy": "public"})
+    client = _client()
+    _enter_temporary(client, "table1-a")
+
+    _, answer = socket.connect(client)
+
+    assert answer == {"message": "TEMPORARY_ACCOUNT_IN_FREEPLAY"}
+
+
+def test_settling_refuses_a_temporary_account(configured: Path) -> None:
+    """Settle is not behind the entry gate, so it refuses a temporary account itself."""
+    _write_policy(configured, {"policy": "public"})
+    client = _client()
+    account_id = _enter_temporary(client, "table1-a")
+
+    response = client.post(f"http://localhost:{PORT}/api/v1/map/settle", json={"region_id": 1})
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
+    assert next(Player.filter_by(account_id=account_id), None) is None

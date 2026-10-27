@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 
 from energetica.identity.lobby_service_client import LobbyServiceClient, LobbyServiceRefusal
 from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode, RunCreate, RunUpdate
+from lobby_service import store
 from lobby_service.app import create_service_app
 from lobby_service.schema import SCHEMA_VERSION, upgrade_database
 from lobby_service.session import decode_session_token, mint_session_token
@@ -168,6 +169,78 @@ def test_changing_the_password(service: TestClient) -> None:
 
 
 # --- run members and facilitator grants --------------------------------------------------------
+
+
+# --- temporary accounts (#1383) ----------------------------------------------------------------
+
+
+def _create_temporary_account(service: TestClient, username: str, expires_at: str) -> dict:
+    resp = service.post(
+        "/accounts", json={"username": username, "password": "correct-password", "expires_at": expires_at}
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_a_temporary_account_reports_its_expiry_in_utc(service: TestClient) -> None:
+    temporary = _create_temporary_account(service, "table1-a", "2026-11-03T18:30:00.5+01:00")
+    permanent = _create_account(service)
+
+    account = service.get(f"/accounts/{temporary['account_id']}").json()
+    session = service.get("/session", headers=_bearer(temporary["token"])).json()
+
+    assert account["expires_at"] == "2026-11-03T17:30:00+00:00"
+    assert session["expires_at"] == "2026-11-03T17:30:00+00:00"
+    assert service.get(f"/accounts/{permanent['account_id']}").json()["expires_at"] is None
+
+
+def test_an_expiry_with_no_time_zone_is_refused(service: TestClient) -> None:
+    resp = service.post(
+        "/accounts", json={"username": "table1-a", "password": "correct-password", "expires_at": "2026-11-03T18:30:00"}
+    )
+    assert resp.status_code == 422
+
+
+def test_deleting_expired_accounts_keeps_permanent_and_unexpired_ones(service: TestClient) -> None:
+    expired = _create_temporary_account(service, "table1-a", "2026-10-01T00:00:00+00:00")
+    unexpired = _create_temporary_account(service, "table1-b", "2026-12-01T00:00:00+00:00")
+    permanent = _create_account(service)
+    for account in (expired, unexpired, permanent):
+        service.put(f"/runs/spring/members/{account['account_id']}")
+    service.put(f"/facilitator-grants/{expired['account_id']}", json={"slug": "autumn"})
+
+    deleted = store.delete_expired_accounts(now=datetime(2026, 11, 1, tzinfo=timezone.utc))
+
+    assert [account.username for account in deleted] == ["table1-a"]
+    assert service.get(f"/accounts/{expired['account_id']}").status_code == 404
+    assert service.get("/session", headers=_bearer(expired["token"])).status_code == 401
+    assert [m["username"] for m in service.get("/runs/spring/members").json()] == ["alice", "table1-b"]
+    with sqlite3.connect(store.db_path()) as conn:
+        rows = conn.execute("SELECT * FROM instance_membership WHERE account_id = ?", (expired["account_id"],))
+        assert rows.fetchall() == []
+
+
+def test_an_account_expires_at_its_expiry_time(service: TestClient) -> None:
+    _create_temporary_account(service, "table1-a", "2026-11-01T00:00:00+00:00")
+
+    assert store.delete_expired_accounts(now=datetime(2026, 10, 31, 23, 59, 59, tzinfo=timezone.utc)) == []
+    assert len(store.delete_expired_accounts(now=datetime(2026, 11, 1, tzinfo=timezone.utc))) == 1
+
+
+def test_a_deleted_accounts_username_is_free_for_a_new_account(service: TestClient) -> None:
+    expired = _create_temporary_account(service, "table1-a", "2026-10-01T00:00:00+00:00")
+    store.delete_expired_accounts(now=datetime(2026, 11, 1, tzinfo=timezone.utc))
+
+    reused = _create_temporary_account(service, "table1-a", "2026-12-01T00:00:00+00:00")
+
+    assert reused["account_id"] > expired["account_id"]
+
+
+def test_the_service_deletes_expired_accounts_when_it_starts(service: TestClient) -> None:
+    expired = _create_temporary_account(service, "table1-a", "2000-01-01T00:00:00+00:00")
+
+    with TestClient(create_service_app(), base_url=BASE) as started:
+        assert started.get(f"/accounts/{expired['account_id']}").status_code == 404
 
 
 def test_joining_a_run_shows_in_the_session_members_and_memberships(service: TestClient) -> None:
