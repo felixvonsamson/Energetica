@@ -97,8 +97,8 @@ def score(player: WorkshopPlayer, *, completed_rounds: int, price_round_count: i
     )
 
 
-# The parts of a score, and the score itself, which a team's score sums over its members.
-SCORE_PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value", "score")
+# The parts of a score, which a team's score sums over its members.
+PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value")
 
 
 class TeamScore(BaseModel):
@@ -150,14 +150,14 @@ def ranked_teams(
     team_scores = []
     for team in teams:
         members = [member for member in scores if member.team == team.name]
-        sums = {part: sum(getattr(member, part) for member in members) for part in SCORE_PARTS}
+        sums = {part: sum(getattr(member, part) for member in members) for part in PARTS}
         multiplier = bonus_multipliers.get(team.name, 1.0)
-        sums["score"] *= multiplier
         team_scores.append(
             TeamScore(
                 name=team.name,
                 account_ids=[member.account_id for member in members],
                 bonus_multiplier=multiplier,
+                score=sum(member.score for member in members) * multiplier,
                 **sums,
             )
         )
