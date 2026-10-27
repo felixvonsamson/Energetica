@@ -30,6 +30,8 @@ class Account:
     pwhash: str
     email: str | None
     created_at: str
+    expires_at: str | None
+    """When a temporary account is deleted, or ``None`` for a permanent account."""
 
 
 @dataclass(frozen=True)
@@ -84,18 +86,24 @@ def _row_to_account(row: sqlite3.Row) -> Account:
         pwhash=row["pwhash"],
         email=row["email"],
         created_at=row["created_at"],
+        expires_at=row["expires_at"],
     )
 
 
-_ACCOUNT_COLUMNS = "account_id, username, pwhash, email, created_at"
+_ACCOUNT_COLUMNS = "account_id, username, pwhash, email, created_at, expires_at"
 
 
-def create_account(*, username: str, pwhash: str) -> int:
-    """Insert a new account and return its ``account_id``."""
+def create_account(*, username: str, pwhash: str, expires_at: datetime | None = None) -> int:
+    """
+    Insert a new account and return its ``account_id``. With ``expires_at``, it is a temporary
+    account, which :func:`delete_expired_accounts` deletes once that time has passed.
+    """
+    stored_expiry = format_timestamp(expires_at) if expires_at is not None else None
     with _connect() as conn:
         try:
             cursor = conn.execute(
-                "INSERT INTO accounts (username, pwhash, created_at) VALUES (?, ?, ?)", (username, pwhash, _now())
+                "INSERT INTO accounts (username, pwhash, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                (username, pwhash, _now(), stored_expiry),
             )
         except sqlite3.IntegrityError as exc:
             raise UsernameTakenError(username) from exc
@@ -132,6 +140,35 @@ def search_accounts(*, prefix: str, limit: int) -> list[Account]:
             (f"{escaped}%", limit),
         ).fetchall()
     return [_row_to_account(row) for row in rows]
+
+
+def delete_expired_accounts(*, now: datetime) -> list[Account]:
+    """
+    Delete every temporary account whose expiry time is ``now`` or earlier, with its memberships
+    and facilitator grants, and return the deleted accounts.
+
+    ``expires_at`` is stored in the one format :func:`format_timestamp` writes, so it compares with
+    ``now`` as text. Freeing the username is safe because account ids are never reused, so a
+    deleted account's session cookie can never reach a new account.
+    """
+    with _connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            expired = [
+                _row_to_account(row)
+                for row in conn.execute(
+                    f"SELECT {_ACCOUNT_COLUMNS} FROM accounts WHERE expires_at <= ? ORDER BY account_id",
+                    (format_timestamp(now),),
+                )
+            ]
+            for account in expired:
+                conn.execute("DELETE FROM instance_membership WHERE account_id = ?", (account.account_id,))
+                conn.execute("DELETE FROM accounts WHERE account_id = ?", (account.account_id,))
+        except BaseException:
+            conn.rollback()
+            raise
+        conn.commit()
+    return expired
 
 
 def update_password(*, account_id: int, pwhash: str) -> None:

@@ -114,7 +114,7 @@ def logout(account: CurrentAccount) -> Response:
 @lobby_router.get("/my-runs")
 def get_my_runs(account: CurrentAccount, service: LobbyService) -> MyRunsResponse:
     """The authenticated account's joined runs (same read the instance serves in-run)."""
-    return build_my_runs(account.username, service.get_memberships(account.account_id))
+    return build_my_runs(account.username, service.get_memberships(account.account_id), expires_at=account.expires_at)
 
 
 @lobby_router.post("/runs/{slug}/join", status_code=status.HTTP_204_NO_CONTENT)
@@ -133,6 +133,10 @@ def join_run(slug: str, account: CurrentAccount, service: LobbyService) -> Respo
         raise HTTPException(status.HTTP_404_NOT_FOUND, LobbyErrorCode.RUN_NOT_FOUND)
     if fragment.private:
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
+    if fragment.mode == "freeplay" and account.expires_at is not None:
+        # The run's entry gate refuses a temporary account too. Refusing here keeps the join from
+        # listing a run under "your runs" that the account can never enter (#1383).
+        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.TEMPORARY_ACCOUNT_IN_FREEPLAY)
     try:
         service.add_run_member(slug, account.account_id)
     except LobbyServiceRefusal as refusal:

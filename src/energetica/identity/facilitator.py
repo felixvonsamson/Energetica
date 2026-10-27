@@ -25,7 +25,7 @@ from energetica.identity.schemas.facilitator import (
     RosterCandidatesOut,
 )
 from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode
-from energetica.identity.web import get_facilitator, lobby_service
+from energetica.identity.web import get_facilitator, lobby_service, refuse_temporary_account_in_freeplay
 from energetica.kernel.game_error import GameError, SharedErrorCode
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
@@ -120,6 +120,7 @@ def add_to_roster(body: RosterAddIn) -> None:
     if account is None:
         raise GameError(SharedErrorCode.USER_NOT_FOUND)
     slug = _require_private_slug()
+    refuse_temporary_account_in_freeplay(temporary=account.expires_at is not None)
     try:
         lobby_service().add_run_member(slug, account.account_id)
     except LobbyServiceRefusal as refusal:

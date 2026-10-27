@@ -10,6 +10,7 @@ gated by the server-wide signup toggle.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -160,7 +161,9 @@ def test_my_runs_returns_authed_accounts_runs(
 # --- join (#1030: the picker's explicit two-click join for public runs) --------------------
 
 
-def _write_fragment(landing_dir: Path, *, slug: str, name: str = "A Run", private: bool = False) -> None:
+def _write_fragment(
+    landing_dir: Path, *, slug: str, name: str = "A Run", private: bool = False, mode: str = "freeplay"
+) -> None:
     (landing_dir / f"{slug}.json").write_text(
         json.dumps(
             {
@@ -168,6 +171,7 @@ def _write_fragment(landing_dir: Path, *, slug: str, name: str = "A Run", privat
                 "name": name,
                 "advertised": True,
                 "private": private,
+                "mode": mode,
                 "starts_at": "2026-03-01T00:00:00Z",
             }
         ),
@@ -355,3 +359,52 @@ def test_a_refusal_the_route_does_not_expect_is_a_503() -> None:
 
     assert resp.status_code == 503
     assert resp.json()["detail"] == "LOBBY_SERVICE_UNAVAILABLE"
+
+
+# --- temporary accounts (#1383) --------------------------------------------------------------
+
+
+def _log_in_temporary(client: TestClient, lobby_service: LobbyServiceClient, expires_at: datetime) -> None:
+    lobby_service.create_account(username="table1-a", password="correct-password", expires_at=expires_at)
+    resp = client.post(
+        f"{BASE}/auth/login", json=LoginRequest(username="table1-a", password="correct-password").model_dump()
+    )
+    assert resp.status_code == 200, resp.text
+
+
+def test_a_temporary_account_cannot_join_a_freeplay_run(
+    landing_dir: Path, client: TestClient, lobby_service: LobbyServiceClient
+) -> None:
+    _log_in_temporary(client, lobby_service, datetime(2099, 1, 1, tzinfo=timezone.utc))
+    _write_fragment(landing_dir, slug="spring-2026")
+
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
+    assert client.get(f"{BASE}/lobby/my-runs").json()["runs"] == []
+
+
+def test_a_temporary_account_can_join_a_workshop_run(
+    landing_dir: Path, client: TestClient, lobby_service: LobbyServiceClient
+) -> None:
+    _log_in_temporary(client, lobby_service, datetime(2099, 1, 1, tzinfo=timezone.utc))
+    _write_fragment(landing_dir, slug="workshop", mode="workshop")
+
+    assert client.post(f"{BASE}/lobby/runs/workshop/join").status_code == 204
+
+
+def test_my_runs_says_when_a_temporary_account_expires(
+    landing_dir: Path, client: TestClient, lobby_service: LobbyServiceClient
+) -> None:
+    _log_in_temporary(client, lobby_service, datetime(2099, 1, 1, 12, tzinfo=timezone.utc))
+
+    assert client.get(f"{BASE}/lobby/my-runs").json()["expires_at"] == "2099-01-01T12:00:00Z"
+
+
+def test_my_runs_gives_a_permanent_account_no_expiry(
+    signups_enabled: None, landing_dir: Path, client: TestClient
+) -> None:
+    _signup(client)
+
+    assert client.get(f"{BASE}/lobby/my-runs").json()["expires_at"] is None

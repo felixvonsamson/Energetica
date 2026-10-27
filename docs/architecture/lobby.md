@@ -158,6 +158,27 @@ instead of being answered with `index.html` as a 200.
 
 ## Data model
 
+### `accounts` (table in `lobby.db`)
+
+```sql
+CREATE TABLE accounts (
+    account_id INTEGER PRIMARY KEY AUTOINCREMENT,  -- never reused, even after a delete (#1382)
+    username   TEXT    NOT NULL UNIQUE,
+    email      TEXT             UNIQUE,
+    pwhash     TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    expires_at TEXT                                -- NULL = permanent; else deleted after this time
+);
+```
+
+- An account with an `expires_at` is a **temporary account** (#1383). Only operator tooling
+  makes one, by passing `expires_at` to the lobby service's `POST accounts`; signup never does.
+  The lobby service deletes each expired account, with its memberships and grants, once when it
+  starts, before it serves, and then once a day. That frees the username for a new account. Ids are never reused,
+  so a deleted account's session cookie cannot reach the new one.
+- Runs keep each player's `account_id` and username in their own state, so a run's scoreboard
+  and recap still work after its accounts are gone.
+
 ### `instance_membership` (table in `lobby.db`)
 
 ```sql
@@ -230,6 +251,14 @@ signup toggle** — a `signups_enabled` flag in a new `/etc/energetica/server.js
 fresh by the lobby, never by a per-instance allowlist. This is the only switch governing
 account creation. A closed-enrollment deployment turns the toggle on while its players sign
 up, then turns it off again; neither flip needs a restart. See ADR-0003.
+
+**Temporary accounts and freeplay (#1383).** A temporary account cannot join a freeplay run,
+where it would leave a player behind with no account once it is deleted. The run's entry gate
+(`/auth/me` and the Socket.IO connect) and settle refuse it with `TEMPORARY_ACCOUNT_IN_FREEPLAY`,
+and so do the ways onto a freeplay run's roster: the lobby's public-run join, the join link and
+the facilitator's roster add. The lobby's `my-runs` reports the account's
+`expires_at`, so the picker never offers a temporary account a freeplay run. Workshop runs admit
+temporary accounts like any other.
 
 **Login (lobby).** The lobby service verifies the credentials and mints the token; the lobby
 backend sets it as the `domain=.{apex}` session cookie. Redirect to the picker, or to `?return=` if present.

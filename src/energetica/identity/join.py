@@ -22,8 +22,7 @@ from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.lobby_service_client import LobbyServiceRefusal
 from energetica.identity.schemas.join import JoinLinkOut, Viewer
 from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode
-from energetica.identity.web import Standing, get_current_account, get_standing, lobby_service
-from energetica.identity.account import Account
+from energetica.identity.web import Standing, get_standing, lobby_service, refuse_temporary_account_in_freeplay
 from energetica.kernel.game_error import GameError, SharedErrorCode
 
 router = APIRouter(prefix="/join", tags=["Join"])
@@ -66,10 +65,10 @@ def get_join_link(token: str, standing: Annotated[Standing | None, Depends(get_s
 
 
 @router.post("/{token}", status_code=204)
-def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
+def confirm_join(token: str, standing: Annotated[Standing | None, Depends(get_standing)]) -> None:
     """Confirm joining: join the signed-in visitor to this run through the lobby service.
 
-    Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
+    Requires an SSO session (``get_standing``, not ``get_settled_player`` — the whole point
     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
     deliberately does not go through ``_enforce_instance_access``: granting access is this
     endpoint's job, not a precondition for reaching it. Checks identity before instance state
@@ -78,13 +77,15 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
     client.
     """
-    if account is None:
+    if standing is None:
         # Matches resolve_entry_account's convention: no/invalid session is a 401, not a 400
         # GameError — this is a plain auth failure, not a game-domain rejection.
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, SharedErrorCode.NOT_AUTHENTICATED)
+    account = standing.account
     _, access = _resolve(token)
     if not access.join_open:
         raise GameError(IdentityErrorCode.JOIN_LINK_CLOSED)
+    refuse_temporary_account_in_freeplay(temporary=standing.temporary)
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:

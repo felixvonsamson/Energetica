@@ -8,7 +8,7 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.identity.account import Account
 from energetica.schemas.map import HexTileOut, SettleRequest, SettleResponse
 from energetica.utils import map_helpers
-from energetica.identity.web import get_playing_account
+from energetica.identity.web import get_playing_account, reject_temporary_account
 from energetica.utils.auth import reject_when_frozen
 
 router = APIRouter(prefix="/map", tags=["Map"])
@@ -40,7 +40,7 @@ def get_map() -> list[HexTileOut]:
     return hex_list
 
 
-@router.post("/settle", dependencies=[Depends(reject_when_frozen)])
+@router.post("/settle", dependencies=[Depends(reject_when_frozen), Depends(reject_temporary_account)])
 def settle_region(
     account: Annotated[Account, Depends(get_playing_account)],
     request_data: SettleRequest,

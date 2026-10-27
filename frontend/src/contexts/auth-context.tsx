@@ -63,6 +63,12 @@ export async function fetchCurrentUser(): Promise<User | null> {
             // app today, so nothing that surfaced `INSTANCE_ACCESS_DENIED`'s message loses it.)
             return null;
         }
+        if (isErrorType(err, "TEMPORARY_ACCOUNT_IN_FREEPLAY")) {
+            // A workshop's temporary account on a freeplay run (#1383): refused like a denied
+            // account above, for the same reason, so the root loader falls through instead of
+            // crashing. The lobby never offers it a freeplay run, so only a typed URL gets here.
+            return null;
+        }
         throw err;
     }
 }

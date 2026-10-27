@@ -12,7 +12,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel
+from pydantic import AwareDatetime, BaseModel, Field
 
 from energetica.identity.instance_config import Phase, RunModeTag
 
@@ -55,10 +55,19 @@ class LobbyServiceErrorCode(StrEnum):
 
 
 class Credentials(BaseModel):
-    """A username and password: the body of ``POST sessions`` and ``POST accounts``."""
+    """A username and password: the body of ``POST sessions``."""
 
     username: str
     password: str
+
+
+class NewAccount(Credentials):
+    """
+    The body of ``POST accounts``. With ``expires_at``, the account is a temporary account, which the
+    service deletes once that time has passed. Only operator tooling sets it; signup never does.
+    """
+
+    expires_at: AwareDatetime | None = None
 
 
 class SessionToken(BaseModel):
@@ -75,6 +84,7 @@ class AccountOut(BaseModel):
     username: str
     email: str | None
     created_at: str
+    expires_at: str | None = Field(description="When a temporary account is deleted; null for a permanent account")
 
 
 class SessionOut(AccountOut):

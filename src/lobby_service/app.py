@@ -14,12 +14,14 @@ each field it changed, old and new. The join token's value is never logged.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
 import secrets
-from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, FastAPI, Header, HTTPException, Request, Response, status
@@ -44,6 +46,7 @@ from energetica.identity.schemas.lobby_service import (
     JoinTokenOut,
     LobbyServiceErrorCode,
     MembershipsOut,
+    NewAccount,
     PasswordChange,
     RunCreate,
     RunMember,
@@ -82,7 +85,11 @@ class Refusal(Exception):
 
 def _account_out(account: store.Account) -> AccountOut:
     return AccountOut(
-        account_id=account.account_id, username=account.username, email=account.email, created_at=account.created_at
+        account_id=account.account_id,
+        username=account.username,
+        email=account.email,
+        created_at=account.created_at,
+        expires_at=account.expires_at,
     )
 
 
@@ -136,12 +143,14 @@ def resolve_session(authorization: Annotated[str | None, Header()] = None, run: 
 
 
 @router.post("/accounts", status_code=status.HTTP_201_CREATED)
-def create_account(credentials: Credentials) -> CreatedAccount:
-    """Sign up: create an account and a session for it."""
-    _check_password_length(credentials.password)
+def create_account(new_account: NewAccount) -> CreatedAccount:
+    """Create an account and a session for it: a permanent one, or a temporary one with ``expires_at``."""
+    _check_password_length(new_account.password)
     try:
         account_id = store.create_account(
-            username=credentials.username, pwhash=generate_password_hash(credentials.password)
+            username=new_account.username,
+            pwhash=generate_password_hash(new_account.password),
+            expires_at=new_account.expires_at,
         )
     except store.UsernameTakenError:
         raise HTTPException(status.HTTP_409_CONFLICT, LobbyServiceErrorCode.USERNAME_TAKEN)
@@ -397,9 +406,53 @@ def healthz() -> HealthOut:
     return HealthOut(status="ok", schema_version=SCHEMA_VERSION, api_versions=API_VERSIONS)
 
 
+EXPIRED_ACCOUNT_SWEEP_INTERVAL = timedelta(days=1)
+
+
+def delete_expired_accounts() -> None:
+    """Delete every temporary account that has expired, logging each one."""
+    for account in store.delete_expired_accounts(now=datetime.now(timezone.utc)):
+        logger.info(
+            "deleted expired account %s (%r), which expired at %s",
+            account.account_id,
+            account.username,
+            account.expires_at,
+        )
+
+
+async def _sweep_expired_accounts() -> None:
+    """Delete expired accounts, logging rather than raising a failure, which the next sweep retries."""
+    try:
+        await asyncio.to_thread(delete_expired_accounts)
+    except Exception:
+        logger.exception("deleting expired accounts failed")
+
+
+async def _sweep_expired_accounts_daily() -> None:
+    while True:
+        await asyncio.sleep(EXPIRED_ACCOUNT_SWEEP_INTERVAL.total_seconds())
+        await _sweep_expired_accounts()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # The first sweep finishes before the service answers anything, so an expired account never
+    # gets a response after a restart.
+    await _sweep_expired_accounts()
+    sweep = asyncio.create_task(_sweep_expired_accounts_daily())
+    try:
+        yield
+    finally:
+        sweep.cancel()
+
+
 def create_service_app() -> FastAPI:
-    """Build the lobby service app. Run :func:`lobby_service.schema.upgrade_database` first."""
-    app = FastAPI(title="Energetica lobby service", openapi_url=None, docs_url=None, redoc_url=None)
+    """
+    Build the lobby service app. Run :func:`lobby_service.schema.upgrade_database` first.
+
+    While it serves, it deletes expired temporary accounts: once when it starts, then once a day.
+    """
+    app = FastAPI(title="Energetica lobby service", openapi_url=None, docs_url=None, redoc_url=None, lifespan=_lifespan)
 
     @app.middleware("http")
     async def log_caller(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

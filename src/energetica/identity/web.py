@@ -58,12 +58,18 @@ class Standing:
     ``role`` is ``"facilitator"`` only if a grant covers this run (server-wide or scoped to it,
     ADR-0004); ``"player"`` is the default for every other account, settled or not. ``joined`` says
     whether the account has joined this run as a player, and is ``None`` on an unconfigured
-    instance, which has no slug to have joined.
+    instance, which has no slug to have joined. ``expires_at`` is set for a temporary account,
+    which the lobby service deletes after that time, and ``None`` for a permanent one (#1383).
     """
 
     account: Account
     role: Role
     joined: bool | None
+    expires_at: str | None = None
+
+    @property
+    def temporary(self) -> bool:
+        return self.expires_at is not None
 
 
 def replayed_account(request: Request) -> Account | None:
@@ -85,6 +91,7 @@ def _resolve_token(token: str | None) -> Standing | None:
         account=Account(account_id=session.account_id, username=session.username),
         role=session.role,
         joined=session.joined,
+        expires_at=session.expires_at,
     )
 
 
@@ -143,6 +150,38 @@ def get_facilitator(request: Request) -> Account:
     return standing.account
 
 
+def _is_freeplay(config: instance_config.InstanceConfig | None) -> bool:
+    """Whether this Run is freeplay. An unconfigured instance runs the persistent world, so it is."""
+    return config is None or config.run.mode == "freeplay"
+
+
+def _raise_if_temporary(temporary: bool) -> None:
+    """
+    Refuse a temporary account, in a freeplay Run. It is deleted after its workshop, so it would
+    leave behind a player with no account (#1383). A Workshop Run admits one.
+    """
+    if temporary:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.TEMPORARY_ACCOUNT_IN_FREEPLAY)
+
+
+def refuse_temporary_account_in_freeplay(*, temporary: bool) -> None:
+    """
+    Refuse a temporary account if this Run is freeplay. For a route that adds a member to this Run
+    without going through the entry gate: the join link and the roster add.
+    """
+    if _is_freeplay(instance_config.load_instance_config()):
+        _raise_if_temporary(temporary)
+
+
+def reject_temporary_account(request: Request) -> None:
+    """
+    Refuse a temporary account. For settle, the one freeplay route that creates a player without
+    going through the entry gate. Attach it as ``dependencies=[Depends(reject_temporary_account)]``.
+    """
+    standing = get_standing(request)
+    _raise_if_temporary(standing is not None and standing.temporary)
+
+
 def _enforce_instance_access(standing: Standing) -> None:
     """Gate this instance's entry on its access policy.
 
@@ -156,6 +195,9 @@ def _enforce_instance_access(standing: Standing) -> None:
     ``instance.json`` no longer carries an allowlist to read. A present-but-broken config fails
     closed. On a successful, allowed read, the public-facing fragment is re-published if its fields
     have changed since this process last wrote them.
+
+    A freeplay Run, which an unconfigured instance is, refuses a temporary account. A Workshop Run
+    admits one.
     """
     if standing.role == "facilitator":
         return
@@ -164,6 +206,8 @@ def _enforce_instance_access(standing: Standing) -> None:
     except instance_config.InstanceConfigError as exc:
         logger.warning("entry blocked: %s", exc)
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED) from exc
+    if _is_freeplay(config):
+        _raise_if_temporary(standing.temporary)
     if config is not None and isinstance(config.access, instance_config.PrivateAccess) and not standing.joined:
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     instance_config.publish(config)

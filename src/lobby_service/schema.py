@@ -34,7 +34,8 @@ def create_current_schema(conn: sqlite3.Connection) -> None:
             username   TEXT    NOT NULL UNIQUE,
             email      TEXT             UNIQUE,
             pwhash     TEXT    NOT NULL,
-            created_at TEXT    NOT NULL
+            created_at TEXT    NOT NULL,
+            expires_at TEXT                         -- NULL = permanent; else deleted after this time
         )
         """
     )
