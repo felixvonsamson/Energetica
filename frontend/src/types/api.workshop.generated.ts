@@ -2109,7 +2109,7 @@ export interface components {
             name: string;
             /**
              * Account Ids
-             * @description The team's players, in the order they joined
+             * @description The team's players, in the order they joined. A member who never entered has no player, so is left out
              */
             account_ids: number[];
             /** Operating Profit */

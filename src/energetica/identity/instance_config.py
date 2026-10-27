@@ -144,7 +144,8 @@ class Team(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    name: str = Field(min_length=1)
+    # Must hold more than spaces.
+    name: str = Field(pattern=r"\S")
     members: list[str] = Field(min_length=1)
 
 

@@ -242,7 +242,6 @@ function TeamSections({
                         key={team.name}
                         title={`${team.name} ${count}/${team.members.length}`}
                         usernames={team.members}
-                        emptyLabel=""
                         entered={entered}
                         canBan={(username) => onRoster.has(username)}
                         onBan={onBan}
@@ -254,7 +253,6 @@ function TeamSections({
                 <RosterSection
                     title={`On no team (${noTeam.length})`}
                     usernames={noTeam}
-                    emptyLabel=""
                     onBan={onBan}
                     pendingUsername={pendingUsername}
                 />
@@ -274,7 +272,8 @@ function RosterSection({
 }: {
     title: string;
     usernames: string[];
-    emptyLabel: string;
+    /** Shown when no one is listed. A list that cannot be empty needs none. */
+    emptyLabel?: string;
     /**
      * The usernames that have entered the Run, marked as such. Unmarked when
      * absent.

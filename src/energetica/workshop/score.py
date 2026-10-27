@@ -93,11 +93,17 @@ def score(player: WorkshopPlayer, *, completed_rounds: int, price_round_count: i
     )
 
 
+# The parts of a score, and the score itself, which a team's score sums over its members.
+SCORE_PARTS = ("operating_profit", "investments", "carbon_tax", "residual_value", "score")
+
+
 class TeamScore(BaseModel):
     """One team's score (#1384): the sum of its members' scores, and of what they add up from."""
 
     name: str
-    account_ids: list[int] = Field(description="The team's players, in the order they joined")
+    account_ids: list[int] = Field(
+        description="The team's players, in the order they joined. A member who never entered has no player, so is left out"
+    )
     operating_profit: float
     investments: float
     carbon_tax: float
@@ -132,15 +138,6 @@ def ranked_teams(teams: Iterable[Team], scores: Iterable[Score]) -> list[TeamSco
     team_scores = []
     for team in teams:
         members = [member for member in scores if member.team == team.name]
-        team_scores.append(
-            TeamScore(
-                name=team.name,
-                account_ids=[member.account_id for member in members],
-                operating_profit=sum(member.operating_profit for member in members),
-                investments=sum(member.investments for member in members),
-                carbon_tax=sum(member.carbon_tax for member in members),
-                residual_value=sum(member.residual_value for member in members),
-                score=sum(member.score for member in members),
-            )
-        )
+        sums = {part: sum(getattr(member, part) for member in members) for part in SCORE_PARTS}
+        team_scores.append(TeamScore(name=team.name, account_ids=[member.account_id for member in members], **sums))
     return sorted(team_scores, key=lambda team_score: team_score.score, reverse=True)

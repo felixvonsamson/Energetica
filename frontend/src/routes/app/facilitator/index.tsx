@@ -48,6 +48,10 @@ function FacilitatorHelp() {
                 shows a "contact the administrator" message instead of letting
                 anyone in.
             </p>
+            <p>
+                A Workshop Run that plays in teams has no join link: its players
+                log in with the accounts made for their team.
+            </p>
         </div>
     );
 }

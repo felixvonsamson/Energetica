@@ -87,6 +87,7 @@ def test_teams_are_read_in_the_order_written() -> None:
         pytest.param([AXPO, {"name": "Romande Energie", "members": ["romanel"]}], id="uneven sizes"),
         pytest.param([{"name": "Axpo", "members": []}, {"name": "Romande Energie", "members": []}], id="empty teams"),
         pytest.param([AXPO, {"name": "", "members": ["romanel", "veytaux"]}], id="empty name"),
+        pytest.param([AXPO, {"name": "  ", "members": ["romanel", "veytaux"]}], id="blank name"),
         pytest.param([AXPO, {"name": "Axpo", "members": ["romanel", "veytaux"]}], id="same name"),
         pytest.param([AXPO, {"name": "Romande Energie", "members": ["romanel", "regensdorf"]}], id="shared member"),
         pytest.param([{"name": "Axpo", "members": ["bex", "bex"]}, ROMANDE], id="member twice in a team"),

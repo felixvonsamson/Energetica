@@ -231,9 +231,10 @@
         --chart-5: oklch(73.797% 0.18336 54.681);
         --chart-6: oklch(63.061% 0.29882 315.557);
 
-        /* Player colors (light mode): the current player, then the two ends of the other players' shades, then
-           the two ends of the teammates' shades in a Workshop Run with teams (#1384), a lighter green than the
-           current player's. The shade ends must be written as oklch(L C H), since the shades are mixed between them. */
+        /* Player colors (light mode): the current player, then the two ends of the other players' shades. Then
+           the two ends of the teammates' shades in a Workshop Run with teams (#1384). They are a lighter green
+           than the current player's. The shade ends must be written as oklch(L C H), since the shades are mixed
+           between them. */
         --chart-self: var(--color-pine-700);
         --chart-others-from: oklch(0.44 0.018 60);
         --chart-others-to: oklch(0.72 0.025 75);

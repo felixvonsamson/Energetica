@@ -111,10 +111,10 @@ export function playerColorGetter(
 
     return (playerId: number) => {
         if (playerId === currentPlayerId) return palette.self;
-        const teammate = teammatePositions.get(playerId);
-        if (teammate !== undefined) {
+        const teammatePosition = teammatePositions.get(playerId);
+        if (teammatePosition !== undefined) {
             if (!teammatesFrom || !teammatesTo) return palette.teammatesFrom;
-            return mix(teammatesFrom, teammatesTo, teammate);
+            return mix(teammatesFrom, teammatesTo, teammatePosition);
         }
         if (!from || !to) return palette.othersFrom;
         const index = positions.get(playerId) ?? others.length + playerId;
