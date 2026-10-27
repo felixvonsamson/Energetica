@@ -28,6 +28,7 @@ from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
+from energetica.workshop.credentials import CREDENTIALS_PATH, delete_expired_credentials
 from energetica.workshop.feedback import FEEDBACK_PATH, FeedbackStore
 from energetica.workshop.realtime import invalidate_session, send_settlement_progress, setup_socketio
 from energetica.workshop.routes import router as workshop_router
@@ -87,6 +88,14 @@ def create_workshop_app(
     if rm_instance:
         session_path.unlink(missing_ok=True)
     app.state.workshop_session = WorkshopSession.open(config, session_path, clock=clock)
+    # The credentials file of a Run with teams (#1385) sits beside the session. Once its accounts have expired, it
+    # holds passwords that are no use to anyone, so it goes.
+    app.state.credentials_path = session_path.with_name(CREDENTIALS_PATH.name)
+    try:
+        delete_expired_credentials(app.state.credentials_path, now=clock())
+    except (OSError, ValueError):
+        # Only the facilitator's credentials card needs the file, so a broken one must not stop the Run.
+        logger.exception("Could not read the Workshop credentials at %s", app.state.credentials_path)
     # Players' feedback sits beside the session, in its own database, so starting the Run over keeps it.
     app.state.feedback_store = FeedbackStore(
         session_path.with_name(FEEDBACK_PATH.name), run_slug=instance_config.instance_slug()

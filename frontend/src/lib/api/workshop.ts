@@ -1,7 +1,7 @@
 /**
  * Workshop Run API calls (#994, #995, #996, #998, #999, #1002, #1007, #1008,
- * #1009, #1011, #1012, #1014, #1018, #1190). Served only by a Workshop Run's
- * backend.
+ * #1009, #1011, #1012, #1014, #1018, #1190, #1385). Served only by a Workshop
+ * Run's backend.
  */
 
 import type { ApiResponse, ApiSchema } from "@/types/api-helpers";
@@ -135,6 +135,15 @@ export const workshopApi = {
         apiClient.put<
             ApiResponse<"/api/v1/workshop/prices/{facility}/{side}", "put">
         >(`/workshop/prices/${facility}/${side}`, { price }),
+
+    /**
+     * Each account's team, username and password, for the slips (#1385), or
+     * null if the Run has no credentials file. Facilitator only.
+     */
+    getCredentials: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/credentials", "get">>(
+            "/workshop/credentials",
+        ),
 
     /**
      * How far each technology is from unlocking its upgrade, and what has

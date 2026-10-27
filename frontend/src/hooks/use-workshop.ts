@@ -423,6 +423,23 @@ export function useWorkshopFuel() {
 }
 
 /**
+ * Each account's team, username and password, for the slips the facilitator
+ * prints (#1385), or null if the Run has no credentials file. Facilitator only.
+ * Only the setup script changes them, so they are read once per page. They are
+ * dropped from the cache as soon as no page uses them, so the passwords are not
+ * kept in memory longer than needed.
+ */
+export function useWorkshopCredentials() {
+    return useQuery({
+        queryKey: queryKeys.workshop.credentials,
+        queryFn: workshopApi.getCredentials,
+        staleTime: Infinity,
+        gcTime: 0,
+        refetchOnWindowFocus: false,
+    });
+}
+
+/**
  * How far each technology is from unlocking its upgrade (#1011). Facilitator
  * only. Re-read whenever the session changes, so it follows each purchase.
  */

@@ -158,9 +158,35 @@ From your local machine:
 Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
 subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
 `drop_player_pwhash.py`, `export_instance_to_csv.py`, `shift_start_date.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
-`grant-facilitator.py`, `run.py`, `whitelist-run.py` — all clients of the lobby service, so they
-live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
-`scripts/*.ts` never touch the server.
+`grant-facilitator.py`, `run.py`, `setup-workshop-teams.py`, `whitelist-run.py` — all clients of the
+lobby service, so they live with the lobby, not with any single instance). `scripts/dev/`,
+`scripts/lib/`, and `scripts/*.ts` never touch the server.
+
+### Setting up a Workshop Run's teams
+
+`setup-workshop-teams.py` (#1385) does the whole setup of a Workshop Run that plays in teams. Run it
+from the lobby directory as `energetica`, the user the Run runs as, so that it can rewrite the Run's
+`instance.json` and the credentials file it writes is readable by the Run alone:
+
+```bash
+cd /var/www/energetica-lobby
+sudo -u energetica ./scripts/setup-workshop-teams.py zurich-2026 --csv /tmp/players.csv
+sudo -u energetica ./scripts/setup-workshop-teams.py zurich-2026 --teams 8 --size 3 --expires-in 3d
+sudo systemctl restart energetica-zurich-2026   # the Run reads its teams when it starts
+```
+
+The CSV has the columns `account_name,team_name`. Teams are ordered by where each first appears,
+which is also the scoreboard's tie-break. `--teams` and `--size` generate accounts `team1-a` …
+`team8-c` in teams `Team 1` … `Team 8`. The script checks everything first and changes nothing if
+any check fails, listing every problem. Otherwise it creates each account as a temporary account
+with a generated password, expiring after `--expires-in` (7 days by default), adds it to the Run's
+roster, and writes the `teams` block into `instance.json`.
+
+It also writes `instance/workshop_credentials.json` in the Run's directory, mode `0600`. Since the
+lobby service keeps only password hashes, this is the one copy of the plain passwords. The
+facilitator prints a slip per team, or downloads a CSV, from the Run's facilitator settings page.
+Once the accounts expire, the Run stops serving the file and deletes it, and it deletes an expired
+file when it starts. `download-instance.sh` leaves it out of backups.
 
 ### What a deploy ships
 

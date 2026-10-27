@@ -40,7 +40,9 @@ FILENAME="energetica-$INSTANCE-$(date +%Y%m%d-%H%M%S).tar.gz"
 REMOTE_TMP="/tmp/$FILENAME"
 
 echo "→ Compressing $INSTANCE state on $SSH..."
-ssh "$SSH" "tar -czf ${REMOTE_TMP} -C ${REMOTE_PATH} instance/"
+# A Workshop Run's credentials file (#1385) is readable by the Run alone, so tar could not read it, and it holds
+# plain passwords that must not end up in a backup.
+ssh "$SSH" "tar -czf ${REMOTE_TMP} --exclude=instance/workshop_credentials.json -C ${REMOTE_PATH} instance/"
 
 echo "→ Downloading to ${LOCAL_DEST}/${FILENAME}..."
 scp "${SSH}:${REMOTE_TMP}" "${LOCAL_DEST}/${FILENAME}"

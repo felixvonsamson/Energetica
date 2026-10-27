@@ -2071,6 +2071,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Credentials
+         * @description Each account's team, username and password, for the slips the facilitator prints (#1385), or null if the Run
+         *     has no credentials file: its accounts were set up by hand, or they have expired. Facilitator only.
+         */
+        get: operations["get_credentials_api_v1_workshop_credentials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/unlocks": {
         parameters: {
             query?: never;
@@ -5480,6 +5501,18 @@ export interface components {
             fuels: components["schemas"]["FuelQuote"][];
         };
         /**
+         * CredentialLine
+         * @description One account's slip line.
+         */
+        CredentialLine: {
+            /** Team */
+            team: string;
+            /** Username */
+            username: string;
+            /** Password */
+            password: string;
+        };
+        /**
          * DemandOutlook
          * @description How peak must-serve demand moves from this Round to the next, through demand growth and the Round events that
          *     last.
@@ -6584,6 +6617,20 @@ export interface components {
             multipliers: {
                 [key: string]: number;
             };
+        };
+        /**
+         * WorkshopCredentials
+         * @description Every account the setup script created, in team order, and when they expire.
+         */
+        WorkshopCredentials: {
+            /**
+             * Expires At
+             * Format: date-time
+             * @description When the accounts, and so this file, expire
+             */
+            expires_at: string;
+            /** Accounts */
+            accounts: components["schemas"]["CredentialLine"][];
         };
         /**
          * WorkshopEntryOut
@@ -10544,6 +10591,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_credentials_api_v1_workshop_credentials_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopCredentials"] | null;
                 };
             };
         };
