@@ -232,7 +232,7 @@ def test_a_failing_step_leaves_the_database_as_it_was(tmp_path: Path) -> None:
     assert "nickname" not in {row[1] for row in sqlite3.connect(path).execute("PRAGMA table_info(accounts)")}
 
 
-def _migrated_database(path: Path) -> None:
+def _migrated_legacy_database(path: Path) -> None:
     _legacy_database(path, _LEGACY_SHAPES["before-settled-at"])
     upgrade_database(path)
 
@@ -241,7 +241,7 @@ def _new_database(path: Path) -> None:
     upgrade_database(path)
 
 
-@pytest.mark.parametrize("make_database", [_new_database, _migrated_database])
+@pytest.mark.parametrize("make_database", [_new_database, _migrated_legacy_database])
 def test_an_account_id_is_never_given_out_twice(tmp_path: Path, make_database: Callable[[Path], None]) -> None:
     """
     Deleting the account with the highest id does not free that id: the session cookie and the runs
@@ -259,10 +259,14 @@ def test_an_account_id_is_never_given_out_twice(tmp_path: Path, make_database: C
             "INSERT INTO accounts (username, pwhash, created_at) VALUES ('carol', 'hash', '2026-03-01T00:00:00+00:00')"
         ).lastrowid
 
-    assert new_id > deleted_id
+    assert new_id == deleted_id + 1
 
 
 def test_migration_4_keeps_every_account_as_it_was(tmp_path: Path) -> None:
+    """
+    A database at version 3 keeps every account's columns, ids with gaps included, and new ids
+    continue after the highest one. The rows replace the one ``_legacy_database`` seeds.
+    """
     path = tmp_path / "lobby.db"
     _legacy_database(path, _LEGACY_SHAPES["before-settled-at"])
     accounts = [
