@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { marketColumns, priceTrend } from "./workshop-market-prices";
+import { GAME_ERROR_MESSAGES } from "./game-messages";
+import {
+    marketColumns,
+    ownRowClick,
+    priceTrend,
+} from "./workshop-market-prices";
 
 const quote = (
     price: number,
@@ -76,5 +81,21 @@ describe("marketColumns", () => {
 
     it("has no columns when nobody had anything operating", () => {
         expect(marketColumns([player({})], [...order])).toEqual([]);
+    });
+});
+
+describe("ownRowClick", () => {
+    it("opens the price panel and points to the Prices button while the window is open", () => {
+        const click = ownRowClick(true);
+        expect(click.openPanel).toBe(true);
+        expect(click.message).toMatch(/Prices button/);
+    });
+
+    it("leaves the panel shut and says prices are locked otherwise", () => {
+        const click = ownRowClick(false);
+        expect(click.openPanel).toBe(false);
+        expect(click.message).toBe(
+            GAME_ERROR_MESSAGES.WORKSHOP_PRICE_SETTING_CLOSED,
+        );
     });
 });

@@ -4,6 +4,7 @@
  * each price moved since the last period it ran in.
  */
 
+import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
@@ -49,4 +50,28 @@ export function marketColumns(
             .filter((side) => has(side, facility))
             .map((side) => ({ facility, side })),
     );
+}
+
+/**
+ * What happens when a player clicks their own row on the board (#1388). The
+ * board cannot be edited, so players who try are sent to the price panel. While
+ * the price-setting window is open, the panel opens and the message says where
+ * to find it again. Otherwise prices cannot be changed, and the message is the
+ * one shown when a price is sent while they are locked.
+ */
+export function ownRowClick(windowOpen: boolean): {
+    openPanel: boolean;
+    message: string;
+} {
+    if (windowOpen) {
+        return {
+            openPanel: true,
+            message:
+                "This board only shows prices. Set yours in the price panel, which opens with the Prices button at the top right of the screen.",
+        };
+    }
+    return {
+        openPanel: false,
+        message: GAME_ERROR_MESSAGES.WORKSHOP_PRICE_SETTING_CLOSED,
+    };
 }

@@ -13,14 +13,25 @@
  *
  * While the price-setting window is open, the board updates live as players
  * change their prices. Afterwards it shows the prices the period ran at.
+ *
+ * The board cannot be edited. A player who clicks their own row is told where
+ * to set their prices, and the price panel opens if the window is open
+ * (#1388).
  */
 
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { toast } from "sonner";
 
-import { useMarketPrices, useWorkshopEntry } from "@/hooks/use-workshop";
+import { useOpenPricePanel } from "@/contexts/price-panel-context";
+import {
+    useMarketPrices,
+    usePriceSettingOpen,
+    useWorkshopEntry,
+} from "@/hooks/use-workshop";
 import {
     type MarketColumn,
     marketColumns,
+    ownRowClick,
     priceTrend,
 } from "@/lib/workshop-market-prices";
 import type { Season } from "@/lib/workshop-timeline";
@@ -43,6 +54,8 @@ export function MarketPricesBoard({
 }) {
     const room = useMarketPrices(round, season);
     const { data: entry } = useWorkshopEntry();
+    const windowOpen = usePriceSettingOpen();
+    const openPricePanel = useOpenPricePanel();
 
     if (room.isPending) return <Spinner />;
     if (room.isError) {
@@ -77,6 +90,12 @@ export function MarketPricesBoard({
     const groups = Map.groupBy(columns, (column) => column.facility);
     const hasBuy = columns.some((column) => column.side === "buy");
     const me = entry?.player?.account_id;
+
+    function handleOwnRowClick() {
+        const click = ownRowClick(windowOpen);
+        if (click.openPanel) openPricePanel();
+        toast.info(click.message, { id: "workshop-prices-board-own-row" });
+    }
 
     return (
         <div className="space-y-3 pt-4">
@@ -132,6 +151,7 @@ export function MarketPricesBoard({
                                 player={player}
                                 columns={columns}
                                 isMe={player.account_id === me}
+                                onOwnRowClick={handleOwnRowClick}
                             />
                         ))}
                     </tbody>
@@ -169,13 +189,16 @@ function BoardRow({
     player,
     columns,
     isMe,
+    onOwnRowClick,
 }: {
     player: PlayerQuotes;
     columns: MarketColumn[];
     isMe: boolean;
+    onOwnRowClick: () => void;
 }) {
     return (
         <tr
+            onClick={isMe ? onOwnRowClick : undefined}
             className={cn(
                 "border-t border-border/30",
                 isMe && "bg-primary/10 font-semibold",
@@ -187,7 +210,22 @@ function BoardRow({
                     isMe ? "bg-primary/10" : "bg-background",
                 )}
             >
-                {player.username}
+                {/*
+                 * The button lets keyboard users reach the row. Its click bubbles
+                 * up to the row's handler. Neither looks clickable, since the
+                 * board is not meant to be edited.
+                 */}
+                {isMe ? (
+                    <button
+                        type="button"
+                        aria-label="Change your prices"
+                        className="rounded-sm"
+                    >
+                        {player.username}
+                    </button>
+                ) : (
+                    player.username
+                )}
                 {isMe && (
                     <span className="ml-1 font-normal text-muted-foreground">
                         (you)
