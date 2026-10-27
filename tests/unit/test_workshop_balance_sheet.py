@@ -192,18 +192,26 @@ def test_fuel_bought_beyond_what_was_burned_is_excess_and_each_type_pays_for_wha
     ]
 
 
-def test_fuel_burned_from_stock_shares_what_was_paid_for_and_leaves_no_excess() -> None:
+def test_fuel_burned_beyond_what_was_paid_for_came_from_stock_and_leaves_no_excess() -> None:
     spring = _burning(
         SPRING, {GAS: 3_000.0, COMBINED: 9_000.0}, FuelPurchase(fuel=Fuel.GAS, quantity=6_000.0, price=0.5)
     )
 
     sheet = period_sheet([spring])
 
-    assert [(line.facility, line.quantity, line.cost) for line in sheet.facility_fuel] == [
-        (GAS, 1_500.0, 750.0),
-        (COMBINED, 4_500.0, 2_250.0),
+    assert [(line.facility, line.quantity, line.cost, line.from_stock) for line in sheet.facility_fuel] == [
+        (GAS, 1_500.0, 750.0, 1_500.0),
+        (COMBINED, 4_500.0, 2_250.0, 4_500.0),
     ]
     assert sheet.excess_fuel == []
+
+
+def test_a_season_that_paid_for_no_fuel_burned_it_all_from_stock() -> None:
+    spring = _burning(SPRING, {GAS: 3_000.0})
+
+    [line] = period_sheet([spring]).facility_fuel
+
+    assert (line.quantity, line.cost, line.from_stock) == (0.0, 0.0, 3_000.0)
 
 
 def test_the_facility_fuel_and_the_excess_add_up_to_the_fuel_bill_over_the_round() -> None:

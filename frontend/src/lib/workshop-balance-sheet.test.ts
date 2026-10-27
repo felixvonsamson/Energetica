@@ -100,6 +100,7 @@ const SPRING: PeriodSheet = {
             fuel: "coal",
             quantity: 6_000,
             cost: 3_000,
+            from_stock: 0,
         },
     ],
     excess_fuel: [
@@ -314,6 +315,57 @@ describe("balanceSheetRows", () => {
             rate: 500,
             amount: -3_000,
         });
+    });
+
+    it("breaks the fuel burned from stock out of the fuel bought, at no cost", () => {
+        // In summer the coal burner burned 6 t: 4 t bought at 0.5 per kg, and
+        // 2 t from stock.
+        const summer: PeriodSheet = {
+            ...SPRING,
+            facility_fuel: [
+                {
+                    ...SPRING.facility_fuel[0]!,
+                    quantity: 4_000,
+                    cost: 2_000,
+                    from_stock: 2_000,
+                },
+            ],
+            excess_fuel: [],
+        };
+        const stocked = balanceSheetRows({ ...SHEET, total: summer }, true);
+        const cell = (id: string, period: PeriodSheet) =>
+            stocked.find((r) => r.id === id)!.cell(period);
+        const ids = stocked.map((r) => r.id);
+        expect(
+            ids.slice(
+                ids.indexOf("coal_burner-fuel"),
+                ids.indexOf("coal_burner-fuel") + 3,
+            ),
+        ).toEqual([
+            "coal_burner-fuel",
+            "coal_burner-fuel-bought",
+            "coal_burner-fuel-stock",
+        ]);
+        expect(cell("coal_burner-fuel", summer)).toEqual({
+            volume: 6,
+            amount: -2_000,
+        });
+        expect(cell("coal_burner-fuel-bought", summer)).toEqual({
+            volume: 4,
+            rate: 500,
+            amount: -2_000,
+        });
+        expect(cell("coal_burner-fuel-stock", summer)).toEqual({
+            volume: 2,
+            rate: 0,
+            amount: 0,
+        });
+        // Spring burned none from stock.
+        expect(cell("coal_burner-fuel-stock", SPRING).volume).toBe(0);
+    });
+
+    it("has no fuel from stock rows in a Round that burned none", () => {
+        expect(rows.some((r) => r.id === "coal_burner-fuel-stock")).toBe(false);
     });
 
     it("shows the fuel bought beyond what was burned as excess, by fuel", () => {

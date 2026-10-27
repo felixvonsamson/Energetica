@@ -13,8 +13,9 @@ The detailed sheet groups the figures by facility type, so each type's sales, du
 it earned. Fuel is paid for per fuel, not per facility type, and unused fuel carries over as stock, so a season's
 fuel bill is split between the types that burned the fuel, in proportion to what each burned. Each type is charged
 what it burned, at the season's price, up to what was paid for. What was paid for beyond what was burned went into
-stock, and the sheet shows it as excess fuel. In a season that burned more than it paid for, the rest came from
-stock paid for earlier, so the types share what was paid for and there is no excess.
+stock, and the sheet shows it as excess fuel, charged in the season it was bought. In a season that burned more than
+it paid for, the rest came from that stock: the types share what was paid for, and the fuel they burned from stock
+costs nothing, since it was charged when it was bought.
 
 A climate event's revenue tax (#1012) takes a share of the season's sale revenue. It comes off inside operating
 income, above fuel.
@@ -98,8 +99,12 @@ class FacilityFuelLine(BaseModel):
     facility: FacilityId
     name: str
     fuel: Fuel
-    quantity: float = Field(description="In kg: what it burned, or its share of what was paid for if that was less")
+    quantity: float = Field(description="In kg: what it burned of the fuel paid for in the period")
     cost: float
+    from_stock: float = Field(
+        default=0.0,
+        description="In kg: what it burned from stock paid for in an earlier period, which costs nothing in this one",
+    )
 
 
 class PeriodSheet(BaseModel):
@@ -272,30 +277,34 @@ def _market_lines(
 
 def _fuel_split(
     results: Sequence[TradingResult],
-) -> tuple[dict[FacilityId, tuple[float, float]], dict[Fuel, tuple[float, float]]]:
-    """Each season's fuel bill split between the facility types that burned it, and what was left over, added up.
+) -> tuple[dict[FacilityId, tuple[float, float, float]], dict[Fuel, tuple[float, float]]]:
+    """Each season's fuel split between the facility types that burned it, and what was left over, added up.
 
-    Returns the quantity and cost charged to each facility type, and the quantity and cost of each fuel's excess.
+    Returns, for each facility type, the quantity it burned of the fuel paid for, its cost, and the quantity it burned
+    from stock. For each fuel, returns the quantity and cost of the excess.
     """
-    charged: dict[FacilityId, tuple[float, float]] = {}
+    charged: dict[FacilityId, tuple[float, float, float]] = {}
     excess: dict[Fuel, tuple[float, float]] = {}
     for result in results:
         for fuel in Fuel:
             paid = sum(purchase.quantity for purchase in result.fuel if purchase.fuel == fuel)
-            if paid <= 0:
-                continue
-            price = sum(purchase.cost for purchase in result.fuel if purchase.fuel == fuel) / paid
+            cost = sum(purchase.cost for purchase in result.fuel if purchase.fuel == fuel)
+            price = cost / paid if paid > 0 else 0.0
             burned = {
                 facility: performance.fuel_burned
                 for facility, performance in result.facilities.items()
                 if CATALOG[facility].fuel_type == fuel and performance.fuel_burned > 0
             }
             burned_total = sum(burned.values())
-            # Below one when the season burned more than it paid for: the rest came from stock.
+            # The share of what was burned that was paid for in the season. Below one, the rest came from stock.
             scale = min(1.0, paid / burned_total) if burned_total else 0.0
             for facility, quantity in burned.items():
-                before = charged.get(facility, (0.0, 0.0))
-                charged[facility] = (before[0] + quantity * scale, before[1] + quantity * scale * price)
+                before = charged.get(facility, (0.0, 0.0, 0.0))
+                charged[facility] = (
+                    before[0] + quantity * scale,
+                    before[1] + quantity * scale * price,
+                    before[2] + quantity * (1 - scale),
+                )
             left = paid - burned_total * scale
             if left > 0:
                 before = excess.get(fuel, (0.0, 0.0))
@@ -374,6 +383,7 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
                 fuel=fuel_type,
                 quantity=charged[facility][0],
                 cost=charged[facility][1],
+                from_stock=charged[facility][2],
             )
             for facility in sorted(charged, key=_catalog_order)
             if (fuel_type := CATALOG[facility].fuel_type) is not None

@@ -1227,11 +1227,17 @@ export interface components {
             fuel: components["schemas"]["Fuel"];
             /**
              * Quantity
-             * @description In kg: what it burned, or its share of what was paid for if that was less
+             * @description In kg: what it burned of the fuel paid for in the period
              */
             quantity: number;
             /** Cost */
             cost: number;
+            /**
+             * From Stock
+             * @description In kg: what it burned from stock paid for in an earlier period, which costs nothing in this one
+             * @default 0
+             */
+            from_stock: number;
         };
         /**
          * FacilityId

@@ -375,7 +375,8 @@ profit**. A season fills in once it is settled. A **loan** and its payments show
 below net profit, apart from it.
 Market income already has the cost of the energy storage bought to charge taken off.
 The detailed view adds operating income up by facility type instead: each type's sales, dumping, O&M and the fuel
-it burned give what it earned. Fuel paid for beyond what was burned went into stock and shows as **excess fuel**.
+it burned give what it earned. Fuel paid for beyond what was burned went into stock and shows as **excess fuel**,
+charged in the season it was bought. Fuel later burned from that stock is shown apart from the fuel bought, at no cost.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
 
 **Carbon tax** (#1015):

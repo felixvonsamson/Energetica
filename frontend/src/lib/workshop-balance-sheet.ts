@@ -21,6 +21,7 @@ export type PeriodSheet = ApiSchema<"PeriodSheet">;
 export type SeasonSheet = ApiSchema<"SeasonSheet">;
 export type FinancingLine = ApiSchema<"FinancingLine">;
 type OmLine = ApiSchema<"OmLine">;
+type FacilityFuelLine = ApiSchema<"FacilityFuelLine">;
 
 const WH_PER_MWH = 1_000_000;
 
@@ -279,24 +280,82 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
         );
     }
     const fuel = total.facility_fuel.find((line) => line.facility === id);
-    if (fuel) {
-        const name =
-            total.fuel.find((line) => line.fuel === fuel.fuel)?.name ??
-            fuel.fuel;
-        rows.push({
+    if (fuel) rows.push(...facilityFuelRows(id, fuel));
+    return rows;
+}
+
+/**
+ * The fuel a facility type burned, in tonnes. If it burned any from stock over
+ * the Round, it breaks down into the fuel bought in the period, at its price,
+ * and the fuel from stock, which costs nothing: it was charged as excess fuel
+ * when it was bought.
+ */
+function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
+    const season = (p: PeriodSheet) =>
+        p.facility_fuel.find((line) => line.facility === id);
+    // The fuel's name as the server writes it: "gas" is "Gas".
+    const name = fuel.fuel.charAt(0).toUpperCase() + fuel.fuel.slice(1);
+    if (fuel.from_stock <= 0) {
+        return [
+            {
+                id: `${id}-fuel`,
+                label: `Fuel (${name})`,
+                level: 1,
+                kind: "line",
+                unit: "fuel",
+                cell: (p) => {
+                    const line = season(p);
+                    if (!line) return { amount: 0 };
+                    return fuelCell(line.quantity, line.cost);
+                },
+            },
+        ];
+    }
+    return [
+        {
             id: `${id}-fuel`,
             label: `Fuel (${name})`,
             level: 1,
             kind: "line",
             unit: "fuel",
             cell: (p) => {
-                const line = p.facility_fuel.find((l) => l.facility === id);
+                const line = season(p);
+                if (!line) return { amount: 0 };
+                return {
+                    volume: (line.quantity + line.from_stock) / KG_PER_TONNE,
+                    amount: -line.cost,
+                };
+            },
+        },
+        {
+            id: `${id}-fuel-bought`,
+            label: "Bought fuel",
+            level: 2,
+            kind: "line",
+            unit: "fuel",
+            cell: (p) => {
+                const line = season(p);
                 if (!line) return { amount: 0 };
                 return fuelCell(line.quantity, line.cost);
             },
-        });
-    }
-    return rows;
+        },
+        {
+            id: `${id}-fuel-stock`,
+            label: "Fuel from stock",
+            level: 2,
+            kind: "line",
+            unit: "fuel",
+            cell: (p) => {
+                const line = season(p);
+                if (!line) return { amount: 0 };
+                return {
+                    volume: line.from_stock / KG_PER_TONNE,
+                    rate: 0,
+                    amount: 0,
+                };
+            },
+        },
+    ];
 }
 
 /** Fuel paid for beyond what was burned, which went into stock, by fuel. */
@@ -305,7 +364,7 @@ function excessFuelRows(total: PeriodSheet): Row[] {
     return [
         {
             id: "excess-fuel",
-            label: "Excess fuel (into stock)",
+            label: "Excess fuel (stocked)",
             level: 0,
             kind: "line",
             cell: (p) => ({
