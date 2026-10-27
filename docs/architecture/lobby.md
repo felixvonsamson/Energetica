@@ -174,7 +174,7 @@ CREATE TABLE accounts (
 - An account with an `expires_at` is a **temporary account** (#1383). Only operator tooling
   makes one, by passing `expires_at` to the lobby service's `POST accounts`; signup never does.
   The lobby service deletes each expired account, with its memberships and grants, once when it
-  starts and then once a day. That frees the username for a new account. Ids are never reused,
+  starts, before it serves, and then once a day. That frees the username for a new account. Ids are never reused,
   so a deleted account's session cookie cannot reach the new one.
 - Runs keep each player's `account_id` and username in their own state, so a run's scoreboard
   and recap still work after its accounts are gone.
@@ -255,7 +255,8 @@ up, then turns it off again; neither flip needs a restart. See ADR-0003.
 **Temporary accounts and freeplay (#1383).** A temporary account cannot join a freeplay run,
 where it would leave a player behind with no account once it is deleted. The run's entry gate
 (`/auth/me` and the Socket.IO connect) and settle refuse it with `TEMPORARY_ACCOUNT_IN_FREEPLAY`,
-and so does the lobby's public-run join. The lobby's `my-runs` reports the account's
+and so do the ways onto a freeplay run's roster: the lobby's public-run join, the join link and
+the facilitator's roster add. The lobby's `my-runs` reports the account's
 `expires_at`, so the picker never offers a temporary account a freeplay run. Workshop runs admit
 temporary accounts like any other.
 

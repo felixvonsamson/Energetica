@@ -112,5 +112,5 @@ def build_my_runs(username: str, memberships: MembershipsOut, *, expires_at: str
         username=username,
         runs=runs,
         facilitated_runs=facilitated_runs,
-        expires_at=datetime.fromisoformat(expires_at) if expires_at is not None else None,
+        expires_at=_parse_aware(expires_at),
     )

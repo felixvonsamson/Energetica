@@ -150,21 +150,36 @@ def get_facilitator(request: Request) -> Account:
     return standing.account
 
 
-def _refuse_temporary_account(standing: Standing | None) -> None:
+def _is_freeplay(config: instance_config.InstanceConfig | None) -> bool:
+    """Whether this Run is freeplay. An unconfigured instance runs the persistent world, so it is."""
+    return config is None or config.run.mode == "freeplay"
+
+
+def _raise_if_temporary(temporary: bool) -> None:
     """
-    Refuse a temporary account in a freeplay Run. It is deleted after its workshop, so it would
-    leave behind a player with no account (#1383).
+    Refuse a temporary account, in a freeplay Run. It is deleted after its workshop, so it would
+    leave behind a player with no account (#1383). A Workshop Run admits one.
     """
-    if standing is not None and standing.temporary:
+    if temporary:
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.TEMPORARY_ACCOUNT_IN_FREEPLAY)
+
+
+def refuse_temporary_account_in_freeplay(*, temporary: bool) -> None:
+    """
+    Refuse a temporary account if this Run is freeplay. For a route that adds a member to this Run
+    without going through the entry gate: the join link and the roster add.
+    """
+    if _is_freeplay(instance_config.load_instance_config()):
+        _raise_if_temporary(temporary)
 
 
 def reject_temporary_account(request: Request) -> None:
     """
-    Refuse a temporary account. For a freeplay route that is not behind the entry gate but creates
-    a player, which is settle. Attach it as ``dependencies=[Depends(reject_temporary_account)]``.
+    Refuse a temporary account. For settle, the one freeplay route that creates a player without
+    going through the entry gate. Attach it as ``dependencies=[Depends(reject_temporary_account)]``.
     """
-    _refuse_temporary_account(get_standing(request))
+    standing = get_standing(request)
+    _raise_if_temporary(standing is not None and standing.temporary)
 
 
 def _enforce_instance_access(standing: Standing) -> None:
@@ -191,8 +206,8 @@ def _enforce_instance_access(standing: Standing) -> None:
     except instance_config.InstanceConfigError as exc:
         logger.warning("entry blocked: %s", exc)
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED) from exc
-    if config is None or config.run.mode == "freeplay":
-        _refuse_temporary_account(standing)
+    if _is_freeplay(config):
+        _raise_if_temporary(standing.temporary)
     if config is not None and isinstance(config.access, instance_config.PrivateAccess) and not standing.joined:
         raise HTTPException(status.HTTP_403_FORBIDDEN, SharedErrorCode.INSTANCE_ACCESS_DENIED)
     instance_config.publish(config)

@@ -320,3 +320,15 @@ def test_roster_delete_is_a_noop_for_an_unlisted_username(instance_json: Path) -
     response = client.delete(f"{ROSTER_URL}/never-invited")
 
     assert response.status_code == 204
+
+
+def test_roster_post_refuses_a_temporary_account_on_a_freeplay_run(instance_json: Path) -> None:
+    """A temporary account could never enter a freeplay Run, so it is not added to one (#1383)."""
+    client = _facilitator_client(instance_json)
+    make_account("table1-a", temporary=True)
+
+    response = client.post(ROSTER_URL, json={"username": "table1-a"})
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
+    assert web.lobby_service().get_run_members(SLUG) == []

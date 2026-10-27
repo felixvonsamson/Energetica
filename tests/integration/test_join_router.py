@@ -266,3 +266,16 @@ def test_post_rejects_a_token_on_a_public_instance(instance_json: Path) -> None:
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_INVALID"
+
+
+def test_confirm_refuses_a_temporary_account_on_a_freeplay_run(instance_json: Path) -> None:
+    """A temporary account could never enter a freeplay Run, so the link does not join it (#1383)."""
+    _write(instance_json, PRIVATE_JSON)
+    client = _client()
+    authenticate(client, make_account("table1-a", temporary=True))
+
+    response = client.post(_join_url(TOKEN))
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
+    assert _joined_usernames() == []

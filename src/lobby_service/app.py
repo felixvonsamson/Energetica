@@ -421,19 +421,25 @@ def delete_expired_accounts() -> None:
 
 
 async def _sweep_expired_accounts() -> None:
-    """Delete expired accounts now, then once every :data:`EXPIRED_ACCOUNT_SWEEP_INTERVAL`."""
+    """Delete expired accounts, logging rather than raising a failure, which the next sweep retries."""
+    try:
+        await asyncio.to_thread(delete_expired_accounts)
+    except Exception:
+        logger.exception("deleting expired accounts failed")
+
+
+async def _sweep_expired_accounts_daily() -> None:
     while True:
-        try:
-            await asyncio.to_thread(delete_expired_accounts)
-        except Exception:
-            # A failed sweep must not stop the service or the next sweep.
-            logger.exception("deleting expired accounts failed")
         await asyncio.sleep(EXPIRED_ACCOUNT_SWEEP_INTERVAL.total_seconds())
+        await _sweep_expired_accounts()
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    sweep = asyncio.create_task(_sweep_expired_accounts())
+    # The first sweep finishes before the service answers anything, so an expired account never
+    # gets a response after a restart.
+    await _sweep_expired_accounts()
+    sweep = asyncio.create_task(_sweep_expired_accounts_daily())
     try:
         yield
     finally:
