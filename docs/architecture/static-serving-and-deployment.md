@@ -262,7 +262,7 @@ Credentials are server-wide; sessions remain per-subdomain. One physical SQLite 
 /var/lib/energetica/accounts.db
 
   accounts(
-    account_id   INTEGER PRIMARY KEY,
+    account_id   INTEGER PRIMARY KEY AUTOINCREMENT,  -- never reused (#1382)
     username     TEXT    NOT NULL UNIQUE,
     email        TEXT             UNIQUE,   -- nullable for now; not yet collected in the signup form
     pwhash       TEXT    NOT NULL,
