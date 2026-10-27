@@ -29,6 +29,7 @@ import {
     formatPriceChange,
     isOverStockpile,
     fieldPrice,
+    formatFuelAmount,
     fuelFieldText,
     fuelFieldUnit,
     orderCost,
@@ -39,7 +40,7 @@ import {
     workshopFuelImages,
 } from "@/lib/workshop-fuel";
 import type { ApiSchema } from "@/types/api-helpers";
-import { formatMass, formatMoney } from "@energetica/core/format-utils";
+import { formatMoney } from "@energetica/core/format-utils";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { Input } from "@energetica/ui/components/input";
 import { cn } from "@energetica/ui/lib/utils";
@@ -131,7 +132,7 @@ function FuelRow({
                                     Stock
                                 </dt>
                                 <dd className="font-bold whitespace-nowrap text-fg-base">
-                                    {formatMass(line.stock)}
+                                    {formatFuelAmount(line.stock, line.fuel)}
                                 </dd>
                             </div>
                             <div className="flex flex-wrap gap-x-1">
@@ -139,7 +140,11 @@ function FuelRow({
                                     Max consumption
                                 </dt>
                                 <dd className="font-bold whitespace-nowrap text-fg-base">
-                                    {formatMass(line.season_need)}/season
+                                    {formatFuelAmount(
+                                        line.season_need,
+                                        line.fuel,
+                                    )}
+                                    /season
                                 </dd>
                             </div>
                         </dl>
@@ -197,7 +202,7 @@ function FuelRow({
 }
 
 /**
- * The quantity to buy, in kilotonnes for gas and coal and tonnes for uranium. A
+ * The quantity to buy, in kilotonnes for gas and coal and kg for uranium. A
  * valid quantity is sent a moment after the player stops typing, and straight
  * away when the field loses focus.
  */

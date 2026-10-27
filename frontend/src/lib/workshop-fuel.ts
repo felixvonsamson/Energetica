@@ -3,8 +3,9 @@
  * into the bids panel, showing a price's change since last season, and telling
  * when an order runs into the stockpile limit.
  *
- * The server counts fuel in kg. Players type gas and coal in kilotonnes and
- * uranium in tonnes.
+ * The server counts fuel in kg. The panel shows gas and coal in kilotonnes and
+ * uranium in kg, always, rather than switching to whichever unit suits the
+ * number: a player reading "34 t" could easily take it for 34 kt.
  */
 
 import coal from "@/assets/fuels/coal.svg";
@@ -30,17 +31,21 @@ export function workshopFuelColor(fuel: Fuel): string {
 export const KG_PER_TONNE = 1_000;
 
 /**
- * The unit each fuel's order field takes. Gas and coal are bought by the
- * thousand tonnes. Uranium is bought by the kg, so a coarser unit would hide
- * most of an order.
+ * The unit each fuel is shown and bought in, and how many decimals its order
+ * field shows so that it counts to the nearest kg. Gas and coal are bought by
+ * the thousand tonnes. Uranium is bought by the kg, since a season's uranium is
+ * a small fraction of a tonne.
  */
-const FIELD_UNITS: Record<Fuel, { label: string; kg: number }> = {
-    gas: { label: "kt", kg: 1_000_000 },
-    coal: { label: "kt", kg: 1_000_000 },
-    uranium: { label: "t", kg: KG_PER_TONNE },
+const FIELD_UNITS: Record<
+    Fuel,
+    { label: string; kg: number; decimals: number }
+> = {
+    gas: { label: "kt", kg: 1_000_000, decimals: 3 },
+    coal: { label: "kt", kg: 1_000_000, decimals: 3 },
+    uranium: { label: "kg", kg: 1, decimals: 0 },
 };
 
-/** The unit beside a fuel's order field, "kt" or "t". */
+/** The unit beside a fuel's order field, "kt" or "kg". */
 export function fuelFieldUnit(fuel: Fuel): string {
     return FIELD_UNITS[fuel].label;
 }
@@ -64,14 +69,32 @@ export function parseFuelQuantity(text: string, fuel: Fuel): ParsedQuantity {
 }
 
 /**
- * `kg` as a fuel's order field shows it: in the field's unit, to three
- * decimals, with thousands separated by an apostrophe as elsewhere in the
- * game.
+ * `kg` as a fuel's order field shows it: in the field's unit, to the nearest
+ * kg, with thousands separated by an apostrophe as elsewhere in the game.
  */
 export function fuelFieldText(kg: number, fuel: Fuel): string {
-    const [whole = "0", fraction] = String(
-        Number((kg / FIELD_UNITS[fuel].kg).toFixed(3)),
-    ).split(".");
+    const unit = FIELD_UNITS[fuel];
+    return separateThousands(
+        String(Number((kg / unit.kg).toFixed(unit.decimals))),
+    );
+}
+
+/**
+ * An amount of fuel in the fuel's unit, such as "34.2 kt" or "417 kg", for the
+ * stock and the maximum consumption. Smaller numbers get more decimals, so each
+ * shows about three significant digits.
+ */
+export function formatFuelAmount(kg: number, fuel: Fuel): string {
+    const unit = FIELD_UNITS[fuel];
+    const value = kg / unit.kg;
+    const size = Math.abs(value);
+    const decimals = size === 0 || size >= 100 ? 0 : size >= 10 ? 1 : 2;
+    return `${separateThousands(value.toFixed(decimals))} ${unit.label}`;
+}
+
+/** A number's text with its thousands separated by an apostrophe. */
+function separateThousands(text: string): string {
+    const [whole = "0", fraction] = text.split(".");
     const separated = whole.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
     return fraction === undefined ? separated : `${separated}.${fraction}`;
 }
