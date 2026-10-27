@@ -9,6 +9,7 @@ version bump, in one transaction.
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -229,3 +230,65 @@ def test_a_failing_step_leaves_the_database_as_it_was(tmp_path: Path) -> None:
 
     assert _user_version(path) == SCHEMA_VERSION
     assert "nickname" not in {row[1] for row in sqlite3.connect(path).execute("PRAGMA table_info(accounts)")}
+
+
+def _migrated_legacy_database(path: Path) -> None:
+    _legacy_database(path, _LEGACY_SHAPES["before-settled-at"])
+    upgrade_database(path)
+
+
+def _new_database(path: Path) -> None:
+    upgrade_database(path)
+
+
+@pytest.mark.parametrize("make_database", [_new_database, _migrated_legacy_database])
+def test_an_account_id_is_never_given_out_twice(tmp_path: Path, make_database: Callable[[Path], None]) -> None:
+    """
+    Deleting the account with the highest id does not free that id: the session cookie and the runs
+    know an account only by its id, so a new account that got it would take over the deleted one's.
+    """
+    path = tmp_path / "lobby.db"
+    make_database(path)
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "INSERT INTO accounts (username, pwhash, created_at) VALUES ('bob', 'hash', '2026-02-01T00:00:00+00:00')"
+        )
+        deleted_id = conn.execute("SELECT max(account_id) FROM accounts").fetchone()[0]
+        conn.execute("DELETE FROM accounts WHERE account_id = ?", (deleted_id,))
+        new_id = conn.execute(
+            "INSERT INTO accounts (username, pwhash, created_at) VALUES ('carol', 'hash', '2026-03-01T00:00:00+00:00')"
+        ).lastrowid
+
+    assert new_id == deleted_id + 1
+
+
+def test_migration_4_keeps_every_account_as_it_was(tmp_path: Path) -> None:
+    """
+    A database at version 3 keeps every account's columns, ids with gaps included, and new ids
+    continue after the highest one. The rows replace the one ``_legacy_database`` seeds.
+    """
+    path = tmp_path / "lobby.db"
+    _legacy_database(path, _LEGACY_SHAPES["before-settled-at"])
+    accounts = [
+        (1, "alice", "hash", None, "2026-01-01T00:00:00+00:00"),
+        (4, "dave", "hash-d", "dave@example.com", "2026-01-04T00:00:00+00:00"),
+        (7, "erin", "hash-e", None, "2026-01-07T00:00:00+00:00"),
+    ]
+    with sqlite3.connect(path) as conn:
+        conn.executemany(
+            "INSERT OR REPLACE INTO accounts (account_id, username, pwhash, email, created_at) VALUES (?, ?, ?, ?, ?)",
+            accounts,
+        )
+    upgrade_database(path, steps=load_steps()[:3])
+
+    upgrade_database(path)
+
+    with sqlite3.connect(path) as conn:
+        rows = conn.execute(
+            "SELECT account_id, username, pwhash, email, created_at FROM accounts ORDER BY account_id"
+        ).fetchall()
+        next_id = conn.execute(
+            "INSERT INTO accounts (username, pwhash, created_at) VALUES ('frank', 'hash', '2026-02-01T00:00:00+00:00')"
+        ).lastrowid
+    assert rows == accounts
+    assert next_id == 8

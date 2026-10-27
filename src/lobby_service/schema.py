@@ -30,7 +30,7 @@ def create_current_schema(conn: sqlite3.Connection) -> None:
     conn.execute(
         """
         CREATE TABLE accounts (
-            account_id INTEGER PRIMARY KEY,
+            account_id INTEGER PRIMARY KEY AUTOINCREMENT,  -- never reused, even after a delete
             username   TEXT    NOT NULL UNIQUE,
             email      TEXT             UNIQUE,
             pwhash     TEXT    NOT NULL,
