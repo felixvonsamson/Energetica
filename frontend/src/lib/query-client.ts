@@ -126,6 +126,9 @@ export const queryKeys = {
         // Every player's score (#1017, #1250). Under the session's key, so it is read again
         // as each Recap opens.
         scoreboard: ["workshop", "session", "scoreboard"] as const,
+        // The visitor's feedback on the game. Not under the session's key: no session change
+        // alters it.
+        feedback: ["workshop", "feedback"] as const,
         // The control room (#1289). Under the session's key, so every session change re-reads
         // it, and the server also names it when a player changes a price.
         controlRoom: ["workshop", "session", "control-room"] as const,

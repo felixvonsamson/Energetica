@@ -111,6 +111,8 @@ export const GAME_ERROR_MESSAGES: Record<ErrorCode, string> = {
         "This workshop plays in teams, and your account is not on any team. Ask the facilitator to check the team list.",
     WORKSHOP_NO_SUCH_TEAM:
         "This workshop has no team by that name. Reload the page to see its teams.",
+    WORKSHOP_FEEDBACK_NOT_OPEN:
+        "Feedback opens once the game is over and the final scores are up.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

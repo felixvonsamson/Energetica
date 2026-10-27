@@ -9,6 +9,7 @@ has already imported the persistent world.
 from __future__ import annotations
 
 import json
+import sqlite3
 import math
 import os
 import subprocess
@@ -66,6 +67,7 @@ FUEL_URL = "/api/v1/workshop/fuel"
 RECAP_URL = "/api/v1/workshop/rounds/{round}/recap"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
+FEEDBACK_URL = "/api/v1/workshop/feedback"
 
 
 @pytest.fixture
@@ -2128,6 +2130,70 @@ def test_a_bonus_multiplier_for_a_team_the_run_does_not_have_is_refused(session_
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_TEAM"
     assert client.get(SCOREBOARD_URL).json()["teams"][0]["bonus_multiplier"] == 1.0
+
+
+# --- feedback on the game -------------------------------------------------------------------
+
+
+def _finish(client: TestClient) -> None:
+    """Advance the session as the facilitator until it is finished."""
+    _facilitator(client)
+    while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("finished"):
+        assert _advance(client).status_code == 200
+
+
+def test_a_player_cannot_send_feedback_before_the_session_is_finished(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+    client.post(ENTER_URL)
+
+    response = client.put(FEEDBACK_URL, json={"fun": 4, "teaching": 5})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_FEEDBACK_NOT_OPEN"
+    assert client.get(FEEDBACK_URL).json() is None
+
+
+def test_a_player_sends_feedback_once_the_session_is_finished_and_can_replace_it(session_path: Path) -> None:
+    client = _client(session_path)
+    alice = _player(client, "alice")
+    client.post(ENTER_URL)
+    _finish(client)
+    authenticate(client, alice)
+
+    first = client.put(FEEDBACK_URL, json={"fun": 4, "teaching": 5, "comment": "  Loved the auctions  "})
+    assert first.status_code == 200
+    assert first.json() == {"fun": 4, "teaching": 5, "comment": "Loved the auctions"}
+    second = client.put(FEEDBACK_URL, json={"fun": 3, "teaching": 2, "comment": "   "})
+    assert second.json() == {"fun": 3, "teaching": 2, "comment": None}
+    assert client.get(FEEDBACK_URL).json() == second.json()
+
+    # The responses are kept in their own database, one row per player, naming the Run.
+    database = session_path.with_name("workshop_feedback.sqlite3")
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT account_id, run_slug, username, fun, teaching, comment FROM feedback"
+        ).fetchall()
+    assert rows == [(alice, SLUG, "alice", 3, 2, None)]
+
+
+@pytest.mark.parametrize("body", [{"fun": 0, "teaching": 3}, {"fun": 3, "teaching": 6}, {"fun": 3}])
+def test_feedback_needs_both_ratings_between_one_and_five(session_path: Path, body: dict) -> None:
+    client = _client(session_path)
+    alice = _player(client, "alice")
+    client.post(ENTER_URL)
+    _finish(client)
+    authenticate(client, alice)
+
+    assert client.put(FEEDBACK_URL, json=body).status_code == 422
+
+
+def test_a_facilitator_sends_no_feedback(session_path: Path) -> None:
+    client = _client(session_path)
+    _finish(client)
+
+    assert client.get(FEEDBACK_URL).status_code == 403
+    assert client.put(FEEDBACK_URL, json={"fun": 5, "teaching": 5}).status_code == 403
 
 
 # --- the carbon tax vote (#1014) ------------------------------------------------------------

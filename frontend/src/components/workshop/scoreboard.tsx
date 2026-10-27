@@ -18,11 +18,15 @@
  * the facilitator gives any team a bonus multiplier other than 1, such as for a
  * quiz, the teams' table gets a Bonus column and each team's score is the sum
  * times its multiplier. Until then, nothing about multipliers is shown.
+ *
+ * Once the scores are final, a card at the bottom asks each player for feedback
+ * on the game.
  */
 
 import { Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { GameFeedback } from "@/components/workshop/game-feedback";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
 import {
@@ -97,6 +101,9 @@ export function Scoreboard() {
                     hasBonus(scoreboard.data.teams)
                 }
             />
+            {scoreboard.data.final && entry?.role === "player" && (
+                <GameFeedback />
+            )}
         </div>
     );
 }
