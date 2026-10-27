@@ -157,6 +157,15 @@ player account on a team:
 "run": {"mode": "workshop", "teams": [{"name": "Axpo", "members": ["alice"]}, {"name": "Romande", "members": ["bob"]}]}
 ```
 
+Or let the setup script (#1385) create the accounts, put them on the roster and write the teams, once
+the lobby service is running (step 2). The Run's directory in local development is the repo root, so
+the credentials file lands in `instance/`, and the facilitator settings page shows it:
+
+```bash
+.venv/bin/python scripts/lobby/setup-workshop-teams.py workshop-demo --teams 2 --size 2 \
+    --socket .energetica-dev/lobby-service.sock --config-dir .energetica-dev/etc --instance-dir .
+```
+
 ### 2. Give two accounts access (once)
 
 A Workshop Run is always private, so only accounts on its roster can enter. You need two accounts:

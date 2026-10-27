@@ -28,6 +28,7 @@ from httpx import Response
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
 from energetica.workshop.app import create_workshop_app
+from energetica.workshop.credentials import CredentialLine, WorkshopCredentials, write_credentials
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import season_need
@@ -66,6 +67,7 @@ FUEL_URL = "/api/v1/workshop/fuel"
 RECAP_URL = "/api/v1/workshop/rounds/{round}/recap"
 FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
 FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
+CREDENTIALS_URL = "/api/v1/workshop/credentials"
 
 
 @pytest.fixture
@@ -287,6 +289,73 @@ def test_a_run_without_teams_lists_none(session_path: Path) -> None:
     _player(client, "alice")
 
     assert client.get(SESSION_URL).json()["teams"] is None
+
+
+# --- the credentials (#1385) ----------------------------------------------------------------
+
+
+def _write_credentials(session_path: Path, expires_at: datetime) -> WorkshopCredentials:
+    """Write the credentials file the setup script writes, beside the session."""
+    credentials = WorkshopCredentials(
+        expires_at=expires_at,
+        accounts=[
+            CredentialLine(team="Axpo", username="laufenbourg", password="k7mp3xq9rt"),
+            CredentialLine(team="Romande Energie", username="romanel", password="b4nw8zd2hc"),
+        ],
+    )
+    write_credentials(session_path.with_name("workshop_credentials.json"), credentials)
+    return credentials
+
+
+def test_the_facilitator_reads_the_credentials(session_path: Path) -> None:
+    credentials = _write_credentials(session_path, datetime.now(timezone.utc) + timedelta(days=7))
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.get(CREDENTIALS_URL)
+
+    assert response.status_code == 200
+    assert WorkshopCredentials.model_validate(response.json()) == credentials
+    # The passwords must not linger in a cache.
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_a_player_cannot_read_the_credentials(session_path: Path) -> None:
+    _write_credentials(session_path, datetime.now(timezone.utc) + timedelta(days=7))
+    client = _client(session_path)
+    _player(client, "alice")
+
+    assert client.get(CREDENTIALS_URL).status_code == 403
+
+
+def test_a_run_without_a_credentials_file_has_none(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.get(CREDENTIALS_URL)
+
+    assert response.status_code == 200
+    assert response.json() is None
+
+
+def test_expired_credentials_are_deleted_when_the_run_starts(session_path: Path) -> None:
+    _write_credentials(session_path, datetime.now(timezone.utc) - timedelta(minutes=1))
+
+    _client(session_path)
+
+    assert not session_path.with_name("workshop_credentials.json").exists()
+
+
+def test_credentials_that_expire_while_the_run_is_up_are_no_longer_served(session_path: Path, clock: _Clock) -> None:
+    _write_credentials(session_path, clock.now + timedelta(days=7))
+    config = load_instance_config()
+    assert config is not None
+    client = TestClient(create_workshop_app(config, session_path=session_path, clock=clock))
+    _facilitator(client)
+    clock.tick(days=7)
+
+    assert client.get(CREDENTIALS_URL).json() is None
+    assert not session_path.with_name("workshop_credentials.json").exists()
 
 
 # --- the session ----------------------------------------------------------------------------

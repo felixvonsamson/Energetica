@@ -12,8 +12,9 @@ player's own. A Round's Recap (#1013) is open to everyone in the Run, but only o
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
 The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone. The
-control room (#1289) is open to everyone in the Run, and names no player. Its capacity counts every player's selection
-(#1287), so changing a selection tells every open page to re-read it.
+credentials of a Run with teams (#1385) are the facilitator's alone. The control room (#1289) is open to everyone in
+the Run, and names no player. Its capacity counts every player's selection (#1287), so changing a selection tells
+every open page to re-read it.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ import asyncio
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity.account import Account
@@ -30,6 +31,7 @@ from energetica.identity.game_error import IdentityErrorCode
 from energetica.identity.web import Standing, get_facilitator, resolve_entry, resolve_entry_account
 from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.control_room import ControlRoom
+from energetica.workshop.credentials import WorkshopCredentials, read_credentials
 from energetica.workshop.events import EVENTS, suggested_severity
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
@@ -218,6 +220,18 @@ async def set_timers(
     await run_in_threadpool(session.set_timers, timers)
     await invalidate_session(request.app)
     return session.timers
+
+
+@router.get("/credentials")
+def get_credentials(
+    _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request, response: Response
+) -> WorkshopCredentials | None:
+    """Each account's team, username and password, for the slips the facilitator prints (#1385), or null if the Run
+    has no credentials file: its accounts were set up by hand, or they have expired. Facilitator only.
+    """
+    # The plain passwords must not be kept by the browser or anything in between.
+    response.headers["Cache-Control"] = "no-store"
+    return read_credentials(request.app.state.credentials_path, now=session.clock())
 
 
 @router.get("/unlocks")

@@ -161,6 +161,7 @@ WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
     "POST /api/v1/workshop/session/phase/extend",
     "GET /api/v1/workshop/timers",
     "PUT /api/v1/workshop/timers",
+    "GET /api/v1/workshop/credentials",
     "GET /api/v1/workshop/unlocks",
     "GET /api/v1/workshop/vote",
     "PUT /api/v1/workshop/vote/ballot",

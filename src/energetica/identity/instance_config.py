@@ -341,11 +341,16 @@ def _landing_dir() -> Path:
     return Path(os.environ.get(_LANDING_DIR_ENV_VAR, _DEFAULT_LANDING_DIR))
 
 
+def instance_json_path(slug: str) -> Path:
+    """Where the run ``slug``'s ``instance.json`` lives."""
+    return _config_dir() / slug / "instance.json"
+
+
 def _instance_json_path() -> Path | None:
     slug = instance_slug()
     if slug is None:
         return None
-    return _config_dir() / slug / "instance.json"
+    return instance_json_path(slug)
 
 
 def load_instance_config() -> InstanceConfig | None:
@@ -360,11 +365,21 @@ def load_instance_config() -> InstanceConfig | None:
     path = _instance_json_path()
     if path is None or not path.exists():
         return None
+    return read_instance_config(path)
+
+
+def read_instance_config(path: Path) -> InstanceConfig:
+    """Read and validate the ``instance.json`` at ``path``, raising :class:`InstanceConfigError` if it cannot."""
     try:
         return InstanceConfig.model_validate_json(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         # ValueError covers pydantic ValidationError and JSON decode errors.
         raise InstanceConfigError(f"invalid instance.json at {path}: {exc}") from exc
+
+
+def write_instance_config(path: Path, config: InstanceConfig) -> None:
+    """Replace the ``instance.json`` at ``path`` with ``config``, atomically, as the run's own writes do."""
+    _atomic_write_json(path, config.model_dump_json())
 
 
 _ModelT = TypeVar("_ModelT", bound=BaseModel)
