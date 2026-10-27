@@ -70,22 +70,48 @@ export const Route = createFileRoute("/app/facilitator/")({
 });
 
 function FacilitatorPage() {
-    const { data: runMode } = useRunMode();
-    const { data: session } = useWorkshopSession({
-        enabled: runMode === "workshop",
-    });
-    // With teams (#1384), the join link could only add accounts on no team, which
-    // cannot enter, so the page does not offer it.
-    const hasTeams = !!session?.teams;
     return (
         <div className="flex min-h-svh flex-col">
             <FacilitatorHeader />
             <main className="flex-1 overflow-auto p-4 md:p-8">
                 <div className="max-w-xl mx-auto">
-                    {hasTeams ? <TeamsInsteadOfJoinLink /> : <JoinLinkCard />}
+                    <AccessCard />
                 </div>
             </main>
         </div>
+    );
+}
+
+/**
+ * The join link card, or in a Workshop Run with teams (#1384) a note in its
+ * place: the join link could only add accounts on no team, which cannot enter.
+ * Nothing is shown until the page knows whether the Run has teams, so a Run
+ * with teams never offers the link, even briefly.
+ */
+function AccessCard() {
+    const runMode = useRunMode();
+    const isWorkshop = runMode.data === "workshop";
+    const session = useWorkshopSession({ enabled: isWorkshop });
+
+    if (runMode.isPending || (isWorkshop && session.isPending)) {
+        return (
+            <div className="flex justify-center py-12">
+                <Spinner />
+            </div>
+        );
+    }
+    const error = runMode.error ?? (isWorkshop ? session.error : null);
+    if (error) {
+        return (
+            <InfoBanner variant="error">
+                {getUserFriendlyError(error)}
+            </InfoBanner>
+        );
+    }
+    return isWorkshop && session.data?.teams ? (
+        <TeamsInsteadOfJoinLink />
+    ) : (
+        <JoinLinkCard />
     );
 }
 

@@ -1,5 +1,6 @@
 import {
     createRootRoute,
+    Link,
     Outlet,
     useMatches,
     useNavigate,
@@ -19,7 +20,8 @@ import {
     isAnnouncedTakeover,
     workshopRedirect,
 } from "@/lib/route-guard";
-import { lobbyLoginHref } from "@energetica/core/instances";
+import { lobbyHref, lobbyLoginHref } from "@energetica/core/instances";
+import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
 import { Spinner } from "@energetica/ui/components/spinner";
 
@@ -85,10 +87,24 @@ function WorkshopRoot() {
     if (isLoading) return <FullPageSpinner />;
     if (isError) {
         // An account on no team in a Run with teams (#1384) is refused for good, so trying again cannot help.
+        // The player may be signed in with the wrong account, so they can log out or go back to the lobby, as
+        // from the Workshop's account menu.
         if (isErrorType(error, "WORKSHOP_NOT_ON_A_TEAM")) {
             return (
-                <div className="flex min-h-screen items-center justify-center p-4 text-center">
+                <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center">
                     <p>{getUserFriendlyError(error)}</p>
+                    <div className="flex gap-2">
+                        {/* On a single-origin host the lobby sends a logged-in
+                            account straight back here, so there is no lobby to go to. */}
+                        {!isSingleOriginHost() && (
+                            <Button variant="outline" asChild>
+                                <a href={lobbyHref("/")}>Back to lobby</a>
+                            </Button>
+                        )}
+                        <Button variant="outline" asChild>
+                            <Link to="/app/logout">Log out</Link>
+                        </Button>
+                    </div>
                 </div>
             );
         }
