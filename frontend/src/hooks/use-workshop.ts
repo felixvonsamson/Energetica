@@ -766,6 +766,21 @@ export function useWorkshopScoreboard() {
 }
 
 /**
+ * Set each named team's bonus multiplier on its score. The facilitator's
+ * scoreboard follows from the answer, and every other page re-reads it.
+ */
+export function useSetBonusMultipliers() {
+    return useMutation({
+        mutationFn: workshopApi.setBonusMultipliers,
+        // Safe to repeat: it sets the values outright.
+        retry: 1,
+        onSuccess: (scoreboard) => {
+            queryClient.setQueryData(queryKeys.workshop.scoreboard, scoreboard);
+        },
+    });
+}
+
+/**
  * Everything the control room shows (#1289). Read again whenever the session
  * changes, and whenever a player changes a price.
  */

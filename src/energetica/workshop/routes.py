@@ -11,7 +11,8 @@ Run: players see every bid, as they do in the persistent world. A Round's balanc
 player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
 current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
 anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run all game (#1250). A player's loan (#1225) is theirs alone. The
+The scoreboard (#1017) is open to everyone in the Run all game (#1250), and only the facilitator sets the teams' bonus
+multipliers on it. A player's loan (#1225) is theirs alone. The
 control room (#1289) is open to everyone in the Run, and names no player. Its capacity counts every player's selection
 (#1287), so changing a selection tells every open page to re-read it.
 """
@@ -43,6 +44,7 @@ from energetica.workshop.recap import WorkshopRecap
 from energetica.workshop.round_plan import LeverChanges, PlannedEvent, planned_effect_line
 from energetica.workshop.schemas import (
     WorkshopBallotIn,
+    WorkshopBonusMultipliersIn,
     WorkshopEntryOut,
     WorkshopEventOut,
     WorkshopEventsOut,
@@ -665,6 +667,22 @@ def get_scoreboard(_: Annotated[Account, Depends(resolve_entry_account)], sessio
     """Every player's score after the Rounds completed so far, highest first, with what it adds up from. The same
     for everyone in the Run. Final once the session is over.
     """
+    return session.scoreboard()
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/scoreboard/bonus-multipliers")
+async def set_bonus_multipliers(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    bonus_multipliers: WorkshopBonusMultipliersIn,
+) -> Scoreboard:
+    """Set the bonus multiplier of each team named, which multiplies its score, and tell every open page. Only in a
+    Run with teams, and only for its teams.
+    """
+    await run_in_threadpool(session.set_bonus_multipliers, bonus_multipliers.multipliers)
+    await invalidate_session(request.app)
     return session.scoreboard()
 
 

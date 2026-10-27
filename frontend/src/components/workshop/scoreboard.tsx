@@ -14,7 +14,10 @@
  * the table spells out the formula and each of its terms.
  *
  * In a Run with teams (#1384), a table of teams comes first, each scoring the
- * sum of its members' scores, and the players' table gets a Team column.
+ * sum of its members' scores, and the players' table gets a Team column. Once
+ * the facilitator gives any team a bonus multiplier other than 1, such as for a
+ * quiz, the teams' table gets a Bonus column and each team's score is the sum
+ * times its multiplier. Until then, nothing about multipliers is shown.
  */
 
 import { Trophy } from "lucide-react";
@@ -88,13 +91,23 @@ export function Scoreboard() {
                 hasTeams={scoreboard.data.teams !== null}
                 me={me}
             />
-            <ScoreFormula />
+            <ScoreFormula
+                bonus={
+                    scoreboard.data.teams !== null &&
+                    hasBonus(scoreboard.data.teams)
+                }
+            />
         </div>
     );
 }
 
 type Score = ApiSchema<"Score">;
 type TeamScore = ApiSchema<"TeamScore">;
+
+/** Whether any team's score is multiplied by something other than 1. */
+function hasBonus(teams: TeamScore[]): boolean {
+    return teams.some((team) => team.bonus_multiplier !== 1);
+}
 
 /** Every team ranked by the sum of its members' scores (#1384). */
 function TeamTable({
@@ -109,8 +122,9 @@ function TeamTable({
     const usernames = new Map(
         scores.map((row) => [row.account_id, row.username]),
     );
+    const bonus = hasBonus(teams);
     return (
-        <ScoreTable label="Team">
+        <ScoreTable label="Team" bonusColumn={bonus}>
             {teams.map((team, index) => {
                 const mine = me !== undefined && team.account_ids.includes(me);
                 return (
@@ -140,7 +154,12 @@ function TeamTable({
                                     .join(", ")}
                             </div>
                         </td>
-                        <ScoreCells row={team} />
+                        <ScoreCells
+                            row={team}
+                            bonusMultiplier={
+                                bonus ? team.bonus_multiplier : undefined
+                            }
+                        />
                     </tr>
                 );
             })}
@@ -193,16 +212,18 @@ function PlayerTable({
 }
 
 /**
- * A ranking table's frame and header: rank, the ranked name, the four parts and
- * the score.
+ * A ranking table's frame and header: rank, the ranked name, the four parts,
+ * the bonus multiplier if shown, and the score.
  */
 function ScoreTable({
     label,
     teamColumn = false,
+    bonusColumn = false,
     children,
 }: {
     label: string;
     teamColumn?: boolean;
+    bonusColumn?: boolean;
     children: ReactNode;
 }) {
     return (
@@ -229,6 +250,11 @@ function ScoreTable({
                                 {column.label}
                             </th>
                         ))}
+                        {bonusColumn && (
+                            <th className="py-2 px-4 text-right font-semibold">
+                                Bonus
+                            </th>
+                        )}
                         <th className="py-2 px-4 text-right font-bold tracking-wide">
                             SCORE
                         </th>
@@ -240,8 +266,17 @@ function ScoreTable({
     );
 }
 
-/** The four parts of a score, the two costs as negative amounts, then the score. */
-function ScoreCells({ row }: { row: Score | TeamScore }) {
+/**
+ * The four parts of a score, the two costs as negative amounts, then the bonus
+ * multiplier if given, then the score.
+ */
+function ScoreCells({
+    row,
+    bonusMultiplier,
+}: {
+    row: Score | TeamScore;
+    bonusMultiplier?: number;
+}) {
     return (
         <>
             {COLUMNS.map((column) => (
@@ -249,6 +284,11 @@ function ScoreCells({ row }: { row: Score | TeamScore }) {
                     <Money amount={column.sign * row[column.key]} />
                 </td>
             ))}
+            {bonusMultiplier !== undefined && (
+                <td className="py-2 px-4 text-right font-mono">
+                    ×{bonusMultiplier}
+                </td>
+            )}
             <td className="py-2 px-4 text-right font-semibold">
                 <Money amount={row.score} />
             </td>
@@ -285,7 +325,7 @@ const TERMS = [
     },
 ] as const;
 
-function ScoreFormula() {
+function ScoreFormula({ bonus }: { bonus: boolean }) {
     return (
         <Card>
             <CardHeader>
@@ -306,6 +346,12 @@ function ScoreFormula() {
                         </div>
                     ))}
                 </dl>
+                {bonus && (
+                    <TypographyMuted>
+                        A team&apos;s score is the sum of its members&apos;
+                        scores, times the team&apos;s bonus multiplier.
+                    </TypographyMuted>
+                )}
                 <TypographyMuted>
                     Cash is not part of the score: it already moves with the
                     terms above, so counting it would count them twice.

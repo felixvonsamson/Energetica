@@ -5,15 +5,17 @@
  * opens on the earliest Round that can still change, and the facilitator can
  * add a Round until the last Recap opens (#1298). Outside the tabs sit what
  * belongs to the whole session: the links to the join link and roster, the
- * phase timers, and how far each technology is from unlocking its upgrade
- * (#1011). Facilitator only: players learn of a Round only at the Recap, so
- * they are sent back to the Workshop home.
+ * phase timers, how far each technology is from unlocking its upgrade (#1011),
+ * and in a Run with teams each team's bonus multiplier. Facilitator only:
+ * players learn of a Round only at the Recap, so they are sent back to the
+ * Workshop home.
  */
 
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Lock, Plus } from "lucide-react";
 import { useState } from "react";
 
+import { BonusMultipliersCard } from "@/components/workshop/bonus-multipliers-card";
 import { PhaseTimersCard } from "@/components/workshop/phase-timers-card";
 import { RoundEvents } from "@/components/workshop/round-events";
 import { RoundLevers } from "@/components/workshop/round-levers";
@@ -71,6 +73,7 @@ function ConsolePage() {
                 <PhaseTimersCard />
                 <TechnologyUnlocksCard />
             </div>
+            <BonusMultipliersCard />
         </div>
     );
 }
