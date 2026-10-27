@@ -281,6 +281,15 @@ export const workshopApi = {
         ),
 
     /**
+     * Set each named team's bonus multiplier on its score. Facilitator only.
+     * Returns the scoreboard after the change.
+     */
+    setBonusMultipliers: (multipliers: Record<string, number>) =>
+        apiClient.put<
+            ApiResponse<"/api/v1/workshop/scoreboard/bonus-multipliers", "put">
+        >("/workshop/scoreboard/bonus-multipliers", { multipliers }),
+
+    /**
      * Everything the control room shows the room (#1289), apart from where the
      * session is. The same for everyone in the Run.
      */

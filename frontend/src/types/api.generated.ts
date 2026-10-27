@@ -2542,6 +2542,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/scoreboard/bonus-multipliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Bonus Multipliers
+         * @description Set the bonus multiplier of each team named, which multiplies its score, and tell every open page. Only in a
+         *     Run with teams, and only for its teams.
+         */
+        put: operations["set_bonus_multipliers_api_v1_workshop_scoreboard_bonus_multipliers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/control-room": {
         parameters: {
             query?: never;
@@ -6404,7 +6425,8 @@ export interface components {
         };
         /**
          * TeamScore
-         * @description One team's score (#1384): the sum of its members' scores, and of what they add up from.
+         * @description One team's score (#1384): the sum of its members' scores times the team's bonus multiplier, and what the sum
+         *     adds up from.
          */
         TeamScore: {
             /** Name */
@@ -6422,7 +6444,15 @@ export interface components {
             carbon_tax: number;
             /** Residual Value */
             residual_value: number;
-            /** Score */
+            /**
+             * Bonus Multiplier
+             * @description What the facilitator multiplies the team's score by, such as a quiz bonus. 1 when none is set
+             */
+            bonus_multiplier: number;
+            /**
+             * Score
+             * @description The sum of the members' scores, times the bonus multiplier
+             */
             score: number;
         };
         /**
@@ -6516,6 +6546,19 @@ export interface components {
              * @enum {string}
              */
             ballot: "yes" | "no";
+        };
+        /**
+         * WorkshopBonusMultipliersIn
+         * @description The bonus multiplier of each team named, by team name, which multiplies the team's score.
+         */
+        WorkshopBonusMultipliersIn: {
+            /**
+             * Multipliers
+             * @description Each team's bonus multiplier, by team name. A team left out keeps its multiplier
+             */
+            multipliers: {
+                [key: string]: number;
+            };
         };
         /**
          * WorkshopEntryOut
@@ -7487,7 +7530,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN" | "WORKSHOP_NOT_ON_A_TEAM";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN" | "WORKSHOP_NOT_ON_A_TEAM" | "WORKSHOP_NO_SUCH_TEAM";
     };
     responses: never;
     parameters: never;
@@ -11086,6 +11129,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Scoreboard"];
+                };
+            };
+        };
+    };
+    set_bonus_multipliers_api_v1_workshop_scoreboard_bonus_multipliers_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopBonusMultipliersIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scoreboard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -2080,6 +2080,56 @@ def test_everyone_reads_the_scoreboard_all_game(session_path: Path) -> None:
     )
 
 
+BONUS_MULTIPLIERS_URL = "/api/v1/workshop/scoreboard/bonus-multipliers"
+
+
+def test_the_facilitator_sets_a_teams_bonus_multiplier_and_everyone_sees_it(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    romanel = _player(client, "romanel")
+    client.post(ENTER_URL)
+    _facilitator(client)
+
+    response = client.put(BONUS_MULTIPLIERS_URL, json={"multipliers": {"Romande Energie": 1.5}})
+
+    assert response.status_code == 200
+    authenticate(client, romanel)
+    teams = {team["name"]: team["bonus_multiplier"] for team in client.get(SCOREBOARD_URL).json()["teams"]}
+    assert teams == {"Axpo": 1.0, "Romande Energie": 1.5}
+    # The multiplier is saved with the session, so it survives a restart.
+    assert _client(session_path).app.state.workshop_session.bonus_multipliers == {"Romande Energie": 1.5}  # type: ignore[attr-defined]
+
+
+def test_only_the_facilitator_sets_bonus_multipliers(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _player(client, "romanel")
+    client.post(ENTER_URL)
+
+    assert client.put(BONUS_MULTIPLIERS_URL, json={"multipliers": {"Axpo": 2.0}}).status_code == 403
+
+
+@pytest.mark.parametrize("multiplier", [0, -1, 2.5])
+def test_a_bonus_multiplier_must_be_above_0_and_at_most_2(session_path: Path, multiplier: float) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _facilitator(client)
+
+    assert client.put(BONUS_MULTIPLIERS_URL, json={"multipliers": {"Axpo": multiplier}}).status_code == 422
+
+
+def test_a_bonus_multiplier_for_a_team_the_run_does_not_have_is_refused(session_path: Path) -> None:
+    _with_teams(session_path)
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.put(BONUS_MULTIPLIERS_URL, json={"multipliers": {"Axpo": 2.0, "Nobody": 2.0}})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_SUCH_TEAM"
+    assert client.get(SCOREBOARD_URL).json()["teams"][0]["bonus_multiplier"] == 1.0
+
+
 # --- the carbon tax vote (#1014) ------------------------------------------------------------
 
 VOTE_URL = "/api/v1/workshop/vote"
