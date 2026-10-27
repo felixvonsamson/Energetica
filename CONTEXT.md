@@ -160,6 +160,13 @@ step from joining, and a freeplay engine act only: the **lobby service** does no
 The single authenticated session a player gets from the lobby, carried to every run on the
 server. Distinct from the per-run **User**/**Player** state it unlocks.
 
+**Temporary account** (#1383):
+An account with an expiry date (`expires_at`), made by operator tooling for one workshop rather than by
+signing up. The lobby service deletes it, with its memberships, once that date has passed, which frees its
+username. It cannot join a freeplay Run. An account with no expiry date is permanent. Account ids are never
+reused (#1382), so a deleted account's id and session cookie can never reach a new account.
+_Avoid_: guest account, workshop account (a permanent account can play a workshop too).
+
 ### Flagged ambiguities
 
 - **"Membership": joined vs settled.** Originally resolved as membership = settled (has a
@@ -328,6 +335,15 @@ everyone in the Run sees it all game (#1250). Mid-game it uses the same formula 
 far (a Round is completed once its Recap opens), with residual value counted from the Round after the last
 completed one. So it changes once per Round, and after the last Round it is the final score.
 _Avoid_: leaderboard, salvage value.
+
+**Team** and **team score** (#1384):
+A fixed group of accounts, usually the computers at one table, set in the Run's `instance.json` when the Run
+is provisioned. Teams are optional: a Run either has none, or puts every player on one, with the same number
+of accounts on each team. An account on no team cannot play in a Run with teams. A player's team is set when
+they first enter and never changes. The team score is the sum of its members' scores, even when a member never
+entered, and the **scoreboard** ranks teams above its ranking of players. Teams only label and score:
+teammates still trade as separate players.
+_Avoid_: table (the room's furniture, not a game term), group.
 
 **Session-length price** (#1306):
 What a long-lived facility costs in a session, fixed for the whole session by how many Rounds it starts with. Nuclear
