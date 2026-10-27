@@ -6,6 +6,11 @@
  * those lines down, with a volume and a rate where the amount is one times the
  * other. Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in
  * kg and are shown in tonnes.
+ *
+ * The simple view adds up operating income by kind: market income, dumping, O&M
+ * and fuel. The detailed view adds it up by facility type instead, so each
+ * type's row is what it earned, with its sales, dumping, O&M and fuel under it.
+ * Fuel bought beyond what was burned went into stock, and has its own row.
  */
 
 import { KG_PER_TONNE } from "@/lib/workshop-fuel";
@@ -15,7 +20,7 @@ export type BalanceSheet = ApiSchema<"BalanceSheet">;
 export type PeriodSheet = ApiSchema<"PeriodSheet">;
 export type SeasonSheet = ApiSchema<"SeasonSheet">;
 export type FinancingLine = ApiSchema<"FinancingLine">;
-type MarketLine = ApiSchema<"MarketLine">;
+type OmLine = ApiSchema<"OmLine">;
 
 const WH_PER_MWH = 1_000_000;
 
@@ -104,28 +109,6 @@ function energyCell(energy: number, money: number): Cell {
     };
 }
 
-/**
- * One line per facility type under energy sold or bought, from the Round's
- * total. A season the type sold or bought nothing in shows zero.
- */
-function marketRows(side: "sold" | "bought", lines: MarketLine[]): Row[] {
-    const sign = side === "sold" ? 1 : -1;
-    return lines.map((line) => ({
-        id: `${side}-${line.facility}`,
-        label: line.name,
-        level: 2,
-        kind: "line",
-        unit: "energy",
-        cell: (p) => {
-            const season = p[side].find(
-                (seasonLine) => seasonLine.facility === line.facility,
-            );
-            if (!season) return { amount: 0 };
-            return energyCell(season.energy, sign * season.amount);
-        },
-    }));
-}
-
 /** CO₂ taxed, as tonnes times the price per tonne. */
 function co2Cell(emissions: number, ratePerKg: number, tax: number): Cell {
     return {
@@ -135,99 +118,24 @@ function co2Cell(emissions: number, ratePerKg: number, tax: number): Cell {
     };
 }
 
-/** The balance sheet's rows, top to bottom. */
-export function balanceSheetRows(sheet: BalanceSheet): Row[] {
-    const omLines = sheet.total?.om ?? [];
-    const fuelLines = sheet.total?.fuel ?? [];
-    const omLine = (period: PeriodSheet, facility: string) =>
-        period.om.find((line) => line.facility === facility);
+/** Fuel as tonnes times the price per tonne. */
+function fuelCell(quantity: number, cost: number): Cell {
+    return {
+        volume: quantity / KG_PER_TONNE,
+        rate: quantity > 0 ? (cost / quantity) * KG_PER_TONNE : undefined,
+        amount: -cost,
+    };
+}
 
-    const rows: Row[] = [
+/**
+ * A climate event's revenue tax (#1012), only in a Round a disaster hit: the
+ * taxable revenue times the rate in percent. Over the Round, that is the
+ * revenue of the seasons it taxed, at their average rate.
+ */
+function revenueTaxRows(sheet: BalanceSheet): Row[] {
+    if ((sheet.total?.revenue_tax ?? 0) <= 0) return [];
+    return [
         {
-            id: "market",
-            label: "Market income",
-            level: 0,
-            kind: "line",
-            cell: (p) => ({ amount: p.market_income }),
-        },
-        {
-            id: "sold",
-            label: "Energy sold",
-            level: 1,
-            kind: "line",
-            unit: "energy",
-            cell: (p) => energyCell(p.energy_sold, p.sale_revenue),
-        },
-        ...marketRows("sold", sheet.total?.sold ?? []),
-        {
-            id: "bought",
-            label: "Energy bought (storage)",
-            level: 1,
-            kind: "line",
-            unit: "energy",
-            cell: (p) => energyCell(p.energy_bought, -p.purchase_cost),
-        },
-        ...marketRows("bought", sheet.total?.bought ?? []),
-        {
-            id: "dump",
-            label: "Dumping cost",
-            level: 0,
-            kind: "line",
-            unit: "energy",
-            cell: (p) => energyCell(p.energy_dumped, -p.dump_cost),
-        },
-        {
-            id: "om",
-            label: "Operation & maintenance",
-            level: 0,
-            kind: "line",
-            cell: (p) => ({ amount: -p.om_total }),
-        },
-    ];
-    for (const line of omLines) {
-        rows.push({
-            id: `om-${line.facility}`,
-            label: `${line.name} ×${line.count}`,
-            level: 1,
-            kind: "line",
-            cell: (p) => ({ amount: -(omLine(p, line.facility)?.om ?? 0) }),
-        });
-        // A facility charged the same whatever its use has nothing to split.
-        if (line.variable_full > 0) {
-            rows.push(
-                {
-                    id: `om-${line.facility}-fixed`,
-                    label: "Fixed",
-                    level: 2,
-                    kind: "line",
-                    cell: (p) => ({
-                        amount: -(omLine(p, line.facility)?.fixed ?? 0),
-                    }),
-                },
-                {
-                    id: `om-${line.facility}-variable`,
-                    label: "Variable (usage × full cost)",
-                    level: 2,
-                    kind: "line",
-                    unit: "usage",
-                    cell: (p) => {
-                        const season = omLine(p, line.facility);
-                        if (!season) return { amount: 0 };
-                        return {
-                            volume: season.usage * 100,
-                            rate: season.variable_full,
-                            amount: -(season.om - season.fixed),
-                        };
-                    },
-                },
-            );
-        }
-    }
-    // A climate event's revenue tax (#1012), only in a Round a disaster hit:
-    // the taxable revenue times the rate in percent. Over the Round, that is the
-    // revenue of the seasons it taxed, at their average rate.
-    if ((sheet.total?.revenue_tax ?? 0) > 0) {
-        rows.push({
             id: "revenue-tax",
             label: "Revenue tax",
             level: 0,
@@ -241,34 +149,213 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
                           amount: -p.revenue_tax,
                       }
                     : { amount: 0 },
-        });
+        },
+    ];
+}
+
+/** Operating income by kind, as the simple view adds it up. */
+function rowsByKind(sheet: BalanceSheet): Row[] {
+    return [
+        {
+            id: "market",
+            label: "Market income",
+            level: 0,
+            kind: "line",
+            cell: (p) => ({ amount: p.market_income }),
+        },
+        {
+            id: "dump",
+            label: "Dumping cost",
+            level: 0,
+            kind: "line",
+            cell: (p) => ({ amount: -p.dump_cost }),
+        },
+        {
+            id: "om",
+            label: "Operation & maintenance",
+            level: 0,
+            kind: "line",
+            cell: (p) => ({ amount: -p.om_total }),
+        },
+        ...revenueTaxRows(sheet),
+        // Fuel is paid for each season (#1009).
+        {
+            id: "fuel",
+            label: "Fuel cost",
+            level: 0,
+            kind: "line",
+            cell: (p) => ({ amount: -p.fuel_total }),
+        },
+    ];
+}
+
+/** What one facility type earned over a period, after its own costs. */
+function facilityResult(p: PeriodSheet, facility: string): number {
+    const amount = (lines: { facility: string; amount: number }[]) =>
+        lines.find((line) => line.facility === facility)?.amount ?? 0;
+    const om = p.om.find((line) => line.facility === facility)?.om ?? 0;
+    const fuel =
+        p.facility_fuel.find((line) => line.facility === facility)?.cost ?? 0;
+    return amount(p.sold) - amount(p.bought) - amount(p.dumped) - om - fuel;
+}
+
+/**
+ * One facility type's rows: its result, with what it sold, bought, dumped, paid
+ * in O&M and burned under it. A line the type has none of over the Round is
+ * left out, and a season it had none in shows zero.
+ */
+function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
+    const id = type.facility;
+    const has = (lines: { facility: string }[]) =>
+        lines.some((line) => line.facility === id);
+    const energyRow = (
+        key: "sold" | "bought" | "dumped",
+        label: string,
+        sign: 1 | -1,
+    ): Row[] =>
+        has(total[key])
+            ? [
+                  {
+                      id: `${id}-${key}`,
+                      label,
+                      level: 1,
+                      kind: "line",
+                      unit: "energy",
+                      cell: (p) => {
+                          const line = p[key].find((l) => l.facility === id);
+                          if (!line) return { amount: 0 };
+                          return energyCell(line.energy, sign * line.amount);
+                      },
+                  },
+              ]
+            : [];
+    const omLine = (p: PeriodSheet) =>
+        p.om.find((line) => line.facility === id);
+    const rows: Row[] = [
+        {
+            id: `facility-${id}`,
+            label: `${type.name} ×${type.count}`,
+            level: 0,
+            kind: "line",
+            cell: (p) => ({ amount: facilityResult(p, id) }),
+        },
+        ...energyRow("sold", "Energy sold", 1),
+        ...energyRow("bought", "Energy bought (storage)", -1),
+        ...energyRow("dumped", "Dumping cost", -1),
+        {
+            id: `${id}-om`,
+            label: "Operation & maintenance",
+            level: 1,
+            kind: "line",
+            cell: (p) => ({ amount: -(omLine(p)?.om ?? 0) }),
+        },
+    ];
+    // A facility charged the same whatever its use has nothing to split.
+    if (type.variable_full > 0) {
+        rows.push(
+            {
+                id: `${id}-om-fixed`,
+                label: "Fixed",
+                level: 2,
+                kind: "line",
+                cell: (p) => ({ amount: -(omLine(p)?.fixed ?? 0) }),
+            },
+            {
+                id: `${id}-om-variable`,
+                label: "Variable (usage × full cost)",
+                level: 2,
+                kind: "line",
+                unit: "usage",
+                cell: (p) => {
+                    const season = omLine(p);
+                    if (!season) return { amount: 0 };
+                    return {
+                        volume: season.usage * 100,
+                        rate: season.variable_full,
+                        amount: -(season.om - season.fixed),
+                    };
+                },
+            },
+        );
     }
-    // Fuel is paid for each season (#1009), as tonnes times the price per tonne.
-    rows.push({
-        id: "fuel",
-        label: "Fuel cost",
-        level: 0,
-        kind: "line",
-        cell: (p) => ({ amount: -p.fuel_total }),
-    });
-    for (const line of fuelLines) {
+    const fuel = total.facility_fuel.find((line) => line.facility === id);
+    if (fuel) {
+        const name =
+            total.fuel.find((line) => line.fuel === fuel.fuel)?.name ??
+            fuel.fuel;
         rows.push({
-            id: `fuel-${line.fuel}`,
-            label: line.name,
+            id: `${id}-fuel`,
+            label: `Fuel (${name})`,
             level: 1,
             kind: "line",
             unit: "fuel",
             cell: (p) => {
-                const bought = p.fuel.find((f) => f.fuel === line.fuel);
-                if (!bought) return { amount: 0 };
-                return {
-                    volume: bought.quantity / KG_PER_TONNE,
-                    rate: bought.price * KG_PER_TONNE,
-                    amount: -bought.cost,
-                };
+                const line = p.facility_fuel.find((l) => l.facility === id);
+                if (!line) return { amount: 0 };
+                return fuelCell(line.quantity, line.cost);
             },
         });
     }
+    return rows;
+}
+
+/** Fuel paid for beyond what was burned, which went into stock, by fuel. */
+function excessFuelRows(total: PeriodSheet): Row[] {
+    if (total.excess_fuel.length === 0) return [];
+    return [
+        {
+            id: "excess-fuel",
+            label: "Excess fuel (into stock)",
+            level: 0,
+            kind: "line",
+            cell: (p) => ({
+                amount: -p.excess_fuel.reduce(
+                    (sum, line) => sum + line.cost,
+                    0,
+                ),
+            }),
+        },
+        ...total.excess_fuel.map(
+            (fuel): Row => ({
+                id: `excess-fuel-${fuel.fuel}`,
+                label: fuel.name,
+                level: 1,
+                kind: "line",
+                unit: "fuel",
+                cell: (p) => {
+                    const line = p.excess_fuel.find(
+                        (l) => l.fuel === fuel.fuel,
+                    );
+                    if (!line) return { amount: 0 };
+                    return fuelCell(line.quantity, line.cost);
+                },
+            }),
+        ),
+    ];
+}
+
+/** Operating income by facility type, as the detailed view adds it up. */
+function rowsByFacility(sheet: BalanceSheet, total: PeriodSheet): Row[] {
+    return [
+        ...total.om.flatMap((type) => facilityRows(total, type)),
+        ...revenueTaxRows(sheet),
+        ...excessFuelRows(total),
+    ];
+}
+
+/**
+ * The balance sheet's rows, top to bottom. The simple view has the level-0 rows
+ * only. Before any season is settled there is nothing to group by facility
+ * type, so both views add up by kind.
+ */
+export function balanceSheetRows(
+    sheet: BalanceSheet,
+    detailed: boolean,
+): Row[] {
+    const rows: Row[] =
+        detailed && sheet.total
+            ? rowsByFacility(sheet, sheet.total)
+            : rowsByKind(sheet);
     rows.push({
         id: "operating",
         label: "Operating income",
@@ -394,7 +481,7 @@ export function balanceSheetRows(sheet: BalanceSheet): Row[] {
             ),
         );
     }
-    return rows;
+    return detailed ? rows : rows.filter((row) => row.level === 0);
 }
 
 /** "Loan", or "Loan payment 1 of 2", noting a payment taken at the session end. */

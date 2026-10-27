@@ -3,15 +3,17 @@
  * white sheet with a waterfall chart of one period on top and a ledger of every
  * season below.
  *
- * The ledger has a column group per season and one for the Round. In the
- * detailed view, each season's group shows a volume and a rate beside each
- * amount, and the rows indented under a line break it down. The sheet fits its
- * page rather than scrolling sideways: where there is no room for every
- * season's volume and rate, only the season picked in the waterfall shows them.
- * A season not settled yet shows "–". As on the timeline, the season the grid
- * went down in is marked with a red zap-off icon, and the seasons it skipped
- * are struck through and read "skipped". The colours belong to the sheet, not
- * the theme, so it reads as paper in dark mode too.
+ * The ledger has a column group per season and one for the Round. The simple
+ * view adds operating income up by kind; the detailed view adds it up by
+ * facility type, with each type's sales, dumping, O&M and fuel indented under
+ * it. In the detailed view, each season's group also shows a volume and a rate
+ * beside each amount. The sheet fits its page rather than scrolling sideways:
+ * where there is no room for every season's volume and rate, only the season
+ * picked in the waterfall shows them. A season not settled yet shows "–". As on
+ * the timeline, the season the grid went down in is marked with a red zap-off
+ * icon, and the seasons it skipped are struck through and read "skipped". The
+ * colours belong to the sheet, not the theme, so it reads as paper in dark mode
+ * too.
  */
 
 import { ZapOff } from "lucide-react";
@@ -440,9 +442,7 @@ function Ledger({
         unit && (fits(ALL_SEASONS_DETAILED_WIDTH) || season === period);
     const cols = columns(expanded, detailed, sheet.seasons);
     const template = { gridTemplateColumns: gridTemplate(unit, cols) };
-    const rows = balanceSheetRows(sheet).filter(
-        (row) => detailed || row.level === 0,
-    );
+    const rows = balanceSheetRows(sheet, detailed);
     const groups: { period: Period; label: ReactNode; span: number }[] = [
         ...sheet.seasons.map((s) => ({
             period: s.season,

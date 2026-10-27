@@ -9,6 +9,13 @@ The sheet fills in as the Round's Trading periods are settled: a season not sett
 
 Fuel is paid for once per season (#1009), so each season's column has its own fuel cost.
 
+The detailed sheet groups the figures by facility type, so each type's sales, dumping, O&M and fuel add up to what
+it earned. Fuel is paid for per fuel, not per facility type, and unused fuel carries over as stock, so a season's
+fuel bill is split between the types that burned the fuel, in proportion to what each burned. Each type is charged
+what it burned, at the season's price, up to what was paid for. What was paid for beyond what was burned went into
+stock, and the sheet shows it as excess fuel. In a season that burned more than it paid for, the rest came from
+stock paid for earlier, so the types share what was paid for and there is no excess.
+
 A climate event's revenue tax (#1012) takes a share of the season's sale revenue. It comes off inside operating
 income, above fuel.
 
@@ -83,6 +90,18 @@ class FuelLine(BaseModel):
     cost: float
 
 
+class FacilityFuelLine(BaseModel):
+    """The part of a period's fuel bill that one facility type burned."""
+
+    model_config = ConfigDict(frozen=True)
+
+    facility: FacilityId
+    name: str
+    fuel: Fuel
+    quantity: float = Field(description="In kg: what it burned, or its share of what was paid for if that was less")
+    cost: float
+
+
 class PeriodSheet(BaseModel):
     """What a player earned and spent running their fleet over a season, or over the Round so far.
 
@@ -100,6 +119,11 @@ class PeriodSheet(BaseModel):
     market_income: float = Field(description="Sale revenue minus the cost of the energy bought")
     energy_dumped: float = Field(description="Renewable energy that did not sell")
     dump_cost: float
+    # Default to none for a sheet without dumping.
+    dumped: list[MarketLine] = Field(
+        default=[],
+        description="One line per facility type that dumped energy, in catalog order. The amount is the dumping cost",
+    )
     om: list[OmLine] = Field(description="One line per facility type that was operating, in catalog order")
     om_total: float
     # Default to none for a sheet without a revenue tax.
@@ -115,6 +139,15 @@ class PeriodSheet(BaseModel):
     # Default to none for a sheet without fuel.
     fuel: list[FuelLine] = Field(default=[], description="One line per fuel paid for, in the order of the fuels")
     fuel_total: float = 0.0
+    facility_fuel: list[FacilityFuelLine] = Field(
+        default=[],
+        description="The fuel paid for split by the facility type that burned it, one line per type, in catalog order",
+    )
+    excess_fuel: list[FuelLine] = Field(
+        default=[],
+        description="The fuel paid for beyond what was burned, which went into stock, one line per fuel, in the order "
+        "of the fuels",
+    )
     operating_income: float = Field(description="Market income minus dumping cost, O&M, revenue tax and fuel")
     # Default to zero for a sheet without a carbon tax.
     construction_emissions: float = Field(
@@ -216,20 +249,58 @@ def _catalog_order(facility: FacilityId) -> int:
 
 
 def _market_lines(
-    performances: Sequence[tuple[FacilityId, FacilityPerformance]], side: Literal["sold", "bought"]
+    performances: Sequence[tuple[FacilityId, FacilityPerformance]], side: Literal["sold", "bought", "dumped"]
 ) -> list[MarketLine]:
-    """The energy each facility type sold, or bought, added up, leaving out the types with none."""
-    sold = side == "sold"
+    """The energy each facility type sold, bought or dumped, added up, leaving out the types with none."""
     energy: dict[FacilityId, float] = {}
     amounts: dict[FacilityId, float] = {}
     for facility, performance in performances:
-        energy[facility] = energy.get(facility, 0.0) + (performance.sold if sold else performance.bought)
-        amounts[facility] = amounts.get(facility, 0.0) + (performance.revenue if sold else performance.purchase_cost)
+        if side == "sold":
+            volume, amount = performance.sold, performance.revenue
+        elif side == "bought":
+            volume, amount = performance.bought, performance.purchase_cost
+        else:
+            volume, amount = performance.dumped, performance.dump_cost
+        energy[facility] = energy.get(facility, 0.0) + volume
+        amounts[facility] = amounts.get(facility, 0.0) + amount
     return [
         MarketLine(facility=facility, name=CATALOG[facility].name, energy=energy[facility], amount=amounts[facility])
         for facility in sorted(energy, key=_catalog_order)
         if energy[facility] > 0
     ]
+
+
+def _fuel_split(
+    results: Sequence[TradingResult],
+) -> tuple[dict[FacilityId, tuple[float, float]], dict[Fuel, tuple[float, float]]]:
+    """Each season's fuel bill split between the facility types that burned it, and what was left over, added up.
+
+    Returns the quantity and cost charged to each facility type, and the quantity and cost of each fuel's excess.
+    """
+    charged: dict[FacilityId, tuple[float, float]] = {}
+    excess: dict[Fuel, tuple[float, float]] = {}
+    for result in results:
+        for fuel in Fuel:
+            paid = sum(purchase.quantity for purchase in result.fuel if purchase.fuel == fuel)
+            if paid <= 0:
+                continue
+            price = sum(purchase.cost for purchase in result.fuel if purchase.fuel == fuel) / paid
+            burned = {
+                facility: performance.fuel_burned
+                for facility, performance in result.facilities.items()
+                if CATALOG[facility].fuel_type == fuel and performance.fuel_burned > 0
+            }
+            burned_total = sum(burned.values())
+            # Below one when the season burned more than it paid for: the rest came from stock.
+            scale = min(1.0, paid / burned_total) if burned_total else 0.0
+            for facility, quantity in burned.items():
+                before = charged.get(facility, (0.0, 0.0))
+                charged[facility] = (before[0] + quantity * scale, before[1] + quantity * scale * price)
+            left = paid - burned_total * scale
+            if left > 0:
+                before = excess.get(fuel, (0.0, 0.0))
+                excess[fuel] = (before[0] + left, before[1] + left * price)
+    return charged, excess
 
 
 def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
@@ -277,6 +348,7 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         for fuel in Fuel
         if quantities.get(fuel, 0.0) > 0
     ]
+    charged, excess = _fuel_split(results)
     return PeriodSheet(
         energy_sold=sum(performance.sold for _, performance in performances),
         sale_revenue=sale_revenue,
@@ -287,6 +359,7 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         market_income=sale_revenue - purchase_cost,
         energy_dumped=sum(performance.dumped for _, performance in performances),
         dump_cost=dump_cost,
+        dumped=_market_lines(performances, "dumped"),
         om=sorted(om.values(), key=lambda line: _catalog_order(line.facility)),
         om_total=om_total,
         revenue_tax=revenue_tax,
@@ -294,6 +367,28 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
         revenue_tax_rate=revenue_tax / taxable_revenue if taxable_revenue else 0.0,
         fuel=fuel,
         fuel_total=sum(line.cost for line in fuel),
+        facility_fuel=[
+            FacilityFuelLine(
+                facility=facility,
+                name=CATALOG[facility].name,
+                fuel=fuel_type,
+                quantity=charged[facility][0],
+                cost=charged[facility][1],
+            )
+            for facility in sorted(charged, key=_catalog_order)
+            if (fuel_type := CATALOG[facility].fuel_type) is not None
+        ],
+        excess_fuel=[
+            FuelLine(
+                fuel=fuel,
+                name=FUEL_NAMES[fuel],
+                quantity=excess[fuel][0],
+                price=excess[fuel][1] / excess[fuel][0],
+                cost=excess[fuel][1],
+            )
+            for fuel in Fuel
+            if fuel in excess
+        ],
         operating_income=sum(period_operating_profit(result) for result in results),
         construction_emissions=sum(result.construction_emissions for result in results),
         construction_carbon_tax=sum(result.construction_carbon_tax for result in results),

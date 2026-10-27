@@ -158,6 +158,67 @@ def test_the_round_totals_fuel_at_its_average_price() -> None:
     assert sheet.total.operating_income == pytest.approx(round_operating_profit([spring, summer], 1))
 
 
+COMBINED = FacilityId.COMBINED_CYCLE
+
+
+def _burning(result: TradingResult, burned: dict[FacilityId, float], *purchases: FuelPurchase) -> TradingResult:
+    """``result`` with the gas each facility type burned and the fuel paid for."""
+    facilities = dict(result.facilities)
+    for facility, quantity in burned.items():
+        performance = facilities.get(facility, _performance())
+        facilities[facility] = performance.model_copy(update={"fuel_burned": quantity})
+    return result.model_copy(update={"facilities": facilities, "fuel": list(purchases)})
+
+
+def test_dumping_has_a_line_per_facility_type_that_dumped() -> None:
+    sheet = period_sheet([SPRING])
+
+    assert [(line.facility, line.energy, line.amount) for line in sheet.dumped] == [(WIND, 4e8, 10_000.0)]
+
+
+def test_fuel_bought_beyond_what_was_burned_is_excess_and_each_type_pays_for_what_it_burned() -> None:
+    spring = _burning(
+        SPRING, {GAS: 3_000.0, COMBINED: 5_000.0}, FuelPurchase(fuel=Fuel.GAS, quantity=10_000.0, price=0.5)
+    )
+
+    sheet = period_sheet([spring])
+
+    assert [(line.facility, line.fuel, line.quantity, line.cost) for line in sheet.facility_fuel] == [
+        (GAS, Fuel.GAS, 3_000.0, 1_500.0),
+        (COMBINED, Fuel.GAS, 5_000.0, 2_500.0),
+    ]
+    assert [(line.fuel, line.quantity, line.price, line.cost) for line in sheet.excess_fuel] == [
+        (Fuel.GAS, 2_000.0, 0.5, 1_000.0)
+    ]
+
+
+def test_fuel_burned_from_stock_shares_what_was_paid_for_and_leaves_no_excess() -> None:
+    spring = _burning(
+        SPRING, {GAS: 3_000.0, COMBINED: 9_000.0}, FuelPurchase(fuel=Fuel.GAS, quantity=6_000.0, price=0.5)
+    )
+
+    sheet = period_sheet([spring])
+
+    assert [(line.facility, line.quantity, line.cost) for line in sheet.facility_fuel] == [
+        (GAS, 1_500.0, 750.0),
+        (COMBINED, 4_500.0, 2_250.0),
+    ]
+    assert sheet.excess_fuel == []
+
+
+def test_the_facility_fuel_and_the_excess_add_up_to_the_fuel_bill_over_the_round() -> None:
+    spring = _burning(SPRING, {GAS: 3_000.0}, FuelPurchase(fuel=Fuel.GAS, quantity=10_000.0, price=0.5))
+    summer = _burning(SUMMER, {GAS: 12_000.0}, FuelPurchase(fuel=Fuel.GAS, quantity=5_000.0, price=0.7))
+
+    sheet = period_sheet([spring, summer])
+
+    [gas] = sheet.facility_fuel
+    [excess] = sheet.excess_fuel
+    assert gas.quantity == pytest.approx(3_000.0 + 5_000.0)
+    assert excess.quantity == pytest.approx(7_000.0)
+    assert gas.cost + excess.cost == pytest.approx(sheet.fuel_total)
+
+
 def test_a_climate_events_revenue_tax_comes_off_the_operating_income() -> None:
     spring = SPRING.model_copy(update={"revenue_tax_rate": 0.07})
 

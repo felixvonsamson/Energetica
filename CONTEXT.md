@@ -374,6 +374,8 @@ Any **carbon tax** comes below it; the Round column then takes off the Round's i
 profit**. A season fills in once it is settled. A **loan** and its payments show in a financing section
 below net profit, apart from it.
 Market income already has the cost of the energy storage bought to charge taken off.
+The detailed view adds operating income up by facility type instead: each type's sales, dumping, O&M and the fuel
+it burned give what it earned. Fuel paid for beyond what was burned went into stock and shows as **excess fuel**.
 _Avoid_: recap (the Recap is the narrative page between Rounds), income statement.
 
 **Carbon tax** (#1015):
