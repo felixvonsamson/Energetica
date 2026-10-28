@@ -31,6 +31,7 @@ import {
 import { queryClient, queryKeys } from "@/lib/query-client";
 import { phaseDeadline } from "@/lib/workshop-countdown";
 import { phaseRedirect, type SessionPhase } from "@/lib/workshop-redirect";
+import type { DayWindow } from "@/lib/workshop-review";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -860,21 +861,44 @@ export function useMarketPrices(round: number, season: Season) {
 }
 
 /**
- * Every settlement point of one simulated week of a settled Trading period.
- * While another week loads, the last one stays on screen.
+ * Every settlement point of some consecutive simulated days of a settled
+ * Trading period. While other days load, the last ones stay on screen.
  */
-export function useWorkshopPeriodWeek(
+export function useWorkshopPeriodDays(
     round: number,
     season: Season,
-    week: number,
+    window: DayWindow,
+) {
+    return useQuery({
+        queryKey: queryKeys.workshop.periodDays(
+            round,
+            season,
+            window.first,
+            window.count,
+        ),
+        queryFn: () =>
+            workshopApi.getPeriodDays(
+                round,
+                season,
+                window.first,
+                window.count,
+            ),
+        staleTime: Infinity,
+        placeholderData: keepPreviousData,
+    });
+}
+
+/** A whole settled Trading period at a low resolution (#1399). */
+export function useWorkshopSeasonOverview(
+    round: number,
+    season: Season,
     { enabled = true } = {},
 ) {
     return useQuery({
-        queryKey: queryKeys.workshop.periodWeek(round, season, week),
-        queryFn: () => workshopApi.getPeriodWeek(round, season, week),
+        queryKey: queryKeys.workshop.seasonOverview(round, season),
+        queryFn: () => workshopApi.getSeasonOverview(round, season),
         enabled,
         staleTime: Infinity,
-        placeholderData: keepPreviousData,
     });
 }
 

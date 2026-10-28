@@ -396,16 +396,30 @@ export const workshopApi = {
         >(`/workshop/periods/${round}/${season}`),
 
     /**
-     * Every settlement point of one simulated week of a settled Trading period.
-     * `week` is the week's position in the period, from 0.
+     * Every settlement point of `count` consecutive simulated days of a settled
+     * Trading period, from the `firstDay`-th.
      */
-    getPeriodWeek: (round: number, season: Season, week: number) =>
+    getPeriodDays: (
+        round: number,
+        season: Season,
+        firstDay: number,
+        count: number,
+    ) =>
         apiClient.get<
             ApiResponse<
-                "/api/v1/workshop/periods/{round_number}/{season}/weeks/{week}",
+                "/api/v1/workshop/periods/{round_number}/{season}/days/{first_day}/{count}",
                 "get"
             >
-        >(`/workshop/periods/${round}/${season}/weeks/${week}`),
+        >(`/workshop/periods/${round}/${season}/days/${firstDay}/${count}`),
+
+    /** A whole settled Trading period at a low resolution (#1399). */
+    getSeasonOverview: (round: number, season: Season) =>
+        apiClient.get<
+            ApiResponse<
+                "/api/v1/workshop/periods/{round_number}/{season}/overview",
+                "get"
+            >
+        >(`/workshop/periods/${round}/${season}/overview`),
 
     /**
      * The merit order at one settlement point of a settled Trading period,

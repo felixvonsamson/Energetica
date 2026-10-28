@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
+import warnings
 from collections.abc import Iterable
 from typing import Annotated, Literal
 
+import numpy as np
 from pydantic import BaseModel, Field
 
 from energetica.workshop.blackout import Blackout
@@ -25,7 +27,7 @@ from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import EventStatus, RoundLevers
-from energetica.workshop.seasons import WEEK_DAYS, Season
+from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.votes import Ballot
@@ -446,7 +448,7 @@ class WorkshopPlansOut(BaseModel):
 
 
 class WorkshopPeriodOut(BaseModel):
-    """What a settled Trading period's review needs before it loads any week (#1007, #1198)."""
+    """What a settled Trading period's review needs before it loads any days (#1007, #1198)."""
 
     round: int
     season: Season
@@ -454,10 +456,6 @@ class WorkshopPeriodOut(BaseModel):
     days: list[int] = Field(
         description="The day of the year of each simulated day, in order: 7 for a representative week, 91 for a "
         "full season"
-    )
-    weeks: int = Field(
-        description="How many weeks the simulated days make: 1 for a representative week, 13 for a full season. "
-        "Weeks are asked for by their position, from 0"
     )
     blackouts: list[int] = Field(
         description="The settlement point of each blackout, counted from the period's first, in order. Empty if the "
@@ -471,13 +469,12 @@ class WorkshopPeriodOut(BaseModel):
             season=record.season,
             clearings_per_day=record.clearings_per_day,
             days=list(record.days),
-            weeks=len(record.days) // WEEK_DAYS,
             blackouts=list(record.blackouts),
         )
 
 
 class WorkshopPoolSeriesOut(BaseModel):
-    """One player's facilities of one type over a simulated week, at each settlement point.
+    """One player's facilities of one type over some simulated days, at each settlement point.
 
     Power is in W and stored energy in Wh.
     """
@@ -492,22 +489,21 @@ class WorkshopPoolSeriesOut(BaseModel):
 
 
 class WorkshopTierSeriesOut(BaseModel):
-    """One demand tier over a simulated week."""
+    """One demand tier over some simulated days."""
 
     tier: str = Field(description="The tier's label, such as must_serve")
     served: list[float] = Field(description="What it bought at each settlement point, in W")
 
 
-class WorkshopPeriodWeekOut(BaseModel):
-    """One simulated week of a settled Trading period, at every settlement point (#1007, #1198).
+class WorkshopPeriodDaysOut(BaseModel):
+    """Some consecutive simulated days of a settled Trading period, at every settlement point (#1007, #1198, #1399).
 
     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
     """
 
-    week: int = Field(description="The week's position in the period's weeks, from 0")
-    days: list[int] = Field(description="The day of the year of each of the week's days, in order")
-    first_point: int = Field(description="The period's settlement point the week starts at")
+    days: list[int] = Field(description="The day of the year of each day, in order")
+    first_point: int = Field(description="The period's settlement point the first day starts at")
     price: list[float | None] = Field(
         description="The price each point settled at, per MWh. Null where the grid was down: unbounded at the "
         "blackout itself, and missing while it was down after it"
@@ -519,12 +515,12 @@ class WorkshopPeriodWeekOut(BaseModel):
     tiers: list[WorkshopTierSeriesOut]
 
     @classmethod
-    def from_record(cls, record: TradingPeriodRecord, week: int) -> WorkshopPeriodWeekOut:
-        start = week * WEEK_DAYS * record.clearings_per_day
-        points = slice(start, start + WEEK_DAYS * record.clearings_per_day)
+    def from_record(cls, record: TradingPeriodRecord, first_day: int, count: int) -> WorkshopPeriodDaysOut:
+        """``count`` days from ``first_day``, the first day's position in the period."""
+        start = first_day * record.clearings_per_day
+        points = slice(start, start + count * record.clearings_per_day)
         return cls(
-            week=week,
-            days=list(record.days[week * WEEK_DAYS : (week + 1) * WEEK_DAYS]),
+            days=list(record.days[first_day : first_day + count]),
             first_point=start,
             price=_finite_or_none(record.price[points].tolist()),
             quantity=_finite_or_none(record.quantity[points].tolist()),
@@ -545,6 +541,75 @@ class WorkshopPeriodWeekOut(BaseModel):
                 for row, tier in enumerate(record.tiers)
             ],
         )
+
+
+OVERVIEW_POINTS_PER_DAY = 8
+"""The overview's power has a point every 3 hours: enough to see each day's solar cycle."""
+
+
+class WorkshopFacilitySeriesOut(BaseModel):
+    """The whole market's facilities of one type over a Trading period."""
+
+    facility: FacilityId
+    values: list[float]
+
+
+class WorkshopSeasonOverviewOut(BaseModel):
+    """A whole settled Trading period at a low resolution, to pick the days to look at closely (#1399)."""
+
+    daily_energy: list[WorkshopFacilitySeriesOut] = Field(
+        description="What every player's facilities of each type generated each day, in Wh"
+    )
+    points_per_day: int = Field(description=f"The points each day has in ``power``: {OVERVIEW_POINTS_PER_DAY}")
+    power: list[WorkshopFacilitySeriesOut] = Field(
+        description="The average power every player's facilities of each type generated over each part of each "
+        "day, in W"
+    )
+    price_mean: list[float | None] = Field(description="Each day's average price, per MWh")
+    price_min: list[float | None] = Field(description="Each day's lowest price, per MWh")
+    price_max: list[float | None] = Field(description="Each day's highest price, per MWh")
+    hourly_price: list[float | None] = Field(description="Each hour's average price, per MWh")
+
+    @classmethod
+    def from_record(cls, record: TradingPeriodRecord) -> WorkshopSeasonOverviewOut:
+        cpd = record.clearings_per_day
+        days = len(record.days)
+
+        def by_type(values: np.ndarray) -> list[WorkshopFacilitySeriesOut]:
+            """``values``' rows, one per pool, summed by facility type."""
+            totals: dict[str, np.ndarray] = {}
+            for row, (_, facility) in enumerate(record.pools):
+                totals[facility] = totals.get(facility, 0) + values[row]
+            return [
+                WorkshopFacilitySeriesOut(facility=FacilityId(facility), values=total.tolist())
+                for facility, total in totals.items()
+            ]
+
+        def runs(values: np.ndarray, count: int) -> np.ndarray:
+            """``values`` (one row per pool) split into ``count`` runs of equal length along the last axis."""
+            return values.reshape(*values.shape[:-1], count, values.shape[-1] // count)
+
+        generation = record.generation.astype(float)
+        mean, low, high = _price_runs(record.price, days)
+        return cls(
+            daily_energy=by_type(runs(generation, days).sum(axis=-1) * 24 / cpd),
+            points_per_day=OVERVIEW_POINTS_PER_DAY,
+            power=by_type(runs(generation, days * OVERVIEW_POINTS_PER_DAY).mean(axis=-1)),
+            price_mean=_finite_or_none(mean.tolist()),
+            price_min=_finite_or_none(low.tolist()),
+            price_max=_finite_or_none(high.tolist()),
+            hourly_price=_finite_or_none(_price_runs(record.price, days * 24)[0].tolist()),
+        )
+
+
+def _price_runs(price: np.ndarray, count: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The average, lowest and highest price of ``count`` runs of equal length, ignoring blackouts."""
+    runs = price.astype(float).reshape(count, -1)
+    runs = np.where(np.isfinite(runs), runs, np.nan)
+    with warnings.catch_warnings():
+        # A run that was all blackout has no price.
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return np.nanmean(runs, axis=1), np.nanmin(runs, axis=1), np.nanmax(runs, axis=1)
 
 
 class WorkshopOrdersOut(BaseModel):

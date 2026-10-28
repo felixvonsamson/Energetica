@@ -2456,7 +2456,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/periods/{round_number}/{season}/weeks/{week}": {
+    "/api/v1/workshop/periods/{round_number}/{season}/overview": {
         parameters: {
             query?: never;
             header?: never;
@@ -2464,12 +2464,32 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Period Week
-         * @description Every settlement point of one simulated week of a settled Trading period: the price, and each player's and
-         *     each demand tier's power. ``week`` is the week's position in the period, from 0: a representative week is week
-         *     0 of 1, and a full season has 13.
+         * Get Season Overview
+         * @description A whole settled Trading period at a low resolution: what each facility type generated, and the price. The
+         *     review shows it to pick the days to look at closely (#1399).
          */
-        get: operations["get_period_week_api_v1_workshop_periods__round_number___season__weeks__week__get"];
+        get: operations["get_season_overview_api_v1_workshop_periods__round_number___season__overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/periods/{round_number}/{season}/days/{first_day}/{count}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Period Days
+         * @description Every settlement point of ``count`` consecutive simulated days of a settled Trading period: the price, and
+         *     each player's and each demand tier's power. ``first_day`` is the first day's position in the period, from 0.
+         */
+        get: operations["get_period_days_api_v1_workshop_periods__round_number___season__days__first_day___count__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6850,6 +6870,15 @@ export interface components {
             capacity_factor: number | null;
         };
         /**
+         * WorkshopFacilitySeriesOut
+         * @description The whole market's facilities of one type over a Trading period.
+         */
+        WorkshopFacilitySeriesOut: {
+            facility: components["schemas"]["FacilityId"];
+            /** Values */
+            values: number[];
+        };
+        /**
          * WorkshopFeedback
          * @description One player's feedback on the game.
          */
@@ -7128,8 +7157,44 @@ export interface components {
             under_construction: boolean;
         };
         /**
+         * WorkshopPeriodDaysOut
+         * @description Some consecutive simulated days of a settled Trading period, at every settlement point (#1007, #1198, #1399).
+         *
+         *     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
+         *     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
+         */
+        WorkshopPeriodDaysOut: {
+            /**
+             * Days
+             * @description The day of the year of each day, in order
+             */
+            days: number[];
+            /**
+             * First Point
+             * @description The period's settlement point the first day starts at
+             */
+            first_point: number;
+            /**
+             * Price
+             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing while it was down after it
+             */
+            price: (number | null)[];
+            /**
+             * Quantity
+             * @description The power each point cleared, in W. Null while the grid was down after a blackout
+             */
+            quantity: (number | null)[];
+            /**
+             * Pools
+             * @description Every player's facility types that were operating
+             */
+            pools: components["schemas"]["WorkshopPoolSeriesOut"][];
+            /** Tiers */
+            tiers: components["schemas"]["WorkshopTierSeriesOut"][];
+        };
+        /**
          * WorkshopPeriodOut
-         * @description What a settled Trading period's review needs before it loads any week (#1007, #1198).
+         * @description What a settled Trading period's review needs before it loads any days (#1007, #1198).
          */
         WorkshopPeriodOut: {
             /** Round */
@@ -7150,56 +7215,10 @@ export interface components {
              */
             days: number[];
             /**
-             * Weeks
-             * @description How many weeks the simulated days make: 1 for a representative week, 13 for a full season. Weeks are asked for by their position, from 0
-             */
-            weeks: number;
-            /**
              * Blackouts
              * @description The settlement point of each blackout, counted from the period's first, in order. Empty if the grid held. The grid stays down for a day after each, and those points never cleared
              */
             blackouts: number[];
-        };
-        /**
-         * WorkshopPeriodWeekOut
-         * @description One simulated week of a settled Trading period, at every settlement point (#1007, #1198).
-         *
-         *     What a player sold is ``generation - dumped``. A player's consumption is what it sold, charged and
-         *     dumped. The market's consumption is what the demand tiers were served, plus all charging and dumping.
-         */
-        WorkshopPeriodWeekOut: {
-            /**
-             * Week
-             * @description The week's position in the period's weeks, from 0
-             */
-            week: number;
-            /**
-             * Days
-             * @description The day of the year of each of the week's days, in order
-             */
-            days: number[];
-            /**
-             * First Point
-             * @description The period's settlement point the week starts at
-             */
-            first_point: number;
-            /**
-             * Price
-             * @description The price each point settled at, per MWh. Null where the grid was down: unbounded at the blackout itself, and missing while it was down after it
-             */
-            price: (number | null)[];
-            /**
-             * Quantity
-             * @description The power each point cleared, in W. Null while the grid was down after a blackout
-             */
-            quantity: (number | null)[];
-            /**
-             * Pools
-             * @description Every player's facility types that were operating
-             */
-            pools: components["schemas"]["WorkshopPoolSeriesOut"][];
-            /** Tiers */
-            tiers: components["schemas"]["WorkshopTierSeriesOut"][];
         };
         /**
          * WorkshopPhaseExtendIn
@@ -7286,7 +7305,7 @@ export interface components {
         };
         /**
          * WorkshopPoolSeriesOut
-         * @description One player's facilities of one type over a simulated week, at each settlement point.
+         * @description One player's facilities of one type over some simulated days, at each settlement point.
          *
          *     Power is in W and stored energy in Wh.
          */
@@ -7426,6 +7445,47 @@ export interface components {
             events: components["schemas"]["WorkshopPlannedEventOut"][];
         };
         /**
+         * WorkshopSeasonOverviewOut
+         * @description A whole settled Trading period at a low resolution, to pick the days to look at closely (#1399).
+         */
+        WorkshopSeasonOverviewOut: {
+            /**
+             * Daily Energy
+             * @description What every player's facilities of each type generated each day, in Wh
+             */
+            daily_energy: components["schemas"]["WorkshopFacilitySeriesOut"][];
+            /**
+             * Points Per Day
+             * @description The points each day has in ``power``: 8
+             */
+            points_per_day: number;
+            /**
+             * Power
+             * @description The average power every player's facilities of each type generated over each part of each day, in W
+             */
+            power: components["schemas"]["WorkshopFacilitySeriesOut"][];
+            /**
+             * Price Mean
+             * @description Each day's average price, per MWh
+             */
+            price_mean: (number | null)[];
+            /**
+             * Price Min
+             * @description Each day's lowest price, per MWh
+             */
+            price_min: (number | null)[];
+            /**
+             * Price Max
+             * @description Each day's highest price, per MWh
+             */
+            price_max: (number | null)[];
+            /**
+             * Hourly Price
+             * @description Each hour's average price, per MWh
+             */
+            hourly_price: (number | null)[];
+        };
+        /**
          * WorkshopSelectionIn
          * @description One facility to add to the calling player's selection.
          */
@@ -7557,7 +7617,7 @@ export interface components {
         };
         /**
          * WorkshopTierSeriesOut
-         * @description One demand tier over a simulated week.
+         * @description One demand tier over some simulated days.
          */
         WorkshopTierSeriesOut: {
             /**
@@ -7664,7 +7724,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_WEEK" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN" | "WORKSHOP_NOT_ON_A_TEAM" | "WORKSHOP_NO_SUCH_TEAM" | "WORKSHOP_FEEDBACK_NOT_OPEN";
+        ErrorCode: "USER_NOT_FOUND" | "NOT_AUTHENTICATED" | "INSTANCE_ACCESS_DENIED" | "LOBBY_SERVICE_UNAVAILABLE" | "TEMPORARY_ACCOUNT_IN_FREEPLAY" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "PLAYER_NOT_SET_UP" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity" | "USERNAME_TAKEN" | "INVALID_PASSWORD" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_FACILITY_LIMIT_REACHED" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_PRICE_ABOVE_CEILING" | "WORKSHOP_NOT_STORAGE" | "WORKSHOP_FUEL_NOT_MANUAL" | "WORKSHOP_FUEL_NOT_BURNED" | "WORKSHOP_SETTLEMENT_RUNNING" | "WORKSHOP_ROUND_LOCKED" | "WORKSHOP_LEVERS_INVALID" | "WORKSHOP_NO_EVENTS_IN_ROUND_ONE" | "WORKSHOP_RECAP_NOT_OPEN" | "WORKSHOP_NO_VOTE" | "WORKSHOP_NO_VOTE_IN_ROUND_ONE" | "WORKSHOP_CARBON_TAX_PASSED" | "WORKSHOP_NO_SUCH_ROUND" | "WORKSHOP_INVALID_PICK" | "WORKSHOP_INVALID_FUEL_QUANTITY" | "WORKSHOP_NO_PERIOD_RECORD" | "WORKSHOP_NO_MARKET_PRICES" | "WORKSHOP_NO_SUCH_DAYS" | "WORKSHOP_NO_SUCH_POINT" | "WORKSHOP_GRID_DOWN" | "WORKSHOP_LOAN_LAST_ROUND" | "WORKSHOP_LOAN_TAKEN" | "WORKSHOP_NO_LOAN" | "WORKSHOP_LOAN_FINAL" | "WORKSHOP_LOAN_NEEDED" | "WORKSHOP_LAST_RECAP_OPEN" | "WORKSHOP_NOT_ON_A_TEAM" | "WORKSHOP_NO_SUCH_TEAM" | "WORKSHOP_FEEDBACK_NOT_OPEN";
     };
     responses: never;
     parameters: never;
@@ -11139,14 +11199,13 @@ export interface operations {
             };
         };
     };
-    get_period_week_api_v1_workshop_periods__round_number___season__weeks__week__get: {
+    get_season_overview_api_v1_workshop_periods__round_number___season__overview_get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 round_number: number;
                 season: "spring" | "summer" | "autumn" | "winter";
-                week: number;
             };
             cookie?: never;
         };
@@ -11158,7 +11217,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkshopPeriodWeekOut"];
+                    "application/json": components["schemas"]["WorkshopSeasonOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_period_days_api_v1_workshop_periods__round_number___season__days__first_day___count__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+                first_day: number;
+                count: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPeriodDaysOut"];
                 };
             };
             /** @description Validation Error */

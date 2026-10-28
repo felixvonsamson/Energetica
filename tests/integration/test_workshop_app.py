@@ -1811,16 +1811,20 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
     for account in (alice, facilitator):
         authenticate(client, account)
         period = client.get(PERIOD_URL).json()
-        assert (period["clearings_per_day"], len(period["days"]), period["weeks"]) == (24, 7, 1)
+        assert (period["clearings_per_day"], len(period["days"])) == (24, 7)
 
-        week = client.get(f"{PERIOD_URL}/weeks/0").json()
-        assert (week["first_point"], week["days"], len(week["price"])) == (0, period["days"], 7 * 24)
-        [pool] = week["pools"]
+        days = client.get(f"{PERIOD_URL}/days/0/7").json()
+        assert (days["first_point"], days["days"], len(days["price"])) == (0, period["days"], 7 * 24)
+        [pool] = days["pools"]
         assert (pool["player_id"], pool["facility"]) == (alice, "gas_burner")
         assert len(pool["generation"]) == 7 * 24
         # A gas burner stores nothing.
         assert (pool["stored"], pool["storage_capacity"]) == ([0.0] * 7 * 24, 0.0)
-        assert [tier["tier"] for tier in week["tiers"]][0] == "must_serve"
+        assert [tier["tier"] for tier in days["tiers"]][0] == "must_serve"
+
+        later = client.get(f"{PERIOD_URL}/days/2/3").json()
+        assert (later["first_point"], later["days"]) == (2 * 24, period["days"][2:5])
+        assert later["price"] == days["price"][2 * 24 : 5 * 24]
 
         order = client.get(f"{PERIOD_URL}/points/0/merit-order").json()
         assert order["offers"]["player_id"] == [alice]
@@ -1830,15 +1834,34 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
         assert order["demands"]["price"][0] is None
 
 
-def test_a_period_has_only_the_weeks_and_points_it_simulated(session_path: Path, clock: _Clock) -> None:
+def test_everyone_reads_a_settled_period_s_overview(session_path: Path, clock: _Clock) -> None:
     client, facilitator, alice = _trading(session_path, clock)
     authenticate(client, facilitator)
     _advance(client)
     authenticate(client, alice)
 
-    response = client.get(f"{PERIOD_URL}/weeks/1")
-    assert response.status_code == 404
-    assert response.json()["detail"] == "WORKSHOP_NO_SUCH_WEEK"
+    days = client.get(f"{PERIOD_URL}/days/0/7").json()
+    overview = client.get(f"{PERIOD_URL}/overview").json()
+    [generation] = [pool["generation"] for pool in days["pools"]]
+    [daily] = overview["daily_energy"]
+    assert daily["facility"] == "gas_burner"
+    # Hourly points, so each day's energy in Wh is the sum of its power in W.
+    assert daily["values"] == pytest.approx([sum(generation[day * 24 : (day + 1) * 24]) for day in range(7)])
+    assert (overview["points_per_day"], len(overview["power"][0]["values"])) == (8, 7 * 8)
+    assert len(overview["price_mean"]) == 7
+    assert len(overview["hourly_price"]) == 7 * 24
+
+
+def test_a_period_has_only_the_days_and_points_it_simulated(session_path: Path, clock: _Clock) -> None:
+    client, facilitator, alice = _trading(session_path, clock)
+    authenticate(client, facilitator)
+    _advance(client)
+    authenticate(client, alice)
+
+    for first_day, count in ((7, 1), (5, 3), (0, 0), (-1, 2)):
+        response = client.get(f"{PERIOD_URL}/days/{first_day}/{count}")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "WORKSHOP_NO_SUCH_DAYS"
     response = client.get(f"{PERIOD_URL}/points/{7 * 24}/merit-order")
     assert response.status_code == 404
     assert response.json()["detail"] == "WORKSHOP_NO_SUCH_POINT"

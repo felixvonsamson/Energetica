@@ -21,6 +21,8 @@ interface PeriodSeriesTableProps {
     color: (key: string) => string;
     /** The energy column's heading, such as "Generated". */
     energyHeading: string;
+    /** What the energy is summed over. "the day" by default. */
+    span?: string;
     /**
      * Called with a row's series key when the player hovers the row, and with
      * null when the pointer leaves the table.
@@ -37,6 +39,7 @@ export function PeriodSeriesTable({
     label,
     color,
     energyHeading,
+    span = "the day",
     onHoverRow,
 }: PeriodSeriesTableProps) {
     if (keys.length === 0) return null;
@@ -55,7 +58,7 @@ export function PeriodSeriesTable({
                             Series
                         </th>
                         <th className="py-2 px-4 text-left font-semibold">
-                            {energyHeading} over the day
+                            {energyHeading} over {span}
                         </th>
                         <th className="py-2 px-4" />
                     </tr>
