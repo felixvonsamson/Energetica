@@ -41,6 +41,8 @@ from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.player import WorkshopPlayer
+from energetica.workshop.prototype_season_overview import PrototypeSeasonOverviewOut
+from energetica.workshop.prototype_season_overview import days_out as prototype_days_out
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, MarketPrices, PriceSide
 from energetica.workshop.realtime import invalidate_control_room, invalidate_market_prices, invalidate_session
 from energetica.workshop.recap import WorkshopRecap
@@ -626,6 +628,28 @@ def get_period_week(
     if not 0 <= week < len(record.days) // WEEK_DAYS:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_SUCH_WEEK)
     return WorkshopPeriodWeekOut.from_record(record, week)
+
+
+# PROTOTYPE (#1399), throwaway: the season overview and any range of days.
+@router.get("/periods/{round_number}/{season}/prototype-overview")
+def get_prototype_season_overview(
+    _: Annotated[Account, Depends(resolve_entry_account)], session: Session, round_number: int, season: Season
+) -> PrototypeSeasonOverviewOut:
+    """PROTOTYPE: each simulated day's market energy by facility type and price."""
+    return PrototypeSeasonOverviewOut.from_record(_period_record(session, round_number, season))
+
+
+@router.get("/periods/{round_number}/{season}/prototype-days/{first_day}/{count}")
+def get_prototype_days(
+    _: Annotated[Account, Depends(resolve_entry_account)],
+    session: Session,
+    round_number: int,
+    season: Season,
+    first_day: int,
+    count: int,
+) -> WorkshopPeriodWeekOut:
+    """PROTOTYPE: ``count`` simulated days from ``first_day``, at every settlement point."""
+    return prototype_days_out(_period_record(session, round_number, season), first_day, count)
 
 
 @router.get("/periods/{round_number}/{season}/points/{point}/merit-order")

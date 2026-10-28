@@ -2478,6 +2478,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/periods/{round_number}/{season}/prototype-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prototype Season Overview
+         * @description PROTOTYPE: each simulated day's market energy by facility type and price.
+         */
+        get: operations["get_prototype_season_overview_api_v1_workshop_periods__round_number___season__prototype_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/periods/{round_number}/{season}/prototype-days/{first_day}/{count}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prototype Days
+         * @description PROTOTYPE: ``count`` simulated days from ``first_day``, at every settlement point.
+         */
+        get: operations["get_prototype_days_api_v1_workshop_periods__round_number___season__prototype_days__first_day___count__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workshop/periods/{round_number}/{season}/points/{point}/merit-order": {
         parameters: {
             query?: never;
@@ -6072,6 +6112,28 @@ export interface components {
             q3: number;
             /** High */
             high: number;
+        };
+        /** PrototypeFacilityDailyOut */
+        PrototypeFacilityDailyOut: {
+            /** Facility */
+            facility: string;
+            /** Energy */
+            energy: number[];
+        };
+        /** PrototypeSeasonOverviewOut */
+        PrototypeSeasonOverviewOut: {
+            /** Days */
+            days: number[];
+            /** Price Mean */
+            price_mean: (number | null)[];
+            /** Price Min */
+            price_min: (number | null)[];
+            /** Price Max */
+            price_max: (number | null)[];
+            /** Demand */
+            demand: number[];
+            /** Facilities */
+            facilities: components["schemas"]["PrototypeFacilityDailyOut"][];
         };
         /**
          * QuotedPrice
@@ -11147,6 +11209,72 @@ export interface operations {
                 round_number: number;
                 season: "spring" | "summer" | "autumn" | "winter";
                 week: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPeriodWeekOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prototype_season_overview_api_v1_workshop_periods__round_number___season__prototype_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrototypeSeasonOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prototype_days_api_v1_workshop_periods__round_number___season__prototype_days__first_day___count__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_number: number;
+                season: "spring" | "summer" | "autumn" | "winter";
+                first_day: number;
+                count: number;
             };
             cookie?: never;
         };

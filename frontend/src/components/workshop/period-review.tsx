@@ -30,7 +30,13 @@ import {
     TrendingUp,
     Zap,
 } from "lucide-react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 
 import {
     type ChartSyncProps,
@@ -50,10 +56,23 @@ import {
     StorageChart,
     type StorageView,
 } from "@/components/charts/storage-chart";
+import { PrototypeSwitcher } from "@/components/prototype-switcher";
 import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { playerLabel } from "@/components/workshop/player-name";
+// PROTOTYPE (#1399), throwaway.
+import {
+    DailyMixCard,
+    type DayWindow,
+    SeasonNavigator,
+    VARIANTS,
+    middleWindow,
+    setVariant,
+    useSeasonDays,
+    useSeasonOverview,
+    usePrototypeVariant,
+} from "@/components/workshop/prototype-season-navigator";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePlayerColors } from "@/hooks/use-player-color-getter";
@@ -258,7 +277,40 @@ function Review({
     const cpd = period.clearings_per_day;
     const labels = useLabels();
     const pointsPerWeek = WEEK_DAYS * cpd;
-    const week = useWorkshopPeriodWeek(period.round, period.season, weekIndex);
+    // PROTOTYPE (#1399): a full season is reviewed through a window of days
+    // picked on a season overview, instead of one week at a time.
+    const fullSeason = period.weeks > 1;
+    const variant = usePrototypeVariant();
+    const week = useWorkshopPeriodWeek(period.round, period.season, weekIndex, {
+        enabled: !fullSeason,
+    });
+    const [dayWindow, setDayWindow] = useState<DayWindow>(() =>
+        middleWindow(period.days.length),
+    );
+    const overview = useSeasonOverview(period.round, period.season, fullSeason);
+    const windowDays = useSeasonDays(
+        period.round,
+        period.season,
+        fullSeason ? dayWindow : null,
+    );
+    const windowFirst = dayWindow.first * cpd;
+    const windowEnd = (dayWindow.first + dayWindow.count) * cpd;
+    const chooseWindow = useCallback(
+        (next: DayWindow) => {
+            setDayWindow(next);
+            setZoom(FULL_ZOOM);
+            const first = next.first * cpd;
+            const end = (next.first + next.count) * cpd;
+            if (point < first || point >= end) setPoint(first);
+        },
+        [cpd, point, setPoint, setZoom],
+    );
+    // In a full season, the merit order starts at the default window's first
+    // point.
+    useEffect(() => {
+        if (fullSeason) setPoint(middleWindow(period.days.length).first * cpd);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const chooseWeek = (index: number) => {
         setWeekIndex(index);
@@ -286,21 +338,24 @@ function Review({
     // it would pick a point outside the chosen week, so it is ignored.
     const onTickClick = useCallback(
         (tick: number) => {
-            if (!isPointOfWeek(tick, weekIndex, cpd)) return;
+            if (fullSeason) {
+                if (tick < windowFirst || tick >= windowEnd) return;
+            } else if (!isPointOfWeek(tick, weekIndex, cpd)) return;
             setPoint(Math.min(tick, lastPoint));
         },
-        [weekIndex, cpd, lastPoint, setPoint],
+        [fullSeason, windowFirst, windowEnd, weekIndex, cpd, lastPoint, setPoint],
     );
 
     // The week shown, which may still be the previous one while the next loads.
-    const shown = week.data;
+    const shown = fullSeason ? windowDays.data : week.data;
+    const days = fullSeason ? windowDays : week;
     const chart = {
         timeAxis,
         markerTick: point,
         blackouts,
         onTickClick,
-        isLoading: week.isPending,
-        isError: week.isError,
+        isLoading: days.isPending,
+        isError: days.isError,
         zoom,
         onZoomChange: setZoom,
     };
@@ -318,6 +373,21 @@ function Review({
                     . Each time, nothing was produced or sold for the next 24
                     hours, and demand was rationed after that.
                 </TypographyMuted>
+            )}
+            {fullSeason && (
+                <PrototypeSwitcher
+                    variants={VARIANTS}
+                    current={variant}
+                    onChange={setVariant}
+                />
+            )}
+            {fullSeason && (
+                <DailyMixCard
+                    overview={overview.data}
+                    labels={labels}
+                    window={dayWindow}
+                    onWindowChange={chooseWindow}
+                />
             )}
             {labels.me !== null && (
                 <PlayerPowerCard
@@ -337,6 +407,24 @@ function Review({
                 {...chart}
             />
             <PriceCard week={shown} {...chart} />
+            {fullSeason ? (
+                <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
+                    {overview.data ? (
+                        <SeasonNavigator
+                            key={variant}
+                            variant={variant}
+                            round={period.round}
+                            season={period.season}
+                            overview={overview.data}
+                            labels={labels}
+                            window={dayWindow}
+                            onWindowChange={chooseWindow}
+                        />
+                    ) : (
+                        <Spinner />
+                    )}
+                </div>
+            ) : (
             <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
                 {period.weeks > 1 && (
                     <WeekPicker
@@ -357,6 +445,7 @@ function Review({
                     />
                 </div>
             </div>
+            )}
             <MeritOrderCard period={period} point={point} labels={labels} />
         </div>
     );
