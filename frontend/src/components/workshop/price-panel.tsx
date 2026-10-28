@@ -17,9 +17,14 @@
  */
 
 import { AlertTriangle, X, Zap } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { FuelOrders } from "@/components/workshop/fuel-orders";
+import {
+    InfoMark,
+    MetricTooltip,
+    StorageMarkupNote,
+} from "@/components/workshop/metric-tooltip";
 import {
     usePriceSettingOpen,
     useSetPrice,
@@ -30,6 +35,7 @@ import {
     useWorkshopSession,
 } from "@/hooks/use-workshop";
 import {
+    isStorage,
     workshopFacilityColor,
     workshopFacilityImages,
 } from "@/lib/workshop-facilities";
@@ -192,6 +198,9 @@ function PriceRow({
     const sell = prices.sell[facility];
     const buy = prices.buy[facility];
     if (sell === undefined) return null;
+    const markup = details && isStorage(details) && (
+        <StorageMarkupNote efficiency={details.base_efficiency} />
+    );
 
     return (
         <li className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3.5 rounded-xl border border-border-subtle bg-surface-raised p-2 shadow-[0_1px_2px_rgba(54,48,20,0.12)]">
@@ -231,6 +240,7 @@ function PriceRow({
                     saved={sell}
                     range={range}
                     disabled={!open}
+                    tooltip={markup}
                 />
                 {buy !== undefined && (
                     <>
@@ -241,6 +251,7 @@ function PriceRow({
                             saved={buy}
                             range={range}
                             disabled={!open}
+                            tooltip={markup}
                         />
                         {sell <= buy && (
                             <p className="flex items-start gap-1.5 text-xs text-warning">
@@ -286,6 +297,7 @@ function PriceField({
     saved,
     range,
     disabled,
+    tooltip,
 }: {
     facility: FacilityId;
     side: "sell" | "buy";
@@ -294,6 +306,8 @@ function PriceField({
     saved: number;
     range: PriceRange;
     disabled: boolean;
+    /** What hovering the label shows, if anything. */
+    tooltip?: ReactNode;
 }) {
     const id = useId();
     const setPrice = useSetPrice(facility, side);
@@ -316,12 +330,15 @@ function PriceField({
     return (
         <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-                <label
-                    htmlFor={id}
-                    className="w-[52px] shrink-0 text-sm font-medium text-fg-muted"
-                >
-                    {label}
-                </label>
+                <MetricTooltip content={tooltip}>
+                    <label
+                        htmlFor={id}
+                        className="flex w-[52px] shrink-0 items-center gap-1 text-sm font-medium text-fg-muted"
+                    >
+                        {label}
+                        {tooltip && <InfoMark />}
+                    </label>
+                </MetricTooltip>
                 <div className="relative w-32 shrink-0">
                     <Input
                         id={id}

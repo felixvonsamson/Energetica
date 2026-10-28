@@ -589,6 +589,19 @@ def test_the_catalog_gives_a_capacity_factor_for_renewable_facilities_only(sessi
         assert factors[other] is None
 
 
+def test_the_catalog_splits_the_om_into_a_fixed_cost_per_season_and_a_variable_cost_per_mwh(
+    session_path: Path,
+) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    coal = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "coal_burner")
+
+    assert coal["om_fixed_per_season"] == pytest.approx(250_000)
+    assert coal["om_variable_per_mwh"] == pytest.approx(13.08, abs=0.01)
+    assert coal["full_output_per_season"] == pytest.approx(76_440e6)
+
+
 def test_the_catalog_prices_a_long_lived_facility_for_the_sessions_length_without_a_price_shock(
     session_path: Path,
 ) -> None:
@@ -1163,6 +1176,9 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "shocked": False,
                 "stock": 0.0,
                 "season_need": pytest.approx(need),
+                "need_by_facility": [
+                    {"facility": "gas_burner", "name": "Gas burner", "count": 6, "need": pytest.approx(need)}
+                ],
                 "stockpile_limit": pytest.approx(3 * need),
                 "order": math.ceil(need / 1_000) * 1_000.0,
                 "ran_out": False,
@@ -1189,6 +1205,7 @@ def _unburned_fuel_line(session: WorkshopSession, fuel: Fuel, name: str) -> dict
         "shocked": price.shocked,
         "stock": 0.0,
         "season_need": 0.0,
+        "need_by_facility": [],
         "stockpile_limit": 0.0,
         "order": None,
         "ran_out": False,

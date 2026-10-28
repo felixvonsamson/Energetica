@@ -22,13 +22,16 @@ import {
     cardFrame,
     FacilityCard,
     LifetimePips,
+    LifetimeTooltip,
 } from "@/components/workshop/facility-card";
+import { useWorkshopSession } from "@/hooks/use-workshop";
 import { workshopFacilityColor } from "@/lib/workshop-facilities";
 import {
     lifetimeRangeLabel,
     roundsLabel,
     type FleetStack as Stack,
 } from "@/lib/workshop-fleet";
+import { workingRounds } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
 import { cn } from "@energetica/ui/lib/utils";
 
@@ -167,7 +170,10 @@ export function FleetStack({
     );
 }
 
-/** One copy's bottom row: when it was built, and how long it has left. */
+/**
+ * One copy's bottom row: when it was built, and how long it has left. Hovering
+ * it shows the Rounds it works in.
+ */
 function CopyRow({
     copy,
     facility,
@@ -177,8 +183,15 @@ function CopyRow({
     facility: WorkshopFacility;
     color: string;
 }) {
+    const { data: session } = useWorkshopSession();
     return (
         <CardFooterRow
+            tooltip={
+                <LifetimeTooltip
+                    rounds={workingRounds(copy.built_round, facility)}
+                    roundCount={session?.round_count ?? null}
+                />
+            }
             left={
                 copy.under_construction ? (
                     <span className="flex items-center gap-1">

@@ -6868,6 +6868,21 @@ export interface components {
              * @description Its average output over a year of the Run's weather, as a share of its power from 0 to 1, or null for a facility that does not follow the weather
              */
             capacity_factor: number | null;
+            /**
+             * Om Fixed Per Season
+             * @description The part of its O&M charged every season whatever its use
+             */
+            om_fixed_per_season: number;
+            /**
+             * Om Variable Per Mwh
+             * @description The part of its O&M charged per MWh it generates
+             */
+            om_variable_per_mwh: number;
+            /**
+             * Full Output Per Season
+             * @description The energy it generates in a season at full output, in Wh
+             */
+            full_output_per_season: number;
         };
         /**
          * WorkshopFacilitySeriesOut
@@ -6966,6 +6981,11 @@ export interface components {
              */
             season_need: number;
             /**
+             * Need By Facility
+             * @description The season need by facility type, in the order the types were first bought. Empty for a fuel they do not burn
+             */
+            need_by_facility: components["schemas"]["WorkshopFuelNeedOut"][];
+            /**
              * Stockpile Limit
              * @description The most the player's stock may hold, counting what they order
              */
@@ -6980,6 +7000,22 @@ export interface components {
              * @description Whether the fuel ran short in the player's last Trading period, holding back the output of their facilities burning it (#1010)
              */
             ran_out: boolean;
+        };
+        /**
+         * WorkshopFuelNeedOut
+         * @description What the operating copies of one facility type burn of a fuel in a season at full output (#1400).
+         */
+        WorkshopFuelNeedOut: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+            /**
+             * Need
+             * @description In kg
+             */
+            need: number;
         };
         /**
          * WorkshopFuelOrderIn

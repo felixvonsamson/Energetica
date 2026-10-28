@@ -76,6 +76,8 @@ export function formatRate(value: number): string {
 export interface Cell {
     volume?: number;
     rate?: number;
+    /** For a facility type's fuel, its cost per MWh the type generated. */
+    perMWh?: number;
     /** Null leaves the amount empty. */
     amount: number | null;
 }
@@ -288,7 +290,9 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
  * The fuel a facility type burned, in tonnes. If it burned any from stock over
  * the Round, it breaks down into the fuel bought in the period, at its price,
  * and the fuel from stock, which costs nothing: it was charged as excess fuel
- * when it was bought.
+ * when it was bought. Without fuel from stock, the row also gives the fuel cost
+ * per MWh the type generated. A type that burns fuel never dumps, so what it
+ * generated is what it sold.
  */
 function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
     const season = (p: PeriodSheet) =>
@@ -306,7 +310,13 @@ function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
                 cell: (p) => {
                     const line = season(p);
                     if (!line) return { amount: 0 };
-                    return fuelCell(line.quantity, line.cost);
+                    const sold =
+                        (p.sold.find((l) => l.facility === id)?.energy ?? 0) /
+                        WH_PER_MWH;
+                    return {
+                        ...fuelCell(line.quantity, line.cost),
+                        perMWh: sold > 0 ? line.cost / sold : undefined,
+                    };
                 },
             },
         ];

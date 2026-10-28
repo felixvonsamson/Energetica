@@ -157,6 +157,9 @@ class WorkshopFacilityOut(WorkshopFacility):
         description="Its average output over a year of the Run's weather, as a share of its power from 0 to 1, or "
         "null for a facility that does not follow the weather"
     )
+    om_fixed_per_season: float = Field(description="The part of its O&M charged every season whatever its use")
+    om_variable_per_mwh: float = Field(description="The part of its O&M charged per MWh it generates")
+    full_output_per_season: float = Field(description="The energy it generates in a season at full output, in Wh")
 
 
 class WorkshopSelectionIn(BaseModel):
@@ -226,6 +229,15 @@ class WorkshopPricesOut(PriceSheet):
     price_range: WorkshopPriceRangeOut
 
 
+class WorkshopFuelNeedOut(BaseModel):
+    """What the operating copies of one facility type burn of a fuel in a season at full output (#1400)."""
+
+    facility: FacilityId
+    name: str
+    count: int
+    need: float = Field(description="In kg")
+
+
 class WorkshopFuelLineOut(BaseModel):
     """One fuel and the calling player's dealings in it, in the current Trading period (#1009). Every fuel is listed,
     so a player sees its price even before they build a facility that burns it (#1290). Quantities are in kg.
@@ -244,6 +256,10 @@ class WorkshopFuelLineOut(BaseModel):
     season_need: float = Field(
         description="What the player's facilities burning it burn running at full output for the whole season. 0 "
         "for a fuel they do not burn"
+    )
+    need_by_facility: list[WorkshopFuelNeedOut] = Field(
+        description="The season need by facility type, in the order the types were first bought. Empty for a fuel "
+        "they do not burn"
     )
     stockpile_limit: float = Field(description="The most the player's stock may hold, counting what they order")
     order: float | None = Field(

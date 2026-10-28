@@ -19,6 +19,11 @@
 import { ZapOff } from "lucide-react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
+import {
+    MetricTooltip,
+    MoneyPerMWh,
+    TooltipFigure,
+} from "@/components/workshop/metric-tooltip";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
@@ -350,12 +355,11 @@ interface Column {
  * How narrow the ledger can get in the detailed view before it drops columns,
  * so the sheet never needs to scroll sideways. Below the first width, only the
  * season picked in the waterfall shows its volume and rate. Below the second,
- * no season does, and the unit column goes too: the breakdown rows keep their
- * amounts. Below about 540px, phone width, even the amounts get cramped: phones
- * are not catered for yet.
+ * no season does: the breakdown rows keep their amounts. Below about 540px,
+ * phone width, even the amounts get cramped: phones are not catered for yet.
  */
-const ALL_SEASONS_DETAILED_WIDTH = 1300;
-const SELECTED_SEASON_DETAILED_WIDTH = 860;
+const ALL_SEASONS_DETAILED_WIDTH = 1180;
+const SELECTED_SEASON_DETAILED_WIDTH = 740;
 
 function columns(
     expanded: (season: Season) => boolean,
@@ -382,8 +386,8 @@ function columns(
     return result;
 }
 
-function gridTemplate(unit: boolean, cols: Column[]): string {
-    const lead = unit ? "minmax(220px,1.6fr) 120px" : "minmax(180px,2fr)";
+function gridTemplate(volumes: boolean, cols: Column[]): string {
+    const lead = volumes ? "minmax(220px,1.6fr)" : "minmax(180px,2fr)";
     // The Round's single column is kept wide enough for its "Round n" heading.
     const rest = cols.map((c) =>
         c.period === "round"
@@ -399,15 +403,6 @@ const FIELD_NAMES: Record<Field, string> = {
     volume: "volume",
     rate: "rate",
     amount: "amount",
-};
-
-/** The unit column's cells, read out in words in place of their symbols. */
-const UNIT_NAMES: Record<RowUnit, string> = {
-    energy: "Megawatt hours, at an average price per megawatt hour",
-    usage: "Usage in percent, of the full variable cost",
-    fuel: "Tonnes, at an average price per tonne",
-    tax: "Taxable revenue, at a rate in percent",
-    co2: "Tonnes of CO₂, at a price per tonne",
 };
 
 /** A period as a column header names it, with a season's blackout state. */
@@ -437,11 +432,11 @@ function Ledger({
     const ref = useRef<HTMLDivElement>(null);
     const { width } = useContainerDimensions(ref);
     const fits = (needed: number) => width >= needed;
-    const unit = detailed && fits(SELECTED_SEASON_DETAILED_WIDTH);
+    const volumes = detailed && fits(SELECTED_SEASON_DETAILED_WIDTH);
     const expanded = (season: Season) =>
-        unit && (fits(ALL_SEASONS_DETAILED_WIDTH) || season === period);
+        volumes && (fits(ALL_SEASONS_DETAILED_WIDTH) || season === period);
     const cols = columns(expanded, detailed, sheet.seasons);
-    const template = { gridTemplateColumns: gridTemplate(unit, cols) };
+    const template = { gridTemplateColumns: gridTemplate(volumes, cols) };
     const rows = balanceSheetRows(sheet, detailed);
     const groups: { period: Period; label: ReactNode; span: number }[] = [
         ...sheet.seasons.map((s) => ({
@@ -466,7 +461,7 @@ function Ledger({
             {/* The season headings are for the eye: each column header below
                 names its own season for screen readers. */}
             <div className="grid" style={template} aria-hidden>
-                <div style={{ gridColumn: `span ${unit ? 2 : 1}` }} />
+                <div />
                 {groups.map((group) => (
                     <div
                         key={group.period}
@@ -489,11 +484,6 @@ function Ledger({
                 <div role="columnheader" className="px-2.5 py-1.5">
                     ITEM
                 </div>
-                {unit && (
-                    <div role="columnheader" className="px-2 py-1.5">
-                        UNIT
-                    </div>
-                )}
                 {cols.map((col) => (
                     <div
                         key={`${col.period}-${col.field}`}
@@ -522,7 +512,6 @@ function Ledger({
                     sheet={sheet}
                     cols={cols}
                     template={template}
-                    unit={unit}
                     period={period}
                 />
             ))}
@@ -537,7 +526,6 @@ function LedgerRow({
     sheet,
     cols,
     template,
-    unit,
     period,
 }: {
     row: Row;
@@ -546,7 +534,6 @@ function LedgerRow({
     sheet: BalanceSheet;
     cols: Column[];
     template: CSSProperties;
-    unit: boolean;
     period: Period;
 }) {
     const sum = row.kind === "subtotal" || row.kind === "total";
@@ -575,18 +562,6 @@ function LedgerRow({
                     last={next?.level !== 2}
                 />
             </div>
-            {unit && (
-                <div
-                    role="cell"
-                    aria-label={row.unit && UNIT_NAMES[row.unit]}
-                    className={cn(
-                        "flex items-center gap-1 px-2 font-mono text-xs font-normal whitespace-nowrap text-(--bs-muted)",
-                        padding,
-                    )}
-                >
-                    {row.unit && <UnitLabel unit={row.unit} />}
-                </div>
-            )}
             {cols.map((col) => (
                 <div
                     key={`${col.period}-${col.field}`}
@@ -675,41 +650,76 @@ function RowLabel({
     );
 }
 
-function UnitLabel({ unit }: { unit: RowUnit }) {
-    const coin = <CoinIcon className="size-[13px]" />;
-    const times = <span className="opacity-60">×</span>;
-    switch (unit) {
-        case "energy":
-            return (
-                <>
-                    MWh {times} {coin}/MWh
-                </>
-            );
-        case "fuel":
-            return (
-                <>
-                    t {times} {coin}/t
-                </>
-            );
-        case "usage":
-            return (
-                <>
-                    % {times} {coin}
-                </>
-            );
-        case "tax":
-            return (
-                <>
-                    {coin} {times} %
-                </>
-            );
-        case "co2":
-            return (
-                <>
-                    t CO₂ {times} {coin}/t
-                </>
-            );
-    }
+/**
+ * What a volume or a rate means, with its unit, for its row's kind (#1400).
+ * Giving the unit on hover keeps the ledger narrow enough to show every
+ * season's volumes. A facility type's fuel also gives its cost per MWh.
+ */
+function VolumeRateTooltip({
+    unit,
+    field,
+    text,
+    perMWh,
+}: {
+    unit: RowUnit;
+    field: "volume" | "rate";
+    /** The figure as the cell shows it. */
+    text: string;
+    perMWh: number | undefined;
+}) {
+    const coins = (
+        <span className="inline-flex items-center gap-0.5">
+            <CoinIcon className="size-3" />
+            {text}
+        </span>
+    );
+    const meanings: Record<
+        "volume" | "rate",
+        Record<RowUnit, [ReactNode, string]>
+    > = {
+        volume: {
+            energy: [`${text} MWh`, "The energy behind this line."],
+            usage: [
+                `${text}% usage`,
+                "How much the facilities ran, as a share of running at full output all season. The variable O&M is charged in proportion.",
+            ],
+            fuel: [`${text} t`, "The fuel behind this line, in tonnes."],
+            tax: [
+                <>{coins} taxable revenue</>,
+                "The revenue the tax is charged on.",
+            ],
+            co2: [`${text} t CO₂`, "The CO₂ emitted, in tonnes."],
+        },
+        rate: {
+            energy: [
+                <>{coins} per MWh</>,
+                "The average price per MWh: the amount divided by the energy.",
+            ],
+            usage: [
+                <>{coins} at full use</>,
+                "The variable O&M at 100% usage. The amount is this times the usage.",
+            ],
+            fuel: [
+                <>{coins} per tonne</>,
+                "The average price paid per tonne of fuel.",
+            ],
+            tax: [`${text}% tax rate`, "The share of the revenue taxed."],
+            co2: [<>{coins} per tonne of CO₂</>, "The carbon tax rate."],
+        },
+    };
+    const [label, note] = meanings[field][unit];
+    return (
+        <>
+            <TooltipFigure label={label} note={note} />
+            {perMWh !== undefined && (
+                <TooltipFigure
+                    label="Fuel cost"
+                    value={<MoneyPerMWh amount={perMWh} />}
+                    note="The fuel paid for divided by the energy the facilities generated."
+                />
+            )}
+        </>
+    );
 }
 
 function CellValue({
@@ -749,16 +759,31 @@ function CellValue({
     if (col.field !== "amount") {
         const value = col.field === "volume" ? cell.volume : cell.rate;
         if (value === undefined) return null;
+        const text =
+            col.field !== "volume"
+                ? formatRate(value)
+                : row.unit === "fuel" || row.unit === "co2"
+                  ? formatFuelVolume(value)
+                  : row.unit === "tax"
+                    ? formatAmount(value)
+                    : formatVolume(value);
         return (
-            <span className="text-[12.5px] font-normal text-(--bs-light)">
-                {col.field !== "volume"
-                    ? formatRate(value)
-                    : row.unit === "fuel" || row.unit === "co2"
-                      ? formatFuelVolume(value)
-                      : row.unit === "tax"
-                        ? formatAmount(value)
-                        : formatVolume(value)}
-            </span>
+            <MetricTooltip
+                content={
+                    row.unit && (
+                        <VolumeRateTooltip
+                            unit={row.unit}
+                            field={col.field}
+                            text={text}
+                            perMWh={cell.perMWh}
+                        />
+                    )
+                }
+            >
+                <span className="text-[12.5px] font-normal text-(--bs-light)">
+                    {text}
+                </span>
+            </MetricTooltip>
         );
     }
     if (cell.amount === null) return null;
