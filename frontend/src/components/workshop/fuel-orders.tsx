@@ -20,11 +20,26 @@
  * player does not burn shows its price, with a note saying so in place of the
  * stock. A note under the stock says when the fuel ran out last season, which
  * held back the output of the facilities burning it (#1010).
+ *
+ * Hovering the maximum consumption breaks it down by facility type, hovering
+ * the price gives what it costs per MWh for each facility type burning the
+ * fuel, and hovering the quantity explains its default and the stockpile limit
+ * (#1400).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { useSetFuelOrder } from "@/hooks/use-workshop";
+import {
+    InfoMark,
+    MetricTooltip,
+    MoneyPerMWh,
+    TooltipFigure,
+} from "@/components/workshop/metric-tooltip";
+import {
+    useSetFuelOrder,
+    useWorkshopFacilities,
+    useWorkshopFleet,
+} from "@/hooks/use-workshop";
 import {
     formatPriceChange,
     isOverStockpile,
@@ -39,6 +54,7 @@ import {
     workshopFuelColor,
     workshopFuelImages,
 } from "@/lib/workshop-fuel";
+import { fuelCostPerMWh, fuelNeedByFacility } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
 import { formatMoney } from "@energetica/core/format-utils";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
@@ -135,18 +151,23 @@ function FuelRow({
                                     {formatFuelAmount(line.stock, line.fuel)}
                                 </dd>
                             </div>
-                            <div className="flex flex-wrap gap-x-1">
-                                <dt className="whitespace-nowrap text-fg-subtle">
-                                    Max consumption
-                                </dt>
-                                <dd className="font-bold whitespace-nowrap text-fg-base">
-                                    {formatFuelAmount(
-                                        line.season_need,
-                                        line.fuel,
-                                    )}
-                                    /season
-                                </dd>
-                            </div>
+                            <MetricTooltip
+                                content={<SeasonNeedFigures line={line} />}
+                            >
+                                <div className="flex flex-wrap items-center gap-x-1">
+                                    <dt className="flex items-center gap-1 whitespace-nowrap text-fg-subtle">
+                                        Max consumption
+                                        <InfoMark />
+                                    </dt>
+                                    <dd className="font-bold whitespace-nowrap text-fg-base">
+                                        {formatFuelAmount(
+                                            line.season_need,
+                                            line.fuel,
+                                        )}
+                                        /season
+                                    </dd>
+                                </div>
+                            </MetricTooltip>
                         </dl>
                     )}
                     {line.ran_out && (
@@ -158,9 +179,14 @@ function FuelRow({
                 </div>
                 <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                        <span className="w-[52px] shrink-0 text-sm font-medium text-fg-muted">
-                            Price
-                        </span>
+                        <MetricTooltip
+                            content={<FuelCostFigures line={line} />}
+                        >
+                            <span className="flex w-[52px] shrink-0 items-center gap-1 text-sm font-medium text-fg-muted">
+                                Price
+                                <InfoMark />
+                            </span>
+                        </MetricTooltip>
                         <span className="flex items-center gap-1 text-sm whitespace-nowrap text-fg-base">
                             <span className="font-mono font-medium">
                                 {formatMoney(fieldPrice(line))}
@@ -198,6 +224,59 @@ function FuelRow({
                 )}
             </div>
         </li>
+    );
+}
+
+/** The season need broken down by the facility types burning the fuel. */
+function SeasonNeedFigures({ line }: { line: FuelLine }) {
+    const { data: facilities = [] } = useWorkshopFacilities();
+    const { data: fleet = [] } = useWorkshopFleet();
+    const name = (id: string) =>
+        facilities.find((facility) => facility.id === id)?.name ?? id;
+    return (
+        <>
+            {fuelNeedByFacility(line.fuel, facilities, fleet).map((need) => (
+                <TooltipFigure
+                    key={need.facility}
+                    label={`${need.count} × ${name(need.facility)}`}
+                    value={formatFuelAmount(need.need, line.fuel)}
+                />
+            ))}
+            <div className="opacity-75">
+                What your facilities burn running at 100% output for the whole
+                season.
+            </div>
+        </>
+    );
+}
+
+/** What the fuel costs per MWh for each facility type that burns it. */
+function FuelCostFigures({ line }: { line: FuelLine }) {
+    const { data: facilities = [] } = useWorkshopFacilities();
+    const burners = facilities.filter(
+        (facility) =>
+            facility.fuel_type === line.fuel && facility.fuel_use !== null,
+    );
+    return (
+        <>
+            {burners.map((facility) => (
+                <TooltipFigure
+                    key={facility.id}
+                    label={facility.name}
+                    value={
+                        <MoneyPerMWh
+                            amount={fuelCostPerMWh(
+                                facility.fuel_use ?? 0,
+                                line.price,
+                            )}
+                        />
+                    }
+                />
+            ))}
+            <div className="opacity-75">
+                The fuel cost per MWh generated, at this season&apos;s price.
+            </div>
+        </>
     );
 }
 
@@ -261,12 +340,28 @@ function OrderField({
     return (
         <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-                <label
-                    htmlFor={id}
-                    className="w-[52px] shrink-0 text-sm font-medium text-fg-muted"
+                <MetricTooltip
+                    content={
+                        <>
+                            <TooltipFigure
+                                label="Starts at your max consumption less your stock"
+                                note="So that you can run at 100% output all season. Buy less if you expect to run less."
+                            />
+                            <TooltipFigure
+                                label={`Your stock holds at most ${formatFuelAmount(line.stockpile_limit, line.fuel)}`}
+                                note={`${stockpileSeasons(line)} seasons of max consumption. A larger quantity is cut down to fit.`}
+                            />
+                        </>
+                    }
                 >
-                    Buy
-                </label>
+                    <label
+                        htmlFor={id}
+                        className="flex w-[52px] shrink-0 items-center gap-1 text-sm font-medium text-fg-muted"
+                    >
+                        Buy
+                        <InfoMark />
+                    </label>
+                </MetricTooltip>
                 <div className="relative w-32 shrink-0">
                     <Input
                         id={id}

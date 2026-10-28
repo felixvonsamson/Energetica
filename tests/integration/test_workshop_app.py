@@ -589,6 +589,19 @@ def test_the_catalog_gives_a_capacity_factor_for_renewable_facilities_only(sessi
         assert factors[other] is None
 
 
+def test_the_catalog_splits_the_om_into_a_fixed_cost_per_season_and_a_variable_cost_per_mwh(
+    session_path: Path,
+) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    coal = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "coal_burner")
+
+    assert coal["om_fixed_per_season"] == pytest.approx(250_000)
+    assert coal["om_variable_per_mwh"] == pytest.approx(13.08, abs=0.01)
+    assert coal["full_output_per_season"] == pytest.approx(76_440e6)
+
+
 def test_the_catalog_prices_a_long_lived_facility_for_the_sessions_length_without_a_price_shock(
     session_path: Path,
 ) -> None:

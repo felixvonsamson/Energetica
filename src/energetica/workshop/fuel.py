@@ -32,10 +32,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from energetica.workshop.demand_block import DAYS_PER_YEAR
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility, is_operating
-from energetica.workshop.seasons import SEASONS
+from energetica.workshop.seasons import SEASON_HOURS
 
 #: Fuel burned per MWh generated, in kg, for every facility that burns fuel. Set by the rebalance of #1306,
 #: together with the catalog prices below.
@@ -79,8 +78,6 @@ FuelProcurement = Literal["automatic", "manual"]
 """How players get fuel: billed for what they burned, or buying it themselves in each price-setting window."""
 
 _KG_PER_TONNE = 1_000
-
-_SEASON_HOURS = DAYS_PER_YEAR // len(SEASONS) * 24
 
 
 class FuelPrice(BaseModel):
@@ -189,7 +186,7 @@ def season_need(fuel: Fuel, fleet: Iterable[OwnedFacility], *, current_round: in
     output for a whole season.
     """
     return sum(
-        CATALOG[owned.facility].base_power_generation / 1_000_000 * _SEASON_HOURS * FUEL_USE[owned.facility]
+        CATALOG[owned.facility].base_power_generation / 1_000_000 * SEASON_HOURS * FUEL_USE[owned.facility]
         for owned in _operating(fleet, current_round)
         if CATALOG[owned.facility].fuel_type == fuel
     )

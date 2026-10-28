@@ -34,7 +34,15 @@ from energetica.workshop.balance_sheet import BalanceSheet, balance_sheet
 from energetica.workshop.control_room import ControlRoom
 from energetica.workshop.credentials import WorkshopCredentials, read_credentials
 from energetica.workshop.events import EVENTS, suggested_severity
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
+from energetica.workshop.facilities import (
+    CATALOG,
+    FacilityId,
+    Fuel,
+    full_output_per_season,
+    om_fixed_per_season,
+    om_variable_per_mwh,
+    session_price,
+)
 from energetica.workshop.feedback import FeedbackNotOpenError, FeedbackStore, WorkshopFeedback
 from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
 from energetica.workshop.game_error import WorkshopErrorCode
@@ -423,6 +431,9 @@ def get_facilities(
             price=session.facility_price(facility.id),
             fuel_use=FUEL_USE.get(facility.id),
             capacity_factor=capacity_factor(session.weather_seed, facility.id),
+            om_fixed_per_season=om_fixed_per_season(facility),
+            om_variable_per_mwh=om_variable_per_mwh(facility),
+            full_output_per_season=full_output_per_season(facility),
         )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned

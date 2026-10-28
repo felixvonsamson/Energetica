@@ -155,6 +155,9 @@ class WorkshopFacilityOut(WorkshopFacility):
         description="Its average output over a year of the Run's weather, as a share of its power from 0 to 1, or "
         "null for a facility that does not follow the weather"
     )
+    om_fixed_per_season: float = Field(description="The part of its O&M charged every season whatever its use")
+    om_variable_per_mwh: float = Field(description="The part of its O&M charged per MWh it generates")
+    full_output_per_season: float = Field(description="The energy it generates in a season at full output, in Wh")
 
 
 class WorkshopSelectionIn(BaseModel):

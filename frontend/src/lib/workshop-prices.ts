@@ -25,7 +25,7 @@ export function pricedFacilities(fleet: OwnedFacility[]): FacilityId[] {
 }
 
 /** Whether `owned` works this Round: built, and not yet retired. */
-function isOperating(owned: OwnedFacility): boolean {
+export function isOperating(owned: OwnedFacility): boolean {
     return !owned.under_construction && owned.rounds_left > 0;
 }
 

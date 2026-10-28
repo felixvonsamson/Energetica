@@ -6848,6 +6848,21 @@ export interface components {
              * @description Its average output over a year of the Run's weather, as a share of its power from 0 to 1, or null for a facility that does not follow the weather
              */
             capacity_factor: number | null;
+            /**
+             * Om Fixed Per Season
+             * @description The part of its O&M charged every season whatever its use
+             */
+            om_fixed_per_season: number;
+            /**
+             * Om Variable Per Mwh
+             * @description The part of its O&M charged per MWh it generates
+             */
+            om_variable_per_mwh: number;
+            /**
+             * Full Output Per Season
+             * @description The energy it generates in a season at full output, in Wh
+             */
+            full_output_per_season: number;
         };
         /**
          * WorkshopFeedback

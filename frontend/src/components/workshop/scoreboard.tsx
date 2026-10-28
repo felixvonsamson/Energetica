@@ -27,6 +27,11 @@ import { Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { GameFeedback } from "@/components/workshop/game-feedback";
+import {
+    InfoMark,
+    MetricTooltip,
+    TooltipFigure,
+} from "@/components/workshop/metric-tooltip";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
 import {
@@ -254,7 +259,24 @@ function ScoreTable({
                                 key={column.key}
                                 className="py-2 px-4 text-right font-semibold"
                             >
-                                {column.label}
+                                <MetricTooltip
+                                    content={
+                                        <TooltipFigure
+                                            label={column.label}
+                                            note={
+                                                TERMS.find(
+                                                    (t) =>
+                                                        t.term === column.label,
+                                                )?.explanation
+                                            }
+                                        />
+                                    }
+                                >
+                                    <span className="inline-flex items-center gap-1">
+                                        {column.label}
+                                        <InfoMark />
+                                    </span>
+                                </MetricTooltip>
                             </th>
                         ))}
                         {bonusColumn && (
