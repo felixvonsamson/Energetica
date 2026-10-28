@@ -514,6 +514,7 @@ export function SeasonPriceChart({
                 {
                     type: "line",
                     stack: "band",
+                    stackStrategy: "all",
                     symbol: "none",
                     ...quiet,
                     lineStyle: { width: 0 },
