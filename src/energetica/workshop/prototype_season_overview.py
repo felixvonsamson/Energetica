@@ -8,6 +8,8 @@ Not for main. See the prototype branch ``prototype/1399-season-overview``.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from pydantic import BaseModel
 
@@ -42,6 +44,9 @@ class PrototypeSeasonOverviewOut(BaseModel):
     """How many points each day has in ``strip``."""
     strip: list[PrototypeFacilityDailyOut]
     """The market's average power (W) of each facility type, ``strip_points_per_day`` points a day, in ``energy``."""
+    strip_price_mean: list[float | None]
+    strip_price_min: list[float | None]
+    strip_price_max: list[float | None]
 
     @classmethod
     def from_record(cls, record: TradingPeriodRecord) -> PrototypeSeasonOverviewOut:
@@ -52,13 +57,7 @@ class PrototypeSeasonOverviewOut(BaseModel):
         def per_day(values: np.ndarray) -> np.ndarray:
             return values.reshape(*values.shape[:-1], day_count, cpd)
 
-        price = per_day(record.price.astype(float))
-        quantity = per_day(np.nan_to_num(record.quantity.astype(float)))
-        finite = np.where(np.isfinite(price), price, np.nan)
-        with np.errstate(invalid="ignore", divide="ignore"):
-            weights = np.where(np.isfinite(finite), quantity, 0.0)
-            mean = np.nansum(np.nan_to_num(finite) * weights, axis=1) / weights.sum(axis=1)
-            mean = np.where(weights.sum(axis=1) > 0, mean, np.nanmean(finite, axis=1))
+        mean, low, high = _price_stats(record, day_count, cpd)
         energy_by_type: dict[str, np.ndarray] = {}
         generation = per_day(record.generation).sum(axis=2) * hours
         for row, (_, facility) in enumerate(record.pools):
@@ -71,6 +70,7 @@ class PrototypeSeasonOverviewOut(BaseModel):
             .reshape(len(record.pools), day_count * strip_points, per_point)
             .mean(axis=2)
         )
+        strip_mean, strip_low, strip_high = _price_stats(record, day_count * strip_points, per_point)
         strip_by_type: dict[str, np.ndarray] = {}
         for row, (_, facility) in enumerate(record.pools):
             strip_by_type[facility] = strip_by_type.get(facility, 0) + fine[row]
@@ -80,10 +80,13 @@ class PrototypeSeasonOverviewOut(BaseModel):
                 PrototypeFacilityDailyOut(facility=facility, energy=power.tolist())
                 for facility, power in strip_by_type.items()
             ],
+            strip_price_mean=_finite_or_none(strip_mean.tolist()),
+            strip_price_min=_finite_or_none(strip_low.tolist()),
+            strip_price_max=_finite_or_none(strip_high.tolist()),
             days=list(record.days),
             price_mean=_finite_or_none(mean.tolist()),
-            price_min=_finite_or_none(np.nanmin(finite, axis=1).tolist()),
-            price_max=_finite_or_none(np.nanmax(finite, axis=1).tolist()),
+            price_min=_finite_or_none(low.tolist()),
+            price_max=_finite_or_none(high.tolist()),
             demand=(per_day(record.served).sum(axis=(0, 2)) * hours).tolist(),
             facilities=[
                 PrototypeFacilityDailyOut(facility=facility, energy=energy.tolist())
@@ -122,3 +125,16 @@ def days_out(record: TradingPeriodRecord, first_day: int, count: int) -> Worksho
             for row, tier in enumerate(record.tiers)
         ],
     )
+
+
+def _price_stats(record: TradingPeriodRecord, groups: int, size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The price over ``groups`` runs of ``size`` points: its mean weighted by the power cleared, lowest and highest."""
+    price = record.price.astype(float).reshape(groups, size)
+    quantity = np.nan_to_num(record.quantity.astype(float)).reshape(groups, size)
+    finite = np.where(np.isfinite(price), price, np.nan)
+    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        weights = np.where(np.isfinite(finite), quantity, 0.0)
+        mean = np.nansum(np.nan_to_num(finite) * weights, axis=1) / weights.sum(axis=1)
+        mean = np.where(weights.sum(axis=1) > 0, mean, np.nanmean(finite, axis=1))
+        return mean, np.nanmin(finite, axis=1), np.nanmax(finite, axis=1)

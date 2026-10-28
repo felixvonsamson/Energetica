@@ -36,6 +36,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from "react";
 
@@ -62,6 +63,15 @@ import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { playerLabel } from "@/components/workshop/player-name";
+// PROTOTYPE (#1399), throwaway.
+import {
+    CardDockBar,
+    CardDockProvider,
+    type DockItem,
+    DockedCard,
+    MinimizeButton,
+    useCardDock,
+} from "@/components/workshop/prototype-card-dock";
 // PROTOTYPE (#1399), throwaway.
 import {
     type DayWindow,
@@ -338,6 +348,9 @@ function Review({
         [cpd, period.days],
     );
 
+    const stickyRef = useRef<HTMLDivElement>(null);
+    const dock = useCardDock(`${STORAGE_PREFIX}:minimized`, stickyRef);
+
     // While another week loads, the charts still show the last one. A click on
     // it would pick a point outside the chosen week, so it is ignored.
     const onTickClick = useCallback(
@@ -364,98 +377,146 @@ function Review({
         onZoomChange: setZoom,
     };
 
+    // PROTOTYPE (#1399): every card can be minimized into the sticky bar.
+    const hadStorage =
+        labels.me !== null &&
+        (shown?.pools.some(
+            (pool) => pool.player_id === labels.me && pool.storage_capacity > 0,
+        ) ??
+            false);
+    const dockItems: DockItem[] = [
+        ...(fullSeason
+            ? [{ id: "season", label: "Season", icon: CalendarRange }]
+            : []),
+        ...(labels.me !== null
+            ? [{ id: "player", label: "Your power", icon: Zap }]
+            : []),
+        ...(hadStorage
+            ? [{ id: "storage", label: "Your storage", icon: Battery }]
+            : []),
+        { id: "network", label: "Market power", icon: Layers },
+        { id: "price", label: "Market price", icon: TrendingUp },
+        { id: "merit", label: "Merit order", icon: BarChart2 },
+    ];
+
     return (
-        <div className="space-y-6 pt-4">
-            {period.blackouts.length > 0 && (
-                <TypographyMuted>
-                    The grid went down on{" "}
-                    {period.blackouts
-                        .map((blackout) =>
-                            pointTime(blackout, period.days, cpd),
+        <CardDockProvider dock={dock}>
+            <div className="space-y-6 pt-4">
+                {period.blackouts.length > 0 && (
+                    <TypographyMuted>
+                        The grid went down on{" "}
+                        {period.blackouts
+                            .map((blackout) =>
+                                pointTime(blackout, period.days, cpd),
+                            )
+                            .join("; ")}
+                        . Each time, nothing was produced or sold for the next
+                        24 hours, and demand was rationed after that.
+                    </TypographyMuted>
+                )}
+                {fullSeason && (
+                    <PrototypeSwitcher
+                        variants={VARIANTS}
+                        current={variant}
+                        onChange={setVariant}
+                    />
+                )}
+                {/* PROTOTYPE (#1399): the sticky bar is the first card. */}
+                <div
+                    ref={stickyRef}
+                    className="sticky top-0 z-10 space-y-1.5 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg"
+                >
+                    {fullSeason ? (
+                        overview.data ? (
+                            <SeasonNavigator
+                                key={variant}
+                                variant={variant}
+                                round={period.round}
+                                season={period.season}
+                                overview={overview.data}
+                                labels={labels}
+                                window={dayWindow}
+                                onWindowChange={chooseWindow}
+                            />
+                        ) : (
+                            <Spinner />
                         )
-                        .join("; ")}
-                    . Each time, nothing was produced or sold for the next 24
-                    hours, and demand was rationed after that.
-                </TypographyMuted>
-            )}
-            {fullSeason && (
-                <PrototypeSwitcher
-                    variants={VARIANTS}
-                    current={variant}
-                    onChange={setVariant}
-                />
-            )}
-            {/* PROTOTYPE (#1399): the sticky bar is the first card. */}
-            {fullSeason ? (
-                <div className="sticky top-0 z-10 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg">
-                    {overview.data ? (
-                        <SeasonNavigator
-                            key={variant}
-                            variant={variant}
-                            round={period.round}
-                            season={period.season}
+                    ) : (
+                        <div className="flex flex-wrap items-center gap-3 py-1.5">
+                            {period.weeks > 1 && (
+                                <WeekPicker
+                                    weeks={reviewableWeeks(period.days)}
+                                    value={weekIndex}
+                                    onChange={chooseWeek}
+                                />
+                            )}
+                            <div className="min-w-0 flex-1">
+                                <PeriodScrubber
+                                    first={weekIndex * pointsPerWeek}
+                                    count={pointsPerWeek}
+                                    last={lastPoint}
+                                    days={period.days}
+                                    clearingsPerDay={cpd}
+                                    point={point}
+                                    onPointChange={setPoint}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <CardDockBar items={dockItems} />
+                </div>
+                {fullSeason && (
+                    <DockedCard id="season">
+                        <SeasonMixCard
                             overview={overview.data}
+                            isLoading={overview.isPending}
+                            isError={overview.isError}
                             labels={labels}
+                            days={period.days}
                             window={dayWindow}
                             onWindowChange={chooseWindow}
                         />
-                    ) : (
-                        <Spinner />
-                    )}
-                </div>
-            ) : (
-            <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
-                {period.weeks > 1 && (
-                    <WeekPicker
-                        weeks={reviewableWeeks(period.days)}
-                        value={weekIndex}
-                        onChange={chooseWeek}
-                    />
+                    </DockedCard>
                 )}
-                <div className="min-w-0 flex-1">
-                    <PeriodScrubber
-                        first={weekIndex * pointsPerWeek}
-                        count={pointsPerWeek}
-                        last={lastPoint}
-                        days={period.days}
-                        clearingsPerDay={cpd}
-                        point={point}
-                        onPointChange={setPoint}
+                {labels.me !== null && (
+                    <DockedCard id="player">
+                        <PlayerPowerCard
+                            week={shown}
+                            labels={labels}
+                            cpd={cpd}
+                            {...chart}
+                        />
+                    </DockedCard>
+                )}
+                {hadStorage && (
+                    <DockedCard id="storage">
+                        <PlayerStorageCard
+                            week={shown}
+                            labels={labels}
+                            {...chart}
+                        />
+                    </DockedCard>
+                )}
+                <DockedCard id="network">
+                    <NetworkPowerCard
+                        week={shown}
+                        labels={labels}
+                        cpd={cpd}
+                        {...chart}
                     />
-                </div>
+                </DockedCard>
+                <DockedCard id="price">
+                    <PriceCard week={shown} {...chart} />
+                </DockedCard>
+                <DockedCard id="merit">
+                    <MeritOrderCard
+                        period={period}
+                        point={point}
+                        labels={labels}
+                    />
+                </DockedCard>
             </div>
-            )}
-            {fullSeason && (
-                <SeasonMixCard
-                    overview={overview.data}
-                    isLoading={overview.isPending}
-                    isError={overview.isError}
-                    labels={labels}
-                    days={period.days}
-                    window={dayWindow}
-                    onWindowChange={chooseWindow}
-                />
-            )}
-            {labels.me !== null && (
-                <PlayerPowerCard
-                    week={shown}
-                    labels={labels}
-                    cpd={cpd}
-                    {...chart}
-                />
-            )}
-            {labels.me !== null && (
-                <PlayerStorageCard week={shown} labels={labels} {...chart} />
-            )}
-            <NetworkPowerCard
-                week={shown}
-                labels={labels}
-                cpd={cpd}
-                {...chart}
-            />
-            <PriceCard week={shown} {...chart} />
-            <MeritOrderCard period={period} point={point} labels={labels} />
-        </div>
+        </CardDockProvider>
     );
 }
 
@@ -601,7 +662,7 @@ function PowerSeries({
     cpd,
     barGap,
     span,
-    between,
+    above,
     ...chart
 }: ChartProps & {
     rows: ChartRow[];
@@ -615,8 +676,8 @@ function PowerSeries({
     /** PROTOTYPE (#1399). */
     barGap?: number;
     span?: string;
-    /** Shown between the chart and its table. */
-    between?: ReactNode;
+    /** Shown above the chart. */
+    above?: ReactNode;
 }) {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
@@ -634,19 +695,22 @@ function PowerSeries({
     );
     return (
         <>
-            <PowerChart
-                chartData={rows}
-                hiddenFacilities={hidden}
-                viewMode={viewMode}
-                keyOrder={keys}
-                getColor={color}
-                formatLabel={label}
-                height={360}
-                highlightedKey={highlightedKey}
-                barGap={barGap}
-                {...chart}
-            />
-            {between}
+            {/* The chart above shares this one's date labels, so no gap. */}
+            <div>
+                {above}
+                <PowerChart
+                    chartData={rows}
+                    hiddenFacilities={hidden}
+                    viewMode={viewMode}
+                    keyOrder={keys}
+                    getColor={color}
+                    formatLabel={label}
+                    height={360}
+                    highlightedKey={highlightedKey}
+                    barGap={barGap}
+                    {...chart}
+                />
+            </div>
             <PeriodSeriesTable
                 rows={rows}
                 keys={keys}
@@ -686,6 +750,7 @@ function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
 
     return (
         <ChartCard
+ actions={<MinimizeButton />}
             icon={Zap}
             iconClassName="text-primary"
             title={
@@ -748,6 +813,7 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
 
     return (
         <ChartCard
+ actions={<MinimizeButton />}
             icon={grouping === "player" ? Activity : Layers}
             iconClassName="text-primary"
             title={`Market ${what} by ${grouping === "player" ? "player" : "type"}`}
@@ -857,10 +923,11 @@ function SeasonMixCard({
 
     return (
         <ChartCard
+ actions={<MinimizeButton />}
             icon={CalendarRange}
             iconClassName="text-primary"
             title="Daily energy mix"
-            subtitle="The market's generation over the whole season, as each day's average power, and each day's price: its range and its average. The shaded days are shown in detail below: click a day to show it."
+            subtitle="Shaded: the days shown in detail below. Click a day to show it."
             headerContent={
                 <Picker
                     label="Display"
@@ -881,7 +948,7 @@ function SeasonMixCard({
                 cpd={1}
                 barGap={0.3}
                 span="the season"
-                between={
+                above={
                     overview && (
                         <SeasonPriceChart
                             overview={overview}
@@ -929,6 +996,7 @@ function PlayerStorageCard({
 
     return (
         <ChartCard
+ actions={<MinimizeButton />}
             icon={Battery}
             iconClassName="text-primary"
             title="Your storage"
@@ -977,6 +1045,7 @@ function PriceCard({
     const rows = useMemo(() => (week ? priceRows(week) : []), [week]);
     return (
         <ChartCard
+ actions={<MinimizeButton />}
             icon={TrendingUp}
             iconClassName="text-primary"
             title="Market price"
@@ -1014,7 +1083,7 @@ function MeritOrderCard({
     );
 
     return (
-        <ChartCard icon={BarChart2} iconClassName="text-primary" title={title}>
+        <ChartCard actions={<MinimizeButton />} icon={BarChart2} iconClassName="text-primary" title={title}>
             {down ? (
                 <TypographyMuted className="py-6 text-center">
                     The grid was down at this point, so the market did not

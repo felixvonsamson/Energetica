@@ -944,9 +944,10 @@ function PriceBandNavigator({
 // ── Season price (in the daily energy mix card) ──────────────────────────────
 
 /**
- * Each day's price over the season: the band from its lowest to its highest
- * price, and its average weighted by the power cleared. Its plot lines up with
- * the bars of the chart above it, which has the same margins.
+ * The price over the season, about 8 points a day: the band from the lowest to
+ * the highest price of each 3 hours, and their average weighted by the power
+ * cleared. It sits above the daily bars and shares their date labels: its plot
+ * has the same margins, and each day takes the same width.
  */
 export function SeasonPriceChart({
     overview,
@@ -957,18 +958,26 @@ export function SeasonPriceChart({
     window: DayWindow;
     onDayClick: (day: number) => void;
 }) {
+    const perDay = overview.strip_points_per_day;
     const option = useMemo((): ECOption => {
         const t = theme();
-        const { days, price_min: min, price_max: max } = overview;
+        const {
+            days,
+            strip_price_min: min,
+            strip_price_max: max,
+            strip_price_mean: mean,
+        } = overview;
         const value = (v: number | null | undefined) =>
             v === null || v === undefined ? "-" : v;
         const row = (color: string, label: string, v: number | null) =>
             `<tr><td class="pr-1 align-middle"><div class="w-2.5 h-2.5 rounded-sm inline-block" style="background:${color}"></div></td>` +
             `<td class="pr-3 whitespace-nowrap align-middle">${label}</td>` +
             `<td class="text-right font-mono whitespace-nowrap align-middle">${v === null ? "None" : `${formatMoney(v)}/MWh`}</td></tr>`;
+        const hoursPerPoint = 24 / perDay;
+        const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
         return {
             animation: false,
-            grid: { left: 70, right: 20, top: 10, bottom: 24 },
+            grid: { left: 70, right: 20, top: 8, bottom: 4 },
             tooltip: {
                 trigger: "axis",
                 axisPointer: { type: "line", lineStyle: { color: t.text } },
@@ -979,13 +988,14 @@ export function SeasonPriceChart({
                 formatter: (params) => {
                     const list = Array.isArray(params) ? params : [params];
                     const index = list[0]?.dataIndex ?? 0;
-                    const day = days[index] ?? 0;
+                    const day = days[Math.floor(index / perDay)] ?? 0;
+                    const from = (index % perDay) * hoursPerPoint;
                     return (
                         `<div class="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs text-foreground">` +
-                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}</div>` +
+                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}, ${hour(from)}–${hour(from + hoursPerPoint)}</div>` +
                         `<table><tbody>` +
                         row(t.price, "Highest price", max[index] ?? null) +
-                        row(t.price, "Average price", overview.price_mean[index] ?? null) +
+                        row(t.price, "Average price", mean[index] ?? null) +
                         row(t.price, "Lowest price", min[index] ?? null) +
                         `</tbody></table></div>`
                     );
@@ -993,14 +1003,14 @@ export function SeasonPriceChart({
             },
             xAxis: {
                 type: "category",
-                data: days.map((day) => dateOfDay(day)),
+                data: mean.map((_, i) => String(i)),
                 axisTick: { show: false },
+                axisLabel: { show: false },
                 axisLine: { lineStyle: { color: t.border } },
-                axisLabel: { color: t.text, fontSize: 11, interval: 6 },
             },
             yAxis: {
                 type: "value",
-                name: "Price (coins/MWh)",
+                name: "Price",
                 nameLocation: "middle",
                 nameGap: 52,
                 nameTextStyle: { color: t.text, fontSize: 11 },
@@ -1018,6 +1028,8 @@ export function SeasonPriceChart({
                     type: "line",
                     stack: "band",
                     symbol: "none",
+                    silent: true,
+                    emphasis: { disabled: true },
                     lineStyle: { width: 0 },
                     data: min.map(value),
                     markArea: {
@@ -1030,8 +1042,12 @@ export function SeasonPriceChart({
                         },
                         data: [
                             [
-                                { xAxis: window.first },
-                                { xAxis: window.first + window.count - 1 },
+                                { xAxis: window.first * perDay },
+                                {
+                                    xAxis:
+                                        (window.first + window.count) * perDay -
+                                        1,
+                                },
                             ],
                         ],
                     },
@@ -1040,6 +1056,8 @@ export function SeasonPriceChart({
                     type: "line",
                     stack: "band",
                     symbol: "none",
+                    silent: true,
+                    emphasis: { disabled: true },
                     lineStyle: { width: 0 },
                     areaStyle: { color: t.price, opacity: 0.3 },
                     data: max.map((v, i) => {
@@ -1052,12 +1070,16 @@ export function SeasonPriceChart({
                 {
                     type: "line",
                     symbol: "none",
-                    lineStyle: { color: t.price, width: 2 },
-                    data: overview.price_mean.map(value),
+                    silent: true,
+                    emphasis: { disabled: true },
+                    lineStyle: { color: t.price, width: 1.5 },
+                    data: mean.map(value),
                 },
             ],
         };
-    }, [overview, window]);
-    const { ref } = useEChart(option, { onDayClick });
-    return <div ref={ref} className="h-[150px] w-full" />;
+    }, [overview, window, perDay]);
+    const { ref } = useEChart(option, {
+        onDayClick: (index) => onDayClick(Math.floor(index / perDay)),
+    });
+    return <div ref={ref} className="h-[130px] w-full" />;
 }
