@@ -31,6 +31,7 @@ import {
 import { queryClient, queryKeys } from "@/lib/query-client";
 import { phaseDeadline } from "@/lib/workshop-countdown";
 import { phaseRedirect, type SessionPhase } from "@/lib/workshop-redirect";
+import { type DayWindow, sliceDays } from "@/lib/workshop-review";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -860,21 +861,71 @@ export function useMarketPrices(round: number, season: Season) {
 }
 
 /**
- * Every settlement point of one simulated week of a settled Trading period.
- * While another week loads, the last one stays on screen.
+ * Every settlement point of some consecutive simulated days of a settled
+ * Trading period, which has `dayCount` days. While other days load, the last
+ * ones stay on screen.
+ *
+ * The record never changes, so once the first days are shown, the whole period
+ * loads in the background (#1399). From then on, any days are cut from it at
+ * once, without asking the server.
  */
-export function useWorkshopPeriodWeek(
+export function useWorkshopPeriodDays(
     round: number,
     season: Season,
-    week: number,
+    window: DayWindow,
+    dayCount: number,
+    clearingsPerDay: number,
+) {
+    const whole = useQuery({
+        queryKey: queryKeys.workshop.periodDays(round, season, 0, dayCount),
+        queryFn: () => workshopApi.getPeriodDays(round, season, 0, dayCount),
+        staleTime: Infinity,
+        enabled: false,
+    });
+    const days = useQuery({
+        queryKey: queryKeys.workshop.periodDays(
+            round,
+            season,
+            window.first,
+            window.count,
+        ),
+        queryFn: () =>
+            workshopApi.getPeriodDays(
+                round,
+                season,
+                window.first,
+                window.count,
+            ),
+        staleTime: Infinity,
+        placeholderData: keepPreviousData,
+        enabled: whole.data === undefined,
+    });
+    const shown = days.isSuccess && !days.isPlaceholderData;
+    // Once only: if it fails, the days keep loading one window at a time.
+    const { refetch, data: all, isFetching, isError: failed } = whole;
+    useEffect(() => {
+        if (shown && all === undefined && !isFetching && !failed)
+            void refetch();
+    }, [shown, all, isFetching, failed, refetch]);
+    const sliced = useMemo(
+        () => all && sliceDays(all, window, clearingsPerDay),
+        [all, window, clearingsPerDay],
+    );
+    if (sliced) return { data: sliced, isPending: false, isError: false };
+    return days;
+}
+
+/** A whole settled Trading period at a low resolution (#1399). */
+export function useWorkshopSeasonOverview(
+    round: number,
+    season: Season,
     { enabled = true } = {},
 ) {
     return useQuery({
-        queryKey: queryKeys.workshop.periodWeek(round, season, week),
-        queryFn: () => workshopApi.getPeriodWeek(round, season, week),
+        queryKey: queryKeys.workshop.seasonOverview(round, season),
+        queryFn: () => workshopApi.getSeasonOverview(round, season),
         enabled,
         staleTime: Infinity,
-        placeholderData: keepPreviousData,
     });
 }
 

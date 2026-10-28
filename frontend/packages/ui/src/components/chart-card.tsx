@@ -19,6 +19,8 @@ export interface ChartCardProps {
     children: ReactNode;
     className?: string;
     headerContent?: ReactNode;
+    /** Buttons at the header's far end, such as minimize. */
+    actions?: ReactNode;
 }
 
 /**
@@ -45,6 +47,7 @@ export function ChartCard({
     children,
     className,
     headerContent,
+    actions,
 }: ChartCardProps) {
     return (
         <PageCard className={cn(className)}>
@@ -63,6 +66,7 @@ export function ChartCard({
                             )}
                         </div>
                         {headerContent}
+                        {actions}
                     </div>
                 </CardHeader>
             )}

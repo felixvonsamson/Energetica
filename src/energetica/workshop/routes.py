@@ -61,7 +61,7 @@ from energetica.workshop.schemas import (
     WorkshopMemberOut,
     WorkshopMeritOrderOut,
     WorkshopOwnedFacilityOut,
-    WorkshopPeriodWeekOut,
+    WorkshopPeriodDaysOut,
     WorkshopPeriodOut,
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
@@ -72,6 +72,7 @@ from energetica.workshop.schemas import (
     WorkshopPriceRangeOut,
     WorkshopPricesOut,
     WorkshopRoundPlanOut,
+    WorkshopSeasonOverviewOut,
     WorkshopSelectionIn,
     WorkshopSelectionOut,
     WorkshopSessionOut,
@@ -82,7 +83,7 @@ from energetica.workshop.schemas import (
     WorkshopVoteOut,
 )
 from energetica.workshop.score import Scoreboard
-from energetica.workshop.seasons import WEEK_DAYS, Season
+from energetica.workshop.seasons import Season
 from energetica.workshop.session import (
     Finished,
     Investment,
@@ -610,22 +611,32 @@ def get_market_prices(
     return session.market_prices(TradingPeriod(round=round_number, season=season))
 
 
-@router.get("/periods/{round_number}/{season}/weeks/{week}")
-def get_period_week(
+@router.get("/periods/{round_number}/{season}/overview")
+def get_season_overview(
+    _: Annotated[Account, Depends(resolve_entry_account)], session: Session, round_number: int, season: Season
+) -> WorkshopSeasonOverviewOut:
+    """A whole settled Trading period at a low resolution: what each facility type generated, and the price. The
+    review shows it to pick the days to look at closely (#1399).
+    """
+    return WorkshopSeasonOverviewOut.from_record(_period_record(session, round_number, season))
+
+
+@router.get("/periods/{round_number}/{season}/days/{first_day}/{count}")
+def get_period_days(
     _: Annotated[Account, Depends(resolve_entry_account)],
     session: Session,
     round_number: int,
     season: Season,
-    week: int,
-) -> WorkshopPeriodWeekOut:
-    """Every settlement point of one simulated week of a settled Trading period: the price, and each player's and
-    each demand tier's power. ``week`` is the week's position in the period, from 0: a representative week is week
-    0 of 1, and a full season has 13.
+    first_day: int,
+    count: int,
+) -> WorkshopPeriodDaysOut:
+    """Every settlement point of ``count`` consecutive simulated days of a settled Trading period: the price, and
+    each player's and each demand tier's power. ``first_day`` is the first day's position in the period, from 0.
     """
     record = _period_record(session, round_number, season)
-    if not 0 <= week < len(record.days) // WEEK_DAYS:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_SUCH_WEEK)
-    return WorkshopPeriodWeekOut.from_record(record, week)
+    if not (0 <= first_day and 1 <= count and first_day + count <= len(record.days)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=WorkshopErrorCode.WORKSHOP_NO_SUCH_DAYS)
+    return WorkshopPeriodDaysOut.from_record(record, first_day, count)
 
 
 @router.get("/periods/{round_number}/{season}/points/{point}/merit-order")

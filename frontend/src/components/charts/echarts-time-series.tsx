@@ -131,6 +131,11 @@ export interface EChartsTimeSeriesConfig {
     yAxisMax?: number;
     /** Y-axis title label (e.g. "Price (coins/MWh)") */
     yAxisLabel?: string;
+    /**
+     * The share of each tick's slot left empty between "area" bars. Zero by
+     * default, so bars touch.
+     */
+    barGap?: number;
 }
 
 export interface EChartsTimeSeriesProps {
@@ -145,6 +150,11 @@ export interface EChartsTimeSeriesProps {
      * `end`, labelled "Blackout": the grid was down there, so the series stop.
      */
     blackouts?: readonly { start: number; end: number }[];
+    /**
+     * Shade the ticks from `start` up to `end`, such as the days shown in
+     * detail elsewhere.
+     */
+    highlight?: { start: number; end: number };
     /** Called with the tick under the pointer when the plot is clicked. */
     onTickClick?: (tick: number) => void;
     /**
@@ -211,6 +221,7 @@ export type ChartSyncProps = Pick<
     EChartsTimeSeriesProps,
     | "markerTick"
     | "blackouts"
+    | "highlight"
     | "onTickClick"
     | "zoom"
     | "onZoomChange"
@@ -358,6 +369,18 @@ const NICE_INTERVALS_S = [
     604800, 1209600, 2592000,
 ];
 
+/**
+ * The round time between two x-axis labels that gives about 6 labels across
+ * `visibleSeconds`. A chart lined up with this one can space its labels the
+ * same way.
+ */
+export function labelIntervalSeconds(visibleSeconds: number): number {
+    const target = visibleSeconds / 6;
+    return NICE_INTERVALS_S.reduce((a, b) =>
+        Math.abs(b - target) < Math.abs(a - target) ? b : a,
+    );
+}
+
 // ── EChartsTimeSeries ─────────────────────────────────────────────────────────
 
 /**
@@ -461,6 +484,7 @@ export function TimeSeriesChart({
     isError = false,
     markerTick,
     blackouts,
+    highlight,
     onTickClick,
     zoom,
     onZoomChange,
@@ -617,12 +641,8 @@ export function TimeSeriesChart({
         const tickInterval = (() => {
             if (!secondsPerDataPoint)
                 return Math.max(0, Math.round(ticks.length / 7) - 1);
-            const visibleSeconds = visibleTickCount * secondsPerDataPoint;
-            const targetSeconds = visibleSeconds / 6;
-            const niceSeconds = NICE_INTERVALS_S.reduce((a, b) =>
-                Math.abs(b - targetSeconds) < Math.abs(a - targetSeconds)
-                    ? b
-                    : a,
+            const niceSeconds = labelIntervalSeconds(
+                visibleTickCount * secondsPerDataPoint,
             );
             return Math.max(1, Math.round(niceSeconds / secondsPerDataPoint));
         })();
@@ -631,7 +651,14 @@ export function TimeSeriesChart({
         // sub-pixel rounding gaps. plotWidth mirrors the grid margins (l:70, r:20).
         const plotWidth = 1.005 * Math.max(1, containerWidth - 90);
         const barWidth =
-            ticks.length > 0 ? Math.ceil(plotWidth / visibleTickCount) : 1;
+            ticks.length > 0
+                ? config.barGap
+                    ? Math.max(
+                          1,
+                          (plotWidth / visibleTickCount) * (1 - config.barGap),
+                      )
+                    : Math.ceil(plotWidth / visibleTickCount)
+                : 1;
 
         // Resolve CSS variables for canvas renderer
         const successColor = resolveCSSVar("--success");
@@ -693,6 +720,34 @@ export function TimeSeriesChart({
             if (to < 0) return [[{ xAxis: from }, {}]];
             return [[{ xAxis: from }, { xAxis: isBar ? to - 1 : to }]];
         });
+        const highlightFrom =
+            highlight === undefined
+                ? -1
+                : ticks.findIndex((tick) => tick >= highlight.start);
+        const highlightTo =
+            highlight === undefined
+                ? -1
+                : ticks.findLastIndex((tick) => tick < highlight.end);
+        const primaryColor = resolveCSSVar("--primary");
+        const highlightAreas =
+            highlightFrom < 0 || highlightTo < highlightFrom
+                ? []
+                : [
+                      [
+                          {
+                              xAxis: highlightFrom,
+                              itemStyle: {
+                                  color: primaryColor,
+                                  opacity: 0.15,
+                                  borderColor: primaryColor,
+                                  borderWidth: 1.5,
+                              },
+                              label: { show: false },
+                          },
+                          { xAxis: highlightTo },
+                      ],
+                  ];
+        blackoutAreas.push(...(highlightAreas as typeof blackoutAreas));
         const markArea: MarkAreaComponentOption | undefined =
             blackoutAreas.length === 0
                 ? undefined
@@ -939,6 +994,7 @@ export function TimeSeriesChart({
         zoomRange,
         markerTick,
         blackouts,
+        highlight,
         highlightedKey,
     ]);
 

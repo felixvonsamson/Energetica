@@ -5,7 +5,8 @@ import {
     DUMPING,
     EXPORTS,
     dateOfDay,
-    isPointOfWeek,
+    isPointOfWindow,
+    sliceDays,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
@@ -14,7 +15,10 @@ import {
     pointAxisLabel,
     pointTime,
     priceRows,
-    reviewableWeeks,
+    centredOn,
+    clampWindow,
+    middleWeek,
+    windowLabel,
     outages,
     isGridDown,
     seriesEnergy,
@@ -22,12 +26,11 @@ import {
     weekdayOfDay,
 } from "./workshop-review";
 
-// Two points of a week starting at the period's point 24. Alice (1) has wind,
+// Two points of some days starting at the period's point 24. Alice (1) has wind,
 // which dumps 1 W at the first point, and batteries, which charge 3 W then
 // discharge 2 W. The batteries hold 4 Wh and end the points at 2 Wh, then
 // empty. Bob (2) has gas.
-const week = {
-    week: 1,
+const days = {
     days: [66, 67, 68, 69, 70, 71, 72],
     first_point: 24,
     price: [50, null],
@@ -69,14 +72,14 @@ const week = {
 
 describe("playerPowerRows", () => {
     it("counts each facility type's generation, keyed by the period's point", () => {
-        expect(playerPowerRows(week, 1, "generation")).toEqual([
+        expect(playerPowerRows(days, 1, "generation")).toEqual([
             { tick: 24, onshore_wind_turbine: 10, lithium_ion_batteries: 0 },
             { tick: 25, onshore_wind_turbine: 4, lithium_ion_batteries: 2 },
         ]);
     });
 
     it("counts what was sold, charged and dumped as consumption", () => {
-        expect(playerPowerRows(week, 1, "consumption")).toEqual([
+        expect(playerPowerRows(days, 1, "consumption")).toEqual([
             {
                 tick: 24,
                 [EXPORTS]: 9,
@@ -93,7 +96,7 @@ describe("playerPowerRows", () => {
     });
 
     it("gives a player with nothing operating empty rows", () => {
-        expect(playerPowerRows(week, 3, "generation")).toEqual([
+        expect(playerPowerRows(days, 3, "generation")).toEqual([
             { tick: 24 },
             { tick: 25 },
         ]);
@@ -102,22 +105,22 @@ describe("playerPowerRows", () => {
 
 describe("playerStorageRows", () => {
     it("gives each storage type's stored energy", () => {
-        expect(playerStorageRows(week, 1, "energy")).toEqual([
+        expect(playerStorageRows(days, 1, "energy")).toEqual([
             { tick: 24, lithium_ion_batteries: 2 },
             { tick: 25, lithium_ion_batteries: 0 },
         ]);
     });
 
     it("gives each storage type's state of charge, from 0 to 1", () => {
-        expect(playerStorageRows(week, 1, "soc")).toEqual([
+        expect(playerStorageRows(days, 1, "soc")).toEqual([
             { tick: 24, lithium_ion_batteries: 0.5 },
             { tick: 25, lithium_ion_batteries: 0 },
         ]);
     });
 
-    it("keeps a storage type that stayed empty all week", () => {
+    it("keeps a storage type that stayed empty all along", () => {
         const empty = {
-            ...week,
+            ...days,
             pools: [
                 {
                     player_id: 2,
@@ -137,7 +140,7 @@ describe("playerStorageRows", () => {
     });
 
     it("gives a player with no storage empty rows", () => {
-        expect(playerStorageRows(week, 2, "soc")).toEqual([
+        expect(playerStorageRows(days, 2, "soc")).toEqual([
             { tick: 24 },
             { tick: 25 },
         ]);
@@ -146,13 +149,13 @@ describe("playerStorageRows", () => {
 
 describe("networkPowerRows", () => {
     it("adds up generation by type or by player", () => {
-        expect(networkPowerRows(week, "generation", "type")[0]).toEqual({
+        expect(networkPowerRows(days, "generation", "type")[0]).toEqual({
             tick: 24,
             onshore_wind_turbine: 10,
             lithium_ion_batteries: 0,
             gas_burner: 5,
         });
-        expect(networkPowerRows(week, "generation", "player")[1]).toEqual({
+        expect(networkPowerRows(days, "generation", "player")[1]).toEqual({
             tick: 25,
             "1": 6,
             "2": 5,
@@ -160,7 +163,7 @@ describe("networkPowerRows", () => {
     });
 
     it("splits consumption into demand tiers, charging and dumping by type", () => {
-        expect(networkPowerRows(week, "consumption", "type")[0]).toEqual({
+        expect(networkPowerRows(days, "consumption", "type")[0]).toEqual({
             tick: 24,
             must_serve: 8,
             low_flex: 3,
@@ -170,7 +173,7 @@ describe("networkPowerRows", () => {
     });
 
     it("groups the tiers as consumers, and gives each player their charging and dumping", () => {
-        expect(networkPowerRows(week, "consumption", "player")[0]).toEqual({
+        expect(networkPowerRows(days, "consumption", "player")[0]).toEqual({
             tick: 24,
             [CONSUMERS]: 11,
             "1": 4,
@@ -184,11 +187,11 @@ describe("networkPowerRows", () => {
                 .filter(([key]) => key !== "tick")
                 .reduce((sum, [, value]) => sum + value, 0);
         const generated = total(
-            networkPowerRows(week, "generation", "type")[0]!,
+            networkPowerRows(days, "generation", "type")[0]!,
         );
 
         for (const grouping of ["type", "player"] as const) {
-            const row = networkPowerRows(week, "consumption", grouping)[0]!;
+            const row = networkPowerRows(days, "consumption", grouping)[0]!;
             expect(total(row)).toBe(generated);
         }
     });
@@ -196,7 +199,7 @@ describe("networkPowerRows", () => {
 
 describe("priceRows", () => {
     it("leaves a gap where the grid was down", () => {
-        const [first, second] = priceRows(week);
+        const [first, second] = priceRows(days);
 
         expect(first).toEqual({ tick: 24, price: 50 });
         expect(second?.tick).toBe(25);
@@ -217,7 +220,7 @@ describe("orderedKeys", () => {
 
 describe("seriesEnergy", () => {
     it("adds up power times the length of each point", () => {
-        const rows = playerPowerRows(week, 1, "generation");
+        const rows = playerPowerRows(days, 1, "generation");
 
         expect(seriesEnergy(rows, "onshore_wind_turbine", 0.5)).toBe(7);
     });
@@ -293,14 +296,64 @@ describe("pointAxisLabel", () => {
     });
 });
 
-describe("reviewableWeeks", () => {
+describe("middleWeek", () => {
+    it("picks the week in the middle of a season", () => {
+        expect(middleWeek(91)).toEqual({ first: 42, count: 7 });
+    });
+
+    it("takes every day of a period shorter than a week", () => {
+        expect(middleWeek(5)).toEqual({ first: 0, count: 5 });
+    });
+});
+
+describe("clampWindow", () => {
+    it("keeps a window inside the period", () => {
+        expect(clampWindow({ first: 88, count: 7 }, 91)).toEqual({
+            first: 84,
+            count: 7,
+        });
+        expect(clampWindow({ first: -3, count: 7 }, 91)).toEqual({
+            first: 0,
+            count: 7,
+        });
+    });
+
+    it("cuts a window down to the period, and to at least a day", () => {
+        expect(clampWindow({ first: 2, count: 120 }, 91)).toEqual({
+            first: 0,
+            count: 91,
+        });
+        expect(clampWindow({ first: 2, count: 0 }, 91)).toEqual({
+            first: 2,
+            count: 1,
+        });
+    });
+});
+
+describe("centredOn", () => {
+    it("centres a window on a day", () => {
+        expect(centredOn(50, 7, 91)).toEqual({ first: 47, count: 7 });
+        expect(centredOn(50, 4, 91)).toEqual({ first: 49, count: 4 });
+    });
+
+    it("stops at the period's ends", () => {
+        expect(centredOn(1, 7, 91)).toEqual({ first: 0, count: 7 });
+        expect(centredOn(90, 7, 91)).toEqual({ first: 84, count: 7 });
+    });
+});
+
+describe("windowLabel", () => {
+    // 1 March is day 59 of the Workshop year, a Thursday.
     const days = Array.from({ length: 14 }, (_, i) => 59 + i);
 
-    it("lists every week, whether or not the grid went down", () => {
-        expect(reviewableWeeks(days)).toEqual([
-            days.slice(0, 7),
-            days.slice(7),
-        ]);
+    it("names the first and last day", () => {
+        expect(windowLabel(days, { first: 2, count: 7 })).toBe(
+            "3 Mar – 9 Mar (7 days)",
+        );
+    });
+
+    it("names a single day with its weekday", () => {
+        expect(windowLabel(days, { first: 0, count: 1 })).toBe("Thu 1 Mar");
     });
 });
 
@@ -324,11 +377,53 @@ describe("isGridDown", () => {
     });
 });
 
-describe("isPointOfWeek", () => {
-    it("tells whether a point belongs to the week", () => {
-        expect(isPointOfWeek(7 * 24, 1, 24)).toBe(true);
-        expect(isPointOfWeek(14 * 24 - 1, 1, 24)).toBe(true);
-        expect(isPointOfWeek(7 * 24 - 1, 1, 24)).toBe(false);
-        expect(isPointOfWeek(14 * 24, 1, 24)).toBe(false);
+describe("sliceDays", () => {
+    // Three days of two points each, from the period's start.
+    const all = {
+        days: [59, 60, 61],
+        first_point: 0,
+        price: [1, 2, 3, 4, 5, null],
+        quantity: [10, 20, 30, 40, 50, null],
+        pools: [
+            {
+                player_id: 1,
+                facility: "gas_burner" as const,
+                generation: [1, 2, 3, 4, 5, 6],
+                dumped: [0, 0, 0, 0, 0, 1],
+                charged: [0, 0, 0, 0, 0, 2],
+                stored: [0, 0, 0, 0, 0, 3],
+                storage_capacity: 0,
+            },
+        ],
+        tiers: [{ tier: "must_serve", served: [6, 5, 4, 3, 2, 1] }],
+    };
+
+    it("keeps the window's days and points, numbered in the period", () => {
+        expect(sliceDays(all, { first: 1, count: 2 }, 2)).toEqual({
+            days: [60, 61],
+            first_point: 2,
+            price: [3, 4, 5, null],
+            quantity: [30, 40, 50, null],
+            pools: [
+                {
+                    ...all.pools[0],
+                    generation: [3, 4, 5, 6],
+                    dumped: [0, 0, 0, 1],
+                    charged: [0, 0, 0, 2],
+                    stored: [0, 0, 0, 3],
+                },
+            ],
+            tiers: [{ tier: "must_serve", served: [4, 3, 2, 1] }],
+        });
+    });
+});
+
+describe("isPointOfWindow", () => {
+    it("tells whether a point belongs to the window's days", () => {
+        const window = { first: 7, count: 3 };
+        expect(isPointOfWindow(7 * 24, window, 24)).toBe(true);
+        expect(isPointOfWindow(10 * 24 - 1, window, 24)).toBe(true);
+        expect(isPointOfWindow(7 * 24 - 1, window, 24)).toBe(false);
+        expect(isPointOfWindow(10 * 24, window, 24)).toBe(false);
     });
 });

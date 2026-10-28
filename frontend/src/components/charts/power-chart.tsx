@@ -55,6 +55,8 @@ interface PowerChartProps extends ChartSyncProps {
     /** Each series' tooltip label. Defaults to the facility's icon and name. */
     formatLabel?: (key: string) => ReactNode;
     height?: number;
+    /** The share of each tick's slot left between bars. */
+    barGap?: number;
 }
 
 // Stable label renderer — defined outside the component so it never causes
@@ -79,6 +81,7 @@ export function PowerChart({
     getColor: getColorProp,
     formatLabel = formatFacilityLabel,
     height,
+    barGap,
     ...chart
 }: PowerChartProps) {
     const getAssetColor = useAssetColorGetter();
@@ -136,8 +139,9 @@ export function PowerChart({
             yAxisMax: viewMode === "percent" ? 100 : undefined,
             hideZeroValues: true,
             height,
+            barGap,
         }),
-        [chartType, getColor, formatLabel, viewMode, height],
+        [chartType, getColor, formatLabel, viewMode, height, barGap],
     );
 
     return (

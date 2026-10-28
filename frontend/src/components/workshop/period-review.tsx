@@ -2,24 +2,29 @@
  * A settled Trading period's review (#1007). Everyone explores the finished
  * period on the persistent world's charts:
  *
+ * - For a full season, the whole season's daily energy mix and price trend
+ *   (#1399);
  * - The player's own power, generation or consumption (not for the facilitator,
  *   who has no fleet);
  * - The player's storage, as a state of charge or stored energy, if they had any
  *   (#1297);
  * - The whole market's power, by facility type or by player;
  * - The market price;
- * - The merit order at one settlement point, picked with the scrubber, which the
- *   charts above mark. Clicking a chart moves the scrubber there.
+ * - The merit order at one settlement point, which the charts above mark.
+ *   Clicking a chart moves it there.
  *
- * The charts above it span the whole week and share one zoom window: zooming or
- * resetting one does the same to the others, so they can be compared. When the
- * grid went down, they shade the rest of the week red from that point (#1273).
+ * The charts from the player's power down show some days at every settlement
+ * point: a representative week whole, or a window of a full season's 91 days.
+ * They share one zoom window: zooming or resetting one does the same to the
+ * others, so they can be compared. When the grid went down, they shade the rest
+ * of the day red from that point (#1273).
  *
- * A period is reviewed one simulated week at a time: a representative week has
- * one, a full season 13. The week is picked in the scrubber's sticky bar, so it
- * can be changed without scrolling back up (#1273). Every player's prices for
- * the period are in their own tab (#1299), which is the only one open before
- * the period is simulated.
+ * A sticky bar at the top holds a scrubber to pick the merit order's point in a
+ * representative week, or, for a full season, a strip of the season to pick the
+ * window of days on (#1399). It also has a button for each card, which the
+ * player can minimize to keep the page short. Every player's prices for the
+ * period are in their own tab (#1299), which is the only one open before the
+ * period is simulated.
  */
 
 import {
@@ -27,10 +32,11 @@ import {
     BarChart2,
     Battery,
     Layers,
+    CalendarRange,
     TrendingUp,
     Zap,
 } from "lucide-react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import {
     type ChartSyncProps,
@@ -50,10 +56,22 @@ import {
     StorageChart,
     type StorageView,
 } from "@/components/charts/storage-chart";
+import {
+    CardDockBar,
+    CardDockProvider,
+    type DockItem,
+    DockedCard,
+    MinimizeButton,
+    useCardDock,
+} from "@/components/workshop/card-dock";
 import { MarketPricesBoard } from "@/components/workshop/market-prices-board";
 import { PeriodScrubber } from "@/components/workshop/period-scrubber";
 import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { playerLabel } from "@/components/workshop/player-name";
+import {
+    SeasonNavigator,
+    SeasonPriceChart,
+} from "@/components/workshop/season-navigator";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePlayerColors } from "@/hooks/use-player-color-getter";
@@ -63,7 +81,8 @@ import {
     useWorkshopFacilities,
     useWorkshopMeritOrder,
     useWorkshopPeriod,
-    useWorkshopPeriodWeek,
+    useWorkshopPeriodDays,
+    useWorkshopSeasonOverview,
     useWorkshopSession,
     useWorkshopTeams,
 } from "@/hooks/use-workshop";
@@ -76,7 +95,11 @@ import {
     type PowerView,
     TIER_NAMES,
     WEEK_DAYS,
-    isPointOfWeek,
+    centredOn,
+    type DayWindow,
+    isPointOfWindow,
+    middleWeek,
+    wholePeriod,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
@@ -85,8 +108,9 @@ import {
     pointAxisLabel,
     pointTime,
     priceRows,
-    reviewableWeeks,
     outages,
+    dateOfDay,
+    weekdayOfDay,
     isGridDown,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -109,7 +133,7 @@ import { TypographyMuted } from "@energetica/ui/components/typography";
 
 type Season = ApiSchema<"TradingPeriod">["season"];
 type Period = ApiSchema<"WorkshopPeriodOut">;
-type PeriodWeek = ApiSchema<"WorkshopPeriodWeekOut">;
+type PeriodDays = ApiSchema<"WorkshopPeriodDaysOut">;
 
 const STORAGE_PREFIX = "energetica:workshop:review";
 
@@ -119,6 +143,40 @@ function humanize(id: string): string {
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * Facility types bottom first, in the order the persistent world's charts stack
+ * them (`POWER_GENERATION_KEYS`): steady hydro and nuclear at the bottom, then
+ * fossil, wind, solar, and storage on top.
+ */
+const STACKING_ORDER = [
+    "small_water_dam",
+    "large_water_dam",
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "coal_burner",
+    "modern_coal_plant",
+    "gas_burner",
+    "combined_cycle",
+    "onshore_wind_turbine",
+    "offshore_wind_turbine",
+    "csp_solar",
+    "pv_solar",
+    "multi_layer_pv",
+    "pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "hydrogen_storage",
+];
+
+/** The catalog's facility types in {@link STACKING_ORDER}, any others on top. */
+function stackingOrder(catalog: readonly string[]): string[] {
+    const rank = (id: string) => {
+        const index = STACKING_ORDER.indexOf(id);
+        return index === -1 ? STACKING_ORDER.length : index;
+    };
+    return [...catalog].sort((a, b) => rank(a) - rank(b));
+}
+
 /** Everything the charts need to name and color their series. */
 interface Labels {
     me: number | null;
@@ -126,7 +184,7 @@ interface Labels {
     playerName: (playerId: number) => string;
     playerColor: (playerId: number) => string;
     assetColor: (key: string) => string;
-    /** Facility types in catalog order, for stacking. */
+    /** Facility types in stacking order, bottom first. */
     facilityOrder: readonly string[];
 }
 
@@ -169,7 +227,9 @@ function useLabels(): Labels {
             playerColor: (playerId) =>
                 playerId < 0 ? assetColor(CONSUMERS) : baseColor(playerId),
             assetColor,
-            facilityOrder: (facilities ?? []).map((facility) => facility.id),
+            facilityOrder: stackingOrder(
+                (facilities ?? []).map((facility) => facility.id),
+            ),
         };
     }, [me, players, facilities, assetColor, baseColor]);
 }
@@ -185,9 +245,10 @@ export function PeriodReview({
 }) {
     const period = useWorkshopPeriod(round, season);
     // Held here rather than in the review tab, which unmounts while the prices
-    // tab is open, so the week, point and zoom survive a look at the prices.
-    const [weekIndex, setWeekIndex] = useState(0);
-    const [point, setPoint] = useState(0);
+    // tab is open, so the days, point and zoom survive a look at the prices.
+    // Until a player picks them, the days and point are the defaults.
+    const [window, setWindow] = useState<DayWindow | null>(null);
+    const [point, setPoint] = useState<number | null>(null);
     const [zoom, setZoom] = useState<ZoomRange>(FULL_ZOOM);
 
     // Before the period is simulated it has nothing to review, but its prices
@@ -222,9 +283,13 @@ export function PeriodReview({
                 ) : (
                     <Review
                         period={period.data}
-                        weekIndex={weekIndex}
-                        onWeekIndexChange={setWeekIndex}
-                        point={point}
+                        window={window ?? defaultWindow(period.data)}
+                        onWindowChange={setWindow}
+                        point={
+                            point ??
+                            (window ?? defaultWindow(period.data)).first *
+                                period.data.clearings_per_day
+                        }
                         onPointChange={setPoint}
                         zoom={zoom}
                         onZoomChange={setZoom}
@@ -238,18 +303,33 @@ export function PeriodReview({
     );
 }
 
+/** Whether a period simulated a full season, rather than a representative week. */
+function isFullSeason(period: Period): boolean {
+    return period.days.length > WEEK_DAYS;
+}
+
+/**
+ * The days the charts show in detail at first: all of a representative week, or
+ * a week in the middle of a full season.
+ */
+function defaultWindow(period: Period): DayWindow {
+    return isFullSeason(period)
+        ? middleWeek(period.days.length)
+        : wholePeriod(period.days.length);
+}
+
 function Review({
     period,
-    weekIndex,
-    onWeekIndexChange: setWeekIndex,
+    window,
+    onWindowChange: setWindow,
     point,
     onPointChange: setPoint,
     zoom,
     onZoomChange: setZoom,
 }: {
     period: Period;
-    weekIndex: number;
-    onWeekIndexChange: (index: number) => void;
+    window: DayWindow;
+    onWindowChange: (window: DayWindow) => void;
     point: number;
     onPointChange: (point: number) => void;
     zoom: ZoomRange;
@@ -257,13 +337,28 @@ function Review({
 }) {
     const cpd = period.clearings_per_day;
     const labels = useLabels();
-    const pointsPerWeek = WEEK_DAYS * cpd;
-    const week = useWorkshopPeriodWeek(period.round, period.season, weekIndex);
+    const fullSeason = isFullSeason(period);
+    const days = useWorkshopPeriodDays(
+        period.round,
+        period.season,
+        window,
+        period.days.length,
+        cpd,
+    );
+    const overview = useWorkshopSeasonOverview(period.round, period.season, {
+        enabled: fullSeason,
+    });
 
-    const chooseWeek = (index: number) => {
-        setWeekIndex(index);
-        setPoint(index * pointsPerWeek);
-    };
+    // Other days are charted from the start, and the merit order follows if
+    // its point is not among them.
+    const chooseWindow = useCallback(
+        (next: DayWindow) => {
+            setWindow(next);
+            setZoom(FULL_ZOOM);
+            if (!isPointOfWindow(point, next, cpd)) setPoint(next.first * cpd);
+        },
+        [cpd, point, setWindow, setPoint, setZoom],
+    );
 
     const pointCount = period.days.length * cpd;
     const lastPoint = pointCount - 1;
@@ -282,108 +377,153 @@ function Review({
         [cpd, period.days],
     );
 
-    // While another week loads, the charts still show the last one. A click on
-    // it would pick a point outside the chosen week, so it is ignored.
+    const stickyRef = useRef<HTMLDivElement>(null);
+    const dock = useCardDock(`${STORAGE_PREFIX}:minimized`, stickyRef);
+
+    // While other days load, the charts still show the last ones. A click on
+    // them would pick a point outside the chosen days, so it is ignored.
     const onTickClick = useCallback(
         (tick: number) => {
-            if (!isPointOfWeek(tick, weekIndex, cpd)) return;
+            if (!isPointOfWindow(tick, window, cpd)) return;
             setPoint(Math.min(tick, lastPoint));
         },
-        [weekIndex, cpd, lastPoint, setPoint],
+        [window, cpd, lastPoint, setPoint],
     );
 
-    // The week shown, which may still be the previous one while the next loads.
-    const shown = week.data;
+    // The days shown, which may still be the previous ones while the next load.
+    const shown = days.data;
     const chart = {
         timeAxis,
         markerTick: point,
         blackouts,
         onTickClick,
-        isLoading: week.isPending,
-        isError: week.isError,
+        isLoading: days.isPending,
+        isError: days.isError,
         zoom,
         onZoomChange: setZoom,
     };
 
-    return (
-        <div className="space-y-6 pt-4">
-            {period.blackouts.length > 0 && (
-                <TypographyMuted>
-                    The grid went down on{" "}
-                    {period.blackouts
-                        .map((blackout) =>
-                            pointTime(blackout, period.days, cpd),
-                        )
-                        .join("; ")}
-                    . Each time, nothing was produced or sold for the next 24
-                    hours, and demand was rationed after that.
-                </TypographyMuted>
-            )}
-            {labels.me !== null && (
-                <PlayerPowerCard
-                    week={shown}
-                    labels={labels}
-                    cpd={cpd}
-                    {...chart}
-                />
-            )}
-            {labels.me !== null && (
-                <PlayerStorageCard week={shown} labels={labels} {...chart} />
-            )}
-            <NetworkPowerCard
-                week={shown}
-                labels={labels}
-                cpd={cpd}
-                {...chart}
-            />
-            <PriceCard week={shown} {...chart} />
-            <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
-                {period.weeks > 1 && (
-                    <WeekPicker
-                        weeks={reviewableWeeks(period.days)}
-                        value={weekIndex}
-                        onChange={chooseWeek}
-                    />
-                )}
-                <div className="min-w-0 flex-1">
-                    <PeriodScrubber
-                        first={weekIndex * pointsPerWeek}
-                        count={pointsPerWeek}
-                        last={lastPoint}
-                        days={period.days}
-                        clearingsPerDay={cpd}
-                        point={point}
-                        onPointChange={setPoint}
-                    />
-                </div>
-            </div>
-            <MeritOrderCard period={period} point={point} labels={labels} />
-        </div>
-    );
-}
+    const hadStorage =
+        labels.me !== null &&
+        (shown?.pools.some(
+            (pool) => pool.player_id === labels.me && pool.storage_capacity > 0,
+        ) ??
+            false);
+    const dockItems: DockItem[] = [
+        ...(fullSeason
+            ? [{ id: "season", label: "Season", icon: CalendarRange }]
+            : []),
+        ...(labels.me !== null
+            ? [{ id: "player", label: "Your power", icon: Zap }]
+            : []),
+        ...(hadStorage
+            ? [{ id: "storage", label: "Your storage", icon: Battery }]
+            : []),
+        { id: "network", label: "Market power", icon: Layers },
+        { id: "price", label: "Market price", icon: TrendingUp },
+        { id: "merit", label: "Merit order", icon: BarChart2 },
+    ];
 
-function WeekPicker({
-    weeks,
-    value,
-    onChange,
-}: {
-    weeks: number[][];
-    value: number;
-    onChange: (index: number) => void;
-}) {
     return (
-        <select
-            value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
-            aria-label="Simulated week"
-            className="h-9 px-3 border border-input rounded-lg bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-            {weeks.map((days, index) => (
-                <option key={days[0]} value={index}>
-                    Week {index + 1}
-                </option>
-            ))}
-        </select>
+        <CardDockProvider dock={dock}>
+            <div className="space-y-6 pt-4">
+                {period.blackouts.length > 0 && (
+                    <TypographyMuted>
+                        The grid went down on{" "}
+                        {period.blackouts
+                            .map((blackout) =>
+                                pointTime(blackout, period.days, cpd),
+                            )
+                            .join("; ")}
+                        . Each time, nothing was produced or sold for the next
+                        24 hours, and demand was rationed after that.
+                    </TypographyMuted>
+                )}
+                {/* Sticky, so the days or the point can be changed from
+                    anywhere down the page, and every card reached. */}
+                <div
+                    ref={stickyRef}
+                    className="sticky top-0 z-10 space-y-1 rounded-lg border border-border bg-surface-card px-3 py-1 shadow-lg"
+                >
+                    {fullSeason ? (
+                        overview.data ? (
+                            <SeasonNavigator
+                                overview={overview.data}
+                                days={period.days}
+                                labels={labels}
+                                window={window}
+                                onWindowChange={chooseWindow}
+                            />
+                        ) : (
+                            <Spinner />
+                        )
+                    ) : (
+                        <div className="py-1.5">
+                            <PeriodScrubber
+                                first={0}
+                                count={pointCount}
+                                last={lastPoint}
+                                days={period.days}
+                                clearingsPerDay={cpd}
+                                point={point}
+                                onPointChange={setPoint}
+                            />
+                        </div>
+                    )}
+                    <CardDockBar items={dockItems} />
+                </div>
+                {fullSeason && (
+                    <DockedCard id="season">
+                        <SeasonMixCard
+                            overview={overview.data}
+                            isLoading={overview.isPending}
+                            isError={overview.isError}
+                            labels={labels}
+                            days={period.days}
+                            window={window}
+                            onWindowChange={chooseWindow}
+                        />
+                    </DockedCard>
+                )}
+                {labels.me !== null && (
+                    <DockedCard id="player">
+                        <PlayerPowerCard
+                            days={shown}
+                            labels={labels}
+                            cpd={cpd}
+                            {...chart}
+                        />
+                    </DockedCard>
+                )}
+                {hadStorage && (
+                    <DockedCard id="storage">
+                        <PlayerStorageCard
+                            days={shown}
+                            labels={labels}
+                            {...chart}
+                        />
+                    </DockedCard>
+                )}
+                <DockedCard id="network">
+                    <NetworkPowerCard
+                        days={shown}
+                        labels={labels}
+                        cpd={cpd}
+                        {...chart}
+                    />
+                </DockedCard>
+                <DockedCard id="price">
+                    <PriceCard days={shown} {...chart} />
+                </DockedCard>
+                <DockedCard id="merit">
+                    <MeritOrderCard
+                        period={period}
+                        point={point}
+                        labels={labels}
+                    />
+                </DockedCard>
+            </div>
+        </CardDockProvider>
     );
 }
 
@@ -396,7 +536,7 @@ interface ChartProps extends ChartSyncProps {
 }
 
 interface PowerCardProps extends ChartProps {
-    week: PeriodWeek | undefined;
+    days: PeriodDays | undefined;
     labels: Labels;
     cpd: number;
 }
@@ -502,6 +642,9 @@ function PowerSeries({
     hidden,
     onToggle,
     cpd,
+    barGap,
+    span,
+    above,
     ...chart
 }: ChartProps & {
     rows: ChartRow[];
@@ -512,6 +655,12 @@ function PowerSeries({
     hidden: Set<string>;
     onToggle: (key: string) => void;
     cpd: number;
+    /** The share of each bar's slot left empty, for bars a day wide. */
+    barGap?: number;
+    /** What the table's energy is summed over. "the day" by default. */
+    span?: string;
+    /** Shown above the chart. */
+    above?: ReactNode;
 }) {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
@@ -529,17 +678,22 @@ function PowerSeries({
     );
     return (
         <>
-            <PowerChart
-                chartData={rows}
-                hiddenFacilities={hidden}
-                viewMode={viewMode}
-                keyOrder={keys}
-                getColor={color}
-                formatLabel={label}
-                height={360}
-                highlightedKey={highlightedKey}
-                {...chart}
-            />
+            {/* The chart above shares this one's date labels, so no gap. */}
+            <div>
+                {above}
+                <PowerChart
+                    chartData={rows}
+                    hiddenFacilities={hidden}
+                    viewMode={viewMode}
+                    keyOrder={keys}
+                    getColor={color}
+                    formatLabel={label}
+                    height={360}
+                    highlightedKey={highlightedKey}
+                    barGap={barGap}
+                    {...chart}
+                />
+            </div>
             <PeriodSeriesTable
                 rows={rows}
                 keys={keys}
@@ -549,13 +703,14 @@ function PowerSeries({
                 label={label}
                 color={color}
                 energyHeading={view === "generation" ? "Generated" : "Consumed"}
+                span={span}
                 onHoverRow={setHighlightedKey}
             />
         </>
     );
 }
 
-function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
+function PlayerPowerCard({ days, labels, cpd, ...chart }: PowerCardProps) {
     const [view, setView] = useLocalStorage<PowerView>(
         `${STORAGE_PREFIX}:player:view`,
         "generation",
@@ -570,14 +725,15 @@ function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     );
     const rows = useMemo(
         () =>
-            week && labels.me !== null
-                ? playerPowerRows(week, labels.me, view)
+            days && labels.me !== null
+                ? playerPowerRows(days, labels.me, view)
                 : [],
-        [week, labels.me, view],
+        [days, labels.me, view],
     );
 
     return (
         <ChartCard
+            actions={<MinimizeButton />}
             icon={Zap}
             iconClassName="text-primary"
             title={
@@ -615,7 +771,7 @@ function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     );
 }
 
-function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
+function NetworkPowerCard({ days, labels, cpd, ...chart }: PowerCardProps) {
     const [view, setView] = useLocalStorage<PowerView>(
         `${STORAGE_PREFIX}:network:view`,
         "generation",
@@ -633,13 +789,14 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
         `${STORAGE_PREFIX}:network:hidden`,
     );
     const rows = useMemo(
-        () => (week ? networkPowerRows(week, view, grouping) : []),
-        [week, view, grouping],
+        () => (days ? networkPowerRows(days, view, grouping) : []),
+        [days, view, grouping],
     );
     const what = view === "generation" ? "generation" : "consumption";
 
     return (
         <ChartCard
+            actions={<MinimizeButton />}
             icon={grouping === "player" ? Activity : Layers}
             iconClassName="text-primary"
             title={`Market ${what} by ${grouping === "player" ? "player" : "type"}`}
@@ -681,33 +838,150 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
     );
 }
 
+// ── Season overview ───────────────────────────────────────────────────────────
+
+/**
+ * The whole market's generation over a full season, one bar per day at the
+ * day's average power, under the trend of the price (#1399). The days shown in
+ * detail below are shaded, and clicking a day shows the days around it.
+ */
+function SeasonMixCard({
+    overview,
+    isLoading,
+    isError,
+    labels,
+    days,
+    window,
+    onWindowChange,
+}: {
+    overview: ApiSchema<"WorkshopSeasonOverviewOut"> | undefined;
+    isLoading: boolean;
+    isError: boolean;
+    labels: Labels;
+    days: readonly number[];
+    window: DayWindow;
+    onWindowChange: (window: DayWindow) => void;
+}) {
+    const [viewMode, setViewMode] = useLocalStorage<PowerChartViewMode>(
+        `${STORAGE_PREFIX}:season:mode`,
+        "absolute",
+    );
+    const [hidden, toggle] = useToggleSet<string>(
+        undefined,
+        `${STORAGE_PREFIX}:season:hidden`,
+    );
+    const [zoom, setZoom] = useState<ZoomRange>(FULL_ZOOM);
+    const rows = useMemo(
+        () =>
+            overview
+                ? days.map((_, day) => {
+                      const row = { tick: day } as ChartRow;
+                      for (const series of overview.daily_energy) {
+                          row[series.facility] = (series.values[day] ?? 0) / 24;
+                      }
+                      return row;
+                  })
+                : [],
+        [overview, days],
+    );
+    const timeAxis = useMemo(
+        (): TimeAxis => ({
+            formatTick: (tick) => dateOfDay(days[tick] ?? 0),
+            formatTooltipTitle: (tick) =>
+                `${weekdayOfDay(days[tick] ?? 0)} ${dateOfDay(days[tick] ?? 0)}, average over the day`,
+            secondsPerTick: 24 * 3600,
+            anchor: "left",
+        }),
+        [days],
+    );
+    const highlight = useMemo(
+        () => ({ start: window.first, end: window.first + window.count }),
+        [window],
+    );
+    const onTickClick = useCallback(
+        (day: number) =>
+            onWindowChange(centredOn(day, window.count, days.length)),
+        [onWindowChange, window.count, days.length],
+    );
+
+    return (
+        <ChartCard
+            actions={<MinimizeButton />}
+            icon={CalendarRange}
+            iconClassName="text-primary"
+            title="Daily energy mix and market prices"
+            subtitle="Shaded: the days shown in detail below. Click a day to show it."
+            headerContent={
+                <Picker
+                    label="Display"
+                    value={viewMode}
+                    onChange={setViewMode}
+                    options={MODE_OPTIONS}
+                />
+            }
+        >
+            <PowerSeries
+                rows={rows}
+                labels={labels}
+                view="generation"
+                grouping="type"
+                viewMode={viewMode}
+                hidden={hidden}
+                onToggle={toggle}
+                cpd={1}
+                barGap={0.3}
+                span="the season"
+                above={
+                    overview && (
+                        <SeasonPriceChart
+                            overview={overview}
+                            days={days}
+                            window={window}
+                            zoom={zoom}
+                            onDayClick={onTickClick}
+                        />
+                    )
+                }
+                timeAxis={timeAxis}
+                isLoading={isLoading}
+                isError={isError}
+                highlight={highlight}
+                onTickClick={onTickClick}
+                zoom={zoom}
+                onZoomChange={setZoom}
+            />
+        </ChartCard>
+    );
+}
+
 // ── Storage chart ─────────────────────────────────────────────────────────────
 
 const NO_HIDDEN_SERIES = new Set<string>();
 
 function PlayerStorageCard({
-    week,
+    days,
     labels,
     ...chart
-}: ChartProps & { week: PeriodWeek | undefined; labels: Labels }) {
+}: ChartProps & { days: PeriodDays | undefined; labels: Labels }) {
     const [view, setView] = useLocalStorage<StorageView>(
         `${STORAGE_PREFIX}:storage:view`,
         "soc",
     );
     const rows = useMemo(
         () =>
-            week && labels.me !== null
-                ? playerStorageRows(week, labels.me, view)
+            days && labels.me !== null
+                ? playerStorageRows(days, labels.me, view)
                 : [],
-        [week, labels.me, view],
+        [days, labels.me, view],
     );
-    const hadStorage = week?.pools.some(
+    const hadStorage = days?.pools.some(
         (pool) => pool.player_id === labels.me && pool.storage_capacity > 0,
     );
     if (!hadStorage) return null;
 
     return (
         <ChartCard
+            actions={<MinimizeButton />}
             icon={Battery}
             iconClassName="text-primary"
             title="Your storage"
@@ -724,7 +998,7 @@ function PlayerStorageCard({
                 chartData={rows}
                 hiddenFacilities={NO_HIDDEN_SERIES}
                 // Every storage type the player had shows, even if it stayed
-                // empty all week.
+                // empty all along.
                 showEmpty
                 view={view}
                 formatLabel={labels.facilityName}
@@ -750,12 +1024,13 @@ const PRICE_CONFIG: EChartsTimeSeriesConfig = {
 };
 
 function PriceCard({
-    week,
+    days,
     ...chart
-}: ChartProps & { week: PeriodWeek | undefined }) {
-    const rows = useMemo(() => (week ? priceRows(week) : []), [week]);
+}: ChartProps & { days: PeriodDays | undefined }) {
+    const rows = useMemo(() => (days ? priceRows(days) : []), [days]);
     return (
         <ChartCard
+            actions={<MinimizeButton />}
             icon={TrendingUp}
             iconClassName="text-primary"
             title="Market price"
@@ -793,7 +1068,12 @@ function MeritOrderCard({
     );
 
     return (
-        <ChartCard icon={BarChart2} iconClassName="text-primary" title={title}>
+        <ChartCard
+            actions={<MinimizeButton />}
+            icon={BarChart2}
+            iconClassName="text-primary"
+            title={title}
+        >
             {down ? (
                 <TypographyMuted className="py-6 text-center">
                     The grid was down at this point, so the market did not

@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity import instance_config
@@ -73,6 +74,9 @@ def create_workshop_app(
     needed. ``clock`` gives the current time that phase timers count from.
     """
     app = FastAPI(title="Energetica Workshop", lifespan=_lifespan)
+    # A Trading period's series are long lists of numbers, a whole season up to several MB of JSON, which
+    # compresses well. A whole room of players loads them at once, often over one venue's Wi-Fi (#1399).
+    app.add_middleware(GZipMiddleware, minimum_size=1_000)
     install_error_handlers(app)
     install_refusal_handler(app)
     app.include_router(run_router("workshop"), prefix="/api/v1")

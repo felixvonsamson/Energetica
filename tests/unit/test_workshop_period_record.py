@@ -20,6 +20,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.prices import DEFAULT_PRICES, PriceSheet
+from energetica.workshop.schemas import WorkshopSeasonOverviewOut
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
 from energetica.workshop.seasons import SEASON_DAYS
 from energetica.workshop.trading import Bidder, TradingOutcome, simulate_trading_period
@@ -246,3 +247,27 @@ def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
     ):
         np.testing.assert_array_equal(getattr(loaded, name), getattr(record, name))
     assert loaded.merit_order(5) == record.merit_order(5)
+
+
+def test_the_season_overview_sums_by_type_and_summarizes_the_price() -> None:
+    # Two players' gas burners make one series. 96 clearings a day: 12 a point of the overview's power, 4 an hour.
+    outcome = _simulate(
+        _bidder(GAS, WIND, sell={GAS: 50.0, WIND: 0.0}),
+        _bidder(GAS, sell={GAS: 120.0}, player_id=2),
+        weather=lambda _facility, seconds: _sunny_mornings(seconds),
+        clearings_per_day=96,
+    )
+    record = outcome.record
+    overview = WorkshopSeasonOverviewOut.from_record(record)
+
+    gas = record.generation[_row(record, 1, GAS)] + record.generation[_row(record, 2, GAS)]
+    [daily_gas] = [series.values for series in overview.daily_energy if series.facility == GAS]
+    assert daily_gas == pytest.approx(gas.reshape(7, 96).sum(axis=1) / 4)
+    [power_gas] = [series.values for series in overview.power if series.facility == GAS]
+    assert overview.points_per_day == 8
+    assert power_gas == pytest.approx(gas.reshape(7 * 8, 12).mean(axis=1))
+
+    day = record.price[:96]
+    assert (overview.price_min[0], overview.price_max[0]) == (day.min(), day.max())
+    assert overview.price_mean[0] == pytest.approx(day.mean())
+    assert overview.hourly_price[:24] == pytest.approx(day.reshape(24, 4).mean(axis=1))

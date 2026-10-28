@@ -134,8 +134,23 @@ export const queryKeys = {
         // The control room (#1289). Under the session's key, so every session change re-reads
         // it, and the server also names it when a player changes a price.
         controlRoom: ["workshop", "session", "control-room"] as const,
-        periodWeek: (round: number, season: string, week: number) =>
-            ["workshop", "periods", round, season, "weeks", week] as const,
+        periodDays: (
+            round: number,
+            season: string,
+            firstDay: number,
+            count: number,
+        ) =>
+            [
+                "workshop",
+                "periods",
+                round,
+                season,
+                "days",
+                firstDay,
+                count,
+            ] as const,
+        seasonOverview: (round: number, season: string) =>
+            ["workshop", "periods", round, season, "overview"] as const,
         meritOrder: (round: number, season: string, point: number) =>
             ["workshop", "periods", round, season, "points", point] as const,
     },
