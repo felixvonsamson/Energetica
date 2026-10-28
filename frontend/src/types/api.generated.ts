@@ -6134,6 +6134,10 @@ export interface components {
             demand: number[];
             /** Facilities */
             facilities: components["schemas"]["PrototypeFacilityDailyOut"][];
+            /** Strip Points Per Day */
+            strip_points_per_day: number;
+            /** Strip */
+            strip: components["schemas"]["PrototypeFacilityDailyOut"][];
         };
         /**
          * QuotedPrice

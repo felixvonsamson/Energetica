@@ -2,13 +2,14 @@
  * PROTOTYPE (#1399), throwaway: three ways to view and navigate a full-season
  * (91-day) Trading period's review, switchable with `?variant=` (A, B, C).
  *
- * In every variant, a "Daily energy mix" card at the top shows the whole
- * season, one bar per day, and the selected window of days. The detailed charts
- * below show that window at full resolution. The variants differ in the
+ * In every variant, a "Daily energy mix" card at the top (`SeasonMixCard` in
+ * period-review.tsx) shows the whole season, one bar per day, and the selected
+ * window of days. The detailed charts below show that window at full
+ * resolution. The variants differ in the
  * navigator in the sticky bar:
  *
- * - A, Brush strip: a thin stacked-area strip of the season with a draggable,
- *   resizable window over it.
+ * - A, Brush strip: a stacked-area strip of the season, 8 points a day, with a
+ *   draggable, resizable window over it. The one picked so far.
  * - B, Hover lens: a strip of daily bars. Hovering a day shows that day at full
  *   resolution above the strip; clicking moves the window there. The window's
  *   length is picked with buttons.
@@ -36,7 +37,7 @@ import type {
 import type { ComposeOption } from "echarts/core";
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-import { CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
     type ReactNode,
     useEffect,
@@ -51,9 +52,8 @@ import { resolveCSSVar } from "@/lib/charts/color-utils";
 import { dateOfDay, weekdayOfDay } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
 import { apiClient } from "@energetica/core/api-client";
-import { formatEnergy, formatMoney } from "@energetica/core/format-utils";
+import { formatMoney } from "@energetica/core/format-utils";
 import { Button } from "@energetica/ui/components/button";
-import { ChartCard } from "@energetica/ui/components/chart-card";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
@@ -104,7 +104,7 @@ function clampWindow(window: DayWindow, dayCount: number): DayWindow {
 }
 
 /** The window of `count` days centred on `day`. */
-function centredOn(day: number, count: number, dayCount: number): DayWindow {
+export function centredOn(day: number, count: number, dayCount: number): DayWindow {
     return clampWindow(
         { first: day - Math.floor((count - 1) / 2), count },
         dayCount,
@@ -348,12 +348,13 @@ function windowArea(window: DayWindow, color: string, opacity = 0.18) {
 function stackedFacilities(
     overview: Overview,
     facilityOrder: readonly string[],
+    series: Overview["facilities"] = overview.facilities,
 ) {
     const rank = (facility: string) => {
         const index = facilityOrder.indexOf(facility);
         return index === -1 ? Infinity : index;
     };
-    return overview.facilities
+    return series
         .filter((facility) => facility.energy.some((value) => value > 0))
         .sort((a, b) => rank(a.facility) - rank(b.facility));
 }
@@ -363,158 +364,6 @@ export interface FacilityLabels {
     facilityName: (facility: string) => string;
     assetColor: (key: string) => string;
     facilityOrder: readonly string[];
-}
-
-// ── Daily energy mix card (every variant) ────────────────────────────────────
-
-export function DailyMixCard({
-    overview,
-    labels,
-    window,
-    onWindowChange,
-}: {
-    overview: Overview | undefined;
-    labels: FacilityLabels;
-    window: DayWindow;
-    onWindowChange: (window: DayWindow) => void;
-}) {
-    const option = useMemo((): ECOption => {
-        if (!overview) return {};
-        const t = theme();
-        const facilities = stackedFacilities(overview, labels.facilityOrder);
-        const days = overview.days;
-        return {
-            animation: false,
-            grid: { left: 64, right: 64, top: 16, bottom: 28 },
-            tooltip: {
-                trigger: "axis",
-                axisPointer: { type: "shadow" },
-                backgroundColor: t.card,
-                borderColor: t.border,
-                textStyle: { color: t.foreground, fontSize: 12 },
-                formatter: (params) => {
-                    const list = Array.isArray(params) ? params : [params];
-                    const index = Number(
-                        (list[0]?.value as [number, number])[0],
-                    );
-                    const day = days[index] ?? 0;
-                    const lines = list
-                        .filter((p) => {
-                            const v = (p.value as [number, number | null])[1];
-                            return v !== null && v !== 0;
-                        })
-                        .reverse()
-                        .map((p) => {
-                            const v = (p.value as [number, number])[1];
-                            const value =
-                                p.seriesName === "Average price"
-                                    ? `${formatMoney(v)}/MWh`
-                                    : formatEnergy(v, 1000);
-                            return `${p.marker} ${p.seriesName}: <b>${value}</b>`;
-                        });
-                    return [
-                        `<b>${weekdayOfDay(day)} ${dateOfDay(day)}</b>`,
-                        ...lines,
-                    ].join("<br/>");
-                },
-            },
-            xAxis: dayAxis(days, { labels: true }),
-            yAxis: [
-                {
-                    type: "value",
-                    axisLabel: {
-                        color: t.text,
-                        fontSize: 10,
-                        formatter: (v: number) => formatEnergy(v, 1000),
-                    },
-                    splitLine: { lineStyle: { color: t.border, opacity: 0.2 } },
-                },
-                {
-                    type: "value",
-                    axisLabel: {
-                        color: t.price,
-                        fontSize: 10,
-                        formatter: (v: number) => formatMoney(v),
-                    },
-                    splitLine: { show: false },
-                },
-            ],
-            series: [
-                ...facilities.map(
-                    (facility, i): BarSeriesOption => ({
-                        type: "bar",
-                        name: labels.facilityName(facility.facility),
-                        stack: "mix",
-                        barWidth: "80%",
-                        itemStyle: {
-                            color: labels.assetColor(facility.facility),
-                        },
-                        data: facility.energy.map((v, day) => [day, v]),
-                        markArea:
-                            i === 0 ? windowArea(window, t.primary) : undefined,
-                    }),
-                ),
-                {
-                    type: "line",
-                    name: "Average price",
-                    yAxisIndex: 1,
-                    symbol: "none",
-                    lineStyle: { color: t.price, width: 2 },
-                    itemStyle: { color: t.price },
-                    data: overview.price_mean.map((v, day) => [day, v]),
-                },
-            ],
-        };
-    }, [overview, labels, window]);
-
-    const { ref } = useEChart(option, {
-        onDayClick: (day) =>
-            overview &&
-            onWindowChange(centredOn(day, window.count, overview.days.length)),
-    });
-
-    return (
-        <ChartCard
-            icon={CalendarRange}
-            iconClassName="text-primary"
-            title="Daily energy mix"
-            subtitle={
-                overview
-                    ? `The whole season, one bar per day, with the average price. Shaded: ${windowLabel(overview.days, window)}, shown in detail below. Click a day to move there.`
-                    : undefined
-            }
-        >
-            <div className="flex flex-wrap gap-x-4 gap-y-1 pb-2 text-xs text-muted-foreground">
-                {overview &&
-                    stackedFacilities(overview, labels.facilityOrder).map(
-                        (facility) => (
-                            <span
-                                key={facility.facility}
-                                className="flex items-center gap-1.5"
-                            >
-                                <span
-                                    className="size-2.5 rounded-sm"
-                                    style={{
-                                        background: labels.assetColor(
-                                            facility.facility,
-                                        ),
-                                    }}
-                                />
-                                {labels.facilityName(facility.facility)}
-                            </span>
-                        ),
-                    )}
-                <span className="flex items-center gap-1.5">
-                    <span
-                        className="h-0.5 w-3"
-                        style={{ background: "var(--chart-1)" }}
-                    />
-                    Average price
-                </span>
-            </div>
-            <div ref={ref} className="h-[280px] w-full" />
-        </ChartCard>
-    );
 }
 
 // ── Navigators (the sticky bar) ──────────────────────────────────────────────
@@ -539,14 +388,18 @@ export function SeasonNavigator(
 function WindowHeading({
     overview,
     window,
+    compact = false,
     children,
 }: {
     overview: Overview;
     window: DayWindow;
+    compact?: boolean;
     children?: ReactNode;
 }) {
     return (
-        <div className="flex flex-wrap items-center gap-3 pb-1">
+        <div
+            className={`flex flex-wrap items-center gap-3 ${compact ? "" : "pb-1"}`}
+        >
             <span className="text-sm font-medium">
                 {windowLabel(overview.days, window)}
             </span>
@@ -571,11 +424,19 @@ function BrushStripNavigator({
 
     const option = useMemo((): ECOption => {
         const t = theme();
-        const facilities = stackedFacilities(overview, labels.facilityOrder);
+        const facilities = stackedFacilities(
+            overview,
+            labels.facilityOrder,
+            overview.strip,
+        );
+        // Each strip point sits in the middle of its part of the day.
+        const perDay = overview.strip_points_per_day;
+        const at = (i: number) =>
+            Math.floor(i / perDay) - 0.5 + ((i % perDay) + 0.5) / perDay;
         const axis = dayAxis(overview.days, { labels: true }) as object;
         return {
             animation: false,
-            grid: { left: 8, right: 8, top: 4, bottom: 18 },
+            grid: { left: 8, right: 8, top: 2, bottom: 16 },
             xAxis: [axis, { ...axis, show: false }],
             yAxis: { type: "value", show: false },
             dataZoom: [
@@ -589,8 +450,8 @@ function BrushStripNavigator({
                     endValue: window.first + window.count - 0.5,
                     minValueSpan: 1,
                     maxValueSpan: MAX_WINDOW_DAYS,
-                    top: 4,
-                    bottom: 18,
+                    top: 2,
+                    bottom: 16,
                     left: 8,
                     right: 8,
                     height: undefined,
@@ -618,7 +479,7 @@ function BrushStripNavigator({
                         color: labels.assetColor(facility.facility),
                         opacity: 0.85,
                     },
-                    data: facility.energy.map((v, day) => [day, v]),
+                    data: facility.energy.map((v, i) => [at(i), v]),
                 }),
             ),
         };
@@ -669,7 +530,7 @@ function BrushStripNavigator({
 
     return (
         <div className="w-full">
-            <WindowHeading overview={overview} window={shown}>
+            <WindowHeading overview={overview} window={shown} compact>
                 <span className="text-xs text-muted-foreground">
                     Drag the window, or its edges (up to {MAX_WINDOW_DAYS}{" "}
                     days)
@@ -677,7 +538,8 @@ function BrushStripNavigator({
                 <div className="ml-auto flex gap-1">
                     <Button
                         variant="outline"
-                        size="icon"
+                        size="icon-sm"
+                        className="size-6"
                         aria-label="Earlier"
                         onClick={() => step(-window.count)}
                     >
@@ -685,7 +547,8 @@ function BrushStripNavigator({
                     </Button>
                     <Button
                         variant="outline"
-                        size="icon"
+                        size="icon-sm"
+                        className="size-6"
                         aria-label="Later"
                         onClick={() => step(window.count)}
                     >
@@ -693,7 +556,7 @@ function BrushStripNavigator({
                     </Button>
                 </div>
             </WindowHeading>
-            <div ref={ref} className="h-[72px] w-full" />
+            <div ref={ref} className="h-[104px] w-full" />
         </div>
     );
 }

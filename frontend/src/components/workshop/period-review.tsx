@@ -27,6 +27,7 @@ import {
     BarChart2,
     Battery,
     Layers,
+    CalendarRange,
     TrendingUp,
     Zap,
 } from "lucide-react";
@@ -63,8 +64,8 @@ import { PeriodSeriesTable } from "@/components/workshop/period-series-table";
 import { playerLabel } from "@/components/workshop/player-name";
 // PROTOTYPE (#1399), throwaway.
 import {
-    DailyMixCard,
     type DayWindow,
+    centredOn,
     SeasonNavigator,
     VARIANTS,
     middleWindow,
@@ -106,6 +107,8 @@ import {
     priceRows,
     reviewableWeeks,
     outages,
+    dateOfDay,
+    weekdayOfDay,
     isGridDown,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -382,9 +385,12 @@ function Review({
                 />
             )}
             {fullSeason && (
-                <DailyMixCard
+                <SeasonMixCard
                     overview={overview.data}
+                    isLoading={overview.isPending}
+                    isError={overview.isError}
                     labels={labels}
+                    days={period.days}
                     window={dayWindow}
                     onWindowChange={chooseWindow}
                 />
@@ -408,7 +414,7 @@ function Review({
             />
             <PriceCard week={shown} {...chart} />
             {fullSeason ? (
-                <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
+                <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg">
                     {overview.data ? (
                         <SeasonNavigator
                             key={variant}
@@ -591,6 +597,8 @@ function PowerSeries({
     hidden,
     onToggle,
     cpd,
+    barGap,
+    span,
     ...chart
 }: ChartProps & {
     rows: ChartRow[];
@@ -601,6 +609,9 @@ function PowerSeries({
     hidden: Set<string>;
     onToggle: (key: string) => void;
     cpd: number;
+    /** PROTOTYPE (#1399). */
+    barGap?: number;
+    span?: string;
 }) {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
@@ -627,6 +638,7 @@ function PowerSeries({
                 formatLabel={label}
                 height={360}
                 highlightedKey={highlightedKey}
+                barGap={barGap}
                 {...chart}
             />
             <PeriodSeriesTable
@@ -638,6 +650,7 @@ function PowerSeries({
                 label={label}
                 color={color}
                 energyHeading={view === "generation" ? "Generated" : "Consumed"}
+                span={span}
                 onHoverRow={setHighlightedKey}
             />
         </>
@@ -765,6 +778,110 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
                 onToggle={toggle}
                 cpd={cpd}
                 {...chart}
+            />
+        </ChartCard>
+    );
+}
+
+// ── Season overview (PROTOTYPE, #1399) ────────────────────────────────────────
+
+/**
+ * The whole market's generation over a full season, one bar per day at the
+ * day's average power. The days shown in detail below are shaded, and clicking
+ * a day shows the days around it.
+ */
+function SeasonMixCard({
+    overview,
+    isLoading,
+    isError,
+    labels,
+    days,
+    window,
+    onWindowChange,
+}: {
+    overview: ApiSchema<"PrototypeSeasonOverviewOut"> | undefined;
+    isLoading: boolean;
+    isError: boolean;
+    labels: Labels;
+    days: readonly number[];
+    window: DayWindow;
+    onWindowChange: (window: DayWindow) => void;
+}) {
+    const [viewMode, setViewMode] = useLocalStorage<PowerChartViewMode>(
+        `${STORAGE_PREFIX}:season:mode`,
+        "absolute",
+    );
+    const [hidden, toggle] = useToggleSet<string>(
+        undefined,
+        `${STORAGE_PREFIX}:season:hidden`,
+    );
+    const [zoom, setZoom] = useState<ZoomRange>(FULL_ZOOM);
+    const rows = useMemo(
+        () =>
+            (overview?.days ?? []).map((_, day) => {
+                const row = { tick: day } as ChartRow;
+                for (const facility of overview?.facilities ?? []) {
+                    row[facility.facility] =
+                        (row[facility.facility] ?? 0) +
+                        (facility.energy[day] ?? 0) / 24;
+                }
+                return row;
+            }),
+        [overview],
+    );
+    const timeAxis = useMemo(
+        (): TimeAxis => ({
+            formatTick: (tick) => dateOfDay(days[tick] ?? 0),
+            formatTooltipTitle: (tick) =>
+                `${weekdayOfDay(days[tick] ?? 0)} ${dateOfDay(days[tick] ?? 0)}, average over the day`,
+            secondsPerTick: 24 * 3600,
+            anchor: "left",
+        }),
+        [days],
+    );
+    const highlight = useMemo(
+        () => ({ start: window.first, end: window.first + window.count }),
+        [window],
+    );
+    const onTickClick = useCallback(
+        (day: number) =>
+            onWindowChange(centredOn(day, window.count, days.length)),
+        [onWindowChange, window.count, days.length],
+    );
+
+    return (
+        <ChartCard
+            icon={CalendarRange}
+            iconClassName="text-primary"
+            title="Daily energy mix"
+            subtitle="The market's generation over the whole season, as each day's average power. The shaded days are shown in detail below: click a day to show it."
+            headerContent={
+                <Picker
+                    label="Display"
+                    value={viewMode}
+                    onChange={setViewMode}
+                    options={MODE_OPTIONS}
+                />
+            }
+        >
+            <PowerSeries
+                rows={rows}
+                labels={labels}
+                view="generation"
+                grouping="type"
+                viewMode={viewMode}
+                hidden={hidden}
+                onToggle={toggle}
+                cpd={1}
+                barGap={0.3}
+                span="the season"
+                timeAxis={timeAxis}
+                isLoading={isLoading}
+                isError={isError}
+                highlight={highlight}
+                onTickClick={onTickClick}
+                zoom={zoom}
+                onZoomChange={setZoom}
             />
         </ChartCard>
     );
