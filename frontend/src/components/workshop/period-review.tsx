@@ -152,6 +152,40 @@ function humanize(id: string): string {
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * Facility types bottom first, in the order the persistent world's charts stack
+ * them (`POWER_GENERATION_KEYS`): steady hydro and nuclear at the bottom, then
+ * fossil, wind, solar, and storage on top.
+ */
+const STACKING_ORDER = [
+    "small_water_dam",
+    "large_water_dam",
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "coal_burner",
+    "modern_coal_plant",
+    "gas_burner",
+    "combined_cycle",
+    "onshore_wind_turbine",
+    "offshore_wind_turbine",
+    "csp_solar",
+    "pv_solar",
+    "multi_layer_pv",
+    "pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "hydrogen_storage",
+];
+
+/** The catalog's facility types in {@link STACKING_ORDER}, any others on top. */
+function stackingOrder(catalog: readonly string[]): string[] {
+    const rank = (id: string) => {
+        const index = STACKING_ORDER.indexOf(id);
+        return index === -1 ? STACKING_ORDER.length : index;
+    };
+    return [...catalog].sort((a, b) => rank(a) - rank(b));
+}
+
 /** Everything the charts need to name and color their series. */
 interface Labels {
     me: number | null;
@@ -159,7 +193,7 @@ interface Labels {
     playerName: (playerId: number) => string;
     playerColor: (playerId: number) => string;
     assetColor: (key: string) => string;
-    /** Facility types in catalog order, for stacking. */
+    /** Facility types in stacking order, bottom first. */
     facilityOrder: readonly string[];
 }
 
@@ -202,7 +236,9 @@ function useLabels(): Labels {
             playerColor: (playerId) =>
                 playerId < 0 ? assetColor(CONSUMERS) : baseColor(playerId),
             assetColor,
-            facilityOrder: (facilities ?? []).map((facility) => facility.id),
+            facilityOrder: stackingOrder(
+                (facilities ?? []).map((facility) => facility.id),
+            ),
         };
     }, [me, players, facilities, assetColor, baseColor]);
 }
@@ -360,7 +396,15 @@ function Review({
             } else if (!isPointOfWeek(tick, weekIndex, cpd)) return;
             setPoint(Math.min(tick, lastPoint));
         },
-        [fullSeason, windowFirst, windowEnd, weekIndex, cpd, lastPoint, setPoint],
+        [
+            fullSeason,
+            windowFirst,
+            windowEnd,
+            weekIndex,
+            cpd,
+            lastPoint,
+            setPoint,
+        ],
     );
 
     // The week shown, which may still be the previous one while the next loads.
@@ -424,7 +468,7 @@ function Review({
                 {/* PROTOTYPE (#1399): the sticky bar is the first card. */}
                 <div
                     ref={stickyRef}
-                    className="sticky top-0 z-10 space-y-1.5 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg"
+                    className="sticky top-0 z-10 space-y-1 rounded-lg border border-border bg-surface-card px-3 py-1 shadow-lg"
                 >
                     {fullSeason ? (
                         overview.data ? (
@@ -750,7 +794,7 @@ function PlayerPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
 
     return (
         <ChartCard
- actions={<MinimizeButton />}
+            actions={<MinimizeButton />}
             icon={Zap}
             iconClassName="text-primary"
             title={
@@ -813,7 +857,7 @@ function NetworkPowerCard({ week, labels, cpd, ...chart }: PowerCardProps) {
 
     return (
         <ChartCard
- actions={<MinimizeButton />}
+            actions={<MinimizeButton />}
             icon={grouping === "player" ? Activity : Layers}
             iconClassName="text-primary"
             title={`Market ${what} by ${grouping === "player" ? "player" : "type"}`}
@@ -923,10 +967,10 @@ function SeasonMixCard({
 
     return (
         <ChartCard
- actions={<MinimizeButton />}
+            actions={<MinimizeButton />}
             icon={CalendarRange}
             iconClassName="text-primary"
-            title="Daily energy mix"
+            title="Daily energy mix and market prices"
             subtitle="Shaded: the days shown in detail below. Click a day to show it."
             headerContent={
                 <Picker
@@ -953,6 +997,7 @@ function SeasonMixCard({
                         <SeasonPriceChart
                             overview={overview}
                             window={window}
+                            zoom={zoom}
                             onDayClick={onTickClick}
                         />
                     )
@@ -996,7 +1041,7 @@ function PlayerStorageCard({
 
     return (
         <ChartCard
- actions={<MinimizeButton />}
+            actions={<MinimizeButton />}
             icon={Battery}
             iconClassName="text-primary"
             title="Your storage"
@@ -1045,7 +1090,7 @@ function PriceCard({
     const rows = useMemo(() => (week ? priceRows(week) : []), [week]);
     return (
         <ChartCard
- actions={<MinimizeButton />}
+            actions={<MinimizeButton />}
             icon={TrendingUp}
             iconClassName="text-primary"
             title="Market price"
@@ -1083,7 +1128,12 @@ function MeritOrderCard({
     );
 
     return (
-        <ChartCard actions={<MinimizeButton />} icon={BarChart2} iconClassName="text-primary" title={title}>
+        <ChartCard
+            actions={<MinimizeButton />}
+            icon={BarChart2}
+            iconClassName="text-primary"
+            title={title}
+        >
             {down ? (
                 <TypographyMuted className="py-6 text-center">
                     The grid was down at this point, so the market did not

@@ -5,16 +5,15 @@
  * In every variant, a "Daily energy mix" card at the top (`SeasonMixCard` in
  * period-review.tsx) shows the whole season, one bar per day, and the selected
  * window of days. The detailed charts below show that window at full
- * resolution. The variants differ in the
- * navigator in the sticky bar:
+ * resolution. The variants differ in the navigator in the sticky bar:
  *
  * - A, Brush strip: a stacked-area strip of the season, 8 points a day, with a
  *   draggable, resizable window over it. The one picked so far.
  * - B, Hover lens: a strip of daily bars. Hovering a day shows that day at full
  *   resolution above the strip; clicking moves the window there. The window's
  *   length is picked with buttons.
- * - C, Price band: the season's daily price range. Dragging across it draws a
- *   new window; clicking moves the window there.
+ * - C, Price band: the season's daily price range. Dragging across it draws a new
+ *   window; clicking moves the window there.
  *
  * Not for main. See the branch `prototype/1399-season-overview`.
  */
@@ -103,7 +102,11 @@ function clampWindow(window: DayWindow, dayCount: number): DayWindow {
 }
 
 /** The window of `count` days centred on `day`. */
-export function centredOn(day: number, count: number, dayCount: number): DayWindow {
+export function centredOn(
+    day: number,
+    count: number,
+    dayCount: number,
+): DayWindow {
     return clampWindow(
         { first: day - Math.floor((count - 1) / 2), count },
         dayCount,
@@ -448,10 +451,12 @@ function BrushStripNavigator({
         const perDay = overview.strip_points_per_day;
         const at = (i: number) =>
             Math.floor(i / perDay) - 0.5 + ((i % perDay) + 0.5) / perDay;
-        const axis = dayAxis(overview.days, { labels: true }) as object;
+        const axis = dayAxis(overview.days, { labels: false }) as object;
         return {
             animation: false,
-            grid: { left: 8, right: 8, top: 2, bottom: 16 },
+            // No margins, so the strip can stay thin. The heading names the
+            // window's dates.
+            grid: { left: 8, right: 8, top: 0, bottom: 1 },
             xAxis: [axis, { ...axis, show: false }],
             yAxis: { type: "value", show: false },
             dataZoom: [
@@ -464,8 +469,8 @@ function BrushStripNavigator({
                     startValue: window.first - 0.5,
                     endValue: window.first + window.count - 0.5,
                     minValueSpan: 1,
-                    top: 2,
-                    bottom: 16,
+                    top: 0,
+                    bottom: 1,
                     left: 8,
                     right: 8,
                     height: undefined,
@@ -538,7 +543,10 @@ function BrushStripNavigator({
     const shown = draft ?? window;
     const step = (by: number) =>
         onWindowChange(
-            clampWindow({ first: window.first + by, count: window.count }, dayCount),
+            clampWindow(
+                { first: window.first + by, count: window.count },
+                dayCount,
+            ),
         );
 
     return (
@@ -585,9 +593,7 @@ function HoverLensNavigator({
     window,
     onWindowChange,
 }: NavigatorProps) {
-    const [hover, setHover] = useState<{ day: number; x: number } | null>(
-        null,
-    );
+    const [hover, setHover] = useState<{ day: number; x: number } | null>(null);
     const dayCount = overview.days.length;
 
     const option = useMemo((): ECOption => {
@@ -638,7 +644,8 @@ function HoverLensNavigator({
             setHover(
                 day === null || day < 0 || day >= dayCount ? null : { day, x },
             ),
-        onDayClick: (day) => onWindowChange(centredOn(day, window.count, dayCount)),
+        onDayClick: (day) =>
+            onWindowChange(centredOn(day, window.count, dayCount)),
     });
 
     // Fetched only once the pointer rests on a day for a moment.
@@ -650,7 +657,10 @@ function HoverLensNavigator({
     );
     const step = (by: number) =>
         onWindowChange(
-            clampWindow({ first: window.first + by, count: window.count }, dayCount),
+            clampWindow(
+                { first: window.first + by, count: window.count },
+                dayCount,
+            ),
         );
 
     return (
@@ -729,7 +739,8 @@ function DayLens({
         const t = theme();
         const byType = new Map<string, number[]>();
         for (const pool of data.pools) {
-            const sum = byType.get(pool.facility) ?? pool.generation.map(() => 0);
+            const sum =
+                byType.get(pool.facility) ?? pool.generation.map(() => 0);
             pool.generation.forEach((v, i) => (sum[i] = (sum[i] ?? 0) + v));
             byType.set(pool.facility, sum);
         }
@@ -799,7 +810,9 @@ function DayLens({
     return (
         <div
             className="pointer-events-none absolute top-full z-20 mt-3 w-[380px] rounded-lg border border-border bg-surface-card p-3 shadow-xl"
-            style={{ left: `clamp(0px, calc(${x}px - 190px), calc(100% - 380px))` }}
+            style={{
+                left: `clamp(0px, calc(${x}px - 190px), calc(100% - 380px))`,
+            }}
         >
             <div className="flex items-baseline justify-between pb-1 text-sm font-medium">
                 <span>
@@ -928,7 +941,8 @@ function PriceBandNavigator({
         <div className="w-full">
             <WindowHeading overview={overview} window={shown}>
                 <span className="text-xs text-muted-foreground">
-                    Average {windowMean === null ? "—" : formatMoney(windowMean)}
+                    Average{" "}
+                    {windowMean === null ? "—" : formatMoney(windowMean)}
                     /MWh, peak {formatMoney(windowMax)}/MWh
                 </span>
                 <span className="ml-auto text-xs text-muted-foreground">
@@ -943,19 +957,36 @@ function PriceBandNavigator({
 
 // ── Season price (in the daily energy mix card) ──────────────────────────────
 
+// The label intervals of the charts below, so the dates line up.
+const NICE_INTERVALS_S = [
+    60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800, 432000,
+    604800, 1209600, 2592000,
+];
+
+/** Every how many days the daily bars below label a date, as they pick it. */
+function labelEveryDays(visibleDays: number): number {
+    const target = (visibleDays * 86400) / 6;
+    const nice = NICE_INTERVALS_S.reduce((a, b) =>
+        Math.abs(b - target) < Math.abs(a - target) ? b : a,
+    );
+    return Math.max(1, Math.round(nice / 86400));
+}
+
 /**
- * The price over the season, about 8 points a day: the band from the lowest to
- * the highest price of each 3 hours, and their average weighted by the power
- * cleared. It sits above the daily bars and shares their date labels: its plot
- * has the same margins, and each day takes the same width.
+ * The trend of the price over the season, about 8 points a day, each smoothed
+ * over the days around it: the average weighted by the power cleared, and a
+ * band from a typical low to a typical high price (10th to 90th percentile). It
+ * sits above the daily bars with the same margins, date labels and zoom.
  */
 export function SeasonPriceChart({
     overview,
     window,
+    zoom,
     onDayClick,
 }: {
     overview: Overview;
     window: DayWindow;
+    zoom: { start: number; end: number };
     onDayClick: (day: number) => void;
 }) {
     const perDay = overview.strip_points_per_day;
@@ -973,11 +1004,31 @@ export function SeasonPriceChart({
             `<tr><td class="pr-1 align-middle"><div class="w-2.5 h-2.5 rounded-sm inline-block" style="background:${color}"></div></td>` +
             `<td class="pr-3 whitespace-nowrap align-middle">${label}</td>` +
             `<td class="text-right font-mono whitespace-nowrap align-middle">${v === null ? "None" : `${formatMoney(v)}/MWh`}</td></tr>`;
-        const hoursPerPoint = 24 / perDay;
-        const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+        const visibleDays = Math.max(
+            1,
+            Math.ceil((days.length * (zoom.end - zoom.start)) / 100),
+        );
+        const every = labelEveryDays(visibleDays) * perDay;
+        // In the middle of each day, under its bar's label.
+        const middle = Math.floor(perDay / 2);
+        const around =
+            overview.smoothing_days === 1
+                ? "the day"
+                : `the ${overview.smoothing_days} days`;
         return {
             animation: false,
-            grid: { left: 70, right: 20, top: 8, bottom: 4 },
+            grid: { left: 70, right: 20, top: 8, bottom: 22 },
+            dataZoom: [
+                {
+                    type: "inside",
+                    start: zoom.start,
+                    end: zoom.end,
+                    zoomOnMouseWheel: false,
+                    moveOnMouseMove: false,
+                    moveOnMouseWheel: false,
+                    preventDefaultMouseMove: false,
+                },
+            ],
             tooltip: {
                 trigger: "axis",
                 axisPointer: { type: "line", lineStyle: { color: t.text } },
@@ -989,14 +1040,13 @@ export function SeasonPriceChart({
                     const list = Array.isArray(params) ? params : [params];
                     const index = list[0]?.dataIndex ?? 0;
                     const day = days[Math.floor(index / perDay)] ?? 0;
-                    const from = (index % perDay) * hoursPerPoint;
                     return (
                         `<div class="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs text-foreground">` +
-                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}, ${hour(from)}–${hour(from + hoursPerPoint)}</div>` +
+                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}, over ${around} around</div>` +
                         `<table><tbody>` +
-                        row(t.price, "Highest price", max[index] ?? null) +
+                        row(t.price, "Typical high", max[index] ?? null) +
                         row(t.price, "Average price", mean[index] ?? null) +
-                        row(t.price, "Lowest price", min[index] ?? null) +
+                        row(t.price, "Typical low", min[index] ?? null) +
                         `</tbody></table></div>`
                     );
                 },
@@ -1005,7 +1055,15 @@ export function SeasonPriceChart({
                 type: "category",
                 data: mean.map((_, i) => String(i)),
                 axisTick: { show: false },
-                axisLabel: { show: false },
+                axisLabel: {
+                    color: t.text,
+                    fontSize: 11,
+                    interval: (index: number) => index % every === middle,
+                    formatter: (value: string) =>
+                        dateOfDay(
+                            days[Math.floor(Number(value) / perDay)] ?? 0,
+                        ),
+                },
                 axisLine: { lineStyle: { color: t.border } },
             },
             yAxis: {
@@ -1077,9 +1135,9 @@ export function SeasonPriceChart({
                 },
             ],
         };
-    }, [overview, window, perDay]);
+    }, [overview, window, zoom, perDay]);
     const { ref } = useEChart(option, {
         onDayClick: (index) => onDayClick(Math.floor(index / perDay)),
     });
-    return <div ref={ref} className="h-[130px] w-full" />;
+    return <div ref={ref} className="h-[150px] w-full" />;
 }

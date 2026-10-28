@@ -1,5 +1,6 @@
 /**
- * PROTOTYPE (#1399), throwaway: minimizing the review's chart cards into a dock.
+ * PROTOTYPE (#1399), throwaway: minimizing the review's chart cards into a
+ * dock.
  *
  * Each card has a minimize button. The sticky bar has a thin row with one
  * button per card. Minimizing a card shrinks it into its button, so the player
@@ -242,7 +243,7 @@ export function MinimizeButton() {
 export function CardDockBar({ items }: { items: readonly DockItem[] }) {
     const dock = useDock();
     return (
-        <div className="flex flex-wrap gap-1 border-t border-border/40 pt-1">
+        <div className="flex flex-wrap gap-1">
             {items.map(({ id, label, icon: Icon }) => {
                 const minimized = dock.minimized.has(id);
                 return (
@@ -251,9 +252,7 @@ export function CardDockBar({ items }: { items: readonly DockItem[] }) {
                         type="button"
                         ref={(element) => dock.registerButton(id, element)}
                         onClick={() => dock.press(id)}
-                        title={
-                            minimized ? `Open ${label}` : `Go to ${label}`
-                        }
+                        title={minimized ? `Open ${label}` : `Go to ${label}`}
                         className={`flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs transition-colors ${
                             minimized
                                 ? "border-dashed border-border text-muted-foreground hover:bg-secondary"

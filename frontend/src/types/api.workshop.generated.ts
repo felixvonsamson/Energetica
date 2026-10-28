@@ -1808,6 +1808,8 @@ export interface components {
             strip_price_min: (number | null)[];
             /** Strip Price Max */
             strip_price_max: (number | null)[];
+            /** Smoothing Days */
+            smoothing_days: number;
         };
         /**
          * QuotedPrice
