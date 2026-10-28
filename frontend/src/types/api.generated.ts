@@ -7181,7 +7181,7 @@ export interface components {
             price: (number | null)[];
             /**
              * Quantity
-             * @description The power each point cleared, in W. Null while the grid was down after a blackout
+             * @description The power each point cleared, in whole W. Null while the grid was down after a blackout
              */
             quantity: (number | null)[];
             /**
@@ -7307,7 +7307,7 @@ export interface components {
          * WorkshopPoolSeriesOut
          * @description One player's facilities of one type over some simulated days, at each settlement point.
          *
-         *     Power is in W and stored energy in Wh.
+         *     Power is in whole W and stored energy in Wh.
          */
         WorkshopPoolSeriesOut: {
             /** Player Id */
@@ -7627,7 +7627,7 @@ export interface components {
             tier: string;
             /**
              * Served
-             * @description What it bought at each settlement point, in W
+             * @description What it bought at each settlement point, in whole W
              */
             served: number[];
         };

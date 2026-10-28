@@ -6,6 +6,7 @@ import {
     EXPORTS,
     dateOfDay,
     isPointOfWindow,
+    sliceDays,
     meritOrderData,
     networkPowerRows,
     orderedKeys,
@@ -373,6 +374,47 @@ describe("isGridDown", () => {
         expect(isGridDown(35, [12], 24)).toBe(true);
         expect(isGridDown(36, [12], 24)).toBe(false);
         expect(isGridDown(5, [], 24)).toBe(false);
+    });
+});
+
+describe("sliceDays", () => {
+    // Three days of two points each, from the period's start.
+    const all = {
+        days: [59, 60, 61],
+        first_point: 0,
+        price: [1, 2, 3, 4, 5, null],
+        quantity: [10, 20, 30, 40, 50, null],
+        pools: [
+            {
+                player_id: 1,
+                facility: "gas_burner" as const,
+                generation: [1, 2, 3, 4, 5, 6],
+                dumped: [0, 0, 0, 0, 0, 1],
+                charged: [0, 0, 0, 0, 0, 2],
+                stored: [0, 0, 0, 0, 0, 3],
+                storage_capacity: 0,
+            },
+        ],
+        tiers: [{ tier: "must_serve", served: [6, 5, 4, 3, 2, 1] }],
+    };
+
+    it("keeps the window's days and points, numbered in the period", () => {
+        expect(sliceDays(all, { first: 1, count: 2 }, 2)).toEqual({
+            days: [60, 61],
+            first_point: 2,
+            price: [3, 4, 5, null],
+            quantity: [30, 40, 50, null],
+            pools: [
+                {
+                    ...all.pools[0],
+                    generation: [3, 4, 5, 6],
+                    dumped: [0, 0, 0, 1],
+                    charged: [0, 0, 0, 2],
+                    stored: [0, 0, 0, 3],
+                },
+            ],
+            tiers: [{ tier: "must_serve", served: [4, 3, 2, 1] }],
+        });
     });
 });
 

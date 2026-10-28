@@ -338,7 +338,13 @@ function Review({
     const cpd = period.clearings_per_day;
     const labels = useLabels();
     const fullSeason = isFullSeason(period);
-    const days = useWorkshopPeriodDays(period.round, period.season, window);
+    const days = useWorkshopPeriodDays(
+        period.round,
+        period.season,
+        window,
+        period.days.length,
+        cpd,
+    );
     const overview = useWorkshopSeasonOverview(period.round, period.season, {
         enabled: fullSeason,
     });

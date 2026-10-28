@@ -329,6 +329,16 @@ def _finite_or_none(values: Iterable[float]) -> list[float | None]:
     return [value if math.isfinite(value) else None for value in values]
 
 
+def _watts(values: np.ndarray) -> list[int]:
+    """Power rounded to whole watts, which roughly halves its JSON. A watt is far below anything a chart shows."""
+    return np.rint(values).astype(np.int64).tolist()
+
+
+def _watts_or_none(values: np.ndarray) -> list[int | None]:
+    """:func:`_watts`, with a missing value as null."""
+    return [round(value) if math.isfinite(value) else None for value in values.tolist()]
+
+
 class WorkshopTechnologyProgressOut(BaseModel):
     """How far one base tier's upgrade is from unlocking (#1011). For the facilitator only."""
 
@@ -476,14 +486,14 @@ class WorkshopPeriodOut(BaseModel):
 class WorkshopPoolSeriesOut(BaseModel):
     """One player's facilities of one type over some simulated days, at each settlement point.
 
-    Power is in W and stored energy in Wh.
+    Power is in whole W and stored energy in Wh.
     """
 
     player_id: int
     facility: FacilityId
-    generation: list[float] = Field(description="What it produced: sold plus dumped. For storage, discharged")
-    dumped: list[float] = Field(description="Renewable output that did not sell")
-    charged: list[float] = Field(description="What storage bought to charge")
+    generation: list[int] = Field(description="What it produced: sold plus dumped. For storage, discharged")
+    dumped: list[int] = Field(description="Renewable output that did not sell")
+    charged: list[int] = Field(description="What storage bought to charge")
     stored: list[float] = Field(description="The energy storage held once each point was over, in Wh")
     storage_capacity: float = Field(description="The most energy it could hold, in Wh. Zero if it is not storage")
 
@@ -492,7 +502,7 @@ class WorkshopTierSeriesOut(BaseModel):
     """One demand tier over some simulated days."""
 
     tier: str = Field(description="The tier's label, such as must_serve")
-    served: list[float] = Field(description="What it bought at each settlement point, in W")
+    served: list[int] = Field(description="What it bought at each settlement point, in whole W")
 
 
 class WorkshopPeriodDaysOut(BaseModel):
@@ -508,8 +518,8 @@ class WorkshopPeriodDaysOut(BaseModel):
         description="The price each point settled at, per MWh. Null where the grid was down: unbounded at the "
         "blackout itself, and missing while it was down after it"
     )
-    quantity: list[float | None] = Field(
-        description="The power each point cleared, in W. Null while the grid was down after a blackout"
+    quantity: list[int | None] = Field(
+        description="The power each point cleared, in whole W. Null while the grid was down after a blackout"
     )
     pools: list[WorkshopPoolSeriesOut] = Field(description="Every player's facility types that were operating")
     tiers: list[WorkshopTierSeriesOut]
@@ -523,21 +533,21 @@ class WorkshopPeriodDaysOut(BaseModel):
             days=list(record.days[first_day : first_day + count]),
             first_point=start,
             price=_finite_or_none(record.price[points].tolist()),
-            quantity=_finite_or_none(record.quantity[points].tolist()),
+            quantity=_watts_or_none(record.quantity[points]),
             pools=[
                 WorkshopPoolSeriesOut(
                     player_id=player_id,
                     facility=FacilityId(facility),
-                    generation=record.generation[row, points].tolist(),
-                    dumped=record.dumped[row, points].tolist(),
-                    charged=record.charged[row, points].tolist(),
+                    generation=_watts(record.generation[row, points]),
+                    dumped=_watts(record.dumped[row, points]),
+                    charged=_watts(record.charged[row, points]),
                     stored=record.stored[row, points].tolist(),
                     storage_capacity=float(record.storage_capacity[row]),
                 )
                 for row, (player_id, facility) in enumerate(record.pools)
             ],
             tiers=[
-                WorkshopTierSeriesOut(tier=tier, served=record.served[row, points].tolist())
+                WorkshopTierSeriesOut(tier=tier, served=_watts(record.served[row, points]))
                 for row, tier in enumerate(record.tiers)
             ],
         )

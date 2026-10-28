@@ -1822,6 +1822,11 @@ def test_everyone_reviews_a_settled_period_at_each_settlement_point(session_path
         assert (pool["stored"], pool["storage_capacity"]) == ([0.0] * 7 * 24, 0.0)
         assert [tier["tier"] for tier in days["tiers"]][0] == "must_serve"
 
+        # Long series go compressed.
+        assert client.get(f"{PERIOD_URL}/days/0/7").headers["content-encoding"] == "gzip"
+        # Power is in whole watts.
+        assert all(isinstance(value, int) for value in pool["generation"])
+
         later = client.get(f"{PERIOD_URL}/days/2/3").json()
         assert (later["first_point"], later["days"]) == (2 * 24, period["days"][2:5])
         assert later["price"] == days["price"][2 * 24 : 5 * 24]

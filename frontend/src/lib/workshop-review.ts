@@ -359,6 +359,36 @@ export function isGridDown(
     );
 }
 
+/**
+ * The `window`'s days, cut from days that start at the period's first and cover
+ * it, so a window can be shown without asking the server.
+ */
+export function sliceDays(
+    all: PeriodDays,
+    window: DayWindow,
+    clearingsPerDay: number,
+): PeriodDays {
+    const from = window.first * clearingsPerDay;
+    const to = (window.first + window.count) * clearingsPerDay;
+    return {
+        days: all.days.slice(window.first, window.first + window.count),
+        first_point: from,
+        price: all.price.slice(from, to),
+        quantity: all.quantity.slice(from, to),
+        pools: all.pools.map((pool) => ({
+            ...pool,
+            generation: pool.generation.slice(from, to),
+            dumped: pool.dumped.slice(from, to),
+            charged: pool.charged.slice(from, to),
+            stored: pool.stored.slice(from, to),
+        })),
+        tiers: all.tiers.map((tier) => ({
+            ...tier,
+            served: tier.served.slice(from, to),
+        })),
+    };
+}
+
 /** Whether `point` is one of the settlement points of the `window`'s days. */
 export function isPointOfWindow(
     point: number,
