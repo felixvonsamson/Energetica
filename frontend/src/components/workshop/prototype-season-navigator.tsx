@@ -435,9 +435,11 @@ function BrushStripNavigator({
     onWindowChange,
 }: NavigatorProps) {
     // While dragging, the window is only a draft, shown in the heading. It is
-    // committed once the pointer is released.
+    // committed once the pointer is released. A click on the strip moves the
+    // window after the release, so it is committed at once.
     const [draft, setDraft] = useState<DayWindow | null>(null);
     const draftRef = useRef<DayWindow | null>(null);
+    const pressed = useRef(false);
     const dayCount = overview.days.length;
 
     const option = useMemo((): ECOption => {
@@ -521,6 +523,10 @@ function BrushStripNavigator({
                     },
                     dayCount,
                 );
+                if (!pressed.current) {
+                    onWindowChange(next);
+                    return;
+                }
                 draftRef.current = next;
                 setDraft(next);
             },
@@ -529,15 +535,23 @@ function BrushStripNavigator({
     );
 
     useEffect(() => {
+        const press = () => {
+            pressed.current = true;
+        };
         const commit = () => {
+            pressed.current = false;
             const next = draftRef.current;
             if (!next) return;
             draftRef.current = null;
             setDraft(null);
             onWindowChange(next);
         };
+        document.addEventListener("pointerdown", press);
         document.addEventListener("pointerup", commit);
-        return () => document.removeEventListener("pointerup", commit);
+        return () => {
+            document.removeEventListener("pointerdown", press);
+            document.removeEventListener("pointerup", commit);
+        };
     }, [onWindowChange]);
 
     const shown = draft ?? window;
@@ -972,11 +986,29 @@ function labelEveryDays(visibleDays: number): number {
     return Math.max(1, Math.round(nice / 86400));
 }
 
+/** How many hours the season price is averaged over, to show its trend. */
+const SMOOTHING_HOURS = 48;
+
+/** A moving average over `width` values around each one, skipping gaps. */
+function smooth(values: readonly (number | null)[], width: number) {
+    const half = Math.floor(width / 2);
+    return values.map((_, i) => {
+        let sum = 0;
+        let count = 0;
+        for (let j = i - half; j <= i + half; j++) {
+            const v = values[j];
+            if (v === null || v === undefined) continue;
+            sum += v;
+            count++;
+        }
+        return count ? sum / count : null;
+    });
+}
+
 /**
- * The trend of the price over the season, about 8 points a day, each smoothed
- * over the days around it: the average weighted by the power cleared, and a
- * band from a typical low to a typical high price (10th to 90th percentile). It
- * sits above the daily bars with the same margins, date labels and zoom.
+ * The trend of the price over the season: the hourly price, and a band between
+ * each day's lowest and highest price, both smoothed. It sits above the daily
+ * bars with the same margins, date labels and zoom.
  */
 export function SeasonPriceChart({
     overview,
@@ -989,15 +1021,17 @@ export function SeasonPriceChart({
     zoom: { start: number; end: number };
     onDayClick: (day: number) => void;
 }) {
-    const perDay = overview.strip_points_per_day;
+    const perDay = 24;
     const option = useMemo((): ECOption => {
         const t = theme();
-        const {
-            days,
-            strip_price_min: min,
-            strip_price_max: max,
-            strip_price_mean: mean,
-        } = overview;
+        const { days } = overview;
+        const ofDay = (daily: readonly (number | null)[]) =>
+            overview.hourly_price.map(
+                (_, hour) => daily[Math.floor(hour / perDay)] ?? null,
+            );
+        const mean = smooth(overview.hourly_price, SMOOTHING_HOURS);
+        const min = smooth(ofDay(overview.price_min), SMOOTHING_HOURS);
+        const max = smooth(ofDay(overview.price_max), SMOOTHING_HOURS);
         const value = (v: number | null | undefined) =>
             v === null || v === undefined ? "-" : v;
         const row = (color: string, label: string, v: number | null) =>
@@ -1011,10 +1045,6 @@ export function SeasonPriceChart({
         const every = labelEveryDays(visibleDays) * perDay;
         // In the middle of each day, under its bar's label.
         const middle = Math.floor(perDay / 2);
-        const around =
-            overview.smoothing_days === 1
-                ? "the day"
-                : `the ${overview.smoothing_days} days`;
         return {
             animation: false,
             grid: { left: 70, right: 20, top: 8, bottom: 22 },
@@ -1039,15 +1069,29 @@ export function SeasonPriceChart({
                 formatter: (params) => {
                     const list = Array.isArray(params) ? params : [params];
                     const index = list[0]?.dataIndex ?? 0;
-                    const day = days[Math.floor(index / perDay)] ?? 0;
+                    const at = Math.floor(index / perDay);
+                    const day = days[at] ?? 0;
                     return (
                         `<div class="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs text-foreground">` +
-                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}, over ${around} around</div>` +
+                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}</div>` +
                         `<table><tbody>` +
-                        row(t.price, "Typical high", max[index] ?? null) +
-                        row(t.price, "Average price", mean[index] ?? null) +
-                        row(t.price, "Typical low", min[index] ?? null) +
-                        `</tbody></table></div>`
+                        row(
+                            t.price,
+                            "Highest price",
+                            overview.price_max[at] ?? null,
+                        ) +
+                        row(
+                            t.price,
+                            "Average price",
+                            overview.price_mean[at] ?? null,
+                        ) +
+                        row(
+                            t.price,
+                            "Lowest price",
+                            overview.price_min[at] ?? null,
+                        ) +
+                        `</tbody></table>` +
+                        `<div class="mt-1 text-muted-foreground">The chart is smoothed.</div></div>`
                     );
                 },
             },

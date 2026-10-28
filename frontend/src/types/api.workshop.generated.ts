@@ -1802,14 +1802,8 @@ export interface components {
             strip_points_per_day: number;
             /** Strip */
             strip: components["schemas"]["PrototypeFacilityDailyOut"][];
-            /** Strip Price Mean */
-            strip_price_mean: (number | null)[];
-            /** Strip Price Min */
-            strip_price_min: (number | null)[];
-            /** Strip Price Max */
-            strip_price_max: (number | null)[];
-            /** Smoothing Days */
-            smoothing_days: number;
+            /** Hourly Price */
+            hourly_price: (number | null)[];
         };
         /**
          * QuotedPrice

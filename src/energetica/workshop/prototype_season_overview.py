@@ -23,9 +23,6 @@ from energetica.workshop.schemas import (
 
 
 STRIP_POINTS_PER_DAY = 8
-SMOOTHING_DAYS = 2
-"""The season price is smoothed over this many days around each point, to show its trend."""
-BAND_PERCENTILES = (10, 90)
 
 
 class PrototypeFacilityDailyOut(BaseModel):
@@ -37,7 +34,7 @@ class PrototypeFacilityDailyOut(BaseModel):
 class PrototypeSeasonOverviewOut(BaseModel):
     days: list[int]
     price_mean: list[float | None]
-    """Each day's price weighted by the power cleared, per MWh."""
+    """Each day's average price, per MWh."""
     price_min: list[float | None]
     price_max: list[float | None]
     demand: list[float]
@@ -47,13 +44,8 @@ class PrototypeSeasonOverviewOut(BaseModel):
     """How many points each day has in ``strip``."""
     strip: list[PrototypeFacilityDailyOut]
     """The market's average power (W) of each facility type, ``strip_points_per_day`` points a day, in ``energy``."""
-    strip_price_mean: list[float | None]
-    """The price around each strip point: its average over ``SMOOTHING_DAYS``, weighted by the power cleared."""
-    strip_price_min: list[float | None]
-    """The 10th percentile of the prices over the same days: a typical low."""
-    strip_price_max: list[float | None]
-    """The 90th percentile: a typical high."""
-    smoothing_days: int
+    hourly_price: list[float | None]
+    """The average price of each hour of the season."""
 
     @classmethod
     def from_record(cls, record: TradingPeriodRecord) -> PrototypeSeasonOverviewOut:
@@ -77,7 +69,6 @@ class PrototypeSeasonOverviewOut(BaseModel):
             .reshape(len(record.pools), day_count * strip_points, per_point)
             .mean(axis=2)
         )
-        strip_mean, strip_low, strip_high = _smoothed_price(record, day_count * strip_points, per_point)
         strip_by_type: dict[str, np.ndarray] = {}
         for row, (_, facility) in enumerate(record.pools):
             strip_by_type[facility] = strip_by_type.get(facility, 0) + fine[row]
@@ -87,10 +78,7 @@ class PrototypeSeasonOverviewOut(BaseModel):
                 PrototypeFacilityDailyOut(facility=facility, energy=power.tolist())
                 for facility, power in strip_by_type.items()
             ],
-            strip_price_mean=_finite_or_none(strip_mean.tolist()),
-            strip_price_min=_finite_or_none(strip_low.tolist()),
-            strip_price_max=_finite_or_none(strip_high.tolist()),
-            smoothing_days=SMOOTHING_DAYS,
+            hourly_price=_finite_or_none(_price_stats(record, day_count * 24, cpd // 24)[0].tolist()),
             days=list(record.days),
             price_mean=_finite_or_none(mean.tolist()),
             price_min=_finite_or_none(low.tolist()),
@@ -136,49 +124,9 @@ def days_out(record: TradingPeriodRecord, first_day: int, count: int) -> Worksho
 
 
 def _price_stats(record: TradingPeriodRecord, groups: int, size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """The price over ``groups`` runs of ``size`` points: its mean weighted by the power cleared, lowest and highest."""
+    """The average, lowest and highest price over ``groups`` runs of ``size`` points."""
     price = record.price.astype(float).reshape(groups, size)
-    quantity = np.nan_to_num(record.quantity.astype(float)).reshape(groups, size)
-    finite = np.where(np.isfinite(price), price, np.nan)
-    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        weights = np.where(np.isfinite(finite), quantity, 0.0)
-        mean = np.nansum(np.nan_to_num(finite) * weights, axis=1) / weights.sum(axis=1)
-        mean = np.where(weights.sum(axis=1) > 0, mean, np.nanmean(finite, axis=1))
-        return mean, np.nanmin(finite, axis=1), np.nanmax(finite, axis=1)
-
-
-def _smoothed_price(record: TradingPeriodRecord, groups: int, size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """The price around the middle of each of ``groups`` runs of ``size`` points, over ``SMOOTHING_DAYS``.
-
-    Its average weighted by the power cleared, and the ``BAND_PERCENTILES`` of the prices.
-    """
-    width = SMOOTHING_DAYS * record.clearings_per_day
-    half = width // 2
-    price = np.where(np.isfinite(record.price.astype(float)), record.price.astype(float), np.nan)
-    quantity = np.nan_to_num(record.quantity.astype(float))
-    quantity = np.where(np.isfinite(price), quantity, 0.0)
-    # Padded with no prices, so the windows at the ends are just shorter.
-    padded_price = np.pad(price, half, constant_values=np.nan)
-    padded_quantity = np.pad(quantity, half)
-    centres = np.arange(groups) * size + size // 2
-    windows = np.lib.stride_tricks.sliding_window_view(padded_price, width)[centres]
-    weights = np.lib.stride_tricks.sliding_window_view(padded_quantity, width)[centres]
-    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        mean = np.nansum(np.nan_to_num(windows) * weights, axis=1) / weights.sum(axis=1)
-        mean = np.where(weights.sum(axis=1) > 0, mean, np.nanmean(windows, axis=1))
-        low, high = np.nanpercentile(windows, BAND_PERCENTILES, axis=1)
-    # The prices take few distinct values, so the percentiles jump: smoothed again over a day.
-    points_per_day = groups // len(record.days)
-    return mean, _rolling_mean(low, points_per_day), _rolling_mean(high, points_per_day)
-
-
-def _rolling_mean(values: np.ndarray, width: int) -> np.ndarray:
-    """The mean of ``width`` values around each one, over those that exist."""
-    half = width // 2
-    padded = np.pad(values.astype(float), half, constant_values=np.nan)
-    windows = np.lib.stride_tricks.sliding_window_view(padded, 2 * half + 1)
+    price = np.where(np.isfinite(price), price, np.nan)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        return np.nanmean(windows, axis=1)
+        return np.nanmean(price, axis=1), np.nanmin(price, axis=1), np.nanmax(price, axis=1)

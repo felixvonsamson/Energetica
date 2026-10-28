@@ -243,7 +243,7 @@ export function MinimizeButton() {
 export function CardDockBar({ items }: { items: readonly DockItem[] }) {
     const dock = useDock();
     return (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5 py-0.5">
             {items.map(({ id, label, icon: Icon }) => {
                 const minimized = dock.minimized.has(id);
                 return (
