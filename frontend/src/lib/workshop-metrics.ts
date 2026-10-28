@@ -5,16 +5,15 @@
  * costs per MWh themselves.
  */
 
-import { isOperating } from "@/lib/workshop-prices";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type Checkpoint = ApiSchema<"WorkshopSessionOut">["checkpoint"];
-type Fuel = ApiSchema<"Fuel">;
-type FacilityId = ApiSchema<"FacilityId">;
-type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 
-/** The fuel a facility burns per MWh, in coins, at a price per kg. */
+/**
+ * What the fuel a facility burns costs per MWh it generates, in coins, at a
+ * price per kg.
+ */
 export function fuelCostPerMWh(kgPerMWh: number, pricePerKg: number): number {
     return kgPerMWh * pricePerKg;
 }
@@ -43,48 +42,6 @@ export function expectedGenerationPerSeason(
 ): number {
     return fullOutputPerSeason * capacityFactor;
 }
-
-/** What the operating copies of one facility type burn in a season. */
-export interface FuelNeed {
-    facility: FacilityId;
-    count: number;
-    /** In kg, at full output for the whole season. */
-    need: number;
-}
-
-/**
- * What each facility type in `fleet` burning `fuel` burns in a season at full
- * output, counting only the copies operating this Round, in the order the types
- * were first bought. Together they make the season need the server starts the
- * fuel order from.
- */
-export function fuelNeedByFacility(
-    fuel: Fuel,
-    facilities: Pick<
-        WorkshopFacility,
-        "id" | "fuel_type" | "fuel_use" | "full_output_per_season"
-    >[],
-    fleet: OwnedFacility[],
-): FuelNeed[] {
-    const needs = new Map<FacilityId, FuelNeed>();
-    for (const owned of fleet.filter(isOperating)) {
-        const facility = facilities.find((f) => f.id === owned.facility);
-        if (facility?.fuel_type !== fuel || facility.fuel_use === null)
-            continue;
-        const line = needs.get(facility.id) ?? {
-            facility: facility.id,
-            count: 0,
-            need: 0,
-        };
-        line.count += 1;
-        line.need +=
-            (facility.full_output_per_season / WH_PER_MWH) * facility.fuel_use;
-        needs.set(facility.id, line);
-    }
-    return [...needs.values()];
-}
-
-const WH_PER_MWH = 1_000_000;
 
 /**
  * The first and last Rounds a facility bought in `builtRound` works in: from

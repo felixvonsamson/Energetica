@@ -21,6 +21,7 @@ import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
 import {
     MetricTooltip,
+    MoneyPerMWh,
     TooltipFigure,
 } from "@/components/workshop/metric-tooltip";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
@@ -651,18 +652,20 @@ function RowLabel({
 
 /**
  * What a volume or a rate means, with its unit, for its row's kind (#1400).
- * These used to fill a unit column; a tooltip on each figure leaves the room to
- * the seasons.
+ * Giving the unit on hover keeps the ledger narrow enough to show every
+ * season's volumes. A facility type's fuel also gives its cost per MWh.
  */
 function VolumeRateTooltip({
     unit,
     field,
     text,
+    perMWh,
 }: {
     unit: RowUnit;
     field: "volume" | "rate";
     /** The figure as the cell shows it. */
     text: string;
+    perMWh: number | undefined;
 }) {
     const coins = (
         <span className="inline-flex items-center gap-0.5">
@@ -705,7 +708,18 @@ function VolumeRateTooltip({
         },
     };
     const [label, note] = meanings[field][unit];
-    return <TooltipFigure label={label} note={note} />;
+    return (
+        <>
+            <TooltipFigure label={label} note={note} />
+            {perMWh !== undefined && (
+                <TooltipFigure
+                    label="Fuel cost"
+                    value={<MoneyPerMWh amount={perMWh} />}
+                    note="The fuel paid for divided by the energy the facilities generated."
+                />
+            )}
+        </>
+    );
 }
 
 function CellValue({
@@ -753,23 +767,22 @@ function CellValue({
                   : row.unit === "tax"
                     ? formatAmount(value)
                     : formatVolume(value);
-        const figure = (
-            <span className="text-[12.5px] font-normal text-(--bs-light)">
-                {text}
-            </span>
-        );
-        if (!row.unit) return figure;
         return (
             <MetricTooltip
                 content={
-                    <VolumeRateTooltip
-                        unit={row.unit}
-                        field={col.field}
-                        text={text}
-                    />
+                    row.unit && (
+                        <VolumeRateTooltip
+                            unit={row.unit}
+                            field={col.field}
+                            text={text}
+                            perMWh={cell.perMWh}
+                        />
+                    )
                 }
             >
-                {figure}
+                <span className="text-[12.5px] font-normal text-(--bs-light)">
+                    {text}
+                </span>
             </MetricTooltip>
         );
     }

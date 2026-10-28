@@ -1176,6 +1176,9 @@ def test_a_player_reads_the_fuel_they_buy_this_season(session_path: Path, clock:
                 "shocked": False,
                 "stock": 0.0,
                 "season_need": pytest.approx(need),
+                "need_by_facility": [
+                    {"facility": "gas_burner", "name": "Gas burner", "count": 6, "need": pytest.approx(need)}
+                ],
                 "stockpile_limit": pytest.approx(3 * need),
                 "order": math.ceil(need / 1_000) * 1_000.0,
                 "ran_out": False,
@@ -1202,6 +1205,7 @@ def _unburned_fuel_line(session: WorkshopSession, fuel: Fuel, name: str) -> dict
         "shocked": price.shocked,
         "stock": 0.0,
         "season_need": 0.0,
+        "need_by_facility": [],
         "stockpile_limit": 0.0,
         "order": None,
         "ran_out": False,

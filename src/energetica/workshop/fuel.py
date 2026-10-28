@@ -32,9 +32,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
+from energetica.workshop.facilities import CATALOG, WH_PER_MWH, FacilityId, Fuel, full_output_per_season
 from energetica.workshop.fleet import OwnedFacility, is_operating
-from energetica.workshop.seasons import SEASON_HOURS
 
 #: Fuel burned per MWh generated, in kg, for every facility that burns fuel. Set by the rebalance of #1306,
 #: together with the catalog prices below.
@@ -181,15 +180,41 @@ def burned_fuels(fleet: Iterable[OwnedFacility], *, current_round: int) -> set[F
     }
 
 
+class FacilityNeed(BaseModel):
+    """What the operating copies of one facility type burn of a fuel in a season at full output (#1400)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    facility: FacilityId
+    count: int
+    need: float = Field(description="In kg")
+
+
+def season_needs_by_facility(fuel: Fuel, fleet: Iterable[OwnedFacility], *, current_round: int) -> list[FacilityNeed]:
+    """
+    What each facility type of ``fleet`` burning ``fuel`` burns of it running at full output for a whole season,
+    counting the copies operating in ``current_round``, in the order the types were first bought.
+    """
+    counts: dict[FacilityId, int] = {}
+    for owned in _operating(fleet, current_round):
+        if CATALOG[owned.facility].fuel_type == fuel:
+            counts[owned.facility] = counts.get(owned.facility, 0) + 1
+    return [
+        FacilityNeed(
+            facility=facility,
+            count=count,
+            need=count * full_output_per_season(CATALOG[facility]) / WH_PER_MWH * FUEL_USE[facility],
+        )
+        for facility, count in counts.items()
+    ]
+
+
 def season_need(fuel: Fuel, fleet: Iterable[OwnedFacility], *, current_round: int) -> float:
-    """The ``fuel``, in kg, that the facilities of ``fleet`` operating in ``current_round`` burn running at full
+    """
+    The ``fuel``, in kg, that the facilities of ``fleet`` operating in ``current_round`` burn running at full
     output for a whole season.
     """
-    return sum(
-        CATALOG[owned.facility].base_power_generation / 1_000_000 * SEASON_HOURS * FUEL_USE[owned.facility]
-        for owned in _operating(fleet, current_round)
-        if CATALOG[owned.facility].fuel_type == fuel
-    )
+    return sum(line.need for line in season_needs_by_facility(fuel, fleet, current_round=current_round))
 
 
 def capped_order(quantity: float, *, stock: float, need: float) -> float:

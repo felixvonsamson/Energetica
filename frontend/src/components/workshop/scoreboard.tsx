@@ -48,11 +48,39 @@ import {
 } from "@energetica/ui/components/typography";
 import { cn } from "@energetica/ui/lib/utils";
 
+/**
+ * The four parts of a score. Each explanation shows in its column header's
+ * tooltip and under the table.
+ */
 const COLUMNS = [
-    { key: "operating_profit", label: "Operating profit", sign: 1 },
-    { key: "investments", label: "Investments", sign: -1 },
-    { key: "carbon_tax", label: "Carbon tax", sign: -1 },
-    { key: "residual_value", label: "Residual value", sign: 1 },
+    {
+        key: "operating_profit",
+        label: "Operating profit",
+        sign: 1,
+        explanation:
+            "What your facilities earned on the market in the completed Rounds, less what they cost to run, their fuel and any revenue tax.",
+    },
+    {
+        key: "investments",
+        label: "Investments",
+        sign: -1,
+        explanation:
+            "What you paid for every facility you bought, plus what the loan cost if you took it: the payments less the money it brought in.",
+    },
+    {
+        key: "carbon_tax",
+        label: "Carbon tax",
+        sign: -1,
+        explanation:
+            "The carbon tax you paid on your emissions and on building, less the share of the tax that was paid back to you.",
+    },
+    {
+        key: "residual_value",
+        label: "Residual value",
+        sign: 1,
+        explanation:
+            "What the facilities you still own are worth: each one's price times the share of its lifetime it has left after the last completed Round. A facility still being built is worth its full price.",
+    },
 ] as const;
 
 export function Scoreboard() {
@@ -263,12 +291,7 @@ function ScoreTable({
                                     content={
                                         <TooltipFigure
                                             label={column.label}
-                                            note={
-                                                TERMS.find(
-                                                    (t) =>
-                                                        t.term === column.label,
-                                                )?.explanation
-                                            }
+                                            note={column.explanation}
                                         />
                                     }
                                 >
@@ -331,29 +354,6 @@ function scoresTitle(scoreboard: ApiSchema<"Scoreboard">): string {
     return `Scores after Round ${scoreboard.completed_rounds}`;
 }
 
-const TERMS = [
-    {
-        term: "Operating profit",
-        explanation:
-            "What your facilities earned on the market in the completed Rounds, less what they cost to run, their fuel and any revenue tax.",
-    },
-    {
-        term: "Investments",
-        explanation:
-            "What you paid for every facility you bought, plus what the loan cost if you took it: the payments less the money it brought in.",
-    },
-    {
-        term: "Carbon tax",
-        explanation:
-            "The carbon tax you paid on your emissions and on building, less the share of the tax that was paid back to you.",
-    },
-    {
-        term: "Residual value",
-        explanation:
-            "What the facilities you still own are worth: each one's price times the share of its lifetime it has left after the last completed Round. A facility still being built is worth its full price.",
-    },
-] as const;
-
 function ScoreFormula({ bonus }: { bonus: boolean }) {
     return (
         <Card>
@@ -366,9 +366,9 @@ function ScoreFormula({ bonus }: { bonus: boolean }) {
                     Residual value
                 </p>
                 <dl className="grid gap-x-6 gap-y-3 text-sm md:grid-cols-[max-content_1fr]">
-                    {TERMS.map(({ term, explanation }) => (
-                        <div key={term} className="contents">
-                            <dt className="font-semibold">{term}</dt>
+                    {COLUMNS.map(({ key, label, explanation }) => (
+                        <div key={key} className="contents">
+                            <dt className="font-semibold">{label}</dt>
                             <dd className="text-muted-foreground">
                                 {explanation}
                             </dd>

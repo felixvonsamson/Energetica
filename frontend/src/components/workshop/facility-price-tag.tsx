@@ -229,7 +229,15 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                         <span className="mt-0.5 flex gap-3 text-[10px]">
                             <MetricTooltip
                                 content={
-                                    <TooltipFigure label="Construction time" />
+                                    <TooltipFigure
+                                        label="Construction time"
+                                        note={
+                                            facility.construction_lag_rounds ===
+                                            0
+                                                ? "It works in the Round you buy it."
+                                                : `It starts working ${roundsLabel(facility.construction_lag_rounds)} after the Round you buy it, and then works its whole lifetime.`
+                                        }
+                                    />
                                 }
                             >
                                 <span className="flex items-center gap-0.5">
@@ -243,7 +251,10 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                             </MetricTooltip>
                             <MetricTooltip
                                 content={
-                                    <TooltipFigure label="Construction pollution" />
+                                    <TooltipFigure
+                                        label="Construction pollution"
+                                        note="The CO₂ emitted to build one. Once a carbon tax is in force, building is taxed too."
+                                    />
                                 }
                             >
                                 <span className="flex items-center gap-0.5">

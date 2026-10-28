@@ -44,7 +44,7 @@ from energetica.workshop.facilities import (
     session_price,
 )
 from energetica.workshop.feedback import FeedbackNotOpenError, FeedbackStore, WorkshopFeedback
-from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS
+from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS, season_needs_by_facility
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -62,6 +62,7 @@ from energetica.workshop.schemas import (
     WorkshopFacilityOut,
     WorkshopFiredEventOut,
     WorkshopFuelLineOut,
+    WorkshopFuelNeedOut,
     WorkshopFuelOrderIn,
     WorkshopFuelOut,
     WorkshopLoanOut,
@@ -567,6 +568,14 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
                 shocked=price.shocked,
                 stock=player.fuel_stock.get(fuel, 0.0),
                 season_need=need,
+                need_by_facility=[
+                    WorkshopFuelNeedOut(
+                        facility=line.facility, name=CATALOG[line.facility].name, count=line.count, need=line.need
+                    )
+                    for line in season_needs_by_facility(
+                        fuel, player.owned_facilities, current_round=session.current_round()
+                    )
+                ],
                 stockpile_limit=STOCKPILE_SEASONS * need,
                 order=player.fuel_order.get(fuel) if burned and session.fuel_procurement == "manual" else None,
                 ran_out=fuel in run_out,

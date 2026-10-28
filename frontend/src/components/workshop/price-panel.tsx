@@ -19,9 +19,12 @@
 import { AlertTriangle, X, Zap } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
-import { StorageMarkupNote } from "@/components/workshop/facility-card";
 import { FuelOrders } from "@/components/workshop/fuel-orders";
-import { InfoMark, MetricTooltip } from "@/components/workshop/metric-tooltip";
+import {
+    InfoMark,
+    MetricTooltip,
+    StorageMarkupNote,
+} from "@/components/workshop/metric-tooltip";
 import {
     usePriceSettingOpen,
     useSetPrice,
@@ -327,24 +330,15 @@ function PriceField({
     return (
         <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-                {tooltip ? (
-                    <MetricTooltip content={tooltip}>
-                        <label
-                            htmlFor={id}
-                            className="flex w-[52px] shrink-0 items-center gap-1 text-sm font-medium text-fg-muted"
-                        >
-                            {label}
-                            <InfoMark />
-                        </label>
-                    </MetricTooltip>
-                ) : (
+                <MetricTooltip content={tooltip}>
                     <label
                         htmlFor={id}
-                        className="w-[52px] shrink-0 text-sm font-medium text-fg-muted"
+                        className="flex w-[52px] shrink-0 items-center gap-1 text-sm font-medium text-fg-muted"
                     >
                         {label}
+                        {tooltip && <InfoMark />}
                     </label>
-                )}
+                </MetricTooltip>
                 <div className="relative w-32 shrink-0">
                     <Input
                         id={id}

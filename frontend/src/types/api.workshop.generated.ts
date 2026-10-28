@@ -2672,6 +2672,11 @@ export interface components {
              */
             season_need: number;
             /**
+             * Need By Facility
+             * @description The season need by facility type, in the order the types were first bought. Empty for a fuel they do not burn
+             */
+            need_by_facility: components["schemas"]["WorkshopFuelNeedOut"][];
+            /**
              * Stockpile Limit
              * @description The most the player's stock may hold, counting what they order
              */
@@ -2686,6 +2691,22 @@ export interface components {
              * @description Whether the fuel ran short in the player's last Trading period, holding back the output of their facilities burning it (#1010)
              */
             ran_out: boolean;
+        };
+        /**
+         * WorkshopFuelNeedOut
+         * @description What the operating copies of one facility type burn of a fuel in a season at full output (#1400).
+         */
+        WorkshopFuelNeedOut: {
+            facility: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+            /**
+             * Need
+             * @description In kg
+             */
+            need: number;
         };
         /**
          * WorkshopFuelOrderIn

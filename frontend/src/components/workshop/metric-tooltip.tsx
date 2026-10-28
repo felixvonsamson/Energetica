@@ -10,6 +10,7 @@ import { Info } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 
 import { formatRate } from "@/lib/workshop-balance-sheet";
+import { storageMarkup } from "@/lib/workshop-metrics";
 import { Money } from "@energetica/ui/components/money";
 import {
     Tooltip,
@@ -17,6 +18,10 @@ import {
     TooltipTrigger,
 } from "@energetica/ui/components/tooltip";
 
+/**
+ * Shows `content` when `children` is hovered. With no content, `children` shows
+ * alone, so a caller need not branch on whether a metric has a tooltip.
+ */
 export function MetricTooltip({
     content,
     children,
@@ -25,6 +30,8 @@ export function MetricTooltip({
     /** The metric to hover. It must take a ref and pass on its props. */
     children: ReactElement;
 }) {
+    if (content === undefined || content === null || content === false)
+        return children;
     return (
         <Tooltip>
             <TooltipTrigger asChild>{children}</TooltipTrigger>
@@ -61,6 +68,19 @@ export function TooltipFigure({
             </div>
             {note && <div className="opacity-75">{note}</div>}
         </div>
+    );
+}
+
+/**
+ * The reminder that storage loses energy, so it must sell dearer than it buys,
+ * shown on a storage facility's card and beside its prices.
+ */
+export function StorageMarkupNote({ efficiency }: { efficiency: number }) {
+    return (
+        <TooltipFigure
+            label="Storage loses energy"
+            note={`Your sell price should be at least ${Math.round(storageMarkup(efficiency) * 100)}% higher than your buy price to make a profit.`}
+        />
     );
 }
 

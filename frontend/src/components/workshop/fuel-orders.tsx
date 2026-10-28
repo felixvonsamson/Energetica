@@ -35,11 +35,7 @@ import {
     MoneyPerMWh,
     TooltipFigure,
 } from "@/components/workshop/metric-tooltip";
-import {
-    useSetFuelOrder,
-    useWorkshopFacilities,
-    useWorkshopFleet,
-} from "@/hooks/use-workshop";
+import { useSetFuelOrder, useWorkshopFacilities } from "@/hooks/use-workshop";
 import {
     formatPriceChange,
     isOverStockpile,
@@ -54,7 +50,7 @@ import {
     workshopFuelColor,
     workshopFuelImages,
 } from "@/lib/workshop-fuel";
-import { fuelCostPerMWh, fuelNeedByFacility } from "@/lib/workshop-metrics";
+import { fuelCostPerMWh } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
 import { formatMoney } from "@energetica/core/format-utils";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
@@ -229,16 +225,12 @@ function FuelRow({
 
 /** The season need broken down by the facility types burning the fuel. */
 function SeasonNeedFigures({ line }: { line: FuelLine }) {
-    const { data: facilities = [] } = useWorkshopFacilities();
-    const { data: fleet = [] } = useWorkshopFleet();
-    const name = (id: string) =>
-        facilities.find((facility) => facility.id === id)?.name ?? id;
     return (
         <>
-            {fuelNeedByFacility(line.fuel, facilities, fleet).map((need) => (
+            {line.need_by_facility.map((need) => (
                 <TooltipFigure
                     key={need.facility}
-                    label={`${need.count} × ${name(need.facility)}`}
+                    label={`${need.count} × ${need.name}`}
                     value={formatFuelAmount(need.need, line.fuel)}
                 />
             ))}

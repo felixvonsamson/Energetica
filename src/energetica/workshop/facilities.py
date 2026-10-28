@@ -299,11 +299,17 @@ def session_price(facility: FacilityId, round_count: int) -> float:
     return CATALOG[facility].base_price
 
 
+WH_PER_MWH = 1_000_000
+
+
+def _om_per_season(facility: WorkshopFacility, share: float) -> float:
+    """``share`` of ``facility``'s O&M for a season. A Round's O&M is spread evenly over its seasons."""
+    return facility.om_per_round * share / len(SEASONS)
+
+
 def om_fixed_per_season(facility: WorkshopFacility) -> float:
-    """The part of ``facility``'s O&M charged every season whatever its use. A Round's O&M is spread evenly over
-    its seasons.
-    """
-    return facility.om_per_round * facility.om_fixed_share / len(SEASONS)
+    """The part of ``facility``'s O&M charged every season whatever its use."""
+    return _om_per_season(facility, facility.om_fixed_share)
 
 
 def full_output_per_season(facility: WorkshopFacility) -> float:
@@ -312,8 +318,9 @@ def full_output_per_season(facility: WorkshopFacility) -> float:
 
 
 def om_variable_per_mwh(facility: WorkshopFacility) -> float:
-    """The part of ``facility``'s O&M charged per MWh it generates. The variable part of a season's O&M is charged
+    """
+    The part of ``facility``'s O&M charged per MWh it generates. The variable part of a season's O&M is charged
     in proportion to the facility's output, so it is the same for every MWh.
     """
-    variable_per_season = facility.om_per_round * (1 - facility.om_fixed_share) / len(SEASONS)
-    return variable_per_season / (full_output_per_season(facility) / 1_000_000)
+    variable_per_season = _om_per_season(facility, 1 - facility.om_fixed_share)
+    return variable_per_season / (full_output_per_season(facility) / WH_PER_MWH)

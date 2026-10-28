@@ -310,11 +310,16 @@ describe("balanceSheetRows", () => {
     it("shows the fuel a facility type burned as tonnes times the price per tonne", () => {
         const coal = row("coal_burner-fuel");
         expect(coal).toMatchObject({ label: "Fuel (Coal)", unit: "fuel" });
-        expect(coal.cell(SPRING)).toEqual({
+        expect(coal.cell(SPRING)).toMatchObject({
             volume: 6,
             rate: 500,
             amount: -3_000,
         });
+    });
+
+    it("gives the fuel cost per MWh the facility type generated", () => {
+        // 3'000 of coal for the 6'000 MWh the coal burner sold.
+        expect(row("coal_burner-fuel").cell(SPRING).perMWh).toBeCloseTo(0.5);
     });
 
     it("breaks the fuel burned from stock out of the fuel bought, at no cost", () => {

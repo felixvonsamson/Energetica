@@ -30,6 +30,7 @@ import {
     InfoMark,
     MetricTooltip,
     MoneyPerMWh,
+    StorageMarkupNote,
     TooltipFigure,
 } from "@/components/workshop/metric-tooltip";
 import {
@@ -50,7 +51,6 @@ import {
     expectedGenerationPerSeason,
     fuelCostPerMWh,
     nextBuyRound,
-    storageMarkup,
     workingRounds,
 } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -85,8 +85,8 @@ export function FacilityCard({
     /** Drawn over the card's top-right corner, such as a stack's count. */
     badge?: ReactNode;
 }) {
-    const context = useCardContext();
-    const { buyRound } = context;
+    const inputs = useTooltipInputs();
+    const { buyRound } = inputs;
     return (
         <div
             className="relative w-60 rounded-2xl p-2 shadow-lg"
@@ -105,12 +105,9 @@ export function FacilityCard({
                     className="mt-1 mb-1.5 aspect-[16/10] w-full rounded-md object-cover"
                 />
                 <ul className="divide-y divide-stone-300 text-xs dark:divide-stone-700">
-                    {facilityStats(facility, context).map((stat) => {
-                        const row = (
-                            <li
-                                key={stat.label}
-                                className="flex items-center gap-2 py-1"
-                            >
+                    {facilityStats(facility, inputs).map((stat) => (
+                        <MetricTooltip key={stat.label} content={stat.tooltip}>
+                            <li className="flex items-center gap-2 py-1">
                                 <stat.icon
                                     className="size-3.5 shrink-0"
                                     style={{
@@ -125,18 +122,8 @@ export function FacilityCard({
                                 </span>
                                 <span className="font-bold">{stat.value}</span>
                             </li>
-                        );
-                        return stat.tooltip ? (
-                            <MetricTooltip
-                                key={stat.label}
-                                content={stat.tooltip}
-                            >
-                                {row}
-                            </MetricTooltip>
-                        ) : (
-                            row
-                        );
-                    })}
+                        </MetricTooltip>
+                    ))}
                 </ul>
                 {footer ?? (
                     <CardFooterRow
@@ -145,7 +132,7 @@ export function FacilityCard({
                             buyRound !== null && (
                                 <LifetimeTooltip
                                     rounds={workingRounds(buyRound, facility)}
-                                    roundCount={context.roundCount}
+                                    roundCount={inputs.roundCount}
                                     boughtIn={buyRound}
                                 />
                             )
@@ -201,22 +188,21 @@ export function CardFooterRow({
     right: ReactNode;
     tooltip?: ReactNode;
 }) {
-    const row = (
-        <div
-            className="mt-1 flex items-center justify-between border-t-2 border-stone-300 text-[11px] dark:border-stone-700"
-            style={{ height: CARD_ROW_HEIGHT }}
-        >
-            <span className="flex items-center gap-1">
-                <span className="opacity-70">{left}</span>
-                {tooltip && <InfoMark />}
-            </span>
-            <span className="flex items-center gap-1.5 font-bold">{right}</span>
-        </div>
-    );
-    return tooltip ? (
-        <MetricTooltip content={tooltip}>{row}</MetricTooltip>
-    ) : (
-        row
+    return (
+        <MetricTooltip content={tooltip}>
+            <div
+                className="mt-1 flex items-center justify-between border-t-2 border-stone-300 text-[11px] dark:border-stone-700"
+                style={{ height: CARD_ROW_HEIGHT }}
+            >
+                <span className="flex items-center gap-1">
+                    <span className="opacity-70">{left}</span>
+                    {tooltip && <InfoMark />}
+                </span>
+                <span className="flex items-center gap-1.5 font-bold">
+                    {right}
+                </span>
+            </div>
+        </MetricTooltip>
     );
 }
 
@@ -254,8 +240,12 @@ export function LifetimeTooltip({
     );
 }
 
-/** What the card's tooltips need beyond the facility itself. */
-interface CardContext {
+/**
+ * What the card's tooltips need beyond the facility itself: the season's fuel
+ * prices, the carbon tax and the session's Rounds. The card loads these itself,
+ * so every place that shows a card gets its tooltips.
+ */
+interface TooltipInputs {
     /** Each fuel's price per kg this season. Empty before the first season. */
     fuelPrices: Partial<Record<FuelType, number>>;
     /** What a carbon tax charges per kg of CO₂, or null until it loads. */
@@ -267,7 +257,7 @@ interface CardContext {
     roundCount: number | null;
 }
 
-function useCardContext(): CardContext {
+function useTooltipInputs(): TooltipInputs {
     const { data: fuel } = useWorkshopFuel();
     const { data: session } = useWorkshopSession();
     const { data: vote } = useWorkshopVote();
@@ -350,7 +340,7 @@ interface Stat {
 
 function facilityStats(
     facility: WorkshopFacility,
-    context: CardContext,
+    inputs: TooltipInputs,
 ): Stat[] {
     const stats: Stat[] = [];
     if (isStorage(facility)) {
@@ -371,11 +361,11 @@ function facilityStats(
                     ? "None"
                     : `${formatMass(facility.base_pollution)}/MWh`,
             tooltip:
-                facility.base_pollution > 0 && context.taxRate !== null ? (
+                facility.base_pollution > 0 && inputs.taxRate !== null ? (
                     <CarbonTaxFigure
                         kgPerMWh={facility.base_pollution}
-                        rate={context.taxRate}
-                        inForce={context.taxInForce}
+                        rate={inputs.taxRate}
+                        inForce={inputs.taxInForce}
                     />
                 ) : undefined,
         });
@@ -386,16 +376,22 @@ function facilityStats(
             icon: Gauge,
             value: `${Math.round(facility.capacity_factor * 100)}%`,
             tooltip: (
-                <TooltipFigure
-                    label="Expected generation"
-                    value={`${formatEnergy(
-                        expectedGenerationPerSeason(
-                            facility.full_output_per_season,
-                            facility.capacity_factor,
-                        ),
-                    )} per season`}
-                    note={`On average over a year of weather: ${formatEnergy(facility.full_output_per_season)} at full output × ${Math.round(facility.capacity_factor * 100)}%.`}
-                />
+                <>
+                    <TooltipFigure
+                        label="Capacity factor"
+                        note="Its average output over a year of weather, as a share of its maximum output."
+                    />
+                    <TooltipFigure
+                        label="Expected generation"
+                        value={`${formatEnergy(
+                            expectedGenerationPerSeason(
+                                facility.full_output_per_season,
+                                facility.capacity_factor,
+                            ),
+                        )} per season`}
+                        note={`On average: ${formatEnergy(facility.full_output_per_season)} at full output × ${Math.round(facility.capacity_factor * 100)}%.`}
+                    />
+                </>
             ),
         });
     }
@@ -413,7 +409,7 @@ function facilityStats(
         });
     }
     if (facility.fuel_use !== null && facility.fuel_type !== null) {
-        const price = context.fuelPrices[facility.fuel_type];
+        const price = inputs.fuelPrices[facility.fuel_type];
         stats.push({
             label: "Fuel use",
             icon: Weight,
@@ -523,16 +519,6 @@ function CarbonTaxFigure({
                     If one passes, at {perTonne}, it costs {tax}.
                 </>
             }
-        />
-    );
-}
-
-/** The reminder that storage loses energy, so it must sell dearer. */
-export function StorageMarkupNote({ efficiency }: { efficiency: number }) {
-    return (
-        <TooltipFigure
-            label="Storage loses energy"
-            note={`Your sell price should be at least ${Math.round(storageMarkup(efficiency) * 100)}% higher than your buy price to make a profit.`}
         />
     );
 }

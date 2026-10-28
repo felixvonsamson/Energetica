@@ -24,6 +24,7 @@ from energetica.workshop.fuel import (
     default_orders,
     next_fuel_price,
     season_need,
+    season_needs_by_facility,
 )
 from energetica.workshop.trading import SEASON_DAYS
 
@@ -179,6 +180,19 @@ def test_the_season_need_is_every_facility_running_flat_out_all_season() -> None
     )
     assert need == pytest.approx(expected)
     assert season_need(Fuel.COAL, fleet, current_round=1) == 0.0
+
+
+def test_the_season_need_breaks_down_by_facility_type_in_the_order_first_bought() -> None:
+    fleet = [_owned(FacilityId.COAL_BURNER), _owned(FacilityId.MODERN_COAL_PLANT), _owned(FacilityId.COAL_BURNER)]
+
+    needs = season_needs_by_facility(Fuel.COAL, fleet, current_round=1)
+
+    # 35 MW for 2,184 hours at 400 kg/MWh, twice; 75 MW for 2,184 hours at 300 kg/MWh.
+    assert [(n.facility, n.count, n.need) for n in needs] == [
+        (FacilityId.COAL_BURNER, 2, pytest.approx(61_152_000)),
+        (FacilityId.MODERN_COAL_PLANT, 1, pytest.approx(49_140_000)),
+    ]
+    assert season_need(Fuel.COAL, fleet, current_round=1) == pytest.approx(sum(n.need for n in needs))
 
 
 def test_a_facility_past_its_lifetime_needs_no_fuel() -> None:
