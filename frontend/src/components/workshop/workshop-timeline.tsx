@@ -112,7 +112,7 @@ export function WorkshopTimeline({
     return (
         <nav
             aria-label="Session timeline"
-            className="relative flex shrink-0 items-center justify-center-safe overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
+            className="relative flex shrink-0 items-center justify-center-safe overflow-x-auto border-b border-border-brand bg-surface-card px-4"
         >
             <TimelineRow
                 checkpoint={checkpoint}
