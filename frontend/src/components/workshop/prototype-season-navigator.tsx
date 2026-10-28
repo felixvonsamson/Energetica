@@ -88,7 +88,6 @@ export interface DayWindow {
     count: number;
 }
 
-export const MAX_WINDOW_DAYS = 14;
 const DEFAULT_WINDOW_DAYS = 7;
 
 /** The default window: 7 days in the middle of the season. */
@@ -98,7 +97,7 @@ export function middleWindow(dayCount: number): DayWindow {
 }
 
 function clampWindow(window: DayWindow, dayCount: number): DayWindow {
-    const count = Math.max(1, Math.min(MAX_WINDOW_DAYS, window.count, dayCount));
+    const count = Math.max(1, Math.min(window.count, dayCount));
     const first = Math.max(0, Math.min(dayCount - count, window.first));
     return { first, count };
 }
@@ -359,6 +358,22 @@ function stackedFacilities(
         .sort((a, b) => rank(a.facility) - rank(b.facility));
 }
 
+/**
+ * Each series' running total, bottom first. ECharts stacks along x when both
+ * axes are value axes, so the strips stack by hand: each series is drawn from
+ * zero up to its running total, the top one first, so the lower ones cover it.
+ */
+function cumulative<T extends { energy: number[] }>(
+    series: T[],
+): { item: T; top: number[] }[] {
+    let running: number[] = [];
+    const stacked = series.map((item) => {
+        running = item.energy.map((v, i) => (running[i] ?? 0) + v);
+        return { item, top: running };
+    });
+    return stacked.reverse();
+}
+
 /** What the season charts need to name and colour facility types. */
 export interface FacilityLabels {
     facilityName: (facility: string) => string;
@@ -449,7 +464,6 @@ function BrushStripNavigator({
                     startValue: window.first - 0.5,
                     endValue: window.first + window.count - 0.5,
                     minValueSpan: 1,
-                    maxValueSpan: MAX_WINDOW_DAYS,
                     top: 2,
                     bottom: 16,
                     left: 8,
@@ -468,18 +482,17 @@ function BrushStripNavigator({
                     moveHandleStyle: { color: t.primary, opacity: 0.6 },
                 },
             ],
-            series: facilities.map(
-                (facility): LineSeriesOption => ({
+            series: cumulative(facilities).map(
+                ({ item, top }): LineSeriesOption => ({
                     type: "line",
-                    stack: "mix",
                     symbol: "none",
                     silent: true,
                     lineStyle: { width: 0 },
                     areaStyle: {
-                        color: labels.assetColor(facility.facility),
-                        opacity: 0.85,
+                        color: labels.assetColor(item.facility),
+                        opacity: 1,
                     },
-                    data: facility.energy.map((v, i) => [at(i), v]),
+                    data: top.map((v, i) => [at(i), v]),
                 }),
             ),
         };
@@ -532,8 +545,7 @@ function BrushStripNavigator({
         <div className="w-full">
             <WindowHeading overview={overview} window={shown} compact>
                 <span className="text-xs text-muted-foreground">
-                    Drag the window, or its edges (up to {MAX_WINDOW_DAYS}{" "}
-                    days)
+                    Drag the window, or its edges
                 </span>
                 <div className="ml-auto flex gap-1">
                     <Button
@@ -587,16 +599,16 @@ function HoverLensNavigator({
             xAxis: dayAxis(overview.days, { labels: true }),
             yAxis: { type: "value", show: false },
             series: [
-                ...facilities.map(
-                    (facility, i): BarSeriesOption => ({
+                ...cumulative(facilities).map(
+                    ({ item, top }, i): BarSeriesOption => ({
                         type: "bar",
-                        stack: "mix",
                         silent: true,
                         barWidth: "75%",
+                        barGap: "-100%",
                         itemStyle: {
-                            color: labels.assetColor(facility.facility),
+                            color: labels.assetColor(item.facility),
                         },
-                        data: facility.energy.map((v, day) => [day, v]),
+                        data: top.map((v, day) => [day, v]),
                         markArea:
                             i === 0
                                 ? windowArea(window, t.primary, 0.15)
@@ -786,7 +798,7 @@ function DayLens({
 
     return (
         <div
-            className="pointer-events-none absolute bottom-full mb-5 w-[380px] rounded-lg border border-border bg-surface-card p-3 shadow-xl"
+            className="pointer-events-none absolute top-full z-20 mt-3 w-[380px] rounded-lg border border-border bg-surface-card p-3 shadow-xl"
             style={{ left: `clamp(0px, calc(${x}px - 190px), calc(100% - 380px))` }}
         >
             <div className="flex items-baseline justify-between pb-1 text-sm font-medium">
@@ -827,7 +839,7 @@ function PriceBandNavigator({
         const from = Math.min(span.from, span.to);
         const to = Math.max(span.from, span.to);
         // Drawing longer than the limit keeps the end the pointer is at.
-        const count = Math.min(MAX_WINDOW_DAYS, to - from + 1);
+        const count = to - from + 1;
         const first = span.to >= span.from ? to - count + 1 : from;
         return clampWindow({ first, count }, dayCount);
     };
@@ -920,11 +932,132 @@ function PriceBandNavigator({
                     /MWh, peak {formatMoney(windowMax)}/MWh
                 </span>
                 <span className="ml-auto text-xs text-muted-foreground">
-                    Daily price range. Drag across it to pick days (up to{" "}
-                    {MAX_WINDOW_DAYS}), or click a day
+                    Daily price range. Drag across it to pick days, or click a
+                    day
                 </span>
             </WindowHeading>
             <div ref={ref} className="h-[72px] w-full cursor-crosshair" />
         </div>
     );
+}
+
+// ── Season price (in the daily energy mix card) ──────────────────────────────
+
+/**
+ * Each day's price over the season: the band from its lowest to its highest
+ * price, and its average weighted by the power cleared. Its plot lines up with
+ * the bars of the chart above it, which has the same margins.
+ */
+export function SeasonPriceChart({
+    overview,
+    window,
+    onDayClick,
+}: {
+    overview: Overview;
+    window: DayWindow;
+    onDayClick: (day: number) => void;
+}) {
+    const option = useMemo((): ECOption => {
+        const t = theme();
+        const { days, price_min: min, price_max: max } = overview;
+        const value = (v: number | null | undefined) =>
+            v === null || v === undefined ? "-" : v;
+        const row = (color: string, label: string, v: number | null) =>
+            `<tr><td class="pr-1 align-middle"><div class="w-2.5 h-2.5 rounded-sm inline-block" style="background:${color}"></div></td>` +
+            `<td class="pr-3 whitespace-nowrap align-middle">${label}</td>` +
+            `<td class="text-right font-mono whitespace-nowrap align-middle">${v === null ? "None" : `${formatMoney(v)}/MWh`}</td></tr>`;
+        return {
+            animation: false,
+            grid: { left: 70, right: 20, top: 10, bottom: 24 },
+            tooltip: {
+                trigger: "axis",
+                axisPointer: { type: "line", lineStyle: { color: t.text } },
+                backgroundColor: "transparent",
+                borderWidth: 0,
+                padding: 0,
+                extraCssText: "box-shadow:none",
+                formatter: (params) => {
+                    const list = Array.isArray(params) ? params : [params];
+                    const index = list[0]?.dataIndex ?? 0;
+                    const day = days[index] ?? 0;
+                    return (
+                        `<div class="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs text-foreground">` +
+                        `<div class="font-semibold mb-1 pb-1 border-b border-border/50">${weekdayOfDay(day)} ${dateOfDay(day)}</div>` +
+                        `<table><tbody>` +
+                        row(t.price, "Highest price", max[index] ?? null) +
+                        row(t.price, "Average price", overview.price_mean[index] ?? null) +
+                        row(t.price, "Lowest price", min[index] ?? null) +
+                        `</tbody></table></div>`
+                    );
+                },
+            },
+            xAxis: {
+                type: "category",
+                data: days.map((day) => dateOfDay(day)),
+                axisTick: { show: false },
+                axisLine: { lineStyle: { color: t.border } },
+                axisLabel: { color: t.text, fontSize: 11, interval: 6 },
+            },
+            yAxis: {
+                type: "value",
+                name: "Price (coins/MWh)",
+                nameLocation: "middle",
+                nameGap: 52,
+                nameTextStyle: { color: t.text, fontSize: 11 },
+                splitNumber: 3,
+                axisLabel: {
+                    color: t.text,
+                    fontSize: 11,
+                    formatter: (v: number) => formatMoney(v),
+                },
+                splitLine: { lineStyle: { color: t.border, opacity: 0.2 } },
+            },
+            series: [
+                // The band: the lowest price, then the spread stacked on it.
+                {
+                    type: "line",
+                    stack: "band",
+                    symbol: "none",
+                    lineStyle: { width: 0 },
+                    data: min.map(value),
+                    markArea: {
+                        silent: true,
+                        itemStyle: {
+                            color: t.primary,
+                            opacity: 0.15,
+                            borderColor: t.primary,
+                            borderWidth: 1.5,
+                        },
+                        data: [
+                            [
+                                { xAxis: window.first },
+                                { xAxis: window.first + window.count - 1 },
+                            ],
+                        ],
+                    },
+                },
+                {
+                    type: "line",
+                    stack: "band",
+                    symbol: "none",
+                    lineStyle: { width: 0 },
+                    areaStyle: { color: t.price, opacity: 0.3 },
+                    data: max.map((v, i) => {
+                        const low = min[i];
+                        return v === null || low === null || low === undefined
+                            ? "-"
+                            : v - low;
+                    }),
+                },
+                {
+                    type: "line",
+                    symbol: "none",
+                    lineStyle: { color: t.price, width: 2 },
+                    data: overview.price_mean.map(value),
+                },
+            ],
+        };
+    }, [overview, window]);
+    const { ref } = useEChart(option, { onDayClick });
+    return <div ref={ref} className="h-[150px] w-full" />;
 }

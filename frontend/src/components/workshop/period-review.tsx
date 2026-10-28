@@ -67,6 +67,7 @@ import {
     type DayWindow,
     centredOn,
     SeasonNavigator,
+    SeasonPriceChart,
     VARIANTS,
     middleWindow,
     setVariant,
@@ -384,6 +385,46 @@ function Review({
                     onChange={setVariant}
                 />
             )}
+            {/* PROTOTYPE (#1399): the sticky bar is the first card. */}
+            {fullSeason ? (
+                <div className="sticky top-0 z-10 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg">
+                    {overview.data ? (
+                        <SeasonNavigator
+                            key={variant}
+                            variant={variant}
+                            round={period.round}
+                            season={period.season}
+                            overview={overview.data}
+                            labels={labels}
+                            window={dayWindow}
+                            onWindowChange={chooseWindow}
+                        />
+                    ) : (
+                        <Spinner />
+                    )}
+                </div>
+            ) : (
+            <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
+                {period.weeks > 1 && (
+                    <WeekPicker
+                        weeks={reviewableWeeks(period.days)}
+                        value={weekIndex}
+                        onChange={chooseWeek}
+                    />
+                )}
+                <div className="min-w-0 flex-1">
+                    <PeriodScrubber
+                        first={weekIndex * pointsPerWeek}
+                        count={pointsPerWeek}
+                        last={lastPoint}
+                        days={period.days}
+                        clearingsPerDay={cpd}
+                        point={point}
+                        onPointChange={setPoint}
+                    />
+                </div>
+            </div>
+            )}
             {fullSeason && (
                 <SeasonMixCard
                     overview={overview.data}
@@ -413,45 +454,6 @@ function Review({
                 {...chart}
             />
             <PriceCard week={shown} {...chart} />
-            {fullSeason ? (
-                <div className="sticky bottom-0 z-10 rounded-lg border border-border bg-surface-card px-3 py-1.5 shadow-lg">
-                    {overview.data ? (
-                        <SeasonNavigator
-                            key={variant}
-                            variant={variant}
-                            round={period.round}
-                            season={period.season}
-                            overview={overview.data}
-                            labels={labels}
-                            window={dayWindow}
-                            onWindowChange={chooseWindow}
-                        />
-                    ) : (
-                        <Spinner />
-                    )}
-                </div>
-            ) : (
-            <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-card p-3 shadow-lg">
-                {period.weeks > 1 && (
-                    <WeekPicker
-                        weeks={reviewableWeeks(period.days)}
-                        value={weekIndex}
-                        onChange={chooseWeek}
-                    />
-                )}
-                <div className="min-w-0 flex-1">
-                    <PeriodScrubber
-                        first={weekIndex * pointsPerWeek}
-                        count={pointsPerWeek}
-                        last={lastPoint}
-                        days={period.days}
-                        clearingsPerDay={cpd}
-                        point={point}
-                        onPointChange={setPoint}
-                    />
-                </div>
-            </div>
-            )}
             <MeritOrderCard period={period} point={point} labels={labels} />
         </div>
     );
@@ -599,6 +601,7 @@ function PowerSeries({
     cpd,
     barGap,
     span,
+    between,
     ...chart
 }: ChartProps & {
     rows: ChartRow[];
@@ -612,6 +615,8 @@ function PowerSeries({
     /** PROTOTYPE (#1399). */
     barGap?: number;
     span?: string;
+    /** Shown between the chart and its table. */
+    between?: ReactNode;
 }) {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
@@ -641,6 +646,7 @@ function PowerSeries({
                 barGap={barGap}
                 {...chart}
             />
+            {between}
             <PeriodSeriesTable
                 rows={rows}
                 keys={keys}
@@ -854,7 +860,7 @@ function SeasonMixCard({
             icon={CalendarRange}
             iconClassName="text-primary"
             title="Daily energy mix"
-            subtitle="The market's generation over the whole season, as each day's average power. The shaded days are shown in detail below: click a day to show it."
+            subtitle="The market's generation over the whole season, as each day's average power, and each day's price: its range and its average. The shaded days are shown in detail below: click a day to show it."
             headerContent={
                 <Picker
                     label="Display"
@@ -875,6 +881,15 @@ function SeasonMixCard({
                 cpd={1}
                 barGap={0.3}
                 span="the season"
+                between={
+                    overview && (
+                        <SeasonPriceChart
+                            overview={overview}
+                            window={window}
+                            onDayClick={onTickClick}
+                        />
+                    )
+                }
                 timeAxis={timeAxis}
                 isLoading={isLoading}
                 isError={isError}
