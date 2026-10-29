@@ -428,6 +428,19 @@ def test_room_capacity_splits_controllable_weather_dependent_and_storage() -> No
     assert capacity.storage_energy == CATALOG[FacilityId.LITHIUM_ION_BATTERIES].base_storage_capacity
 
 
+def test_a_drought_cuts_every_part_of_hydros_capacity() -> None:
+    dam = CATALOG[FacilityId.SMALL_WATER_DAM].base_power_generation
+    facilities = [FacilityId.COAL_BURNER, FacilityId.SMALL_WATER_DAM]
+    capacity_factors = {FacilityId.SMALL_WATER_DAM: 0.55}
+
+    normal = room_capacity(facilities, capacity_factors)
+    dry = room_capacity(facilities, capacity_factors, hydro_output=0.5)
+
+    assert normal.controllable - dry.controllable == pytest.approx(HYDRO_GUARANTEED_SHARE * dam / 2)
+    assert normal.total - dry.total == pytest.approx(dam / 2)
+    assert dry.weighted == pytest.approx(normal.weighted / 2)
+
+
 def test_hydros_guaranteed_share_is_the_lowest_its_river_table_gives() -> None:
     weather = RunWeather(seed=0)
     hours = [t for season in SEASONS for day in _hours(season) for t in day]

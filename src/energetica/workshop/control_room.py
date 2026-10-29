@@ -284,9 +284,12 @@ class RoomCapacity(BaseModel):
     storage_energy: float = Field(description="In Wh")
 
 
-def room_capacity(facilities: Iterable[FacilityId], capacity_factors: Mapping[FacilityId, float]) -> RoomCapacity:
+def room_capacity(
+    facilities: Iterable[FacilityId], capacity_factors: Mapping[FacilityId, float], *, hydro_output: float = 1.0
+) -> RoomCapacity:
     """The capacity of ``facilities``, one entry per facility. ``capacity_factors`` gives each weather-dependent
-    type's average output as a share of its power.
+    type's average output as a share of its power. ``hydro_output`` multiplies everything a dam produces, less than 1
+    in a drought, as the settlement does.
     """
     controllable = total = weighted = storage_power = storage_energy = 0.0
     for facility in facilities:
@@ -300,6 +303,7 @@ def room_capacity(facilities: Iterable[FacilityId], capacity_factors: Mapping[Fa
                 controllable += power
                 total += power
             case PowerSource.HYDRO:
+                power *= hydro_output
                 controllable += power * HYDRO_GUARANTEED_SHARE
                 total += power
                 weighted += power * (capacity_factors[facility] - HYDRO_GUARANTEED_SHARE)

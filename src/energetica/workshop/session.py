@@ -1609,7 +1609,8 @@ class WorkshopSession:
         """The room's capacity in Round ``round_number`` against its must-serve peak (#1287): the peak of the season
         whose Trading period the session is in, or else the highest of the Round's seasons. Facilities selected in its
         open Investment phase count as if bought, and those still under construction do not. The peak counts the
-        Round's events, those still planned too, and leaves out rationing. The caller holds the lock.
+        Round's events, those still planned too, and leaves out rationing. So does the capacity: a drought cuts what
+        dams produce in its season, and in the Round's outlook the driest season counts. The caller holds the lock.
         """
         players = self.network.players()
         plan = self.plans[round_number - 1]
@@ -1653,7 +1654,10 @@ class WorkshopSession:
             for facility in set(facilities)
             if (factor := capacity_factor(self.weather_seed, facility)) is not None
         }
-        capacity = room_capacity(facilities, capacity_factors)
+        hydro_output = min(
+            hydro_output_factor(events, round_number, each) for each in (SEASONS if season is None else (season,))
+        )
+        capacity = room_capacity(facilities, capacity_factors, hydro_output=hydro_output)
         return CapacityOutlook(
             round=round_number,
             season=season,
