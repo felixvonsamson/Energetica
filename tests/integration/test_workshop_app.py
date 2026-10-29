@@ -2011,12 +2011,13 @@ def test_the_facilitator_lists_the_events_without_their_headlines(session_path: 
         "direction": "negative",
         "effect_kind": "revenue_tax",
         "severities": ["moderate", "major", "catastrophic"],
+        "seasons": ["spring", "autumn", "winter"],
         "suggested_severity": "moderate",
         "fuel_chosen": False,
         "summaries": {
-            "moderate": "3% of every player's sales lost this season",
-            "major": "7% of every player's sales lost this season",
-            "catastrophic": "15% of every player's sales lost this season",
+            "moderate": "8% of every player's sales lost this season",
+            "major": "18% of every player's sales lost this season",
+            "catastrophic": "35% of every player's sales lost this season",
         },
     }
     assert "substation" not in json.dumps(body)
@@ -2067,7 +2068,7 @@ def test_the_facilitator_plans_and_drops_an_event(session_path: Path) -> None:
         {
             **shock,
             "name": "Diplomatic resolution ends a regional conflict",
-            "summary": "Coal costs 15% less in summer, then eases back",
+            "summary": "Coal costs 30% less in summer, then eases back",
             "status": "planned",
         }
     ]
@@ -2093,16 +2094,24 @@ def test_a_climate_event_fires_at_the_season_it_is_planned_for(session_path: Pat
     _, client, facilitator, alice = _keeping_the_lights_on(session_path, clock)
 
     client.put(
-        PLANNED_EVENTS_URL.format(round=2), json={"event": "climate.flood", "severity": "moderate", "season": "summer"}
+        PLANNED_EVENTS_URL.format(round=2),
+        json={"event": "climate.wildfire", "severity": "moderate", "season": "summer"},
     )
     # Changed before the Round locks: only the last plan fires.
     client.put(
-        PLANNED_EVENTS_URL.format(round=2), json={"event": "climate.flood", "severity": "major", "season": "summer"}
+        PLANNED_EVENTS_URL.format(round=2), json={"event": "climate.wildfire", "severity": "major", "season": "summer"}
     )
     while client.get(SESSION_URL).json()["checkpoint"] != _checkpoint("trading_period", 2, "summer"):
         _advance(client)
     assert client.get(EVENTS_URL).json()["fired"] == [
-        {"event": "climate.flood", "name": "Flood", "severity": "major", "fuel": None, "round": 2, "season": "summer"}
+        {
+            "event": "climate.wildfire",
+            "name": "Wildfire season",
+            "severity": "major",
+            "fuel": None,
+            "round": 2,
+            "season": "summer",
+        }
     ]
     assert client.get(PLANS_URL).json()["rounds"][1]["events"][0]["status"] == "fired"
     _advance(client)  # summer settles
@@ -2111,8 +2120,8 @@ def test_a_climate_event_fires_at_the_season_it_is_planned_for(session_path: Pat
     spring, summer = client.get(BALANCE_SHEET_URL.format(round=2)).json()["seasons"][:2]
     assert spring["sheet"]["revenue_tax"] == 0.0
     assert summer["sheet"]["sale_revenue"] > 0
-    assert summer["sheet"]["revenue_tax_rate"] == pytest.approx(0.07)
-    assert summer["sheet"]["revenue_tax"] == pytest.approx(0.07 * summer["sheet"]["sale_revenue"])
+    assert summer["sheet"]["revenue_tax_rate"] == pytest.approx(0.18)
+    assert summer["sheet"]["revenue_tax"] == pytest.approx(0.18 * summer["sheet"]["sale_revenue"])
 
 
 def test_a_facility_price_shock_shows_in_the_catalog_for_its_round(session_path: Path, clock: _Clock) -> None:
@@ -2123,7 +2132,7 @@ def test_a_facility_price_shock_shows_in_the_catalog_for_its_round(session_path:
 
     authenticate(client, alice)
     wind = next(facility for facility in client.get(FACILITIES_URL).json() if facility["id"] == "onshore_wind_turbine")
-    assert wind["price"] == pytest.approx(wind["base_price"] * 1.35)
+    assert wind["price"] == pytest.approx(wind["base_price"] * 1.25)
 
 
 # --- the Recap (#1013) ----------------------------------------------------------------------
@@ -2150,7 +2159,7 @@ def test_everyone_reads_the_recap_once_it_opens_and_not_before(session_path: Pat
     recap = player_view.json()
     assert recap["round"] == 1
     assert recap["figures"]["energy_sold"] > 0
-    assert [story["effect"] for story in recap["year_ahead"]["stories"]] == ["Wind turbines cost 35% more in Round 2"]
+    assert [story["effect"] for story in recap["year_ahead"]["stories"]] == ["Wind turbines cost 25% more in Round 2"]
 
 
 def test_a_recap_of_a_round_the_session_does_not_have_is_not_found(session_path: Path) -> None:

@@ -159,13 +159,23 @@ def test_a_planned_event_takes_the_place_of_the_one_in_the_same_slot() -> None:
     plan = with_event(plan, PlannedEvent(event="climate.heatwave", severity="minor", season="summer"))
     plan = with_event(plan, PlannedEvent(event="climate.flood", severity="major", season="winter"))
     plan = with_event(plan, PlannedEvent(event="demand.recession", severity="base"))
-    plan = with_event(plan, PlannedEvent(event="climate.flood", severity="major", season="summer"))
+    plan = with_event(plan, PlannedEvent(event="climate.wildfire", severity="major", season="summer"))
 
     assert plan.events == [
         PlannedEvent(event="climate.flood", severity="major", season="winter"),
         PlannedEvent(event="demand.recession", severity="base"),
-        PlannedEvent(event="climate.flood", severity="major", season="summer"),
+        PlannedEvent(event="climate.wildfire", severity="major", season="summer"),
     ]
+
+
+def test_a_climate_event_can_be_planned_only_for_a_season_its_weather_happens_in() -> None:
+    plan = RoundPlan(levers=RoundLevers())
+
+    with pytest.raises(InvalidPickError):
+        with_event(plan, PlannedEvent(event="climate.cold_snap", severity="major", season="summer"))
+    with pytest.raises(InvalidPickError):
+        with_event(plan, PlannedEvent(event="climate.heatwave", severity="major", season="winter"))
+    assert with_event(plan, PlannedEvent(event="climate.cold_snap", severity="major", season="winter")).events
 
 
 def test_a_seasonal_event_needs_a_season_and_a_round_event_takes_none() -> None:
@@ -204,7 +214,7 @@ def test_a_planned_event_is_planned_until_it_fires() -> None:
 
 def test_a_planned_event_states_its_effect_as_the_recap_will() -> None:
     planned = PlannedEvent(event="climate.heatwave", severity="major", season="summer")
-    assert planned_effect_line(planned, 3, fired=[]) == "Demand +18% for the summer"
+    assert planned_effect_line(planned, 3, fired=[]) == "Demand +16% for the summer"
     shift = PlannedEvent(event="demand.recession", severity="base")
     assert planned_effect_line(shift, 3, fired=[]) == "Demand −10% from Round 3 on"
 

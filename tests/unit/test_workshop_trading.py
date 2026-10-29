@@ -78,6 +78,7 @@ def _simulate(
     share: float = 1.0,
     clearings_per_day: ClearingsPerDay = 24,
     trading_format: TradingFormat = "representative_week",
+    hydro_output: float = 1.0,
 ) -> TradingOutcome:
     return simulate_trading_period(
         list(bidders),
@@ -87,6 +88,7 @@ def _simulate(
         amplitude=_AMPLITUDE,
         curve=_FLAT,
         weather=steady(share),
+        hydro_output=hydro_output,
     )
 
 
@@ -160,6 +162,15 @@ def test_a_renewable_produces_what_the_weather_gives_it() -> None:
     wind = outcome.results[1].facilities[WIND]
     assert wind.generation == pytest.approx(0.4 * 45e6 * _HOURS * SEASON_DAYS)
     assert wind.capacity_factor == pytest.approx(0.4)
+
+
+def test_a_drought_cuts_what_dams_produce_and_nothing_else() -> None:
+    dam = FacilityId.SMALL_WATER_DAM
+    outcome = _simulate(_bidder(GAS, WIND, dam, sell={GAS: 100.0, WIND: 500.0, dam: 500.0}), hydro_output=0.5)
+
+    power = CATALOG[dam].base_power_generation
+    assert outcome.results[1].facilities[dam].generation == pytest.approx(0.5 * power * _HOURS * SEASON_DAYS)
+    assert outcome.results[1].facilities[WIND].capacity_factor == pytest.approx(1.0)
 
 
 def test_storage_discharges_what_it_sells_and_keeps_the_rest() -> None:

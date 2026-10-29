@@ -83,7 +83,8 @@ def test_the_recap_reports_the_round_just_played_and_the_one_coming(tmp_path: Pa
     assert recap.figures.energy_sold > 0
     assert recap.figures.emissions_round > 0
     assert recap.year_ahead is not None
-    assert [story.event for story in recap.year_ahead.stories] == ["demand.ev_tipping_point"]
+    assert recap.year_ahead.stories == []
+    assert recap.year_ahead.demand_article.event == "demand.ev_tipping_point"
     assert [forecast.season for forecast in recap.year_ahead.forecasts] == ["summer"]
     assert recap.year_ahead.demand is not None
     assert recap.year_ahead.demand_growth == pytest.approx(session.demand_growth[2])
@@ -93,7 +94,8 @@ def test_the_recap_reports_the_round_just_played_and_the_one_coming(tmp_path: Pa
     session.advance()  # Round 2's Investment phase
     _to_recap(session)
     recap = session.recap(2)
-    assert [story.event for story in recap.stories] == ["demand.ev_tipping_point", "climate.heatwave"]
+    # The tipping point was told in the Year Ahead before, so only the heatwave is told.
+    assert [story.event for story in recap.stories] == ["climate.heatwave"]
     assert recap.year_ahead is None
     # An earlier Recap stays as it was told.
     assert session.recap(1).year_ahead is not None

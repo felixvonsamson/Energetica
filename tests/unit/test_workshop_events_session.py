@@ -122,7 +122,7 @@ def test_a_climate_event_moves_demand_in_its_trading_period_only(path: Path) -> 
     session.finish_settlement(job, session.run_settlement(job))
     session.advance()  # summer opens: the heatwave fires
     assert session.fired_events == [FiredEvent.of(heatwave, round_number=2, season="summer")]
-    assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE * 1.18)
+    assert _amplitude_for_next_settlement(session) == pytest.approx(BASE_AMPLITUDE * 1.16)
     job = session.start_settlement()
     assert job is not None
     session.finish_settlement(job, session.run_settlement(job))
@@ -151,8 +151,8 @@ def test_a_disaster_taxes_every_players_revenue_in_its_period(path: Path) -> Non
     _settle(session)
     for player in session.network.players():
         result = player.trading_results[-1]
-        assert result.revenue_tax_rate == pytest.approx(0.07)
-        assert result.revenue_tax == pytest.approx(0.07 * result.revenue)
+        assert result.revenue_tax_rate == pytest.approx(0.18)
+        assert result.revenue_tax == pytest.approx(0.18 * result.revenue)
         assert result.revenue_tax > 0
     session.advance()
     _settle(session)
@@ -167,15 +167,15 @@ def test_a_facility_price_shock_moves_the_price_for_its_round_only(path: Path) -
     session.advance()  # Round 2's Investment phase: the shock fires
     assert session.checkpoint == Investment(round=2)
     wind = CATALOG[FacilityId.ONSHORE_WIND_TURBINE].base_price
-    assert session.facility_price(FacilityId.ONSHORE_WIND_TURBINE) == pytest.approx(wind * 1.35)
+    assert session.facility_price(FacilityId.ONSHORE_WIND_TURBINE) == pytest.approx(wind * 1.25)
     assert session.facility_price(FacilityId.COAL_BURNER) == CATALOG[FacilityId.COAL_BURNER].base_price
     player = session.network.members[1]
     money = player.money
     session.select(1, FacilityId.ONSHORE_WIND_TURBINE)
     session.advance()  # close the Investment phase
     session.buy_selections()
-    assert player.money == pytest.approx(money - wind * 1.35)
-    assert player.purchases[-1].price == pytest.approx(wind * 1.35)
+    assert player.money == pytest.approx(money - wind * 1.25)
+    assert player.purchases[-1].price == pytest.approx(wind * 1.25)
     _to_next(session, Investment)  # Round 3
     assert session.facility_price(FacilityId.ONSHORE_WIND_TURBINE) == wind
 
@@ -192,7 +192,7 @@ def test_a_fuel_shock_lands_with_its_trading_period(path: Path) -> None:
     assert not session.fuel_prices[Fuel.COAL].shocked
     _to_next(session, TradingPeriod)  # summer
     assert session.fuel_prices[Fuel.COAL].shocked
-    assert session.fuel_prices[Fuel.COAL].shock == pytest.approx(0.85)
+    assert session.fuel_prices[Fuel.COAL].shock == pytest.approx(0.70)
     assert not session.fuel_prices[Fuel.GAS].shocked
 
 

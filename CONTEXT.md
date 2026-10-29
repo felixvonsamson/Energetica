@@ -419,13 +419,14 @@ A named vignette from a fixed catalog, such as a heatwave, a gas pipeline disrup
 point, in one of three categories: climate, price shock or geopolitics, and demand shift. The facilitator
 **plans** an event and one of its severities for a Round, and a seasonal event also for a season. It can
 be changed or dropped until the Round's plan is **locked**. A Round event **fires** when the Round's
-Investment phase opens, and a seasonal event when its season's Trading period opens. Each category holds
+Investment phase opens, and a seasonal event when its season's Trading period opens. A climate event can
+be planned only for the seasons its weather happens in, such as a cold snap only in winter. Each category holds
 at most one event per **boundary**: one per Round, or one per season for a seasonal event. Round 1 holds
-none. A fired
-event's headline is told at the Recap, and nobody, the facilitator included, sees it before. The Recap
-before a Round also tells what the Round holds: a Round event with its exact effect, and a seasonal event
+none. An event's
+headline is told only at a Recap, and nobody, the facilitator included, sees it before. The Recap before a
+Round tells what the Round holds: a Round event with its headline and exact effect, and a seasonal event
 only as a **forecast** that names its season, gives no figures, and sounds more certain the more severe
-the event is.
+the event is. Once a seasonal event has fired, the next Recap tells its headline, in the past tense. A demand shift is told together with **demand growth**, in one article on how demand moves.
 _Avoid_: lever (a lever is a setting that stays; an event fires once), scenario.
 
 **Peak demand** (#1013):
@@ -446,8 +447,9 @@ _Avoid_: player progression, demand trend.
 
 **Recap** (#1013):
 The page between two Rounds, printed as a newspaper, The Megawatt Times. Recap N has two sections kept
-strictly apart. **The Year in Review** tells what happened in Round N: each event that fired, with its
-headline and a line of plain numbers such as "Demand +18% for the summer", the day and hour of each blackout with what it cost,
+strictly apart. **The Year in Review** tells what happened in Round N: each seasonal event that fired, with its
+headline and a line of plain numbers in the past tense such as "Demand was 18% higher in summer" (a Round event
+is left out, since the Year Ahead before told it with its exact effect), the day and hour of each blackout with what it cost,
 the room's figures, and how each season's wind and sunshine compared with a normal season (#1200). **The
 Year Ahead** tells what Round N+1 holds: its unlocks, a carbon tax **vote** if it holds one, its Round
 events with their exact effect, the **demand growth** and the change in peak demand, and its seasonal events as
@@ -469,5 +471,5 @@ later Rounds, so a failed tax can be proposed again.
 _Avoid_: poll, referendum.
 
 **Revenue tax** (#1012):
-The share of every player's sale revenue a climate disaster (a drought, wildfire, hurricane or flood)
+The share of every player's sale revenue a climate disaster (a wildfire, hurricane or flood)
 takes in the Trading period it fires at. The same share for every player.

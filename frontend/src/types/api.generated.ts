@@ -5533,6 +5533,22 @@ export interface components {
             password: string;
         };
         /**
+         * DemandArticle
+         * @description How demand moves into the coming Round, told as one article: its natural growth, and the demand shift that
+         *     starts with the Round, if any. It gives no figure, since the demand forecast beside it does.
+         */
+        DemandArticle: {
+            /**
+             * Event
+             * @description The demand shift it tells, or null if the Round starts none
+             */
+            event: string | null;
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+        };
+        /**
          * DemandOutlook
          * @description How peak must-serve demand moves from this Round to the next, through demand growth and the Round events that
          *     last.
@@ -6201,7 +6217,7 @@ export interface components {
             headline: string;
             /**
              * Effect
-             * @description What it does, in one short line of plain numbers
+             * @description What it does, in one short line of plain numbers. In the past tense in the Year in Review
              */
             effect: string;
         };
@@ -6735,9 +6751,14 @@ export interface components {
              * Effect Kind
              * @enum {string}
              */
-            effect_kind: "demand_amplitude_shift" | "revenue_tax" | "facility_capex_multiplier" | "fuel_price_multiplier" | "tech_unlock_trigger" | "vote_outcome";
+            effect_kind: "demand_amplitude_shift" | "revenue_tax" | "hydro_output_multiplier" | "facility_capex_multiplier" | "fuel_price_multiplier" | "tech_unlock_trigger" | "vote_outcome";
             /** Severities */
             severities: ("base" | "minor" | "moderate" | "major" | "catastrophic")[];
+            /**
+             * Seasons
+             * @description The seasons a climate event can be planned for, since its weather happens only in them. Null for any other event
+             */
+            seasons: ("spring" | "summer" | "autumn" | "winter")[] | null;
             /**
              * Suggested Severity
              * @description For a climate event, the severity the session's CO₂ so far suggests. Null for any other
@@ -7449,7 +7470,7 @@ export interface components {
             rationing: number;
             /**
              * Stories
-             * @description Every event that fired in the Round: the Round's own first, then each season's in order
+             * @description Every seasonal event that fired in the Round, in season order. Round events are left out: the Year Ahead before told them
              */
             stories: components["schemas"]["RecapStory"][];
             figures: components["schemas"]["RoomFigures"];
@@ -7731,9 +7752,10 @@ export interface components {
             round: number;
             /** Unlocks */
             unlocks: components["schemas"]["RecapUnlock"][];
+            demand_article: components["schemas"]["DemandArticle"];
             /**
              * Stories
-             * @description The Round events planned for it, which fire when it opens
+             * @description The Round events planned for it, which fire when it opens. A demand shift is told in the demand article instead
              */
             stories: components["schemas"]["RecapStory"][];
             /**

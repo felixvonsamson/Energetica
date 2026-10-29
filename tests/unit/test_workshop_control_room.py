@@ -290,7 +290,7 @@ def test_a_seasonal_event_raises_an_alarm_with_its_exact_effect_as_soon_as_it_fi
 
     [alarm] = _alarms(fired=[fired])
     assert alarm == EventAlarm(
-        round=2, season="summer", category="climate", name="Heatwave", effect="Demand +18% for the summer"
+        round=2, season="summer", category="climate", name="Heatwave", effect="Demand +16% for the summer"
     )
 
 

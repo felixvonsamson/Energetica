@@ -684,13 +684,14 @@ def simulate_trading_period(
     curve: DemandCurve,
     weather: Weather,
     rationing: float = 1.0,
+    hydro_output: float = 1.0,
     on_day_done: Callable[[int], None] | None = None,
 ) -> TradingOutcome:
     """Clear the days of ``season`` that ``round_format`` simulates, and add them up into the Trading period.
 
     ``amplitude`` and ``curve`` shape the demand block, and ``weather`` gives the renewables' output. ``rationing`` is
     what demand starts the period at, after the blackouts earlier in the Round: :data:`RATIONING` to the power of how
-    many there were.
+    many there were. ``hydro_output`` multiplies what every dam produces, less than 1 in a drought.
     ``on_day_done``, if given, is called after each day cleared with how many are done, out of
     :func:`cleared_day_count`.
     """
@@ -701,6 +702,12 @@ def simulate_trading_period(
     # A representative week stands for the whole season. Full-season days are all literal.
     scale = SEASON_DAYS / len(days)
     season_weather = weather.season(season)
+    weather_shares = season_weather.shares if full_season else season_weather.week
+
+    def shares(facility: FacilityId, seconds: float) -> float:
+        share = weather_shares(facility, seconds)
+        return share * hydro_output if CATALOG[facility].category == FacilityCategory.HYDRO else share
+
     scaled_amplitude = amplitude * demand_scale(season, round_format, curve)
     days_done = 0
 
@@ -718,7 +725,7 @@ def simulate_trading_period(
             clearings_per_day=clearings_per_day,
             amplitude=scaled_amplitude,
             curve=curve,
-            shares=season_weather.shares if full_season else season_weather.week,
+            shares=shares,
             on_day_cleared=on_day_cleared,
             rationing=rationing,
             outages=outages,

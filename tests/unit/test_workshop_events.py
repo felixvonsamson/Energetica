@@ -21,6 +21,7 @@ from energetica.workshop.events import (
     effect_summary,
     facility_price_factor,
     fuel_shocks,
+    hydro_output_factor,
     revenue_tax_rate,
     slot,
     suggested_severity,
@@ -141,7 +142,36 @@ def test_the_boundary_follows_the_category_and_effect() -> None:
 
 def test_climate_vignettes_never_carry_both_effects() -> None:
     kinds = {event.effect.kind for event in EVENTS.values() if event.category == "climate"}
-    assert kinds == {"demand_amplitude_shift", "revenue_tax"}
+    assert kinds == {"demand_amplitude_shift", "revenue_tax", "hydro_output_multiplier"}
+
+
+def test_each_climate_event_happens_only_in_the_seasons_its_weather_can() -> None:
+    allowed = {
+        season: {event.id for event in EVENTS.values() if event.category == "climate" and event.happens_in(season)}
+        for season in ("spring", "summer", "autumn", "winter")
+    }
+    assert allowed == {
+        "spring": {"climate.drought", "climate.flood", "climate.heatwave"},
+        "summer": {
+            "climate.heatwave",
+            "climate.mild_summer",
+            "climate.drought",
+            "climate.wildfire",
+            "climate.hurricane",
+        },
+        "autumn": {"climate.wildfire", "climate.hurricane", "climate.flood"},
+        "winter": {"climate.cold_snap", "climate.mild_winter", "climate.flood"},
+    }
+    # Any other event can happen whenever its boundary comes.
+    assert EVENTS["geo.gas_discovery"].happens_in("winter")
+
+
+def test_a_drought_cuts_hydropower_in_its_trading_period_only() -> None:
+    fired = [_fired("climate.drought", "major", round_number=2, season="summer")]
+    assert hydro_output_factor(fired, 2, "summer") == pytest.approx(0.5)
+    assert hydro_output_factor(fired, 2, "autumn") == 1.0
+    assert revenue_tax_rate(fired, 2, "summer") == 0.0
+    assert demand_factor(fired, 2, "summer") == 1.0
 
 
 def test_the_chip_shortage_is_dropped() -> None:
@@ -171,7 +201,7 @@ def test_price_shocks_on_facilities_and_on_fuel_use_different_slots() -> None:
 
 def test_a_temperature_event_moves_demand_for_its_trading_period_only() -> None:
     fired = [_fired("climate.heatwave", "major", round_number=1, season="summer")]
-    assert demand_factor(fired, 1, "summer") == pytest.approx(1.18)
+    assert demand_factor(fired, 1, "summer") == pytest.approx(1.16)
     assert demand_factor(fired, 1, "autumn") == 1.0
     assert demand_factor(fired, 2, "summer") == 1.0
 
@@ -188,20 +218,16 @@ def test_a_demand_shift_lasts_from_its_round_on_and_builds_on_earlier_ones() -> 
 
 def test_a_disaster_taxes_revenue_in_its_trading_period_only() -> None:
     fired = [_fired("climate.hurricane", "catastrophic", round_number=1, season="autumn")]
-    assert revenue_tax_rate(fired, 1, "autumn") == pytest.approx(0.18)
+    assert revenue_tax_rate(fired, 1, "autumn") == pytest.approx(0.40)
     assert revenue_tax_rate(fired, 1, "winter") == 0.0
 
 
 def test_a_facility_price_shock_moves_every_tier_of_its_targets_for_one_round() -> None:
-    fired = [_fired("geo.rare_earth_ban", round_number=2)]
-    for facility in (
-        FacilityId.ONSHORE_WIND_TURBINE,
-        FacilityId.OFFSHORE_WIND_TURBINE,
-        FacilityId.SOLID_STATE_BATTERIES,
-    ):
-        assert facility_price_factor(fired, facility, 2) == pytest.approx(1.20)
-    assert facility_price_factor(fired, FacilityId.PV_SOLAR, 2) == 1.0
-    assert facility_price_factor(fired, FacilityId.ONSHORE_WIND_TURBINE, 3) == 1.0
+    fired = [_fired("geo.shipping_blockade", round_number=2)]
+    for facility in (FacilityId.PV_SOLAR, FacilityId.SOLID_STATE_BATTERIES):
+        assert facility_price_factor(fired, facility, 2) == pytest.approx(4 / 3)
+    assert facility_price_factor(fired, FacilityId.ONSHORE_WIND_TURBINE, 2) == 1.0
+    assert facility_price_factor(fired, FacilityId.PV_SOLAR, 3) == 1.0
 
 
 def test_the_suggested_severity_grows_with_the_emissions_per_player() -> None:
@@ -230,29 +256,32 @@ def test_a_fuel_shock_moves_its_target_or_the_fuel_the_facilitator_picked() -> N
             EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL), round_number=1, season="autumn"
         ),
     ]
-    assert fuel_shocks(fired, 1, "summer") == {Fuel.GAS: pytest.approx(1.50)}
-    assert fuel_shocks(fired, 1, "autumn") == {Fuel.COAL: pytest.approx(0.85)}
+    assert fuel_shocks(fired, 1, "summer") == {Fuel.GAS: pytest.approx(2.00)}
+    assert fuel_shocks(fired, 1, "autumn") == {Fuel.COAL: pytest.approx(0.70)}
     assert fuel_shocks(fired, 1, "winter") == {}
 
 
 def test_a_fired_event_keeps_its_effect_whatever_the_catalog_later_says() -> None:
-    fired = _fired("geo.rare_earth_ban", round_number=2).model_copy(update={"event": "geo.renamed"})
-    assert facility_price_factor([fired], FacilityId.ONSHORE_WIND_TURBINE, 2) == pytest.approx(1.20)
+    fired = _fired("geo.shipping_blockade", round_number=2).model_copy(update={"event": "geo.renamed"})
+    assert facility_price_factor([fired], FacilityId.PV_SOLAR, 2) == pytest.approx(4 / 3)
 
 
 @pytest.mark.parametrize(
     ("event", "severity", "season", "line"),
     [
-        ("climate.heatwave", "major", "summer", "Demand +18% for the summer"),
-        ("climate.mild_season", "base", "spring", "Demand −3% for the spring"),
+        ("climate.heatwave", "major", "summer", "Demand +16% for the summer"),
+        ("climate.mild_winter", "base", "winter", "Demand −5% for the winter"),
         ("demand.ev_tipping_point", "base", None, "Demand +12% from Round 3 on"),
         ("demand.recession", "base", None, "Demand −10% from Round 3 on"),
-        ("climate.wildfire", "moderate", "autumn", "3% of every player's autumn sales lost"),
-        ("geo.wind_supply_war", "base", None, "Wind turbines cost 35% more in Round 3"),
+        ("climate.wildfire", "moderate", "autumn", "8% of every player's autumn sales lost"),
+        ("climate.drought", "moderate", "spring", "Dams produce 20% less in spring"),
+        ("geo.wind_supply_war", "base", None, "Wind turbines cost 25% more in Round 3"),
         ("geo.pv_megafactory", "base", None, "Solar panels cost 20% less in Round 3"),
-        ("geo.rare_earth_ban", "base", None, "Wind turbines and batteries cost 20% more in Round 3"),
-        ("geo.gas_pipeline_disruption", "base", "winter", "Gas costs 50% more in winter, then eases back"),
-        ("geo.gas_discovery", "base", "summer", "Gas costs 20% less in summer, then eases back"),
+        ("geo.shipping_blockade", "base", None, "Batteries and solar panels cost 33% more in Round 3"),
+        ("geo.turbine_devaluation", "base", None, "Wind turbines cost 17% less in Round 3"),
+        ("geo.gas_pipeline_disruption", "base", "winter", "Gas costs 100% more in winter, then eases back"),
+        ("geo.gas_discovery", "base", "summer", "Gas costs 35% less in summer, then eases back"),
+        ("geo.coal_discovery", "base", "summer", "Coal costs 35% less in summer, then eases back"),
     ],
 )
 def test_an_event_states_its_effect_in_plain_numbers(
@@ -261,11 +290,28 @@ def test_an_event_states_its_effect_in_plain_numbers(
     assert effect_line(_fired(event, severity, round_number=3, season=season)) == line
 
 
+@pytest.mark.parametrize(
+    ("event", "severity", "season", "line"),
+    [
+        ("climate.heatwave", "major", "summer", "Demand was 16% higher in summer"),
+        ("climate.mild_summer", "base", "summer", "Demand was 5% lower in summer"),
+        ("climate.wildfire", "catastrophic", "autumn", "Every player lost 35% of their autumn sales"),
+        ("climate.drought", "major", "spring", "Dams produced 50% less in spring"),
+        ("geo.gas_pipeline_disruption", "base", "winter", "Gas cost 100% more in winter, then started to ease back"),
+        ("geo.coal_discovery", "base", "summer", "Coal cost 35% less in summer, then started to ease back"),
+    ],
+)
+def test_an_event_that_happened_states_its_effect_in_the_past_tense(
+    event: str, severity: Severity, season: Season, line: str
+) -> None:
+    assert effect_line(_fired(event, severity, round_number=3, season=season), past=True) == line
+
+
 def test_a_shock_on_a_picked_fuel_names_that_fuel() -> None:
     fired = FiredEvent.of(
         EventPick(event="geo.conflict_resolution", severity="base", fuel=Fuel.COAL), round_number=2, season="autumn"
     )
-    assert effect_line(fired) == "Coal costs 15% less in autumn, then eases back"
+    assert effect_line(fired) == "Coal costs 30% less in autumn, then eases back"
 
 
 def test_every_event_has_an_effect_line_at_every_severity() -> None:
@@ -281,17 +327,18 @@ def test_every_event_has_an_effect_line_at_every_severity() -> None:
     ("event", "severity", "summary"),
     [
         ("climate.heatwave", "minor", "Demand +3% this season"),
-        ("climate.heatwave", "major", "Demand +18% this season"),
-        ("climate.mild_season", "base", "Demand −3% this season"),
+        ("climate.heatwave", "major", "Demand +16% this season"),
+        ("climate.mild_summer", "base", "Demand −5% this season"),
         ("demand.ev_tipping_point", "base", "Demand +12% from this Round on"),
         ("demand.recession", "base", "Demand −10% from this Round on"),
-        ("climate.wildfire", "catastrophic", "12% of every player's sales lost this season"),
-        ("geo.wind_supply_war", "base", "Wind turbines cost 35% more this Round"),
+        ("climate.wildfire", "catastrophic", "35% of every player's sales lost this season"),
+        ("climate.drought", "major", "Dams produce 50% less this season"),
+        ("geo.wind_supply_war", "base", "Wind turbines cost 25% more this Round"),
+        ("geo.polysilicon_unrest", "base", "Solar panels cost 33% more this Round"),
         ("geo.pv_megafactory", "base", "Solar panels cost 20% less this Round"),
-        ("geo.rare_earth_ban", "base", "Wind turbines and batteries cost 20% more this Round"),
-        ("geo.gas_pipeline_disruption", "base", "Gas costs 50% more this season, then eases back"),
-        ("geo.gas_discovery", "base", "Gas costs 20% less this season, then eases back"),
-        ("geo.conflict_resolution", "base", "The chosen fuel costs 15% less this season, then eases back"),
+        ("geo.gas_pipeline_disruption", "base", "Gas costs 100% more this season, then eases back"),
+        ("geo.gas_discovery", "base", "Gas costs 35% less this season, then eases back"),
+        ("geo.conflict_resolution", "base", "The chosen fuel costs 30% less this season, then eases back"),
     ],
 )
 def test_an_event_summarises_its_effect_before_it_is_planned(event: str, severity: Severity, summary: str) -> None:

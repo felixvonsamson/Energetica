@@ -3,12 +3,13 @@
  * Round has one slot for Round events, which fire when its Investment phase
  * opens, and one slot per season for seasonal events, which fire when that
  * season's Trading period opens. In each slot, every category is a pool of
- * tiles graded by severity. Clicking a tile plans it, in place of the
- * category's earlier pick for the slot, and clicking it again drops it. A
- * checkmark marks the pick, and a star the severity the session's CO₂ so far
- * suggests for a climate event. Each tile states what the event does at each
- * severity in plain numbers (#1253). The facilitator never sees a headline, so
- * the Recap surprises them too.
+ * tiles graded by severity. A climate event shows only in the seasons its
+ * weather can happen in. Clicking a tile plans it, in place of the category's
+ * earlier pick for the slot, and clicking it again drops it. A checkmark marks
+ * the pick, and a star the severity the session's CO₂ so far suggests for a
+ * climate event. Each tile states what the event does at each severity in plain
+ * numbers (#1253). The facilitator never sees a headline, so the Recap
+ * surprises them too.
  *
  * Round 1 holds no events. A locked Round lists what was planned, and which
  * events fired.
@@ -152,7 +153,10 @@ export function RoundEvents({
                 const members = events.events.filter(
                     (event) =>
                         event.category === pool.category &&
-                        event.boundary_type === pool.boundary,
+                        event.boundary_type === pool.boundary &&
+                        (season === null ||
+                            event.seasons === null ||
+                            event.seasons.includes(season)),
                 );
                 const ids = new Set(members.map((event) => event.id));
                 const pick = plan.events.find(

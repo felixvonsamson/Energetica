@@ -154,13 +154,16 @@ def with_levers(plans: Sequence[RoundPlan], round_number: int, changes: LeverCha
 
 def validate_planned(planned: PlannedEvent) -> WorkshopEvent:
     """The event ``planned`` names, or :class:`~energetica.workshop.events.InvalidPickError` if the pick is not one
-    the facilitator can make, a seasonal event has no season, or a Round event has one.
+    the facilitator can make, a seasonal event has no season or one its weather cannot happen in, or a Round event
+    has one.
     """
     event = validate_pick(planned)
     if event.boundary_type == "trading_period" and planned.season is None:
         raise InvalidPickError(f"{event.name} fires with a Trading period, so it needs a season")
     if event.boundary_type == "round" and planned.season is not None:
         raise InvalidPickError(f"{event.name} fires with the Round, so it takes no season")
+    if planned.season is not None and not event.happens_in(planned.season):
+        raise InvalidPickError(f"{event.name} cannot happen in {planned.season}")
     return event
 
 

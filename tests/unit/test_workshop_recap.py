@@ -71,22 +71,29 @@ def _recap(round_number: int = 1, **overrides: object):  # noqa: ANN202
     return recap(round_number, **arguments)
 
 
-def test_the_year_in_review_tells_every_event_that_fired_in_the_round() -> None:
+def test_the_year_in_review_tells_every_seasonal_event_that_fired_in_the_round_in_the_past_tense() -> None:
     fired = [
-        _fired("demand.recession", round_number=1),
-        _fired("demand.ev_tipping_point", round_number=2),
+        _fired("climate.flood", "moderate", round_number=1, season="spring"),
         _fired("climate.wildfire", "moderate", round_number=2, season="autumn"),
         _fired("climate.heatwave", "major", round_number=2, season="summer"),
     ]
     stories = _recap(2, fired=fired).stories
-    # The Round's own event first, then the seasons in order.
-    assert [story.event for story in stories] == ["demand.ev_tipping_point", "climate.heatwave", "climate.wildfire"]
-    heatwave = stories[1]
+    assert [story.event for story in stories] == ["climate.heatwave", "climate.wildfire"]
+    heatwave = stories[0]
     assert heatwave.name == "Heatwave"
     assert heatwave.season == "summer"
     assert heatwave.severity == "major"
     assert heatwave.headline == EVENTS["climate.heatwave"].headlines["major"]
-    assert heatwave.effect == "Demand +18% for the summer"
+    assert heatwave.effect == "Demand was 16% higher in summer"
+
+
+def test_the_year_in_review_leaves_out_round_events_the_year_ahead_already_told() -> None:
+    fired = [
+        _fired("demand.ev_tipping_point", round_number=2),
+        _fired("geo.wind_supply_war", round_number=2),
+        _fired("geo.gas_discovery", round_number=2, season="winter"),
+    ]
+    assert [story.event for story in _recap(2, fired=fired).stories] == ["geo.gas_discovery"]
 
 
 def test_an_event_the_catalog_no_longer_has_is_left_out() -> None:
@@ -231,8 +238,37 @@ def test_the_year_ahead_tells_next_rounds_round_events_with_their_effect() -> No
     assert year_ahead is not None
     [story] = year_ahead.stories
     assert story.headline == EVENTS["geo.wind_supply_war"].headlines["base"]
-    assert story.effect == "Wind turbines cost 35% more in Round 2"
+    assert story.effect == "Wind turbines cost 25% more in Round 2"
     assert story.season is None
+
+
+def test_the_year_ahead_tells_natural_growth_alone_when_no_demand_shift_comes() -> None:
+    year_ahead = _recap(1, demand_growth=1.2).year_ahead
+    assert year_ahead is not None
+    assert year_ahead.demand_article.event is None
+    assert year_ahead.demand_article.title == "Electricity demand keeps growing"
+
+
+@pytest.mark.parametrize(
+    ("event", "growth", "title"),
+    [
+        ("demand.data_center_boom", 1.2, "Data-center boom speeds up electricity demand growth"),
+        ("demand.efficiency_mandate", 1.2, "Energy-efficiency mandate slows electricity demand growth"),
+        ("demand.pandemic_lockdown", 1.1, "Pandemic lockdown sends electricity demand down"),
+        ("demand.recession", 1 / 0.9, "Economic recession keeps electricity demand steady"),
+    ],
+)
+def test_the_year_ahead_tells_a_demand_shift_together_with_natural_growth(
+    event: str, growth: float, title: str
+) -> None:
+    plans = _plans([], [PlannedEvent(event=event, severity="base")])
+    year_ahead = _recap(1, plans=plans, demand_growth=growth).year_ahead
+    assert year_ahead is not None
+    article = year_ahead.demand_article
+    assert (article.event, article.title) == (event, title)
+    assert article.body.startswith(EVENTS[event].headlines["base"])
+    # Told in the demand article, so not again as an article of its own.
+    assert year_ahead.stories == []
 
 
 def test_the_year_ahead_forecasts_next_rounds_seasonal_events_without_figures() -> None:
