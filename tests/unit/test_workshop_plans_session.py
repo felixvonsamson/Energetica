@@ -212,9 +212,9 @@ def test_an_event_planned_without_the_season_it_needs_is_refused(path: Path) -> 
 
 def test_planned_events_fire_at_their_round_and_season_and_never_carry(path: Path) -> None:
     session = _session(path)
-    flood = PlannedEvent(event="climate.flood", severity="major", season="summer")
+    wildfire = PlannedEvent(event="climate.wildfire", severity="major", season="summer")
     recession = PlannedEvent(event="demand.recession", severity="base")
-    assert session.plan_event(2, flood)
+    assert session.plan_event(2, wildfire)
     assert session.plan_event(2, recession)
     assert not session.plan_event(2, recession)
     session.advance()
@@ -224,7 +224,7 @@ def test_planned_events_fire_at_their_round_and_season_and_never_carry(path: Pat
     assert session.fired_events == [FiredEvent.of(recession, round_number=2, season=None)]
     _to_next(session, TradingPeriod)  # spring
     _to_next(session, TradingPeriod)  # summer
-    assert session.fired_events[-1] == FiredEvent.of(flood, round_number=2, season="summer")
+    assert session.fired_events[-1] == FiredEvent.of(wildfire, round_number=2, season="summer")
     _to_next(session, Investment)  # Round 3
     assert len(session.fired_events) == 2
     assert session.plans[2].events == []
@@ -233,17 +233,17 @@ def test_planned_events_fire_at_their_round_and_season_and_never_carry(path: Pat
 
 def test_a_planned_event_can_be_dropped_before_its_round_locks(path: Path) -> None:
     session = _session(path)
-    session.plan_event(2, PlannedEvent(event="climate.flood", severity="major", season="summer"))
+    session.plan_event(2, PlannedEvent(event="climate.wildfire", severity="major", season="summer"))
 
-    assert not session.unplan_event(2, "climate.flood", "spring")
-    assert session.unplan_event(2, "climate.flood", "summer")
+    assert not session.unplan_event(2, "climate.wildfire", "spring")
+    assert session.unplan_event(2, "climate.wildfire", "summer")
     assert session.plans[1].events == []
 
 
 def test_an_event_planned_for_a_season_after_a_blackout_still_fires(path: Path) -> None:
     session = _session(path, round_count=2, players=1)
-    flood = PlannedEvent(event="climate.flood", severity="major", season="summer")
-    session.plan_event(2, flood)
+    wildfire = PlannedEvent(event="climate.wildfire", severity="major", season="summer")
+    session.plan_event(2, wildfire)
     session.advance()
     _keep_the_lights_on(session)
     _to_next(session, Recap)
@@ -259,13 +259,13 @@ def test_an_event_planned_for_a_season_after_a_blackout_still_fires(path: Path) 
     session.advance()
 
     assert session.checkpoint == TradingPeriod(round=2, season="summer")
-    assert session.plans_view().statuses[1] == [(flood, "fired")]
+    assert session.plans_view().statuses[1] == [(wildfire, "fired")]
 
 
 def test_picks_the_catalog_no_longer_allows_are_dropped_on_restart(path: Path) -> None:
     session = _session(path)
-    session.plan_event(2, PlannedEvent(event="climate.flood", severity="major", season="summer"))
-    # The flood has no minor severity, as if a catalog edit had removed the one planned.
+    session.plan_event(2, PlannedEvent(event="climate.wildfire", severity="major", season="summer"))
+    # The wildfire has no minor severity, as if a catalog edit had removed the one planned.
     path.write_text(path.read_text().replace('"major"', '"minor"'))
 
     assert WorkshopSession.open(WORKSHOP_CONFIG, path).plans[1].events == []

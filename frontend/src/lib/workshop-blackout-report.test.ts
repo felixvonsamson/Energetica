@@ -34,9 +34,9 @@ describe("blackoutReport", () => {
         expect(report([MARCH])).toEqual({
             headline: "Lights out on Mon 12 Mar",
             body:
-                "At 18:00 on Mon 12 Mar the grid could not cover the demand that must always be served, and went down. " +
+                "At 18:00 on Mon 12 Mar the grid could not supply the demand that must always be served, and went down. " +
                 "After 24 hours it was restarted, and electricity was rationed for the rest of the year: demand was cut by 10%. " +
-                "Every producer loses 30% of this year's operating profit.",
+                "Every producer lost 30% of this year's operating profit.",
         });
     });
 
@@ -46,7 +46,7 @@ describe("blackoutReport", () => {
             body:
                 "The grid went down twice this year: on Mon 12 Mar at 18:00 and on Thu 6 Dec at 19:15. " +
                 "Each time it was restarted after 24 hours with tighter rationing, and by the end of the year demand had been cut by 19%. " +
-                "Every producer loses 60% of this year's operating profit.",
+                "Every producer lost 60% of this year's operating profit.",
         });
     });
 
@@ -56,9 +56,9 @@ describe("blackoutReport", () => {
             headline: "Grid in crisis",
             body:
                 "The grid failed three times this year: on Mon 12 Mar at 18:00, on Thu 6 Dec at 19:15 and on Fri 7 Dec at 19:15. " +
-                "The country is losing faith in its power producers. " +
+                "People no longer trust their power producers. " +
                 "Rationing cut demand by 27% by the end of the year. " +
-                "Every producer loses 90% of this year's operating profit.",
+                "Every producer lost 90% of this year's operating profit.",
         });
     });
 
@@ -73,7 +73,7 @@ describe("blackoutReport", () => {
                 "The grid failed 7 times this year: on Mon 12 Mar at 18:00, on Tue 13 Mar at 18:00, on Wed 14 Mar at 18:00, " +
                 "on Thu 15 Mar at 18:00, on Fri 16 Mar at 18:00 and 2 more times. " +
                 "Electricity has become a luxury, rationed down to 48% of normal demand. " +
-                "Every producer loses this year's entire operating profit.",
+                "Every producer lost this year's entire operating profit.",
         });
     });
 });

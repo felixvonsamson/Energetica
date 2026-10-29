@@ -60,12 +60,12 @@ export function blackoutReport(
     if (!first) return null;
     const count = blackouts.length;
     const cut = percent(1 - rationing);
-    const loss = `Every producer loses ${percent(costShare)} of this year's operating profit.`;
+    const loss = `Every producer lost ${percent(costShare)} of this year's operating profit.`;
     if (count === 1) {
         return {
             headline: `Lights out on ${day(first)}`,
             body:
-                `At ${time(first)} on ${day(first)} the grid could not cover the demand that must always be served, and went down. ` +
+                `At ${time(first)} on ${day(first)} the grid could not supply the demand that must always be served, and went down. ` +
                 `After 24 hours it was restarted, and electricity was rationed for the rest of the year: demand was cut by ${cut}. ` +
                 loss,
         };
@@ -84,7 +84,7 @@ export function blackoutReport(
             headline: "Grid in crisis",
             body:
                 `The grid failed three times this year: ${dates(blackouts)}. ` +
-                "The country is losing faith in its power producers. " +
+                "People no longer trust their power producers. " +
                 `Rationing cut demand by ${cut} by the end of the year. ` +
                 loss,
         };
@@ -95,7 +95,7 @@ export function blackoutReport(
             `The grid failed ${count} times this year: ${dates(blackouts)}. ` +
             `Electricity has become a luxury, rationed down to ${percent(rationing)} of normal demand. ` +
             (costShare >= 1
-                ? "Every producer loses this year's entire operating profit."
+                ? "Every producer lost this year's entire operating profit."
                 : loss),
     };
 }

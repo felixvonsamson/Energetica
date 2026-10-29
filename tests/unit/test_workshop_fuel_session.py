@@ -159,12 +159,12 @@ def test_a_planned_shock_lands_at_its_trading_period_only(path: Path) -> None:
     _close_and_settle(session)
     session.advance()
     assert session.fuel_prices[Fuel.GAS].shocked
-    assert session.fuel_prices[Fuel.GAS].shock == 1.5
+    assert session.fuel_prices[Fuel.GAS].shock == 2.0
     assert not session.fuel_prices[Fuel.COAL].shocked
     _close_and_settle(session)
     session.advance()
     assert not session.fuel_prices[Fuel.GAS].shocked
-    assert session.fuel_prices[Fuel.GAS].shock == pytest.approx(1.25)
+    assert session.fuel_prices[Fuel.GAS].shock == pytest.approx(1.5)
 
 
 # --- ordering -----------------------------------------------------------------------------------

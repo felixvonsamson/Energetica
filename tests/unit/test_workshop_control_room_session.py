@@ -9,7 +9,13 @@ import pytest
 
 from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
-from energetica.workshop.control_room import FUEL_HISTORY_POINTS, HISTORY_SEASONS, BlackoutRisk, PowerSource
+from energetica.workshop.control_room import (
+    FUEL_HISTORY_POINTS,
+    HISTORY_SEASONS,
+    HYDRO_GUARANTEED_SHARE,
+    BlackoutRisk,
+    PowerSource,
+)
 from energetica.workshop.demand_block import DEMAND_TIERS
 from energetica.workshop.events import EVENTS
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
@@ -240,6 +246,33 @@ def test_selected_facilities_count_towards_the_rounds_capacity(tmp_path: Path) -
     session.select(1, FacilityId.COAL_BURNER)
 
     assert session.control_room().capacity.room.controllable == pytest.approx(before + coal)
+
+
+def test_a_drought_cuts_hydros_capacity_in_its_season_and_in_the_rounds_outlook(tmp_path: Path) -> None:
+    calm = _investing(tmp_path / "calm.json")
+    dry = _investing(tmp_path / "dry.json")
+    dry.plan_event(2, PlannedEvent(event="climate.drought", severity="major", season="summer"))
+    for session in (calm, dry):
+        session.select(1, FacilityId.SMALL_WATER_DAM)
+        _advance_to(session, Investment(round=2))
+    hydro = HYDRO_GUARANTEED_SHARE * CATALOG[FacilityId.SMALL_WATER_DAM].base_power_generation
+
+    # The Round's outlook counts its driest season.
+    assert calm.control_room().capacity.room.controllable - dry.control_room().capacity.room.controllable == (
+        pytest.approx(hydro / 2)
+    )
+    for session in (calm, dry):
+        _advance_to(session, TradingPeriod(round=2, season="spring"))
+    # Each session draws its own weather, so only the parts that do not depend on it compare.
+    assert dry.control_room().capacity.room.controllable == pytest.approx(
+        calm.control_room().capacity.room.controllable
+    )
+    assert dry.control_room().capacity.room.total == pytest.approx(calm.control_room().capacity.room.total)
+    for session in (calm, dry):
+        _advance_to(session, TradingPeriod(round=2, season="summer"))
+    assert calm.control_room().capacity.room.controllable - dry.control_room().capacity.room.controllable == (
+        pytest.approx(hydro / 2)
+    )
 
 
 def test_facilities_under_construction_do_not_count(tmp_path: Path) -> None:

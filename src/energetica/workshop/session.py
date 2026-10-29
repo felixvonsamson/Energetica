@@ -120,6 +120,7 @@ from energetica.workshop.events import (
     demand_factor,
     facility_price_factor,
     fuel_shocks,
+    hydro_output_factor,
     revenue_tax_rate,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
@@ -567,6 +568,8 @@ class SettlementJob:
     weather_seed: int
     rationing: float = 1.0
     """What demand starts the period at, after the blackouts earlier in its Round (#1286)."""
+    hydro_output: float = 1.0
+    """What every dam's output is multiplied by, after the events that move it: less than 1 in a drought."""
     # Set to stop the simulation after the day it is on.
     cancelled: threading.Event = field(default_factory=threading.Event)
 
@@ -1606,7 +1609,8 @@ class WorkshopSession:
         """The room's capacity in Round ``round_number`` against its must-serve peak (#1287): the peak of the season
         whose Trading period the session is in, or else the highest of the Round's seasons. Facilities selected in its
         open Investment phase count as if bought, and those still under construction do not. The peak counts the
-        Round's events, those still planned too, and leaves out rationing. The caller holds the lock.
+        Round's events, those still planned too, and leaves out rationing. So does the capacity: a drought cuts what
+        dams produce in its season, and in the Round's outlook the driest season counts. The caller holds the lock.
         """
         players = self.network.players()
         plan = self.plans[round_number - 1]
@@ -1650,7 +1654,10 @@ class WorkshopSession:
             for facility in set(facilities)
             if (factor := capacity_factor(self.weather_seed, facility)) is not None
         }
-        capacity = room_capacity(facilities, capacity_factors)
+        hydro_output = min(
+            hydro_output_factor(events, round_number, each) for each in (SEASONS if season is None else (season,))
+        )
+        capacity = room_capacity(facilities, capacity_factors, hydro_output=hydro_output)
         return CapacityOutlook(
             round=round_number,
             season=season,
@@ -1992,6 +1999,7 @@ class WorkshopSession:
                 base_demand_amplitude=base_amplitude,
                 weather_seed=self.weather_seed,
                 rationing=rationing(self.blackouts, period.round, period.season),
+                hydro_output=hydro_output_factor(self.fired_events, period.round, period.season),
             )
             self.settlement = SettlementProgress(period, 0, cleared_day_count(period.season, round_format))
             return job
@@ -2020,6 +2028,7 @@ class WorkshopSession:
             curve=national_demand_curve(),
             weather=representative_weather(job.weather_seed, job.period.round),
             rationing=job.rationing,
+            hydro_output=job.hydro_output,
             on_day_done=on_day_done,
         )
 

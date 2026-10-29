@@ -395,6 +395,10 @@ class WorkshopEventOut(BaseModel):
     direction: Direction
     effect_kind: EffectKind
     severities: list[Severity]
+    seasons: list[Season] | None = Field(
+        description="The seasons a climate event can be planned for, since its weather happens only in them. Null "
+        "for any other event"
+    )
     suggested_severity: Severity | None = Field(
         description="For a climate event, the severity the session's CO₂ so far suggests. Null for any other"
     )
@@ -415,6 +419,7 @@ class WorkshopEventOut(BaseModel):
             direction=event.direction,
             effect_kind=event.effect.kind,
             severities=list(event.severities),
+            seasons=None if event.seasons is None else list(event.seasons),
             suggested_severity=suggested_severity,
             fuel_chosen=event.fuel_chosen,
             summaries={severity: effect_summary(event, severity) for severity in event.severities},

@@ -2,15 +2,18 @@
 
 The Recap that closes Round N has two sections, kept strictly apart:
 
-- **The Year in Review** tells what happened in Round N: every event that fired in it, with its headline and a
-  line of plain numbers (:func:`~energetica.workshop.events.effect_line`), each time the grid went down, with how far
+- **The Year in Review** tells what happened in Round N: every seasonal event that fired in it, with its headline
+  and a line of plain numbers in the past tense (:func:`~energetica.workshop.events.effect_line`). A Round event is
+  left out, since the Year Ahead before already told it with its exact effect. It also tells each time the grid went
+  down, with how far
   rationing cut demand and what the blackouts cost (#1286), the room's figures for the Round, and each season's
   weather: how its wind and sunshine compared with a normal season (#1200). The weather only tells what happened, never what is coming.
 - **The Year Ahead** tells what Round N+1 holds. Its plan locks when Recap N opens (#1190), so what the Recap tells
   holds. Round events are told with their headline and exact effect, and seasonal events only as a forecast with
   no figures (#1189). The facilities that unlock for Round N+1 are announced here, the first place players learn
-  of them (#1011). So is how much demand grows into Round N+1 (#1226), as a percentage without the formula behind
-  it. The last Round has no Year Ahead.
+  of them (#1011). Its first article tells how demand moves into Round N+1: its natural growth (#1226) and, in the
+  same article, the demand shift planned for the Round, if any, so that players read the two as one change. The
+  figure is left to the demand forecast beside it. The last Round has no Year Ahead.
 
 Everyone in the Run reads the same Recap, the facilitator included, and only once it has opened: a headline is
 never told before. Vote outcomes are not told here, since they are announced live (#1014), but a carbon tax vote
@@ -55,7 +58,9 @@ class RecapStory(BaseModel):
     severity: Severity
     season: Season | None = Field(description="The Trading period it fires at, or null for one that lasts the Round")
     headline: str
-    effect: str = Field(description="What it does, in one short line of plain numbers")
+    effect: str = Field(
+        description="What it does, in one short line of plain numbers. In the past tense in the Year in Review"
+    )
 
 
 class RecapForecast(BaseModel):
@@ -121,6 +126,16 @@ class DemandOutlook(BaseModel):
     )
 
 
+class DemandArticle(BaseModel):
+    """How demand moves into the coming Round, told as one article: its natural growth, and the demand shift that
+    starts with the Round, if any. It gives no figure, since the demand forecast beside it does.
+    """
+
+    event: str | None = Field(description="The demand shift it tells, or null if the Round starts none")
+    title: str
+    body: str
+
+
 class RecapVote(BaseModel):
     """A carbon tax vote the coming Round holds in its Investment phase."""
 
@@ -132,7 +147,11 @@ class YearAhead(BaseModel):
 
     round: int
     unlocks: list[RecapUnlock]
-    stories: list[RecapStory] = Field(description="The Round events planned for it, which fire when it opens")
+    demand_article: DemandArticle
+    stories: list[RecapStory] = Field(
+        description="The Round events planned for it, which fire when it opens. A demand shift is told in the demand "
+        "article instead"
+    )
     forecasts: list[RecapForecast] = Field(description="Its seasonal events, in season order")
     demand_growth: float = Field(
         description="The factor demand grows by from this Round to the next before any event, 1.35 for 35% (#1226)"
@@ -157,7 +176,8 @@ class WorkshopRecap(BaseModel):
         description="What rationing had cut demand to by the end of the Round, 0.81 for 81%. One without blackouts"
     )
     stories: list[RecapStory] = Field(
-        description="Every event that fired in the Round: the Round's own first, then each season's in order"
+        description="Every seasonal event that fired in the Round, in season order. Round events are left out: the "
+        "Year Ahead before told them"
     )
     figures: RoomFigures
     weather: list[SeasonWeatherReport] = Field(description="Each season the Round played, in order")
@@ -168,7 +188,7 @@ def _season_order(season: Season | None) -> int:
     return -1 if season is None else SEASONS.index(season)
 
 
-def _story(fired: FiredEvent) -> RecapStory | None:
+def _story(fired: FiredEvent, *, past: bool) -> RecapStory | None:
     event = EVENTS.get(fired.event)
     if event is None or fired.severity not in event.headlines:
         return None
@@ -180,13 +200,13 @@ def _story(fired: FiredEvent) -> RecapStory | None:
         severity=fired.severity,
         season=fired.season,
         headline=event.headlines[fired.severity],
-        effect=effect_line(fired),
+        effect=effect_line(fired, past=past),
     )
 
 
-def _stories(fired: Iterable[FiredEvent]) -> list[RecapStory]:
+def _stories(fired: Iterable[FiredEvent], *, past: bool) -> list[RecapStory]:
     ordered = sorted(fired, key=lambda event: _season_order(event.season))
-    return [story for event in ordered if (story := _story(event)) is not None]
+    return [story for event in ordered if (story := _story(event, past=past)) is not None]
 
 
 def emissions(purchases: Iterable[Purchase], results: Iterable[TradingResult]) -> float:
@@ -265,6 +285,41 @@ def _unlock(unlock: Unlock) -> RecapUnlock:
     )
 
 
+def _demand_article(shift: FiredEvent | None, growth: float) -> DemandArticle:
+    """The article on how demand moves into the coming Round: ``growth`` is its natural growth, and ``shift`` the
+    demand shift that starts with it, if any. The title follows which way the two together move demand.
+    """
+    event = None if shift is None else EVENTS.get(shift.event)
+    if shift is None or event is None:
+        return DemandArticle(
+            event=None,
+            title="Electricity demand keeps growing",
+            body="As the economy and the population grow, the country uses more electricity. Experts expect "
+            "demand to rise again next year.",
+        )
+    change = round((growth * shift.magnitude - 1) * 100)
+    if shift.magnitude > 1:
+        title = f"{event.name} speeds up electricity demand growth"
+        outcome = (
+            "Together with a growing economy and population, this makes electricity demand grow faster than usual "
+            "next year."
+        )
+    elif change > 0:
+        title = f"{event.name} slows electricity demand growth"
+        outcome = "The economy and the population are still growing, but electricity demand will grow less than usual next year."
+    elif change == 0:
+        title = f"{event.name} keeps electricity demand steady"
+        outcome = (
+            "This cancels out the growing economy and population: electricity demand will stay the same next year."
+        )
+    else:
+        title = f"{event.name} sends electricity demand down"
+        outcome = (
+            "This is stronger than the growth of the economy and population: electricity demand will fall next year."
+        )
+    return DemandArticle(event=shift.event, title=title, body=f"{event.headlines[shift.severity]} {outcome}")
+
+
 def _year_ahead(
     next_round: int,
     *,
@@ -295,7 +350,14 @@ def _year_ahead(
     return YearAhead(
         round=next_round,
         unlocks=[_unlock(unlock) for unlock in unlocks if unlock.round == next_round],
-        stories=_stories(event for event in coming if event.season is None),
+        demand_article=_demand_article(
+            next((event for event in coming if event.season is None and event.kind == "demand_amplitude_shift"), None),
+            demand_growth,
+        ),
+        stories=_stories(
+            (event for event in coming if event.season is None and EVENTS[event.event].category != "demand_shift"),
+            past=False,
+        ),
         forecasts=forecasts,
         demand_growth=demand_growth,
         demand=demand,
@@ -337,7 +399,9 @@ def recap(
         blackouts=this_round,
         blackout_cost_share=blackout_cost_share(len(this_round)),
         rationing=RATIONING ** len(this_round),
-        stories=_stories(event for event in fired if event.round == round_number),
+        stories=_stories(
+            (event for event in fired if event.round == round_number and event.season is not None), past=True
+        ),
         figures=_figures(round_number, purchases=purchases, results=results),
         weather=_weather(weather),
         year_ahead=None

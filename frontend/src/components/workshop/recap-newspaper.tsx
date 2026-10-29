@@ -7,18 +7,22 @@
  *
  * - "The Year in Review" tells what happened in the Round just closed: a "Lights
  *   out" report if the grid went down, an article on the opening of the market
- *   in Round 1, every event that fired as an article ending in a line of plain
- *   numbers, and the room's figures.
- * - "The Year Ahead" tells what the next Round holds: how much demand grows
- *   (#1226), each facility that unlocks, with a black-and-white photo, a carbon
- *   tax vote if the Round holds one (#1014), the switch to buying fuel by hand
- *   if the Round makes it, the Round's events with their exact effect, the
- *   change in peak demand, and a seasonal outlook that only hints at the
- *   seasonal events, with no figures. After the last Round, a "Final Edition"
- *   banner takes its place.
+ *   in Round 1, every seasonal event that fired as an article ending in a line
+ *   of plain numbers, all in the past tense, and the room's figures. Round
+ *   events are left out, since the Year Ahead before told them.
+ * - "The Year Ahead" tells what the next Round holds: how demand moves, its
+ *   natural growth (#1226) and any demand shift told as one article, each
+ *   facility that unlocks, with a black-and-white photo, a carbon tax vote if
+ *   the Round holds one (#1014), the switch to buying fuel by hand if the Round
+ *   makes it, the Round's other events with their exact effect, the change in
+ *   peak demand, and a seasonal outlook that only hints at the seasonal events,
+ *   with no figures. After the last Round, a "Final Edition" banner takes its
+ *   place.
  *
- * Players and the facilitator read the same page. A note, such as a player's
- * loan payment, can be stuck on the page's top corner as a post-it.
+ * Players and the facilitator read the same page, and many of them do not speak
+ * English as their first language, so the texts keep to common words. A note,
+ * such as a player's loan payment, can be stuck on the page's top corner as a
+ * post-it.
  */
 
 import { type ReactNode, useEffect } from "react";
@@ -112,8 +116,8 @@ export function RecapNewspaper({
                     ) : (
                         <p className="py-10 text-center text-2xl italic">
                             {recap.blackouts.length > 0
-                                ? `Apart from the blackout${recap.blackouts.length > 1 ? "s" : ""}, the year passed without incident.`
-                                : "A quiet year. Nothing out of the ordinary to report."}
+                                ? `Apart from the blackout${recap.blackouts.length > 1 ? "s" : ""}, nothing unusual happened this year.`
+                                : "A quiet year. Nothing unusual happened."}
                         </p>
                     )}
                 </div>
@@ -147,8 +151,8 @@ function YearAheadSection({ yearAhead }: { yearAhead: YearAhead }) {
             />
             <div className="grid gap-8 lg:grid-cols-[1fr_17rem]">
                 <div className="space-y-6">
-                    <GrowthArticle
-                        growth={yearAhead.demand_growth}
+                    <DemandArticle
+                        article={yearAhead.demand_article}
                         round={yearAhead.round}
                     />
                     {yearAhead.unlocks.map((unlock, i) => (
@@ -305,12 +309,13 @@ function OpeningArticle() {
                 New energy companies take over the grid
             </h3>
             <p className="mt-2 text-justify leading-relaxed hyphens-auto">
-                The country's electricity market has opened to competition. A
-                handful of new energy companies, each with fresh capital and big
-                ambitions, have started building power plants and selling their
-                electricity on the market. Every season they name their price.
-                Who will build wisely, who will overspend, and what the new
-                market will cost the planet in CO₂?
+                The country's electricity market is now open to competition. A
+                few new energy companies, each with money to invest and big
+                plans, have started building power plants and selling their
+                electricity on the market. Every season, they set their own
+                prices. Who will invest wisely? Who will beat the competition
+                with smart prices? And how much CO₂ will the new market cost the
+                planet?
             </p>
         </section>
     );
@@ -320,11 +325,11 @@ function OpeningArticle() {
 function unlockStory(unlock: RecapUnlock): string {
     switch (unlock.trigger) {
         case "investment_threshold":
-            return `After a year of heavy buying of ${unlock.base_name ?? "its predecessor"}, manufacturers have brought its successor to market.`;
+            return `Companies bought a lot of ${unlock.base_name ?? "the older model"} last year, so manufacturers have developed an improved model.`;
         case "round_gate":
-            return "Engineers have finished the first commercial designs, and builders are taking orders.";
+            return "Engineers have finished the first designs, and builders are now taking orders.";
         case "format_lever":
-            return "With the grid now planned season by season, storage that holds energy for months is worth building, and builders are taking orders.";
+            return "Now that the grid is planned season by season, storage that keeps energy for months is worth building, and builders are taking orders.";
         default:
             throw unlock.trigger satisfies never;
     }
@@ -374,26 +379,27 @@ function UnlockArticle({
 }
 
 /**
- * How much demand grows into the next Round, before any event (#1226). Told
- * without the formula behind it.
+ * How demand moves into the next Round: its natural growth (#1226) and the
+ * demand shift that starts with the Round, if any, told together so players
+ * read them as one change. The figure is left to the demand forecast beside
+ * it.
  */
-function GrowthArticle({ growth, round }: { growth: number; round: number }) {
-    const percent = Math.round((growth - 1) * 100);
+function DemandArticle({
+    article,
+    round,
+}: {
+    article: YearAhead["demand_article"];
+    round: number;
+}) {
     return (
         <section className="border-t border-neutral-900 pt-5 first:border-t-0 first:pt-0">
             <Kicker>Economy · Round {round}</Kicker>
             <h3
                 className={`mt-1 text-3xl leading-[1.05] font-black ${HEADLINE}`}
             >
-                {percent === 0
-                    ? "Demand is expected to hold steady next year"
-                    : `Demand is expected to ${percent > 0 ? "grow" : "fall"} ${Math.abs(percent)}% next year`}
+                {article.title}
             </h3>
-            <p className="mt-2 text-justify leading-relaxed">
-                As the economy changes, so does the country's appetite for
-                electricity. Analysts have revised their forecasts for the year
-                ahead. Any events of the year come on top.
-            </p>
+            <p className="mt-2 text-justify leading-relaxed">{article.body}</p>
         </section>
     );
 }
@@ -434,11 +440,11 @@ function FuelArticle({ round }: { round: number }) {
                 Companies to buy their own fuel
             </h3>
             <p className="mt-2 text-justify leading-relaxed">
-                Until now, fuel was delivered as it was burned. From next year,
-                companies buy it themselves: each season, next to their prices,
-                they choose how much of each fuel their facilities burn to buy.
-                Fuel left over carries over to the next season, but a facility
-                that runs out of fuel cannot produce.
+                Until now, fuel was delivered automatically when it was needed.
+                From next year, companies buy it themselves: each season, next
+                to their prices, they choose how much of each fuel to buy. Fuel
+                left over carries over to the next season, but a facility that
+                runs out of fuel cannot produce.
             </p>
             <p className="mt-2 border-l-2 border-neutral-900 pl-2 text-sm font-bold">
                 Fuel is bought by hand from Round {round}
