@@ -144,6 +144,15 @@ def test_each_pool_keeps_the_storage_capacity_it_had() -> None:
     assert record.storage_capacity[_row(record, 1, WIND)] == 0.0
 
 
+def test_each_pool_keeps_the_power_it_had() -> None:
+    # The capacity factor is the generation over this power. Like the storage capacity, it cannot be worked out
+    # again after the period.
+    record = _simulate(_bidder(WIND, WIND, BATTERIES)).record
+
+    assert record.power[_row(record, 1, WIND)] == pytest.approx(2 * CATALOG[WIND].base_power_generation)
+    assert record.power[_row(record, 1, BATTERIES)] == pytest.approx(CATALOG[BATTERIES].base_power_generation)
+
+
 def test_the_demand_tiers_served_add_up_to_the_cleared_quantity() -> None:
     record = _simulate(_bidder(GAS, sell={GAS: 50.0})).record
 
@@ -241,6 +250,7 @@ def test_a_saved_record_loads_back_the_same(tmp_path: Path) -> None:
         "dumped",
         "charged",
         "stored",
+        "power",
         "storage_capacity",
         "served",
         "offered",

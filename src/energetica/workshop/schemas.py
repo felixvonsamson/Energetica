@@ -516,6 +516,7 @@ class WorkshopPoolSeriesOut(BaseModel):
     dumped: list[int] = Field(description="Renewable output that did not sell")
     charged: list[int] = Field(description="What storage bought to charge")
     stored: list[float] = Field(description="The energy storage held once each point was over, in Wh")
+    power: float = Field(description="The most its facilities could generate together, in W")
     storage_capacity: float = Field(description="The most energy it could hold, in Wh. Zero if it is not storage")
 
 
@@ -563,6 +564,7 @@ class WorkshopPeriodDaysOut(BaseModel):
                     dumped=_watts(record.dumped[row, points]),
                     charged=_watts(record.charged[row, points]),
                     stored=record.stored[row, points].tolist(),
+                    power=float(record.power[row]),
                     storage_capacity=float(record.storage_capacity[row]),
                 )
                 for row, (player_id, facility) in enumerate(record.pools)

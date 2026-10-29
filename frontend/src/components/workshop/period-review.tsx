@@ -645,6 +645,7 @@ function PowerSeries({
     barGap,
     span,
     above,
+    power,
     ...chart
 }: ChartProps & {
     rows: ChartRow[];
@@ -661,6 +662,8 @@ function PowerSeries({
     span?: string;
     /** Shown above the chart. */
     above?: ReactNode;
+    /** The power of each series' facilities, for the capacity factor column. */
+    power?: (key: string) => number | undefined;
 }) {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
@@ -705,6 +708,7 @@ function PowerSeries({
                 energyHeading={view === "generation" ? "Generated" : "Consumed"}
                 span={span}
                 onHoverRow={setHighlightedKey}
+                power={power}
             />
         </>
     );
@@ -730,6 +734,15 @@ function PlayerPowerCard({ days, labels, cpd, ...chart }: PowerCardProps) {
                 : [],
         [days, labels.me, view],
     );
+    const power = useMemo(() => {
+        if (!days || view !== "generation") return undefined;
+        const byFacility = new Map(
+            days.pools
+                .filter((pool) => pool.player_id === labels.me)
+                .map((pool) => [pool.facility as string, pool.power]),
+        );
+        return (key: string) => byFacility.get(key);
+    }, [days, labels.me, view]);
 
     return (
         <ChartCard
@@ -765,6 +778,7 @@ function PlayerPowerCard({ days, labels, cpd, ...chart }: PowerCardProps) {
                 hidden={hidden}
                 onToggle={toggle}
                 cpd={cpd}
+                power={power}
                 {...chart}
             />
         </ChartCard>

@@ -7391,6 +7391,11 @@ export interface components {
              */
             stored: number[];
             /**
+             * Power
+             * @description The most its facilities could generate together, in W
+             */
+            power: number;
+            /**
              * Storage Capacity
              * @description The most energy it could hold, in Wh. Zero if it is not storage
              */

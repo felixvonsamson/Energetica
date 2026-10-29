@@ -1,14 +1,17 @@
 /**
  * The table under a Trading-period review chart: each series' energy over the
- * day, with a button to hide or show it in the chart. A lighter take on the
+ * day, with a button to hide or show it in the chart. A player's generation
+ * also shows each facility type's capacity factor. A lighter take on the
  * persistent world's power and market tables.
  */
 
 import type { ReactNode } from "react";
 
 import { MagnitudeBar } from "@/components/ui/magnitude-bar";
+import { InfoMark, MetricTooltip } from "@/components/workshop/metric-tooltip";
 import { type ChartRow, seriesEnergy } from "@/lib/workshop-review";
 import { formatEnergy } from "@energetica/core/format-utils";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 
 interface PeriodSeriesTableProps {
     rows: ChartRow[];
@@ -28,6 +31,12 @@ interface PeriodSeriesTableProps {
      * null when the pointer leaves the table.
      */
     onHoverRow?: (key: string | null) => void;
+    /**
+     * The most a series' facilities could generate, in W. When given, a
+     * capacity factor column shows each series' average output over it, so only
+     * pass it for series keyed by facility type.
+     */
+    power?: (key: string) => number | undefined;
 }
 
 export function PeriodSeriesTable({
@@ -41,9 +50,16 @@ export function PeriodSeriesTable({
     energyHeading,
     span = "the day",
     onHoverRow,
+    power,
 }: PeriodSeriesTableProps) {
     if (keys.length === 0) return null;
     const energies = keys.map((key) => seriesEnergy(rows, key, hoursPerPoint));
+    const hours = rows.length * hoursPerPoint;
+    /** The series' average output as a percentage of its power. */
+    const capacityFactor = (key: string, energy: number) => {
+        const watts = power?.(key);
+        return watts && hours > 0 ? (energy / hours / watts) * 100 : undefined;
+    };
     const max = Math.max(...energies);
     const sorted = keys
         .map((key, i) => ({ key, energy: energies[i] ?? 0 }))
@@ -57,6 +73,18 @@ export function PeriodSeriesTable({
                         <th className="py-2 px-4 text-left font-semibold">
                             Series
                         </th>
+                        {power && (
+                            <th className="py-2 px-4 text-center font-semibold">
+                                <MetricTooltip
+                                    content={`Average output over ${span}, as a share of the most the facilities could generate.`}
+                                >
+                                    <span className="inline-flex items-center gap-1 cursor-help">
+                                        Capacity factor
+                                        <InfoMark />
+                                    </span>
+                                </MetricTooltip>
+                            </th>
+                        )}
                         <th className="py-2 px-4 text-left font-semibold">
                             {energyHeading} over {span}
                         </th>
@@ -66,6 +94,7 @@ export function PeriodSeriesTable({
                 <tbody onMouseLeave={() => onHoverRow?.(null)}>
                     {sorted.map(({ key, energy }) => {
                         const visible = !hidden.has(key);
+                        const factor = capacityFactor(key, energy);
                         return (
                             <tr
                                 key={key}
@@ -73,6 +102,20 @@ export function PeriodSeriesTable({
                                 className="border-b border-border/30"
                             >
                                 <td className="py-2 px-4">{label(key)}</td>
+                                {power && (
+                                    <td
+                                        className={`py-2 px-4 min-w-37.5 text-center transition-opacity ${visible ? "" : "opacity-40"}`}
+                                    >
+                                        {factor !== undefined ? (
+                                            <FacilityGauge
+                                                facilityType={key}
+                                                value={Math.min(factor, 100)}
+                                            />
+                                        ) : (
+                                            "-"
+                                        )}
+                                    </td>
+                                )}
                                 <td className="py-2 px-4">
                                     <MagnitudeBar
                                         value={energy}
