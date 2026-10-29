@@ -10,8 +10,9 @@
  * player paid for facilities and any loan (#1225) and in carbon tax, plus the
  * residual value of the facilities still owned. The two costs are shown as
  * negative amounts, so the four columns add up to the score. Everyone in the
- * Run sees the same table, and a player's own row is highlighted. A panel below
- * the table spells out the formula and each of its terms.
+ * Run sees the same table, and a player's own row is highlighted. Each part's
+ * column header explains it on hover, and the score's header gives the
+ * formula.
  *
  * In a Run with teams (#1384), a table of teams comes first, each scoring the
  * sum of its members' scores, and the players' table gets a Team column. Once
@@ -34,12 +35,6 @@ import {
 } from "@/components/workshop/metric-tooltip";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@energetica/ui/components/card";
 import { Money } from "@energetica/ui/components/money";
 import { Spinner } from "@energetica/ui/components/spinner";
 import {
@@ -50,7 +45,7 @@ import { cn } from "@energetica/ui/lib/utils";
 
 /**
  * The four parts of a score. Each explanation shows in its column header's
- * tooltip and under the table.
+ * tooltip.
  */
 const COLUMNS = [
     {
@@ -127,12 +122,6 @@ export function Scoreboard() {
                 scores={scoreboard.data.scores}
                 hasTeams={scoreboard.data.teams !== null}
                 me={me}
-            />
-            <ScoreFormula
-                bonus={
-                    scoreboard.data.teams !== null &&
-                    hasBonus(scoreboard.data.teams)
-                }
             />
             {scoreboard.data.final && entry?.role === "player" && (
                 <GameFeedback />
@@ -287,28 +276,26 @@ function ScoreTable({
                                 key={column.key}
                                 className="py-2 px-4 text-right font-semibold"
                             >
-                                <MetricTooltip
-                                    content={
-                                        <TooltipFigure
-                                            label={column.label}
-                                            note={column.explanation}
-                                        />
-                                    }
-                                >
-                                    <span className="inline-flex items-center gap-1">
-                                        {column.label}
-                                        <InfoMark />
-                                    </span>
-                                </MetricTooltip>
+                                <HeaderTooltip
+                                    label={column.label}
+                                    note={column.explanation}
+                                />
                             </th>
                         ))}
                         {bonusColumn && (
                             <th className="py-2 px-4 text-right font-semibold">
-                                Bonus
+                                <HeaderTooltip
+                                    label="Bonus"
+                                    note="A team's score is the sum of its members' scores, times the team's bonus multiplier."
+                                />
                             </th>
                         )}
                         <th className="py-2 px-4 text-right font-bold tracking-wide">
-                            SCORE
+                            <HeaderTooltip
+                                label="SCORE"
+                                title="Score"
+                                note="Operating profit + Investments + Carbon tax + Residual value."
+                            />
                         </th>
                     </tr>
                 </thead>
@@ -354,38 +341,23 @@ function scoresTitle(scoreboard: ApiSchema<"Scoreboard">): string {
     return `Scores after Round ${scoreboard.completed_rounds}`;
 }
 
-function ScoreFormula({ bonus }: { bonus: boolean }) {
+/** A column header with an info mark, explained on hover. */
+function HeaderTooltip({
+    label,
+    title = label,
+    note,
+}: {
+    label: string;
+    /** The tooltip's heading, if not the label. */
+    title?: string;
+    note: string;
+}) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>How the score adds up</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <p className="text-center font-mono text-base md:text-lg">
-                    Score = Operating profit − Investments − Carbon tax +
-                    Residual value
-                </p>
-                <dl className="grid gap-x-6 gap-y-3 text-sm md:grid-cols-[max-content_1fr]">
-                    {COLUMNS.map(({ key, label, explanation }) => (
-                        <div key={key} className="contents">
-                            <dt className="font-semibold">{label}</dt>
-                            <dd className="text-muted-foreground">
-                                {explanation}
-                            </dd>
-                        </div>
-                    ))}
-                </dl>
-                {bonus && (
-                    <TypographyMuted>
-                        A team&apos;s score is the sum of its members&apos;
-                        scores, times the team&apos;s bonus multiplier.
-                    </TypographyMuted>
-                )}
-                <TypographyMuted>
-                    Cash is not part of the score: it already moves with the
-                    terms above, so counting it would count them twice.
-                </TypographyMuted>
-            </CardContent>
-        </Card>
+        <MetricTooltip content={<TooltipFigure label={title} note={note} />}>
+            <span className="inline-flex items-center gap-1">
+                {label}
+                <InfoMark />
+            </span>
+        </MetricTooltip>
     );
 }

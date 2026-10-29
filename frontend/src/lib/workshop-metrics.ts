@@ -33,14 +33,14 @@ export function storageMarkup(efficiency: number): number {
 }
 
 /**
- * The energy a weather-dependent facility generates in an average season, in
- * Wh: a season at full output, in Wh, at its capacity factor.
+ * The most fuel a facility burns in a season, in kg: a season at full output,
+ * in Wh, at its fuel use per MWh.
  */
-export function expectedGenerationPerSeason(
+export function maxFuelPerSeason(
     fullOutputPerSeason: number,
-    capacityFactor: number,
+    kgPerMWh: number,
 ): number {
-    return fullOutputPerSeason * capacityFactor;
+    return (fullOutputPerSeason / WH_PER_MWH) * kgPerMWh;
 }
 
 /**
@@ -77,17 +77,4 @@ export function nextBuyRound(
     return round !== null && round <= roundCount ? round : null;
 }
 
-/**
- * A facility's price spread over each MW of its power and each Round of its
- * lifetime, in coins, so facilities of different sizes and lifetimes compare.
- * `power` is in W.
- */
-export function pricePerMWPerRound(
-    price: number,
-    power: number,
-    lifetimeRounds: number,
-): number {
-    return price / (power / W_PER_MW) / lifetimeRounds;
-}
-
-const W_PER_MW = 1_000_000;
+const WH_PER_MWH = 1_000_000;

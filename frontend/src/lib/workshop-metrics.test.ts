@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
     carbonTaxPerMWh,
-    expectedGenerationPerSeason,
+    maxFuelPerSeason,
     fuelCostPerMWh,
     nextBuyRound,
-    pricePerMWPerRound,
     storageMarkup,
     workingRounds,
 } from "./workshop-metrics";
@@ -60,13 +59,10 @@ describe("storageMarkup", () => {
     });
 });
 
-describe("expectedGenerationPerSeason", () => {
-    it("is a season at full output scaled down by the capacity factor", () => {
-        // 95 MW of PV for 2'184 hours is 207'480 MWh; at 15%, 31'122 MWh.
-        expect(expectedGenerationPerSeason(207_480e6, 0.15)).toBeCloseTo(
-            31_122e6,
-            -3,
-        );
+describe("maxFuelPerSeason", () => {
+    it("is a season at full output times the fuel use per MWh", () => {
+        // 100 MW for 2'184 hours is 218'400 MWh; at 400 kg/MWh, 87'360 t.
+        expect(maxFuelPerSeason(218_400e6, 400)).toBeCloseTo(87_360_000);
     });
 });
 
@@ -89,15 +85,5 @@ describe("workingRounds", () => {
                 lifetime_rounds: 6,
             }),
         ).toEqual({ first: 3, last: 8 });
-    });
-});
-
-describe("pricePerMWPerRound", () => {
-    it("spreads the price over each MW of power and each Round of lifetime", () => {
-        // A coal burner: 10M for 35 MW lasting 3 Rounds.
-        expect(pricePerMWPerRound(10_000_000, 35_000_000, 3)).toBeCloseTo(
-            95_238,
-            0,
-        );
     });
 });

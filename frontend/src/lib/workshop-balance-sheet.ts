@@ -4,7 +4,7 @@
  *
  * Only level-0 rows add up to the result. The rows indented under them break
  * those lines down, with a volume and a rate where the amount is one times the
- * other. Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in
+ * other. Each such row says what its volume and rate are, for their tooltips. Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in
  * kg and are shown in tonnes.
  *
  * The simple view adds up operating income by kind: market income, dumping, O&M
@@ -76,14 +76,26 @@ export function formatRate(value: number): string {
 export interface Cell {
     volume?: number;
     rate?: number;
-    /** For a facility type's fuel, its cost per MWh the type generated. */
-    perMWh?: number;
     /** Null leaves the amount empty. */
     amount: number | null;
 }
 
-/** The unit column: what the volume and the rate are measured in. */
-export type RowUnit = "energy" | "usage" | "fuel" | "tax" | "co2";
+/** What the volume and the rate are measured in. */
+export type RowUnit = "energy" | "fuel" | "tax" | "co2";
+
+/** Each unit's volume and rate, as their tooltips name them. */
+export const UNIT_NAMES: Record<RowUnit, { volume: string; rate: string }> = {
+    energy: { volume: "MWh", rate: "coins/MWh" },
+    fuel: { volume: "tonnes", rate: "coins/tonne" },
+    tax: { volume: "coins", rate: "%" },
+    co2: { volume: "tonnes of CO₂", rate: "coins/tonne of CO₂" },
+};
+
+/** What a row's volume and rate are, for their tooltips. */
+export interface RowNotes {
+    volume: string;
+    rate: string;
+}
 
 export interface Row {
     id: string;
@@ -91,6 +103,8 @@ export interface Row {
     level: 0 | 1 | 2;
     kind: "line" | "subtotal" | "total" | "pending";
     unit?: RowUnit;
+    /** Set with `unit`. */
+    notes?: RowNotes;
     /** The row's columns for a season, or for the Round so far. */
     cell: (sheet: PeriodSheet) => Cell;
     /**
@@ -101,6 +115,13 @@ export interface Row {
 }
 
 const empty: Cell = { amount: null };
+
+const SOLD_NOTE = "Energy sold by this facility";
+const FUEL_NOTES: RowNotes = {
+    volume: "Fuel consumed by this facility",
+    rate: "Price paid per tonne of fuel",
+};
+const CO2_RATE_NOTE = "Carbon tax per tonne of CO₂";
 
 /** Energy and the money it was worth, as a volume in MWh and a rate per MWh. */
 function energyCell(energy: number, money: number): Cell {
@@ -144,6 +165,10 @@ function revenueTaxRows(sheet: BalanceSheet): Row[] {
             level: 0,
             kind: "line",
             unit: "tax",
+            notes: {
+                volume: "Revenue the tax is charged on",
+                rate: "Share of the revenue taxed",
+            },
             cell: (p) =>
                 p.revenue_tax > 0
                     ? {
@@ -215,6 +240,7 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
         key: "sold" | "bought" | "dumped",
         label: string,
         sign: 1 | -1,
+        notes: RowNotes,
     ): Row[] =>
         has(total[key])
             ? [
@@ -224,6 +250,7 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
                       level: 1,
                       kind: "line",
                       unit: "energy",
+                      notes,
                       cell: (p) => {
                           const line = p[key].find((l) => l.facility === id);
                           if (!line) return { amount: 0 };
@@ -242,9 +269,18 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
             kind: "line",
             cell: (p) => ({ amount: facilityResult(p, id) }),
         },
-        ...energyRow("sold", "Energy sold", 1),
-        ...energyRow("bought", "Energy bought (storage)", -1),
-        ...energyRow("dumped", "Dumping cost", -1),
+        ...energyRow("sold", "Energy sold", 1, {
+            volume: SOLD_NOTE,
+            rate: "Average price at which this facility sold its electricity",
+        }),
+        ...energyRow("bought", "Energy bought (storage)", -1, {
+            volume: "Energy bought by this facility",
+            rate: "Average price at which this facility bought its electricity",
+        }),
+        ...energyRow("dumped", "Dumping cost", -1, {
+            volume: "Energy dumped by this facility",
+            rate: "Cost of dumping",
+        }),
         {
             id: `${id}-om`,
             label: "Operation & maintenance",
@@ -263,20 +299,21 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
                 kind: "line",
                 cell: (p) => ({ amount: -(omLine(p)?.fixed ?? 0) }),
             },
+            // Against the energy sold, as on the row above, at the variable
+            // cost per MWh sold.
             {
                 id: `${id}-om-variable`,
-                label: "Variable (usage × full cost)",
+                label: "Variable",
                 level: 2,
                 kind: "line",
-                unit: "usage",
+                unit: "energy",
+                notes: { volume: SOLD_NOTE, rate: "Variable O&M cost" },
                 cell: (p) => {
                     const season = omLine(p);
                     if (!season) return { amount: 0 };
-                    return {
-                        volume: season.usage * 100,
-                        rate: season.variable_full,
-                        amount: -(season.om - season.fixed),
-                    };
+                    const sold =
+                        p.sold.find((l) => l.facility === id)?.energy ?? 0;
+                    return energyCell(sold, -(season.om - season.fixed));
                 },
             },
         );
@@ -290,9 +327,7 @@ function facilityRows(total: PeriodSheet, type: OmLine): Row[] {
  * The fuel a facility type burned, in tonnes. If it burned any from stock over
  * the Round, it breaks down into the fuel bought in the period, at its price,
  * and the fuel from stock, which costs nothing: it was charged as excess fuel
- * when it was bought. Without fuel from stock, the row also gives the fuel cost
- * per MWh the type generated. A type that burns fuel never dumps, so what it
- * generated is what it sold.
+ * when it was bought.
  */
 function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
     const season = (p: PeriodSheet) =>
@@ -307,16 +342,11 @@ function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
                 level: 1,
                 kind: "line",
                 unit: "fuel",
+                notes: FUEL_NOTES,
                 cell: (p) => {
                     const line = season(p);
                     if (!line) return { amount: 0 };
-                    const sold =
-                        (p.sold.find((l) => l.facility === id)?.energy ?? 0) /
-                        WH_PER_MWH;
-                    return {
-                        ...fuelCell(line.quantity, line.cost),
-                        perMWh: sold > 0 ? line.cost / sold : undefined,
-                    };
+                    return fuelCell(line.quantity, line.cost);
                 },
             },
         ];
@@ -328,6 +358,7 @@ function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
             level: 1,
             kind: "line",
             unit: "fuel",
+            notes: FUEL_NOTES,
             cell: (p) => {
                 const line = season(p);
                 if (!line) return { amount: 0 };
@@ -343,6 +374,10 @@ function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
             level: 2,
             kind: "line",
             unit: "fuel",
+            notes: {
+                volume: "Fuel this facility consumed that was bought this season",
+                rate: "Price paid per tonne of fuel",
+            },
             cell: (p) => {
                 const line = season(p);
                 if (!line) return { amount: 0 };
@@ -355,6 +390,10 @@ function facilityFuelRows(id: string, fuel: FacilityFuelLine): Row[] {
             level: 2,
             kind: "line",
             unit: "fuel",
+            notes: {
+                volume: "Fuel this facility consumed from your stock",
+                rate: "Nothing: it was paid for as excess fuel when it was bought",
+            },
             cell: (p) => {
                 const line = season(p);
                 if (!line) return { amount: 0 };
@@ -391,6 +430,10 @@ function excessFuelRows(total: PeriodSheet): Row[] {
                 level: 1,
                 kind: "line",
                 unit: "fuel",
+                notes: {
+                    volume: "Fuel bought beyond what your facilities consumed, which went into your stock",
+                    rate: "Price paid per tonne of fuel",
+                },
                 cell: (p) => {
                     const line = p.excess_fuel.find(
                         (l) => l.fuel === fuel.fuel,
@@ -452,6 +495,10 @@ export function balanceSheetRows(
                 level: 1,
                 kind: "line",
                 unit: "co2",
+                notes: {
+                    volume: "CO₂ emitted building this Round's facilities",
+                    rate: CO2_RATE_NOTE,
+                },
                 cell: (p) =>
                     p.construction_emissions > 0
                         ? co2Cell(
@@ -467,6 +514,10 @@ export function balanceSheetRows(
                 level: 1,
                 kind: "line",
                 unit: "co2",
+                notes: {
+                    volume: "CO₂ emitted by your facilities",
+                    rate: CO2_RATE_NOTE,
+                },
                 cell: (p) =>
                     co2Cell(
                         p.taxed_emissions,

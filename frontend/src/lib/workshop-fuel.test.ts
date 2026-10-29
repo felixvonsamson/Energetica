@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
     formatFuelAmount,
     formatPriceChange,
-    fieldPrice,
     fuelFieldText,
     fuelFieldUnit,
     shownQuantity,
@@ -104,13 +103,6 @@ describe("shownQuantity", () => {
     it("rounds kg to what the field shows, so retyping it changes nothing", () => {
         expect(shownQuantity(12_345_678.9, "gas")).toBe(12_346_000);
         expect(shownQuantity(417.2, "uranium")).toBe(417);
-    });
-});
-
-describe("fieldPrice", () => {
-    it("is the price per unit of the order field", () => {
-        expect(fieldPrice({ fuel: "gas", price: 0.08 })).toBeCloseTo(80_000);
-        expect(fieldPrice({ fuel: "uranium", price: 250 })).toBe(250);
     });
 });
 

@@ -6,9 +6,10 @@
  *
  * Hovering a stat marked with an info mark shows figures worked out from it
  * (#1400): the O&M split into a fixed cost per season and a variable cost per
- * MWh, the fuel cost per MWh at this season's price, the carbon tax per MWh,
- * and so on. Players add up the costs per MWh themselves to find their marginal
- * cost, so the card never shows it.
+ * MWh, the fuel burned with its cost per MWh at this season's price, the
+ * expected generation of each season, the carbon tax per MWh once one is in
+ * force, and so on. Players add up the costs per MWh themselves to find their
+ * marginal cost, so the card never shows it.
  *
  * What it costs to buy is deliberately not on the card: see `FacilityPriceTag`.
  */
@@ -20,7 +21,6 @@ import {
     Gauge,
     type LucideIcon,
     Percent,
-    Weight,
     Wrench,
     Zap,
 } from "lucide-react";
@@ -38,7 +38,8 @@ import {
     useWorkshopSession,
     useWorkshopVote,
 } from "@/hooks/use-workshop";
-import { fuelPrice, taxPerTonne } from "@/lib/workshop-control-room";
+import { formatVolume } from "@/lib/workshop-balance-sheet";
+import { taxPerTonne } from "@/lib/workshop-control-room";
 import {
     formatFuelUse,
     isStorage,
@@ -48,11 +49,12 @@ import {
 import { roundsLabel } from "@/lib/workshop-fleet";
 import {
     carbonTaxPerMWh,
-    expectedGenerationPerSeason,
     fuelCostPerMWh,
+    maxFuelPerSeason,
     nextBuyRound,
     workingRounds,
 } from "@/lib/workshop-metrics";
+import { SEASON_LABELS, SEASONS } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 import {
     formatEnergy,
@@ -64,6 +66,8 @@ import { cn } from "@energetica/ui/lib/utils";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
 type FuelType = ApiSchema<"Fuel">;
+
+const WH_PER_MWH = 1_000_000;
 
 /** Height of a card's bottom row, which an opened fleet stack lines up with. */
 export const CARD_ROW_HEIGHT = 30;
@@ -102,7 +106,14 @@ export function FacilityCard({
                 <img
                     src={workshopFacilityImages[facility.id]}
                     alt=""
-                    className="mt-1 mb-1.5 aspect-[16/10] w-full rounded-md object-cover"
+                    className={cn(
+                        "mt-1 aspect-[16/10] w-full rounded-md object-cover",
+                        // Every card is the same height. A storage card has one
+                        // stat row (25px) fewer, but its headline figures take
+                        // two lines, 12.5px more than a name: the gap below its
+                        // image makes up the rest.
+                        isStorage(facility) ? "mb-[18.5px]" : "mb-1.5",
+                    )}
                 />
                 <ul className="divide-y divide-stone-300 text-xs dark:divide-stone-700">
                     {facilityStats(facility, inputs).map((stat) => (
@@ -246,11 +257,17 @@ export function LifetimeTooltip({
  * so every place that shows a card gets its tooltips.
  */
 interface TooltipInputs {
-    /** Each fuel's price per kg this season. Empty before the first season. */
+    /**
+     * Each fuel's price per kg this season, or its catalog price before the
+     * first season. Empty until it loads.
+     */
     fuelPrices: Partial<Record<FuelType, number>>;
     /** What a carbon tax charges per kg of CO₂, or null until it loads. */
     taxRate: number | null;
-    /** Whether a carbon tax vote has passed, so the tax is charged. */
+    /**
+     * Whether a carbon tax vote has passed, so the tax is charged. Until then
+     * the emissions have no tooltip.
+     */
     taxInForce: boolean;
     /** The Round a facility bought next is bought in, or null if none is. */
     buyRound: number | null;
@@ -361,11 +378,12 @@ function facilityStats(
                     ? "None"
                     : `${formatMass(facility.base_pollution)}/MWh`,
             tooltip:
-                facility.base_pollution > 0 && inputs.taxRate !== null ? (
+                facility.base_pollution > 0 &&
+                inputs.taxInForce &&
+                inputs.taxRate !== null ? (
                     <CarbonTaxFigure
                         kgPerMWh={facility.base_pollution}
                         rate={inputs.taxRate}
-                        inForce={inputs.taxInForce}
                     />
                 ) : undefined,
         });
@@ -375,24 +393,7 @@ function facilityStats(
             label: "Capacity factor",
             icon: Gauge,
             value: `${Math.round(facility.capacity_factor * 100)}%`,
-            tooltip: (
-                <>
-                    <TooltipFigure
-                        label="Capacity factor"
-                        note="Its average output over a year of weather, as a share of its maximum output."
-                    />
-                    <TooltipFigure
-                        label="Expected generation"
-                        value={`${formatEnergy(
-                            expectedGenerationPerSeason(
-                                facility.full_output_per_season,
-                                facility.capacity_factor,
-                            ),
-                        )} per season`}
-                        note={`On average: ${formatEnergy(facility.full_output_per_season)} at full output × ${Math.round(facility.capacity_factor * 100)}%.`}
-                    />
-                </>
-            ),
+            tooltip: <CapacityFactorFigures facility={facility} />,
         });
     }
     stats.push({
@@ -401,24 +402,17 @@ function facilityStats(
         value: <Money amount={facility.om_per_round} />,
         tooltip: <OmFigures facility={facility} />,
     });
-    if (facility.fuel_type !== null) {
-        stats.push({
-            label: "Fuel",
-            icon: Fuel,
-            value: capitalize(facility.fuel_type),
-        });
-    }
     if (facility.fuel_use !== null && facility.fuel_type !== null) {
-        const price = inputs.fuelPrices[facility.fuel_type];
         stats.push({
             label: "Fuel use",
-            icon: Weight,
+            icon: Fuel,
             value: formatFuelUse(facility.fuel_use),
             tooltip: (
-                <FuelCostFigure
+                <FuelUseFigures
+                    facility={facility}
                     fuel={facility.fuel_type}
                     kgPerMWh={facility.fuel_use}
-                    pricePerKg={price}
+                    pricePerKg={inputs.fuelPrices[facility.fuel_type]}
                 />
             ),
         });
@@ -426,8 +420,48 @@ function facilityStats(
     return stats;
 }
 
-/** The O&M split into what is charged whatever the use and per MWh. */
+/**
+ * What the capacity factor means, and the energy the facility generates in
+ * each season on average over many Runs' weather.
+ */
+function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
+    const expected = facility.expected_generation;
+    return (
+        <>
+            <TooltipFigure
+                label="Capacity factor"
+                note="Its average output over a year of weather, as a share of its maximum output."
+            />
+            {expected && (
+                <div>
+                    <div className="font-semibold">
+                        Expected generation per season
+                    </div>
+                    <dl className="grid grid-cols-[auto_auto] justify-start gap-x-3">
+                        {SEASONS.map((season) => (
+                            <div key={season} className="contents">
+                                <dt className="opacity-75">
+                                    {SEASON_LABELS[season]}
+                                </dt>
+                                <dd className="text-right">
+                                    {formatVolume((expected[season] ?? 0) / WH_PER_MWH)}{" "}
+                                    MWh
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+            )}
+        </>
+    );
+}
+
+/**
+ * The O&M split into what is charged whatever the use and per MWh, each with
+ * its share of the O&M.
+ */
 function OmFigures({ facility }: { facility: WorkshopFacility }) {
+    const fixedShare = Math.round(facility.om_fixed_share * 100);
     return (
         <>
             <TooltipFigure
@@ -435,7 +469,7 @@ function OmFigures({ facility }: { facility: WorkshopFacility }) {
                 value={
                     <>
                         <Money amount={facility.om_fixed_per_season} /> per
-                        season
+                        season ({fixedShare}% share)
                     </>
                 }
                 note="Paid whatever you produce."
@@ -444,7 +478,12 @@ function OmFigures({ facility }: { facility: WorkshopFacility }) {
                 <TooltipFigure
                     label="Variable"
                     value={
-                        <MoneyPerMWh amount={facility.om_variable_per_mwh} />
+                        <>
+                            <MoneyPerMWh
+                                amount={facility.om_variable_per_mwh}
+                            />{" "}
+                            ({100 - fixedShare}% share)
+                        </>
                     }
                     note="Paid only on what you produce."
                 />
@@ -453,70 +492,61 @@ function OmFigures({ facility }: { facility: WorkshopFacility }) {
     );
 }
 
-/** What the fuel costs per MWh at this season's price. */
-function FuelCostFigure({
+/**
+ * The fuel a facility burns, what it costs per MWh at this season's price, and
+ * the most it burns in a season, running at full output all season.
+ */
+function FuelUseFigures({
+    facility,
     fuel,
     kgPerMWh,
     pricePerKg,
 }: {
+    facility: WorkshopFacility;
     fuel: FuelType;
     kgPerMWh: number;
     pricePerKg: number | undefined;
 }) {
-    if (pricePerKg === undefined) {
-        return (
-            <TooltipFigure
-                label="Fuel cost"
-                note="Shows once the first season's fuel prices are set."
-            />
-        );
-    }
-    const price = fuelPrice(fuel, pricePerKg);
     return (
-        <TooltipFigure
-            label="Fuel cost"
-            value={
-                <MoneyPerMWh amount={fuelCostPerMWh(kgPerMWh, pricePerKg)} />
-            }
-            note={
-                <>
-                    At this season&apos;s {fuel} price,{" "}
-                    <Money amount={price.value} />
-                    {price.unit}, for {formatFuelUse(kgPerMWh)}.
-                </>
-            }
-        />
+        <>
+            <TooltipFigure label="Fuel" value={capitalize(fuel)} />
+            {pricePerKg !== undefined && (
+                <TooltipFigure
+                    label="Fuel cost"
+                    value={
+                        <MoneyPerMWh
+                            amount={fuelCostPerMWh(kgPerMWh, pricePerKg)}
+                        />
+                    }
+                    note="At this season's price."
+                />
+            )}
+            <TooltipFigure
+                label="Max fuel use"
+                value={`${formatMass(
+                    maxFuelPerSeason(facility.full_output_per_season, kgPerMWh),
+                )} per season`}
+                note="Running at 100% output all season."
+            />
+        </>
     );
 }
 
-/** What the carbon tax costs per MWh, or would cost if a vote passes. */
+/** What the carbon tax costs per MWh, once one is in force. */
 function CarbonTaxFigure({
     kgPerMWh,
     rate,
-    inForce,
 }: {
     kgPerMWh: number;
     rate: number;
-    inForce: boolean;
 }) {
-    const tax = <MoneyPerMWh amount={carbonTaxPerMWh(kgPerMWh, rate)} />;
-    const perTonne = (
-        <>
-            <Money amount={taxPerTonne(rate)} /> per tonne of CO₂
-        </>
-    );
-    return inForce ? (
+    return (
         <TooltipFigure
             label="Carbon tax"
-            value={tax}
-            note={<>At {perTonne}.</>}
-        />
-    ) : (
-        <TooltipFigure
-            label="No carbon tax yet"
+            value={<MoneyPerMWh amount={carbonTaxPerMWh(kgPerMWh, rate)} />}
             note={
                 <>
-                    If one passes, at {perTonne}, it costs {tax}.
+                    At <Money amount={taxPerTonne(rate)} /> per tonne of CO₂.
                 </>
             }
         />

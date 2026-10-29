@@ -37,7 +37,7 @@ export function MetricTooltip({
             <TooltipTrigger asChild>{children}</TooltipTrigger>
             <TooltipContent
                 side="right"
-                className="flex max-w-72 flex-col gap-1.5 py-2 text-left leading-snug text-balance"
+                className="flex max-w-80 flex-col gap-1.5 py-2 text-left text-sm leading-snug text-wrap"
             >
                 {content}
             </TooltipContent>

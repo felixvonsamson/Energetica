@@ -104,7 +104,7 @@ from energetica.workshop.session import (
 from energetica.workshop.storage import energy_at_risk
 from energetica.workshop.unlocks import CSP_UNLOCK_ROUND, UPGRADES
 from energetica.workshop.votes import CARBON_TAX_RATE
-from energetica.workshop.weather import capacity_factor
+from energetica.workshop.weather import capacity_factor, expected_generation
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -436,6 +436,7 @@ def get_facilities(
             om_fixed_per_season=om_fixed_per_season(facility),
             om_variable_per_mwh=om_variable_per_mwh(facility),
             full_output_per_season=full_output_per_season(facility),
+            expected_generation=expected_generation(facility.id),
         )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned
@@ -553,9 +554,8 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
         run_out = last.fuels_run_out
     lines = []
     for fuel in Fuel:
+        # Before the first Trading period, a fuel is at its catalog price, as on the control room.
         price = session.fuel_prices.get(fuel)
-        if price is None:
-            continue
         # A fuel the player does not burn is listed for its price alone (#1290).
         burned = fuel in needs
         need = needs.get(fuel, 0.0)
@@ -564,9 +564,9 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
                 fuel=fuel,
                 name=FUEL_NAMES[fuel],
                 burned=burned,
-                price=price.price,
-                change=price.change,
-                shocked=price.shocked,
+                price=session.fuel_price(fuel),
+                change=None if price is None else price.change,
+                shocked=price is not None and price.shocked,
                 stock=player.fuel_stock.get(fuel, 0.0),
                 season_need=need,
                 need_by_facility=[
@@ -587,8 +587,9 @@ def _fuel_out(player: WorkshopPlayer, session: WorkshopSession) -> WorkshopFuelO
 
 @router.get("/fuel")
 def get_fuel(player: Player, session: Session) -> WorkshopFuelOut:
-    """Every fuel's price this season, the calling player's stock of it, and for a fuel their operating facilities
-    burn, under manual procurement, what they buy when the price-setting window closes.
+    """Every fuel's price this season, or its catalog price before the first one, the calling player's stock of it,
+    and for a fuel their operating facilities burn, under manual procurement, what they buy when the price-setting
+    window closes.
     """
     return _fuel_out(player, session)
 

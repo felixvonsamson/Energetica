@@ -7,7 +7,8 @@
  * view adds operating income up by kind; the detailed view adds it up by
  * facility type, with each type's sales, dumping, O&M and fuel indented under
  * it. In the detailed view, each season's group also shows a volume and a rate
- * beside each amount. The sheet fits its page rather than scrolling sideways:
+ * beside each amount, each explained on hover, as an info mark on their column
+ * headers says. The sheet fits its page rather than scrolling sideways:
  * where there is no room for every season's volume and rate, only the season
  * picked in the waterfall shows them. A season not settled yet shows "–". As on
  * the timeline, the season the grid went down in is marked with a red zap-off
@@ -20,8 +21,8 @@ import { ZapOff } from "lucide-react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
 import {
+    InfoMark,
     MetricTooltip,
-    MoneyPerMWh,
     TooltipFigure,
 } from "@/components/workshop/metric-tooltip";
 import { useContainerDimensions } from "@/hooks/use-container-dimensions";
@@ -29,6 +30,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
     type BalanceSheet,
     type Row,
+    type RowNotes,
     type RowUnit,
     type Period,
     type SeasonSheet,
@@ -38,6 +40,7 @@ import {
     formatFuelVolume,
     formatVolume,
     initialPeriod,
+    UNIT_NAMES,
     waterfallScale,
     waterfallSteps,
 } from "@/lib/workshop-balance-sheet";
@@ -495,11 +498,16 @@ function Ledger({
                             col.period === period && "bg-(--bs-highlight)",
                         )}
                     >
-                        {col.field === "volume"
-                            ? "VOL"
-                            : col.field === "rate"
-                              ? "RATE"
-                              : "AMOUNT"}
+                        {col.field === "amount" ? (
+                            "AMOUNT"
+                        ) : (
+                            <MetricTooltip content="Hover a value to see its unit and where it comes from.">
+                                <span className="inline-flex items-center gap-1">
+                                    {col.field === "volume" ? "VOL" : "RATE"}
+                                    <InfoMark />
+                                </span>
+                            </MetricTooltip>
+                        )}
                     </div>
                 ))}
             </div>
@@ -651,74 +659,23 @@ function RowLabel({
 }
 
 /**
- * What a volume or a rate means, with its unit, for its row's kind (#1400).
- * Giving the unit on hover keeps the ledger narrow enough to show every
- * season's volumes. A facility type's fuel also gives its cost per MWh.
+ * What a volume or a rate is, with its unit (#1400). Giving the unit on hover
+ * keeps the ledger narrow enough to show every season's volumes.
  */
 function VolumeRateTooltip({
     unit,
+    notes,
     field,
-    text,
-    perMWh,
 }: {
     unit: RowUnit;
+    notes: RowNotes;
     field: "volume" | "rate";
-    /** The figure as the cell shows it. */
-    text: string;
-    perMWh: number | undefined;
 }) {
-    const coins = (
-        <span className="inline-flex items-center gap-0.5">
-            <CoinIcon className="size-3" />
-            {text}
-        </span>
-    );
-    const meanings: Record<
-        "volume" | "rate",
-        Record<RowUnit, [ReactNode, string]>
-    > = {
-        volume: {
-            energy: [`${text} MWh`, "The energy behind this line."],
-            usage: [
-                `${text}% usage`,
-                "How much the facilities ran, as a share of running at full output all season. The variable O&M is charged in proportion.",
-            ],
-            fuel: [`${text} t`, "The fuel behind this line, in tonnes."],
-            tax: [
-                <>{coins} taxable revenue</>,
-                "The revenue the tax is charged on.",
-            ],
-            co2: [`${text} t CO₂`, "The CO₂ emitted, in tonnes."],
-        },
-        rate: {
-            energy: [
-                <>{coins} per MWh</>,
-                "The average price per MWh: the amount divided by the energy.",
-            ],
-            usage: [
-                <>{coins} at full use</>,
-                "The variable O&M at 100% usage. The amount is this times the usage.",
-            ],
-            fuel: [
-                <>{coins} per tonne</>,
-                "The average price paid per tonne of fuel.",
-            ],
-            tax: [`${text}% tax rate`, "The share of the revenue taxed."],
-            co2: [<>{coins} per tonne of CO₂</>, "The carbon tax rate."],
-        },
-    };
-    const [label, note] = meanings[field][unit];
     return (
-        <>
-            <TooltipFigure label={label} note={note} />
-            {perMWh !== undefined && (
-                <TooltipFigure
-                    label="Fuel cost"
-                    value={<MoneyPerMWh amount={perMWh} />}
-                    note="The fuel paid for divided by the energy the facilities generated."
-                />
-            )}
-        </>
+        <TooltipFigure
+            label={`In ${UNIT_NAMES[unit][field]}`}
+            note={`${notes[field]}.`}
+        />
     );
 }
 
@@ -770,12 +727,12 @@ function CellValue({
         return (
             <MetricTooltip
                 content={
-                    row.unit && (
+                    row.unit &&
+                    row.notes && (
                         <VolumeRateTooltip
                             unit={row.unit}
+                            notes={row.notes}
                             field={col.field}
-                            text={text}
-                            perMWh={cell.perMWh}
                         />
                     )
                 }
