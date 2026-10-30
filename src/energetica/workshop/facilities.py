@@ -199,7 +199,7 @@ _FACILITIES = [
         construction_pollution=5_000_000, pollution=1_200, ramping_time=7_200, fuel=Fuel.COAL,
     ),
     _generator(
-        FacilityId.MODERN_COAL_PLANT, "Modern coal power plant", FacilityCategory.CONVENTIONAL,
+        FacilityId.MODERN_COAL_PLANT, "Modern coal plant", FacilityCategory.CONVENTIONAL,
         price=26_000_000, power=75_000_000, construction_lag=0, lifetime=3, om_per_round=8_000_000, om_fixed_share=0.2,
         construction_pollution=10_000_000, pollution=900, ramping_time=5_400, fuel=Fuel.COAL,
     ),
@@ -246,7 +246,7 @@ _FACILITIES = [
         construction_pollution=20_000_000, pollution=0, ramping_time=0, fuel=None,
     ),
     _generator(
-        FacilityId.CSP_SOLAR, "Concentrated solar power", FacilityCategory.CSP,
+        FacilityId.CSP_SOLAR, "Concent. solar power", FacilityCategory.CSP,
         price=12_000_000, power=150_000_000, construction_lag=0, lifetime=3, om_per_round=250_000, om_fixed_share=1.0,
         construction_pollution=5_000_000, pollution=0, ramping_time=0, fuel=None,
     ),

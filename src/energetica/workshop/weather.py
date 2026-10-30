@@ -42,7 +42,7 @@ from energetica.sim.renewables import (
     wind_speed_noise,
 )
 from energetica.workshop.demand_block import DAYS_PER_YEAR
-from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId
+from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, full_output_per_season
 from energetica.workshop.seasons import (
     MIDDLE_WEEK_START,
     SEASONS,
@@ -272,6 +272,43 @@ def _hydro_capacity_factor() -> float:
     weather = RunWeather(seed=0)
     hours = [t for season in SEASONS for day in _hours(season) for t in day]
     return sum(weather.share(FacilityId.SMALL_WATER_DAM, t) for t in hours) / len(hours)
+
+
+@cache
+def _hydro_season_factor(season: Season) -> float:
+    """Hydro's average output over ``season``: the same in every Run, since it follows a fixed table."""
+    weather = RunWeather(seed=0)
+    hours = [t for day in _hours(season) for t in day]
+    return sum(weather.share(FacilityId.SMALL_WATER_DAM, t) for t in hours) / len(hours)
+
+
+def normal_season_factor(facility: FacilityId, season: Season) -> float | None:
+    """The average share of its power ``facility`` produces in ``season`` over many Runs' weather, from 0 to 1, or
+    None for a facility that does not follow the weather: what a player can expect of a season before it is played.
+    """
+    match CATALOG[facility].category:
+        case FacilityCategory.WIND:
+            return NORMAL_OUTPUT[season].wind
+        case FacilityCategory.PV | FacilityCategory.CSP:
+            return NORMAL_OUTPUT[season].solar
+        case FacilityCategory.HYDRO:
+            return _hydro_season_factor(season)
+        case _:
+            return None
+
+
+def expected_generation(facility: FacilityId) -> dict[Season, float] | None:
+    """The energy ``facility`` generates in each season on average over many Runs' weather, in Wh, or None for a
+    facility that does not follow the weather.
+    """
+    full_output = full_output_per_season(CATALOG[facility])
+    expected: dict[Season, float] = {}
+    for season in SEASONS:
+        factor = normal_season_factor(facility, season)
+        if factor is None:
+            return None
+        expected[season] = full_output * factor
+    return expected
 
 
 def capacity_factor(seed: int, facility: FacilityId) -> float | None:

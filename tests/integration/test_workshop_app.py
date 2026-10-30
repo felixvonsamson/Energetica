@@ -32,7 +32,7 @@ from energetica.workshop.app import create_workshop_app
 from energetica.workshop.credentials import CredentialLine, WorkshopCredentials, write_credentials
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fleet import OwnedFacility, Purchase
-from energetica.workshop.fuel import season_need
+from energetica.workshop.fuel import CATALOG_FUEL_PRICES, season_need
 from energetica.workshop import session as session_module
 from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.round_format import TradingFormat
@@ -1270,6 +1270,18 @@ def test_an_order_must_be_a_quantity(session_path: Path, clock: _Clock, body: di
 
     assert client.put(f"{FUEL_URL}/gas", json=body).status_code == 422
     assert client.put(f"{FUEL_URL}/wood", json={"quantity": 1.0}).status_code == 422
+
+
+def test_before_the_first_season_every_fuel_is_at_its_catalog_price(session_path: Path, clock: _Clock) -> None:
+    # As on the control room, so a player has a fuel price to plan with in Round 1's Investment phase.
+    _, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+
+    body = client.get(FUEL_URL).json()
+
+    assert [(line["fuel"], line["price"], line["change"]) for line in body["fuels"]] == [
+        (fuel.value, CATALOG_FUEL_PRICES[fuel], None) for fuel in Fuel
+    ]
 
 
 def test_the_facilitator_has_no_fuel(session_path: Path, clock: _Clock) -> None:

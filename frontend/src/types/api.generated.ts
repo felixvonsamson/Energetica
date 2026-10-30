@@ -2381,8 +2381,9 @@ export interface paths {
         };
         /**
          * Get Fuel
-         * @description Every fuel's price this season, the calling player's stock of it, and for a fuel their operating facilities
-         *     burn, under manual procurement, what they buy when the price-setting window closes.
+         * @description Every fuel's price this season, or its catalog price before the first one, the calling player's stock of it,
+         *     and for a fuel their operating facilities burn, under manual procurement, what they buy when the price-setting
+         *     window closes.
          */
         get: operations["get_fuel_api_v1_workshop_fuel_get"];
         put?: never;
@@ -6904,6 +6905,13 @@ export interface components {
              * @description The energy it generates in a season at full output, in Wh
              */
             full_output_per_season: number;
+            /**
+             * Expected Generation
+             * @description The energy it generates in each season on average over many Runs' weather, in Wh, or null for a facility that does not follow the weather
+             */
+            expected_generation: {
+                [key: string]: number;
+            } | null;
         };
         /**
          * WorkshopFacilitySeriesOut
@@ -6978,12 +6986,12 @@ export interface components {
             burned: boolean;
             /**
              * Price
-             * @description The season's price per kg
+             * @description The season's price per kg, or the catalog price before the first season
              */
             price: number;
             /**
              * Change
-             * @description The change since last season, as a share of last season's price, such as 0.15 for +15%. Null in the first season
+             * @description The change since last season, as a share of last season's price, such as 0.15 for +15%. Null in the first season and before it
              */
             change: number | null;
             /**

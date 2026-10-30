@@ -297,10 +297,11 @@ describe("balanceSheetRows", () => {
         });
     });
 
-    it("splits variable O&M into usage times the full variable cost", () => {
+    it("shows variable O&M as the energy sold times the cost per MWh", () => {
+        // 1'980 of variable O&M for the 6'000 MWh the coal burner sold.
         const variable = row("coal_burner-om-variable").cell(SPRING);
-        expect(variable.volume).toBeCloseTo(55);
-        expect(variable.rate).toBe(3_600);
+        expect(variable.volume).toBeCloseTo(6_000);
+        expect(variable.rate).toBeCloseTo(0.33);
         expect(variable.amount).toBe(-(2_880 - 900));
         expect(rows.some((r) => r.id === "onshore_wind_turbine-om-fixed")).toBe(
             false,
@@ -315,11 +316,6 @@ describe("balanceSheetRows", () => {
             rate: 500,
             amount: -3_000,
         });
-    });
-
-    it("gives the fuel cost per MWh the facility type generated", () => {
-        // 3'000 of coal for the 6'000 MWh the coal burner sold.
-        expect(row("coal_burner-fuel").cell(SPRING).perMWh).toBeCloseTo(0.5);
     });
 
     it("breaks the fuel burned from stock out of the fuel bought, at no cost", () => {

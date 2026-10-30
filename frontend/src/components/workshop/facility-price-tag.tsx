@@ -15,9 +15,7 @@
  *
  * Prices are always in millions ("8M", #1247), unlike money elsewhere.
  *
- * The price per MW per Round of lifetime (#1400), which compares facilities of
- * different sizes and lifetimes, shows on the tag's back and in a tooltip on
- * its price, since the tag only flips while the phase is open.
+ * The construction time and pollution are named on hover (#1400).
  */
 
 import { useAnimate } from "framer-motion";
@@ -32,7 +30,6 @@ import {
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 import { formatCatalogPrice } from "@/lib/workshop-facilities";
 import { roundsLabel } from "@/lib/workshop-fleet";
-import { pricePerMWPerRound } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
 import { formatEmissions } from "@energetica/core/format-utils";
 import { Money } from "@energetica/ui/components/money";
@@ -162,18 +159,6 @@ export type PriceTag = ReturnType<typeof usePriceTag>;
 export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
     const { facility, owned, selected, affordable, flipped, scope } = tag;
     const { limit, atLimit } = tag;
-    const perMW = (
-        <>
-            <Money
-                amount={pricePerMWPerRound(
-                    facility.price,
-                    facility.base_power_generation,
-                    facility.lifetime_rounds,
-                )}
-            />{" "}
-            per MW per Round
-        </>
-    );
 
     return (
         // The string counts as part of the tag for hovering, so the pointer
@@ -201,23 +186,12 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                         className={FACE}
                     >
                         <PinHole />
-                        <MetricTooltip
-                            content={
-                                <TooltipFigure
-                                    label={perMW}
-                                    note={`The price spread over its ${facility.base_power_generation / 1_000_000} MW and its ${roundsLabel(facility.lifetime_rounds)} of lifetime.`}
-                                />
-                            }
-                        >
-                            <span>
-                                {/* The coin sits a little low next to these bold digits. */}
-                                <Money
-                                    amount={facility.price}
-                                    format={formatCatalogPrice}
-                                    className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
-                                />
-                            </span>
-                        </MetricTooltip>
+                        {/* The coin sits a little low next to these bold digits. */}
+                        <Money
+                            amount={facility.price}
+                            format={formatCatalogPrice}
+                            className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
+                        />
                         {/* A price shock this Round moved the price (#1012). */}
                         {facility.price !== facility.base_price && (
                             <Money
@@ -229,15 +203,7 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                         <span className="mt-0.5 flex gap-3 text-[10px]">
                             <MetricTooltip
                                 content={
-                                    <TooltipFigure
-                                        label="Construction time"
-                                        note={
-                                            facility.construction_lag_rounds ===
-                                            0
-                                                ? "It works in the Round you buy it."
-                                                : `It starts working ${roundsLabel(facility.construction_lag_rounds)} after the Round you buy it, and then works its whole lifetime.`
-                                        }
-                                    />
+                                    <TooltipFigure label="Construction time" />
                                 }
                             >
                                 <span className="flex items-center gap-0.5">
@@ -251,10 +217,7 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                             </MetricTooltip>
                             <MetricTooltip
                                 content={
-                                    <TooltipFigure
-                                        label="Construction pollution"
-                                        note="The CO₂ emitted to build one. Once a carbon tax is in force, building is taxed too."
-                                    />
+                                    <TooltipFigure label="Construction pollution" />
                                 }
                             >
                                 <span className="flex items-center gap-0.5">
@@ -299,9 +262,6 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                                 : affordable
                                   ? "Click to add"
                                   : "Not enough money"}
-                        </span>
-                        <span className="mt-0.5 flex items-center gap-1 text-[10px] whitespace-nowrap">
-                            {perMW}
                         </span>
                         <span className="mt-0.5 text-[10px] whitespace-nowrap">
                             {countsLabel(owned, selected)}

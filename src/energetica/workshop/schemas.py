@@ -160,6 +160,10 @@ class WorkshopFacilityOut(WorkshopFacility):
     om_fixed_per_season: float = Field(description="The part of its O&M charged every season whatever its use")
     om_variable_per_mwh: float = Field(description="The part of its O&M charged per MWh it generates")
     full_output_per_season: float = Field(description="The energy it generates in a season at full output, in Wh")
+    expected_generation: dict[Season, float] | None = Field(
+        description="The energy it generates in each season on average over many Runs' weather, in Wh, or null for "
+        "a facility that does not follow the weather"
+    )
 
 
 class WorkshopSelectionIn(BaseModel):
@@ -246,10 +250,10 @@ class WorkshopFuelLineOut(BaseModel):
     fuel: Fuel
     name: str
     burned: bool = Field(description="Whether the player's operating facilities burn it. Only then can they order it")
-    price: float = Field(description="The season's price per kg")
+    price: float = Field(description="The season's price per kg, or the catalog price before the first season")
     change: float | None = Field(
         description="The change since last season, as a share of last season's price, such as 0.15 for +15%. Null "
-        "in the first season"
+        "in the first season and before it"
     )
     shocked: bool = Field(description="Whether a price shock landed this season")
     stock: float = Field(description="What the player holds")

@@ -3,9 +3,10 @@
  * into the bids panel, showing a price's change since last season, and telling
  * when an order runs into the stockpile limit.
  *
- * The server counts fuel in kg. The panel shows gas and coal in kilotonnes and
- * uranium in kg, always, rather than switching to whichever unit suits the
- * number: a player reading "34 t" could easily take it for 34 kt.
+ * The server counts fuel in kg. The panel shows quantities of gas and coal in
+ * kilotonnes and of uranium in kg, always, rather than switching to whichever
+ * unit suits the number: a player reading "34 t" could easily take it for 34
+ * kt.
  */
 
 import coal from "@/assets/fuels/coal.svg";
@@ -106,14 +107,6 @@ function separateThousands(text: string): string {
 export function shownQuantity(kg: number, fuel: Fuel): number {
     const parsed = parseFuelQuantity(fuelFieldText(kg, fuel), fuel);
     return parsed.ok ? parsed.kg : kg;
-}
-
-/**
- * The season's price per unit of the fuel's order field, so it reads in the
- * same unit as the quantity beside it.
- */
-export function fieldPrice(line: Pick<FuelLine, "fuel" | "price">): number {
-    return line.price * FIELD_UNITS[line.fuel].kg;
 }
 
 /** How many seasons at full output the stockpile limit holds, such as 3. */
