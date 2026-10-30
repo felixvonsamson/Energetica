@@ -421,8 +421,8 @@ function facilityStats(
 }
 
 /**
- * What the capacity factor means, and the energy the facility generates in
- * each season on average over many Runs' weather.
+ * What the capacity factor means, and the energy the facility generates in each
+ * season on average over many Runs' weather.
  */
 function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
     const expected = facility.expected_generation;
@@ -444,7 +444,9 @@ function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
                                     {SEASON_LABELS[season]}
                                 </dt>
                                 <dd className="text-right">
-                                    {formatVolume((expected[season] ?? 0) / WH_PER_MWH)}{" "}
+                                    {formatVolume(
+                                        (expected[season] ?? 0) / WH_PER_MWH,
+                                    )}{" "}
                                     MWh
                                 </dd>
                             </div>

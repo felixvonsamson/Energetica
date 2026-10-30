@@ -4,8 +4,9 @@
  *
  * Only level-0 rows add up to the result. The rows indented under them break
  * those lines down, with a volume and a rate where the amount is one times the
- * other. Each such row says what its volume and rate are, for their tooltips. Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in
- * kg and are shown in tonnes.
+ * other. Each such row says what its volume and rate are, for their tooltips.
+ * Energy arrives in Wh and is shown in MWh, and fuel and CO₂ arrive in kg and
+ * are shown in tonnes.
  *
  * The simple view adds up operating income by kind: market income, dumping, O&M
  * and fuel. The detailed view adds it up by facility type instead, so each

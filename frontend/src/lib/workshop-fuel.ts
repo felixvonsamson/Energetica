@@ -5,8 +5,8 @@
  *
  * The server counts fuel in kg. The panel shows quantities of gas and coal in
  * kilotonnes and of uranium in kg, always, rather than switching to whichever
- * unit suits the number: a player reading "34 t" could easily take it for
- * 34 kt.
+ * unit suits the number: a player reading "34 t" could easily take it for 34
+ * kt.
  */
 
 import coal from "@/assets/fuels/coal.svg";

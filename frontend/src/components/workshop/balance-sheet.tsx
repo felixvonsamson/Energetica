@@ -8,13 +8,12 @@
  * facility type, with each type's sales, dumping, O&M and fuel indented under
  * it. In the detailed view, each season's group also shows a volume and a rate
  * beside each amount, each explained on hover, as an info mark on their column
- * headers says. The sheet fits its page rather than scrolling sideways:
- * where there is no room for every season's volume and rate, only the season
- * picked in the waterfall shows them. A season not settled yet shows "–". As on
- * the timeline, the season the grid went down in is marked with a red zap-off
- * icon, and the seasons it skipped are struck through and read "skipped". The
- * colours belong to the sheet, not the theme, so it reads as paper in dark mode
- * too.
+ * headers says. The sheet fits its page rather than scrolling sideways: where
+ * there is no room for every season's volume and rate, only the season picked
+ * in the waterfall shows them. A season not settled yet shows "–". As on the
+ * timeline, the season the grid went down in is marked with a red zap-off icon,
+ * and the seasons it skipped are struck through and read "skipped". The colours
+ * belong to the sheet, not the theme, so it reads as paper in dark mode too.
  */
 
 import { ZapOff } from "lucide-react";

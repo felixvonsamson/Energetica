@@ -22,8 +22,8 @@
  * held back the output of the facilities burning it (#1010).
  *
  * Quantities are in kilotonnes for gas and coal and kg for uranium, but prices
- * are per tonne for gas and coal, as on the control room and everywhere else
- * in the game.
+ * are per tonne for gas and coal, as on the control room and everywhere else in
+ * the game.
  *
  * Hovering the maximum consumption says what it is, and hovering the quantity
  * explains its default and the stockpile limit (#1400).
@@ -148,9 +148,7 @@ function FuelRow({
                                     {formatFuelAmount(line.stock, line.fuel)}
                                 </dd>
                             </div>
-                            <MetricTooltip
-                                content="What your facilities burn running at 100% output for the whole season."
-                            >
+                            <MetricTooltip content="What your facilities burn running at 100% output for the whole season.">
                                 <div className="flex flex-wrap items-center gap-x-1">
                                     <dt className="flex items-center gap-1 whitespace-nowrap text-fg-subtle">
                                         Max consumption
