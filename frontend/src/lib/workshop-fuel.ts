@@ -18,7 +18,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 type Fuel = ApiSchema<"Fuel">;
 type FuelLine = ApiSchema<"WorkshopFuelLineOut">;
 
-/** Each fuel's image in the bids panel. These are placeholders for now. */
+/** Each fuel's image in the bids panel. */
 export const workshopFuelImages: Record<Fuel, string> = { coal, gas, uranium };
 
 /**

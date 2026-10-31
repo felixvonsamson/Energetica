@@ -4,8 +4,6 @@
  * Workshop's facilities are its own (#975), so they are keyed by Workshop's
  * `FacilityId`, not the persistent world's `ProjectType`. Typed as a full
  * record, so a facility the backend adds without artwork fails the typecheck.
- * The two net-new facilities borrow the image of their base tier until they get
- * their own.
  */
 
 import coalBurner from "@/assets/facilities/power/coal_burner.webp";
@@ -13,6 +11,8 @@ import combinedCycle from "@/assets/facilities/power/combined_cycle.webp";
 import cspSolar from "@/assets/facilities/power/CSP_solar.webp";
 import gasBurner from "@/assets/facilities/power/gas_burner.webp";
 import largeWaterDam from "@/assets/facilities/power/large_water_dam.webp";
+import modernCoalPlant from "@/assets/facilities/power/modern_coal_plant.webp";
+import multiLayerPv from "@/assets/facilities/power/multi_layer_pv.webp";
 import nuclearReactor from "@/assets/facilities/power/nuclear_reactor.webp";
 import nuclearReactorGen4 from "@/assets/facilities/power/nuclear_reactor_gen4.webp";
 import offshoreWindTurbine from "@/assets/facilities/power/offshore_wind_turbine.webp";
@@ -33,7 +33,7 @@ export const workshopFacilityImages: Record<FacilityId, string> = {
     onshore_wind_turbine: onshoreWindTurbine,
     offshore_wind_turbine: offshoreWindTurbine,
     coal_burner: coalBurner,
-    modern_coal_plant: coalBurner,
+    modern_coal_plant: modernCoalPlant,
     gas_burner: gasBurner,
     combined_cycle: combinedCycle,
     small_water_dam: smallWaterDam,
@@ -41,7 +41,7 @@ export const workshopFacilityImages: Record<FacilityId, string> = {
     nuclear_reactor: nuclearReactor,
     nuclear_reactor_gen4: nuclearReactorGen4,
     pv_solar: pvSolar,
-    multi_layer_pv: pvSolar,
+    multi_layer_pv: multiLayerPv,
     csp_solar: cspSolar,
     lithium_ion_batteries: lithiumIonBatteries,
     solid_state_batteries: solidStateBatteries,
