@@ -90,6 +90,10 @@ export default defineConfig(({ mode }) => {
             alias: { "@": path.resolve(__dirname, "./src") },
         },
         base: "/",
+        // The app and lobby dev servers run side by side, so they need separate
+        // dependency caches. In a shared one, each overwrites what the other is
+        // serving, and a page can load two copies of React.
+        cacheDir: "node_modules/.vite-lobby",
         // Keep the dev dependency scanner off the sibling entries (index.html
         // pulls the game graph, whose .mdx this config cannot parse).
         optimizeDeps: {
