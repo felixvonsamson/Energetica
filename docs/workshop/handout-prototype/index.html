@@ -1,0 +1,981 @@
+<!doctype html>
+<!--
+PROTOTYPE, throwaway. Three layouts of the workshop help sheet (A4), switchable with ?variant=A|B|C or the
+arrow keys. Every variant ends with the same separate worksheet (facility table and season log).
+Open with: xdg-open docs/workshop/handout-prototype/index.html. Print to PDF at A4, no margins, to check on paper.
+Chart data comes from data.js (build_data.py). Dashed grey boxes are placeholders for the user's own images.
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Workshop help sheet prototype</title>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans:wght@700&family=Poppins:wght@500;600&display=swap"
+        />
+        <style>
+            /* The game's light theme: pine-800 text, pine-700 brand, pine-500 muted, bone tints for boxes and lines. */
+            :root {
+                --ink: #1b3820;
+                --muted: #5f8d4e;
+                --line: #d5c38f;
+                --accent: #285430;
+                --tint: #f7f2e4;
+                --warn: #b42318;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                margin: 0;
+                background: #d9dce1;
+                font-family: "Baloo 2", system-ui, sans-serif;
+                color: var(--ink);
+                font-size: 8.6pt;
+                line-height: 1.22;
+            }
+            .page-label {
+                width: 210mm;
+                margin: 8mm auto 2mm;
+                font-size: 10pt;
+                color: #444;
+                display: flex;
+                justify-content: space-between;
+            }
+            .page-label .overflow {
+                color: var(--warn);
+                font-weight: 600;
+            }
+            .page {
+                width: 210mm;
+                height: 297mm;
+                margin: 0 auto;
+                background: white;
+                padding: 9mm;
+                box-shadow: 0 2px 10px #0003;
+                position: relative;
+                overflow: hidden;
+            }
+            .page.overflowing {
+                outline: 3px solid var(--warn);
+            }
+            h1,
+            h2,
+            h3,
+            table.ws th {
+                font-family: "Poppins", system-ui, sans-serif;
+            }
+            h1 {
+                font-size: 14pt;
+                margin: 0;
+                letter-spacing: -0.01em;
+            }
+            h2 {
+                font-size: 10pt;
+                margin: 0 0 1.6mm;
+                color: var(--accent);
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+            h3 {
+                font-size: 8.8pt;
+                margin: 0 0 1mm;
+            }
+            p {
+                margin: 0 0 1.4mm;
+            }
+            .sheet-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1.5px solid var(--accent);
+                padding-bottom: 1.5mm;
+                margin-bottom: 3mm;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 2.5mm;
+            }
+            .brand img {
+                width: 11mm;
+                height: 11mm;
+            }
+            .brand .name {
+                font-family: "Expletus Sans", system-ui, sans-serif;
+                font-weight: 700;
+                font-size: 17pt;
+                color: var(--accent);
+                line-height: 1;
+            }
+            .brand .what {
+                font-family: "Poppins", system-ui, sans-serif;
+                font-weight: 600;
+                font-size: 11pt;
+                color: var(--ink);
+            }
+            .coin {
+                height: 1em;
+                width: 1em;
+                vertical-align: -0.12em;
+            }
+            .sheet-head .team {
+                font-size: 9pt;
+                color: var(--muted);
+            }
+            .box {
+                background: var(--tint);
+                border: 1px solid var(--line);
+                border-radius: 2mm;
+                padding: 2.5mm;
+            }
+            .warnbox {
+                border: 1.2px solid #f2b8b5;
+                background: #fff6f5;
+                border-radius: 2mm;
+                padding: 2.5mm;
+            }
+            .warnbox h3 {
+                color: var(--warn);
+            }
+            .gloss dt {
+                font-weight: 700;
+            }
+            .gloss dd {
+                margin: 0 0 1.3mm;
+                color: #333;
+            }
+            .gloss.cols {
+                columns: 2;
+                column-gap: 6mm;
+            }
+            .gloss .term {
+                break-inside: avoid;
+            }
+            .numbers {
+                font-size: 7.8pt;
+                color: var(--muted);
+            }
+            .formula {
+                font-size: 9.4pt;
+                background: var(--tint);
+                border-left: 3px solid var(--accent);
+                padding: 2mm 2.5mm;
+                margin: 0 0 1.5mm;
+                line-height: 1.6;
+            }
+            .formula .eq {
+                font-weight: 700;
+            }
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 4.4mm;
+                height: 4.4mm;
+                border-radius: 50%;
+                background: white;
+                border: 1.3px solid var(--accent);
+                color: var(--accent);
+                font-family: "Poppins", sans-serif;
+                font-size: 7pt;
+                font-weight: 600;
+                vertical-align: middle;
+            }
+            .formula .main {
+                font-size: 11pt;
+                display: flex;
+                align-items: center;
+                gap: 1.2mm;
+                flex-wrap: wrap;
+            }
+            .formula .legend {
+                margin-top: 1.5mm;
+                font-size: 8.4pt;
+                line-height: 1.5;
+            }
+            .formula .legend div {
+                display: flex;
+                align-items: center;
+                gap: 1.2mm;
+            }
+            .frac {
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                vertical-align: middle;
+            }
+            .frac > span {
+                display: flex;
+                align-items: center;
+                gap: 1mm;
+                padding: 0 1.5mm;
+            }
+            .frac > span:first-child {
+                border-bottom: 1.3px solid currentColor;
+                padding-bottom: 0.6mm;
+                margin-bottom: 0.6mm;
+            }
+            .example .main {
+                display: flex;
+                align-items: center;
+                gap: 1.2mm;
+                flex-wrap: wrap;
+                font-size: 9pt;
+            }
+            .shot {
+                display: block;
+                width: 100%;
+                border-radius: 2mm;
+            }
+            .costrow {
+                display: grid;
+                grid-template-columns: 94mm 1fr;
+                gap: 4mm;
+                align-items: start;
+            }
+            .example {
+                font-size: 8pt;
+                color: #333;
+            }
+            .example b {
+                color: var(--ink);
+            }
+            .question {
+                font-style: italic;
+                color: var(--accent);
+                font-weight: 600;
+            }
+            .placeholder {
+                border: 1.5px dashed #9aa3ae;
+                background: repeating-linear-gradient(
+                    45deg,
+                    #f6f7f9,
+                    #f6f7f9 3mm,
+                    #eef0f3 3mm,
+                    #eef0f3 6mm
+                );
+                border-radius: 2mm;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                color: #5b6470;
+                font-size: 8pt;
+                padding: 2mm;
+                position: relative;
+            }
+            .placeholder .tag {
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                font-size: 7pt;
+                text-transform: uppercase;
+            }
+            .placeholder .badges {
+                position: absolute;
+                top: 2mm;
+                left: 2mm;
+                display: flex;
+                gap: 6mm;
+            }
+            .lines {
+                margin-top: 1mm;
+            }
+            .lines div {
+                border-bottom: 1px solid var(--line);
+                height: 6mm;
+            }
+            .score {
+                font-size: 9.2pt;
+            }
+            .score .eq {
+                font-weight: 700;
+            }
+            svg text {
+                font-family: inherit;
+            }
+            table.ws {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 8pt;
+            }
+            table.ws th {
+                background: var(--tint);
+                text-align: left;
+                padding: 1.5mm;
+                border: 1px solid var(--line);
+                font-weight: 600;
+                vertical-align: bottom;
+            }
+            table.ws td {
+                border: 1px solid var(--line);
+                height: 9mm;
+                padding: 0 1.5mm;
+            }
+            table.ws.tall td {
+                height: 13mm;
+            }
+            table.ws.log td {
+                height: 17mm;
+            }
+            table.ws th small {
+                display: block;
+                font-weight: 400;
+                color: var(--muted);
+            }
+            /* Variant C runs smaller to fit on one side. */
+            .compact {
+                font-size: 7.5pt;
+            }
+            .compact .formula {
+                font-size: 8.2pt;
+            }
+            .compact h2 {
+                font-size: 9pt;
+            }
+
+            #switcher {
+                position: fixed;
+                bottom: 5mm;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #111;
+                color: white;
+                border-radius: 999px;
+                padding: 6px 8px;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                box-shadow: 0 6px 20px #0006;
+                font: 13px system-ui;
+                z-index: 10;
+            }
+            #switcher button {
+                background: #333;
+                color: white;
+                border: 0;
+                border-radius: 999px;
+                width: 30px;
+                height: 30px;
+                font-size: 15px;
+                cursor: pointer;
+            }
+            #switcher button:hover {
+                background: #555;
+            }
+            #switcher span {
+                min-width: 260px;
+                text-align: center;
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            @media print {
+                body {
+                    background: white;
+                }
+                .page-label,
+                #switcher {
+                    display: none;
+                }
+                .page {
+                    margin: 0;
+                    box-shadow: none;
+                    break-after: page;
+                    outline: none !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="root"></div>
+        <div id="switcher">
+            <button id="prev" title="Previous (←)">‹</button
+            ><span id="label"></span
+            ><button id="next" title="Next (→)">›</button>
+        </div>
+        <script src="data.js"></script>
+        <script>
+            // ---------- Shared content ----------
+
+            const brand = (what) =>
+                `<div class="brand"><img src="../../../frontend/packages/ui/src/assets/simplified_logo.svg" alt=""><span class="name">Energetica</span><span class="what">Workshop · ${what}</span></div>`;
+
+            const GLOSSARY = [
+                [
+                    "Round",
+                    "One year of play. You invest first, then trade through four seasons.",
+                ],
+                [
+                    "Season",
+                    "One trading period. You set your prices, then the market simulates one week and multiplies the result by 13.",
+                ],
+                [
+                    "Merit order",
+                    "All offers sorted from cheapest to most expensive. The cheapest are used first.",
+                ],
+                [
+                    "Clearing price",
+                    "The price where supply meets demand. Every offer that sells is paid this same price.",
+                ],
+                [
+                    "Must-serve demand",
+                    "Demand that has to be met at any price. If it is not, there is a blackout.",
+                ],
+                [
+                    "Capacity factor",
+                    "A facility's average output as a share of its maximum power.",
+                ],
+                ["Marginal cost", "What it costs to produce one more MWh."],
+                [
+                    "LCOE",
+                    "Levelized cost of electricity: everything a facility costs over its life, divided by the energy it produces.",
+                ],
+                [
+                    "Dumping",
+                    `Renewable output that does not sell is thrown away, at a cost of <span style="white-space:nowrap">25 <img class="coin" src="../../../frontend/packages/ui/src/assets/coin.svg" alt="coins">/MWh</span>.`,
+                ],
+            ];
+            const NUMBERS =
+                "1 Round = 1 year = 364 days = 8,736 h · 1 season = 13 weeks = 2,184 h · Prices are per MWh.";
+
+            const glossary = (cols) =>
+                `<h2>Glossary</h2><dl class="gloss ${cols ? "cols" : ""}">${GLOSSARY.map(([t, d]) => `<div class="term"><dt>${t}</dt><dd>${d}</dd></div>`).join("")}</dl><p class="numbers">${NUMBERS}</p>`;
+
+            const score = () =>
+                `<div class="box score"><h3>Your score</h3><p class="eq">Score = operating profit − investments + residual value</p><p class="numbers">The Scoreboard page shows the full breakdown.</p></div>`;
+
+            const blackout = () =>
+                `<h3>⚠ Blackout</h3><p>If must-serve demand cannot be met, the grid goes down for a day. Demand is then cut by 10% for the rest of the Round, and each blackout costs <b>every player</b> 30% of their operating profit. Keep an eye on the control room screen.</p>`;
+            const events = () =>
+                `<h3>⚠ Events</h3><p>High emission levels make events with negative consequences more likely. The Round Recap warns you about them: read it carefully.</p>`;
+
+            const shot = (h, what, n) =>
+                `<div class="placeholder" style="height:${h}mm"><div class="badges">${n.map((i) => `<span class="badge">${i}</span>`).join("")}</div><span class="tag">Screenshot placeholder</span>${what}</div>`;
+
+            const COIN = `<img class="coin" src="../../../frontend/packages/ui/src/assets/coin.svg" alt="coins">`;
+            const b = (n) => `<span class="badge">${n}</span>`;
+            const legend = (rows) =>
+                `<div class="legend">${rows.map(([n, text]) => `<div>${b(n)}<span>${text}</span></div>`).join("")}</div>`;
+
+            const MC_FORMULA = `<div class="formula"><div class="main"><b>Marginal cost</b> [${COIN}/MWh] = ${b(1)} + ${b(2)} + ${b(3)}</div>
+    ${legend([
+        [1, "Fuel cost = fuel price × fuel use"],
+        [2, "Variable O&amp;M"],
+        [3, "Carbon tax cost = carbon tax per kg CO₂ × emissions"],
+    ])}</div>`;
+            const MC_EXAMPLE = `<div class="example"><div class="main"><b>Example, coal burner:</b> 52.8 + 13.1 + 30 = <b>95.9 ${COIN}/MWh</b></div></div>`;
+            const MC_QUESTION = `<p class="question">What is the marginal cost of a renewable power plant?</p>`;
+
+            const LCOE_FORMULA = `<div class="formula"><div class="main"><b>LCOE</b> [${COIN}/MWh] =
+    <span class="frac"><span>${b(1)} + ${b(2)} × ${b(3)}</span><span>${b(4)} × 8,736 h × ${b(5)} × ${b(2)}</span></span></div>
+    ${legend([
+        [1, "Build price"],
+        [2, "Lifetime in Rounds"],
+        [3, "Operational cost per Round = O&amp;M + fuel cost"],
+        [4, "Installed power capacity"],
+        [5, "Capacity factor"],
+    ])}</div>`;
+            const LCOE_EXAMPLE = `<div class="example"><b>Example, onshore wind turbine:</b><div class="main">
+    <span class="frac"><span>12M + 2 × 1.5M</span><span>45 MW × 8,736 h × 46% × 2</span></span> = <b>41.5 ${COIN}/MWh</b></div></div>`;
+
+            const QUESTIONS = [
+                "Why is LCOE not equal to marginal cost?",
+                "Which one is most useful to help you set your prices?",
+                "What is the optimal bidding price for renewables?",
+                "What happens if everyone bids high, e.g. 900 per MWh?",
+            ];
+            const questions = (lines) =>
+                QUESTIONS.map(
+                    (q) =>
+                        `<div><p class="question">${q}</p>${lines ? `<div class="lines">${"<div></div>".repeat(lines)}</div>` : ""}</div>`,
+                ).join("");
+
+            // ---------- Charts (inline SVG; 1 unit = 1/3 mm, so text sizes match across variants) ----------
+
+            const U = 3;
+            const svg = (wmm, hmm, body) =>
+                `<svg viewBox="0 0 ${wmm * U} ${hmm * U}" width="${wmm}mm" height="${hmm}mm" fill="#1b3820" style="display:block">${body}</svg>`;
+
+            const ICONS = {
+                spring: `<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>`,
+                summer: `<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>`,
+                autumn: `<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>`,
+                winter: `<path d="M2 12h20M12 2v20M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>`,
+            };
+            const SEASON_STYLE = {
+                spring: { fill: "#e8f5e3", ink: "#4f8a3c" },
+                summer: { fill: "#fdf4d2", ink: "#b98a00" },
+                autumn: { fill: "#fbe7d6", ink: "#b8642a" },
+                winter: { fill: "#e4eef9", ink: "#3d6fa8" },
+            };
+            const icon = (name, cx, cy, size, color) =>
+                `<g transform="translate(${cx - size / 2},${cy - size / 2}) scale(${size / 24})" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</g>`;
+            const MONTHS = [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+            ];
+
+            // Season bands over a day axis: winter wraps around the new year.
+            function seasonBands(
+                sx,
+                top,
+                bottom,
+                iconSize,
+                iconY = top + iconSize * 0.75,
+            ) {
+                let out = "";
+                for (const [season, [start, end]] of Object.entries(
+                    DATA.seasons,
+                )) {
+                    const parts =
+                        start <= end
+                            ? [[start, end + 1]]
+                            : [
+                                  [start, 364],
+                                  [0, end + 1],
+                              ];
+                    for (const [a, b] of parts) {
+                        const { fill, ink } = SEASON_STYLE[season];
+                        out += `<rect x="${sx(a)}" y="${top}" width="${sx(b) - sx(a)}" height="${bottom - top}" fill="${fill}"/>`;
+                        if (sx(b) - sx(a) > iconSize * 1.6)
+                            out += icon(
+                                season,
+                                (sx(a) + sx(b)) / 2,
+                                iconY,
+                                iconSize,
+                                ink,
+                            );
+                    }
+                }
+                return out;
+            }
+
+            function yAxis(x0, x1, sy, ticks, fmt) {
+                return ticks
+                    .map(
+                        (t) =>
+                            `<line x1="${x0}" x2="${x1}" y1="${sy(t)}" y2="${sy(t)}" stroke="#0001"/><text x="${x0 - 2}" y="${sy(t) + 2.5}" font-size="7" text-anchor="end" fill="#5f8d4e">${fmt(t)}</text>`,
+                    )
+                    .join("");
+            }
+
+            // The year's demand with the representative winter week pulled out under a magnifying glass.
+            function demandZoom(wmm, hmm, layout = "stack") {
+                const W = wmm * U,
+                    H = hmm * U,
+                    ml = 26,
+                    mr = 4,
+                    mt = 21,
+                    mb = 13;
+                const year =
+                    layout === "stack"
+                        ? { x: 0, y: 0, w: W, h: H * 0.52 }
+                        : { x: 0, y: 0, w: W * 0.58, h: H };
+                const week =
+                    layout === "stack"
+                        ? { x: 0, y: H * 0.6, w: W, h: H * 0.4 }
+                        : { x: W * 0.66, y: 0, w: W * 0.34, h: H };
+                const pct = (t) => `${Math.round(t * 100)}%`;
+                let s = "";
+
+                // Year panel.
+                const yx0 = year.x + ml,
+                    yx1 = year.x + year.w - mr,
+                    yt = year.y + mt,
+                    yb = year.y + year.h - mb;
+                const sx = (d) => yx0 + (d / 364) * (yx1 - yx0);
+                const sy = (v) => yb - ((v - 0.5) / (1.9 - 0.5)) * (yb - yt);
+                const narrow = wmm < 100;
+                s += `<text x="${year.x}" y="${year.y + 8}" font-size="8.5" font-weight="700">Demand over the year</text><text x="${year.x}" y="${year.y + 16.5}" font-size="6.5" fill="#5f8d4e">${narrow ? "% of yearly average · band: daily min–max" : "% of the yearly average · line: smoothed · band: lowest to highest of each day"}</text>`;
+                s += seasonBands(sx, yt, yb, 11);
+                const connectorsAt = s.length;
+                s += yAxis(yx0, yx1, sy, [0.6, 1.0, 1.4], pct);
+                const band = DATA.daily_max
+                    .map((v, d) => `${sx(d + 0.5)},${sy(v)}`)
+                    .concat(
+                        DATA.daily_min
+                            .map((v, d) => `${sx(d + 0.5)},${sy(v)}`)
+                            .reverse(),
+                    );
+                s += `<polygon points="${band.join(" ")}" fill="#7d8ea6" fill-opacity="0.35"/>`;
+                s += `<polyline points="${DATA.smooth.map((v, d) => `${sx(d + 0.5)},${sy(v)}`).join(" ")}" fill="none" stroke="${"#285430"}" stroke-width="1.8"/>`;
+                const short = yx1 - yx0 < 260;
+                MONTHS.forEach(
+                    (m, i) =>
+                        (s += `<text x="${sx(((i + 0.5) * 364) / 12)}" y="${yb + 8}" font-size="6.5" text-anchor="middle" fill="#5f8d4e">${short ? m[0] : m}</text>`),
+                );
+
+                // Week panel.
+                const wx0 = week.x + ml,
+                    wx1 = week.x + week.w - mr,
+                    wt = week.y + mt,
+                    wb = week.y + week.h - mb;
+                const hx = (h) => wx0 + (h / 168) * (wx1 - wx0);
+                const wy = (v) => wb - ((v - 0.5) / (1.9 - 0.5)) * (wb - wt);
+                s += `<text x="${week.x}" y="${week.y + 8}" font-size="8.5" font-weight="700">${narrow ? "Zoom: the simulated winter week" : "Zoom: the winter week the market simulates"}</text><text x="${week.x}" y="${week.y + 16.5}" font-size="6.5" fill="#5f8d4e">${narrow ? "Each season: its own middle week" : "Every season simulates its own middle week · weekends shaded"}</text>`;
+                s += `<rect x="${wx0}" y="${wt}" width="${wx1 - wx0}" height="${wb - wt}" fill="${SEASON_STYLE.winter.fill}"/>`;
+                s += `<rect x="${hx(120)}" y="${wt}" width="${hx(168) - hx(120)}" height="${wb - wt}" fill="#0000000d"/>`;
+                s += yAxis(wx0, wx1, wy, [0.6, 1.0, 1.4], pct);
+                ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach(
+                    (d, i) => {
+                        if (i)
+                            s += `<line x1="${hx(i * 24)}" x2="${hx(i * 24)}" y1="${wt}" y2="${wb}" stroke="#0002"/>`;
+                        s += `<text x="${hx(i * 24 + 12)}" y="${wb + 8}" font-size="6.5" text-anchor="middle" fill="#5f8d4e">${short && layout !== "stack" ? d[0] : d}</text>`;
+                    },
+                );
+                const pts = DATA.week_hourly.map(
+                    (v, h) => `${hx(h + 0.5)},${wy(v)}`,
+                );
+                s += `<polygon points="${hx(0.5)},${wb} ${pts.join(" ")} ${hx(167.5)},${wb}" fill="#285430" fill-opacity="0.12"/><polyline points="${pts.join(" ")}" fill="none" stroke="#285430" stroke-width="1.4"/>`;
+
+                // Magnifying glass over the week in the year chart, with lines out to the zoom.
+                const [d0, d1] = [DATA.week_days[0], DATA.week_days[6] + 1];
+                const wk = DATA.week_hourly;
+                const cx = (sx(d0) + sx(d1)) / 2,
+                    cy = (sy(Math.max(...wk)) + sy(Math.min(...wk))) / 2;
+                const r =
+                    Math.max(
+                        sx(d1) - sx(d0),
+                        sy(Math.min(...wk)) - sy(Math.max(...wk)),
+                    ) /
+                        2 +
+                    5;
+                const lines =
+                    layout === "stack"
+                        ? [
+                              [cx - r * 0.7, cy + r * 0.7, wx0, wt],
+                              [cx + r * 0.7, cy + r * 0.7, wx1, wt],
+                          ]
+                        : [
+                              [cx, cy - r, wx0, wt],
+                              [cx, cy + r, wx0, wb],
+                          ];
+                s =
+                    s.slice(0, connectorsAt) +
+                    lines
+                        .map(
+                            ([a, b, c, d]) =>
+                                `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#285430" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.6"/>`,
+                        )
+                        .join("") +
+                    s.slice(connectorsAt);
+                s += `<rect x="${wx0}" y="${wt}" width="${wx1 - wx0}" height="${wb - wt}" fill="none" stroke="#285430" stroke-width="1.2"/>`;
+                const a = -Math.PI / 4;
+                s += `<line x1="${cx + r * Math.cos(a)}" y1="${cy + r * Math.sin(a)}" x2="${cx + (r + 15) * Math.cos(a)}" y2="${cy + (r + 15) * Math.sin(a)}" stroke="#1d2430" stroke-width="4.5" stroke-linecap="round"/>`;
+                s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffffff55" stroke="#1d2430" stroke-width="2"/>`;
+                return svg(wmm, hmm, s);
+            }
+
+            const SERIES = {
+                solar: { label: "Solar", color: "#e3b500" },
+                wind: { label: "Wind", color: "rgb(73,160,120)" },
+                hydro: { label: "Hydro", color: "rgb(0,119,182)" },
+            };
+
+            // Monthly output as a share of maximum power, for one source or several side by side.
+            function monthlyBars(wmm, hmm, keys, title) {
+                const W = wmm * U,
+                    H = hmm * U,
+                    ml = 22,
+                    mr = 3,
+                    mt = keys.length > 1 ? 30 : 23,
+                    mb = 11;
+                const x0 = ml,
+                    x1 = W - mr,
+                    top = mt,
+                    bottom = H - mb;
+                const sx = (d) => x0 + (d / 364) * (x1 - x0);
+                const sy = (v) => bottom - v * (bottom - top);
+                let s = `<text x="0" y="8" font-size="8.5" font-weight="700">${title}</text>`;
+                if (keys.length > 1) {
+                    s += keys
+                        .map(
+                            (k, i) =>
+                                `<rect x="${i * 34}" y="11" width="6" height="6" fill="${SERIES[k].color}"/><text x="${i * 34 + 8}" y="16.5" font-size="6.5">${SERIES[k].label}</text>`,
+                        )
+                        .join("");
+                }
+                s += seasonBands(sx, top - 9, bottom, 7, top - 4.5);
+                s += yAxis(x0, x1, sy, [0, 0.5, 1], (t) => `${t * 100}%`);
+                const slot = (x1 - x0) / 12,
+                    bw = (slot * 0.7) / keys.length;
+                keys.forEach((k, j) =>
+                    DATA[k].forEach((v, m) => {
+                        const x = x0 + m * slot + slot * 0.15 + j * bw;
+                        s += `<rect x="${x}" y="${sy(v)}" width="${bw}" height="${bottom - sy(v)}" fill="${SERIES[k].color}"/>`;
+                        if (keys.length === 1 && slot > 12)
+                            s += `<text x="${x + bw / 2}" y="${sy(v) - 1.5}" font-size="5.2" text-anchor="middle" fill="#444">${Math.round(v * 100)}</text>`;
+                    }),
+                );
+                MONTHS.forEach(
+                    (m, i) =>
+                        (s += `<text x="${x0 + (i + 0.5) * slot}" y="${bottom + 7.5}" font-size="6.2" text-anchor="middle" fill="#5f8d4e">${slot < 20 ? m[0] : m}</text>`),
+                );
+                return svg(wmm, hmm, s);
+            }
+
+            // Stand-in for the user's frame of the merit order animation: the six demand blocks.
+            function demandBlocks(wmm, hmm) {
+                const W = wmm * U,
+                    H = hmm * U,
+                    ml = 26,
+                    mr = 8,
+                    mt = 14,
+                    mb = 16;
+                const sx = (q) => ml + (q / 270) * (W - ml - mr),
+                    sy = (p) => H - mb - (p / 320) * (H - mt - mb);
+                const steps = [
+                    [0, 100, 320],
+                    [100, 130, 250],
+                    [130, 160, 140],
+                    [160, 190, 80],
+                    [190, 220, 40],
+                    [220, 250, 10],
+                ];
+                const names = [
+                    "Must-serve",
+                    "Low flex",
+                    "Medium flex",
+                    "High flex",
+                    "Very high flex",
+                    "Opportunistic",
+                ];
+                let s = yAxis(ml, W - mr, sy, [0, 100, 200, 300], (t) => t);
+                let path = `M${sx(0)},${sy(320)}`;
+                steps.forEach(
+                    ([a, b, p]) =>
+                        (path += ` L${sx(a)},${sy(p)} L${sx(b)},${sy(p)}`),
+                );
+                path += ` L${sx(250)},${sy(0)}`;
+                s += `<path d="M${sx(0)},${sy(5)} H${sx(60)} V${sy(30)} H${sx(120)} V${sy(65)} H${sx(170)} V${sy(95)} H${sx(210)} V${sy(160)} H${sx(250)}" fill="none" stroke="#9aa3ae" stroke-width="1.2" stroke-dasharray="3 2"/>`;
+                s += `<path d="${path}" fill="none" stroke="#b42318" stroke-width="2"/>`;
+                steps.forEach(([a, b, p], i) => {
+                    const label = i ? `${p} · +30%` : "any price · 100%";
+                    s += `<text x="${sx(a) + 2}" y="${sy(Math.min(p, 300)) - 3}" font-size="6.2" fill="#b42318">${label}</text>`;
+                });
+                s += `<text x="${ml}" y="8" font-size="8.5" font-weight="700">The six demand blocks</text>`;
+                s += `<text x="${(ml + W - mr) / 2}" y="${H - 3}" font-size="6.5" text-anchor="middle" fill="#5f8d4e">${wmm < 100 ? "Quantity (% of must-serve)" : "Quantity (% of must-serve demand)"}</text>`;
+                s += `<rect x="${W * 0.38}" y="${H * 0.18}" width="${W * 0.58}" height="15" rx="3" fill="#fff" stroke="#9aa3ae" stroke-dasharray="3 2"/><text x="${W * 0.67}" y="${H * 0.18 + 10}" font-size="${wmm < 100 ? 5.5 : 7}" text-anchor="middle" fill="#5b6470">${wmm < 100 ? "PLACEHOLDER · animation frame" : "PLACEHOLDER · frame from the merit order animation"}</text>`;
+                return svg(wmm, hmm, s);
+            }
+
+            // Stand-in for the user's round loop diagram.
+            function roundLoop(wmm, hmm) {
+                const W = wmm * U,
+                    H = hmm * U,
+                    cx = W / 2,
+                    cy = H / 2 + 3,
+                    r = Math.min(W, H) * 0.34;
+                const nodes = [
+                    ["Invest", null],
+                    ["Spring", "spring"],
+                    ["Summer", "summer"],
+                    ["Autumn", "autumn"],
+                    ["Winter", "winter"],
+                    ["Recap", null],
+                ];
+                let s = `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="6" fill="#f6f7f9" stroke="#9aa3ae" stroke-dasharray="4 3"/>`;
+                s += `<text x="6" y="10" font-size="7" font-weight="700" fill="#5b6470">PLACEHOLDER · your round loop diagram</text>`;
+                s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#c4cad2" stroke-width="2"/>`;
+                s += `<text x="${cx}" y="${cy - 2}" font-size="8" font-weight="700" text-anchor="middle">1 Round = 1 year</text><text x="${cx}" y="${cy + 8}" font-size="6.5" text-anchor="middle" fill="#5f8d4e">each season: set prices,</text><text x="${cx}" y="${cy + 15}" font-size="6.5" text-anchor="middle" fill="#5f8d4e">1 week simulated ×13</text>`;
+                nodes.forEach(([n, season], i) => {
+                    const a = -Math.PI / 2 + (i / nodes.length) * 2 * Math.PI,
+                        x = cx + r * Math.cos(a),
+                        y = cy + r * Math.sin(a);
+                    const fill = season ? SEASON_STYLE[season].fill : "#fff";
+                    s += `<circle cx="${x}" cy="${y}" r="13" fill="${fill}" stroke="#285430"/>`;
+                    s += season
+                        ? icon(season, x, y - 3, 9, SEASON_STYLE[season].ink) +
+                          `<text x="${x}" y="${y + 8}" font-size="5.5" text-anchor="middle">${n}</text>`
+                        : `<text x="${x}" y="${y + 2}" font-size="6.5" text-anchor="middle" font-weight="700">${n}</text>`;
+                });
+                return svg(wmm, hmm, s);
+            }
+
+            // ---------- Separate worksheet (same in every variant) ----------
+
+            const worksheet = () => [
+                `<div class="sheet-head">${brand("Worksheet · facilities")}<span class="team">Team: ________________</span></div>
+    <p>Copy the values from the investment page, then work out each facility's marginal cost and LCOE (formulas on the help sheet).</p>
+    <table class="ws tall"><tr><th style="width:24%">Facility</th><th>Build price<small>M</small></th><th>Power<small>MW</small></th><th>Lifetime<small>Rounds</small></th><th>O&amp;M<small>per Round</small></th><th>Fuel use<small>kg/MWh</small></th><th>Capacity factor<small>%</small></th><th>Marginal cost<small>per MWh</small></th><th>LCOE<small>per MWh</small></th></tr>
+    ${`<tr>${"<td></td>".repeat(9)}</tr>`.repeat(16)}</table>
+    <p class="numbers" style="margin-top:3mm">${NUMBERS}</p>`,
+                `<div class="sheet-head">${brand("Worksheet · season log")}<span class="team">Team: ________________</span></div>
+    <p>One row per season. Write down what you bid and what came back, so you can compare seasons.</p>
+    <table class="ws log"><tr><th style="width:8%">Round</th><th style="width:9%">Season</th><th style="width:36%">Our bids<small>facility: price per MWh</small></th><th>Market price<small>per MWh</small></th><th>Operating profit<small>M</small></th><th style="width:22%">Notes</th></tr>
+    ${[1, 2, 3].map((r) => ["spring", "summer", "autumn", "winter"].map((s, i) => `<tr><td>${i ? "" : r}</td><td>${svg(5, 5, icon(s, 7.5, 7.5, 12, SEASON_STYLE[s].ink))}</td>${"<td></td>".repeat(4)}</tr>`).join("")).join("")}</table>`,
+            ];
+
+            // ---------- Variants ----------
+
+            const head = (subtitle) =>
+                `<div class="sheet-head">${brand("Help sheet")}<span class="team">${subtitle}</span></div>`;
+
+            const VARIANTS = {
+                A: {
+                    name: "Front explains, back calculates",
+                    pages: () => [
+                        `${head("Side 1 · How the game works")}
+            ${glossary(true)}
+            <div style="display:grid;grid-template-columns:96mm 1fr;gap:4mm;margin-top:2mm">
+                <img src="images/round-loop.png" alt="" style="width:96mm;display:block">
+                <div style="display:flex;flex-direction:column;gap:2.5mm">${score()}<div class="warnbox">${blackout()}${events()}</div></div>
+            </div>
+            <h2 style="margin-top:3mm">The six demand blocks</h2><img src="images/demand-blocks.png" alt="" style="width:100%;display:block;border-radius:2mm">`,
+                        `${head("Side 2 · Seasons and costs")}
+            <h2>The year at a glance</h2>
+            ${demandZoom(192, 80, "stack")}
+            <div style="display:flex;gap:3mm;margin-top:1mm">${monthlyBars(62, 32, ["solar"], "Solar")}${monthlyBars(62, 32, ["wind"], "Wind")}${monthlyBars(62, 32, ["hydro"], "Hydro")}</div>
+            <p class="numbers">Bars: average output as a share of maximum power (capacity factor), per month.</p>
+            <h2 style="margin-top:2mm">Marginal cost</h2>
+            <div class="costrow"><img class="shot" src="images/marginal-cost-coal-burner.png" alt=""><div>${MC_FORMULA}${MC_EXAMPLE}${MC_QUESTION}</div></div>
+            <h2 style="margin-top:2.5mm">LCOE</h2>
+            <div class="costrow"><img class="shot" src="images/lcoe-onshore-wind.png" alt=""><div>${LCOE_FORMULA}${LCOE_EXAMPLE}</div></div>
+            <div class="box" style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 5mm;margin-top:2mm"><h2 style="grid-column:1/-1;margin:0">Think about it</h2>${questions(0)}</div>`,
+                    ],
+                },
+                B: {
+                    name: "Glossary sidebar, questions sidebar",
+                    pages: () => [
+                        `${head("Side 1 · How the game works")}
+            <div style="display:grid;grid-template-columns:58mm 1fr;gap:5mm">
+                <aside style="border-right:1px solid var(--line);padding-right:4mm">${glossary(false)}<div style="margin-top:3mm">${score()}</div></aside>
+                <main>
+                    ${roundLoop(128, 108)}
+                    <div style="margin-top:3mm">${demandBlocks(128, 72)}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:3mm">
+                        <div class="warnbox">${blackout()}</div>
+                        <div class="warnbox">${events()}</div>
+                    </div>
+                </main>
+            </div>`,
+                        `${head("Side 2 · Seasons and costs")}
+            <div style="display:grid;grid-template-columns:1fr 58mm;gap:5mm">
+                <main>
+                    ${demandZoom(128, 96, "stack")}
+                    <h2 style="margin-top:3mm">Marginal cost</h2>
+                    <div style="display:grid;grid-template-columns:52mm 1fr;gap:3mm">${shot(48, "Investment page and price panel", [1, 2, 3, 4, 5])}<div>${MC_FORMULA}${MC_EXAMPLE}</div></div>
+                    <h2 style="margin-top:3mm">LCOE</h2>
+                    <div style="display:grid;grid-template-columns:52mm 1fr;gap:3mm">${shot(44, "Investment page: facility details", [1, 2, 3, 4])}<div>${LCOE_FORMULA}${LCOE_EXAMPLE}</div></div>
+                </main>
+                <aside style="border-left:1px solid var(--line);padding-left:4mm">
+                    <h2>Renewables by month</h2>
+                    ${monthlyBars(53, 32, ["solar"], "Solar")}${monthlyBars(53, 32, ["wind"], "Wind")}${monthlyBars(53, 32, ["hydro"], "Hydro")}
+                    <p class="numbers">Average output as a share of maximum power.</p>
+                    <h2 style="margin-top:3mm">Think about it</h2>
+                    ${MC_QUESTION}<div class="lines"><div></div><div></div></div>
+                    ${questions(2)}
+                </aside>
+            </div>`,
+                    ],
+                },
+                C: {
+                    name: "Everything on one side",
+                    pages: () => [
+                        `<div class="compact">${head("One side · keep the back for notes")}
+            <div style="display:grid;grid-template-columns:62mm 62mm 1fr;gap:3.5mm">
+                <div>
+                    ${glossary(false)}
+                    <div style="margin-top:2mm">${roundLoop(62, 52)}</div>
+                    <div style="margin-top:2mm">${score()}</div>
+                </div>
+                <div>
+                    ${demandBlocks(62, 50)}
+                    <div style="margin-top:2mm">${demandZoom(62, 92, "stack")}</div>
+                    <div style="margin-top:2mm">${monthlyBars(62, 40, ["solar", "wind", "hydro"], "Renewables by month")}</div>
+                    <p class="numbers">Bars: average output as a share of maximum power.</p>
+                    <div class="warnbox" style="margin-top:2mm">${blackout()}${events()}</div>
+                </div>
+                <div>
+                    <h2>Marginal cost</h2>${shot(26, "Investment page and price panel", [1, 2, 3, 4, 5])}${MC_FORMULA}${MC_EXAMPLE}${MC_QUESTION}
+                    <h2 style="margin-top:3mm">LCOE</h2>${shot(26, "Facility details", [1, 2, 3, 4])}${LCOE_FORMULA}${LCOE_EXAMPLE}
+                    <div class="box" style="margin-top:3mm"><h2>Think about it</h2>${questions(0)}</div>
+                </div>
+            </div></div>`,
+                    ],
+                },
+            };
+
+            // ---------- Rendering and switcher ----------
+
+            const keys = Object.keys(VARIANTS);
+            function render() {
+                const params = new URLSearchParams(location.search);
+                const key = keys.includes(params.get("variant"))
+                    ? params.get("variant")
+                    : "A";
+                const v = VARIANTS[key];
+                const sheet = v
+                    .pages()
+                    .map((html, i, all) => [
+                        `Help sheet · ${all.length === 1 ? "single side" : `side ${i + 1}`}`,
+                        html,
+                    ]);
+                const ws = worksheet().map((html, i) => [
+                    `Separate worksheet · side ${i + 1}`,
+                    html,
+                ]);
+                // ?only=sheet or ?only=worksheet prints one of the two documents on its own.
+                const only = params.get("only");
+                const pages =
+                    only === "sheet"
+                        ? sheet
+                        : only === "worksheet"
+                          ? ws
+                          : sheet.concat(ws);
+                document.getElementById("root").innerHTML = pages
+                    .map(
+                        ([label, html]) =>
+                            `<div class="page-label"><span>${label}</span><span class="overflow"></span></div><div class="page">${html}</div>`,
+                    )
+                    .join("");
+                document.getElementById("label").textContent =
+                    `${key} — ${v.name}`;
+                // Flag pages whose content runs past the A4 height.
+                document.querySelectorAll(".page").forEach((page) => {
+                    const over = page.scrollHeight - page.clientHeight;
+                    if (over > 1) {
+                        page.classList.add("overflowing");
+                        page.previousElementSibling.querySelector(
+                            ".overflow",
+                        ).textContent =
+                            `overflows by ${Math.round(over / 3.78)} mm`;
+                    }
+                });
+            }
+            function go(step) {
+                const params = new URLSearchParams(location.search);
+                const i = keys.indexOf(params.get("variant") ?? "A");
+                params.set(
+                    "variant",
+                    keys[(Math.max(i, 0) + step + keys.length) % keys.length],
+                );
+                history.replaceState(null, "", `?${params}`);
+                render();
+            }
+            document.getElementById("prev").onclick = () => go(-1);
+            document.getElementById("next").onclick = () => go(1);
+            document.addEventListener("keydown", (e) => {
+                if (e.target.closest?.("input, textarea, [contenteditable]"))
+                    return;
+                if (e.key === "ArrowLeft") go(-1);
+                if (e.key === "ArrowRight") go(1);
+            });
+            render();
+        </script>
+    </body>
+</html>
