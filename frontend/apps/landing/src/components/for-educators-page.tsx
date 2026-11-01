@@ -144,7 +144,7 @@ export function ForEducatorsPage() {
                 </section>
 
                 {/* Header */}
-                <section className="flex flex-col gap-6 max-w-3xl">
+                <section className="flex flex-col items-center gap-6 max-w-3xl mx-auto text-center">
                     <TypographyH1>Energetica in the Classroom</TypographyH1>
                     <TypographyLead className="text-foreground">
                         An open-source simulation game that makes energy

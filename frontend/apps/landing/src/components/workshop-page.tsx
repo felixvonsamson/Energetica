@@ -170,8 +170,8 @@ export function WorkshopPage() {
                 </section>
 
                 {/* Header */}
-                <section className="flex flex-col gap-6 max-w-3xl">
-                    <TypographyH1>
+                <section className="flex flex-col items-center gap-6 max-w-3xl mx-auto text-center">
+                    <TypographyH1 className="text-balance">
                         Run an Electricity Market in a Single Afternoon
                     </TypographyH1>
                     <TypographyLead className="text-foreground">
@@ -181,7 +181,7 @@ export function WorkshopPage() {
                         facilitators lead the session, and no energy background
                         is needed.
                     </TypographyLead>
-                    <ul className="flex flex-wrap gap-2">
+                    <ul className="flex flex-wrap justify-center gap-2">
                         {facts.map((fact) => (
                             <li
                                 key={fact}
@@ -193,7 +193,7 @@ export function WorkshopPage() {
                     </ul>
                     <a
                         href={workshopEnquiryHref}
-                        className="w-fit bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-4xl shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-95 transition-all"
+                        className="bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-4xl shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-95 transition-all"
                     >
                         Ask about a workshop
                     </a>
