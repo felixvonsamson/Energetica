@@ -116,7 +116,7 @@ function ExampleEdition() {
             <button
                 onClick={() => setOpen(true)}
                 aria-label="Read the full example edition of The Megawatt Times"
-                className="group relative block w-full h-144 overflow-hidden rounded-4xl bg-white shadow-md cursor-zoom-in text-left"
+                className="group relative block w-full h-112 overflow-hidden rounded-4xl bg-white shadow-md cursor-zoom-in text-left"
             >
                 <img src={megawattTimesExample} alt={alt} className="w-full" />
                 <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-white to-transparent" />
@@ -256,7 +256,7 @@ export function WorkshopPage() {
                 </section>
 
                 {/* The Megawatt Times */}
-                <section className="max-w-6xl mx-auto w-full flex flex-col gap-8">
+                <section className="max-w-6xl mx-auto w-full grid gap-8 xl:grid-cols-2 items-center">
                     <div className="flex flex-col gap-4">
                         <TypographyH2 className="text-primary">
                             The News at the End of Every Year
