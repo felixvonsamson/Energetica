@@ -126,15 +126,24 @@ function ExampleEdition() {
                 </span>
             </button>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-[90vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto p-2 bg-white">
+                {/* Each breakpoint needs its own width because the shared dialog sets one per breakpoint. */}
+                <DialogContent className="w-[95vw] max-w-7xl sm:max-w-7xl md:max-w-7xl xl:max-w-7xl max-h-[95vh] overflow-hidden p-2 bg-white">
                     <DialogTitle className="sr-only">
                         The Megawatt Times, example edition
                     </DialogTitle>
-                    <img
-                        src={megawattTimesExample}
-                        alt={alt}
-                        className="w-full"
-                    />
+                    {/* Only the newspaper scrolls, so the close button stays in view. The minimum width keeps it readable on phones, which scroll sideways too. */}
+                    <div
+                        // Focus lets the arrow keys scroll the newspaper as soon as it opens.
+                        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+                        tabIndex={0}
+                        className="max-h-[calc(95vh-1.25rem)] overflow-auto outline-none"
+                    >
+                        <img
+                            src={megawattTimesExample}
+                            alt={alt}
+                            className="w-full min-w-3xl max-w-none"
+                        />
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
