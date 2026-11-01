@@ -11,12 +11,10 @@ import {
     TypographyP,
 } from "@energetica/ui/components/typography";
 import {
-    Coins,
     GraduationCap,
     Landmark,
     PartyPopper,
     Puzzle,
-    Scale,
     Sun,
     Users,
     Zap,
@@ -40,52 +38,27 @@ const facts = [
 
 const outcomes: { title: string; description: string; icon: LucideIcon }[] = [
     {
-        title: "How market prices are set",
+        title: "How electricity markets really work",
         description:
-            "Why the most expensive plant the market still needs sets the price for everyone, and what that means for each company's profit.",
+            "Why the most expensive plant the market still needs sets the price for everyone, and what marginal cost and LCOE mean for a company's profit.",
         icon: Zap,
     },
     {
-        title: "Economic concepts in practice",
+        title: "The energy transition, first-hand",
         description:
-            "The difference between marginal cost and the levelised cost of electricity (LCOE) and how they are calculated.",
-        icon: Coins,
-    },
-    {
-        title: "The challenges of the energy transition",
-        description:
-            "The impact of wind, solar and batteries on the market and how they affect the prices across the day and the seasons.",
+            "Wind, solar and batteries reshape prices across the day and the seasons, while blackouts and CO₂ emissions become everyone's problem. Your group lives it instead of reading about it.",
         icon: Sun,
     },
     {
-        title: "The consequences of individual choices",
+        title: "Challenges solved together",
         description:
-            "Blackouts and CO₂ emissions come from choices each company makes alone, but everyone bears the result. A carbon tax is something the group has to decide together.",
-        icon: Scale,
-    },
-];
-
-const togetherPoints: {
-    title: string;
-    description: string;
-    icon: LucideIcon;
-}[] = [
-    {
-        title: "Shared challenges",
-        description:
-            "Every Round brings something new: a surge in demand, a price shock, a looming shortage. The group works out what is happening and what to do next.",
+            "Every Round brings something new: a surge in demand, a price shock, a looming shortage. Colleagues who rarely work together end up on the same problems, trying ideas and comparing results.",
         icon: Puzzle,
     },
     {
-        title: "Everyone plays",
+        title: "A great time with your team",
         description:
-            "Each participant plays from the first Round to the last, whatever their job or experience. Nobody is left watching from the side.",
-        icon: Users,
-    },
-    {
-        title: "Fun you can share",
-        description:
-            "Rivalries, surprises and a vote on a carbon tax get people talking and laughing, and the stories carry on long after the session.",
+            "Everyone plays from the first Round to the last, whatever their job or experience. Rivalries, surprises and a vote on a carbon tax get people talking and laughing long after the session.",
         icon: PartyPopper,
     },
 ];
@@ -257,38 +230,6 @@ export function WorkshopPage() {
                                 </div>
                                 <TypographyP className="mt-0!">
                                     {outcome.description}
-                                </TypographyP>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Team building */}
-                <section className="max-w-6xl mx-auto w-full flex flex-col gap-6">
-                    <TypographyH2 className="text-primary">
-                        A Great Afternoon for Your Team
-                    </TypographyH2>
-                    <TypographyP className="mt-0!">
-                        A workshop is also a shared experience. Colleagues who
-                        rarely work together end up around the same problems,
-                        trying ideas, comparing results and enjoying the game.
-                    </TypographyP>
-                    <div className="grid gap-8 xl:grid-cols-3">
-                        {togetherPoints.map((point) => (
-                            <div
-                                key={point.title}
-                                className="flex flex-col gap-3 p-6 bg-card rounded-4xl shadow-md"
-                            >
-                                <div className="flex flex-row items-center gap-4">
-                                    <div className="shrink-0 size-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-md">
-                                        <point.icon />
-                                    </div>
-                                    <TypographyH3 className="text-xl text-foreground">
-                                        {point.title}
-                                    </TypographyH3>
-                                </div>
-                                <TypographyP className="mt-0!">
-                                    {point.description}
                                 </TypographyP>
                             </div>
                         ))}
