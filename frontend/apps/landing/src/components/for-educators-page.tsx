@@ -178,7 +178,7 @@ export function ForEducatorsPage() {
                             {pedagogicalValues.map((v) => (
                                 <div
                                     key={v.title}
-                                    className="flex flex-col gap-4 p-6 bg-card rounded-4xl shadow-md"
+                                    className="flex flex-col gap-3 p-6 bg-card rounded-4xl shadow-md"
                                 >
                                     <div className="flex flex-row items-center gap-4">
                                         <div className="shrink-0 size-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-md">
@@ -188,7 +188,9 @@ export function ForEducatorsPage() {
                                             {v.title}
                                         </TypographyH3>
                                     </div>
-                                    <TypographyP>{v.description}</TypographyP>
+                                    <TypographyP className="mt-0!">
+                                        {v.description}
+                                    </TypographyP>
                                 </div>
                             ))}
                         </div>

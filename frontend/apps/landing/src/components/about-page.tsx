@@ -77,7 +77,7 @@ export function AboutPage() {
                         {team.map((member) => (
                             <div
                                 key={member.name}
-                                className="p-6 bg-card rounded-4xl shadow-md flex flex-col gap-2"
+                                className="p-6 bg-card rounded-4xl shadow-md flex flex-col gap-3"
                             >
                                 <TypographyH3 className="text-xl">
                                     {member.name}
@@ -85,7 +85,9 @@ export function AboutPage() {
                                 <p className="text-sm font-semibold text-muted-foreground">
                                     {member.background}
                                 </p>
-                                <TypographyP>{member.bio}</TypographyP>
+                                <TypographyP className="mt-0!">
+                                    {member.bio}
+                                </TypographyP>
                             </div>
                         ))}
                     </div>

@@ -14,6 +14,8 @@ import {
     Coins,
     GraduationCap,
     Landmark,
+    PartyPopper,
+    Puzzle,
     Scale,
     Sun,
     Users,
@@ -60,6 +62,31 @@ const outcomes: { title: string; description: string; icon: LucideIcon }[] = [
         description:
             "Blackouts and CO₂ emissions come from choices each company makes alone, but everyone bears the result. A carbon tax is something the group has to decide together.",
         icon: Scale,
+    },
+];
+
+const togetherPoints: {
+    title: string;
+    description: string;
+    icon: LucideIcon;
+}[] = [
+    {
+        title: "Shared challenges",
+        description:
+            "Every Round brings something new: a surge in demand, a price shock, a looming shortage. The group works out what is happening and what to do next.",
+        icon: Puzzle,
+    },
+    {
+        title: "Everyone plays",
+        description:
+            "Each participant plays from the first Round to the last, whatever their job or experience. Nobody is left watching from the side.",
+        icon: Users,
+    },
+    {
+        title: "Fun you can share",
+        description:
+            "Rivalries, surprises and a vote on a carbon tax get people talking and laughing, and the stories carry on long after the session.",
+        icon: PartyPopper,
     },
 ];
 
@@ -188,7 +215,8 @@ export function WorkshopPage() {
                         energy companies. They build power plants, set their
                         prices and face the consequences together. Our
                         facilitators lead the session, and no energy background
-                        is needed.
+                        is needed. It's a great way to take on challenges as a
+                        group and have fun together.
                     </TypographyLead>
                     <ul className="flex flex-wrap justify-center gap-2">
                         {facts.map((fact) => (
@@ -217,7 +245,7 @@ export function WorkshopPage() {
                         {outcomes.map((outcome) => (
                             <div
                                 key={outcome.title}
-                                className="flex flex-col gap-4 p-6 bg-card rounded-4xl shadow-md"
+                                className="flex flex-col gap-3 p-6 bg-card rounded-4xl shadow-md"
                             >
                                 <div className="flex flex-row items-center gap-4">
                                     <div className="shrink-0 size-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-md">
@@ -227,7 +255,41 @@ export function WorkshopPage() {
                                         {outcome.title}
                                     </TypographyH3>
                                 </div>
-                                <TypographyP>{outcome.description}</TypographyP>
+                                <TypographyP className="mt-0!">
+                                    {outcome.description}
+                                </TypographyP>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Team building */}
+                <section className="max-w-6xl mx-auto w-full flex flex-col gap-6">
+                    <TypographyH2 className="text-primary">
+                        A Great Afternoon for Your Team
+                    </TypographyH2>
+                    <TypographyP className="mt-0!">
+                        A workshop is also a shared experience. Colleagues who
+                        rarely work together end up around the same problems,
+                        trying ideas, comparing results and enjoying the game.
+                    </TypographyP>
+                    <div className="grid gap-8 xl:grid-cols-3">
+                        {togetherPoints.map((point) => (
+                            <div
+                                key={point.title}
+                                className="flex flex-col gap-3 p-6 bg-card rounded-4xl shadow-md"
+                            >
+                                <div className="flex flex-row items-center gap-4">
+                                    <div className="shrink-0 size-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-md">
+                                        <point.icon />
+                                    </div>
+                                    <TypographyH3 className="text-xl text-foreground">
+                                        {point.title}
+                                    </TypographyH3>
+                                </div>
+                                <TypographyP className="mt-0!">
+                                    {point.description}
+                                </TypographyP>
                             </div>
                         ))}
                     </div>
@@ -289,10 +351,11 @@ export function WorkshopPage() {
                     <TypographyH2 className="text-primary">
                         Who It's For
                     </TypographyH2>
-                    <TypographyP>
-                        Workshops work for people new to the subject, and for
-                        specialists who want to test their intuition. Before the
-                        session, we talk with you about your group and its
+                    <TypographyP className="mt-0!">
+                        Workshops work for people new to the subject, for
+                        specialists who want to test their intuition, and for
+                        teams looking for a memorable activity to share. Before
+                        the session, we talk with you about your group and its
                         goals, and we adapt the session to them.
                     </TypographyP>
                     <ul className="grid gap-4 sm:grid-cols-2">

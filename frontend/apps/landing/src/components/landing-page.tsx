@@ -284,7 +284,7 @@ export function LandingPage() {
                     </TypographyH2>
                     {gameElements.map((el, index) => {
                         const card = (
-                            <div className="flex flex-col gap-4 p-6 bg-card rounded-4xl shadow-md h-full">
+                            <div className="flex flex-col gap-3 p-6 bg-card rounded-4xl shadow-md h-full">
                                 <div className="flex flex-row items-center gap-4">
                                     <div className="shrink-0 size-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-md">
                                         {el.icon}
@@ -293,7 +293,9 @@ export function LandingPage() {
                                         {el.title}
                                     </TypographyH3>
                                 </div>
-                                <TypographyP>{el.description}</TypographyP>
+                                <TypographyP className="mt-0!">
+                                    {el.description}
+                                </TypographyP>
                             </div>
                         );
                         const image = <ImageTileComponent image={el.image} />;
