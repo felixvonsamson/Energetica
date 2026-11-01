@@ -227,13 +227,13 @@ export function LandingPage() {
                                     <br />
                                     Drive the Transition.
                                 </TypographyH1>
-                                <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
+                                <TypographyLead className="text-primary-foreground sm:text-xl max-w-4xl mx-auto leading-relaxed text-pretty">
                                     Energetica is a multiplayer strategy game
                                     where you manage a power grid, compete on
                                     electricity markets, and face the collective
                                     consequences of CO₂ emissions.
                                 </TypographyLead>
-                                <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
+                                <TypographyLead className="text-primary-foreground sm:text-xl max-w-4xl mx-auto leading-relaxed text-pretty">
                                     A powerful tool for understanding real
                                     energy trade-offs, already used in courses
                                     at <b>ETH Zürich</b> and <b>ZHAW</b>.
