@@ -38,9 +38,9 @@ const facts = [
 
 const outcomes: { title: string; description: string; icon: LucideIcon }[] = [
     {
-        title: "How electricity markets really work",
+        title: "Inside a living electricity market",
         description:
-            "Why the most expensive plant the market still needs sets the price for everyone, and what marginal cost and LCOE mean for a company's profit.",
+            "Every decision moves the market. Participants discover why the most expensive plant still needed sets the price for everyone, and use concepts like marginal cost and LCOE to plan their next move.",
         icon: Zap,
     },
     {
@@ -50,15 +50,15 @@ const outcomes: { title: string; description: string; icon: LucideIcon }[] = [
         icon: Sun,
     },
     {
-        title: "Challenges solved together",
+        title: "New challenges every Round",
         description:
-            "Every Round brings something new: a surge in demand, a price shock, a looming shortage. Colleagues who rarely work together end up on the same problems, trying ideas and comparing results.",
+            "Every Round brings something new: a surge in demand, a new technology, a price shock. The competition does the rest, as players team up when it pays and strategize against each other when it doesn't.",
         icon: Puzzle,
     },
     {
         title: "A great time with your team",
         description:
-            "Everyone plays from the first Round to the last, whatever their job or experience. Rivalries, surprises and a vote on a carbon tax get people talking and laughing long after the session.",
+            "Energetica is an original way to take on serious topics: challenging, fun, and with so much to keep track of that teamwork and a good division of tasks make all the difference.",
         icon: PartyPopper,
     },
 ];
