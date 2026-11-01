@@ -1,31 +1,29 @@
 import { Link } from "@tanstack/react-router";
 
+import { CONTACT_EMAIL } from "@/lib/contact";
+import { navLinks } from "@/lib/nav-links";
+
+const linkClass = "text-foreground hover:opacity-70 transition-opacity";
+
 export function Footer() {
     return (
-        <footer className="bg-card h-20 shadow-xl flex flex-row items-center justify-center gap-5 mt-12">
-            <Link
-                to="/landing-page"
-                className="text-foreground hover:opacity-70 transition-opacity"
-            >
-                The Game
+        <footer className="bg-card min-h-20 shadow-xl flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2 px-6 py-4 mt-12">
+            {navLinks.map((link) => (
+                <Link key={link.to} to={link.to} className={linkClass}>
+                    {link.label}
+                </Link>
+            ))}
+            <Link to="/wiki/introduction" className={linkClass}>
+                Wiki
             </Link>
-            <Link
-                to="/for-educators"
-                className="text-foreground hover:opacity-70 transition-opacity"
-            >
-                For Educators
-            </Link>
-            <Link
-                to="/about"
-                className="text-foreground hover:opacity-70 transition-opacity"
-            >
-                The Project
-            </Link>
+            <a href={`mailto:${CONTACT_EMAIL}`} className={linkClass}>
+                Contact
+            </a>
             <a
                 href="https://github.com/felixvonsamson/Energetica"
-                className="text-foreground hover:opacity-70 transition-opacity"
+                className={linkClass}
             >
-                Github
+                GitHub
             </a>
         </footer>
     );

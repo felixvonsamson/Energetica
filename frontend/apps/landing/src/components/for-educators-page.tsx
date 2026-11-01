@@ -5,6 +5,7 @@ import {
     TypographyLead,
     TypographyP,
 } from "@energetica/ui/components/typography";
+import { Link } from "@tanstack/react-router";
 import {
     BookOpen,
     Code2,
@@ -18,6 +19,7 @@ import {
 
 import liveDemoPhoto from "@/assets/live_demo_photo.webp";
 import { HomeLayout } from "@/components/home-layout";
+import { CONTACT_EMAIL, courseEnquiryHref } from "@/lib/contact";
 
 export function ForEducatorsPage() {
     const concepts = [
@@ -153,6 +155,17 @@ export function ForEducatorsPage() {
                         Already used in courses at <b>ETH Zürich</b> and{" "}
                         <b>ZHAW</b>.
                     </TypographyLead>
+                    <TypographyP>
+                        This page is about using the game throughout a semester.
+                        If you only have an afternoon, see{" "}
+                        <Link
+                            to="/workshop"
+                            className="font-semibold underline hover:opacity-70 transition-opacity"
+                        >
+                            Workshops
+                        </Link>
+                        .
+                    </TypographyP>
                 </section>
 
                 {/* Why it works */}
@@ -269,9 +282,9 @@ export function ForEducatorsPage() {
                             },
                             {
                                 icon: <LifeBuoy className="size-5" />,
-                                title: "Technical Support",
+                                title: "Hosting and Support",
                                 description:
-                                    "We help with setup, student onboarding, and answering questions that come up during sessions — so you can focus on the teaching.",
+                                    "We host the game for your course and help with setup, student onboarding, and questions that come up during sessions, so you can focus on the teaching. This is a paid package for universities. Write to us for a quote.",
                             },
                             {
                                 icon: <GraduationCap className="size-5" />,
@@ -315,10 +328,10 @@ export function ForEducatorsPage() {
                             back to you to discuss how it could fit your course.
                         </TypographyLead>
                         <a
-                            href="mailto:energetica.game@gmail.com"
+                            href={courseEnquiryHref}
                             className="mt-4 inline-block bg-primary-foreground text-primary font-bold text-lg px-10 py-4 rounded-4xl shadow hover:opacity-90 hover:shadow-xl active:scale-95 transition-all"
                         >
-                            energetica.game@gmail.com
+                            {CONTACT_EMAIL}
                         </a>
                     </div>
                 </section>

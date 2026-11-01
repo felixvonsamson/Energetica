@@ -269,7 +269,7 @@ export function lobbyLoginHref(): string {
  * dead dev link is accepted. Set `VITE_APEX_DOMAIN` to exercise the real
  * cross-origin link locally.
  *
- * @param path Absolute landing path, e.g. `/landing-page`.
+ * @param path Absolute landing path, e.g. `/workshop`.
  */
 export function landingHref(path: string): string {
     const apex = apexDomain();

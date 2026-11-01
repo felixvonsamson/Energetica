@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { LandingPage } from "@/components/landing-page";
-
+// The home page used to live here. Kept so that links already shared still work.
 export const Route = createFileRoute("/landing-page")({
-    component: LandingPage,
-    staticData: { title: "Landing Page" },
+    loader: () => {
+        throw redirect({ to: "/" });
+    },
+    staticData: { title: "" },
 });

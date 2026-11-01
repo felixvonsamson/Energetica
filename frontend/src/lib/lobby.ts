@@ -109,7 +109,7 @@ export function runFacilitatorHref(slug: string): string {
  * lobby knows about — these are secondary "learn more" links, so a dead dev
  * link is accepted).
  *
- * @param path Absolute landing path, e.g. `/landing-page`.
+ * @param path Absolute landing path, e.g. `/workshop`.
  */
 export function lobbyLandingHref(path: string): string {
     const apex = lobbyApexDomain();

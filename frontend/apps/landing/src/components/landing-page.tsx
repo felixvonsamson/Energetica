@@ -250,7 +250,7 @@ export function LandingPage() {
                     </div>
 
                     {/* CTAs */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Cross-bundle: see note in components/header.tsx. The lobby
                             picker is where a player logs in and chooses a run. */}
                         <a
@@ -261,10 +261,17 @@ export function LandingPage() {
                             <ChevronRight />
                         </a>
                         <Link
+                            to="/workshop"
+                            className="bg-card text-foreground border border-border p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-muted hover:shadow-lg active:scale-[0.99] transition-all"
+                        >
+                            <p className="text-lg">Run a workshop</p>
+                            <ChevronRight />
+                        </Link>
+                        <Link
                             to="/for-educators"
                             className="bg-card text-foreground border border-border p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-muted hover:shadow-lg active:scale-[0.99] transition-all"
                         >
-                            <p className="text-lg">For Educators</p>
+                            <p className="text-lg">Use it in a course</p>
                             <ChevronRight />
                         </Link>
                     </div>

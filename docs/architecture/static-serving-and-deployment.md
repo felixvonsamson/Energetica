@@ -221,7 +221,7 @@ in the vhost; #1064 removed it, in the same migration that retargeted the other 
 energetica-game.org  (landing — DocumentRoot /var/www/energetica-landing/, no game backend)
 ├── /instances.json         → Apache serves /var/www/energetica-landing/instances.json  (manifest, Cache-Control: max-age=60)
 ├── /instances/{slug}.json  → Apache serves /var/www/energetica-landing/instances/{slug}.json  (per-instance public fragment)
-└── /*                    → FallbackResource → index.html  (SPA routing for /landing-page, /about, /for-educators, /wiki/*, /changelog)
+└── /*                    → FallbackResource → index.html  (SPA routing for /, /workshop, /about, /for-educators, /wiki/*, /changelog)
 ```
 
 The landing vhost uses `DocumentRoot /var/www/energetica-landing/`. With `base: "/"`, Vite emits assets at `/assets/index-abc123.js`; Apache serves them directly from DocumentRoot. No Alias needed.
@@ -431,10 +431,10 @@ Accounts and `instance_membership` rows are server-wide and survive teardown. A 
 
 ### Route split
 
-| Bundle      | Routes                                                                        |
-| ----------- | ----------------------------------------------------------------------------- |
-| **Landing** | `/`, `/landing-page`, `/about`, `/for-educators`, `/wiki/$slug`, `/changelog` |
-| **App**     | `/app/*` (including `/app/sign-up`, moved from top-level `/sign-up`)          |
+| Bundle      | Routes                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| **Landing** | `/`, `/landing-page` (redirects to `/`), `/workshop`, `/about`, `/for-educators`, `/wiki/$slug`, `/changelog` |
+| **App**     | `/app/*` (including `/app/sign-up`, moved from top-level `/sign-up`)                                          |
 
 ### Directory structure
 

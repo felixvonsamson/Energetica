@@ -92,7 +92,7 @@ function LoginForm({ returnSlug }: { returnSlug: string | undefined }) {
                     Energetica
                 </TypographyBrand>
                 <a
-                    href={lobbyLandingHref("/landing-page")}
+                    href={lobbyLandingHref("/")}
                     className="text-base text-primary hover:opacity-80 transition-opacity underline"
                 >
                     Learn more about Energetica

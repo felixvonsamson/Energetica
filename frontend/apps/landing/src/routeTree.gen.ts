@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorkshopRouteImport } from './routes/workshop'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
 import { Route as ForEducatorsRouteImport } from './routes/for-educators'
 import { Route as ChangelogRouteImport } from './routes/changelog'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WikiIndexRouteImport } from './routes/wiki/index'
 import { Route as WikiSlugRouteImport } from './routes/wiki/$slug'
 
+const WorkshopRoute = WorkshopRouteImport.update({
+  id: '/workshop',
+  path: '/workshop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
+  '/workshop': typeof WorkshopRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki': typeof WikiIndexRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/changelog': typeof ChangelogRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
+  '/workshop': typeof WorkshopRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki': typeof WikiIndexRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
+  '/workshop': typeof WorkshopRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki/': typeof WikiIndexRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/for-educators'
     | '/landing-page'
+    | '/workshop'
     | '/wiki/$slug'
     | '/wiki'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/for-educators'
     | '/landing-page'
+    | '/workshop'
     | '/wiki/$slug'
     | '/wiki'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/for-educators'
     | '/landing-page'
+    | '/workshop'
     | '/wiki/$slug'
     | '/wiki/'
   fileRoutesById: FileRoutesById
@@ -117,12 +129,20 @@ export interface RootRouteChildren {
   ChangelogRoute: typeof ChangelogRoute
   ForEducatorsRoute: typeof ForEducatorsRoute
   LandingPageRoute: typeof LandingPageRoute
+  WorkshopRoute: typeof WorkshopRoute
   WikiSlugRoute: typeof WikiSlugRoute
   WikiIndexRoute: typeof WikiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/workshop': {
+      id: '/workshop'
+      path: '/workshop'
+      fullPath: '/workshop'
+      preLoaderRoute: typeof WorkshopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/landing-page': {
       id: '/landing-page'
       path: '/landing-page'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChangelogRoute: ChangelogRoute,
   ForEducatorsRoute: ForEducatorsRoute,
   LandingPageRoute: LandingPageRoute,
+  WorkshopRoute: WorkshopRoute,
   WikiSlugRoute: WikiSlugRoute,
   WikiIndexRoute: WikiIndexRoute,
 }
