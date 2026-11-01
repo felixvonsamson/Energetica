@@ -22,6 +22,24 @@
             crossorigin="anonymous"
         />
         <title>Energetica</title>
+        <!-- What link previews show. Crawlers do not run JavaScript, so every page
+             shares these tags, and they need an absolute image URL. -->
+        <meta
+            name="description"
+            content="A multiplayer strategy game and live workshops about electricity markets and the energy transition."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Energetica" />
+        <meta property="og:title" content="Energetica" />
+        <meta
+            property="og:description"
+            content="A multiplayer strategy game and live workshops about electricity markets and the energy transition."
+        />
+        <meta
+            property="og:image"
+            content="https://%VITE_APEX_DOMAIN%/og-image.jpg"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
         <!-- HTML cannot import a package by name, so the logo is reached by its path. -->
         <link
             rel="icon"
