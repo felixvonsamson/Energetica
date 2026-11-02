@@ -1,7 +1,6 @@
 /**
  * What a facility costs to buy (#998), hanging under its card like a price tag,
- * so it reads as the price of the card rather than one of its stats: the price,
- * the construction time and the construction pollution.
+ * so it reads as the price of the card rather than one of its stats.
  *
  * While the Investment phase is open, the tag flips over when the tag or its
  * card is hovered (or tapped, on a touch screen). Clicking the tag's back, or
@@ -15,11 +14,13 @@
  *
  * Prices are always in millions ("8M", #1247), unlike money elsewhere.
  *
- * The construction time and pollution are named on hover (#1400).
+ * A facility that does not work in the Round it is bought in, such as a nuclear
+ * reactor, says how many Rounds it needs to build, and adding it asks the
+ * player to confirm first (#1414). Every other facility works straight away,
+ * which is the default, so its tag says nothing about building.
  */
 
 import { useAnimate } from "framer-motion";
-import { Cloud, Hammer } from "lucide-react";
 import { type PointerEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -29,9 +30,21 @@ import {
 } from "@/components/workshop/metric-tooltip";
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 import { formatCatalogPrice } from "@/lib/workshop-facilities";
-import { roundsLabel } from "@/lib/workshop-fleet";
+import {
+    constructionLagLabel,
+    constructionLagWarning,
+} from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
-import { formatEmissions } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
 import { Money } from "@energetica/ui/components/money";
 import { cn } from "@energetica/ui/lib/utils";
 
@@ -74,7 +87,10 @@ export interface PriceTagOptions {
  * both use: `hoverHandlers` flip it while the pointer is over them, and
  * `handleClick` does what a click on the card or the tag's front does. The
  * caller calls `turnBack` when focus leaves both, which is what turns over a
- * tag a tap flipped.
+ * tag a tap flipped. Adding a facility with a construction lag opens a dialog
+ * first (`confirming`), and only `confirmAdd` adds it. The tag stays turned
+ * over while the dialog is open and after it closes, so focus can go back to
+ * the button that opened it.
  */
 export function usePriceTag({
     facility,
@@ -86,11 +102,12 @@ export function usePriceTag({
     adding,
 }: PriceTagOptions) {
     const [turned, setTurned] = useState(false);
+    const [confirming, setConfirming] = useState(false);
     const [scope, animate] = useAnimate<HTMLDivElement>();
     const unflipTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => () => clearTimeout(unflipTimer.current), []);
     // A tag turned over just as the phase closed turns back.
-    const flipped = turned && investmentOpen;
+    const flipped = (turned || confirming) && investmentOpen;
     // Owned ones count whether built or under construction, and selected ones too.
     const limit = facility.max_owned;
     const atLimit = limit !== null && owned + selected >= limit;
@@ -132,6 +149,29 @@ export function usePriceTag({
     }
 
     function handleAdd() {
+        if (facility.construction_lag_rounds > 0) {
+            setConfirming(true);
+            return;
+        }
+        add();
+    }
+
+    function closeDialog() {
+        // The dialog covered the tag, so the pointer left it and may have set
+        // it to turn back.
+        clearTimeout(unflipTimer.current);
+        setConfirming(false);
+        setTurned(true);
+    }
+
+    function confirmAdd() {
+        closeDialog();
+        // The money, the limit or an add in flight may have changed while the
+        // dialog was open: the tag's back then says why it cannot be added.
+        if (canAdd) add();
+    }
+
+    function add() {
         void animate(scope.current, { scale: BOUNCE }, { duration: 0.35 });
         onAdd();
     }
@@ -150,6 +190,9 @@ export function usePriceTag({
         turnBack,
         handleClick,
         handleAdd,
+        confirming,
+        closeDialog,
+        confirmAdd,
     };
 }
 
@@ -159,117 +202,123 @@ export type PriceTag = ReturnType<typeof usePriceTag>;
 export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
     const { facility, owned, selected, affordable, flipped, scope } = tag;
     const { limit, atLimit } = tag;
+    const lagLabel = constructionLagLabel(facility.construction_lag_rounds);
 
     return (
-        // The string counts as part of the tag for hovering, so the pointer
-        // goes straight from the card's hover area to the tag's.
-        <div className="flex flex-col items-center" {...tag.hoverHandlers}>
-            {/* The string the tag hangs from. */}
-            <div className="h-4 w-px bg-muted-foreground" />
-            <div
-                ref={scope}
-                className={cn(
-                    "perspective-[600px] transition-[rotate] hover:rotate-0",
-                    flipped ? "rotate-0" : "-rotate-2",
-                )}
-            >
+        <>
+            {/* The string counts as part of the tag for hovering, so the pointer
+            goes straight from the card's hover area to the tag's. */}
+            <div className="flex flex-col items-center" {...tag.hoverHandlers}>
+                {/* The string the tag hangs from. */}
+                <div className="h-4 w-px bg-muted-foreground" />
                 <div
+                    ref={scope}
                     className={cn(
-                        "grid transition-transform duration-500 transform-3d",
-                        flipped && "rotate-y-180",
+                        "perspective-[600px] transition-[rotate] hover:rotate-0",
+                        flipped ? "rotate-0" : "-rotate-2",
                     )}
                 >
-                    <button
-                        type="button"
-                        onClick={tag.handleClick}
-                        inert={flipped}
-                        className={FACE}
-                    >
-                        <PinHole />
-                        {/* The coin sits a little low next to these bold digits. */}
-                        <Money
-                            amount={facility.price}
-                            format={formatCatalogPrice}
-                            className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
-                        />
-                        {/* A price shock this Round moved the price (#1012). */}
-                        {facility.price !== facility.base_price && (
-                            <Money
-                                amount={facility.base_price}
-                                format={formatCatalogPrice}
-                                className="block text-center text-[10px] line-through opacity-60"
-                            />
-                        )}
-                        <span className="mt-0.5 flex gap-3 text-[10px]">
-                            <MetricTooltip
-                                content={
-                                    <TooltipFigure label="Construction time" />
-                                }
-                            >
-                                <span className="flex items-center gap-0.5">
-                                    <Hammer className="size-3" />
-                                    {facility.construction_lag_rounds === 0
-                                        ? "Instant"
-                                        : roundsLabel(
-                                              facility.construction_lag_rounds,
-                                          )}
-                                </span>
-                            </MetricTooltip>
-                            <MetricTooltip
-                                content={
-                                    <TooltipFigure label="Construction pollution" />
-                                }
-                            >
-                                <span className="flex items-center gap-0.5">
-                                    <Cloud className="size-3" />
-                                    {formatEmissions(
-                                        facility.base_construction_pollution,
-                                    )}
-                                </span>
-                            </MetricTooltip>
-                        </span>
-                        {limit !== null && (
-                            <MetricTooltip
-                                content={
-                                    <TooltipFigure label="The most you can own at once, counting those in your selection" />
-                                }
-                            >
-                                <span className="mt-0.5 text-[10px] font-bold">
-                                    {owned + selected} of {limit}
-                                </span>
-                            </MetricTooltip>
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={tag.handleAdd}
-                        disabled={!tag.canAdd}
-                        inert={!flipped}
+                    <div
                         className={cn(
-                            FACE,
-                            "rotate-y-180 disabled:cursor-not-allowed",
+                            "grid transition-transform duration-500 transform-3d",
+                            flipped && "rotate-y-180",
                         )}
                     >
-                        <PinHole />
-                        <span
+                        <button
+                            type="button"
+                            onClick={tag.handleClick}
+                            inert={flipped}
+                            className={FACE}
+                        >
+                            <PinHole />
+                            {/* The coin sits a little low next to these bold digits. */}
+                            <Money
+                                amount={facility.price}
+                                format={formatCatalogPrice}
+                                className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
+                            />
+                            {/* A price shock this Round moved the price (#1012). */}
+                            {facility.price !== facility.base_price && (
+                                <Money
+                                    amount={facility.base_price}
+                                    format={formatCatalogPrice}
+                                    className="block text-center text-[10px] line-through opacity-60"
+                                />
+                            )}
+                            {lagLabel && (
+                                <span className="mt-0.5 text-[10px] font-bold whitespace-nowrap">
+                                    {lagLabel}
+                                </span>
+                            )}
+                            {limit !== null && (
+                                <MetricTooltip
+                                    content={
+                                        <TooltipFigure label="The most you can own at once, counting those in your selection" />
+                                    }
+                                >
+                                    <span className="mt-0.5 text-[10px] font-bold">
+                                        {owned + selected} of {limit}
+                                    </span>
+                                </MetricTooltip>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={tag.handleAdd}
+                            disabled={!tag.canAdd}
+                            inert={!flipped}
                             className={cn(
-                                "text-sm font-extrabold",
-                                (!affordable || atLimit) && "opacity-50",
+                                FACE,
+                                "rotate-y-180 disabled:cursor-not-allowed",
                             )}
                         >
-                            {atLimit
-                                ? "Limit reached"
-                                : affordable
-                                  ? "Click to add"
-                                  : "Not enough money"}
-                        </span>
-                        <span className="mt-0.5 text-[10px] whitespace-nowrap">
-                            {countsLabel(owned, selected)}
-                        </span>
-                    </button>
+                            <PinHole />
+                            <span
+                                className={cn(
+                                    "text-sm font-extrabold",
+                                    (!affordable || atLimit) && "opacity-50",
+                                )}
+                            >
+                                {atLimit
+                                    ? "Limit reached"
+                                    : affordable
+                                      ? "Click to add"
+                                      : "Not enough money"}
+                            </span>
+                            <span className="mt-0.5 text-[10px] whitespace-nowrap">
+                                {countsLabel(owned, selected)}
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+            {/* Outside the hover area: React passes pointer events from the
+            dialog's portal up to its parents, which would flip the tag. */}
+            <Dialog
+                open={tag.confirming}
+                onOpenChange={(open) => !open && tag.closeDialog()}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{lagLabel}</DialogTitle>
+                        <DialogDescription>
+                            {constructionLagWarning(
+                                facility.name,
+                                facility.construction_lag_rounds,
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={tag.confirmAdd}>
+                            Add to selection
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
 

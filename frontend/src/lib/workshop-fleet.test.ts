@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { fleetStacks, lifetimeRangeLabel } from "./workshop-fleet";
+import {
+    constructionLagLabel,
+    constructionLagWarning,
+    fleetStacks,
+    lifetimeRangeLabel,
+} from "./workshop-fleet";
 
 const wind = (built_round: number, rounds_left: number) => ({
     facility: "onshore_wind_turbine" as const,
@@ -49,5 +54,30 @@ describe("lifetimeRangeLabel", () => {
     it("shows one figure when every copy has the same lifetime left", () => {
         expect(lifetimeRangeLabel([wind(2, 2), wind(2, 2)])).toBe("2 Rounds");
         expect(lifetimeRangeLabel([wind(2, 1)])).toBe("1 Round");
+    });
+});
+
+describe("constructionLagLabel", () => {
+    it("says nothing for a facility that works in the Round it is built in", () => {
+        expect(constructionLagLabel(0)).toBeNull();
+    });
+
+    it("says how many Rounds a facility needs to build", () => {
+        expect(constructionLagLabel(1)).toBe("Needs 1 Round to build");
+        expect(constructionLagLabel(2)).toBe("Needs 2 Rounds to build");
+    });
+});
+
+describe("constructionLagWarning", () => {
+    it("says a facility built in one Round produces nothing this year", () => {
+        expect(constructionLagWarning("Nuclear reactor", 1)).toBe(
+            "A nuclear reactor needs 1 Round, one year, to build. If you buy it now, it will not produce any power this Round. It starts working next Round.",
+        );
+    });
+
+    it("counts the Rounds of a longer build", () => {
+        expect(constructionLagWarning("Gen-IV nuclear reactor", 2)).toBe(
+            "A Gen-IV nuclear reactor needs 2 Rounds, 2 years, to build. If you buy it now, it will not produce any power this Round or the next. It starts working in 2 Rounds.",
+        );
     });
 });
