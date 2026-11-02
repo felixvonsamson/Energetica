@@ -103,6 +103,15 @@ export function usePriceTag({
 }: PriceTagOptions) {
     const [turned, setTurned] = useState(false);
     const [confirming, setConfirming] = useState(false);
+    // If the phase closes while the dialog is open, the dialog closes too, so
+    // the player is not left confirming an add the server would refuse, and it
+    // does not open again when the next phase does. Set during render, as
+    // React advises for state that follows a prop.
+    const [phaseWasOpen, setPhaseWasOpen] = useState(investmentOpen);
+    if (phaseWasOpen !== investmentOpen) {
+        setPhaseWasOpen(investmentOpen);
+        if (!investmentOpen) setConfirming(false);
+    }
     const [scope, animate] = useAnimate<HTMLDivElement>();
     const unflipTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => () => clearTimeout(unflipTimer.current), []);
@@ -168,7 +177,7 @@ export function usePriceTag({
         closeDialog();
         // The money, the limit or an add in flight may have changed while the
         // dialog was open: the tag's back then says why it cannot be added.
-        if (canAdd) add();
+        if (investmentOpen && canAdd) add();
     }
 
     function add() {
