@@ -477,9 +477,8 @@ export function balanceSheetRows(
         cell: (p) => ({ amount: p.operating_income }),
     });
     // The carbon tax (#1015), once it is in force: below operating income, which
-    // leaves it out. It is paid on the CO₂ emitted building the Round's
-    // investments, charged in its first season only, and on the CO₂ emitted
-    // generating, each as tonnes times the price per tonne. The player's share
+    // leaves it out. It is paid on the CO₂ emitted generating, as tonnes times
+    // the price per tonne. Building emits nothing (#1414). The player's share
     // of what everyone paid comes back.
     if ((sheet.total?.carbon_tax_rate ?? 0) > 0) {
         rows.push(
@@ -489,25 +488,6 @@ export function balanceSheetRows(
                 level: 0,
                 kind: "line",
                 cell: (p) => ({ amount: -p.carbon_tax }),
-            },
-            {
-                id: "carbon-tax-construction",
-                label: "Tax on construction CO₂",
-                level: 1,
-                kind: "line",
-                unit: "co2",
-                notes: {
-                    volume: "CO₂ emitted building this Round's facilities",
-                    rate: CO2_RATE_NOTE,
-                },
-                cell: (p) =>
-                    p.construction_emissions > 0
-                        ? co2Cell(
-                              p.construction_emissions,
-                              p.carbon_tax_rate,
-                              p.construction_carbon_tax,
-                          )
-                        : empty,
             },
             {
                 id: "carbon-tax-emitted",

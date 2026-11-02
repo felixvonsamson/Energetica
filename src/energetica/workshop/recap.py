@@ -85,7 +85,7 @@ class RecapUnlock(BaseModel):
 class RoomFigures(BaseModel):
     """The whole room's figures for one Round."""
 
-    emissions_round: float = Field(description="CO₂ every player emitted in the Round, building and running, in kg")
+    emissions_round: float = Field(description="CO₂ every player's facilities emitted in the Round, in kg")
     emissions_total: float = Field(description="CO₂ every player emitted from Round 1 to the end of this one, in kg")
     capacity_built: float = Field(description="Power of every facility bought in the Round, in W")
     energy_sold: float = Field(
@@ -209,11 +209,9 @@ def _stories(fired: Iterable[FiredEvent], *, past: bool) -> list[RecapStory]:
     return [story for event in ordered if (story := _story(event, past=past)) is not None]
 
 
-def emissions(purchases: Iterable[Purchase], results: Iterable[TradingResult]) -> float:
-    """The CO₂ emitted building the facilities ``purchases`` bought and running them for ``results``, in kg."""
-    built = sum(CATALOG[purchase.facility].base_construction_pollution for purchase in purchases)
-    ran = sum(performance.emissions for result in results for performance in result.facilities.values())
-    return built + ran
+def emissions(results: Iterable[TradingResult]) -> float:
+    """The CO₂ the facilities emitted running for ``results``, in kg. Building them emits nothing (#1414)."""
+    return sum(performance.emissions for result in results for performance in result.facilities.values())
 
 
 def average_price(results: Iterable[TradingResult]) -> float | None:
@@ -243,14 +241,8 @@ def _figures(round_number: int, *, purchases: Sequence[Purchase], results: Seque
         performance.sold for facility, performance in sold if CATALOG[facility].category in RENEWABLE_CATEGORIES
     )
     return RoomFigures(
-        emissions_round=emissions(
-            [purchase for purchase in purchases if purchase.round == round_number],
-            [result for result in results if result.round == round_number],
-        ),
-        emissions_total=emissions(
-            [purchase for purchase in purchases if purchase.round <= round_number],
-            [result for result in results if result.round <= round_number],
-        ),
+        emissions_round=emissions(result for result in results if result.round == round_number),
+        emissions_total=emissions(result for result in results if result.round <= round_number),
         capacity_built=sum(
             CATALOG[purchase.facility].base_power_generation for purchase in purchases if purchase.round == round_number
         ),

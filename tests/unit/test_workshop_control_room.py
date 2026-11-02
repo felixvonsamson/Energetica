@@ -33,7 +33,6 @@ from energetica.workshop.control_room import (
 )
 from energetica.workshop.events import EVENTS, FiredEvent, Severity, effect_line
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.fleet import Purchase
 from energetica.workshop.recap import average_price
 from energetica.workshop.prices import MarketPrices, PlayerQuotes, QuotedPrice
 from energetica.workshop.round_plan import PlannedEvent
@@ -238,22 +237,20 @@ def test_a_period_that_never_settled_a_point_has_no_price_summary() -> None:
 # --- carbon -------------------------------------------------------------------------------------
 
 
-def test_each_rounds_emissions_count_building_and_running() -> None:
-    coal = CATALOG[FacilityId.COAL_BURNER].base_construction_pollution
-    purchases = [Purchase(facility=FacilityId.COAL_BURNER, round=1, price=1.0)]
+def test_each_rounds_emissions_count_running_but_not_building() -> None:
     results = [
         _result({FacilityId.COAL_BURNER: _performance(emissions=500.0)}, round_number=1),
         _result({FacilityId.COAL_BURNER: _performance(emissions=700.0)}, round_number=2, season="autumn"),
     ]
 
-    assert round_emissions(purchases, results, rounds=2, completed=1) == [
-        RoundEmissions(round=1, emissions=coal + 500.0, complete=True),
+    assert round_emissions(results, rounds=2, completed=1) == [
+        RoundEmissions(round=1, emissions=500.0, complete=True),
         RoundEmissions(round=2, emissions=700.0, complete=False),
     ]
 
 
 def test_a_session_that_has_not_started_has_no_rounds_of_emissions() -> None:
-    assert round_emissions([], [], rounds=0, completed=0) == []
+    assert round_emissions([], rounds=0, completed=0) == []
 
 
 # --- alarms -------------------------------------------------------------------------------------

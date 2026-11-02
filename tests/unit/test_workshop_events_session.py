@@ -196,16 +196,13 @@ def test_a_fuel_shock_lands_with_its_trading_period(path: Path) -> None:
     assert not session.fuel_prices[Fuel.GAS].shocked
 
 
-def test_session_emissions_count_building_and_running(path: Path) -> None:
+def test_session_emissions_count_running_but_not_building(path: Path) -> None:
     session = _session(path)
     assert session.emissions() == 0
     session.advance()  # close the Investment phase
     session.buy_selections()
-    built = PLAYERS * (
-        COAL_BURNERS * CATALOG[FacilityId.COAL_BURNER].base_construction_pollution
-        + CATALOG[FacilityId.ONSHORE_WIND_TURBINE].base_construction_pollution
-    )
-    assert session.emissions() == pytest.approx(built)
+    # Building emits nothing in the workshop (#1414).
+    assert session.emissions() == 0
     _to_next(session, TradingPeriod)
     _settle(session)
-    assert session.emissions() > built
+    assert session.emissions() > 0

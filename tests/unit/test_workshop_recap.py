@@ -152,9 +152,9 @@ def test_the_rooms_figures_cover_the_round() -> None:
         ),
     ]
     figures = _recap(2, purchases=purchases, results=results).figures
-    built = CATALOG[coal].base_construction_pollution + CATALOG[wind].base_construction_pollution
-    assert figures.emissions_round == pytest.approx(built + 1000.0)
-    assert figures.emissions_total == pytest.approx(built + CATALOG[wind].base_construction_pollution + 1007.0)
+    # Building emits nothing (#1414), so only what the facilities emitted running counts.
+    assert figures.emissions_round == pytest.approx(1000.0)
+    assert figures.emissions_total == pytest.approx(1007.0)
     assert figures.capacity_built == CATALOG[coal].base_power_generation + CATALOG[wind].base_power_generation
     # Storage resells energy generated elsewhere, so it is left out.
     assert figures.energy_sold == pytest.approx(4e6)

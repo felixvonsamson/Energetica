@@ -21,8 +21,7 @@ A climate event's revenue tax (#1012) takes a share of the season's sale revenue
 income, above fuel.
 
 The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
-emitted building the Round's investments, charged in its first season, the tax on the CO₂ emitted generating, and
-the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
+emitted generating and the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
 
 Each blackout in the Round costs the player a share of their operating income for it (#1286,
 :mod:`~energetica.workshop.blackout`). The cost sits below operating income, and the Round's net profit takes it off
@@ -155,12 +154,6 @@ class PeriodSheet(BaseModel):
     )
     operating_income: float = Field(description="Market income minus dumping cost, O&M, revenue tax and fuel")
     # Default to zero for a sheet without a carbon tax.
-    construction_emissions: float = Field(
-        default=0.0, description="The CO₂ emitted building the Round's investments that the carbon tax charged, in kg"
-    )
-    construction_carbon_tax: float = Field(
-        default=0.0, description="The carbon tax on construction_emissions, charged in the Round's first season"
-    )
     taxed_emissions: float = Field(
         default=0.0, description="The CO₂ emitted generating in the seasons the carbon tax was in force, in kg"
     )
@@ -171,7 +164,7 @@ class PeriodSheet(BaseModel):
     carbon_tax_share: float = Field(default=0.0, description="The player's share of the carbon tax takings")
     carbon_tax: float = Field(
         default=0.0,
-        description="The carbon tax paid on construction and generation, minus the share that came back. Below zero "
+        description="The carbon tax paid on generation, minus the share that came back. Below zero "
         "when more came back than was paid",
     )
 
@@ -400,8 +393,6 @@ def period_sheet(results: Sequence[TradingResult]) -> PeriodSheet:
             if fuel in excess
         ],
         operating_income=sum(period_operating_profit(result) for result in results),
-        construction_emissions=sum(result.construction_emissions for result in results),
-        construction_carbon_tax=sum(result.construction_carbon_tax for result in results),
         taxed_emissions=sum(result.emissions for result in results if result.carbon_tax_rate > 0),
         emitted_carbon_tax=sum(result.emitted_carbon_tax for result in results),
         # The rate is the same in every season a Round taxes: a carbon tax stays once it passes.

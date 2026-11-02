@@ -11,7 +11,6 @@ import pytest
 
 from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
-from energetica.workshop.carbon_tax import construction_emissions
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.session import (
@@ -295,8 +294,6 @@ def test_a_passed_carbon_tax_is_settled_each_trading_period_and_shared_out(path:
     session = _vote_in_round_one(path)
     session.cast_ballot(1, "yes")
     _keep_the_lights_on(session)
-    # Player 3 buys a wind turbine too, so the players differ in what they emit building.
-    session.select(3, FacilityId.ONSHORE_WIND_TURBINE)
     _close_investment(session)
     players = session.network.players()
     before = {player.account_id: player.money for player in players}
@@ -307,9 +304,9 @@ def test_a_passed_carbon_tax_is_settled_each_trading_period_and_shared_out(path:
     for player in players:
         result = results[player.account_id]
         assert result.carbon_tax_rate == CARBON_TAX_RATE
-        assert result.construction_emissions == pytest.approx(construction_emissions(player.purchases, 1))
+        # Only what the facilities emitted is taxed: building emits nothing (#1414).
+        assert result.carbon_tax_paid == pytest.approx(result.emissions * CARBON_TAX_RATE)
         assert player.money - before[player.account_id] == pytest.approx(result.operating_profit - result.carbon_tax)
-    assert results[3].construction_emissions > results[1].construction_emissions
     # Everything paid comes back, shared out equally.
     assert sum(result.carbon_tax for result in results.values()) == pytest.approx(0.0, abs=1e-6)
     assert len({result.carbon_tax_share for result in results.values()}) == 1
@@ -317,7 +314,6 @@ def test_a_passed_carbon_tax_is_settled_each_trading_period_and_shared_out(path:
     session.advance()
     _settle_period(session)
 
-    assert all(player.trading_results[-1].construction_emissions == 0 for player in players)
     assert all(player.trading_results[-1].carbon_tax_share > 0 for player in players)
 
 
