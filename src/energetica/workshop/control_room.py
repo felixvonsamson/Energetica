@@ -10,7 +10,7 @@ out each panel.
 - **Capacity against demand** (#1287): what the facilities working this Round can produce, those players have
   selected to buy included, against the must-serve peak: the Round's, or in a Trading period, its season's. Either
   way, with how likely a blackout is.
-- **Carbon**: the CO₂ the room emitted in each Round, building and running its facilities.
+- **Carbon**: the CO₂ the room's facilities emitted in each Round.
 - **Each settled season**: its average market price with the spread of its clearing prices, and the room's
   generation by power source.
 - **The room's prices** for each power source, as a box per Trading period: the lowest, the quartiles, the median
@@ -36,7 +36,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from energetica.workshop.blackout import Blackout
 from energetica.workshop.events import EVENTS, EventCategory, FiredEvent, effect_line
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
-from energetica.workshop.fleet import Purchase
 from energetica.workshop.prices import MarketPrices
 from energetica.workshop.recap import emissions
 from energetica.workshop.seasons import SEASONS, Season
@@ -216,7 +215,7 @@ class DurationCurve(BaseModel):
 
 
 class RoundEmissions(BaseModel):
-    """The CO₂ the room emitted in one Round, building its facilities and running them."""
+    """The CO₂ the room's facilities emitted in one Round."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -225,17 +224,12 @@ class RoundEmissions(BaseModel):
     complete: bool = Field(description="Whether the Round is over: its Recap has opened")
 
 
-def round_emissions(
-    purchases: Sequence[Purchase], results: Sequence[TradingResult], *, rounds: int, completed: int
-) -> list[RoundEmissions]:
+def round_emissions(results: Sequence[TradingResult], *, rounds: int, completed: int) -> list[RoundEmissions]:
     """The emissions of Rounds 1 to ``rounds``, of which the first ``completed`` are over."""
     return [
         RoundEmissions(
             round=round_number,
-            emissions=emissions(
-                [purchase for purchase in purchases if purchase.round == round_number],
-                [result for result in results if result.round == round_number],
-            ),
+            emissions=emissions(result for result in results if result.round == round_number),
             complete=round_number <= completed,
         )
         for round_number in range(1, rounds + 1)

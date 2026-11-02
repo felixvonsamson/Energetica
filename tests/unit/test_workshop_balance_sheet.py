@@ -349,25 +349,23 @@ def test_before_any_season_is_settled_the_net_profit_is_minus_the_investments() 
     assert sheet.net_profit == pytest.approx(-90_000.0)
 
 
-def _taxed(round_number: int, season: Season, *, emissions: float, construction: float, share: float) -> TradingResult:
+def _taxed(round_number: int, season: Season, *, emissions: float, share: float) -> TradingResult:
     """A result the carbon tax (#1015) was settled on, at 0.1 per kg."""
     return _result(
         round_number, season, {GAS: _performance(sold=1e9, revenue=50_000.0, emissions=emissions)}
-    ).model_copy(update={"carbon_tax_rate": 0.1, "construction_emissions": construction, "carbon_tax_share": share})
+    ).model_copy(update={"carbon_tax_rate": 0.1, "carbon_tax_share": share})
 
 
 def test_a_season_breaks_the_carbon_tax_down_below_its_operating_income() -> None:
-    spring = _taxed(1, "spring", emissions=20_000.0, construction=5_000.0, share=1_500.0)
+    spring = _taxed(1, "spring", emissions=20_000.0, share=1_500.0)
 
     sheet = period_sheet([spring])
 
-    assert sheet.construction_emissions == pytest.approx(5_000.0)
-    assert sheet.construction_carbon_tax == pytest.approx(500.0)
     assert sheet.taxed_emissions == pytest.approx(20_000.0)
     assert sheet.emitted_carbon_tax == pytest.approx(2_000.0)
     assert sheet.carbon_tax_rate == pytest.approx(0.1)
     assert sheet.carbon_tax_share == pytest.approx(1_500.0)
-    assert sheet.carbon_tax == pytest.approx(1_000.0)
+    assert sheet.carbon_tax == pytest.approx(500.0)
     # The carbon tax is left out of operating income.
     assert sheet.operating_income == pytest.approx(50_000.0)
 
@@ -379,8 +377,8 @@ def test_a_season_without_the_carbon_tax_has_none() -> None:
 
 
 def test_the_round_totals_the_carbon_tax_and_takes_it_off_the_net_profit() -> None:
-    spring = _taxed(1, "spring", emissions=20_000.0, construction=5_000.0, share=1_500.0)
-    summer = _taxed(1, "summer", emissions=10_000.0, construction=0.0, share=800.0)
+    spring = _taxed(1, "spring", emissions=20_000.0, share=1_500.0)
+    summer = _taxed(1, "summer", emissions=10_000.0, share=800.0)
     purchases = [Purchase(facility=GAS, round=1, price=90_000.0)]
 
     sheet = balance_sheet(
@@ -388,8 +386,7 @@ def test_the_round_totals_the_carbon_tax_and_takes_it_off_the_net_profit() -> No
     )
 
     assert sheet.total is not None
-    assert sheet.total.construction_carbon_tax == pytest.approx(500.0)
     assert sheet.total.emitted_carbon_tax == pytest.approx(3_000.0)
     assert sheet.total.carbon_tax_share == pytest.approx(2_300.0)
-    assert sheet.total.carbon_tax == pytest.approx(1_200.0)
-    assert sheet.net_profit == pytest.approx(100_000.0 - 1_200.0 - 90_000.0)
+    assert sheet.total.carbon_tax == pytest.approx(700.0)
+    assert sheet.net_profit == pytest.approx(100_000.0 - 700.0 - 90_000.0)

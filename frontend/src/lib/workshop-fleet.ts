@@ -38,6 +38,40 @@ export function roundsLabel(rounds: number): string {
 }
 
 /**
+ * "Needs 1 Round to build", for a facility that only starts working Rounds
+ * after the one it is bought in, or null for one that works straight away
+ * (#1414). Working straight away is the default, so it goes unsaid.
+ */
+export function constructionLagLabel(lagRounds: number): string | null {
+    return lagRounds > 0 ? `Needs ${roundsLabel(lagRounds)} to build` : null;
+}
+
+/**
+ * What the dialog says before a player adds a facility with a construction lag
+ * to their selection (#1414), so nobody is surprised when it produces nothing
+ * this Round. A Round is a year, and the text says so.
+ */
+export function constructionLagWarning(
+    name: string,
+    lagRounds: number,
+): string {
+    // Catalog names are in sentence case, so mid-sentence the first letter
+    // goes lower case, unless the first word is an acronym like "Gen-IV".
+    const noun = /^[A-Z][a-z]*(\s|$)/.test(name)
+        ? name[0]!.toLowerCase() + name.slice(1)
+        : name;
+    const article = /^[aeiou]/i.test(noun) ? "An" : "A";
+    const years = lagRounds === 1 ? "one year" : `${lagRounds} years`;
+    const idle =
+        lagRounds === 1
+            ? "this Round"
+            : `this Round or the next${lagRounds > 2 ? ` ${lagRounds - 1}` : ""}`;
+    const start =
+        lagRounds === 1 ? "next Round" : `in ${roundsLabel(lagRounds)}`;
+    return `${article} ${noun} needs ${roundsLabel(lagRounds)}, ${years}, to build. If you buy it now, it will not produce any power ${idle}. It starts working ${start}.`;
+}
+
+/**
  * The lifetime left across a stack, longest first, such as "2–1 Rounds", or a
  * single figure when every copy has the same left.
  */

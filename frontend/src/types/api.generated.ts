@@ -5981,18 +5981,6 @@ export interface components {
              */
             operating_income: number;
             /**
-             * Construction Emissions
-             * @description The CO₂ emitted building the Round's investments that the carbon tax charged, in kg
-             * @default 0
-             */
-            construction_emissions: number;
-            /**
-             * Construction Carbon Tax
-             * @description The carbon tax on construction_emissions, charged in the Round's first season
-             * @default 0
-             */
-            construction_carbon_tax: number;
-            /**
              * Taxed Emissions
              * @description The CO₂ emitted generating in the seasons the carbon tax was in force, in kg
              * @default 0
@@ -6018,7 +6006,7 @@ export interface components {
             carbon_tax_share: number;
             /**
              * Carbon Tax
-             * @description The carbon tax paid on construction and generation, minus the share that came back. Below zero when more came back than was paid
+             * @description The carbon tax paid on generation, minus the share that came back. Below zero when more came back than was paid
              * @default 0
              */
             carbon_tax: number;
@@ -6289,7 +6277,7 @@ export interface components {
         RoomFigures: {
             /**
              * Emissions Round
-             * @description CO₂ every player emitted in the Round, building and running, in kg
+             * @description CO₂ every player's facilities emitted in the Round, in kg
              */
             emissions_round: number;
             /**
@@ -6345,7 +6333,7 @@ export interface components {
         };
         /**
          * RoundEmissions
-         * @description The CO₂ the room emitted in one Round, building its facilities and running them.
+         * @description The CO₂ the room's facilities emitted in one Round.
          */
         RoundEmissions: {
             /** Round */
@@ -6848,11 +6836,6 @@ export interface components {
              * @description Share of the O&M cost charged whatever the facility's use, from 0 to 1
              */
             om_fixed_share: number;
-            /**
-             * Base Construction Pollution
-             * @description CO₂ emitted to build one, in kg
-             */
-            base_construction_pollution: number;
             /**
              * Base Pollution
              * @description CO₂ emitted per MWh generated, in kg

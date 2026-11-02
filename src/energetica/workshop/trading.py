@@ -192,12 +192,6 @@ class TradingResult(BaseModel):
     carbon_tax_rate: float = Field(
         default=0.0, ge=0, description="What the carbon tax charged per kg of CO₂ in the period, or zero if none"
     )
-    construction_emissions: float = Field(
-        default=0.0,
-        ge=0,
-        description="The CO₂ emitted building the facilities bought in the Round's Investment phase, in kg, which the "
-        "carbon tax charges in the Round's first Trading period. Zero in any other period",
-    )
     carbon_tax_share: float = Field(
         default=0.0, ge=0, description="The player's equal share of the carbon tax takings of the period"
     )
@@ -230,19 +224,16 @@ class TradingResult(BaseModel):
         return sum(performance.emissions for performance in self.facilities.values())
 
     @property
-    def construction_carbon_tax(self) -> float:
-        """What the carbon tax charged on :attr:`construction_emissions` (#1015)."""
-        return self.construction_emissions * self.carbon_tax_rate
-
-    @property
     def emitted_carbon_tax(self) -> float:
         """What the carbon tax charged on the CO₂ the player's facilities emitted in the period (#1015)."""
         return self.emissions * self.carbon_tax_rate
 
     @property
     def carbon_tax_paid(self) -> float:
-        """What the player paid in carbon tax in the period, on construction and on generation (#1015)."""
-        return self.construction_carbon_tax + self.emitted_carbon_tax
+        """What the player paid in carbon tax in the period (#1015). Building emits nothing (#1414), so this is
+        only the tax on what the player's facilities emitted.
+        """
+        return self.emitted_carbon_tax
 
     @property
     def carbon_tax(self) -> float:

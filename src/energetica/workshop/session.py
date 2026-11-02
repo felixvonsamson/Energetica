@@ -89,7 +89,7 @@ from pydantic import BaseModel, Field
 
 from energetica.identity.instance_config import Team, WorkshopRun
 from energetica.kernel.atomic_file import write_atomically
-from energetica.workshop.carbon_tax import carbon_tax_rate, construction_emissions, settle_carbon_tax
+from energetica.workshop.carbon_tax import carbon_tax_rate, settle_carbon_tax
 from energetica.workshop.control_room import (
     FUEL_HISTORY_POINTS,
     HISTORY_SEASONS,
@@ -912,12 +912,8 @@ class WorkshopSession:
         return {facility: self.facility_price(facility, round_number) for facility in CATALOG}
 
     def emissions(self) -> float:
-        """The CO₂ every player has emitted so far, in kg: building their facilities and running them."""
-        players = self.network.players()
-        return emissions(
-            [purchase for player in players for purchase in player.purchases],
-            [result for player in players for result in player.trading_results],
-        )
+        """The CO₂ every player's facilities have emitted so far, in kg. Building them emits nothing (#1414)."""
+        return emissions(result for player in self.network.players() for result in player.trading_results)
 
     def unlock_progress(self) -> UnlockProgress:
         """How far each technology is from unlocking, read in one step so its parts agree (#1011)."""
@@ -1533,7 +1529,6 @@ class WorkshopSession:
                 priced.append(self.checkpoint)
             players = self.network.players()
             results = [result for player in players for result in player.trading_results]
-            purchases = [purchase for player in players for purchase in player.purchases]
             started = not isinstance(self.checkpoint, NotStarted)
             vote_open = self.investment_open() and self.vote_held()
             current_round = self.current_round()
@@ -1563,7 +1558,6 @@ class WorkshopSession:
                 vote_open=current_round if vote_open else None,
             )
             emitted = round_emissions(
-                purchases,
                 results,
                 rounds=current_round if started else 0,
                 completed=completed_rounds(self.checkpoint, round_count=self.round_count),
@@ -2066,17 +2060,11 @@ class WorkshopSession:
         # Worked out before anything changes, so a failure here leaves the session as it was.
         tax_rate = revenue_tax_rate(self.fired_events, period.round, period.season)
         summary = price_summary(outcome.record.price)
-        # The carbon tax (#1015) charges construction in the Round's first Trading period, which always settles.
-        first = period.season == SEASONS[0]
         traded = {player.account_id: outcome.results.get(player.account_id) for player in players}
         results = settle_carbon_tax(
             {
                 player: None if result is None else result.model_copy(update={"revenue_tax_rate": tax_rate})
                 for player, result in traded.items()
-            },
-            {
-                player.account_id: construction_emissions(player.purchases, period.round) if first else 0.0
-                for player in players
             },
             rate=carbon_tax_rate(self.vote_outcomes, period.round),
             round_number=period.round,

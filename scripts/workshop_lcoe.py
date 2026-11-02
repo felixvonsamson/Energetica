@@ -67,7 +67,7 @@ def lcoe(facility: WorkshopFacility, capacity_factor: float) -> Lcoe:
     mwh = facility.base_power_generation / 1e6 * HOURS_PER_ROUND * capacity_factor * rounds
     om = facility.om_per_round * (facility.om_fixed_share + (1 - facility.om_fixed_share) * capacity_factor) * rounds
     without_tax = (facility.base_price + om) / mwh + fuel_cost_per_mwh(facility)
-    tax = CARBON_TAX_RATE * (facility.base_construction_pollution / mwh + facility.base_pollution)
+    tax = CARBON_TAX_RATE * facility.base_pollution
     return Lcoe(capacity_factor, without_tax, without_tax + tax)
 
 
@@ -167,7 +167,7 @@ def simulate(args: argparse.Namespace) -> None:
         for seed in range(args.seeds):
             mwh, om, fuel, emissions, factor = simulate_lifetime(facility, seed)
             cost = facility.base_price + om + fuel
-            tax = CARBON_TAX_RATE * (facility.base_construction_pollution + emissions)
+            tax = CARBON_TAX_RATE * emissions
             without.append(cost / mwh)
             with_tax.append((cost + tax) / mwh)
             factors.append(factor)
