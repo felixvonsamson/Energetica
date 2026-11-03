@@ -10,9 +10,15 @@ interface JoinQrCodeProps {
     value: string;
     /** Canvas side length in CSS pixels. */
     size?: number;
+    /** What the code links to, read out by screen readers. */
+    label?: string;
 }
 
-export function JoinQrCode({ value, size = 200 }: JoinQrCodeProps) {
+export function JoinQrCode({
+    value,
+    size = 200,
+    label = "QR code for the instance join link",
+}: JoinQrCodeProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [error, setError] = useState(false);
 
@@ -46,7 +52,7 @@ export function JoinQrCode({ value, size = 200 }: JoinQrCodeProps) {
             width={size}
             height={size}
             role="img"
-            aria-label="QR code for the instance join link"
+            aria-label={label}
             className="rounded-md"
         />
     );
