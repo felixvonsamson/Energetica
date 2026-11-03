@@ -8,12 +8,14 @@ from energetica.workshop.prices import is_storage
 from energetica.workshop.round_format import StorageAvailability
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
 from energetica.workshop.unlocks import (
+    THRESHOLD_SHARES,
+    UPGRADES,
     Unlock,
     available_facilities,
     format_lever_unlocks,
     invested,
     round_end_unlocks,
-    unlock_threshold,
+    unlock_thresholds,
 )
 
 
@@ -83,15 +85,26 @@ def test_spend_on_upgrades_and_standalone_facilities_counts_toward_nothing() -> 
     assert set(spent.values()) == {0.0}
 
 
-def test_the_threshold_is_two_fifths_of_every_players_starting_budget() -> None:
-    assert unlock_threshold(player_count=5) == 2 * WORKSHOP_STARTING_BUDGET
+def test_each_threshold_is_its_share_of_every_players_starting_budget() -> None:
+    thresholds = unlock_thresholds(player_count=4)
+
+    assert thresholds[FacilityId.COAL_BURNER] == 1.6 * WORKSHOP_STARTING_BUDGET
+    assert thresholds[FacilityId.NUCLEAR_REACTOR] == 2 * WORKSHOP_STARTING_BUDGET
+    assert thresholds[FacilityId.LITHIUM_ION_BATTERIES] == 0.6 * WORKSHOP_STARTING_BUDGET
+
+
+def test_every_base_tier_has_a_threshold_share() -> None:
+    assert set(THRESHOLD_SHARES) == set(UPGRADES)
 
 
 def _round_end(
     spent: dict[FacilityId, float], *, next_round: int = 2, unlocked: frozenset[FacilityId] = frozenset()
 ) -> list[Unlock]:
     return round_end_unlocks(
-        next_round=next_round, spent={**invested([]), **spent}, threshold=1_000.0, unlocked=unlocked
+        next_round=next_round,
+        spent={**invested([]), **spent},
+        thresholds=dict.fromkeys(UPGRADES, 1_000.0),
+        unlocked=unlocked,
     )
 
 
@@ -112,7 +125,12 @@ def test_concentrated_solar_power_unlocks_from_round_three_whatever_was_invested
 
 
 def test_nothing_unlocks_without_spend_even_if_the_threshold_is_zero() -> None:
-    assert round_end_unlocks(next_round=2, spent=invested([]), threshold=0.0, unlocked=frozenset()) == []
+    assert (
+        round_end_unlocks(
+            next_round=2, spent=invested([]), thresholds=dict.fromkeys(UPGRADES, 0.0), unlocked=frozenset()
+        )
+        == []
+    )
 
 
 def test_full_season_storage_unlocks_the_first_round_the_storage_lever_allows_every_type() -> None:

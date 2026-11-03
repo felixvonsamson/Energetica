@@ -1928,8 +1928,6 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 
     assert response.status_code == 200
     body = response.json()
-    # Two fifths of two starting budgets of 50,000,000.
-    assert body["threshold"] == 40_000_000.0
     assert body["csp_unlock_round"] == 3
     assert body["unlocks"] == []
     technologies = {technology["base"]: technology for technology in body["technologies"]}
@@ -1939,6 +1937,8 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
         "upgrade": "combined_cycle",
         "upgrade_name": "Combined cycle",
         "invested": 8_000_000.0,
+        # Two fifths of two starting budgets of 50,000,000.
+        "threshold": 40_000_000.0,
         "unlocked_round": None,
     }
     assert technologies["coal_burner"]["invested"] == 0.0
@@ -1948,7 +1948,7 @@ def test_the_facilitator_sees_how_far_each_technology_is_from_unlocking(session_
 def test_the_progress_shows_the_round_an_upgrade_unlocked_from(session_path: Path, clock: _Clock) -> None:
     _, client, facilitator, [alice] = _investing(session_path, clock, "alice")
     authenticate(client, alice)
-    # 80,000,000, past the threshold of half one starting budget, and bought with the loan.
+    # Past nuclear's threshold of half one starting budget, and bought with the loan.
     client.post(LOAN_URL)
     client.post(SELECTION_URL, json={"facility": "nuclear_reactor"})
     authenticate(client, facilitator)

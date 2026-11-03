@@ -31,8 +31,8 @@ WORKSHOP_CONFIG = InstanceConfig.model_validate(
     }
 )
 
-# With four players, the threshold is two starting budgets: 100,000,000. One nuclear reactor costs 80,000,000, so
-# two cross it and one does not.
+# With four players, nuclear's threshold is two starting budgets: 100,000,000. One nuclear reactor costs 53,000,000 in
+# a 3-Round session, so two cross it and one does not.
 PLAYERS = 4
 
 

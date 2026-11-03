@@ -19,7 +19,7 @@ from energetica.workshop.fuel import CATALOG_FUEL_PRICES, FUEL_USE
 from energetica.workshop.loan import LOAN_AMOUNT
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
 from energetica.workshop.seasons import SEASONS
-from energetica.workshop.unlocks import UPGRADES, unlock_threshold
+from energetica.workshop.unlocks import UPGRADES, unlock_thresholds
 from energetica.workshop.votes import CARBON_TAX_RATE
 from energetica.workshop.weather import NORMAL_OUTPUT
 
@@ -110,7 +110,9 @@ def test_small_dams_can_reach_the_large_dam_unlock() -> None:
     small_dam = CATALOG[FacilityId.SMALL_WATER_DAM]
     assert small_dam.max_owned is not None
     players = 6
-    assert players * small_dam.max_owned * small_dam.base_price >= unlock_threshold(players)
+    assert (
+        players * small_dam.max_owned * small_dam.base_price >= unlock_thresholds(players)[FacilityId.SMALL_WATER_DAM]
+    )
 
 
 def test_o_and_m_per_mw_goes_coal_nuclear_gas_wind() -> None:

@@ -367,6 +367,9 @@ class WorkshopTechnologyProgressOut(BaseModel):
     upgrade: FacilityId
     upgrade_name: str
     invested: float = Field(description="Money every player has spent on the base tier so far")
+    threshold: float = Field(
+        description="The spend on the base tier that unlocks its upgrade. It grows with the number of players"
+    )
     unlocked_round: int | None = Field(
         description="The first Round the upgrade can be bought in, or null while it is locked"
     )
@@ -377,10 +380,6 @@ class WorkshopUnlocksOut(BaseModel):
     only: players learn of an unlock at the Recap, never how close one is.
     """
 
-    threshold: float = Field(
-        description="The spend on a base tier that unlocks its upgrade, the same for every technology. It grows "
-        "with the number of players"
-    )
     technologies: list[WorkshopTechnologyProgressOut] = Field(description="Each base tier, in catalog order")
     csp_unlock_round: int = Field(description="The first Round Concentrated solar power can be bought in")
     unlocks: list[Unlock] = Field(description="Every facility unlocked so far, in the order they unlocked")
