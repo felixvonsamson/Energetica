@@ -256,7 +256,6 @@ def get_unlocks(_: Annotated[Account, Depends(get_facilitator)], session: Sessio
     progress = session.unlock_progress()
     unlocked_round = {unlock.facility: unlock.round for unlock in progress.unlocks}
     return WorkshopUnlocksOut(
-        threshold=progress.threshold,
         technologies=[
             WorkshopTechnologyProgressOut(
                 base=base,
@@ -264,6 +263,7 @@ def get_unlocks(_: Annotated[Account, Depends(get_facilitator)], session: Sessio
                 upgrade=upgrade,
                 upgrade_name=CATALOG[upgrade].name,
                 invested=progress.invested[base],
+                threshold=progress.thresholds[base],
                 unlocked_round=unlocked_round.get(upgrade),
             )
             for base, upgrade in UPGRADES.items()

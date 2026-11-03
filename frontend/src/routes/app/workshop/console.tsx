@@ -287,9 +287,10 @@ function TechnologyUnlocksCard() {
                 <CardTitle>Technology unlocks</CardTitle>
                 <TypographyMuted>
                     Only you see this. Every player's purchases of a base
-                    technology add up, and once they reach the threshold, its
-                    upgrade unlocks from the next Round. Players find out at the
-                    Recap.
+                    technology add up, and once they reach that technology's
+                    threshold, its upgrade unlocks from the next Round. Players
+                    find out at the Recap. Thresholds grow with the number of
+                    players.
                 </TypographyMuted>
             </CardHeader>
             <CardContent>
@@ -315,16 +316,11 @@ function UnlockProgress({ unlocks }: { unlocks: WorkshopUnlocks }) {
 
     return (
         <div className="space-y-5">
-            <p className="text-sm">
-                Threshold: <Money amount={unlocks.threshold} /> spent on a base
-                technology. It grows with the number of players.
-            </p>
             <ul className="space-y-4">
                 {unlocks.technologies.map((technology) => (
                     <TechnologyRow
                         key={technology.base}
                         technology={technology}
-                        threshold={unlocks.threshold}
                     />
                 ))}
             </ul>
@@ -350,13 +346,8 @@ function UnlockProgress({ unlocks }: { unlocks: WorkshopUnlocks }) {
     );
 }
 
-function TechnologyRow({
-    technology,
-    threshold,
-}: {
-    technology: TechnologyProgress;
-    threshold: number;
-}) {
+function TechnologyRow({ technology }: { technology: TechnologyProgress }) {
+    const { threshold } = technology;
     const unlocked = technology.unlocked_round !== null;
     // The threshold is zero before anyone joins, which would leave the bar
     // nothing to fill.

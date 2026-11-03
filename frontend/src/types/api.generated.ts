@@ -7663,6 +7663,11 @@ export interface components {
              */
             invested: number;
             /**
+             * Threshold
+             * @description The spend on the base tier that unlocks its upgrade. It grows with the number of players
+             */
+            threshold: number;
+            /**
              * Unlocked Round
              * @description The first Round the upgrade can be bought in, or null while it is locked
              */
@@ -7690,11 +7695,6 @@ export interface components {
          *     only: players learn of an unlock at the Recap, never how close one is.
          */
         WorkshopUnlocksOut: {
-            /**
-             * Threshold
-             * @description The spend on a base tier that unlocks its upgrade, the same for every technology. It grows with the number of players
-             */
-            threshold: number;
             /**
              * Technologies
              * @description Each base tier, in catalog order

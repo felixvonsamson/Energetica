@@ -406,7 +406,8 @@ cut down to fit. Unused fuel carries over, and fuel left at the end of the sessi
 **Unlock** (#1011):
 A facility becoming available to buy partway through a session, kept so the Recap can announce it.
 An **upgrade tier** unlocks once the money every player has spent buying its **base tier** reaches the
-unlock threshold, which is the same for every technology and grows with the number of players. That is
+technology's unlock threshold, which grows with the number of players. Cheap technologies have a lower
+threshold, so the room does not need far more of them than it would use. That is
 checked when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar power
 unlocks from a set Round instead, and hydrogen storage and pumped hydro the first Round that allows
 every storage type, checked at the Recap before it, or when the session starts for Round 1. That Round's

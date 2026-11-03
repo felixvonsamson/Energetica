@@ -191,7 +191,7 @@ from energetica.workshop.unlocks import (
     format_lever_unlocks,
     invested,
     round_end_unlocks,
-    unlock_threshold,
+    unlock_thresholds,
 )
 from energetica.workshop.votes import CARBON_TAX_RATE, Ballot, VoteOutcome, carbon_tax_since, passes, vote_held
 from energetica.workshop.weather import AverageOutput, capacity_factor, representative_weather, season_output
@@ -598,8 +598,8 @@ class PlansView(NamedTuple):
 class UnlockProgress(NamedTuple):
     """How far each technology is from unlocking its upgrade, for the facilitator (#1011)."""
 
-    threshold: float
-    """The spend on a base tier that unlocks its upgrade, with the players the session has now."""
+    thresholds: dict[FacilityId, float]
+    """The spend on each base tier that unlocks its upgrade, with the players the session has now."""
     invested: dict[FacilityId, float]
     """The money every player has spent on each base tier so far."""
     unlocks: list[Unlock]
@@ -918,17 +918,17 @@ class WorkshopSession:
     def unlock_progress(self) -> UnlockProgress:
         """How far each technology is from unlocking, read in one step so its parts agree (#1011)."""
         with self._lock:
-            return UnlockProgress(self._unlock_threshold(), self._invested(), list(self.unlocks))
+            return UnlockProgress(self._unlock_thresholds(), self._invested(), list(self.unlocks))
 
     def _invested(self) -> dict[FacilityId, float]:
         """The money every player has spent on each base tier so far. The caller holds the lock."""
         return invested(purchase for player in self.network.players() for purchase in player.purchases)
 
-    def _unlock_threshold(self) -> float:
-        """The spend on a base tier that unlocks its upgrade, with the players the session has now. The caller
+    def _unlock_thresholds(self) -> dict[FacilityId, float]:
+        """The spend on each base tier that unlocks its upgrade, with the players the session has now. The caller
         holds the lock.
         """
-        return unlock_threshold(len(self.network.players()))
+        return unlock_thresholds(len(self.network.players()))
 
     def investment_open(self) -> bool:
         """Whether players can change their selection: the session is in an Investment phase and its time
@@ -1212,7 +1212,7 @@ class WorkshopSession:
                     *round_end_unlocks(
                         next_round=round_number + 1,
                         spent=self._invested(),
-                        threshold=self._unlock_threshold(),
+                        thresholds=self._unlock_thresholds(),
                         unlocked=unlocked,
                     ),
                     *format_lever_unlocks(
