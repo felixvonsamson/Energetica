@@ -4,11 +4,15 @@
  * electricity market works, from 1 to 5 stars, and can add a comment. Sending
  * again replaces what they sent before, so the form starts from their last
  * answer.
+ *
+ * Several players often share one account, so below the form a link and QR code
+ * lead to a longer external form that each person can fill in on their own.
  */
 
-import { MessageSquareHeart, Star } from "lucide-react";
+import { ExternalLink, MessageSquareHeart, Star } from "lucide-react";
 import { useId, useState } from "react";
 
+import { JoinQrCode } from "@/components/facilitator/join-qr-code";
 import { useSendFeedback, useWorkshopFeedback } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
 import { Button } from "@energetica/ui/components/button";
@@ -26,6 +30,10 @@ import { cn } from "@energetica/ui/lib/utils";
 type Feedback = ApiSchema<"WorkshopFeedback">;
 
 const COMMENT_MAX_LENGTH = 4000;
+
+/** The longer feedback form, a Google Form each participant fills in alone. */
+const DETAILED_FEEDBACK_URL =
+    "https://docs.google.com/forms/d/e/1FAIpQLSew-LbpCqLSyuTY-WLTEWLFQXNO4JQuvjAyUzNeXab5vnm0fg/viewform";
 
 export function GameFeedback() {
     const feedback = useWorkshopFeedback();
@@ -53,8 +61,38 @@ export function GameFeedback() {
                         sent={feedback.data ?? null}
                     />
                 )}
+                <DetailedFeedbackLink />
             </CardContent>
         </Card>
+    );
+}
+
+function DetailedFeedbackLink() {
+    return (
+        <div className="mt-6 flex flex-col items-center gap-4 border-t pt-6 sm:flex-row">
+            <div className="shrink-0 rounded-md bg-white p-1">
+                <JoinQrCode
+                    value={DETAILED_FEEDBACK_URL}
+                    size={128}
+                    label="QR code for the detailed feedback form"
+                />
+            </div>
+            <div className="flex flex-col gap-2 text-center sm:text-left">
+                <p className="text-sm">
+                    To help us improve the game, please fill in this form (5
+                    min). Each of you can scan the code with your phone.
+                </p>
+                <a
+                    href={DETAILED_FEEDBACK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1 text-sm font-medium text-brand underline-offset-4 hover:underline sm:justify-start"
+                >
+                    Open the feedback form
+                    <ExternalLink className="size-4" />
+                </a>
+            </div>
+        </div>
     );
 }
 
