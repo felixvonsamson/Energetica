@@ -7,11 +7,13 @@ on:
     branches: [main, dev, release/*]
 
 # A new push to a PR cancels that PR's run in progress, since only the latest commit's result
-# matters. Pushes to main, dev and release branches never cancel each other, so every merged
-# commit gets a complete run.
+# matters. Every other run gets a group of its own (its run id), so pushes to main, dev and
+# release branches never cancel or queue behind each other. A shared group per branch would not
+# be enough: GitHub keeps only one pending run per group and drops the older one, even without
+# cancel-in-progress, so a merged commit could lose its run.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -38,8 +40,9 @@ jobs:
             frontend:
               - .github/workflows/ci.yml
               - frontend/**
-              # The guard scripts the frontend job runs live outside frontend/.
-              - scripts/guard-*.ts
+              # The guard scripts the frontend job runs, and the helpers they import, live
+              # outside frontend/.
+              - scripts/**/*.ts
               - package.json
               - tsconfig.json
             python:
@@ -48,6 +51,8 @@ jobs:
               # Non-Python files the backend ships or reads: package data, test fixtures.
               - src/**
               - tests/**
+              # The tests also read deploy scripts, Apache configs and templates under scripts/.
+              - scripts/**
               - pyproject.toml
               # python-lint checks that the ruff pin here matches pyproject.toml.
               - .pre-commit-config.yaml
@@ -55,6 +60,8 @@ jobs:
               - .github/workflows/ci.yml
               - frontend/src/types/api*.generated.ts
               - scripts/generate-types.sh
+              # Defines the generate-types command the job runs.
+              - package.json
               # openapi-typescript's version, which shapes the generated output.
               - frontend/package.json
               - frontend/bun.lock
