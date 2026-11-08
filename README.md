@@ -2,7 +2,7 @@
 
 Energetica is an educational strategy game. It focuses on electricity and energy systems. Its goal is to be both compelling and educational.
 
-Play online: **http://energetica.ethz.ch**
+Play online: **https://energetica-game.org**
 
 ## Contributing
 
