@@ -6,8 +6,68 @@ on:
   pull_request:
     branches: [main, dev, release/*]
 
+# A new push to a PR cancels that PR's run in progress, since only the latest commit's result
+# matters. Every other run gets a group of its own (its run id), so pushes to main, dev and
+# release branches never cancel or queue behind each other. A shared group per branch would not
+# be enough: GitHub keeps only one pending run per group and drops the older one, even without
+# cancel-in-progress, so a merged commit could lose its run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # paths-filter lists a PR's changed files through the API.
+  pull-requests: read
+
 jobs:
-  frontend-checks:
+  changes:
+    # Works out which parts of the repo a PR touches, so the jobs below can skip work that the
+    # change cannot affect. A docs-only PR runs only format-check. Pushes to main, dev and
+    # release branches ignore these outputs and run everything, which catches anything a
+    # filter missed. Editing this workflow counts as touching every part.
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      python: ${{ steps.filter.outputs.python }}
+      api-types: ${{ steps.filter.outputs.api-types }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - .github/workflows/ci.yml
+              - frontend/**
+              # The guard scripts the frontend job runs, and the helpers they import, live
+              # outside frontend/.
+              - scripts/**/*.ts
+              - package.json
+              - tsconfig.json
+            python:
+              - .github/workflows/ci.yml
+              - "**/*.py"
+              # Non-Python files the backend ships or reads: package data, test fixtures.
+              - src/**
+              - tests/**
+              # The tests also read deploy scripts, Apache configs and templates under scripts/.
+              - scripts/**
+              - pyproject.toml
+              # python-lint checks that the ruff pin here matches pyproject.toml.
+              - .pre-commit-config.yaml
+            api-types:
+              - .github/workflows/ci.yml
+              - frontend/src/types/api*.generated.ts
+              - scripts/generate-types.sh
+              # Defines the generate-types command the job runs.
+              - package.json
+              # openapi-typescript's version, which shapes the generated output.
+              - frontend/package.json
+              - frontend/bun.lock
+
+  format-check:
+    # Always runs: Prettier covers the whole repo, docs included, not just frontend/ (#1325).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,9 +75,19 @@ jobs:
       - name: Install dependencies
         run: bun install
         working-directory: frontend
-      # Runs from the repo root: Prettier covers the whole repo, not just frontend/ (#1325).
       - name: Format check
         run: bun run format:check
+
+  frontend-checks:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend
       - name: Typecheck
         run: bun run typecheck
         working-directory: frontend
@@ -47,6 +117,8 @@ jobs:
         working-directory: frontend
 
   type-check:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +144,8 @@ jobs:
     # Ruff over the whole Python tree, matching the pre-commit hooks (#1081). The hooks
     # auto-fix; here the checks are read-only so CI reports rather than rewrites, and a
     # commit made with --no-verify still gets caught.
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,6 +205,8 @@ jobs:
         run: ruff format --check .
 
   unit-tests:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -164,6 +240,8 @@ jobs:
     # what the wheel actually contains — the package-data globs, the __init__.py-less namespace
     # subpackages — is invisible until a server fails to start. So build the real artifact and
     # install it into a clean environment, the way scripts/lib/backend-wheel.sh does.
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -223,6 +301,11 @@ jobs:
     # api.<app>.generated.ts per app) and fail if any drifts from what's committed.
     # Generation boots the FastAPI apps to emit the OpenAPI schemas (needs Python
     # + deps) then runs openapi-typescript (needs bun).
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      needs.changes.outputs.python == 'true' ||
+      needs.changes.outputs.api-types == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
