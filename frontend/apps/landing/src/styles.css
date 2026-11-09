@@ -1,2 +1,33 @@
 @import "@energetica/ui/global.css";
 @import "@energetica/content/styles/sources.css";
+
+/*
+ * The shared stylesheet fixes html, body and #root at one screen tall, which
+ * suits the game's app shell. The landing pages scroll the document itself,
+ * so let these grow with the content.
+ */
+@layer base {
+    html,
+    body,
+    #root {
+        height: auto;
+        min-height: 100%;
+    }
+}
+
+/*
+ * Overscroll colour: green at the top, the footer's colour at the bottom. See
+ * useFooterColouredOverscroll in home-layout.tsx. The body is transparent
+ * because Safari paints body's colour over html's, so html alone decides.
+ */
+@layer base {
+    html {
+        background-color: var(--background);
+    }
+    html[data-at-page-end] {
+        background-color: var(--card);
+    }
+    body {
+        background-color: transparent;
+    }
+}
