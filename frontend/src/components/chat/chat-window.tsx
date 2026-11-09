@@ -7,6 +7,7 @@ import { useMuteChat, useUnmuteChat } from "@/hooks/use-chats";
 import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import type { Message, Chat } from "@/types/chats";
 import { Button } from "@energetica/ui/components/button";
+import { Card } from "@energetica/ui/components/card";
 import {
     Tooltip,
     TooltipContent,
@@ -66,7 +67,7 @@ export function ChatWindow({
 
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden bg-card rounded-lg text-foreground">
+            <Card className="flex-1 overflow-hidden gap-0 py-0">
                 {/* Chat Header */}
                 <div className="shrink-0 border-b border-border pb-4 mb-4 px-6 pt-6">
                     <div className="flex items-center gap-3">
@@ -145,7 +146,7 @@ export function ChatWindow({
                         />
                     )}
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
