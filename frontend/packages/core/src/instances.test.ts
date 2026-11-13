@@ -4,6 +4,7 @@ import {
     derivePhase,
     isValidRunSlug,
     resolveLobbyBaseUrl,
+    runEntry,
 } from "#core/instances";
 
 const APEX = "energetica-game.org";
@@ -125,5 +126,49 @@ describe("derivePhase (must mirror backend derive_phase)", () => {
             freeze_at: "not-a-date",
         };
         expect(derivePhase(bad, at("2026-06-01T00:00:00Z"))).toBe("active");
+    });
+});
+
+describe("runEntry (the action the lobby and the switcher offer)", () => {
+    const lifecycle = {
+        starts_at: "2026-01-01T00:00:00Z",
+        freeze_at: "2026-02-01T00:00:00Z",
+        ended_at: "2026-03-01T00:00:00Z",
+    };
+    const at = {
+        announced: new Date("2025-12-01T00:00:00Z"),
+        active: new Date("2026-01-15T00:00:00Z"),
+        freeze: new Date("2026-02-15T00:00:00Z"),
+        ended: new Date("2026-03-15T00:00:00Z"),
+    };
+
+    it.each([
+        ["player", "announced", "enter", "Play", false],
+        ["player", "active", "enter", "Play", false],
+        ["player", "freeze", "enter", "Play", true],
+        ["player", "ended", "recap", "View recap", false],
+        ["facilitator", "active", "manage", "Manage", false],
+        ["facilitator", "freeze", "manage", "Manage", true],
+        ["facilitator", "ended", "recap", "View recap", false],
+        ["visitor", "announced", "join", "Join", false],
+        ["visitor", "freeze", "join", "Join", true],
+        ["visitor", "ended", "recap", "View recap", false],
+    ] as const)(
+        "%s during %s → %s",
+        (relation, phase, action, actionLabel, recapAsSecondary) => {
+            expect(runEntry(lifecycle, relation, at[phase])).toEqual({
+                phase,
+                action,
+                actionLabel,
+                recapAsSecondary,
+            });
+        },
+    );
+
+    it("an open-ended run never offers a recap", () => {
+        const open = { starts_at: "2026-01-01T00:00:00Z" };
+        const entry = runEntry(open, "player", new Date("2099-01-01"));
+        expect(entry.action).toBe("enter");
+        expect(entry.recapAsSecondary).toBe(false);
     });
 });
