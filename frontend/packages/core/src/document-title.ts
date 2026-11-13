@@ -1,0 +1,28 @@
+/**
+ * The browser tab title for a page (#792). Every bundle's root route uses these
+ * in its `head` option to title the tab from the deepest matched route's
+ * `staticData.title`, and renders `<HeadContent />` to apply it. A route that
+ * knows more, such as a wiki page, sets its own `head` title, and the deepest
+ * title wins.
+ */
+
+const SITE_NAME = "Energetica";
+
+/**
+ * `"Changelog"` gives `"Changelog — Energetica"`; an empty title gives
+ * `"Energetica"`.
+ */
+export function documentTitle(pageTitle: string | undefined): string {
+    const trimmed = pageTitle?.trim();
+    return trimmed ? `${trimmed} — ${SITE_NAME}` : SITE_NAME;
+}
+
+/** Reads the page title from the deepest matched route's static data. */
+export function pageTitleFromMatches(
+    matches: readonly { staticData?: unknown }[],
+): string | undefined {
+    const staticData = matches[matches.length - 1]?.staticData;
+    if (typeof staticData !== "object" || staticData === null) return undefined;
+    const title = (staticData as { title?: unknown }).title;
+    return typeof title === "string" ? title : undefined;
+}

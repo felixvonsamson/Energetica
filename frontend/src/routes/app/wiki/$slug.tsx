@@ -4,7 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { WikiLayout } from "@/components/wiki/wiki-layout";
 import { contentHost } from "@/lib/content-host";
+import { wikiPageTitle } from "@energetica/content/wiki-nav";
 import { wikiPages } from "@energetica/content/wiki-pages";
+import { documentTitle } from "@energetica/core/document-title";
 import {
     TypographyH1,
     TypographyLead,
@@ -12,6 +14,9 @@ import {
 
 export const Route = createFileRoute("/app/wiki/$slug")({
     component: WikiPage,
+    head: ({ params }) => ({
+        meta: [{ title: documentTitle(wikiPageTitle(params.slug)) }],
+    }),
     staticData: {
         title: "Game Wiki",
     },

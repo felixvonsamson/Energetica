@@ -1,5 +1,6 @@
 import {
     createRootRoute,
+    HeadContent,
     Link,
     Outlet,
     useMatches,
@@ -20,6 +21,10 @@ import {
     isAnnouncedTakeover,
     workshopRedirect,
 } from "@/lib/route-guard";
+import {
+    documentTitle,
+    pageTitleFromMatches,
+} from "@energetica/core/document-title";
 import { lobbyHref, lobbyLoginHref } from "@energetica/core/instances";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
@@ -27,6 +32,9 @@ import { Spinner } from "@energetica/ui/components/spinner";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },
+    head: ({ matches }) => ({
+        meta: [{ title: documentTitle(pageTitleFromMatches(matches)) }],
+    }),
     component: RootComponent,
     validateSearch: (
         search: Record<string, unknown>,
@@ -44,7 +52,12 @@ export const Route = createRootRoute({
  */
 function RootComponent() {
     const { data: mode } = useRunMode();
-    return mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />;
+    return (
+        <>
+            <HeadContent />
+            {mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />}
+        </>
+    );
 }
 
 function FullPageSpinner() {

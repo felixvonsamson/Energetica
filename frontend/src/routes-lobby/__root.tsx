@@ -1,13 +1,25 @@
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+    createRootRoute,
+    HeadContent,
+    Link,
+    Outlet,
+} from "@tanstack/react-router";
 import { LogOut, UserCog } from "lucide-react";
 
 import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
+import {
+    documentTitle,
+    pageTitleFromMatches,
+} from "@energetica/core/document-title";
 import { Button } from "@energetica/ui/components/button";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { TypographyBrand } from "@energetica/ui/components/typography";
 
 export const Route = createRootRoute({
     staticData: { title: "" },
+    head: ({ matches }) => ({
+        meta: [{ title: documentTitle(pageTitleFromMatches(matches)) }],
+    }),
     component: RootComponent,
 });
 
@@ -22,6 +34,7 @@ function RootComponent() {
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <HeadContent />
             <header className="w-full max-w-3xl mx-auto flex flex-row items-center justify-between px-6 py-4">
                 <Link to="/" className="flex flex-row items-baseline gap-2">
                     <TypographyBrand className="text-2xl text-primary">
