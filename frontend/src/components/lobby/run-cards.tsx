@@ -27,7 +27,11 @@
  * At `ended` it replaces that primary action instead of sitting beside it: the
  * reap has stopped the instance (T7), so the cross-origin link would point at a
  * subdomain that no longer answers. The recap is what survived, so it becomes
- * the whole card's destination.
+ * the whole card's destination, for every kind of card.
+ *
+ * These rules live in `runEntry` (`@energetica/core/instances`), which the
+ * in-run switcher is meant to share (#1337); the cards only turn its action
+ * into a link.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -44,7 +48,12 @@ import { useJoinRun } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { runAppHref, runFacilitatorHref } from "@/lib/lobby";
-import { derivePhase, type InstanceFragment } from "@energetica/core/instances";
+import {
+    derivePhase,
+    runEntry,
+    type InstanceFragment,
+    type RunEntry,
+} from "@energetica/core/instances";
 import { Button } from "@energetica/ui/components/button";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { Spinner } from "@energetica/ui/components/spinner";
@@ -74,29 +83,29 @@ function ViewRecapRow({ slug }: { slug: string }) {
     );
 }
 
+/**
+ * The card for one run. Its action, label and recap row all come from
+ * {@link runEntry}, meant to be shared with the in-run switcher; the card only
+ * turns the action into a link. `href` is where the live action (play, manage
+ * or the logged-out join) goes; a `recap` action links to the in-lobby recap
+ * route instead.
+ */
 function RunCardFrame({
     href,
-    cta,
     slug,
-    phase,
+    entry,
     children,
 }: {
     href: string;
-    cta: string;
     slug: string;
-    phase: ReturnType<typeof derivePhase>;
+    entry: RunEntry;
     children: React.ReactNode;
 }) {
-    // Once the run is `ended` its process has been reaped (T7) and `{slug}.{apex}` no longer
-    // answers, so "Play"/"Join" would be a link into nothing. The recap is all that outlived
-    // the reap, so it becomes the card's primary — and only — action. During `freeze` the
-    // instance is still up and readable (G2), which is why the recap is merely an extra row there.
-    const reaped = phase === "ended";
     const body = (
         <>
             {children}
             <div className="flex flex-row items-center gap-1 text-primary shrink-0">
-                <p className="font-semibold">{reaped ? "View recap" : cta}</p>
+                <p className="font-semibold">{entry.actionLabel}</p>
                 <ChevronRight />
             </div>
         </>
@@ -105,7 +114,7 @@ function RunCardFrame({
         "p-5 flex flex-row justify-between items-center gap-4 hover:bg-muted transition-all";
     return (
         <div className="bg-card text-foreground border border-border rounded-4xl shadow-md overflow-hidden">
-            {reaped ? (
+            {entry.action === "recap" ? (
                 <Link
                     to="/runs/$slug/recap"
                     params={{ slug }}
@@ -118,7 +127,7 @@ function RunCardFrame({
                     {body}
                 </a>
             )}
-            {phase === "freeze" && <ViewRecapRow slug={slug} />}
+            {entry.recapAsSecondary && <ViewRecapRow slug={slug} />}
         </div>
     );
 }
@@ -130,9 +139,8 @@ export function MyRunCard({ run }: { run: MyRun }) {
     return (
         <RunCardFrame
             href={runAppHref(run.slug)}
-            cta="Play"
             slug={run.slug}
-            phase={derivePhase(run)}
+            entry={runEntry(run, "player")}
         >
             <div className="flex flex-row items-center gap-4 min-w-0">
                 <div className="bg-primary/10 text-primary rounded-2xl p-3 shrink-0">
@@ -161,9 +169,8 @@ export function FacilitatedRunCard({ run }: { run: FacilitatedRun }) {
     return (
         <RunCardFrame
             href={runFacilitatorHref(run.slug)}
-            cta="Manage"
             slug={run.slug}
-            phase={derivePhase(run)}
+            entry={runEntry(run, "facilitator")}
         >
             <div className="flex flex-row items-center gap-4 min-w-0">
                 <div className="bg-primary/10 text-primary rounded-2xl p-3 shrink-0">
@@ -203,11 +210,15 @@ function OpenRunCardContent({ instance }: { instance: InstanceFragment }) {
  * joined, the run moves to "Your runs" on the next `my-runs` refetch, which is
  * where "Play" lives.
  */
-function JoinableOpenRunCard({ instance }: { instance: InstanceFragment }) {
+function JoinableOpenRunCard({
+    instance,
+    entry,
+}: {
+    instance: InstanceFragment;
+    entry: RunEntry;
+}) {
     const [selected, setSelected] = useState(false);
     const joinRun = useJoinRun();
-    const phase = derivePhase(instance);
-    const recapAvailable = phase === "freeze" || phase === "ended";
 
     return (
         <div className="bg-card text-foreground border border-border rounded-4xl shadow-md overflow-hidden">
@@ -251,7 +262,7 @@ function JoinableOpenRunCard({ instance }: { instance: InstanceFragment }) {
                     </div>
                 </div>
             )}
-            {recapAvailable && <ViewRecapRow slug={instance.slug} />}
+            {entry.recapAsSecondary && <ViewRecapRow slug={instance.slug} />}
         </div>
     );
 }
@@ -269,15 +280,17 @@ export function OpenRunCard({
     instance: InstanceFragment;
     loggedIn: boolean;
 }) {
-    if (loggedIn) {
-        return <JoinableOpenRunCard instance={instance} />;
+    const entry = runEntry(instance, "visitor");
+    // An ended run cannot be joined, so a logged-in visitor gets the same recap card as a
+    // logged-out one; the two-click join is only for a run that is still up.
+    if (loggedIn && entry.action === "join") {
+        return <JoinableOpenRunCard instance={instance} entry={entry} />;
     }
     return (
         <RunCardFrame
             href={`/login?return=${encodeURIComponent(instance.slug)}`}
-            cta="Join"
             slug={instance.slug}
-            phase={derivePhase(instance)}
+            entry={entry}
         >
             <OpenRunCardContent instance={instance} />
         </RunCardFrame>

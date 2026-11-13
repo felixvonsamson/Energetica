@@ -84,6 +84,82 @@ export function derivePhase(run: Lifecycle, now: Date = new Date()): Phase {
 }
 
 /**
+ * How the account relates to a run: it plays in it (a `my-runs` run), it
+ * facilitates it (a `my-runs` facilitated run), or it has not joined it (an
+ * advertised run from the instance manifest).
+ */
+export type RunRelation = "player" | "facilitator" | "visitor";
+
+/**
+ * The main thing a player can do with a run:
+ *
+ * - `enter`: open the run's app. An unsettled player is sent on to the settle
+ *   page by the app's own route guard, so entering covers settling too.
+ * - `manage`: open the run's facilitator page.
+ * - `join`: join the run, or log in first to join it.
+ * - `recap`: open the run's recap on the lobby.
+ */
+export type RunAction = "enter" | "manage" | "join" | "recap";
+
+/** What the lobby cards and the in-run switcher show for one run. */
+export type RunEntry = {
+    phase: Phase;
+    /** The run's main action. */
+    action: RunAction;
+    /** The text of the main action, e.g. "Play" or "View recap". */
+    actionLabel: string;
+    /**
+     * Whether to offer the recap as a second action next to the main one. True
+     * during `freeze`: the recap exists and the run is still up and readable.
+     * At `ended` the recap is the main action instead.
+     */
+    recapAsSecondary: boolean;
+};
+
+const ACTION_LABELS: Record<RunAction, string> = {
+    enter: "Play",
+    manage: "Manage",
+    join: "Join",
+    recap: "View recap",
+};
+
+const LIVE_ACTIONS: Record<RunRelation, RunAction> = {
+    player: "enter",
+    facilitator: "manage",
+    visitor: "join",
+};
+
+/**
+ * Decide what to show for a run: its phase, its main action and whether the
+ * recap sits beside that action. The lobby cards use it, and the in-run
+ * switcher is meant to as well (#1337), so that a run offers the same action
+ * wherever it is listed.
+ *
+ * Once a run has `ended`, its process is stopped and its subdomain no longer
+ * answers, so the recap replaces every other action. During `freeze` the run is
+ * still up, so the main action stays and the recap is offered next to it.
+ *
+ * This returns the action, not a URL. The lobby and the app build run URLs
+ * differently (the lobby reads the apex from its hostname, the app gets it at
+ * build time), and the recap is an in-app route on the lobby but a cross-origin
+ * link from a run, so each caller turns the action into its own link.
+ */
+export function runEntry(
+    run: Lifecycle,
+    relation: RunRelation,
+    now: Date = new Date(),
+): RunEntry {
+    const phase = derivePhase(run, now);
+    const action = phase === "ended" ? "recap" : LIVE_ACTIONS[relation];
+    return {
+        phase,
+        action,
+        actionLabel: ACTION_LABELS[action],
+        recapAsSecondary: phase === "freeze",
+    };
+}
+
+/**
  * Apex domain the instances live under (e.g. "energetica-game.org"), injected
  * at build time. Empty during the interim, when the landing is still served
  * same-origin by FastAPI.
