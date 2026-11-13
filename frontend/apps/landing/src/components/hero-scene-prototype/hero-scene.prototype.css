@@ -1,0 +1,214 @@
+/* PROTOTYPE — hero scene go/no-go. Throwaway; see hero-scene-prototype.tsx. */
+
+.hs {
+    --paper: var(--color-bone-50);
+    --ink: var(--color-pine-800);
+    --amp: 60;
+    position: relative;
+}
+
+.hs svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Window parallax: the card is a window moving past a distant scene, so far layers lag
+   behind it (drift down relative to the card) and the foreground stays put. */
+.hs .layer {
+    transform: translateY(calc(var(--s, 0) * var(--d) * var(--amp) * 1px));
+}
+
+/* Per-layer depth: ink strength and stroke width fall off with distance. */
+.hs .far {
+    --k: 30%;
+    --sw: 0.8px;
+    --t: 12%;
+}
+.hs .mid {
+    --k: 42%;
+    --sw: 0.9px;
+    --t: 20%;
+}
+.hs .forest {
+    --k: 55%;
+    --sw: 1px;
+    --t: 30%;
+}
+.hs .hills {
+    --k: 72%;
+    --sw: 1.15px;
+    --t: 42%;
+}
+.hs .plain {
+    --k: 86%;
+    --sw: 1.3px;
+    --t: 56%;
+}
+.hs .near {
+    --k: 100%;
+    --sw: 1.5px;
+    --t: 72%;
+}
+.hs .sky {
+    --k: 25%;
+    --sw: 0.8px;
+    --t: 0%;
+}
+
+.hs .layer {
+    --ink-l: color-mix(in oklch, var(--ink) var(--k), var(--paper));
+    --land: color-mix(in oklch, var(--ink) var(--t), var(--paper));
+}
+
+/* ---------- Variant: ink lines ---------- */
+
+.hs-lines svg * {
+    fill: var(--paper);
+    stroke: var(--ink-l);
+    stroke-width: var(--sw);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+.hs-lines svg .detail {
+    fill: none;
+    stroke-width: calc(var(--sw) * 0.7);
+}
+.hs-lines svg .shade {
+    fill: color-mix(in oklch, var(--ink-l) 14%, var(--paper));
+}
+.hs-lines svg .water {
+    fill: color-mix(in oklch, var(--ink-l) 7%, var(--paper));
+}
+.hs-lines svg rect.sky {
+    stroke: none;
+}
+.hs-lines svg .f {
+    stroke: none;
+}
+
+/* ---------- Variant: tonal fills (no outlines) ---------- */
+
+.hs-fills .layer {
+    /* structures are lighter than the land they stand on, like concrete on grass */
+    --struct: color-mix(in oklch, var(--land), var(--paper) 50%);
+}
+.hs-fills svg * {
+    fill: var(--struct);
+    stroke: none;
+}
+.hs-fills svg .land {
+    fill: var(--land);
+}
+.hs-fills svg .shade {
+    fill: color-mix(in oklch, var(--struct), var(--ink) 22%);
+}
+.hs-fills svg .land.shade {
+    fill: color-mix(in oklch, var(--land), var(--ink) 18%);
+}
+.hs-fills svg .tree {
+    fill: color-mix(in oklch, var(--land), var(--ink) 14%);
+}
+.hs-fills svg .water {
+    fill: color-mix(in oklch, var(--land), var(--paper) 65%);
+}
+.hs-fills svg .detail {
+    fill: none;
+    stroke: color-mix(in oklch, var(--struct), var(--ink) 30%);
+    stroke-width: 0.75px;
+    vector-effect: non-scaling-stroke;
+}
+.hs-fills svg .detail.trunk {
+    stroke: color-mix(in oklch, var(--land), var(--ink) 25%);
+    stroke-width: 1.5px;
+}
+.hs-fills svg .land .detail,
+.hs-fills .mid .detail {
+    stroke: color-mix(in oklch, var(--land), var(--ink) 12%);
+}
+.hs-fills svg rect.sky {
+    fill: var(--paper);
+}
+
+/* Shared by both variants */
+
+.hs svg .cloud,
+.hs svg .steam {
+    fill: color-mix(in oklch, var(--paper), white 55%);
+}
+.hs svg .label {
+    fill: var(--ink-l);
+    stroke: none;
+    font: 600 30px var(--font-sans, sans-serif);
+}
+.hs-fills svg .label {
+    fill: color-mix(in oklch, var(--struct), var(--ink) 40%);
+}
+
+/* ---------- Ambient motion ---------- */
+
+.hs .rotor,
+.hs .fan {
+    transform-box: view-box;
+    animation: hs-spin 12s linear infinite;
+}
+.hs .fan {
+    animation-duration: 2.5s;
+}
+.hs .steam {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: hs-steam 9s linear infinite;
+}
+.hs .flow {
+    stroke-dasharray: 8 14;
+    animation: hs-flow 0.9s linear infinite;
+}
+.hs .ripple {
+    stroke-dasharray: 10 8;
+    animation: hs-flow 4s linear infinite;
+}
+.hs .drift {
+    animation: hs-drift 90s ease-in-out infinite alternate;
+}
+
+@keyframes hs-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@keyframes hs-steam {
+    0% {
+        transform: translate(0, 0) scale(0.45);
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(45px, -120px) scale(1.5);
+        opacity: 0;
+    }
+}
+@keyframes hs-flow {
+    to {
+        stroke-dashoffset: -22;
+    }
+}
+@keyframes hs-drift {
+    to {
+        transform: translateX(60px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hs *,
+    .hs .layer {
+        animation: none !important;
+        transform: none !important;
+    }
+    .hs .steam {
+        opacity: 0.9;
+    }
+}
