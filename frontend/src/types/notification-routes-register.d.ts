@@ -5,21 +5,16 @@
 // src/router.d.ts already uses for StaticDataRouteOption: an empty interface that a separate
 // file merges into.
 //
-// It is a separate file because notification-config.tsx, where AppRoute is used, is compiled by
-// four programs, and only one of them can afford to see the route tree. `src/routeTree.gen.ts`
-// imports every route module, so any file importing it drags the whole game app into every
-// program that reaches that file. tsconfig.landing.json and tsconfig.lobby.json reach
-// notification-config.tsx through shared components (top-bar → notification-popup), and
-// excluding it does not help: `exclude` only filters a program's root files, it never stops a
-// transitive import. Those programs deliberately lack src/main.tsx, where the router's
-// `Register` augmentation lives, so the game routes would type-check without a registered
-// router and every `navigate({ search })` in them would degrade to an implicit `any`.
+// It is a separate file because notification-routes.ts, where AppRoute is declared, is also
+// compiled by the service worker's program (tsconfig.sw.json), and that program must not see
+// the route tree. `src/routeTree.gen.ts` imports every route module, so any file importing it
+// drags the whole game app into every program that reaches that file. The service worker only
+// needs AppRoute as a type it can pass along, not the real route union.
 //
 // Keeping the import here instead confines it to the app's own program. Nothing imports this
-// file; tsconfig.json picks it up because it includes all of src/, and the landing, lobby and
-// service-worker configs leave it out. In those three, AppRouteRegistry stays empty and
-// AppRoute falls back to `string` — they never validate routes, which is fine, because the
-// app's own program does and that is what CI runs.
+// file; tsconfig.json picks it up because it includes all of src/, and tsconfig.sw.json leaves
+// it out. There, AppRouteRegistry stays empty and AppRoute falls back to `string`. It never
+// validates routes, which is fine, because the app's own program does and that is what CI runs.
 import type { FileRouteTypes } from "@/routeTree.gen";
 
 declare module "@/types/notification-routes" {
