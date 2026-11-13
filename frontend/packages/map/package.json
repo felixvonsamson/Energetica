@@ -5,7 +5,8 @@
     "exports": {
         "./components/*": "./src/components/*.tsx",
         "./contexts/*": "./src/contexts/*.tsx",
-        "./lib/*": "./src/lib/*.ts"
+        "./lib/*": "./src/lib/*.ts",
+        "./styles/sources.css": "./src/styles/sources.css"
     },
     "imports": {
         "#map/components/*": "./src/components/*.tsx",

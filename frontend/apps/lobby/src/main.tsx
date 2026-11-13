@@ -7,7 +7,7 @@ import ReactDOM from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
 
-import "@energetica/ui/global.css";
+import "./styles.css";
 
 // Like the landing, the lobby bundle does not augment the router `Register`
 // interface — the app bundle owns that augmentation — so `to` props fall back
