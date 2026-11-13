@@ -3,7 +3,8 @@
  * its owner.
  *
  * The field names match the freeplay API's `HexTileOut`, so freeplay passes its
- * tiles in unchanged, and its type check fails if the two shapes drift apart.
+ * tiles in unchanged. Its type check fails if `HexTileOut` loses or renames a
+ * field the map reads; a field added to `HexTileOut` is simply ignored here.
  * Other callers, such as the lobby recap, adapt their own tiles to this shape.
  * The map never sends a tile back to an API, so it does not depend on any app's
  * generated types.

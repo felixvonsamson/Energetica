@@ -4,9 +4,9 @@
  * After the lobby cutover (ADR-0002/0003) the instance mints no sessions — the
  * only auth call it makes is `/auth/me`, the entry gate that validates the
  * shared SSO cookie and provisions the local user. Credentials (login / signup
- * / logout / change-password) are the lobby's; they live in `lib/api/lobby.ts`
- * (`lobbyAuthApi`) so they can't be called from a run, where those endpoints no
- * longer exist.
+ * / logout / change-password) are the lobby's; they live in the lobby app
+ * (`frontend/apps/lobby`), so they can't be called from a run, where those
+ * endpoints no longer exist.
  */
 
 import type { ApiResponse } from "@/types/api-helpers";

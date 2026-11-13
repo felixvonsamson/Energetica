@@ -1,6 +1,3 @@
-/// <reference types="vite/client" />
-/// <reference types="vite-plugin-svgr/client" />
-
 interface ImportMetaEnv {
     /**
      * Local-dev override for the app dev-server origin the lobby's "enter run"

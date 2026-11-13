@@ -39,10 +39,11 @@ export type RecapRow = {
 };
 
 /**
- * One tile of the frozen map snapshot: `HexTileOut` minus `id`, with live
+ * One tile of the frozen map snapshot: a `MapTile` without `id`, with
  * `player_id` swapped for the durable `owner_account_id` (joins {@link RecapRow}
- * by `account_id`). Renewable fields are 0–1 potentials; fuel fields are the
- * reserves remaining at freeze, in kg.
+ * by `account_id`). {@link recapMapTiles} converts it back for the map.
+ * Renewable fields are 0–1 potentials; fuel fields are the reserves remaining
+ * at freeze, in kg.
  */
 export type RecapTile = {
     q: number;

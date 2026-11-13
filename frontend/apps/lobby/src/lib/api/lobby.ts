@@ -51,7 +51,7 @@ export const lobbyAuthApi = {
         ),
 
     // Change-password is deliberately absent here: the account page posts it as a
-    // native <form> (frontend/src/routes-lobby/account.tsx) rather than via this fetch
+    // native <form> (frontend/apps/lobby/src/routes/account.tsx) rather than via this fetch
     // client, so Safari/Apple Passwords sees the submit navigation and offers to update
     // the saved credential (issue #849). There is no JSON change-password endpoint.
 
