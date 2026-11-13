@@ -16,7 +16,7 @@ import { useState } from "react";
 
 import { navLinks } from "@/lib/nav-links";
 
-const loginButtonClass =
+const playButtonClass =
     "bg-primary text-primary-foreground px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-md hover:shadow-lg";
 
 /** The links marked as the current page. The home page must match exactly. */
@@ -75,10 +75,10 @@ function MobileMenu() {
                     ))}
                 </nav>
                 <a
-                    href={lobbyHref("/login")}
-                    className={`${loginButtonClass} text-center`}
+                    href={lobbyHref("/")}
+                    className={`${playButtonClass} text-center`}
                 >
-                    Log In
+                    Play
                 </a>
             </SheetContent>
         </Sheet>
@@ -115,15 +115,16 @@ export function Header() {
                 </div>
                 <div className="flex xl:flex-1 justify-end gap-3 items-center">
                     <ThemeToggle />
-                    {/* Cross-bundle navigation: landing → the lobby, which owns
-                        login and the run picker (ADR-0002). Uses <a href> (a real
+                    {/* Cross-bundle navigation: landing → the lobby home, which
+                        shows signed-out visitors the login form and signed-in
+                        players their runs (ADR-0002). Uses <a href> (a real
                         cross-origin nav) so TanStack Router — which has no lobby
                         routes in the landing bundle — doesn't intercept the click. */}
                     <a
-                        href={lobbyHref("/login")}
-                        className={`${loginButtonClass} hidden sm:block whitespace-nowrap`}
+                        href={lobbyHref("/")}
+                        className={`${playButtonClass} hidden sm:block whitespace-nowrap`}
                     >
-                        Log In
+                        Play
                     </a>
                     <MobileMenu />
                 </div>

@@ -4,14 +4,23 @@ import {
     Link,
     Outlet,
 } from "@tanstack/react-router";
-import { LogOut, UserCog } from "lucide-react";
+import { CircleUser, ExternalLink, LogOut, Settings } from "lucide-react";
 
 import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
+import { lobbyLandingHref } from "@/lib/lobby";
 import {
     documentTitle,
     pageTitleFromMatches,
 } from "@energetica/core/document-title";
 import { Button } from "@energetica/ui/components/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@energetica/ui/components/dropdown-menu";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { TypographyBrand } from "@energetica/ui/components/typography";
 
@@ -24,18 +33,17 @@ export const Route = createRootRoute({
 });
 
 /**
- * The lobby shell: a slim header (wordmark + "lobby" chip, theme toggle, and a
- * global logout when authenticated) over a narrow centered column — a front
- * door, not a dashboard.
+ * The lobby shell: a slim header over a narrow centered column — a front door,
+ * not a dashboard. The header holds the wordmark, a "Website" link back to the
+ * landing page, the theme toggle and, when signed in, the account menu.
  */
 function RootComponent() {
     const { data: myRuns } = useMyRuns();
-    const logout = useLobbyLogout();
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             <HeadContent />
-            <header className="w-full max-w-3xl mx-auto flex flex-row items-center justify-between px-6 py-4">
+            <header className="w-full max-w-3xl mx-auto flex flex-row items-center justify-between gap-4 px-6 py-4">
                 <Link to="/" className="flex flex-row items-baseline gap-2">
                     <TypographyBrand className="text-2xl text-primary">
                         Energetica
@@ -45,30 +53,21 @@ function RootComponent() {
                     </span>
                 </Link>
                 <div className="flex flex-row items-center gap-1">
+                    {/* Cross-origin: the landing page is another app. */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5"
+                        asChild
+                    >
+                        <a href={lobbyLandingHref("/")}>
+                            Website
+                            <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    </Button>
                     <ThemeToggle />
                     {myRuns != null && (
-                        <>
-                            <Link to="/account">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-1.5"
-                                >
-                                    <UserCog className="w-4 h-4" />
-                                    Account
-                                </Button>
-                            </Link>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => logout.mutate()}
-                                disabled={logout.isPending}
-                                className="gap-1.5"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                Log out
-                            </Button>
-                        </>
+                        <LobbyAccountMenu username={myRuns.username} />
                     )}
                 </div>
             </header>
@@ -76,5 +75,43 @@ function RootComponent() {
                 <Outlet />
             </main>
         </div>
+    );
+}
+
+/**
+ * The lobby's account menu. It matches the run app's `AccountMenu` (same
+ * trigger, username label) so the two look alike; sharing one component waits
+ * on a React package both bundles can use (#1379).
+ */
+function LobbyAccountMenu({ username }: { username: string }) {
+    const logout = useLobbyLogout();
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Account menu">
+                    <CircleUser size={20} />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel asChild>
+                    <p className="truncate">{username}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link to="/account">
+                        <Settings size={16} />
+                        Account settings
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onSelect={() => logout.mutate()}
+                    disabled={logout.isPending}
+                >
+                    <LogOut size={16} />
+                    Log out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
