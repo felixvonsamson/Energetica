@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-query";
 
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
+import { runAppHref } from "@/lib/lobby";
 import { fetchRecap, RecapNotMintedError, type Recap } from "@/lib/recap";
 import type { LoginRequest, SignupRequest } from "@/types/auth";
 import { ApiClientError } from "@energetica/core/api-client";
@@ -99,17 +100,26 @@ export function useRecap(slug: string) {
 }
 
 /**
- * Mutation hook for the picker's explicit two-click join (#1030). Refetches
- * `my-runs` on success so the joined run moves from "Open runs" into "Your
- * runs".
+ * Mutation hook for the picker's explicit two-click join (#1030). Once the
+ * lobby has recorded the join, it sends the player straight into the run
+ * (#1034), since entering is always the next step after joining. This is a
+ * plain cross-origin page load, not a fetch, so the join itself stays the
+ * lobby-owned write that ADR-0005 settled on.
+ *
+ * It also refetches `my-runs`, so the lobby is current if the player comes back
+ * to it with the browser's Back button.
  */
 export function useJoinRun() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (slug: string) => lobbyApi.joinRun(slug),
-        onSuccess: () =>
-            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
+        onSuccess: (_data, slug) => {
+            window.location.assign(runAppHref(slug));
+            return queryClient.invalidateQueries({
+                queryKey: lobbyQueryKeys.myRuns,
+            });
+        },
     });
 }
 
