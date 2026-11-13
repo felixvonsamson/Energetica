@@ -104,7 +104,7 @@ export function useRecap(slug: string) {
  * lobby has recorded the join, it sends the player straight into the run
  * (#1034), since entering is always the next step after joining. This is a
  * plain cross-origin page load, not a fetch, so the join itself stays the
- * lobby-owned write that ADR-0005 settled on.
+ * lobby-owned write that ADR-0006 settled on.
  *
  * It also refetches `my-runs`, so the lobby is current if the player comes back
  * to it with the browser's Back button.
