@@ -1,6 +1,6 @@
 /** Button component for selecting resource filters on the map. */
 
-import { oklchToString, RESOURCES } from "@/lib/map-resources";
+import { oklchToString, RESOURCES } from "#map/lib/map-resources";
 
 interface ResourceButtonProps {
     resource: (typeof RESOURCES)[number];

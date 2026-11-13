@@ -4,13 +4,13 @@
  */
 
 import { PlayerName } from "@/components/ui/player-name";
+import type { ApiResponse } from "@/types/api-helpers";
+import type { Player } from "@/types/players";
 import {
     buildResourceBars,
     calculateTooltipPosition,
     TOOLTIP_WIDTH,
-} from "@/lib/map-resources";
-import type { ApiResponse } from "@/types/api-helpers";
-import type { Player } from "@/types/players";
+} from "@energetica/map/lib/map-resources";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 

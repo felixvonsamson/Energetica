@@ -8,26 +8,26 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 
 import { LifecycleBanner } from "@/components/lifecycle/lifecycle-banner";
 import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
-import { MapCanvas } from "@/components/map/map-canvas";
-import { MapHoverBorder } from "@/components/map/map-hover-border";
-import { MapTiles } from "@/components/map/map-tiles";
-import { ResourceButton } from "@/components/map/resource-button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
 import { useIsReadOnly } from "@/hooks/use-phase";
 import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
 import { isInstanceFrozenError } from "@/lib/lifecycle";
+import { queryKeys } from "@/lib/query-client";
+import { HexTileResources } from "@/types/map";
+import { formatMass } from "@energetica/core/format-utils";
+import { MapCanvas } from "@energetica/map/components/map-canvas";
+import { MapHoverBorder } from "@energetica/map/components/map-hover-border";
+import { MapTiles } from "@energetica/map/components/map-tiles";
+import { ResourceButton } from "@energetica/map/components/resource-button";
 import {
     RESOURCES,
     MAX_VALUES,
     ResourceId,
     getResourceValue,
     oklchToString,
-} from "@/lib/map-resources";
-import { queryKeys } from "@/lib/query-client";
-import { HexTileResources } from "@/types/map";
-import { formatMass } from "@energetica/core/format-utils";
+} from "@energetica/map/lib/map-resources";
 import { Button } from "@energetica/ui/components/button";
 import { ButtonGroup } from "@energetica/ui/components/button-group";
 import {

@@ -50,6 +50,7 @@
     "dependencies": {
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/map": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@floating-ui/dom": "^1.7.4",
         "@lucide/lab": "^0.1.2",

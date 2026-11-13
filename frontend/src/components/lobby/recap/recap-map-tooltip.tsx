@@ -11,11 +11,11 @@ import {
     buildResourceBars,
     calculateTooltipPosition,
     TOOLTIP_WIDTH,
-} from "@/lib/map-resources";
-import type { HexTileResources } from "@/types/map";
+} from "@energetica/map/lib/map-resources";
+import type { MapTile } from "@energetica/map/lib/map-tile";
 
 interface RecapMapTooltipProps {
-    tile: HexTileResources;
+    tile: MapTile;
     /** The settling player's username at freeze, or null for a vacant tile. */
     ownerName: string | null;
     x: number;

@@ -18,6 +18,7 @@
  */
 
 import type { Lifecycle } from "@energetica/core/instances";
+import type { MapTile } from "@energetica/map/lib/map-tile";
 
 /** One player's row of the per-player retrospective table (no rank — ADR-0005). */
 export type RecapRow = {
@@ -75,6 +76,21 @@ export type Recap = Lifecycle & {
     rows: RecapRow[];
     tiles: RecapTile[];
 };
+
+/**
+ * Adapt the recap's tiles to the shape the shared map draws. The array index
+ * becomes the tile's `id`: the map uses it only as a React key and for hover
+ * lookups, and the recap's tile list never changes. The owning account becomes
+ * `player_id`, which the map reads as "owned by", so labels and colours work as
+ * on the live map.
+ */
+export function recapMapTiles(tiles: RecapTile[]): MapTile[] {
+    return tiles.map(({ owner_account_id, ...tile }, index) => ({
+        ...tile,
+        id: index,
+        player_id: owner_account_id,
+    }));
+}
 
 /**
  * Thrown by {@link fetchRecap} when the run hasn't reached `freeze` yet, so no

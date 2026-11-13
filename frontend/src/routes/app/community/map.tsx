@@ -4,16 +4,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { MapCanvas } from "@/components/map/map-canvas";
-import { MapTiles } from "@/components/map/map-tiles";
 import { MapTooltip } from "@/components/map/map-tooltip";
-import { ResourceButton } from "@/components/map/resource-button";
-import { useMapContext } from "@/contexts/map-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
 import { usePlayerMap, usePlayers } from "@/hooks/use-players";
-import { getHexPosition } from "@/lib/hex-utils";
-import { RESOURCES, ResourceId } from "@/lib/map-resources";
+import { MapCanvas } from "@energetica/map/components/map-canvas";
+import { MapTiles } from "@energetica/map/components/map-tiles";
+import { ResourceButton } from "@energetica/map/components/resource-button";
+import { useMapContext } from "@energetica/map/contexts/map-context";
+import { getHexPosition } from "@energetica/map/lib/hex-utils";
+import { RESOURCES, ResourceId } from "@energetica/map/lib/map-resources";
 
 function MapHelp() {
     return (

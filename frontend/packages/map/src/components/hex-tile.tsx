@@ -8,12 +8,12 @@
 
 //TODO: HexTile should not change the mouse icon, as if it were a link, if there is no link
 
-import { useMapContext } from "@/contexts/map-context";
-import { getHexagonPoints, getHexPosition } from "@/lib/hex-utils";
-import { HexTileResources } from "@/types/map";
+import { useMapContext } from "#map/contexts/map-context";
+import { getHexagonPoints, getHexPosition } from "#map/lib/hex-utils";
+import type { MapTile } from "#map/lib/map-tile";
 
 export interface HexTileProps {
-    tile: HexTileResources;
+    tile: MapTile;
     fill?: string;
     stroke?: string;
     strokeWidth?: number;

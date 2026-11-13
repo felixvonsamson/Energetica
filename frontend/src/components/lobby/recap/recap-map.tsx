@@ -1,8 +1,8 @@
 /**
  * The recap's frozen map snapshot. No `MapContext` provider of its own — it
- * hands the frozen `RecapTile[]` (adapted to the live `HexTileOut` shape) to
- * the _same_ `MapCanvas`/`MapTiles` the in-game community map renders with, so
- * the snapshot isn't a lookalike reimplementation but the actual map component
+ * hands the frozen `RecapTile[]` (adapted to the shared `MapTile` shape) to the
+ * _same_ `MapCanvas`/`MapTiles` the in-game community map renders with, so the
+ * snapshot isn't a lookalike reimplementation but the actual map component
  * displaying old data. That also fixes the recap map's sizing: it previously
  * hard-coded a 14px hex (`recap-map.tsx` pre-#915) instead of
  * `calculateHexSizeWithConstraints`, so it never matched the live map's scale.
@@ -25,14 +25,13 @@
 
 import { useMemo, useState } from "react";
 
-import { MapCanvas } from "@/components/map/map-canvas";
-import { MapTiles } from "@/components/map/map-tiles";
-import { ResourceButton } from "@/components/map/resource-button";
-import { useMapContext } from "@/contexts/map-context";
-import { getHexPosition } from "@/lib/hex-utils";
-import { RESOURCES, ResourceId } from "@/lib/map-resources";
-import type { RecapTile } from "@/lib/recap";
-import type { HexTileResources } from "@/types/map";
+import { recapMapTiles, type RecapTile } from "@/lib/recap";
+import { MapCanvas } from "@energetica/map/components/map-canvas";
+import { MapTiles } from "@energetica/map/components/map-tiles";
+import { ResourceButton } from "@energetica/map/components/resource-button";
+import { useMapContext } from "@energetica/map/contexts/map-context";
+import { getHexPosition } from "@energetica/map/lib/hex-utils";
+import { RESOURCES, ResourceId } from "@energetica/map/lib/map-resources";
 
 import { RecapMapTooltip } from "./recap-map-tooltip";
 
@@ -45,19 +44,7 @@ type Props = {
 export function RecapMap({ tiles, ownerNames }: Props) {
     const [overlay, setOverlay] = useState<ResourceId | undefined>(undefined);
 
-    // MapTiles/HexTile expect the live HexTileOut shape: a numeric `id` (used
-    // only as the React key + hover lookup here, never round-tripped anywhere)
-    // and `player_id` in place of the recap's durable `owner_account_id`. The
-    // index is stable — `tiles` is a fixed prop, not a live-updating list.
-    const mapData: HexTileResources[] = useMemo(
-        () =>
-            tiles.map((tile, index) => ({
-                ...tile,
-                id: index,
-                player_id: tile.owner_account_id,
-            })),
-        [tiles],
-    );
+    const mapData = useMemo(() => recapMapTiles(tiles), [tiles]);
 
     const toggleOverlay = (id: ResourceId) =>
         setOverlay((current) => (current === id ? undefined : id));

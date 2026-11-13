@@ -10,22 +10,23 @@
  * - OnTileClick make tiles clickable; omit for read-only maps
  */
 
-import { HexTile } from "@/components/map/hex-tile";
-import { useMapContext } from "@/contexts/map-context";
+import { useTheme } from "@energetica/ui/contexts/theme-context";
+
+import { HexTile } from "#map/components/hex-tile";
+import { useMapContext } from "#map/contexts/map-context";
 import {
     ResourceId,
     calculateTileFillWithResource,
     calculateTileLabel,
-} from "@/lib/map-resources";
-import { HexTileResources } from "@/types/map";
-import { useTheme } from "@energetica/ui/contexts/theme-context";
+} from "#map/lib/map-resources";
+import type { MapTile } from "#map/lib/map-tile";
 
 interface MapTilesProps {
-    mapData: HexTileResources[];
+    mapData: MapTile[];
     playerMap: Record<number, string>;
     activeResourceId: ResourceId | undefined;
     currentPlayerId?: number | null;
-    onTileClick?: (tile: HexTileResources) => void;
+    onTileClick?: (tile: MapTile) => void;
 }
 
 export function MapTiles({

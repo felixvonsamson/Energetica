@@ -6,6 +6,7 @@
       "dependencies": {
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/map": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@floating-ui/dom": "^1.7.4",
         "@lucide/lab": "^0.1.2",
@@ -112,6 +113,18 @@
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:",
+      },
+    },
+    "packages/map": {
+      "name": "@energetica/map",
+      "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "react": "catalog:",
+      },
+      "devDependencies": {
+        "@types/react": "catalog:",
+        "typescript": "catalog:",
       },
     },
     "packages/ui": {
@@ -240,6 +253,8 @@
     "@energetica/core": ["@energetica/core@workspace:packages/core"],
 
     "@energetica/landing": ["@energetica/landing@workspace:apps/landing"],
+
+    "@energetica/map": ["@energetica/map@workspace:packages/map"],
 
     "@energetica/ui": ["@energetica/ui@workspace:packages/ui"],
 

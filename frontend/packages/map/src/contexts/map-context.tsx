@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import { HexTileResources } from "@/types/map";
+import type { MapTile } from "#map/lib/map-tile";
 
 /**
  * Map context providing dimensions, hex sizing, and hover state to all
@@ -18,7 +18,7 @@ export interface MapContextValue {
     /** ID of currently hovered tile, or null if none */
     hoveredTileId: number | null;
     /** Currently hovered tile, or null if none */
-    hoveredTile: HexTileResources | null;
+    hoveredTile: MapTile | null;
     /** Handler to call when mouse enters a tile */
     handleMouseEnter: (tileId: number) => void;
     /** Handler to call when mouse leaves a tile */
@@ -45,5 +45,5 @@ export function useMapContext(): MapContextValue {
 export interface MapCanvasProps {
     children: ReactNode;
     className?: string;
-    mapData?: Array<HexTileResources>;
+    mapData?: Array<MapTile>;
 }

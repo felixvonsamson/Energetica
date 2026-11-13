@@ -7,16 +7,16 @@
  * without prop drilling.
  */
 
+import { useContainerDimensions } from "@energetica/ui/hooks/use-container-dimensions";
 import { useRef, useState, useCallback, useMemo } from "react";
 
-import { MapHoverBorder } from "@/components/map/map-hover-border";
+import { MapHoverBorder } from "#map/components/map-hover-border";
 import {
     MapCanvasProps,
     MapContextValue,
     MapContext,
-} from "@/contexts/map-context";
-import { useContainerDimensions } from "@/hooks/use-container-dimensions";
-import { calculateHexSizeWithConstraints } from "@/lib/hex-utils";
+} from "#map/contexts/map-context";
+import { calculateHexSizeWithConstraints } from "#map/lib/hex-utils";
 
 /**
  * MapCanvas component that automatically sizes to its container and provides
