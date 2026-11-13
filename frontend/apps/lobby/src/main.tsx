@@ -1,0 +1,41 @@
+import { createQueryClient } from "@energetica/core/query-client";
+import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider, createRouter } from "@tanstack/react-router";
+import { StrictMode } from "react";
+import ReactDOM from "react-dom/client";
+
+import { routeTree } from "./routeTree.gen";
+
+import "./styles.css";
+
+// Like the landing, the lobby bundle does not augment the router `Register`
+// interface — the app bundle owns that augmentation — so `to` props fall back
+// to loose `string` typing.
+const router = createRouter({
+    routeTree,
+    scrollRestoration: true,
+});
+
+// Light providers, like the landing, plus a query client for the picker's
+// my-runs/auth state. Deliberately not the game's client from `query-client.ts`:
+// that one is tuned for the in-game Socket.IO cache-invalidation setup, none of
+// which exists here. It starts from the same shared factory, so mutations are
+// not retried here either.
+const queryClient = createQueryClient({
+    queries: {
+        retry: false,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    },
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+        <ThemeProvider>
+            <QueryClientProvider client={queryClient}>
+                <RouterProvider router={router} />
+            </QueryClientProvider>
+        </ThemeProvider>
+    </StrictMode>,
+);

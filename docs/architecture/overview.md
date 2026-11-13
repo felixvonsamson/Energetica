@@ -58,10 +58,11 @@ src/energetica/       # Python/FastAPI backend
 
 ## Frontend
 
-The frontend is a set of Bun workspaces rooted at `frontend/`. The combined app and the lobby are still built from `frontend/src/`. The landing page is its own workspace package, `frontend/apps/landing` (`@energetica/landing`), and the other apps will follow it into `frontend/apps/`. An app there has its own `package.json`, `vite.config.ts`, `tsconfig.json` and `index.html`, builds to its own `dist/`, and imports only its own `src/` (through `@/`) and the shared packages. Code the apps share lives in workspace packages under `frontend/packages/`:
+The frontend is a set of Bun workspaces rooted at `frontend/`. The combined freeplay and workshop app is still built from `frontend/src/`. The landing page (`frontend/apps/landing`, `@energetica/landing`) and the lobby (`frontend/apps/lobby`, `@energetica/lobby`) are workspace packages of their own, and the other apps will follow them into `frontend/apps/`. An app there has its own `package.json`, `vite.config.ts`, `tsconfig.json` and `index.html`, builds to its own `dist/`, and imports only its own `src/` (through `@/`) and the shared packages. An app with a backend also has its own generated API types in `src/types/api.generated.ts`, so it cannot type-check against routes another app serves. Code the apps share lives in workspace packages under `frontend/packages/`:
 
-- `@energetica/ui`: the customised shadcn components, the `cn` helper, the theme context, the global stylesheet and the logo.
-- `@energetica/core`: the API client, the formatting helpers, `createQueryClient` (the query client factory) and the links between the apex, the lobby and the Instances (`instances.ts`, `single-origin.ts`).
+- `@energetica/ui`: the customised shadcn components, the `cn` helper, a few generic React hooks (such as `useContainerDimensions`), the theme context, the global stylesheet and the logo.
+- `@energetica/core`: the API client, `createErrorMessages` (turns an app's table of error-code messages into readable error helpers), the formatting helpers, `createQueryClient` (the query client factory) and the links between the apex, the lobby and the Instances (`instances.ts`, `single-origin.ts`).
+- `@energetica/map`: the hex map (canvas, tiles, hover border, resource buttons and heatmap colours). It draws `MapTile`s, a type it declares itself, so it needs no app's generated types. Freeplay's settle and community map pages and the lobby's run recap use it. An app under `apps/` that renders the map imports `@energetica/map/styles/sources.css` in the same stylesheet as `@energetica/ui/global.css`, for the same reason as the content package below.
 - `@energetica/content`: the wiki pages and the changelog, written in MDX, with their figures and the components they import. Its `contentMdx()` Vite plugin compiles them; see [Wiki pages](../frontend/wiki-pages.md). An app under `apps/` that renders them imports `@energetica/content/styles/sources.css` in the same stylesheet as `@energetica/ui/global.css`, because Tailwind only scans the app's own directory for class names.
 
 A Vite config that imports a workspace package, as one using `contentMdx()` does, runs with `vite --configLoader runner`. Otherwise Vite hands the package's TypeScript files to Node, which can only load them from Node 22.18 on. Other tools load the config that way, such as the Vitest VS Code extension, so a package's files must stay loadable by Node: they import each other through the package's `#<name>/` subpath imports, never through relative paths, which Node cannot resolve without a file extension.
@@ -80,7 +81,7 @@ frontend/src/
 ├── lib/                 # Utilities and configs
 │   ├── api/             # API client modules (*-api.ts files)
 │   ├── query-client.ts  # This app's query client and query keys
-│   └── other utilities  # date-utils, hex-utils, etc.
+│   └── other utilities  # date-utils, etc.
 ├── contexts/            # React contexts
 ├── types/               # TypeScript types
 └── routes/              # TanStack Router routes

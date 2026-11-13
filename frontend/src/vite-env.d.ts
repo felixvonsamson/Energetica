@@ -11,12 +11,6 @@ interface ImportMetaEnv {
      */
     readonly VITE_LOBBY_URL?: string;
     /**
-     * Local-dev override for the app dev-server origin the lobby bundle's
-     * "enter run" links target (default `http://localhost:5173`). See
-     * `lib/lobby.ts`.
-     */
-    readonly VITE_APP_URL?: string;
-    /**
      * The single live instance slug the app dev server is pinned to, injected
      * at dev-server startup (never in a prod build). Lets the account menu mark
      * that instance and disable hops to the account's other (prod) runs. See

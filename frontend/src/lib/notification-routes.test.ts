@@ -13,15 +13,14 @@ import type { AppRoute } from "@/types/notification-routes";
 // thing it is checking.
 //
 // What enforces it is `bun run typecheck`, which CI runs as the "Typecheck" step of the
-// frontend-checks job. Running this file under vitest proves nothing extra: the check is
-// entirely at compile time, and `expect` is here only so the assertion has a use and does not
-// trip noUnusedLocals. CI does not currently run vitest at all — the unit-tests job is pytest
-// and the type-check job is Pyright, both Python. So do not read the file extension as a second
-// line of defence; the typechecker is the only one.
+// frontend-checks job. CI also runs this file under vitest, but that proves nothing extra: the
+// check is entirely at compile time, and `expect` is here only so the assertion has a use and
+// does not trip noUnusedLocals. So do not read the file extension as a second line of defence;
+// the typechecker is the only one.
 //
-// tsconfig.landing.json and tsconfig.lobby.json exclude this file. Those programs leave the
-// register file out on purpose, so AppRoute is `string` there and the assertion below would be
-// a false alarm rather than a real one. Only the app's own program can answer this question.
+// tsconfig.sw.json, the service worker's program, leaves the register file out on purpose, so
+// AppRoute is `string` there. It does not compile this test either. Only the app's own program
+// can answer this question.
 type RegistryIsPopulated = string extends AppRoute ? never : true;
 
 describe("notification route registry", () => {

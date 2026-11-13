@@ -113,7 +113,7 @@ log_success "Lobby backend unit is current"
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building lobby bundle..."
     # No VITE_APEX_DOMAIN here: the lobby derives the apex from its own hostname at
-    # runtime (frontend/src/lib/lobby.ts), so the bundle is domain-agnostic.
+    # runtime (frontend/apps/lobby/src/lib/lobby.ts), so the bundle is domain-agnostic.
     ( cd frontend && bun run build:lobby )
     log_success "Lobby bundle built"
 else
@@ -155,8 +155,9 @@ log_step "Syncing lobby bundle..."
 # locally rather than as a second server-side chmod keeps the transfer atomic — there is no
 # window where Apache serves a just-rsynced file with the wrong perms. World bits are moot —
 # others cannot traverse the root.
-chmod -R u=rwX,g=rX,o=rX ./frontend/dist-lobby
-rsync -az --delete ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
+# The lobby app builds to frontend/apps/lobby/dist; the server keeps serving it from dist-lobby/.
+chmod -R u=rwX,g=rX,o=rX ./frontend/apps/lobby/dist
+rsync -az --delete ./frontend/apps/lobby/dist/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
 log_success "Lobby bundle synced"
 
 # --- 6. Install the backend into the server venv --------------------------------------

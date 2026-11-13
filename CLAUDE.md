@@ -32,10 +32,12 @@ from the repo root:
 
 ### Frontend: API Types
 
-`bun run generate-types` creates `frontend/src/types/api.generated.ts` is the bridge for full stack type safety.
+`bun run generate-types` generates TypeScript types from each backend app's OpenAPI schema. They are the bridge for full stack type safety.
 
-- backend: `src/energetica/schemas/` and `src/energetica/routers/` are the source of truth
-- frontend: `frontend/src/types/api-helpers.ts` for consuming types
+- backend: `src/energetica/schemas/`, `src/energetica/routers/` and `src/lobby/` are the source of truth
+- one types file per app, so code only type-checks against routes its own backend serves:
+  - lobby app: `frontend/apps/lobby/src/types/api.generated.ts`, consumed through `frontend/apps/lobby/src/types/api-helpers.ts`
+  - combined freeplay and workshop bundle: still uses the merged `frontend/src/types/api.generated.ts`, consumed through `frontend/src/types/api-helpers.ts`. `api.freeplay.generated.ts` and `api.workshop.generated.ts` sit beside it, for when those apps split out (#1171).
 
 ## Agent skills
 

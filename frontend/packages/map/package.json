@@ -1,0 +1,28 @@
+{
+    "name": "@energetica/map",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./components/*": "./src/components/*.tsx",
+        "./contexts/*": "./src/contexts/*.tsx",
+        "./lib/*": "./src/lib/*.ts",
+        "./styles/sources.css": "./src/styles/sources.css"
+    },
+    "imports": {
+        "#map/components/*": "./src/components/*.tsx",
+        "#map/contexts/*": "./src/contexts/*.tsx",
+        "#map/lib/*": "./src/lib/*.ts"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "react": "catalog:"
+    },
+    "devDependencies": {
+        "@types/react": "catalog:",
+        "typescript": "catalog:"
+    }
+}

@@ -46,7 +46,6 @@ const SCAN_PREFIXES = [
 /** Route trees where TanStack's file-based route syntax applies. */
 const ROUTE_TREES = [
     "frontend/src/routes/",
-    "frontend/src/routes-lobby/",
     // Each app under apps/ keeps its route tree in src/routes.
     ...APPS.map((name) => `frontend/apps/${name}/src/routes/`),
 ];

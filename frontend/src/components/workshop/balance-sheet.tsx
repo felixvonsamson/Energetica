@@ -24,7 +24,6 @@ import {
     MetricTooltip,
     TooltipFigure,
 } from "@/components/workshop/metric-tooltip";
-import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
     type BalanceSheet,
@@ -46,6 +45,7 @@ import {
 import { SEASON_LABELS, type Season } from "@/lib/workshop-timeline";
 import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { useContainerDimensions } from "@energetica/ui/hooks/use-container-dimensions";
 import { cn } from "@energetica/ui/lib/utils";
 
 const SHEET_COLORS = {
