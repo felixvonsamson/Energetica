@@ -1,7 +1,17 @@
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+    createRootRoute,
+    Link,
+    Outlet,
+    useMatches,
+} from "@tanstack/react-router";
 import { LogOut, UserCog } from "lucide-react";
+import { useEffect } from "react";
 
 import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
+import {
+    documentTitle,
+    pageTitleFromMatches,
+} from "@energetica/core/document-title";
 import { Button } from "@energetica/ui/components/button";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { TypographyBrand } from "@energetica/ui/components/typography";
@@ -17,6 +27,10 @@ export const Route = createRootRoute({
  * door, not a dashboard.
  */
 function RootComponent() {
+    const pageTitle = pageTitleFromMatches(useMatches());
+    useEffect(() => {
+        document.title = documentTitle(pageTitle);
+    }, [pageTitle]);
     const { data: myRuns } = useMyRuns();
     const logout = useLobbyLogout();
 

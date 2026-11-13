@@ -20,6 +20,10 @@ import {
     isAnnouncedTakeover,
     workshopRedirect,
 } from "@/lib/route-guard";
+import {
+    documentTitle,
+    pageTitleFromMatches,
+} from "@energetica/core/document-title";
 import { lobbyHref, lobbyLoginHref } from "@energetica/core/instances";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
@@ -43,6 +47,10 @@ export const Route = createRootRoute({
  * world's auth and game hooks are never called (#995).
  */
 function RootComponent() {
+    const pageTitle = pageTitleFromMatches(useMatches());
+    useEffect(() => {
+        document.title = documentTitle(pageTitle);
+    }, [pageTitle]);
     const { data: mode } = useRunMode();
     return mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />;
 }
