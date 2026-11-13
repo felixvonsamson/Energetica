@@ -17,5 +17,10 @@ export function useMyRuns() {
         queryFn: async () => (await lobbyApi.myRuns()).runs,
         // The set of settled runs changes rarely within a session; avoid refetching on every mount.
         staleTime: 60_000,
+        // No polling interval: inside a run, nobody waits for this list to
+        // change. But do refetch whenever the window regains focus, even
+        // inside staleTime, so a run joined in another tab shows up when the
+        // player comes back (#1280).
+        refetchOnWindowFocus: "always",
     });
 }

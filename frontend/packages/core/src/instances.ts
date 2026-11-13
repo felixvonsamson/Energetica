@@ -356,11 +356,20 @@ export function landingHref(path: string): string {
 /**
  * Fetch the public instance manifest. Returns the raw entries in their
  * published (sorted) order.
+ *
+ * Apache serves the manifest with `Cache-Control: max-age=60`, so a plain fetch
+ * can return a browser-cached copy up to a minute old. `no-cache` makes the
+ * browser check with the server every time; an unchanged manifest comes back as
+ * a cheap 304. The lobby polls this every 15 seconds (#1280), which would be
+ * pointless if it kept reading the cached copy.
  */
 export async function fetchInstances(
     signal?: AbortSignal,
 ): Promise<InstanceFragment[]> {
-    const response = await fetch("/instances.json", { signal });
+    const response = await fetch("/instances.json", {
+        signal,
+        cache: "no-cache",
+    });
     if (!response.ok)
         throw new Error(`Failed to fetch instances.json: ${response.status}`);
     const data = (await response.json()) as Partial<InstancesManifest>;

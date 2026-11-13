@@ -33,6 +33,19 @@ export const lobbyQueryKeys = {
 };
 
 /**
+ * How the lobby keeps "Your runs" and "Open runs" current (#1280). A player can
+ * be added to a run, or a run can open, while the lobby sits open, and the
+ * lobby has no Socket.IO to hear about it (ADR-0002). So both lists poll every
+ * 15 seconds and refetch whenever the window regains focus. React Query pauses
+ * the interval while the tab is hidden, so a background tab sends nothing.
+ */
+const lobbyListPolling = {
+    staleTime: 15 * 1000,
+    refetchInterval: 15 * 1000,
+    refetchOnWindowFocus: "always",
+} as const;
+
+/**
  * The authenticated account's joined runs.
  *
  * Also the lobby's _auth probe_ — the lobby backend has no `/auth/me`, so
@@ -40,6 +53,9 @@ export const lobbyQueryKeys = {
  * cookie is absent or invalid (401 → logged out) and the runs payload when
  * logged in. Other errors (backend unreachable, 5xx) surface as query errors so
  * the picker can distinguish "logged out" from "broken".
+ *
+ * Polls (see {@link lobbyListPolling}), so it also notices a session that
+ * expires while the lobby is open.
  */
 export function useMyRuns() {
     return useQuery<MyRunsResponse | null>({
@@ -54,6 +70,7 @@ export function useMyRuns() {
                 throw error;
             }
         },
+        ...lobbyListPolling,
     });
 }
 
@@ -66,6 +83,7 @@ export function useInstancesManifest() {
     return useQuery<InstanceFragment[]>({
         queryKey: lobbyQueryKeys.instances,
         queryFn: ({ signal }) => fetchInstances(signal).catch(() => []),
+        ...lobbyListPolling,
     });
 }
 
