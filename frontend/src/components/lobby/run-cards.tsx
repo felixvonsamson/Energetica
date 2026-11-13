@@ -11,10 +11,9 @@
  * (`{slug}.{apex}/app`), which a full page load handles fine. A logged-in "open
  * run" card is different: joining (#1030) is an explicit two-click in-lobby
  * action — click the card to reveal a "Join run" button, click that to record
- * the join — so it never navigates on its own; the run simply reappears under
- * "Your runs" once `my-runs` refetches. Logged out, there is no account to join
- * with yet, so that card stays the original single link through
- * `/login?return={slug}`.
+ * the join — and only once the join is recorded does it send the player into
+ * the run (#1034). Logged out, there is no account to join with yet, so that
+ * card stays the original single link through `/login?return={slug}`.
  *
  * Once a run reaches `freeze` (its recap is minted and published, T5/G1), both
  * "your runs" and the logged-out "open run" card grow a secondary "View recap"
@@ -206,9 +205,9 @@ function OpenRunCardContent({ instance }: { instance: InstanceFragment }) {
 
 /**
  * A logged-in visitor's "open run" card: click to select (reveals a "Join run"
- * button), click that to record the join (#1030). Never navigates itself — once
- * joined, the run moves to "Your runs" on the next `my-runs` refetch, which is
- * where "Play" lives.
+ * button), click that to record the join (#1030). Once the join succeeds,
+ * {@link useJoinRun} sends the player into the run (#1034); the buttons stay
+ * disabled while that page loads.
  */
 function JoinableOpenRunCard({
     instance,
@@ -219,6 +218,9 @@ function JoinableOpenRunCard({
 }) {
     const [selected, setSelected] = useState(false);
     const joinRun = useJoinRun();
+    // After success the browser is already loading the run, so keep the
+    // buttons disabled and the spinner up rather than offering a second join.
+    const busy = joinRun.isPending || joinRun.isSuccess;
 
     return (
         <div className="bg-card text-foreground border border-border rounded-4xl shadow-md overflow-hidden">
@@ -247,16 +249,16 @@ function JoinableOpenRunCard({
                         <Button
                             variant="ghost"
                             onClick={() => setSelected(false)}
-                            disabled={joinRun.isPending}
+                            disabled={busy}
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={() => joinRun.mutate(instance.slug)}
-                            disabled={joinRun.isPending}
+                            disabled={busy}
                             className="gap-2"
                         >
-                            {joinRun.isPending && <Spinner />}
+                            {busy && <Spinner />}
                             Join run
                         </Button>
                     </div>

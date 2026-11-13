@@ -277,8 +277,10 @@ prevent an open-redirect.
 **Join a public run (#1030).** The picker's explicit two-click action — select a run, then
 "Join run" — calls the lobby's own `POST /api/v1/lobby/runs/{slug}/join`, which writes an
 unsettled `instance_membership` row straight from the lobby (no instance round-trip). This is
-what makes a run appear under "your runs," _before_ the account has settled. A private run is
-excluded from this endpoint (403) — its admission stays instance-owned (roster / join-link).
+what makes a run appear under "your runs," _before_ the account has settled. Once the join
+succeeds, the picker navigates straight to the run's app (#1034), where the player settles.
+That is a plain page load, not a cross-origin call, so the join stays lobby-owned. A private run
+is excluded from this endpoint (403) — its admission stays instance-owned (roster / join-link).
 
 **Settle.** Unchanged game-side, plus the lobby service's idempotent join, so the account has a
 membership row even if it never went through a join step.
