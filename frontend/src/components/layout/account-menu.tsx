@@ -2,11 +2,13 @@
  * The run app's account menu: switch runs, open the lobby, and the account
  * items, behind one `CircleUser` trigger at every screen size (#1035).
  *
- * - "Switch run" lists the live runs the account plays, then the ones it
- *   facilitates. Ended runs and runs open to join are left out: the lobby is
- *   where you join something new or read a recap. Each run shows the action
- *   picking it takes, from {@link runEntry}. The current run stays in the list,
- *   disabled, with a tick. The item is hidden when there is no other live run.
+ * - "Switch run" lists the runs the account plays or facilitates from the lobby's
+ *   Now and Coming up bands, in the lobby's order and with its badges, with no
+ *   headings (`@energetica/core/run-list`, #1039). Frozen and ended runs, and
+ *   runs open to join, are left out: the lobby is where you join something new
+ *   or read a recap. Each run shows the action picking it takes, from
+ *   {@link runEntry}. The current run stays in the list, disabled, with a tick.
+ *   The item is hidden when there is no other run to switch to.
  * - On desktop "Switch run" is a side submenu. On mobile a side submenu does not
  *   fit next to the menu, so the runs expand in place below it instead.
  * - On mobile the menu also carries Notifications and the theme toggle, which are
@@ -25,7 +27,9 @@
 
 import { Link } from "@tanstack/react-router";
 import {
+    Archive,
     Bell,
+    CalendarDays,
     Check,
     ChevronDown,
     ChevronsUpDown,
@@ -33,7 +37,12 @@ import {
     FlagTriangleRight,
     Home,
     LogOut,
+    type LucideIcon,
+    Presentation,
     Settings,
+    Snowflake,
+    Timer,
+    Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -45,16 +54,20 @@ import {
     runAppHref,
     runEntry,
     runFacilitatorHref,
-    type Phase,
     type RunEntry,
-    type RunRelation,
 } from "@energetica/core/instances";
+import {
+    bandRuns,
+    runBadge,
+    type ListedRun,
+    type RunBadge,
+    type RunBadgeColour,
+} from "@energetica/core/run-list";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -68,130 +81,149 @@ import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { useIsMobile } from "@energetica/ui/hooks/use-mobile";
 import { cn } from "@energetica/ui/lib/utils";
 
-/** A run as the "Switch run" list shows it. */
-type SwitchableRun = {
-    slug: string;
-    name: string;
-    entry: RunEntry;
+const BADGE_ICONS: Record<RunBadge["status"], LucideIcon> = {
+    "starting-soon": Timer,
+    upcoming: CalendarDays,
+    frozen: Snowflake,
+    ended: Archive,
 };
 
-type RunGroup = { label: string; runs: SwitchableRun[] };
-
-/** Words shown before the action for phases where it is worth knowing. */
-const PHASE_PREFIX: Partial<Record<Phase, string>> = {
-    announced: "Upcoming",
-    freeze: "Frozen",
+const BADGE_COLOURS: Record<RunBadgeColour, string> = {
+    warning: "text-warning",
+    info: "text-info",
+    frozen: "text-frozen",
+    "muted-foreground": "text-muted-foreground",
 };
 
 /**
- * The live runs the account plays and facilitates, as labelled groups (empty
- * groups dropped), plus whether any of them is somewhere other than here.
+ * Turns text white on a highlighted row (green background). Without it the
+ * badge and the action label are unreadable there.
+ */
+const ON_HIGHLIGHT = "in-data-highlighted:text-accent-foreground";
+
+/**
+ * The runs the account plays or facilitates from the lobby's Now and Coming up
+ * bands, in the lobby's order, plus whether any of them is somewhere other than
+ * here. Frozen and ended runs are left out: the lobby is where you read a
+ * recap.
  */
 function useSwitchableRuns(here: string | null): {
-    groups: RunGroup[];
+    runs: ListedRun[];
     hasOtherRun: boolean;
 } {
     const { data } = useMyRuns();
-    const live = (
-        runs: { slug: string; name: string; starts_at: string }[],
-        relation: RunRelation,
-    ): SwitchableRun[] =>
-        runs
-            .map((run) => ({
-                slug: run.slug,
-                name: run.name,
-                entry: runEntry(run, relation),
-            }))
-            .filter((run) => run.entry.phase !== "ended");
-    const groups = [
-        { label: "Your runs", runs: live(data?.runs ?? [], "player") },
-        {
-            label: "Facilitating",
-            runs: live(data?.facilitated_runs ?? [], "facilitator"),
-        },
-    ].filter((group) => group.runs.length > 0);
-    const hasOtherRun = groups.some((group) =>
-        group.runs.some((run) => run.slug !== here),
+    const runs = bandRuns([
+        ...(data?.runs ?? []).map((run) => ({
+            ...run,
+            relation: "player" as const,
+        })),
+        ...(data?.facilitated_runs ?? []).map((run) => ({
+            ...run,
+            relation: "facilitator" as const,
+        })),
+    ])
+        .filter(({ band }) => band !== "past")
+        .flatMap(({ runs: bandedRuns }) => bandedRuns);
+    const hasOtherRun = runs.some((run) => run.slug !== here);
+    return { runs, hasOtherRun };
+}
+
+function runHref(slug: string, entry: RunEntry): string {
+    return entry.action === "manage"
+        ? runFacilitatorHref(slug)
+        : runAppHref(slug);
+}
+
+/** The badge under a run's name: a coloured icon and short text. */
+function BadgeLabel({ badge }: { badge: RunBadge }) {
+    const Icon = BADGE_ICONS[badge.status];
+    return (
+        <span
+            className={cn(
+                "flex items-center gap-1 text-xs font-semibold",
+                BADGE_COLOURS[badge.colour],
+                ON_HIGHLIGHT,
+            )}
+        >
+            <Icon className="size-3 text-current" />
+            {badge.text}
+        </span>
     );
-    return { groups, hasOtherRun };
 }
 
-function runHref(run: SwitchableRun): string {
-    return run.entry.action === "manage"
-        ? runFacilitatorHref(run.slug)
-        : runAppHref(run.slug);
-}
-
-/** One run: its name, then a tick if it is this run, or its action. */
+/**
+ * One run: its mode icon, its name with the lobby's badge under it, then a tick
+ * if it is this run, or its action.
+ */
 function RunItem({
     run,
     isCurrent,
     pinnedToLocalDev,
 }: {
-    run: SwitchableRun;
+    run: ListedRun;
     isCurrent: boolean;
     pinnedToLocalDev: boolean;
 }) {
-    if (isCurrent) {
-        return (
-            <DropdownMenuItem disabled>
-                <span className="truncate flex-1">{run.name}</span>
+    const entry = runEntry(run, run.relation);
+    const badge = runBadge(run);
+    const ModeIcon = run.mode === "workshop" ? Presentation : Zap;
+    const body = (
+        <>
+            <ModeIcon />
+            <span className="flex flex-col min-w-0 flex-1">
+                <span className="truncate">{run.name}</span>
+                {badge && <BadgeLabel badge={badge} />}
+            </span>
+            {isCurrent ? (
                 <Check size={16} className="ml-auto" />
-            </DropdownMenuItem>
-        );
-    }
-    const prefix = PHASE_PREFIX[run.entry.phase];
-    const action = (
-        <DropdownMenuShortcut className="tracking-normal whitespace-nowrap">
-            {prefix ? `${prefix} · ` : ""}
-            {run.entry.actionLabel}
-        </DropdownMenuShortcut>
+            ) : (
+                <DropdownMenuShortcut
+                    className={cn(
+                        "tracking-normal whitespace-nowrap",
+                        ON_HIGHLIGHT,
+                    )}
+                >
+                    {entry.actionLabel}
+                </DropdownMenuShortcut>
+            )}
+        </>
     );
+    if (isCurrent) {
+        return <DropdownMenuItem disabled>{body}</DropdownMenuItem>;
+    }
     if (pinnedToLocalDev) {
         return (
             <DropdownMenuItem
                 disabled
                 title="Switching runs is disabled in local dev: this dev server is pinned to one live instance."
             >
-                <span className="truncate flex-1">{run.name}</span>
-                {action}
+                {body}
             </DropdownMenuItem>
         );
     }
     return (
         <DropdownMenuItem asChild>
-            <a href={runHref(run)}>
-                <span className="truncate flex-1">{run.name}</span>
-                {action}
-            </a>
+            <a href={runHref(run.slug, entry)}>{body}</a>
         </DropdownMenuItem>
     );
 }
 
-function RunGroups({
-    groups,
+function RunItems({
+    runs,
     here,
     pinnedToLocalDev,
 }: {
-    groups: RunGroup[];
+    runs: ListedRun[];
     here: string | null;
     pinnedToLocalDev: boolean;
 }) {
-    return groups.map((group, i) => (
-        <DropdownMenuGroup key={group.label}>
-            {i > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-                {group.label}
-            </DropdownMenuLabel>
-            {group.runs.map((run) => (
-                <RunItem
-                    key={run.slug}
-                    run={run}
-                    isCurrent={run.slug === here}
-                    pinnedToLocalDev={pinnedToLocalDev}
-                />
-            ))}
-        </DropdownMenuGroup>
+    return runs.map((run) => (
+        <RunItem
+            key={run.slug}
+            run={run}
+            isCurrent={run.slug === here}
+            pinnedToLocalDev={pinnedToLocalDev}
+        />
     ));
 }
 
@@ -231,12 +263,12 @@ export function AccountMenu({
     // run in the URL: fall back to the slug the proxy is pinned to.
     const pinnedSlug = devInstanceSlug();
     const here = currentRunSlug() ?? pinnedSlug;
-    const { groups, hasOtherRun } = useSwitchableRuns(here);
+    const { runs, hasOtherRun } = useSwitchableRuns(here);
     const singleOrigin = isSingleOriginHost();
     const showSwitchRun = !singleOrigin && hasOtherRun;
-    const runGroups = (
-        <RunGroups
-            groups={groups}
+    const runItems = (
+        <RunItems
+            runs={runs}
             here={here}
             pinnedToLocalDev={pinnedSlug !== null}
         />
@@ -307,7 +339,7 @@ export function AccountMenu({
                             </DropdownMenuItem>
                             {runsExpanded && (
                                 <div className="ml-3 mb-1 border-l pl-1">
-                                    {runGroups}
+                                    {runItems}
                                 </div>
                             )}
                         </>
@@ -318,7 +350,7 @@ export function AccountMenu({
                                 Switch run
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="w-72 max-h-[70vh] overflow-y-auto">
-                                {runGroups}
+                                {runItems}
                             </DropdownMenuSubContent>
                         </DropdownMenuSub>
                     ))}

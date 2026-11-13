@@ -1,24 +1,18 @@
 import type { InstanceFragment } from "@energetica/core/instances";
+import type { ListedRun } from "@energetica/core/run-list";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
-import { EmptyState } from "@energetica/ui/components/empty-state";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { Spinner } from "@energetica/ui/components/spinner";
 import {
     TypographyBrand,
-    TypographyH2,
     TypographyLead,
-    TypographyMuted,
 } from "@energetica/ui/components/typography";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Compass, LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import {
-    FacilitatedRunCard,
-    MyRunCard,
-    OpenRunCard,
-} from "@/components/run-cards";
+import { RunList } from "@/components/run-list";
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
@@ -119,6 +113,11 @@ function PickerPage() {
     );
 }
 
+/** A run from the public manifest, which the account has not joined. */
+function visitorRun(instance: InstanceFragment): ListedRun {
+    return { ...instance, relation: "visitor" };
+}
+
 function LoggedOutPicker({
     openRuns,
     returnSlug,
@@ -133,11 +132,9 @@ function LoggedOutPicker({
                 <TypographyBrand className="text-5xl text-primary">
                     Energetica
                 </TypographyBrand>
-                <TypographyLead>One account for all your runs.</TypographyLead>
-                <TypographyMuted>
-                    Log in to pick up your runs, or create an account to join
-                    one.
-                </TypographyMuted>
+                <TypographyLead>
+                    Log in to play your runs, or create an account to join one.
+                </TypographyLead>
                 <div className="flex flex-row gap-3 mt-2">
                     <Link to="/login" search={{ return: returnSlug }}>
                         <Button size="lg" className="gap-2">
@@ -154,22 +151,7 @@ function LoggedOutPicker({
                 </div>
             </div>
 
-            {openRuns.length > 0 && (
-                <section className="flex flex-col gap-4">
-                    <TypographyH2 className="text-primary">
-                        Runs open to join
-                    </TypographyH2>
-                    <div className="flex flex-col gap-4">
-                        {openRuns.map((instance) => (
-                            <OpenRunCard
-                                key={instance.slug}
-                                instance={instance}
-                                loggedIn={false}
-                            />
-                        ))}
-                    </div>
-                </section>
-            )}
+            <RunList runs={openRuns.map(visitorRun)} loggedIn={false} />
         </div>
     );
 }
@@ -187,9 +169,10 @@ function LoggedInPicker({
 }) {
     const myRunSlugs = new Set(runs.map((run) => run.slug));
     const facilitatedSlugs = new Set(facilitatedRuns.map((run) => run.slug));
-    // A facilitator's own run can be public and advertised; without this exclusion it would show
-    // up under "Open runs" with a "Join" button that would just fail server-side — player and
-    // facilitator are mutually exclusive per (account_id, slug) (ADR-0004).
+    // A run the account plays or facilitates is listed once, from my-runs. A facilitator's own run
+    // can also be public and advertised; listed again from the manifest, it would get a "Join"
+    // button that would just fail server-side — player and facilitator are mutually exclusive per
+    // (account_id, slug) (ADR-0004).
     // A temporary account, made for one workshop, cannot join a freeplay run: it is deleted after
     // the workshop and would leave a player behind with no account (#1383). The join route refuses
     // it, so its "Join" button would only fail.
@@ -203,58 +186,18 @@ function LoggedInPicker({
             ),
     );
 
+    const listed: ListedRun[] = [
+        ...runs.map((run) => ({ ...run, relation: "player" as const })),
+        ...facilitatedRuns.map((run) => ({
+            ...run,
+            relation: "facilitator" as const,
+        })),
+        ...openRuns.map(visitorRun),
+    ];
+
     return (
-        <div className="flex flex-col gap-12 pt-8">
-            <section className="flex flex-col gap-4">
-                <TypographyH2 className="text-primary">Your runs</TypographyH2>
-                {runs.length > 0 ? (
-                    <div className="flex flex-col gap-4">
-                        {runs.map((run) => (
-                            <MyRunCard key={run.slug} run={run} />
-                        ))}
-                    </div>
-                ) : (
-                    <EmptyState
-                        icon={Compass}
-                        title="No runs joined yet"
-                        description={
-                            openRuns.length > 0
-                                ? "Join an open run below to start playing."
-                                : "No runs are open right now. Check back soon."
-                        }
-                    />
-                )}
-            </section>
-
-            {facilitatedRuns.length > 0 && (
-                <section className="flex flex-col gap-4">
-                    <TypographyH2 className="text-primary">
-                        Runs you facilitate
-                    </TypographyH2>
-                    <div className="flex flex-col gap-4">
-                        {facilitatedRuns.map((run) => (
-                            <FacilitatedRunCard key={run.slug} run={run} />
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {openRuns.length > 0 && (
-                <section className="flex flex-col gap-4">
-                    <TypographyH2 className="text-primary">
-                        Open runs
-                    </TypographyH2>
-                    <div className="flex flex-col gap-4">
-                        {openRuns.map((instance) => (
-                            <OpenRunCard
-                                key={instance.slug}
-                                instance={instance}
-                                loggedIn
-                            />
-                        ))}
-                    </div>
-                </section>
-            )}
+        <div className="pt-8">
+            <RunList runs={listed} loggedIn />
         </div>
     );
 }

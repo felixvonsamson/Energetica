@@ -133,6 +133,18 @@ def test_facilitated_runs_joined_with_fragments(instances: Path) -> None:
     assert response.facilitated_runs[0].granted_at.isoformat() == "2026-02-01T00:00:00+00:00"
 
 
+def test_facilitated_runs_carry_their_run_mode(instances: Path) -> None:
+    """A facilitator's row in the lobby says "Workshop" for a workshop, so a facilitated run carries its mode too."""
+    _fragment(instances, slug="workshop-1", name="Workshop", starts_at="2026-03-01T00:00:00Z", mode="workshop")
+    _fragment(instances, slug="world", name="World", starts_at="2026-01-01T00:00:00Z")
+
+    runs = build_my_runs(
+        "alice", _granted(("workshop-1", "2026-03-02T00:00:00+00:00"), ("world", "2026-01-02T00:00:00+00:00"))
+    ).facilitated_runs
+
+    assert [(run.slug, run.mode) for run in runs] == [("workshop-1", "workshop"), ("world", "freeplay")]
+
+
 def test_facilitated_runs_filters_stale_grant_without_fragment(instances: Path) -> None:
     assert build_my_runs("alice", _granted(("deleted-run", "2026-01-01T00:00:00+00:00"))).facilitated_runs == []
 

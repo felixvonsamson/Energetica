@@ -113,6 +113,7 @@
     --color-warning-fg: var(--warning-fg);
     --color-success-fg: var(--success-fg);
     --color-info-fg: var(--info-fg);
+    --color-frozen: var(--frozen);
 
     /* Fonts */
     --font-main: "Baloo 2", system-ui, sans-serif;
@@ -222,6 +223,8 @@
         --success-fg: #ffffff;
         --info: rgb(37, 99, 235);
         --info-fg: #ffffff;
+        /* A frozen run's badge in run lists (Tailwind's sky-700) */
+        --frozen: oklch(50% 0.134 242.749);
 
         /* Chart colors (light mode) */
         --chart-1: oklch(0.646 0.222 41.116);
@@ -457,6 +460,8 @@
         --success-fg: #000000;
         --info: rgb(96, 165, 250);
         --info-fg: #000000;
+        /* A frozen run's badge in run lists (Tailwind's sky-300) */
+        --frozen: oklch(82.8% 0.111 230.318);
 
         /* Chart colors (dark mode) */
         --chart-1: oklch(0.488 0.243 264.376);
