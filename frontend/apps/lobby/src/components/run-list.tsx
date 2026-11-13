@@ -210,7 +210,9 @@ function RunRow({
                     className="size-5 shrink-0 text-primary"
                     aria-label={run.mode === "workshop" ? "Workshop" : "Run"}
                 />
-                <div className="flex flex-col min-w-0 flex-1">
+                {/* The minimum width makes the actions wrap below the name on a
+                    narrow screen, instead of squeezing the name to nothing. */}
+                <div className="flex flex-col min-w-36 flex-1">
                     <p className="font-semibold truncate">{run.name}</p>
                     {(badge || subtitle.length > 0) && (
                         <p className="text-sm text-muted-foreground">
