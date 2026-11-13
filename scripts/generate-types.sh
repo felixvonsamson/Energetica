@@ -1,6 +1,8 @@
 #!/bin/bash
 # Generate TypeScript types from the OpenAPI schemas: one types file per app
-# (freeplay, workshop, lobby) and the merged file every bundle uses today.
+# (freeplay, workshop, lobby) and the merged file the combined app bundle uses
+# today. Apps that are their own workspace package (so far the lobby) get their
+# types file inside the app.
 # Usage: npm run generate-types
 
 set -e
@@ -29,10 +31,11 @@ echo "📋 Generating OpenAPI schemas from backend..."
 
 # Generate TypeScript types: the merged schema, then each app's.
 bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.json" -o "$PROJECT_ROOT/frontend/$TYPES_DIR/api.generated.ts"
-for app in freeplay workshop lobby; do
+for app in freeplay workshop; do
     bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.$app.json" -o "$PROJECT_ROOT/frontend/$TYPES_DIR/api.$app.generated.ts"
 done
-echo "✓ Types generated in frontend/$TYPES_DIR"
+bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.lobby.json" -o "$PROJECT_ROOT/frontend/apps/lobby/$TYPES_DIR/api.generated.ts"
+echo "✓ Types generated in frontend/$TYPES_DIR and frontend/apps/lobby/$TYPES_DIR"
 # No Prettier pass: .prettierignore lists the generated files, so they stay as openapi-typescript
 # writes them (#1325).
 

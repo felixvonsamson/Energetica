@@ -46,15 +46,14 @@ describe("frontend boundaries", () => {
         ).toEqual([]);
     });
 
-    it("rejects one bundle importing another bundle's files", async () => {
+    it("rejects the lobby importing the combined app's files", async () => {
         expect(
             await violatedRules(
-                "src/routes-lobby/example.tsx",
-                'import { Route } from "@/routes/app/logout";\nexport const x = Route;\n',
+                "apps/lobby/src/routes/example.tsx",
+                'import type { ApiSchema } from "../../../../src/types/api-helpers";\nexport type X = ApiSchema<"HexTileOut">;\n',
             ),
-        ).toContain("import/no-restricted-paths");
+        ).toContain("import/no-relative-packages");
     });
-
     it("allows an app under apps/ to import its own files through @/", async () => {
         expect(
             await violatedRules(

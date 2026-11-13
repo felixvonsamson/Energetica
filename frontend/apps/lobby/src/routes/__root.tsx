@@ -1,14 +1,4 @@
 import {
-    createRootRoute,
-    HeadContent,
-    Link,
-    Outlet,
-} from "@tanstack/react-router";
-import { CircleUser, ExternalLink, LogOut, Settings } from "lucide-react";
-
-import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
-import { lobbyLandingHref } from "@/lib/lobby";
-import {
     documentTitle,
     pageTitleFromMatches,
 } from "@energetica/core/document-title";
@@ -23,6 +13,16 @@ import {
 } from "@energetica/ui/components/dropdown-menu";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { TypographyBrand } from "@energetica/ui/components/typography";
+import {
+    createRootRoute,
+    HeadContent,
+    Link,
+    Outlet,
+} from "@tanstack/react-router";
+import { CircleUser, ExternalLink, LogOut, Settings } from "lucide-react";
+
+import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
+import { lobbyLandingHref } from "@/lib/lobby";
 
 export const Route = createRootRoute({
     staticData: { title: "" },

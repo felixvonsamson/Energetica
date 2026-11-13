@@ -9,27 +9,9 @@ import { defineConfig } from "eslint/config";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 
-// The combined app and the lobby are separate bundles that still share one src
-// directory. Each bundle's own entry files may not import another bundle's. Code
-// they share lives in the rest of src or in packages/. The apps under apps/ are
-// workspace packages of their own, so the package rules below cover them.
-const BUNDLE_FILES = {
-    app: ["./src/main.tsx", "./src/routes", "./src/routeTree.gen.ts"],
-    lobby: [
-        "./src/main-lobby.tsx",
-        "./src/routes-lobby",
-        "./src/routeTree.lobby.gen.ts",
-        "./src/components/lobby",
-    ],
-};
-const BUNDLE_ZONES = [
-    ...Object.entries(BUNDLE_FILES).map(([bundle, target]) => ({
-        target,
-        from: Object.entries(BUNDLE_FILES)
-            .filter(([other]) => other !== bundle)
-            .flatMap(([, files]) => files),
-        message: `This file belongs to the ${bundle} bundle and cannot import another bundle's files.`,
-    })),
+// The apps under apps/ are workspace packages of their own, so the package rules
+// below keep them apart from each other and from the combined app in src/.
+const BOUNDARY_ZONES = [
     {
         target: "./packages",
         from: ["./src", "./apps"],
@@ -51,7 +33,6 @@ const APPS = workspaces("apps");
 const PACKAGES = workspaces("packages");
 const TSCONFIGS = [
     "./tsconfig.json",
-    "./tsconfig.lobby.json",
     ...APPS.map((name) => `./apps/${name}/tsconfig.json`),
     ...PACKAGES.map((name) => `./packages/${name}/tsconfig.json`),
 ];
@@ -63,7 +44,6 @@ export default defineConfig([
             "dist/",
             "dist-app/",
             "apps/*/dist/",
-            "dist-lobby/",
             "*.config.ts",
             "*.config.js",
             "src/service-worker.ts",
@@ -182,7 +162,7 @@ export default defineConfig([
             // Import another workspace package by its name, never through a relative
             // path into its directory.
             "import/no-relative-packages": "error",
-            "import/no-restricted-paths": ["error", { zones: BUNDLE_ZONES }],
+            "import/no-restricted-paths": ["error", { zones: BOUNDARY_ZONES }],
         },
     },
     // Shared packages import their own files through their own subpath imports,

@@ -8,13 +8,13 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes-lobby/__root'
-import { Route as SignupRouteImport } from './routes-lobby/signup'
-import { Route as LogoutRouteImport } from './routes-lobby/logout'
-import { Route as LoginRouteImport } from './routes-lobby/login'
-import { Route as AccountRouteImport } from './routes-lobby/account'
-import { Route as IndexRouteImport } from './routes-lobby/index'
-import { Route as RunsSlugRecapRouteImport } from './routes-lobby/runs.$slug.recap'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as RunsSlugRecapRouteImport } from './routes/runs.$slug.recap'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',

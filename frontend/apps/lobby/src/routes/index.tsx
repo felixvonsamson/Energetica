@@ -1,15 +1,3 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Compass, LogIn, UserPlus } from "lucide-react";
-import { useEffect, useRef } from "react";
-
-import {
-    FacilitatedRunCard,
-    MyRunCard,
-    OpenRunCard,
-} from "@/components/lobby/run-cards";
-import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
-import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
-import { runAppHref, validateReturnSearch } from "@/lib/lobby";
 import type { InstanceFragment } from "@energetica/core/instances";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
@@ -22,6 +10,18 @@ import {
     TypographyLead,
     TypographyMuted,
 } from "@energetica/ui/components/typography";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Compass, LogIn, UserPlus } from "lucide-react";
+import { useEffect, useRef } from "react";
+
+import {
+    FacilitatedRunCard,
+    MyRunCard,
+    OpenRunCard,
+} from "@/components/run-cards";
+import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
+import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
+import { runAppHref, validateReturnSearch } from "@/lib/lobby";
 
 export const Route = createFileRoute("/")({
     validateSearch: validateReturnSearch,

@@ -1,6 +1,7 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import { loadEnv, type Plugin, type ProxyOptions } from "vite";
 
@@ -14,6 +15,13 @@ import { loadEnv, type Plugin, type ProxyOptions } from "vite";
 export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
 
 /**
+ * The directory holding the env files (`.env.local`, `.env.game`, ...): the
+ * frontend directory, which this file sits in. Every app reads the same ones,
+ * whichever directory its dev server runs from.
+ */
+export const ENV_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+/**
  * Load the env for the deployment named by the `BACKEND` variable, else the
  * plain dev env. `BACKEND=game|edu|ethz` selects `.env.{game,edu,ethz}` (which
  * set `VITE_APEX_DOMAIN`), so `BACKEND=game bun run dev:app` points the dev
@@ -23,7 +31,7 @@ export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
  */
 export function loadDeploymentEnv(mode: string): Record<string, string> {
     const deployment = process.env.BACKEND || undefined;
-    const env = loadEnv(deployment ?? mode, process.cwd(), "");
+    const env = loadEnv(deployment ?? mode, ENV_DIR, "");
     // A misspelled or unsupported BACKEND would otherwise load no deployment file, leave
     // VITE_APEX_DOMAIN unset, and silently proxy to the local backend — so a command meant to
     // hit a live deployment would quietly exercise local data. Fail loudly instead. An explicit
@@ -32,10 +40,10 @@ export function loadDeploymentEnv(mode: string): Record<string, string> {
     if (
         deployment &&
         !env.VITE_BACKEND_URL &&
-        !fs.existsSync(path.join(process.cwd(), `.env.${deployment}`))
+        !fs.existsSync(path.join(ENV_DIR, `.env.${deployment}`))
     ) {
         const available = fs
-            .readdirSync(process.cwd())
+            .readdirSync(ENV_DIR)
             .filter(
                 (f) =>
                     f.startsWith(".env.") &&
@@ -70,9 +78,9 @@ export function explicitBackendUrl(
 }
 
 /**
- * Which lobby backend the lobby dev server (`vite.config.lobby.ts`) proxies
- * `/api` to. Precedence mirrors the app config's `resolveBackendUrl`: an
- * explicit `VITE_BACKEND_URL` wins, else the selected deployment's lobby
+ * Which lobby backend the lobby dev server (`apps/lobby/vite.config.ts`)
+ * proxies `/api` to. Precedence mirrors the app config's `resolveBackendUrl`:
+ * an explicit `VITE_BACKEND_URL` wins, else the selected deployment's lobby
  * (`lobby.{apex}` from `BACKEND=…`), else the local lobby backend
  * (`main_lobby.py`) on :8001. Pure and synchronous — unlike the app target, no
  * instance-slug discovery is needed, since the lobby always lives at the apex's
@@ -127,8 +135,8 @@ export function instanceSlugFromBackend(
  * `localhost` at all. No-op for a local backend, which sets neither attribute.
  *
  * Shared by every dev proxy that fronts an auth backend (vite.config.ts,
- * vite.config.lobby.ts): cookie-attribute handling is auth-critical plumbing,
- * so a fix here must reach all bundles at once.
+ * apps/lobby/vite.config.ts): cookie-attribute handling is auth-critical
+ * plumbing, so a fix here must reach all bundles at once.
  */
 export const rewriteSetCookieForLocalhost: NonNullable<
     ProxyOptions["configure"]

@@ -1,12 +1,11 @@
+import { createQueryClient } from "@energetica/core/query-client";
+import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { createQueryClient } from "@energetica/core/query-client";
-import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
-
-import { routeTree } from "./routeTree.lobby.gen";
+import { routeTree } from "./routeTree.gen";
 
 import "@energetica/ui/global.css";
 

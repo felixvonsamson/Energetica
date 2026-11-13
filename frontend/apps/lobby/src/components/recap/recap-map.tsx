@@ -23,15 +23,15 @@
  * the numbers can't drift between the two.
  */
 
-import { useMemo, useState } from "react";
-
-import { recapMapTiles, type RecapTile } from "@/lib/recap";
 import { MapCanvas } from "@energetica/map/components/map-canvas";
 import { MapTiles } from "@energetica/map/components/map-tiles";
 import { ResourceButton } from "@energetica/map/components/resource-button";
 import { useMapContext } from "@energetica/map/contexts/map-context";
 import { getHexPosition } from "@energetica/map/lib/hex-utils";
 import { RESOURCES, ResourceId } from "@energetica/map/lib/map-resources";
+import { useMemo, useState } from "react";
+
+import { recapMapTiles, type RecapTile } from "@/lib/recap";
 
 import { RecapMapTooltip } from "./recap-map-tooltip";
 

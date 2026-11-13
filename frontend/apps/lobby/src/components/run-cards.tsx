@@ -32,6 +32,16 @@
  * app's "Switch run" list shares; the cards only turn its action into a link.
  */
 
+import {
+    derivePhase,
+    runEntry,
+    type InstanceFragment,
+    type RunEntry,
+} from "@energetica/core/instances";
+import { Button } from "@energetica/ui/components/button";
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { TypographyMuted } from "@energetica/ui/components/typography";
 import { Link } from "@tanstack/react-router";
 import {
     ChevronRight,
@@ -46,16 +56,6 @@ import { useJoinRun } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { runAppHref, runFacilitatorHref } from "@/lib/lobby";
-import {
-    derivePhase,
-    runEntry,
-    type InstanceFragment,
-    type RunEntry,
-} from "@energetica/core/instances";
-import { Button } from "@energetica/ui/components/button";
-import { InfoBanner } from "@energetica/ui/components/info-banner";
-import { Spinner } from "@energetica/ui/components/spinner";
-import { TypographyMuted } from "@energetica/ui/components/typography";
 
 /** "March 2026" from an ISO timestamp, or null when unparseable. */
 function formatMonthYear(iso: string): string | null {

@@ -200,7 +200,7 @@ export default defineConfig(async ({ mode, command }) => {
         },
         build: {
             // The output directory and the public URL do not match on purpose: the
-            // bundle is built to `dist-app/` (beside dist-lobby/) but
+            // bundle is built to `dist-app/` but
             // is served at `/static/app/` per `base` above, which an Apache Alias maps
             // back to this directory. The URL is frozen; docs/architecture/
             // static-serving-and-deployment.md § Request routing explains why.

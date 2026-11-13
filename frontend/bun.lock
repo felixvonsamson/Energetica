@@ -78,6 +78,31 @@
         "vite-plugin-svgr": "catalog:",
       },
     },
+    "apps/lobby": {
+      "name": "@energetica/lobby",
+      "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/map": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@tanstack/react-query": "catalog:",
+        "@tanstack/react-router": "catalog:",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+      },
+      "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
+        "@tanstack/router-plugin": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^4.7.0",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/content": {
       "name": "@energetica/content",
       "dependencies": {
@@ -253,6 +278,8 @@
     "@energetica/core": ["@energetica/core@workspace:packages/core"],
 
     "@energetica/landing": ["@energetica/landing@workspace:apps/landing"],
+
+    "@energetica/lobby": ["@energetica/lobby@workspace:apps/lobby"],
 
     "@energetica/map": ["@energetica/map@workspace:packages/map"],
 

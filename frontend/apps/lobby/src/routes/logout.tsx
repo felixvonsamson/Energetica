@@ -7,11 +7,11 @@
  * returns to the login page.
  */
 
+import { Spinner } from "@energetica/ui/components/spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 import { useLobbyLogout } from "@/hooks/use-lobby";
-import { Spinner } from "@energetica/ui/components/spinner";
 
 function LogoutPage() {
     const navigate = useNavigate();

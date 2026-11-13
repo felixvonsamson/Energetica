@@ -4,6 +4,11 @@
  * mutations against the lobby backend.
  */
 
+import { ApiClientError } from "@energetica/core/api-client";
+import {
+    fetchInstances,
+    type InstanceFragment,
+} from "@energetica/core/instances";
 import {
     type QueryClient,
     useMutation,
@@ -15,11 +20,6 @@ import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { runAppHref } from "@/lib/lobby";
 import { fetchRecap, RecapNotMintedError, type Recap } from "@/lib/recap";
 import type { LoginRequest, SignupRequest } from "@/types/auth";
-import { ApiClientError } from "@energetica/core/api-client";
-import {
-    fetchInstances,
-    type InstanceFragment,
-} from "@energetica/core/instances";
 
 /**
  * Query keys local to the lobby bundle. Deliberately not part of the game's
@@ -170,7 +170,7 @@ export function useLobbySignup() {
 }
 
 // Change-password has no hook: the account page submits it as a native <form> POST
-// (see frontend/src/routes-lobby/account.tsx) so Safari/Apple Passwords detects the
+// (see frontend/apps/lobby/src/routes/account.tsx) so Safari/Apple Passwords detects the
 // credential change (issue #849). It never goes through this fetch/React Query layer.
 
 /** Mutation hook for global logout (clears the parent-domain cookie). */

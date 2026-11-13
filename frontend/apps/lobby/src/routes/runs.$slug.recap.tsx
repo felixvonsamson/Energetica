@@ -19,21 +19,6 @@
  * `prototype/864-recap-retrospection` branch.
  */
 
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-    ArrowDown,
-    ArrowLeft,
-    ArrowUp,
-    ArrowUpDown,
-    Factory,
-    Scale,
-    Users,
-} from "lucide-react";
-import { useMemo, useState } from "react";
-
-import { RecapMap } from "@/components/lobby/recap/recap-map";
-import { useRecap } from "@/hooks/use-lobby";
-import type { RecapRow } from "@/lib/recap";
 import {
     formatEmissions,
     formatTimestamp,
@@ -48,6 +33,21 @@ import {
     TypographyMuted,
 } from "@energetica/ui/components/typography";
 import { cn } from "@energetica/ui/lib/utils";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+    ArrowDown,
+    ArrowLeft,
+    ArrowUp,
+    ArrowUpDown,
+    Factory,
+    Scale,
+    Users,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+
+import { RecapMap } from "@/components/recap/recap-map";
+import { useRecap } from "@/hooks/use-lobby";
+import type { RecapRow } from "@/lib/recap";
 
 export const Route = createFileRoute("/runs/$slug/recap")({
     component: RecapPage,
