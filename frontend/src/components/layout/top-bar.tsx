@@ -22,7 +22,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
-import { RunSwitcher } from "@/components/layout/run-switcher";
+import { AccountMenuPrototype } from "@/components/layout/account-menu.prototype";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
@@ -168,8 +168,6 @@ export function TopBar() {
                         </ButtonGroup>
                     )}
 
-                    {/* In-run switcher — your settled runs + Open lobby (all sizes) */}
-                    <RunSwitcher />
 
                     {/* Notifications, Theme Toggle and User Menu — desktop only */}
                     <ButtonGroup className="hidden md:flex">
@@ -188,8 +186,17 @@ export function TopBar() {
                         </Button>
 
                         <ThemeToggle variant="icon-only" />
+                    </ButtonGroup>
 
-                        {/* User dropdown */}
+                    {/* PROTOTYPE (#1035): one account + run menu at every size */}
+                    <AccountMenuPrototype
+                        username={user.username}
+                        unreadCount={unreadCount}
+                        onNotifications={() => setShowNotifications(true)}
+                    />
+
+                    {/* PROTOTYPE: the old user dropdown and three-dot menu, switched off */}
+                    <ButtonGroup className="hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
@@ -241,7 +248,7 @@ export function TopBar() {
                     </ButtonGroup>
 
                     {/* Three-dots menu — mobile only */}
-                    <div className="md:hidden">
+                    <div className="hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

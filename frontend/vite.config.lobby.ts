@@ -101,6 +101,7 @@ export default defineConfig(({ mode }) => {
         },
         server: {
             port: DEV_PORTS.lobby,
+            host: true, // PROTOTYPE: LAN access for phone testing
             // Fail loudly on a busy port instead of drifting to the next free one:
             // the app bundle's login/logout bounce hard-codes this port (LOBBY_DEV_URL
             // in @energetica/core/instances), so a silent drift would send auth to a dead
