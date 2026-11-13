@@ -43,7 +43,9 @@ function RootComponent() {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             <HeadContent />
-            <header className="w-full max-w-3xl mx-auto flex flex-row items-center justify-between gap-4 px-6 py-4">
+            {/* Wraps on narrow phones: the controls drop to their own
+                right-aligned row instead of overflowing. */}
+            <header className="w-full max-w-3xl mx-auto flex flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4">
                 <Link to="/" className="flex flex-row items-baseline gap-2">
                     <TypographyBrand className="text-2xl text-primary">
                         Energetica
@@ -52,7 +54,7 @@ function RootComponent() {
                         Lobby
                     </span>
                 </Link>
-                <div className="flex flex-row items-center gap-1">
+                <div className="ml-auto flex flex-row items-center gap-1">
                     {/* Cross-origin: the landing page is another app. */}
                     <Button
                         variant="ghost"
