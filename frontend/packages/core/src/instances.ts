@@ -131,8 +131,9 @@ const LIVE_ACTIONS: Record<RunRelation, RunAction> = {
 
 /**
  * Decide what to show for a run: its phase, its main action and whether the
- * recap sits beside that action. The lobby cards and the in-run switcher both
- * use it, so a run offers the same action wherever it is listed.
+ * recap sits beside that action. The lobby cards use it, and the in-run
+ * switcher is meant to as well (#1337), so that a run offers the same action
+ * wherever it is listed.
  *
  * Once a run has `ended`, its process is stopped and its subdomain no longer
  * answers, so the recap replaces every other action. During `freeze` the run is
