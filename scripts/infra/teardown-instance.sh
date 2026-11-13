@@ -251,9 +251,17 @@ if [ "$HAS_RECAP" = true ]; then
         fi
         LEAVE_REDIRECT=true
     else
+        # The recovery needs a webroot and an HTTP vhost for the challenge, both of which this run
+        # is about to delete, so the steps recreate them before issuing the certificate. They
+        # mirror steps 4-6 of setup-instance.sh.
         log_error "No certificate at $CERT_DIR, so no recap redirect can be left behind."
-        log_error "The subdomain will get the server's default certificate. To add the redirect,"
-        log_error "issue one (certbot certonly --webroot -w $APP_DIR -d $FQDN) and re-run."
+        log_error "The subdomain will get the server's default certificate. To add the redirect"
+        log_error "after this teardown, issue a certificate and re-run:"
+        echo "  install -d -m 0755 $APP_DIR"
+        echo "  printf '<VirtualHost *:80>\\n    ServerName $FQDN\\n    DocumentRoot $APP_DIR\\n</VirtualHost>\\n' > $VHOST"
+        echo "  a2ensite energetica-$INSTANCE && systemctl reload apache2"
+        echo "  certbot certonly --webroot -w $APP_DIR -d $FQDN --non-interactive --agree-tos --register-unsafely-without-email"
+        echo "  bash $0 $INSTANCE --domain $DOMAIN"
     fi
 fi
 
