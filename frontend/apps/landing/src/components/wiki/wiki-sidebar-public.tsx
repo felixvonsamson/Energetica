@@ -1,3 +1,4 @@
+import { wikiNav } from "@energetica/content/wiki-nav";
 import {
     Sidebar,
     SidebarContent,
@@ -9,47 +10,6 @@ import {
     SidebarRail,
 } from "@energetica/ui/components/sidebar";
 import { Link, useParams } from "@tanstack/react-router";
-import {
-    BatteryFull,
-    BookOpen,
-    Clock,
-    FlaskConical,
-    Gem,
-    Hammer,
-    Leaf,
-    Map,
-    Network,
-    SlidersVertical,
-    Warehouse,
-    Zap,
-} from "lucide-react";
-
-const wikiLinks = [
-    { slug: "introduction", label: "Introduction", icon: BookOpen },
-    { slug: "map", label: "The Map", icon: Map },
-    { slug: "projects", label: "Projects", icon: Hammer },
-    { slug: "power-facilities", label: "Power Facilities", icon: Zap },
-    {
-        slug: "storage-facilities",
-        label: "Storage Facilities",
-        icon: BatteryFull,
-    },
-    { slug: "resources", label: "Natural Resources", icon: Gem },
-    {
-        slug: "functional-facilities",
-        label: "Functional Facilities",
-        icon: Warehouse,
-    },
-    { slug: "technologies", label: "Technology", icon: FlaskConical },
-    {
-        slug: "power-management",
-        label: "Power Management",
-        icon: SlidersVertical,
-    },
-    { slug: "network", label: "Network", icon: Network },
-    { slug: "time-and-weather", label: "Time & Weather", icon: Clock },
-    { slug: "climate-effects", label: "Climate Change", icon: Leaf },
-];
 
 export function WikiSidebarPublic() {
     const params = useParams({ strict: false });
@@ -65,7 +25,7 @@ export function WikiSidebarPublic() {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {wikiLinks.map(({ slug, label, icon: Icon }) => (
+                            {wikiNav.map(({ slug, label, icon: Icon }) => (
                                 <SidebarMenuItem key={slug}>
                                     <SidebarMenuButton
                                         asChild

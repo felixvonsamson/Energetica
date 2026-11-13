@@ -2,18 +2,21 @@ import {
     documentTitle,
     pageTitleFromMatches,
 } from "@energetica/core/document-title";
-import { createRootRoute, Outlet, useMatches } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },
+    head: ({ matches }) => ({
+        meta: [{ title: documentTitle(pageTitleFromMatches(matches)) }],
+    }),
     component: RootComponent,
 });
 
 function RootComponent() {
-    const pageTitle = pageTitleFromMatches(useMatches());
-    useEffect(() => {
-        document.title = documentTitle(pageTitle);
-    }, [pageTitle]);
-    return <Outlet />;
+    return (
+        <>
+            <HeadContent />
+            <Outlet />
+        </>
+    );
 }

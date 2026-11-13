@@ -1,5 +1,6 @@
 import {
     createRootRoute,
+    HeadContent,
     Link,
     Outlet,
     useMatches,
@@ -31,6 +32,9 @@ import { Spinner } from "@energetica/ui/components/spinner";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },
+    head: ({ matches }) => ({
+        meta: [{ title: documentTitle(pageTitleFromMatches(matches)) }],
+    }),
     component: RootComponent,
     validateSearch: (
         search: Record<string, unknown>,
@@ -47,12 +51,13 @@ export const Route = createRootRoute({
  * world's auth and game hooks are never called (#995).
  */
 function RootComponent() {
-    const pageTitle = pageTitleFromMatches(useMatches());
-    useEffect(() => {
-        document.title = documentTitle(pageTitle);
-    }, [pageTitle]);
     const { data: mode } = useRunMode();
-    return mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />;
+    return (
+        <>
+            <HeadContent />
+            {mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />}
+        </>
+    );
 }
 
 function FullPageSpinner() {

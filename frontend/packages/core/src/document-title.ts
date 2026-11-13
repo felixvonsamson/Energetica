@@ -1,7 +1,9 @@
 /**
- * The browser tab title for a page (#792). Every bundle's root route sets
- * `document.title` from the deepest matched route's `staticData.title`, so a
- * player with several Energetica tabs open can tell them apart.
+ * The browser tab title for a page (#792). Every bundle's root route uses these
+ * in its `head` option to title the tab from the deepest matched route's
+ * `staticData.title`, and renders `<HeadContent />` to apply it. A route that
+ * knows more, such as a wiki page, sets its own `head` title, and the deepest
+ * title wins.
  */
 
 const SITE_NAME = "Energetica";

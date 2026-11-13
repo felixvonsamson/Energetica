@@ -1,20 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
-import {
-    ArrowLeft,
-    BatteryFull,
-    BookOpen,
-    Clock,
-    FlaskConical,
-    Leaf,
-    Map,
-    Network,
-    SlidersVertical,
-    Warehouse,
-    Zap,
-    Gem,
-    Hammer,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
+import { wikiNav } from "@energetica/content/wiki-nav";
 import {
     Sidebar,
     SidebarContent,
@@ -26,33 +13,6 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@energetica/ui/components/sidebar";
-
-const wikiLinks = [
-    { slug: "introduction", label: "Introduction", icon: BookOpen },
-    { slug: "map", label: "The Map", icon: Map },
-    { slug: "projects", label: "Projects", icon: Hammer },
-    { slug: "power-facilities", label: "Power Facilities", icon: Zap },
-    {
-        slug: "storage-facilities",
-        label: "Storage Facilities",
-        icon: BatteryFull,
-    },
-    { slug: "resources", label: "Natural Resources", icon: Gem },
-    {
-        slug: "functional-facilities",
-        label: "Functional Facilities",
-        icon: Warehouse,
-    },
-    { slug: "technologies", label: "Technology", icon: FlaskConical },
-    {
-        slug: "power-management",
-        label: "Power Management",
-        icon: SlidersVertical,
-    },
-    { slug: "network", label: "Network", icon: Network },
-    { slug: "time-and-weather", label: "Time & Weather", icon: Clock },
-    { slug: "climate-effects", label: "Climate Change", icon: Leaf },
-];
 
 interface WikiSidebarProps {
     showBackToGame?: boolean;
@@ -72,7 +32,7 @@ export function WikiSidebar({ showBackToGame = false }: WikiSidebarProps) {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {wikiLinks.map(({ slug, label, icon: Icon }) => (
+                            {wikiNav.map(({ slug, label, icon: Icon }) => (
                                 <SidebarMenuItem key={slug}>
                                     <SidebarMenuButton
                                         asChild

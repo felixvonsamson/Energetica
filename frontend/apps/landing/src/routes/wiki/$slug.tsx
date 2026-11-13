@@ -1,4 +1,6 @@
+import { wikiPageTitle } from "@energetica/content/wiki-nav";
 import { wikiPages } from "@energetica/content/wiki-pages";
+import { documentTitle } from "@energetica/core/document-title";
 import {
     TypographyH1,
     TypographyLead,
@@ -10,6 +12,9 @@ import { contentHost } from "@/lib/content-host";
 
 export const Route = createFileRoute("/wiki/$slug")({
     component: WikiPage,
+    head: ({ params }) => ({
+        meta: [{ title: documentTitle(wikiPageTitle(params.slug)) }],
+    }),
     staticData: { title: "Game Wiki" },
 });
 

@@ -1,11 +1,10 @@
 import {
     createRootRoute,
+    HeadContent,
     Link,
     Outlet,
-    useMatches,
 } from "@tanstack/react-router";
 import { LogOut, UserCog } from "lucide-react";
-import { useEffect } from "react";
 
 import { useLobbyLogout, useMyRuns } from "@/hooks/use-lobby";
 import {
@@ -18,6 +17,9 @@ import { TypographyBrand } from "@energetica/ui/components/typography";
 
 export const Route = createRootRoute({
     staticData: { title: "" },
+    head: ({ matches }) => ({
+        meta: [{ title: documentTitle(pageTitleFromMatches(matches)) }],
+    }),
     component: RootComponent,
 });
 
@@ -27,15 +29,12 @@ export const Route = createRootRoute({
  * door, not a dashboard.
  */
 function RootComponent() {
-    const pageTitle = pageTitleFromMatches(useMatches());
-    useEffect(() => {
-        document.title = documentTitle(pageTitle);
-    }, [pageTitle]);
     const { data: myRuns } = useMyRuns();
     const logout = useLobbyLogout();
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <HeadContent />
             <header className="w-full max-w-3xl mx-auto flex flex-row items-center justify-between px-6 py-4">
                 <Link to="/" className="flex flex-row items-baseline gap-2">
                     <TypographyBrand className="text-2xl text-primary">

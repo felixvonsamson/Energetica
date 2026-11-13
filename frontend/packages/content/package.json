@@ -8,6 +8,7 @@
         "./content-links": "./src/content-links.ts",
         "./styles/sources.css": "./src/styles/sources.css",
         "./vite-plugin": "./src/vite-plugin.ts",
+        "./wiki-nav": "./src/wiki-nav.ts",
         "./wiki-pages": "./src/wiki-pages.ts"
     },
     "imports": {
@@ -28,6 +29,7 @@
         "@tanstack/react-router": "catalog:",
         "@types/estree": "^1.0.9",
         "@types/mdast": "^4.0.4",
+        "lucide-react": "catalog:",
         "mdast-util-mdx-jsx": "^3.2.0",
         "mdast-util-mdxjs-esm": "^2.0.1",
         "react": "catalog:",
