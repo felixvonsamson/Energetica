@@ -9,20 +9,15 @@ import {
 import {
     AlertCircle,
     Bell,
-    CircleUser,
-    FlagTriangleRight,
     FlaskConical,
     Hammer,
     HelpCircle,
-    LogOut,
-    MoreVertical,
-    Settings,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { AccountMenu } from "@/components/layout/account-menu";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
-import { RunSwitcher } from "@/components/layout/run-switcher";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
@@ -42,14 +37,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@energetica/ui/components/dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@energetica/ui/components/dropdown-menu";
 import { Money as MoneyComponent } from "@energetica/ui/components/money";
 import { Separator } from "@energetica/ui/components/separator";
 import { SidebarTrigger } from "@energetica/ui/components/sidebar";
@@ -168,10 +155,7 @@ export function TopBar() {
                         </ButtonGroup>
                     )}
 
-                    {/* In-run switcher — your settled runs + Open lobby (all sizes) */}
-                    <RunSwitcher />
-
-                    {/* Notifications, Theme Toggle and User Menu — desktop only */}
+                    {/* Notifications and theme toggle — desktop only; on mobile they are in the account menu */}
                     <ButtonGroup className="hidden md:flex">
                         <Button
                             onClick={() => setShowNotifications(true)}
@@ -188,130 +172,14 @@ export function TopBar() {
                         </Button>
 
                         <ThemeToggle variant="icon-only" />
-
-                        {/* User dropdown */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    aria-label="User menu"
-                                >
-                                    <CircleUser size={20} />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel asChild>
-                                    <p>{user.username}</p>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={
-                                            "https://forms.gle/GJqaK9KCNkGF8G7b7"
-                                        }
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <FlagTriangleRight size={20} />
-                                        Report an issue
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        to="/app/settings"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Settings size={20} />
-                                        Settings
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        to="/app/logout"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <LogOut size={20} />
-                                        Logout
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                     </ButtonGroup>
 
-                    {/* Three-dots menu — mobile only */}
-                    <div className="md:hidden">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="relative"
-                                    aria-label="Menu"
-                                >
-                                    <MoreVertical size={20} />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center z-20">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                    onSelect={() => setShowNotifications(true)}
-                                >
-                                    <Bell size={20} />
-                                    Notifications
-                                    {unreadCount > 0 && (
-                                        <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <ThemeToggle variant="menu-item" />
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel asChild>
-                                    <p>{user.username}</p>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <a
-                                        href={
-                                            "https://forms.gle/GJqaK9KCNkGF8G7b7"
-                                        }
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <FlagTriangleRight size={20} />
-                                        Report an issue
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        to="/app/settings"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Settings size={20} />
-                                        Settings
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        to="/app/logout"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <LogOut size={20} />
-                                        Logout
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                    {/* Account menu — switch run, open lobby, account items (all sizes) */}
+                    <AccountMenu
+                        username={user.username}
+                        unreadCount={unreadCount}
+                        onShowNotifications={() => setShowNotifications(true)}
+                    />
                 </div>
             </header>
 

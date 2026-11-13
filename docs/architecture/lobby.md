@@ -120,15 +120,15 @@ is that all UGC renders as escaped text — guarded by a CI tripwire (see Securi
 
 ### Endpoint ownership after cutover
 
-| Concern                                                           | Owner                                                                                                                                                                                                                        |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Signup, login, change-password, logout                            | **Lobby**                                                                                                                                                                                                                    |
-| `my-runs` (read `instance_membership` for the authed account)     | **Both** — the lobby (for the picker) _and_ every instance (for the in-run switcher). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
-| Join a public run (`instance_membership` write, unsettled, #1030) | **Lobby**                                                                                                                                                                                                                    |
-| Session-cookie _validation_ (shared secret)                       | Every instance                                                                                                                                                                                                               |
-| Entry gate: auto-provision local `User` (access-policy-gated)     | Instance                                                                                                                                                                                                                     |
-| Settle (`Player` creation) + `instance_membership` write          | Instance                                                                                                                                                                                                                     |
-| `/auth/me`, all game state, `/api/*`, `/socket.io`                | Instance                                                                                                                                                                                                                     |
+| Concern                                                           | Owner                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signup, login, change-password, logout                            | **Lobby**                                                                                                                                                                                                                                     |
+| `my-runs` (read `instance_membership` for the authed account)     | **Both** — the lobby (for the picker) _and_ every instance (for the account menu's "Switch run" list). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
+| Join a public run (`instance_membership` write, unsettled, #1030) | **Lobby**                                                                                                                                                                                                                                     |
+| Session-cookie _validation_ (shared secret)                       | Every instance                                                                                                                                                                                                                                |
+| Entry gate: auto-provision local `User` (access-policy-gated)     | Instance                                                                                                                                                                                                                                      |
+| Settle (`Player` creation) + `instance_membership` write          | Instance                                                                                                                                                                                                                                      |
+| `/auth/me`, all game state, `/api/*`, `/socket.io`                | Instance                                                                                                                                                                                                                                      |
 
 Instances **lose** their login/signup pages and credential endpoints; unauthenticated
 access redirects to the lobby.
@@ -285,10 +285,13 @@ is excluded from this endpoint (403) — its admission stays instance-owned (ros
 **Settle.** Unchanged game-side, plus the lobby service's idempotent join, so the account has a
 membership row even if it never went through a join step.
 
-**In-run switcher.** Top-right dropdown next to Logout. Lists your settled runs (current
-one marked) as cross-origin `<a href>` to `{slug}.{apex}/app` (`instanceAppHref`), plus an
-"Open lobby" item. Data from the **instance's own backend** (`my-runs`, read through the
-lobby service) — same origin, no CORS; serves only the cookie-authenticated account.
+**Switching runs.** The run app's account menu (top right) has a "Switch run" item listing
+the live runs you play, then the ones you facilitate, each with its `runEntry` action
+("Play", "Manage") as a cross-origin `<a href>` to that run. The current run is marked.
+Ended runs and runs open to join are not listed; the lobby handles those. "Open lobby" sits
+at the top level of the same menu. Data from the **instance's own backend** (`my-runs`,
+read through the lobby service) — same origin, no CORS; serves only the
+cookie-authenticated account.
 
 **Logout (global).** Clears the single `domain=.{apex}` cookie → logged out of every run.
 Per-run logout is not expressible with a shared cookie and is not offered.

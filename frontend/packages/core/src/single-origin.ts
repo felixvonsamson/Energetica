@@ -11,8 +11,8 @@
  * does not resolve, so the frontend must (a) build **same-origin** links
  * instead of cross-subdomain ones (see `apexDomain()` in `instances.ts`) and
  * (b) collapse the multi-run chooser — there is exactly one reachable run, so
- * the picker bounces straight into it and the in-run switcher hides its lateral
- * hops.
+ * the picker bounces straight into it and the run app's account menu hides
+ * "Switch run" and "Open lobby".
  *
  * This is an explicit allowlist, deliberately **not** a heuristic ("hostname
  * isn't my build-time apex"): it drives auth-adjacent behaviour, so a reviewer

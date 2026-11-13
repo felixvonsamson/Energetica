@@ -28,9 +28,8 @@
  * subdomain that no longer answers. The recap is what survived, so it becomes
  * the whole card's destination, for every kind of card.
  *
- * These rules live in `runEntry` (`@energetica/core/instances`), which the
- * in-run switcher is meant to share (#1337); the cards only turn its action
- * into a link.
+ * These rules live in `runEntry` (`@energetica/core/instances`), which the run
+ * app's "Switch run" list shares; the cards only turn its action into a link.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -84,7 +83,7 @@ function ViewRecapRow({ slug }: { slug: string }) {
 
 /**
  * The card for one run. Its action, label and recap row all come from
- * {@link runEntry}, meant to be shared with the in-run switcher; the card only
+ * {@link runEntry}, shared with the run app's "Switch run" list; the card only
  * turns the action into a link. `href` is where the live action (play, manage
  * or the logged-out join) goes; a `recap` action links to the in-lobby recap
  * route instead.
