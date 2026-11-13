@@ -91,8 +91,8 @@ Two things to know:
   instance and your writes hit it, exactly as logging into prod does. This is intended, not a
   sandbox.
 - **One instance only.** The app dev server proxies to a single live instance (the newest
-  advertised, or `VITE_BACKEND_URL` if pinned). The in-run switcher marks that instance and disables
-  hops to your other runs — those are prod origins, not this local dev app. Pin `VITE_BACKEND_URL`
+  advertised, or `VITE_BACKEND_URL` if pinned). The account menu's "Switch run" list marks that instance and
+  disables hops to your other runs — those are prod origins, not this local dev app. Pin `VITE_BACKEND_URL`
   to target a specific instance.
 
 ## Full local stack (backend work)

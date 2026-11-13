@@ -101,7 +101,7 @@ export type RunRelation = "player" | "facilitator" | "visitor";
  */
 export type RunAction = "enter" | "manage" | "join" | "recap";
 
-/** What the lobby cards and the in-run switcher show for one run. */
+/** What the lobby cards and the run app's account menu show for one run. */
 export type RunEntry = {
     phase: Phase;
     /** The run's main action. */
@@ -131,9 +131,9 @@ const LIVE_ACTIONS: Record<RunRelation, RunAction> = {
 
 /**
  * Decide what to show for a run: its phase, its main action and whether the
- * recap sits beside that action. The lobby cards use it, and the in-run
- * switcher is meant to as well (#1337), so that a run offers the same action
- * wherever it is listed.
+ * recap sits beside that action. The lobby cards and the run app's "Switch run"
+ * list both use it, so that a run offers the same action wherever it is
+ * listed.
  *
  * Once a run has `ended`, its process is stopped and its subdomain no longer
  * answers, so the recap replaces every other action. During `freeze` the run is
@@ -212,15 +212,25 @@ export function isValidRunSlug(slug: string): boolean {
 
 /**
  * A run's app entry point, as an absolute cross-origin URL
- * (`https://{slug}.{apex}/app`). Used by the in-run switcher to hop between the
- * account's runs. A slug that is not a valid DNS label, or a missing apex
- * (local dev / interim), falls back to a relative `/app`: a dead same-origin
- * link beats a cross-origin URL pointing at a host we did not intend.
+ * (`https://{slug}.{apex}/app`). Used by the account menu's "Switch run" list
+ * to hop between the account's runs. A slug that is not a valid DNS label, or a
+ * missing apex (local dev / interim), falls back to a relative `/app`: a dead
+ * same-origin link beats a cross-origin URL pointing at a host we did not
+ * intend.
  */
 export function runAppHref(slug: string): string {
     const apex = apexDomain();
     if (!apex || !isValidRunSlug(slug)) return "/app";
     return `https://${slug}.${apex}/app`;
+}
+
+/**
+ * A run's facilitator page (`https://{slug}.{apex}/app/facilitator`), where the
+ * "Manage" action goes. Falls back to a relative path the same way
+ * {@link runAppHref} does.
+ */
+export function runFacilitatorHref(slug: string): string {
+    return `${runAppHref(slug)}/facilitator`;
 }
 
 /**
