@@ -22,14 +22,113 @@ import {
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
+import { PrototypeSwitcher } from "@/prototype/prototype-switcher";
+import {
+    allCombinations,
+    bandRuns,
+    loggedOut,
+    typicalSignedIn,
+} from "@/prototype/run-list-model";
+import { VariantA, VariantB } from "@/prototype/run-list-variants";
 
+// PROTOTYPE (#1039): `?variant=` and `?data=` switch the page to the run-list prototype.
 export const Route = createFileRoute("/")({
-    validateSearch: validateReturnSearch,
+    validateSearch: (search: Record<string, unknown>) => ({
+        ...validateReturnSearch(search),
+        variant:
+            typeof search.variant === "string"
+                ? (search.variant as ProtoVariant)
+                : undefined,
+        data:
+            typeof search.data === "string"
+                ? (search.data as ProtoData)
+                : undefined,
+    }),
     component: PickerPage,
     staticData: { title: "Lobby" },
 });
 
 function PickerPage() {
+    const { variant } = Route.useSearch();
+    if (variant) return <RunListPrototype />;
+    return <RealPickerPage />;
+}
+
+function RunListPrototype() {
+    const search = Route.useSearch();
+    const { variant = "B", data = "typical" } = search;
+    const navigate = Route.useNavigate();
+    const runs =
+        data === "all"
+            ? allCombinations()
+            : data === "logged-out"
+              ? loggedOut()
+              : data === "empty"
+                ? []
+                : typicalSignedIn();
+    const bands = bandRuns(runs);
+    return (
+        <>
+            {data === "logged-out" && (
+                <div className="text-center flex flex-col items-center gap-4 pt-12">
+                    <TypographyBrand className="text-5xl text-primary">
+                        Energetica
+                    </TypographyBrand>
+                    <TypographyLead>
+                        Log in to play your runs, or create an account to join
+                        one.
+                    </TypographyLead>
+                    <div className="flex flex-row gap-3 mt-2">
+                        <Button size="lg" className="gap-2">
+                            <LogIn className="w-5 h-5" />
+                            Log in
+                        </Button>
+                        <Button variant="secondary" size="lg" className="gap-2">
+                            <UserPlus className="w-5 h-5" />
+                            Create account
+                        </Button>
+                    </div>
+                </div>
+            )}
+            {variant === "A" && <VariantA bands={bands} />}
+            {variant === "B" && <VariantB bands={bands} />}
+            <div className="h-24" />
+            <PrototypeSwitcher
+                variants={PROTO_VARIANTS}
+                current={variant}
+                onVariant={(v) =>
+                    void navigate({
+                        search: { ...search, variant: v },
+                        replace: true,
+                    })
+                }
+                dataSets={PROTO_DATA}
+                currentData={data}
+                onData={(d) =>
+                    void navigate({
+                        search: { ...search, data: d },
+                        replace: true,
+                    })
+                }
+            />
+        </>
+    );
+}
+
+type ProtoVariant = "A" | "B";
+type ProtoData = "typical" | "all" | "logged-out" | "empty";
+const PROTO_VARIANTS: { key: ProtoVariant; name: string }[] = [
+    { key: "B", name: "Band panels, dense rows" },
+    { key: "A", name: "Cards + pill badges" },
+];
+const PROTO_DATA: { key: ProtoData; name: string }[] = [
+    { key: "typical", name: "typical" },
+    { key: "all", name: "all 30" },
+    { key: "logged-out", name: "logged out" },
+    { key: "empty", name: "empty" },
+];
+
+function RealPickerPage() {
     const { return: returnSlug } = Route.useSearch();
     const myRuns = useMyRuns();
     const instances = useInstancesManifest();
