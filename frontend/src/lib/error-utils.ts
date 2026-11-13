@@ -21,44 +21,18 @@
  *     ```;
  */
 
-import { GAME_ERROR_MESSAGES, ErrorCode } from "@/lib/game-messages";
+import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 import { ApiClientError } from "@energetica/core/api-client";
+import { createErrorMessages } from "@energetica/core/error-messages";
 
 /**
- * Get a user-friendly error message from any error object.
- *
- * This function handles different error types and formats:
- *
- * - ApiClientError with various backend response formats
- * - Standard JavaScript Error objects
- * - Unknown error types
- *
- * @example
- *     ```typescript
- *     catch (error) {
- *       const message = getUserFriendlyError(error);
- *       setError(message);
- *     }
- *     ```;
- *
- * @param error - The error object to process
- * @returns A user-friendly error message string
+ * `getUserFriendlyError(error)` gives a readable message for any error, using
+ * `GAME_ERROR_MESSAGES` for known error codes. `isErrorType(error, code)`
+ * checks whether an error is an API error with that code. See
+ * `@energetica/core/error-messages`.
  */
-export function getUserFriendlyError(error: unknown): string {
-    if (error instanceof ApiClientError) {
-        const errorMsg = error.getErrorMessage();
-        const mapped = (
-            GAME_ERROR_MESSAGES as Record<string, string | undefined>
-        )[errorMsg];
-        return mapped ?? errorMsg;
-    }
-
-    if (error instanceof Error) {
-        return error.message;
-    }
-
-    return "An unexpected error occurred. Please try again.";
-}
+export const { getUserFriendlyError, isErrorType } =
+    createErrorMessages(GAME_ERROR_MESSAGES);
 
 /**
  * Handle API errors with logging and user-friendly messaging.
@@ -102,29 +76,6 @@ export function handleApiError(error: unknown, fallback?: string): string {
     // }
 
     return message || fallback || "An error occurred. Please try again.";
-}
-
-/**
- * Check if an error is a specific API error type.
- *
- * Useful for handling specific error cases differently.
- *
- * @example
- *     ```typescript
- *     if (isErrorType(error, 'username is taken')) {
- *       // Show username suggestion UI
- *     }
- *     ```;
- *
- * @param error - The error to check
- * @param errorType - The error type to check for (from backend)
- * @returns True if the error matches the specified type
- */
-export function isErrorType(error: unknown, errorType: ErrorCode): boolean {
-    if (error instanceof ApiClientError) {
-        return error.getErrorMessage() === errorType;
-    }
-    return false;
 }
 
 /**
