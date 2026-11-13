@@ -20,8 +20,10 @@ Project docs: `docs/README.md`
 
 ## package.json scripts
 
+from the repo root:
+
 - `bun run typecheck`
-- `bun run format` and `bun run lint` - run both before committing
+- `bun run format` and `bun run lint`
 - `bun run generate-types`
 
 ## Python env
