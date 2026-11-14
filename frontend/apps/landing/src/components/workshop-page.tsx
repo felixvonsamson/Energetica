@@ -312,6 +312,39 @@ export function WorkshopPage() {
                     </ul>
                 </section>
 
+                {/* Testimonial */}
+                <section className="max-w-6xl mx-auto w-full">
+                    <TypographyH2 className="text-primary mb-8">
+                        What Our Clients Say
+                    </TypographyH2>
+                    <div className="rounded-4xl p-8 flex flex-col gap-4 bg-card shadow-md">
+                        <blockquote className="text-xl italic text-foreground leading-relaxed">
+                            "Energetica was the centrepiece of our department
+                            event, with around 40 colleagues. We mixed people
+                            from different teams in each game team, and the game
+                            quickly got them working together. It was great to
+                            see everyone so engaged, cheering their wins and
+                            lamenting their losses every time a new season was
+                            simulated. We even caused a few blackouts in the
+                            first round, a nice irony for a TSO! Even for people
+                            who deal with the market every day, it made tangible
+                            how electricity prices actually form and what it
+                            takes to integrate renewables. The discussions
+                            carried on long after the session ended. The
+                            Energetica team tailored the workshop to our needs,
+                            even weaving in a pub quiz we had prepared. They
+                            provided clear support material and four
+                            facilitators who moved from team to team. I’d
+                            recommend it to any organisation looking for an
+                            original team event with real substance on energy."
+                        </blockquote>
+                        <p className="text-muted-foreground font-semibold">
+                            — Bastien Grand, Head of Market & System
+                            optimisation, Swissgrid
+                        </p>
+                    </div>
+                </section>
+
                 {/* Logistics */}
                 <section className="max-w-6xl mx-auto w-full flex flex-col gap-6">
                     <TypographyH2 className="text-primary">
