@@ -76,10 +76,10 @@ log_step "Syncing landing files..."
 # --delete see static/ is what removes the old tree from hosts that still carry it; once it
 # is gone the exclude would have nothing left to protect.
 #
-# -rlptz, not -az: -g would copy the local dist/ folder's group onto $LANDING_DIR, replacing
+# -rlptz, not -az: -g would copy the local dist/ dir's group onto $LANDING_DIR, replacing
 # `energetica`. The instance services write instances.json into $LANDING_DIR through that group,
-# so the lobby list silently went stale after a deploy from a machine whose group the deploy
-# user belongs to on the server (#1412). See scripts/lib/backend-sync.sh for when rsync does that.
+# so the lobby list silently went stale. rsync only does this when the server's deploy user
+# belongs to the deployer's local group (#1412); scripts/lib/backend-sync.sh has the details.
 rsync -rlptz --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
