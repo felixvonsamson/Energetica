@@ -92,8 +92,9 @@ log_success "Landing bundle deployed"
 # backends (group energetica) atomically write instances.json *into this dir*, so without
 # group-write the aggregate write fails with EPERM — and because the instances/ fragment dir
 # is --excluded (keeps its 2775), per-instance fragments still write while the aggregate
-# manifest silently goes stale (a new instance never appears in the lobby picker). openrsync
-# (macOS) lacks --chmod, so re-assert the mode over ssh after the sync. The deploy user owns
+# manifest silently goes stale (a new instance never appears in the lobby picker). macOS's
+# openrsync either rejects --chmod or ignores it (see scripts/lib/backend-sync.sh), so re-assert
+# the mode over ssh after the sync. The deploy user owns
 # $LANDING_DIR, so it can restore the setgid bit.
 #
 # The group is re-asserted too. The sync above no longer changes it, but deploys made before

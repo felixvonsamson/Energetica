@@ -70,7 +70,8 @@ build_backend_wheel() {
     # the wheel 0600 under umask 077) would ship a file the service user cannot read, failing
     # every deploy at the install step. Normalise locally and let rsync -p carry the result
     # across, exactly as deploy-lobby.sh does for the SPA bundle: dirs 755, files 644. rsync's
-    # --chmod would do this during transfer, but macOS ships openrsync, which rejects it.
+    # --chmod would do this during transfer, but macOS's openrsync either rejects it or ignores it
+    # (see backend-sync.sh).
     chmod -R u=rwX,g=rX,o=rX "$dist_dir"
 
     log_success "Backend wheel built ($BACKEND_WHEEL)"
