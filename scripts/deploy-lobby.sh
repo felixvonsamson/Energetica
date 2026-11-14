@@ -141,23 +141,25 @@ sync_backend "$SSH:$REMOTE_PATH" dist-lobby main_lobby.py main_lobby_service.py
 
 # --- 4b. rsync lobby-scoped scripts (flattened: scripts/lobby/* → scripts/*) --------------
 log_step "Syncing lobby scripts..."
-rsync -az --delete ./scripts/lobby/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
+# -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
+rsync -rlptz --delete ./scripts/lobby/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
 log_success "Lobby scripts synced"
 
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."
 # Apache reads the bundle via the energetica group (the tree is 2750 deploy:energetica), and
-# `rsync -a` preserves permissions — a restrictive local umask would otherwise ship files
+# rsync -p preserves permissions — a restrictive local umask would otherwise ship files
 # www-data cannot read (SPA 403s after an apparently successful deploy). rsync's --chmod would
 # fix perms during transfer, but macOS ships openrsync, which rejects it ("--chmod: invalid
-# argument"). So normalise the *local* bundle first and let `rsync -a` carry those perms across
+# argument"). So normalise the *local* bundle first and let rsync -p carry those perms across
 # in a single pass: dirs 755, files 644 (u=rwX gives dirs +x, files stay non-exec). Doing it
 # locally rather than as a second server-side chmod keeps the transfer atomic — there is no
 # window where Apache serves a just-rsynced file with the wrong perms. World bits are moot —
 # others cannot traverse the root.
 # The lobby app builds to frontend/apps/lobby/dist; the server keeps serving it from dist-lobby/.
 chmod -R u=rwX,g=rX,o=rX ./frontend/apps/lobby/dist
-rsync -az --delete ./frontend/apps/lobby/dist/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
+# -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
+rsync -rlptz --delete ./frontend/apps/lobby/dist/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
 log_success "Lobby bundle synced"
 
 # --- 6. Install the backend into the server venv --------------------------------------

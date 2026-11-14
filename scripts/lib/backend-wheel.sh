@@ -66,9 +66,9 @@ build_backend_wheel() {
 
     # An instance installs the wheel as the `energetica` service user, but the instance tree is
     # 2750 deploy:energetica — so the service user reaches the wheel through the group bit only.
-    # `rsync -a` preserves local permissions, so a developer with a restrictive umask (pip writes
+    # rsync -p preserves local permissions, so a developer with a restrictive umask (pip writes
     # the wheel 0600 under umask 077) would ship a file the service user cannot read, failing
-    # every deploy at the install step. Normalise locally and let `rsync -a` carry the result
+    # every deploy at the install step. Normalise locally and let rsync -p carry the result
     # across, exactly as deploy-lobby.sh does for the SPA bundle: dirs 755, files 644. rsync's
     # --chmod would do this during transfer, but macOS ships openrsync, which rejects it.
     chmod -R u=rwX,g=rX,o=rX "$dist_dir"

@@ -12,6 +12,7 @@ that holds the junk a real checkout accumulates.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -135,6 +136,26 @@ def test_shipped_files_stay_readable_by_the_group_under_a_restrictive_umask(repo
     assert result.returncode == 0, result.stderr
     expected = {".": 0o755, "dist": 0o755, "main.py": 0o644, f"dist/{_WHEEL}": 0o644}
     assert {relative: (target / relative).stat().st_mode & 0o777 for relative in expected} == expected
+
+
+def test_leaves_the_group_of_the_target_root_alone(repo: Path, tmp_path: Path) -> None:
+    """
+    The setup scripts give the app dir the `energetica` group, which is how the service and Apache
+    reach the code. `rsync -a` would copy the deployer's local group onto it instead, whenever the
+    server's `deploy` user belongs to the group that local one maps to (#1412). Stand in for that
+    with any second group the test user belongs to.
+    """
+    other_groups = sorted(set(os.getgroups()) - {os.getgid()})
+    if not other_groups:
+        pytest.skip("the test user belongs to only one group")
+    target = tmp_path / "server"
+    target.mkdir()
+    os.chown(target, -1, other_groups[0])
+
+    result = _sync(repo, target, "dist-app", "main.py")
+
+    assert result.returncode == 0, result.stderr
+    assert target.stat().st_gid == other_groups[0]
 
 
 def test_refuses_to_sync_before_the_wheel_is_built(repo: Path, tmp_path: Path) -> None:
