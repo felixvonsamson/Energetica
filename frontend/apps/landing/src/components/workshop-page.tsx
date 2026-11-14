@@ -319,7 +319,7 @@ export function WorkshopPage() {
                     </TypographyH2>
                     <div className="rounded-4xl p-8 flex flex-col gap-4 bg-card shadow-md">
                         <blockquote className="text-xl italic text-foreground leading-relaxed">
-                            "Energetica was the centrepiece of our department
+                            “Energetica was the centrepiece of our department
                             event, with around 40 colleagues. We mixed people
                             from different teams in each game team, and the game
                             quickly got them working together. It was great to
@@ -336,7 +336,7 @@ export function WorkshopPage() {
                             provided clear support material and four
                             facilitators who moved from team to team. I’d
                             recommend it to any organisation looking for an
-                            original team event with real substance on energy."
+                            original team event with real substance on energy.”
                         </blockquote>
                         <p className="text-muted-foreground font-semibold">
                             — Bastien Grand, Head of Market & System
