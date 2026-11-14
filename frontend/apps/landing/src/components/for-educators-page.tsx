@@ -230,8 +230,8 @@ export function ForEducatorsPage() {
                     </TypographyH2>
                     <div className="rounded-4xl p-8 flex flex-col gap-4 bg-card shadow-md">
                         <blockquote className="text-xl italic text-foreground leading-relaxed">
-                            "Energetica has been a valuable addition to our
-                            'Energy and Climate' module at ZHAW and was very
+                            “Energetica has been a valuable addition to our
+                            ‘Energy and Climate’ module at ZHAW and was very
                             well received by our students. The game complements
                             the lectures effectively, integrating numerous
                             theoretical concepts and revealing the interactions
@@ -246,7 +246,7 @@ export function ForEducatorsPage() {
                             engaging with the game and discussing it well beyond
                             the scope of the lectures. I would recommend
                             Energetica to any educator working on energy,
-                            climate, or economics topics."
+                            climate, or economics topics.”
                         </blockquote>
                         <p className="text-muted-foreground font-semibold">
                             —{" "}
