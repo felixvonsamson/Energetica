@@ -27,9 +27,7 @@
 
 import { Link } from "@tanstack/react-router";
 import {
-    Archive,
     Bell,
-    CalendarDays,
     Check,
     ChevronDown,
     ChevronsUpDown,
@@ -37,11 +35,8 @@ import {
     FlagTriangleRight,
     Home,
     LogOut,
-    type LucideIcon,
     Presentation,
     Settings,
-    Snowflake,
-    Timer,
     Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -56,13 +51,7 @@ import {
     runFacilitatorHref,
     type RunEntry,
 } from "@energetica/core/instances";
-import {
-    bandRuns,
-    runBadge,
-    type ListedRun,
-    type RunBadge,
-    type RunBadgeColour,
-} from "@energetica/core/run-list";
+import { bandRuns, runBadge, type ListedRun } from "@energetica/core/run-list";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
 import { Button } from "@energetica/ui/components/button";
 import {
@@ -77,23 +66,10 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@energetica/ui/components/dropdown-menu";
+import { RunBadgeLabel } from "@energetica/ui/components/run-badge-label";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 import { useIsMobile } from "@energetica/ui/hooks/use-mobile";
 import { cn } from "@energetica/ui/lib/utils";
-
-const BADGE_ICONS: Record<RunBadge["status"], LucideIcon> = {
-    "starting-soon": Timer,
-    upcoming: CalendarDays,
-    frozen: Snowflake,
-    ended: Archive,
-};
-
-const BADGE_COLOURS: Record<RunBadgeColour, string> = {
-    warning: "text-warning",
-    info: "text-info",
-    frozen: "text-frozen",
-    "muted-foreground": "text-muted-foreground",
-};
 
 /**
  * Turns text white on a highlighted row (green background). Without it the
@@ -134,23 +110,6 @@ function runHref(slug: string, entry: RunEntry): string {
         : runAppHref(slug);
 }
 
-/** The badge under a run's name: a coloured icon and short text. */
-function BadgeLabel({ badge }: { badge: RunBadge }) {
-    const Icon = BADGE_ICONS[badge.status];
-    return (
-        <span
-            className={cn(
-                "flex items-center gap-1 text-xs font-semibold",
-                BADGE_COLOURS[badge.colour],
-                ON_HIGHLIGHT,
-            )}
-        >
-            <Icon className="size-3 text-current" />
-            {badge.text}
-        </span>
-    );
-}
-
 /**
  * One run: its mode icon, its name with the lobby's badge under it, then a tick
  * if it is this run, or its action.
@@ -172,7 +131,12 @@ function RunItem({
             <ModeIcon />
             <span className="flex flex-col min-w-0 flex-1">
                 <span className="truncate">{run.name}</span>
-                {badge && <BadgeLabel badge={badge} />}
+                {badge && (
+                    <RunBadgeLabel
+                        badge={badge}
+                        className={cn("text-xs", ON_HIGHLIGHT)}
+                    />
+                )}
             </span>
             {isCurrent ? (
                 <Check size={16} className="ml-auto" />

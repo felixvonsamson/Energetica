@@ -7,9 +7,8 @@
  * The order, the bands, the badge text and its colour come from
  * `@energetica/core/run-list`, and each row's actions from `runEntry` in
  * `@energetica/core/instances`. The run app's "Switch run" menu uses the same
- * functions, so a run sits in the same order with the same badge in both. The
- * icons and colour classes are drawn here; sharing them waits on a React
- * package both bundles can use (#1379).
+ * functions, so a run sits in the same order with the same badge in both. Both
+ * draw the badge with `RunBadgeLabel` from `@energetica/ui`.
  *
  * Run links are cross-origin (`{slug}.{apex}/app`), so they are plain `<a
  * href>`. The recap is an in-lobby route, so it uses TanStack Router's `Link`.
@@ -25,29 +24,17 @@ import {
     RUN_BAND_TITLES,
     runBadge,
     type ListedRun,
-    type RunBadge,
-    type RunBadgeColour,
     type RunBand,
 } from "@energetica/core/run-list";
 import { Button } from "@energetica/ui/components/button";
 import { EmptyState } from "@energetica/ui/components/empty-state";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { RunBadgeLabel } from "@energetica/ui/components/run-badge-label";
 import { Spinner } from "@energetica/ui/components/spinner";
 import { TypographyH2 } from "@energetica/ui/components/typography";
 import { cn } from "@energetica/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import {
-    Archive,
-    CalendarDays,
-    ChevronDown,
-    Compass,
-    Eye,
-    type LucideIcon,
-    Presentation,
-    Snowflake,
-    Timer,
-    Zap,
-} from "lucide-react";
+import { ChevronDown, Compass, Eye, Presentation, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { useJoinRun } from "@/hooks/use-lobby";
@@ -57,20 +44,6 @@ import { runAppHref, runFacilitatorHref } from "@/lib/lobby";
 
 /** How many Past rows show before "Show all past runs". */
 const PAST_PREVIEW = 3;
-
-const BADGE_ICONS: Record<RunBadge["status"], LucideIcon> = {
-    "starting-soon": Timer,
-    upcoming: CalendarDays,
-    frozen: Snowflake,
-    ended: Archive,
-};
-
-const BADGE_COLOURS: Record<RunBadgeColour, string> = {
-    warning: "text-warning",
-    info: "text-info",
-    frozen: "text-frozen",
-    "muted-foreground": "text-muted-foreground",
-};
 
 /**
  * The run list, or the page's one empty state when every band is empty.
@@ -216,7 +189,7 @@ function RunRow({
                     <p className="font-semibold truncate">{run.name}</p>
                     {(badge || subtitle.length > 0) && (
                         <p className="text-sm text-muted-foreground">
-                            {badge && <BadgeLabel badge={badge} />}
+                            {badge && <RunBadgeLabel badge={badge} />}
                             {badge && subtitle.length > 0 && " · "}
                             {subtitle.join(" · ")}
                         </p>
@@ -254,22 +227,6 @@ function RunRow({
                 />
             )}
         </div>
-    );
-}
-
-/** The badge: a coloured icon and short text, with no pill. */
-function BadgeLabel({ badge }: { badge: RunBadge }) {
-    const Icon = BADGE_ICONS[badge.status];
-    return (
-        <span
-            className={cn(
-                "inline-flex items-center gap-1 align-middle font-semibold",
-                BADGE_COLOURS[badge.colour],
-            )}
-        >
-            <Icon className="size-3.5" />
-            {badge.text}
-        </span>
     );
 }
 

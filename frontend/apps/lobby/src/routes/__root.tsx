@@ -82,8 +82,9 @@ function RootComponent() {
 
 /**
  * The lobby's account menu. It matches the run app's `AccountMenu` (same
- * trigger, username label) so the two look alike; sharing one component waits
- * on a React package both bundles can use (#1379).
+ * trigger, username label) so the two look alike. It stays a separate
+ * component: apart from the trigger, its items and logout hook belong to the
+ * lobby (#1379).
  */
 function LobbyAccountMenu({ username }: { username: string }) {
     const logout = useLobbyLogout();
