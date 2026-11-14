@@ -1,22 +1,23 @@
 /**
- * Shared shell for the facilitator surfaces (#1020 join link, #1022 roster):
- * the topbar plus a small nav between the two pages. In a Workshop Run, the
- * topbar also links back to the facilitator's console (#1018).
- *
- * Deliberately doesn't use `GameLayout`/`AppSidebar` — those assume a settled
- * player (capability flags, money, workers), none of which a facilitator
- * account has.
+ * The top bar of the facilitator pages (#1020 join link, #1022 roster), with a
+ * small nav between the two. In a Workshop Run, it also links back to the
+ * facilitator's console (#1018). The parts come from `@energetica/instance`;
+ * this app only arranges them with its own routes.
  */
 
 import { Link, useLocation } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 
 import { useRunMode } from "@/hooks/use-run-mode";
-import { lobbyHref } from "@energetica/core/instances";
-import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
+import {
+    BackToLobbyButton,
+    LogOutButton,
+    navLinkClassName,
+    TopBar,
+    TopBarLogo,
+} from "@energetica/instance/components/top-bar";
 import { Button } from "@energetica/ui/components/button";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
-import { cn } from "@energetica/ui/lib/utils";
 
 const NAV_LINKS = [
     { to: "/app/facilitator", label: "Join link" },
@@ -28,51 +29,33 @@ export function FacilitatorHeader() {
     const { data: runMode } = useRunMode();
 
     return (
-        <header className="shrink-0 flex flex-col border-b border-border-brand bg-topbar">
-            <div className="flex h-(--topbar-height) items-center justify-between px-4">
-                <Link to="/app" className="flex items-center gap-1.5">
-                    <Logo className="size-10 fill-foreground" />
-                    <span className="font-titles text-lg">
-                        Energetica — Facilitator
-                    </span>
+        <TopBar
+            nav={NAV_LINKS.map((link) => (
+                <Link
+                    key={link.to}
+                    to={link.to}
+                    className={navLinkClassName(location.pathname === link.to)}
+                >
+                    {link.label}
                 </Link>
-                <div className="flex items-center gap-2">
-                    <ThemeToggle variant="icon-only" />
-                    {runMode === "workshop" && (
-                        <Button variant="outline" asChild>
-                            <Link to="/app/workshop/console">
-                                <SlidersHorizontal className="size-4" />
-                                Console
-                            </Link>
-                        </Button>
-                    )}
+            ))}
+        >
+            <Link to="/app">
+                <TopBarLogo title="Energetica — Facilitator" />
+            </Link>
+            <div className="flex items-center gap-2">
+                <ThemeToggle variant="icon-only" />
+                {runMode === "workshop" && (
                     <Button variant="outline" asChild>
-                        <a href={lobbyHref("/")}>Back to lobby</a>
-                    </Button>
-                    <Button variant="outline" asChild>
-                        <Link to="/app/logout">Log out</Link>
-                    </Button>
-                </div>
-            </div>
-            <nav className="flex gap-4 px-4">
-                {NAV_LINKS.map((link) => {
-                    const isActive = location.pathname === link.to;
-                    return (
-                        <Link
-                            key={link.to}
-                            to={link.to}
-                            className={cn(
-                                "border-b-2 px-1 pb-2 text-sm font-medium transition-colors",
-                                isActive
-                                    ? "border-foreground text-foreground"
-                                    : "border-transparent text-muted-foreground hover:text-foreground",
-                            )}
-                        >
-                            {link.label}
+                        <Link to="/app/workshop/console">
+                            <SlidersHorizontal className="size-4" />
+                            Console
                         </Link>
-                    );
-                })}
-            </nav>
-        </header>
+                    </Button>
+                )}
+                <BackToLobbyButton />
+                <LogOutButton />
+            </div>
+        </TopBar>
     );
 }

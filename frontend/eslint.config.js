@@ -11,10 +11,19 @@ import pluginQuery from "@tanstack/eslint-plugin-query";
 
 // The apps under apps/ are workspace packages of their own, so the package rules
 // below keep them apart from each other and from the combined app in src/.
+//
+// The one exception is an app's API types, which a package imports through `@api`
+// (see the shared package rules below). The alias resolves to the app's helpers file.
 const BOUNDARY_ZONES = [
     {
         target: "./packages",
-        from: ["./src", "./apps"],
+        from: "./src",
+        except: ["./types/api-helpers.ts", "./types/api-helpers.freeplay.ts"],
+        message: "Shared packages cannot import from an app.",
+    },
+    {
+        target: "./packages",
+        from: "./apps",
         message: "Shared packages cannot import from an app.",
     },
 ];
@@ -94,7 +103,9 @@ export default defineConfig([
                 },
                 node: true,
             },
-            "import/internal-regex": "^@/",
+            // `@api` is an alias for the API types of the app compiling the file, not
+            // a package named `@api`.
+            "import/internal-regex": "^(@/|@api$)",
         },
         rules: {
             "import/order": [
@@ -173,12 +184,24 @@ export default defineConfig([
     // "this app's src", so inside a package it would silently point at whichever
     // app is compiling it. A package importing itself by name only resolves
     // through the root package's node_modules, which the apps will not share.
+    //
+    // A package reaches the API types of whichever app compiles it through `@api`.
+    // Only type imports are allowed: they are erased before bundling, so the package
+    // never depends at runtime on which app's file the alias points at.
     ...PACKAGES.map((name) => ({
         files: [`packages/${name}/src/**/*.{ts,tsx}`],
         rules: {
             "no-restricted-imports": [
                 "error",
                 {
+                    paths: [
+                        {
+                            name: "@api",
+                            allowTypeImports: true,
+                            message:
+                                "Import the app's API types from @api with `import type`.",
+                        },
+                    ],
                     patterns: [
                         {
                             group: ["./*", "../*"],

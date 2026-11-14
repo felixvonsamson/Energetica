@@ -1,8 +1,8 @@
 /**
- * Public join flow (#1021): link → confirm → enter.
+ * Public join flow (#1021): link → confirm → enter. The page is assembled from
+ * the parts in `@energetica/instance/components/join`.
  *
- * The visitor-facing counterpart to #1020's facilitator page. Anyone with the
- * link (with the token) can access this page. anyone holding the link —
+ * Anyone holding the link (with the token) can access this page.
  * `staticData.routeConfig` is `{ requiredRole: null }` so `__root.tsx`'s guard
  * leaves it alone regardless of auth state, which matters here: a visitor
  * mid-join has a valid SSO session but isn't access-allowed yet, a state
@@ -12,36 +12,16 @@
  *
  * Doesn't use `GameLayout`/`AppSidebar` (same reasoning as the facilitator page
  * — no settled player to render chrome around) or `GameLayout`'s sibling admin
- * shell. `JoinHeader` shows "Signed in as X" + a "Log out" link only once the
- * visitor has a session (`viewer` is non-null) — before that, no identity
- * exists yet to log out of.
+ * shell.
  */
 
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
 
-import { useConfirmJoin, useJoinLink } from "@/hooks/use-join";
 import { getUserFriendlyError } from "@/lib/error-utils";
-import { rememberPendingJoinToken } from "@/lib/join";
-import type { ApiSchema } from "@/types/api-helpers";
-import { lobbyLoginHref } from "@energetica/core/instances";
-import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
-import { Button } from "@energetica/ui/components/button";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@energetica/ui/components/card";
-import { InfoBanner } from "@energetica/ui/components/info-banner";
-import { Spinner } from "@energetica/ui/components/spinner";
-import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
-import {
-    TypographyH2,
-    TypographyMuted,
-} from "@energetica/ui/components/typography";
-
-type Viewer = ApiSchema<"Viewer">;
+import { queryKeys } from "@/lib/query-client";
+import { JoinCard, JoinHeader } from "@energetica/instance/components/join";
+import { useJoinLink } from "@energetica/instance/hooks/use-join";
 
 function JoinHelp() {
     return (
@@ -64,226 +44,44 @@ export const Route = createFileRoute("/app/join/$token")({
     },
 });
 
-function JoinHeader({ viewer }: { viewer?: Viewer | null }) {
-    return (
-        <header className="shrink-0 flex h-(--topbar-height) items-center justify-between border-b border-border-brand bg-topbar px-4">
-            <div className="flex items-center gap-1.5">
-                <Logo className="size-10 fill-foreground" />
-                <span className="font-titles text-lg">Energetica</span>
-            </div>
-            <div className="flex items-center gap-3">
-                {viewer && (
-                    <>
-                        <span className="text-sm text-muted-foreground">
-                            Signed in as{" "}
-                            <span className="font-medium text-foreground">
-                                {viewer.username}
-                            </span>
-                        </span>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link to="/app/logout">Log out</Link>
-                        </Button>
-                    </>
-                )}
-                <ThemeToggle variant="icon-only" />
-            </div>
-        </header>
-    );
-}
-
 function JoinPage() {
     const { token } = Route.useParams();
     const { data } = useJoinLink(token);
+    const queryClient = useQueryClient();
+    const navigate = useNavigate();
+
+    // Once joined, `/app` re-resolves the now-passing entry gate and lands the visitor on their
+    // role-appropriate page — the same redirect any returning player gets, not a special case for
+    // joining. The gate is `GET /auth/me` in the persistent world and `POST /workshop/enter` in a
+    // Workshop Run. Refreshing the other mode's query does nothing, since it was never loaded.
+    const onJoined = async () => {
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.entry,
+            }),
+        ]);
+        void navigate({ to: "/app" });
+    };
 
     return (
         <div className="flex min-h-svh flex-col">
             <JoinHeader viewer={data?.viewer} />
             <main className="flex-1 overflow-auto p-4 md:p-8">
                 <div className="max-w-xl mx-auto">
-                    <JoinCard />
+                    <JoinCard
+                        token={token}
+                        formatError={getUserFriendlyError}
+                        onJoined={onJoined}
+                        renderHomeLink={(label) => (
+                            <Link to="/app">{label}</Link>
+                        )}
+                        renderFacilitatorLink={(label) => (
+                            <Link to="/app/facilitator">{label}</Link>
+                        )}
+                    />
                 </div>
             </main>
         </div>
-    );
-}
-
-function JoinCard() {
-    const { token } = Route.useParams();
-    const { data, isLoading, isError, error } = useJoinLink(token);
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner />
-            </div>
-        );
-    }
-
-    if (isError || !data) {
-        return (
-            <InfoBanner variant="error">
-                {getUserFriendlyError(error)}
-            </InfoBanner>
-        );
-    }
-
-    // Show show facilitators and players who have already joined the same thing
-    // irrespective of if the join link is still active or not
-    if (data.viewer?.membership === "facilitator") {
-        return <AlreadyFacilitatorCard instanceName={data.instance_name} />;
-    }
-
-    if (data.viewer?.membership === "player") {
-        return <AlreadyMemberCard instanceName={data.instance_name} />;
-    }
-
-    if (!data.join_open) {
-        return (
-            <InfoBanner variant="warning">
-                Joining <strong>{data.instance_name}</strong> is currently
-                closed. Contact the administrator for an invitation.
-            </InfoBanner>
-        );
-    }
-
-    if (data.viewer === null) {
-        return (
-            <LogInToJoinCard instanceName={data.instance_name} token={token} />
-        );
-    }
-
-    return <ConfirmJoinCard instanceName={data.instance_name} token={token} />;
-}
-
-function LogInToJoinCard({
-    instanceName,
-    token,
-}: {
-    instanceName: string;
-    token: string;
-}) {
-    const handleLogIn = () => {
-        // Survives the round trip through the lobby's login/signup (a different origin) so
-        // `/app/`'s root loader can send the visitor straight back here afterwards — see `lib/join.ts`.
-        rememberPendingJoinToken(token);
-        window.location.assign(lobbyLoginHref());
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>
-                    <TypographyH2>Join {instanceName}</TypographyH2>
-                </CardTitle>
-                <TypographyMuted>
-                    Log in or create an account to join this instance.
-                </TypographyMuted>
-            </CardHeader>
-            <CardContent>
-                <Button onClick={handleLogIn} className="w-full" size="lg">
-                    Log in to join
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
-function ConfirmJoinCard({
-    instanceName,
-    token,
-}: {
-    instanceName: string;
-    token: string;
-}) {
-    const navigate = useNavigate();
-    const {
-        mutate: confirmJoin,
-        isPending,
-        isSuccess,
-        isError,
-        error,
-    } = useConfirmJoin(token);
-
-    // Once confirmed, `/app` re-resolves the now-passing entry gate (`auth.me`, invalidated by
-    // the mutation) and lands the visitor on their role-appropriate page — the same redirect any
-    // returning player gets, not a special case for joining.
-    useEffect(() => {
-        if (isSuccess) {
-            void navigate({ to: "/app" });
-        }
-    }, [isSuccess, navigate]);
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>
-                    <TypographyH2>Join {instanceName}?</TypographyH2>
-                </CardTitle>
-                <TypographyMuted>
-                    Join this instance to start playing.
-                </TypographyMuted>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {isError && (
-                    <InfoBanner variant="error">
-                        {getUserFriendlyError(error)}
-                    </InfoBanner>
-                )}
-                <Button
-                    onClick={() => confirmJoin()}
-                    disabled={isPending || isSuccess}
-                    className="w-full flex items-center justify-center gap-2"
-                    size="lg"
-                >
-                    {(isPending || isSuccess) && <Spinner />}
-                    Join {instanceName}
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
-function AlreadyMemberCard({ instanceName }: { instanceName: string }) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>
-                    <TypographyH2>
-                        You're already in {instanceName}
-                    </TypographyH2>
-                </CardTitle>
-                <TypographyMuted>
-                    You have already joined this instance.
-                </TypographyMuted>
-            </CardHeader>
-            <CardContent>
-                <Button asChild className="w-full" size="lg">
-                    <Link to="/app">Go to instance</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
-function AlreadyFacilitatorCard({ instanceName }: { instanceName: string }) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>
-                    <TypographyH2>Join link for {instanceName}</TypographyH2>
-                </CardTitle>
-                <TypographyMuted>
-                    The join link for this instance is currently enabled. Share
-                    this page's URL to players so they can join this instance.
-                </TypographyMuted>
-            </CardHeader>
-            <CardContent>
-                <Button asChild className="w-full" size="lg">
-                    <Link to="/app/facilitator">
-                        Back to facilitator dashboard
-                    </Link>
-                </Button>
-            </CardContent>
-        </Card>
     );
 }

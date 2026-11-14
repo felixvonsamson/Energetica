@@ -1,7 +1,6 @@
 import {
     createRootRoute,
     HeadContent,
-    Link,
     Outlet,
     useMatches,
     useNavigate,
@@ -27,6 +26,7 @@ import {
 } from "@energetica/core/document-title";
 import { lobbyHref, lobbyLoginHref } from "@energetica/core/instances";
 import { isSingleOriginHost } from "@energetica/core/single-origin";
+import { LogOutButton } from "@energetica/instance/components/top-bar";
 import { Button } from "@energetica/ui/components/button";
 import { Spinner } from "@energetica/ui/components/spinner";
 
@@ -114,9 +114,7 @@ function WorkshopRoot() {
                                 <a href={lobbyHref("/")}>Back to lobby</a>
                             </Button>
                         )}
-                        <Button variant="outline" asChild>
-                            <Link to="/app/logout">Log out</Link>
-                        </Button>
+                        <LogOutButton />
                     </div>
                 </div>
             );
@@ -184,7 +182,10 @@ function FreeplayRoot() {
             window.location.assign(lobbyLoginHref());
             return;
         }
-        if (redirectTo) void navigate({ to: redirectTo });
+        // The lobby owns the session cookie, so only its logout page can clear it (ADR-0002).
+        if (redirectTo === "log-out")
+            window.location.assign(lobbyHref("/logout"));
+        else if (redirectTo) void navigate({ to: redirectTo });
     }, [mustLogIn, redirectTo, navigate]);
 
     // While auth or capabilities are still resolving, show a centred spinner rather than

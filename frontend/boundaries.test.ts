@@ -100,6 +100,24 @@ describe("frontend boundaries", () => {
         ).toContain("no-restricted-imports");
     });
 
+    it("allows a shared package to import the app's API types from @api", async () => {
+        expect(
+            await violatedRules(
+                "packages/instance/src/lib/example.ts",
+                'import type { ApiSchema } from "@api";\nexport type X = ApiSchema<"Viewer">;\n',
+            ),
+        ).toEqual([]);
+    });
+
+    it("rejects a value import from @api in a shared package", async () => {
+        expect(
+            await violatedRules(
+                "packages/instance/src/lib/example.ts",
+                'import { ApiSchema } from "@api";\nexport type X = ApiSchema<"Viewer">;\n',
+            ),
+        ).toContain("no-restricted-imports");
+    });
+
     it("rejects a relative import into another package", async () => {
         expect(
             await violatedRules(

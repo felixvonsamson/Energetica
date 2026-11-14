@@ -1,12 +1,12 @@
 /**
  * Hooks for the facilitator's join-link settings (#1020): the join token/link
- * and the "allow joining" toggle backing `/app/facilitator`.
+ * and the "allow joining" toggle backing the join-link page.
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { facilitatorApi } from "@/lib/api/facilitator";
-import { queryClient, queryKeys } from "@/lib/query-client";
+import { facilitatorApi } from "#instance/lib/api/facilitator";
+import { instanceQueryKeys } from "#instance/lib/query-keys";
 
 /**
  * This instance's join-link settings. The first call generates the join token
@@ -16,7 +16,7 @@ import { queryClient, queryKeys } from "@/lib/query-client";
  */
 export function useFacilitatorAccess() {
     return useQuery({
-        queryKey: queryKeys.facilitator.access,
+        queryKey: instanceQueryKeys.facilitator.access,
         queryFn: facilitatorApi.getAccess,
         // A facilitator's own toggle changes drive updates via the mutation below;
         // there's no other writer of this instance's join settings to poll for.
@@ -33,6 +33,7 @@ export function useFacilitatorAccess() {
  *     setJoinOpen(true);
  */
 export function useSetJoinOpen() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (joinOpen: boolean) =>
             facilitatorApi.updateAccess({ join_open: joinOpen }),
@@ -44,7 +45,7 @@ export function useSetJoinOpen() {
             // a failed PATCH needs a refetch too, to rule out the request having
             // landed server-side despite the client-visible error.
             queryClient.invalidateQueries({
-                queryKey: queryKeys.facilitator.access,
+                queryKey: instanceQueryKeys.facilitator.access,
             });
         },
     });

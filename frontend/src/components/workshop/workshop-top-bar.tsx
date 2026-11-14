@@ -244,10 +244,10 @@ function AccountMenu({ name }: { name: ReactNode }) {
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/app/logout">
+                    <a href={lobbyHref("/logout")}>
                         <LogOut className="size-4" />
                         Log out
-                    </Link>
+                    </a>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

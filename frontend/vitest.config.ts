@@ -6,7 +6,10 @@ import path from "path";
 // needed and the default `node` environment suffices.
 export default defineConfig({
     resolve: {
-        alias: { "@": path.resolve(__dirname, "./src") },
+        alias: {
+            "@api": path.resolve(__dirname, "./src/types/api-helpers.ts"),
+            "@": path.resolve(__dirname, "./src"),
+        },
     },
     test: {
         include: ["src/**/*.test.ts", "*.test.ts"],

@@ -1,9 +1,8 @@
 /** Renders a URL as a scannable QR code (#1020's facilitator join link). */
 
+import { InfoBanner } from "@energetica/ui/components/info-banner";
 import { toCanvas } from "qrcode";
 import { useEffect, useRef, useState } from "react";
-
-import { InfoBanner } from "@energetica/ui/components/info-banner";
 
 interface JoinQrCodeProps {
     /** The URL to encode — drawn to canvas imperatively, never through raw HTML. */

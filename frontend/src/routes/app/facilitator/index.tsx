@@ -1,7 +1,8 @@
 /**
  * Facilitator settings page (#1020): the join link/QR code for this private
- * instance, and the "allow joining" toggle gating it. A Workshop Run with teams
- * shows its credentials instead (#1385).
+ * instance, and the "allow joining" toggle gating it, from
+ * `@energetica/instance`. A Workshop Run with teams shows its credentials
+ * instead (#1385).
  *
  * Deliberately doesn't use `GameLayout`/`AppSidebar` — those assume a settled
  * player (capability flags, money, workers), none of which a facilitator
@@ -9,24 +10,18 @@
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Copy, Download, Printer } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Download, Printer } from "lucide-react";
 
 import { FacilitatorHeader } from "@/components/facilitator/facilitator-header";
-import { JoinQrCode } from "@/components/facilitator/join-qr-code";
-import {
-    useFacilitatorAccess,
-    useSetJoinOpen,
-} from "@/hooks/use-facilitator-access";
 import { useRunMode } from "@/hooks/use-run-mode";
 import {
     useWorkshopCredentials,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
 import { getUserFriendlyError } from "@/lib/error-utils";
-import { buildJoinUrl } from "@/lib/facilitator";
 import { credentialsCsv } from "@/lib/workshop-credentials";
 import type { ApiSchema } from "@/types/api-helpers";
+import { JoinLinkCard } from "@energetica/instance/components/join-link-card";
 import { Button } from "@energetica/ui/components/button";
 import {
     Card,
@@ -35,11 +30,7 @@ import {
     CardTitle,
 } from "@energetica/ui/components/card";
 import { InfoBanner } from "@energetica/ui/components/info-banner";
-import { Input } from "@energetica/ui/components/input";
-import { Label } from "@energetica/ui/components/label";
-import { Separator } from "@energetica/ui/components/separator";
 import { Spinner } from "@energetica/ui/components/spinner";
-import { Switch } from "@energetica/ui/components/switch";
 import {
     TypographyH2,
     TypographyMuted,
@@ -119,7 +110,10 @@ function AccessCard() {
     return isWorkshop && session.data?.teams ? (
         <CredentialsCard />
     ) : (
-        <JoinLinkCard />
+        <JoinLinkCard
+            joinPath={(token) => `/app/join/${token}`}
+            formatError={getUserFriendlyError}
+        />
     );
 }
 
@@ -209,111 +203,4 @@ function downloadCsv(accounts: ApiSchema<"CredentialLine">[]) {
     link.click();
     // Once the click has started the download.
     setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-function JoinLinkCard() {
-    const { data, isLoading, isError, error } = useFacilitatorAccess();
-    const {
-        mutate: setJoinOpen,
-        isPending,
-        error: setJoinOpenError,
-    } = useSetJoinOpen();
-    const [copied, setCopied] = useState(false);
-
-    // Reset the "Copied!" confirmation a couple seconds after each copy, and on unmount.
-    useEffect(() => {
-        if (!copied) return;
-        const timeout = setTimeout(() => setCopied(false), 2000);
-        return () => clearTimeout(timeout);
-    }, [copied]);
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner />
-            </div>
-        );
-    }
-
-    if (isError || !data) {
-        return (
-            <InfoBanner variant="error">
-                {getUserFriendlyError(error)}
-            </InfoBanner>
-        );
-    }
-
-    const joinUrl = buildJoinUrl(window.location.origin, data.join_token);
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(joinUrl);
-            setCopied(true);
-        } catch {
-            // Clipboard access can be denied (permissions, insecure context); the link is still
-            // selectable text in the input below, so this is a silent no-op rather than an error.
-        }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>
-                    <TypographyH2>Join link</TypographyH2>
-                </CardTitle>
-                <TypographyMuted>
-                    Anyone with this link (or who scans the QR code) can join
-                    this instance while joining is allowed below.
-                </TypographyMuted>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <Label htmlFor="join-open-switch">Allow joining</Label>
-                        <TypographyMuted>
-                            Turn off to stop the link from admitting new
-                            accounts.
-                        </TypographyMuted>
-                    </div>
-                    <Switch
-                        id="join-open-switch"
-                        checked={data.join_open}
-                        disabled={isPending}
-                        onCheckedChange={(checked) => setJoinOpen(checked)}
-                    />
-                </div>
-                {setJoinOpenError && (
-                    <InfoBanner variant="error">
-                        {getUserFriendlyError(setJoinOpenError)}
-                    </InfoBanner>
-                )}
-
-                <Separator />
-
-                <div className="space-y-2">
-                    <Label htmlFor="join-url">Link</Label>
-                    <div className="flex gap-2">
-                        <Input id="join-url" readOnly value={joinUrl} />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label="Copy join link"
-                            onClick={handleCopy}
-                        >
-                            {copied ? (
-                                <Check className="text-success" />
-                            ) : (
-                                <Copy />
-                            )}
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="flex justify-center">
-                    <JoinQrCode value={joinUrl} />
-                </div>
-            </CardContent>
-        </Card>
-    );
 }

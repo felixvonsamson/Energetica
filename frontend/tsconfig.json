@@ -2,7 +2,12 @@
     "extends": "./tsconfig.base.json",
     "compilerOptions": {
         "types": ["vite/client"],
-        "paths": { "@/*": ["./src/*"] }
+        // `@api` is how shared packages, such as @energetica/instance, reach this
+        // app's API types. The combined app uses the merged types.
+        "paths": {
+            "@/*": ["./src/*"],
+            "@api": ["./src/types/api-helpers.ts"]
+        }
     },
     "include": ["src"],
     "exclude": ["**/*.mdx", "src/service-worker.ts"]

@@ -3,8 +3,9 @@
  * `lib/api/facilitator.ts`.
  */
 
-import type { ApiResponse } from "@/types/api-helpers";
 import { apiClient } from "@energetica/core/api-client";
+
+import type { ApiResponse } from "@api";
 
 export const joinApi = {
     /**

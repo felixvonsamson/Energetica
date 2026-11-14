@@ -4,20 +4,20 @@
  * A visitor with no SSO session yet must go through the lobby's existing,
  * unmodified login/signup flow before they can confirm joining — but that
  * flow's `?return=` bounce (`lobbyLoginHref` in `@energetica/core/instances`)
- * only ever lands them back on this run's bare `/app` root, never on the
- * specific `/app/join/:token` page they started from (the bounce carries a run
- * slug, not an arbitrary path, and is shared with unrelated login flows the
- * switcher/picker also use). `sessionStorage` — scoped to this run's own
- * origin, so it survives the round trip to the lobby's different origin and
- * back, and is cleared when the tab closes rather than lingering forever — is
- * what lets `/app/`'s root loader notice "there was a join in progress" and
- * send the visitor back to the confirm screen instead of the ordinary
- * role-based landing page.
+ * only ever lands them back on this run's home page, never on the specific join
+ * page they started from (the bounce carries a run slug, not an arbitrary path,
+ * and is shared with unrelated login flows the switcher/picker also use).
+ * `sessionStorage` — scoped to this run's own origin, so it survives the round
+ * trip to the lobby's different origin and back, and is cleared when the tab
+ * closes rather than lingering forever — is what lets each app's home page
+ * notice "there was a join in progress" and send the visitor back to the
+ * confirm screen instead of the ordinary role-based landing page. The join card
+ * remembers the token; the app's home page takes it back.
  *
  * The storage takes a `Storage` parameter (defaulting to the real
  * `sessionStorage`) rather than reading the global directly, so the round-trip
  * logic is a pure function of its argument and needs no DOM environment to test
- * (`vitest.config.ts` sticks to the plain `node` environment).
+ * (Vitest runs in its plain `node` environment).
  */
 
 const PENDING_JOIN_TOKEN_KEY = "energetica.pendingJoinToken";

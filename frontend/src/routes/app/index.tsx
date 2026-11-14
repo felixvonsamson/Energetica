@@ -2,8 +2,8 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { fetchCurrentUser } from "@/contexts/auth-context";
 import { runQueryOptions } from "@/hooks/use-run-mode";
-import { takePendingJoinToken } from "@/lib/join";
 import { queryClient, queryKeys } from "@/lib/query-client";
+import { takePendingJoinToken } from "@energetica/instance/lib/join";
 
 export const Route = createFileRoute("/app/")({
     loader: async () => {
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/app/")({
         // who followed a join link while signed out was sent off to the lobby to log in/sign up
         // and is bouncing back here now — `takePendingJoinToken` is how `/app/join/$token`
         // survives that cross-origin round trip (the lobby's `?return=` bounce only ever lands on
-        // this bare `/app` root, see `lib/join.ts`). Checked, and consumed, before touching
+        // this bare `/app` root, see `lib/join.ts` in `@energetica/instance`). Checked, and consumed, before touching
         // `auth.me`: a visitor in this state is real per the SSO cookie but not yet
         // access-allowed, and `fetchCurrentUser` reads that as `null` (#1021) — falling through to
         // the role-based redirect below would bounce them straight back to the lobby and loop.
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/app/")({
 
         // Role-aware so a facilitator account lands on its own home (#1020) instead of bouncing
         // through the player-only `/app/dashboard`, which `__root.tsx`'s route guard would then
-        // redirect straight to `/app/logout` (a role mismatch on a gated route always logs out —
+        // send straight to the lobby's logout (a role mismatch on a gated route always logs out —
         // see `computeRedirect` in `lib/route-guard.ts`). `ensureQueryData` reads the same
         // `queryKeys.auth.me` cache `AuthProvider` populates (the module-level singleton, not
         // router context — the root route isn't `createRootRouteWithContext`-typed), awaiting the
