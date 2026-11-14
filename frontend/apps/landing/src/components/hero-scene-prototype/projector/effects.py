@@ -16,7 +16,21 @@ def _blob(circles, fill):
     return "".join(f'<circle cx="{fmt(x)}" cy="{fmt(y)}" r="{fmt(r)}" fill="{fill}"/>' for x, y, r in circles)
 
 
-def steam(s: Scene, at, size=20.0, n=6, period=11.0, rise=None, wind=None, seed=0, prio=3, plume=False):
+def steam(
+    s: Scene,
+    at,
+    size=20.0,
+    n=6,
+    period=11.0,
+    rise=None,
+    wind=None,
+    seed=0,
+    prio=3,
+    plume=False,
+    behind=None,
+    spread=None,
+    lift=0.6,
+):
     """Rising, fading puffs from a stack mouth at local point `at`. size = puff radius at birth.
     rise / wind: how far a puff travels up / sideways over its life (world units).
     plume=True: a dense, continuous cooling-tower plume (the puffs stay opaque longer and grow
@@ -26,7 +40,7 @@ def steam(s: Scene, at, size=20.0, n=6, period=11.0, rise=None, wind=None, seed=
     wind = wind if wind is not None else size * 3
     cls = "steam steam-plume" if plume else "steam"
 
-    spread = 0.75 if plume else 0.35
+    spread = spread if spread is not None else (0.75 if plume else 0.35)
 
     def draw(tone):
         # Two passes with identical timing: every puff's shaded body first, then every puff's
@@ -35,7 +49,7 @@ def steam(s: Scene, at, size=20.0, n=6, period=11.0, rise=None, wind=None, seed=
         for i in range(n):
             dx = rnd.uniform(-spread, spread) * size
             r = size * rnd.uniform(0.85, 1.2)
-            cy = -size * 0.6
+            cy = -size * lift
             # y is flipped back to "down" inside so the CSS keyframes rise upwards on screen;
             # the pivot is the puff's own centre, shared by both passes so they stay in sync
             style = (
@@ -51,11 +65,11 @@ def steam(s: Scene, at, size=20.0, n=6, period=11.0, rise=None, wind=None, seed=
         return f'<g transform="scale(1,-1)">{"".join(shade)}{"".join(lit)}</g>'
 
     if plume:
-        static_plume(s, at, size=size, height=rise * 0.55, lean=wind * 0.55)
-    s.billboard(at, draw, prio=prio, bounds=(-size * 1.5, -size, wind + size * 3, rise + size * 3))
+        static_plume(s, at, size=size, height=rise * 0.55, lean=wind * 0.55, behind=behind)
+    s.billboard(at, draw, prio=prio, bounds=(-size * 1.5, -size, wind + size * 3, rise + size * 3), behind=behind)
 
 
-def static_plume(s: Scene, at, size=20.0, height=None, lean=None, prio=2):
+def static_plume(s: Scene, at, size=20.0, height=None, lean=None, prio=2, behind=None):
     """A static plume body, shown only with prefers-reduced-motion (class steam-static)."""
     height = height or size * 4
     lean = lean if lean is not None else size * 1.6
@@ -71,7 +85,7 @@ def static_plume(s: Scene, at, size=20.0, height=None, lean=None, prio=2):
         lit = _blob([(x - r * 0.1, y + r * 0.12, r * 0.86) for x, y, r in cs], tone(P.steam, 0.5))
         return f'<g class="steam-static" opacity="0.92">{shade}{lit}</g>'
 
-    s.billboard(at, draw, prio=prio, bounds=(-size * 1.2, 0, lean + size * 2, height + size * 2.2))
+    s.billboard(at, draw, prio=prio, bounds=(-size * 1.2, 0, lean + size * 2, height + size * 2.2), behind=behind)
 
 
 def cloud(s: Scene, at, width=400.0, seed=0, drift=None, period=None):

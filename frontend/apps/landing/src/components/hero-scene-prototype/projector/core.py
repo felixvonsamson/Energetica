@@ -536,25 +536,30 @@ class Scene:
         left = [min(range(segments), key=lambda i: pr[i][0]) for pr in proj]
         right = [max(range(segments), key=lambda i: pr[i][0]) for pr in proj]
 
-        def arc(pr, i0, i1, front):
-            """Indices from i0 to i1 along the ring, choosing the near (front) or far half."""
+        def arc(ring, i0, i1, front):
+            """Indices from i0 to i1 along the ring, choosing the half nearer to (front) or farther
+            from the camera by real depth. (Which half is lower on screen flips with eye level:
+            choosing by screen position drew rims above the eye as if seen from above.)"""
             a = [(i0 + k) % segments for k in range((i1 - i0) % segments + 1)]
             b = [(i0 - k) % segments for k in range((i0 - i1) % segments + 1)]
-            mean_v = lambda idx: sum(pr[i][1] for i in idx) / len(idx)
-            pick = max if front else min
-            return pick((a, b), key=mean_v)
+            depth = lambda idx: sum(self.cam.depth(ring[i]) for i in idx) / len(idx)
+            pick = min if front else max
+            return pick((a, b), key=depth)
 
         outline = []
         nr = len(rings)
         for k in range(nr - 1, -1, -1):
             outline.append(proj[k][left[k]])
-        outline += [proj[0][i] for i in arc(proj[0], left[0], right[0], front=base_w[1] < eye_y or True)]
+        # lower envelope: the near half of the base ring when it is below the eye
+        outline += [proj[0][i] for i in arc(rings[0], left[0], right[0], front=base_w[1] < eye_y)]
         for k in range(nr):
             outline.append(proj[k][right[k]])
         top_r = profile[-1][0]
         top_above = top_w[1] < eye_y  # we look down on the top ring
         if top_r > 1e-6:
-            outline += [proj[-1][i] for i in arc(proj[-1], right[-1], left[-1], front=not top_above)]
+            # upper envelope: the far half when looking down on the top, the near half when looking up
+            outline += [proj[-1][i] for i in arc(rings[-1], right[-1], left[-1], front=not top_above)]
+        self.last_outline = outline  # screen-space silhouette, e.g. to mask steam behind a rim
 
         # shading
         widest = max(range(nr), key=lambda k: profile[k][0])
@@ -618,9 +623,9 @@ class Scene:
             bp = [[self.P(p) for p in ring] for ring in bring]
             bl = [min(range(segments), key=lambda i: pr[i][0]) for pr in bp]
             br = [max(range(segments), key=lambda i: pr[i][0]) for pr in bp]
-            o = [bp[0][i] for i in arc(bp[0], bl[0], br[0], front=True)]
+            o = [bp[0][i] for i in arc(bring[0], bl[0], br[0], front=True)]
             o += [bp[1][br[1]]]
-            o += [bp[2][i] for i in arc(bp[2], br[2], bl[2], front=True)]
+            o += [bp[2][i] for i in arc(bring[2], br[2], bl[2], front=True)]
             o += [bp[1][bl[1]]]
             svg.append(f'<path d="{path_d(o)}" {self._style(hgrad(bc))}/>')
 
@@ -698,11 +703,13 @@ class Scene:
             right.append((x - ox, z - oz))
         self.ground(left + right[::-1], color, y, prio=prio)
 
-    def billboard(self, at, draw, *, prio=0, flat=False, bounds=None):
+    def billboard(self, at, draw, *, prio=0, flat=False, bounds=None, behind=None):
         """2D art that always faces the camera (trees, bushes, people, clouds, steam), placed at a
         local 3D point and scaled with depth. draw(tone) returns SVG in local units with y UP and
         the anchor at (0, 0); tone(colour, k=0) returns a shaded and hazed colour.
-        bounds = (x0, y0, x1, y1) of the art in those units, so auto-framing includes it."""
+        bounds = (x0, y0, x1, y1) of the art in those units, so auto-framing includes it.
+        behind = a screen-space silhouette (e.g. Scene.last_outline after a lathe): the art is
+        clipped away wherever it overlaps it, so it seems to come from behind that solid."""
         w = self.W(at)
         u, v = self.P(w)
         k = self.scale() * self.cam.px_per_unit(w)
@@ -712,9 +719,16 @@ class Scene:
             b[1], b[3] = min(b[1], v - k * bounds[3]), max(b[3], v - k * bounds[1])
         z = self.cam.depth(w)
         body = draw(lambda color, k=0.0: tone(self.look, color, k, z))
-        self.emit(
-            f'<g transform="translate({fmt(u)},{fmt(v)}) scale({k:.4f},{-k:.4f})">{body}</g>', w, prio=prio, flat=flat
-        )
+        svg = f'<g transform="translate({fmt(u)},{fmt(v)}) scale({k:.4f},{-k:.4f})">{body}</g>'
+        if behind:
+            # everything except the silhouette: a huge rectangle with the outline cut out (evenodd)
+            cid = self.uid("cut")
+            hole = path_d(behind)
+            self.defs.append(
+                f'<clipPath id="{cid}" clipPathUnits="userSpaceOnUse"><path clip-rule="evenodd" d="M-5000,-5000H9000V9000H-5000Z{hole}"/></clipPath>'
+            )
+            svg = f'<g clip-path="url(#{cid})">{svg}</g>'
+        self.emit(svg, w, prio=prio, flat=flat)
 
     def ridge(self, pts, color, *, base_y=None, crest=0.25, foot=-0.25, prio=0, decorate=None, gradient=True):
         """Terrain curtain: a crest line of local 3D points, closed straight down to base_y

@@ -75,19 +75,63 @@ def curtain(s: Scene, crest, z, color, *, foot=None, crest_k=0.3, foot_k=-0.15, 
             decorate(pts)
 
 
-def treeline(s: Scene, pts, z, h_px, every_px, kind="conifer", seed=0, jitter=0.4, color=None, below=4):
-    """Billboard trees along a crest polyline (banner pixels), sunk `below` px into it."""
+# Screen boxes of placed facilities: (u0, v0, u1, v1, depth). Trees never stand in front of them.
+FACILITY_BOXES: list[tuple] = []
+
+
+def clear_of_facilities(u, v, w_px, h_px, z):
+    """False if a tree at banner pixel (u, v) (its base), w_px wide and h_px tall, at depth z,
+    would stand in front of a facility."""
+    for x0, y0, x1, y1, fz in FACILITY_BOXES:
+        if fz > z and u + w_px / 2 > x0 and u - w_px / 2 < x1 and v > y0 and v - h_px < y1:
+            return False
+    return True
+
+
+def put_tree(s: Scene, u, v, z, h_px, kind="tree", seed=0, color=None, prio=1):
+    """One billboard tree with its base at banner pixel (u, v), h_px tall, at depth z, unless it
+    would stand in front of a facility."""
+    if not clear_of_facilities(u, v, h_px * 0.9, h_px, z):
+        return
+    h = metres(h_px, z)
+    if kind == "conifer":
+        fx.conifer(s, at(u, v, z), h=h, color=color, prio=prio)
+    elif kind == "bush":
+        fx.bush(s, at(u, v, z), w=h * 1.4, seed=seed, color=color, prio=prio)
+    else:
+        fx.tree(s, at(u, v, z), h=h, seed=seed, color=color, prio=prio)
+
+
+def treeline(
+    s: Scene, pts, z, h_px, every_px, kind="conifer", seed=0, jitter=0.4, color=None, below=4, slope=0, density=0.7
+):
+    """Billboard trees along a crest polyline (banner pixels). Density follows a slow random
+    wave, so the line breaks into clumps and gaps instead of a regular fringe, and with slope > 0
+    the clumps spill up to `slope` px down the hillside below the crest."""
     rnd = random.Random(seed)
+    ph = [rnd.uniform(0, 2 * math.pi) for _ in range(3)]
+
+    def dens(u):
+        w = 0.5 * math.sin(u / 95 + ph[0]) + 0.3 * math.sin(u / 41 + ph[1]) + 0.2 * math.sin(u / 17 + ph[2])
+        return 0.5 + 0.5 * w
+
+    spots = []
     for (u0, v0, *_), (u1, v1, *_) in zip(pts, pts[1:]):
         n = max(1, int(abs(u1 - u0) / every_px))
         for i in range(n):
             t = (i + rnd.random() * 0.8) / n
-            u, v = u0 + (u1 - u0) * t, v0 + (v1 - v0) * t + below + rnd.uniform(0, below)
-            h = metres(h_px * (1 - jitter / 2 + rnd.random() * jitter), z)
-            if kind == "conifer":
-                fx.conifer(s, at(u, v, z * 0.999), h=h, color=color, prio=1)
-            else:
-                fx.tree(s, at(u, v, z * 0.999), h=h, seed=rnd.randint(0, 999), color=color, prio=1)
+            u, vc = u0 + (u1 - u0) * t, v0 + (v1 - v0) * t
+            d = dens(u)
+            if d < 1 - density:
+                continue
+            spots.append((u, vc + below + rnd.uniform(0, below)))
+            # thicker clumps spill down the slope
+            for _ in range(int(slope / 12 * max(0.0, d - 0.45) * 2)):
+                spots.append((u + rnd.uniform(-every_px, every_px), vc + below + rnd.uniform(4, slope)))
+    # back to front: higher on the hillside first (each a hair farther, so the sort keeps it)
+    for u, v in sorted(spots, key=lambda p: p[1]):
+        hp = h_px * (1 - jitter / 2 + rnd.random() * jitter)
+        put_tree(s, u, v, z * (0.999 - 1e-6 * v), hp, kind=kind, seed=rnd.randint(0, 999), color=color)
 
 
 def facets(s: Scene, pts, z, color, base_v, k=-0.55):
@@ -108,15 +152,19 @@ def facets(s: Scene, pts, z, color, base_v, k=-0.55):
         s.emit(f'<path d="{path_d(poly)}" fill="{s.tone(color, k=k, at_world=a)}" opacity="0.55"/>', a, prio=-4)
 
 
-def ground_patch(s: Scene, pts_world, color, k=0.0, lift=0.0, extra=""):
-    """A patch lying on the ground, painted as a standing item keyed by its far edge, so it
-    lands on the terrain curtain behind it and under anything standing on it."""
+PLAIN_Z = 905.0  # depth of the main plain's curtain; ground decoration sorts just in front of it
+
+
+def ground_patch(s: Scene, pts_world, color, k=0.0, order=1, extra=""):
+    """A patch lying on the plain (field, road). It is painted as part of the plain: right after
+    the plain's curtain and before anything standing, so it can never cover a facility or a
+    tree, and it moves with the plain in parallax. `order` stacks patches (roads over fields)."""
     far = max(pts_world, key=lambda p: CAM.depth(p))
     near_v = max(s.P(p)[1] for p in pts_world)
     if near_v < HORIZON:
         return
     fill = s.tone(color, k=k, at_world=far)
-    s.emit(f'<path d="{path_d([s.P(p) for p in pts_world])}" fill="{fill}"{extra}/>', add_z(far, lift))
+    s.emit(f'<path d="{path_d([s.P(p) for p in pts_world])}" fill="{fill}"{extra}/>', at(1000, 600, PLAIN_Z - order))
 
 
 def add_z(p, dz):
@@ -152,6 +200,12 @@ def fields(s: Scene, region_px, seed=1, yaw=18.0, cell=(70, 120), min_v=458):
                     cw = centroid_xz(world)
                     shrunk = [lerp3(p, cw, inset) for p in world]
                     ground_patch(s, shrunk, rnd.choice(tones), k=rnd.uniform(-0.1, 0.25))
+                    if rnd.random() < 0.22:  # an occasional hedgerow along the field's far edge
+                        a_, b_ = shrunk[2], shrunk[3]
+                        for i in range(max(1, int(math.dist(a_, b_) / 6))):
+                            p = lerp3(a_, b_, (i + rnd.random() * 0.4) / max(1, int(math.dist(a_, b_) / 6)))
+                            col = P.tree_dark if rnd.random() < 0.4 else P.tree
+                            tree_at_ground(s, p, rnd.uniform(2.6, 4.2), "bush", rnd.randint(0, 999), col)
             zz += d
         x += w
 
@@ -177,7 +231,15 @@ def road(s: Scene, px_pts, width_m, color=P.path):
         right.append((p[0] - ox, 0.0, p[2] - oz))
     # split into short pieces so each sorts at its own depth
     for i in range(len(pts) - 1):
-        ground_patch(s, [left[i], left[i + 1], right[i + 1], right[i]], color, k=0.3, lift=-2)
+        ground_patch(s, [left[i], left[i + 1], right[i + 1], right[i]], color, k=0.3, order=2)
+
+
+def tree_at_ground(s: Scene, p, h_m, kind="tree", seed=0, color=None):
+    """A tree standing on the plain at world point p, unless it would stand in front of a facility."""
+    u, v = CAM.project(p)
+    z = CAM.depth(p)
+    hp = h_m * F / z
+    put_tree(s, u, v, z, hp, kind=kind, seed=seed, color=color, prio=0)
 
 
 def copse(s: Scene, u, v, n, spread_m, h_m=(9, 15), seed=0, kind="tree"):
@@ -186,12 +248,8 @@ def copse(s: Scene, u, v, n, spread_m, h_m=(9, 15), seed=0, kind="tree"):
     c = g(u, v)
     for _ in range(n):
         p = (c[0] + rnd.uniform(-1, 1) * spread_m, 0.0, c[2] + rnd.uniform(-0.5, 0.5) * spread_m)
-        if kind == "tree":
-            fx.tree(
-                s, p, h=rnd.uniform(*h_m), seed=rnd.randint(0, 999), color=rnd.choice([P.tree, P.tree, P.tree_dark])
-            )
-        else:
-            fx.conifer(s, p, h=rnd.uniform(*h_m) * 1.3)
+        col = rnd.choice([P.tree, P.tree, P.tree_dark]) if kind == "tree" else None
+        tree_at_ground(s, p, rnd.uniform(*h_m) * (1.3 if kind == "conifer" else 1), kind, rnd.randint(0, 999), col)
 
 
 def hedge(s: Scene, px_pts, every_m=7, h_m=4.5, seed=0):
@@ -201,13 +259,20 @@ def hedge(s: Scene, px_pts, every_m=7, h_m=4.5, seed=0):
         n = max(1, int(math.dist(a, b) / every_m))
         for i in range(n):
             p = lerp3(a, b, (i + rnd.random() * 0.5) / n)
-            fx.bush(
-                s,
-                p,
-                w=h_m * rnd.uniform(0.8, 1.3),
-                seed=rnd.randint(0, 999),
-                color=P.tree_dark if rnd.random() < 0.4 else P.tree,
-            )
+            col = P.tree_dark if rnd.random() < 0.4 else P.tree
+            tree_at_ground(s, p, h_m * rnd.uniform(0.8, 1.3) / 1.4, "bush", rnd.randint(0, 999), col)
+
+
+def scatter(s: Scene, region_px, n, seed=0, h_m=(7, 14)):
+    """Lone trees and little clumps across the plain, so it isn't bare between the ridges."""
+    rnd = random.Random(seed)
+    (u0, v0), (u1, v1) = region_px
+    for _ in range(n):
+        u, v = rnd.uniform(u0, u1), rnd.uniform(v0, v1)
+        c = g(u, v)
+        for _ in range(rnd.choice([1, 1, 1, 2, 3])):
+            p = (c[0] + rnd.uniform(-8, 8), 0.0, c[2] + rnd.uniform(-5, 5))
+            tree_at_ground(s, p, rnd.uniform(*h_m), "tree", rnd.randint(0, 999), rnd.choice([P.tree, P.tree_dark]))
 
 
 # ------------------------------------------------------------------ facilities
@@ -221,7 +286,7 @@ def load(key):
         return None
 
 
-def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w=None, yaw=None, **kw):
+def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w=None, yaw=None, keep_clear=True, **kw):
     """Put facility `key` with its base centre at banner pixel (u, v) and depth z, scaled so its
     height (or width) spans px_h (px_w) banner pixels."""
     mod = load(key)
@@ -234,12 +299,41 @@ def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w
         k = px_h / ((model_h or eh) * ppm)
     else:
         k = px_w / ((model_w or ew) * ppm)
+    # measure the facility's own screen box (trees keep clear of it), then merge it back
+    outer = s.bbox
+    s.bbox = [math.inf, math.inf, -math.inf, -math.inf]
     with s.frame(origin, SITE_YAW if yaw is None else yaw, k):
         with s.group(anchor=(0, 0, 0)):
             mod.build(s, **kw)
+    x0, y0, x1, y1 = s.bbox
+    if keep_clear:
+        FACILITY_BOXES.append((x0, y0, x1, y1, z))
+    s.bbox = [min(outer[0], x0), min(outer[1], y0), max(outer[2], x1), max(outer[3], y1)]
 
 
 # ------------------------------------------------------------------ scene
+
+
+def plant(s: Scene):
+    """All facilities. Placed before the terrain decoration, so trees can keep clear of them.
+    The site grid is SITE_YAW; facilities turned a further 90 degrees face left instead of right."""
+    FACILITY_BOXES.clear()
+    # wind turbines on the hills: (u, base v, hub height px, z, phase)
+    for u, v, hub_px, z, ph in [
+        (630, 403, 112, 2100, 40),
+        (938, 350, 72, 2600, 200),
+        (838, 384, 122, 1850, 110),
+        (736, 396, 210, 1700, 0),
+    ]:
+        place(s, "wind", u, v, z, px_h=hub_px, model_h=100, phase=ph, period=6 + (ph % 3), keep_clear=False)
+
+    place(s, "hydro_dam", 250, 455, 1300, px_w=430, reservoir=False, pool=True, keep_clear=False)
+    place(s, "nuclear", 1215, 455, 880, px_h=275, model_h=150, hall="left")
+    place(s, "gas", 1560, 505, 780, px_h=280, yaw=SITE_YAW + 90)
+    place(s, "dry_cooler", 1915, 556, 560, px_h=165, yaw=SITE_YAW + 90)
+    place(s, "hydrogen", 830, 556, 520, px_h=140)
+    place(s, "solar", 1540, 718, 390, px_w=800, model_w=8 * 6.35, rows=10, cols=8, yaw=SITE_YAW + 90)
+    place(s, "battery", 735, 672, 380, px_w=430)
 
 
 def build(outline=0.0):
@@ -275,6 +369,8 @@ def build(outline=0.0):
     ):
         z = 40000 + i * 900
         fx.cloud(s, at(u, v, z), width=metres(wpx, z), seed=i, drift=metres(drift, z), period=120 + 25 * i)
+
+    plant(s)
 
     # far range (faceted: shaded right-hand slopes)
     far = [
@@ -354,7 +450,7 @@ def build(outline=0.0):
         5200,
         P.forest_far,
         crest_k=0.1,
-        decorate=lambda pts: treeline(s, pts, 5200, 16, 9, seed=3, color=P.forest_far),
+        decorate=lambda pts: treeline(s, pts, 5200, 16, 9, seed=3, color=P.forest_far, density=0.85),
     )
 
     # right meadow hills with a forest edge
@@ -376,7 +472,7 @@ def build(outline=0.0):
         P.hill,
         foot=P.grass,
         crest_k=0.25,
-        decorate=lambda pts: treeline(s, pts[2:], 3200, 26, 11, seed=4, color=P.conifer),
+        decorate=lambda pts: treeline(s, pts[2:], 3200, 26, 11, seed=4, color=P.conifer, slope=40, density=0.6),
     )
     right2 = [(1600, 440), (1700, 400), (1800, 380), (1900, 368), (2000, 352), (2100, 344), (2190, 340)]
     curtain(
@@ -386,7 +482,9 @@ def build(outline=0.0):
         P.meadow,
         foot=P.grass,
         crest_k=0.35,
-        decorate=lambda pts: treeline(s, pts[1:], 2200, 30, 70, kind="tree", seed=9, jitter=0.5),
+        decorate=lambda pts: treeline(
+            s, pts[1:], 2200, 30, 70, kind="tree", seed=9, jitter=0.5, slope=60, density=0.55
+        ),
     )
 
     # turbine hills, centre-left
@@ -412,7 +510,9 @@ def build(outline=0.0):
         P.hill,
         foot=P.grass,
         crest_k=0.35,
-        decorate=lambda pts: treeline(s, pts[1:9], 1900, 22, 34, kind="tree", seed=5, jitter=0.6),
+        decorate=lambda pts: treeline(
+            s, pts[1:9], 1900, 22, 22, kind="tree", seed=5, jitter=0.6, slope=45, density=0.5
+        ),
     )
     # a lower fold in front of the turbine hills, with a forest strip
     fold = [
@@ -433,17 +533,10 @@ def build(outline=0.0):
         P.hill_shade,
         foot=P.grass,
         crest_k=0.3,
-        decorate=lambda pts: treeline(s, pts[1:], 1450, 26, 16, kind="conifer", seed=8, color=P.forest),
+        decorate=lambda pts: treeline(
+            s, pts[1:], 1450, 26, 16, kind="conifer", seed=8, color=P.forest, slope=30, density=0.6
+        ),
     )
-
-    # wind turbines on the hills: (u, base v, hub height px, z, phase)
-    for u, v, hub_px, z, ph in [
-        (630, 403, 112, 2100, 40),
-        (938, 350, 72, 2600, 200),
-        (838, 384, 122, 1850, 110),
-        (736, 396, 210, 1700, 0),
-    ]:
-        place(s, "wind", u, v, z, px_h=hub_px, model_h=100, phase=ph, period=6 + (ph % 3))
 
     # main plain: a terrain curtain whose crest sits on the ground plane, then fields, hedges,
     # roads and copses as real ground geometry in perspective
@@ -461,7 +554,8 @@ def build(outline=0.0):
     ]
     curtain(s, plain, 905, P.grass, foot=P.meadow, crest_k=0.1, foot_k=0.25)
     fields(s, ((900, 455), (2190, 725)), seed=2)
-    road(s, [(700, 560), (860, 572), (1060, 586), (1300, 576), (1500, 560), (1720, 552), (1980, 560), (2190, 572)], 9)
+    # the main road ends at the dry cooler (its access road) instead of running underneath it
+    road(s, [(700, 560), (860, 572), (1060, 586), (1300, 576), (1500, 560), (1680, 553), (1770, 556)], 9)
     road(s, [(1500, 560), (1460, 520), (1440, 488), (1460, 466)], 6)
     hedge(s, [(1730, 530), (1900, 515), (2060, 505), (2190, 500)], seed=1)
     hedge(s, [(1150, 520), (1300, 512), (1420, 506)], seed=2)
@@ -473,11 +567,18 @@ def build(outline=0.0):
     copse(s, 2120, 700, 6, 6, h_m=(6, 9), seed=6)
     copse(s, 860, 715, 5, 6, h_m=(4, 6), seed=7)
     copse(s, 1700, 470, 4, 12, seed=8)
+    scatter(s, ((880, 470), (2190, 720)), 34, seed=9)
 
     # dam valley: left forest slope, dam, lake
     left_slope = [(-20, 272), (40, 286), (90, 318), (130, 360), (165, 430), (185, 520)]
-    curtain(s, left_slope, 1400, P.forest, crest_k=0.2, decorate=lambda pts: treeline(s, pts, 1400, 30, 14, seed=6))
-    place(s, "hydro_dam", 250, 455, 1300, px_w=430, reservoir=False, pool=True)
+    curtain(
+        s,
+        left_slope,
+        1400,
+        P.forest,
+        crest_k=0.2,
+        decorate=lambda pts: treeline(s, pts, 1400, 30, 14, seed=6, slope=70, density=0.8),
+    )
     # grassy knoll the dam's right-hand end runs into, wooded where it meets the wall, as on
     # the banner (no bare cross-section of the dam)
     knoll = [
@@ -499,18 +600,10 @@ def build(outline=0.0):
         P.hill,
         foot=P.grass,
         crest_k=0.35,
-        decorate=lambda pts: treeline(s, pts[1:5], 1180, 32, 9, kind="conifer", seed=21, color=P.forest),
+        decorate=lambda pts: treeline(
+            s, pts[1:5], 1180, 32, 9, kind="conifer", seed=21, color=P.forest, slope=45, density=0.75
+        ),
     )
-
-    # big plant cluster
-    place(s, "nuclear", 1215, 455, 880, px_h=275, model_h=150)
-    place(s, "gas", 1560, 505, 780, px_h=280)
-    place(s, "dry_cooler", 1915, 556, 560, px_h=165)
-    place(s, "hydrogen", 830, 556, 520, px_h=140)
-
-    # foreground
-    place(s, "solar", 1540, 718, 390, px_w=800, model_w=8 * 6.35, rows=10, cols=8)
-    place(s, "battery", 735, 672, 380, px_w=430)
 
     mine(s)
 
@@ -532,7 +625,7 @@ def mine(s: Scene):
         P.hill_shade,
         foot=P.hill_shade,
         crest_k=0.3,
-        decorate=lambda pts: treeline(s, pts[:6], 480, 24, 26, kind="tree", seed=12),
+        decorate=lambda pts: treeline(s, pts[:6], 480, 24, 26, kind="tree", seed=12, slope=20, density=0.6),
     )
     face = [(-20, 462), (80, 468), (170, 486), (250, 504), (320, 528), (372, 562), (410, 610), (432, 668), (440, 760)]
 
@@ -553,7 +646,10 @@ def mine(s: Scene):
     z = 466
     with s.frame(at(40, 466, z), SITE_YAW, 520 / (38 * F / z)):
         with s.group(anchor=(0, 0, 0)):
+            # without its coal heap: the heap sits behind the tower, which lands it on the dam's foot
+            heap, cm.stockpile = cm.stockpile, (lambda *a, **k: None)
             cm.headframe(s, (0, 0, 0), scale=0.75)
+            cm.stockpile = heap
 
     # the yard in front: portal at the foot of the face, conveyor, heap, excavator, screen, truck
     z = 400
