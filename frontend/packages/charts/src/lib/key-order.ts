@@ -1,4 +1,4 @@
-/** The order of chart series. */
+/** The storage chart's series order, and putting series in a given order. */
 
 /** The storage facility types, in the order the storage chart shows them. */
 export const STORAGE_KEYS = [

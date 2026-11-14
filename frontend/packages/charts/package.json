@@ -20,8 +20,8 @@
     "dependencies": {
         "@energetica/core": "workspace:*",
         "@energetica/ui": "workspace:*",
-        "@floating-ui/dom": "^1.7.4",
-        "echarts": "^6.0.0",
+        "@floating-ui/dom": "catalog:",
+        "echarts": "catalog:",
         "lucide-react": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:"
