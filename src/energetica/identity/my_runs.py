@@ -101,6 +101,7 @@ def build_my_runs(username: str, memberships: MembershipsOut, *, expires_at: str
             FacilitatedRun(
                 slug=fragment.slug,
                 name=fragment.name,
+                mode=fragment.mode,
                 starts_at=fragment.starts_at,
                 freeze_at=fragment.freeze_at,
                 ended_at=fragment.ended_at,

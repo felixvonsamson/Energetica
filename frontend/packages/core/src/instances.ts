@@ -101,7 +101,10 @@ export type RunRelation = "player" | "facilitator" | "visitor";
  */
 export type RunAction = "enter" | "manage" | "join" | "recap";
 
-/** What the lobby cards and the run app's account menu show for one run. */
+/** An action that opens the run's own app, as opposed to its recap or a join. */
+export type OpenRunAction = "enter" | "manage";
+
+/** What the lobby's run list and the run app's account menu show for one run. */
 export type RunEntry = {
     phase: Phase;
     /** The run's main action. */
@@ -109,11 +112,13 @@ export type RunEntry = {
     /** The text of the main action, e.g. "Play" or "View recap". */
     actionLabel: string;
     /**
-     * Whether to offer the recap as a second action next to the main one. True
-     * during `freeze`: the recap exists and the run is still up and readable.
-     * At `ended` the recap is the main action instead.
+     * The action behind a second, read-only "Open run" button next to the
+     * recap, or `null` for none. Set during `freeze`, when the recap is the
+     * main action but the run is still up and readable. A visitor gets none:
+     * they have not joined the run, and joining a frozen run is refused
+     * (#1447).
      */
-    recapAsSecondary: boolean;
+    readOnlyAction: OpenRunAction | null;
 };
 
 const ACTION_LABELS: Record<RunAction, string> = {
@@ -123,21 +128,23 @@ const ACTION_LABELS: Record<RunAction, string> = {
     recap: "View recap",
 };
 
-const LIVE_ACTIONS: Record<RunRelation, RunAction> = {
+const LIVE_ACTIONS: Record<RunRelation, OpenRunAction | "join"> = {
     player: "enter",
     facilitator: "manage",
     visitor: "join",
 };
 
 /**
- * Decide what to show for a run: its phase, its main action and whether the
- * recap sits beside that action. The lobby cards and the run app's "Switch run"
- * list both use it, so that a run offers the same action wherever it is
- * listed.
+ * Decide what to show for a run: its phase, its main action and whether a
+ * read-only "Open run" sits beside it. The lobby's run list and the run app's
+ * "Switch run" menu both use it, so that a run offers the same action wherever
+ * it is listed.
  *
- * Once a run has `ended`, its process is stopped and its subdomain no longer
- * answers, so the recap replaces every other action. During `freeze` the run is
- * still up, so the main action stays and the recap is offered next to it.
+ * Once a run reaches `freeze`, play is over and its recap exists, so the recap
+ * becomes the main action. During `freeze` the run is still up, so a player or
+ * facilitator can also open it read-only. Once it has `ended`, its process is
+ * stopped and its subdomain no longer answers, so the recap is all that is
+ * left.
  *
  * This returns the action, not a URL. The lobby and the app build run URLs
  * differently (the lobby reads the apex from its hostname, the app gets it at
@@ -150,12 +157,15 @@ export function runEntry(
     now: Date = new Date(),
 ): RunEntry {
     const phase = derivePhase(run, now);
-    const action = phase === "ended" ? "recap" : LIVE_ACTIONS[relation];
+    const liveAction = LIVE_ACTIONS[relation];
+    const action =
+        phase === "freeze" || phase === "ended" ? "recap" : liveAction;
     return {
         phase,
         action,
         actionLabel: ACTION_LABELS[action],
-        recapAsSecondary: phase === "freeze",
+        readOnlyAction:
+            phase === "freeze" && liveAction !== "join" ? liveAction : null,
     };
 }
 

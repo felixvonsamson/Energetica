@@ -33,11 +33,12 @@ export const lobbyQueryKeys = {
 };
 
 /**
- * How the lobby keeps "Your runs" and "Open runs" current (#1280). A player can
- * be added to a run, or a run can open, while the lobby sits open, and the
- * lobby has no Socket.IO to hear about it (ADR-0002). So both lists poll every
- * 15 seconds and refetch whenever the window regains focus. React Query pauses
- * the interval while the tab is hidden, so a background tab sends nothing.
+ * How the lobby keeps its run list current (#1280): the account's own runs and
+ * the runs open to join. A player can be added to a run, or a run can open,
+ * while the lobby sits open, and the lobby has no Socket.IO to hear about it
+ * (ADR-0002). So both lists poll every 15 seconds and refetch whenever the
+ * window regains focus. React Query pauses the interval while the tab is
+ * hidden, so a background tab sends nothing.
  */
 const lobbyListPolling = {
     staleTime: 15 * 1000,

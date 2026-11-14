@@ -143,24 +143,24 @@ describe("runEntry (the action the lobby and the switcher offer)", () => {
     };
 
     it.each([
-        ["player", "announced", "enter", "Play", false],
-        ["player", "active", "enter", "Play", false],
-        ["player", "freeze", "enter", "Play", true],
-        ["player", "ended", "recap", "View recap", false],
-        ["facilitator", "active", "manage", "Manage", false],
-        ["facilitator", "freeze", "manage", "Manage", true],
-        ["facilitator", "ended", "recap", "View recap", false],
-        ["visitor", "announced", "join", "Join", false],
-        ["visitor", "freeze", "join", "Join", true],
-        ["visitor", "ended", "recap", "View recap", false],
+        ["player", "announced", "enter", "Play", null],
+        ["player", "active", "enter", "Play", null],
+        ["player", "freeze", "recap", "View recap", "enter"],
+        ["player", "ended", "recap", "View recap", null],
+        ["facilitator", "active", "manage", "Manage", null],
+        ["facilitator", "freeze", "recap", "View recap", "manage"],
+        ["facilitator", "ended", "recap", "View recap", null],
+        ["visitor", "announced", "join", "Join", null],
+        ["visitor", "freeze", "recap", "View recap", null],
+        ["visitor", "ended", "recap", "View recap", null],
     ] as const)(
         "%s during %s → %s",
-        (relation, phase, action, actionLabel, recapAsSecondary) => {
+        (relation, phase, action, actionLabel, readOnlyAction) => {
             expect(runEntry(lifecycle, relation, at[phase])).toEqual({
                 phase,
                 action,
                 actionLabel,
-                recapAsSecondary,
+                readOnlyAction,
             });
         },
     );
@@ -169,6 +169,6 @@ describe("runEntry (the action the lobby and the switcher offer)", () => {
         const open = { starts_at: "2026-01-01T00:00:00Z" };
         const entry = runEntry(open, "player", new Date("2099-01-01"));
         expect(entry.action).toBe("enter");
-        expect(entry.recapAsSecondary).toBe(false);
+        expect(entry.readOnlyAction).toBeNull();
     });
 });

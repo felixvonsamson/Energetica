@@ -27,14 +27,12 @@ export function EmptyState({
                 className,
             )}
         >
-            {Icon && (
-                <Icon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
-            )}
-            <TypographyH3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            {Icon && <Icon className="w-12 h-12 text-muted-foreground mb-4" />}
+            <TypographyH3 className="text-lg font-semibold text-foreground mb-2">
                 {title}
             </TypographyH3>
             {description && (
-                <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-sm">
+                <p className="text-muted-foreground mb-4 max-w-sm">
                     {description}
                 </p>
             )}
