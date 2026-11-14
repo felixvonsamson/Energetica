@@ -9,6 +9,7 @@ import {
     Map,
     Network,
     SlidersVertical,
+    Trophy,
     Warehouse,
     Zap,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export const wikiNav = [
     { slug: "network", label: "Network", icon: Network },
     { slug: "time-and-weather", label: "Time & Weather", icon: Clock },
     { slug: "climate-effects", label: "Climate Change", icon: Leaf },
+    { slug: "progression", label: "Progression", icon: Trophy },
 ];
 
 /**
