@@ -15,7 +15,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 import {
     AddAccountCard,
     RosterCard,
-    type RosterMembers,
+    type LoadedRoster,
     RosterSection,
 } from "@energetica/instance/components/roster";
 
@@ -104,7 +104,7 @@ function TeamSections({
     members,
     onBan,
     pendingUsername,
-}: RosterMembers & {
+}: LoadedRoster & {
     teams: ApiSchema<"WorkshopTeamOut">[];
     players: ApiSchema<"WorkshopMemberOut">[];
 }) {

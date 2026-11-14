@@ -29,12 +29,12 @@ import {
     useSetJoinOpen,
 } from "#instance/hooks/use-facilitator-access";
 import { buildJoinUrl } from "#instance/lib/facilitator";
+import type { FormatError } from "#instance/lib/format-error";
 
 interface JoinLinkCardProps {
     /** The path the app serves its join page at, for this token. */
     joinPath: (token: string) => string;
-    /** Turns an API error into a message for the facilitator. */
-    formatError: (error: unknown) => string;
+    formatError: FormatError;
 }
 
 export function JoinLinkCard({ joinPath, formatError }: JoinLinkCardProps) {

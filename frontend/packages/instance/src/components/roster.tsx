@@ -26,6 +26,7 @@ import {
     useRemoveFromRoster,
     useRosterCandidates,
 } from "#instance/hooks/use-facilitator-roster";
+import type { FormatError } from "#instance/lib/format-error";
 
 export function AddAccountCard() {
     const [query, setQuery] = useState("");
@@ -105,7 +106,7 @@ export function AddAccountCard() {
 }
 
 /** The loaded roster, and what a section listing its members needs. */
-export interface RosterMembers {
+export interface LoadedRoster {
     /** Every account allowed to enter the instance. */
     members: string[];
     onBan: (username: string) => void;
@@ -114,13 +115,12 @@ export interface RosterMembers {
 }
 
 interface RosterCardProps {
-    /** Turns an API error into a message for the facilitator. */
-    formatError: (error: unknown) => string;
+    formatError: FormatError;
     /**
      * Lists the members in the app's own way, such as grouped by team. By
      * default they are listed in one section.
      */
-    renderMembers?: (roster: RosterMembers) => ReactNode;
+    renderMembers?: (roster: LoadedRoster) => ReactNode;
 }
 
 /** The roster, once loaded, listed by `renderMembers`. */
@@ -144,7 +144,7 @@ export function RosterCard({ formatError, renderMembers }: RosterCardProps) {
         return <InfoBanner variant="error">{formatError(error)}</InfoBanner>;
     }
 
-    const roster: RosterMembers = {
+    const roster: LoadedRoster = {
         members: data.members,
         onBan: removeFromRoster,
         pendingUsername: isPending ? pendingUsername : null,

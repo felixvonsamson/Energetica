@@ -27,6 +27,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import { LogOutButton, TopBar, TopBarLogo } from "#instance/components/top-bar";
 import { useConfirmJoin, useJoinLink } from "#instance/hooks/use-join";
+import type { FormatError } from "#instance/lib/format-error";
 import { rememberPendingJoinToken } from "#instance/lib/join";
 import type { ApiSchema } from "@api";
 
@@ -64,8 +65,7 @@ export function JoinHeader({ viewer }: { viewer?: Viewer | null }) {
 
 interface JoinCardProps {
     token: string;
-    /** Turns an API error into a message for the visitor. */
-    formatError: (error: unknown) => string;
+    formatError: FormatError;
     /**
      * Runs once the visitor has joined. The app re-reads whatever its entry
      * gate depends on and takes the visitor into the app. The join button keeps
@@ -100,8 +100,8 @@ export function JoinCard({
         return <InfoBanner variant="error">{formatError(error)}</InfoBanner>;
     }
 
-    // Show show facilitators and players who have already joined the same thing
-    // irrespective of if the join link is still active or not
+    // A facilitator, or a player who already joined, sees the same card whether or not the
+    // join link is still open.
     if (data.viewer?.membership === "facilitator") {
         return (
             <AlreadyFacilitatorCard
@@ -186,7 +186,7 @@ function ConfirmJoinCard({
 }: {
     instanceName: string;
     token: string;
-    formatError: (error: unknown) => string;
+    formatError: FormatError;
     onJoined: () => void | Promise<void>;
 }) {
     const {
