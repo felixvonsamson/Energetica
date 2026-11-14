@@ -94,10 +94,10 @@ export function runBand(run: Lifecycle, now: Date = new Date()): RunBand {
  * The one total ordering of runs. Sorting with it and cutting the result into
  * bands gives each band in its own order:
  *
- * - **Now:** runs starting soon at the top, soonest start first. Then workshops
- *   before freeplay, the account's own runs (played or facilitated) before runs
- *   it could join, soonest `freeze_at` first with open-ended runs last, and
- *   name.
+ * - **Now:** runs starting soon at the top, soonest start first whatever their
+ *   mode or relation. Then the live runs: workshops before freeplay, the
+ *   account's own runs (played or facilitated) before runs it could join,
+ *   soonest `freeze_at` first with open-ended runs last, and name.
  * - **Coming up:** workshops before freeplay, own runs before joinable ones,
  *   soonest `starts_at` first, and name.
  * - **Past:** frozen before ended, own runs before public recaps, most recent
@@ -135,6 +135,12 @@ function compareCurrent(
     const soonA = statusA === "starting-soon";
     const soonB = statusB === "starting-soon";
     if (soonA !== soonB) return soonA ? -1 : 1;
+    // Among runs starting soon, the one starting first is the most urgent,
+    // whatever its mode or relation.
+    if (soonA) {
+        const byStart = timestamp(a.starts_at) - timestamp(b.starts_at);
+        if (byStart) return byStart;
+    }
     const byFlags =
         flag(isWorkshop(a), isWorkshop(b)) || flag(isOwn(a), isOwn(b));
     if (byFlags) return byFlags;

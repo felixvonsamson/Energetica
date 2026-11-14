@@ -107,6 +107,33 @@ describe("compareRuns: Now", () => {
         ).toEqual(["sooner", "later"]);
     });
 
+    it("orders runs starting soon by start before mode and relation", () => {
+        expect(
+            order([
+                soon("own-workshop-later", {
+                    mode: "workshop",
+                    starts_at: at(55 * MIN),
+                }),
+                soon("visitor-freeplay-sooner", {
+                    relation: "visitor",
+                    starts_at: at(5 * MIN),
+                }),
+            ]),
+        ).toEqual(["visitor-freeplay-sooner", "own-workshop-later"]);
+    });
+
+    it("falls back to mode and relation for runs starting at the same time", () => {
+        expect(
+            order([
+                soon("a-freeplay", { starts_at: at(20 * MIN) }),
+                soon("b-workshop", {
+                    mode: "workshop",
+                    starts_at: at(20 * MIN),
+                }),
+            ]),
+        ).toEqual(["b-workshop", "a-freeplay"]);
+    });
+
     it("puts workshops before freeplay, then own runs before joinable ones", () => {
         expect(
             order([
