@@ -7,8 +7,8 @@
  * projector shows the colours players see on their own screens.
  */
 
-import { resolveCSSVar } from "@/lib/charts/color-utils";
 import type { ApiSchema } from "@/types/api-helpers";
+import { resolveCSSVar } from "@energetica/ui/lib/color-utils";
 
 type PowerSource = ApiSchema<"PowerSource">;
 

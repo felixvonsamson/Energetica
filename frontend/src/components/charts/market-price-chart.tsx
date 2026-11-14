@@ -1,12 +1,13 @@
 import { ReactNode, useMemo } from "react";
 
 import {
+    chartTypeConfig,
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { ResolutionOption } from "@/types/charts";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
 import { formatMoney } from "@energetica/core/format-utils";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 
@@ -57,7 +58,7 @@ export function MarketPriceChart({
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: "market-clearing",
+            ...chartTypeConfig("market-clearing"),
             chartVariant: "steppedLine",
             stacked: false,
             getColor: () => "var(--chart-2)",

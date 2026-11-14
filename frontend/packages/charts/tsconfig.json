@@ -1,0 +1,9 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        // `?react` SVG imports in @energetica/ui, which every app's Vite config turns
+        // into components.
+        "types": ["vite/client", "vite-plugin-svgr/client"]
+    },
+    "include": ["src"]
+}

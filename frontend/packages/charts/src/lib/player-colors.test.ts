@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseOklch, playerColorGetter, shadePosition } from "./player-colors";
+import {
+    parseOklch,
+    playerColorGetter,
+    shadePosition,
+} from "#charts/lib/player-colors";
 
 const palette = {
     self: "oklch(0.4 0.08 148)",

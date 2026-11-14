@@ -39,24 +39,6 @@ import {
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import {
-    type ChartSyncProps,
-    type EChartsTimeSeriesConfig,
-    FULL_ZOOM,
-    type TimeAxis,
-    TimeSeriesChart,
-    type ZoomRange,
-} from "@/components/charts/echarts-time-series";
-import { MeritOrderView } from "@/components/charts/merit-order-view";
-import {
-    PowerChart,
-    type PowerChartViewMode,
-} from "@/components/charts/power-chart";
-import {
-    STORAGE_VIEW_OPTIONS,
-    StorageChart,
-    type StorageView,
-} from "@/components/charts/storage-chart";
-import {
     CardDockBar,
     CardDockProvider,
     type DockItem,
@@ -72,9 +54,7 @@ import {
     SeasonNavigator,
     SeasonPriceChart,
 } from "@/components/workshop/season-navigator";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { usePlayerColors } from "@/hooks/use-player-color-getter";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import {
     useWorkshopEntry,
@@ -82,9 +62,9 @@ import {
     useWorkshopMeritOrder,
     useWorkshopPeriod,
     useWorkshopPeriodDays,
+    useWorkshopPlayerColors,
     useWorkshopSeasonOverview,
     useWorkshopSession,
-    useWorkshopTeams,
 } from "@/hooks/use-workshop";
 import {
     CONSUMERS,
@@ -114,6 +94,24 @@ import {
     isGridDown,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
+import { MeritOrderView } from "@energetica/charts/components/merit-order-view";
+import {
+    PowerChart,
+    type PowerChartViewMode,
+} from "@energetica/charts/components/power-chart";
+import {
+    STORAGE_VIEW_OPTIONS,
+    StorageChart,
+    type StorageView,
+} from "@energetica/charts/components/storage-chart";
+import {
+    type ChartSyncProps,
+    type EChartsTimeSeriesConfig,
+    FULL_ZOOM,
+    type TimeAxis,
+    TimeSeriesChart,
+    type ZoomRange,
+} from "@energetica/charts/components/time-series-chart";
 import { ApiClientError } from "@energetica/core/api-client";
 import { formatMoney } from "@energetica/core/format-utils";
 import { ChartCard } from "@energetica/ui/components/chart-card";
@@ -130,6 +128,7 @@ import {
     TabsTrigger,
 } from "@energetica/ui/components/tabs";
 import { TypographyMuted } from "@energetica/ui/components/typography";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 type Season = ApiSchema<"TradingPeriod">["season"];
 type Period = ApiSchema<"WorkshopPeriodOut">;
@@ -196,12 +195,7 @@ function useLabels(): Labels {
 
     const me = entry?.player?.account_id ?? null;
     const players = session?.players;
-    const playerIds = useMemo(
-        () => (players ?? []).map((player) => player.account_id),
-        [players],
-    );
-    const { teammateIds } = useWorkshopTeams();
-    const baseColor = usePlayerColors(me, playerIds, teammateIds);
+    const baseColor = useWorkshopPlayerColors();
 
     return useMemo(() => {
         const names = new Map(

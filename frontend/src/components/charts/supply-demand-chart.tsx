@@ -2,8 +2,6 @@
 
 import { memo, useMemo, useState } from "react";
 
-import { MeritOrderView } from "@/components/charts/merit-order-view";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useMarketData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
@@ -11,14 +9,16 @@ import { useGameTick } from "@/hooks/use-game-tick";
 import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
 import { getAssetLongName } from "@/lib/assets/asset-names";
+import { MeritOrderView } from "@energetica/charts/components/merit-order-view";
 import { formatDuration } from "@energetica/core/format-utils";
 import { Label } from "@energetica/ui/components/label";
 import { Slider } from "@energetica/ui/components/slider";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 export type {
     ActiveMode,
     ColorMode,
-} from "@/components/charts/merit-order-view";
+} from "@energetica/charts/components/merit-order-view";
 
 // ── MeritOrderChart ───────────────────────────────────────────────────────────
 

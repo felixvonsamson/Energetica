@@ -12,8 +12,8 @@
 import coal from "@/assets/fuels/coal.svg";
 import gas from "@/assets/fuels/gas.svg";
 import uranium from "@/assets/fuels/uranium.svg";
-import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import type { ApiSchema } from "@/types/api-helpers";
+import { assetCSSColourVariable } from "@energetica/ui/lib/asset-colors";
 
 type Fuel = ApiSchema<"Fuel">;
 type FuelLine = ApiSchema<"WorkshopFuelLineOut">;

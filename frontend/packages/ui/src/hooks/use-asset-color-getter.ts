@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from "react";
 
-import { clearAssetColorCache, getAssetColor } from "@/lib/assets/asset-colors";
-import { useTheme } from "@energetica/ui/contexts/theme-context";
+import { useTheme } from "#ui/contexts/theme-context";
+import { clearAssetColorCache, getAssetColor } from "#ui/lib/asset-colors";
 
 /**
  * Hook that returns a color getter function that's theme-aware.

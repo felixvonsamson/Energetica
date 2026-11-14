@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from "react";
 
-import {
-    EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
-} from "@/components/charts/echarts-time-series";
+import { EChartsTimeSeries } from "@/components/charts/echarts-time-series";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
 import {
     formatConcentration,
     formatEmissions,

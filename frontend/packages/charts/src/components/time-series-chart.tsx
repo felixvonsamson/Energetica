@@ -1,0 +1,1271 @@
+/**
+ * Generic ECharts time-series chart replacing the old Recharts TimeSeriesChart.
+ *
+ * "area" variant renders as zero-gap stacked bars (like PowerChart).
+ * "steppedLine" and "smoothLine" render as line series.
+ *
+ * Features shared across all variants:
+ *
+ * - Tick labels at adaptive round intervals, from a {@link TimeAxis}
+ * - Drag-to-zoom with zoom preservation on new data, which charts can share
+ * - React tooltip overlay with colored circles on the axis pointer
+ * - An optional marker on one tick, and a callback when a tick is clicked
+ * - Optional red striped "Blackout" regions, each from where the grid went down
+ *   to where it came back
+ * - An optional highlighted series, with the others faded
+ *
+ * It shows only the data it is given, on the {@link TimeAxis} it is given, so
+ * every app supplies both. The persistent world's axis counts back from the
+ * current game tick; the Workshop's counts days of a Trading period.
+ */
+
+import { resolveColor, resolveCSSVar } from "@energetica/ui/lib/color-utils";
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { BarChart as EBarChart, LineChart as ELineChart } from "echarts/charts";
+import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
+import {
+    DataZoomComponent,
+    GridComponent,
+    MarkAreaComponent,
+    MarkLineComponent,
+    ToolboxComponent,
+    TooltipComponent,
+} from "echarts/components";
+import type {
+    DataZoomComponentOption,
+    GridComponentOption,
+    MarkAreaComponentOption,
+    MarkLineComponentOption,
+    ToolboxComponentOption,
+    TooltipComponentOption,
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { ZoomOut } from "lucide-react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { createPortal } from "react-dom";
+
+import { reorderObjectKeys } from "#charts/lib/key-order";
+import { seriesOpacity } from "#charts/lib/series-highlight";
+
+// Register ECharts components once at module level (tree-shaking)
+echarts.use([
+    EBarChart,
+    ELineChart,
+    GridComponent,
+    TooltipComponent,
+    DataZoomComponent,
+    MarkAreaComponent,
+    MarkLineComponent,
+    ToolboxComponent,
+    CanvasRenderer,
+]);
+
+type ECOption = ComposeOption<
+    | BarSeriesOption
+    | LineSeriesOption
+    | GridComponentOption
+    | TooltipComponentOption
+    | DataZoomComponentOption
+    | MarkAreaComponentOption
+    | MarkLineComponentOption
+    | ToolboxComponentOption
+>;
+
+export type ChartVariant = "area" | "steppedLine" | "smoothLine";
+
+/** Configuration for TimeSeriesChart. */
+export interface EChartsTimeSeriesConfig {
+    /**
+     * Names what the chart shows, such as "power-sources". Changing it resets
+     * the zoom, as new data of another length does.
+     */
+    kind?: string;
+    /**
+     * The series keys in display order. Keys the order leaves out come after
+     * them, in the data's order.
+     */
+    keyOrder?: readonly string[];
+    /**
+     * Visual variant ("area" = stacked bars, "steppedLine" / "smoothLine" =
+     * lines)
+     */
+    chartVariant: ChartVariant;
+    /** Whether to stack multiple series */
+    stacked?: boolean;
+    /** Height in pixels (default 500) */
+    height?: number;
+    /** Color getter per series key */
+    getColor?: (key: string) => string;
+    /** Data key filters applied in order */
+    filterDataKeys?: Array<(key: string, data: unknown[]) => boolean>;
+    /** Y-axis label formatter */
+    formatYAxis?: (value: number) => string;
+    /** Tooltip value formatter */
+    formatValue: (value: number) => ReactNode;
+    /** Tooltip label formatter (default: the series key) */
+    formatLabel?: (key: string) => ReactNode;
+    /**
+     * Keys whose bars are colored green when positive, red when negative. For
+     * "area" variant bars this replaces the old linear gradient. For line
+     * variants a green/red linear gradient fill is still used.
+     */
+    gradientKeys?: string[];
+    /** Whether to hide zero values in tooltip (default true) */
+    hideZeroValues?: boolean;
+    /** Y-axis minimum (default: auto) */
+    yAxisMin?: number;
+    /** Y-axis maximum (default: auto) */
+    yAxisMax?: number;
+    /** Y-axis title label (e.g. "Price (coins/MWh)") */
+    yAxisLabel?: string;
+    /**
+     * The share of each tick's slot left empty between "area" bars. Zero by
+     * default, so bars touch.
+     */
+    barGap?: number;
+}
+
+export interface EChartsTimeSeriesProps {
+    data: Array<Record<string, unknown>>;
+    config: EChartsTimeSeriesConfig;
+    isLoading?: boolean;
+    isError?: boolean;
+    /** Draw a vertical marker at this tick, if it is one of the data's ticks. */
+    markerTick?: number;
+    /**
+     * Shade the chart red over each of these tick ranges, from `start` up to
+     * `end`, labelled "Blackout": the grid was down there, so the series stop.
+     */
+    blackouts?: readonly { start: number; end: number }[];
+    /**
+     * Shade the ticks from `start` up to `end`, such as the days shown in
+     * detail elsewhere.
+     */
+    highlight?: { start: number; end: number };
+    /** Called with the tick under the pointer when the plot is clicked. */
+    onTickClick?: (tick: number) => void;
+    /**
+     * A zoom window shared with other charts. When given, the chart shows it,
+     * and reports the player's zooms and resets through `onZoomChange`.
+     */
+    zoom?: ZoomRange;
+    onZoomChange?: (zoom: ZoomRange) => void;
+    /**
+     * The series to highlight, with the others faded, such as the one whose row
+     * the player hovers in a table below the chart.
+     */
+    highlightedKey?: string | null;
+}
+
+/** The part of the data a chart shows, as percentages from its start. */
+export interface ZoomRange {
+    start: number;
+    end: number;
+}
+
+export const FULL_ZOOM: ZoomRange = { start: 0, end: 100 };
+
+function isFullZoom({ start, end }: ZoomRange): boolean {
+    return start <= 0.5 && end >= 99.5;
+}
+
+function isSameZoom(a: ZoomRange, b: ZoomRange): boolean {
+    return Math.abs(a.start - b.start) < 1e-6 && Math.abs(a.end - b.end) < 1e-6;
+}
+
+/** How a chart's ticks map to time: the x-axis labels and tooltip heading. */
+export interface TimeAxis {
+    /**
+     * The x-axis label for `tick`. `isLast` is true for the rightmost data
+     * point.
+     */
+    formatTick: (tick: number, isLast: boolean) => string;
+    /** The tooltip heading for `tick`. */
+    formatTooltipTitle: (tick: number) => ReactNode;
+    /**
+     * In-game seconds from one tick to the next, used to space labels at round
+     * intervals. Zero when not known yet.
+     */
+    secondsPerTick: number;
+    /**
+     * Which end the label intervals count from: the right for an axis ending
+     * "now", the left for one starting at a round time such as midnight.
+     */
+    anchor: "left" | "right";
+}
+
+export interface TimeSeriesChartProps extends EChartsTimeSeriesProps {
+    /** Callers should memoize it, like `config`. */
+    timeAxis: TimeAxis;
+}
+
+/**
+ * The props a chart built on the time-series chart passes straight through to
+ * it: the marker, blackout, click, shared zoom and highlighted series, and the
+ * time axis.
+ */
+export type ChartSyncProps = Pick<
+    EChartsTimeSeriesProps,
+    | "markerTick"
+    | "blackouts"
+    | "highlight"
+    | "onTickClick"
+    | "zoom"
+    | "onZoomChange"
+    | "highlightedKey"
+> & {
+    /** The chart's time axis. Callers should memoize it, like `config`. */
+    timeAxis: TimeAxis;
+};
+
+// ── CSS variable resolver ─────────────────────────────────────────────────────
+
+// ── Tooltip overlay ───────────────────────────────────────────────────────────
+
+interface Circle {
+    seriesKey: string;
+    clientX: number;
+    clientY: number;
+    color: string;
+}
+
+interface TooltipEntry {
+    key: string;
+    color: string;
+    value: number;
+    label: ReactNode;
+}
+
+interface TSTooltipState {
+    clientX: number;
+    clientY: number;
+    tick: number;
+    entries: TooltipEntry[];
+    stacked: boolean;
+    circles: Circle[];
+}
+
+function TSTooltip({
+    tooltip,
+    title,
+    formatValue,
+}: {
+    tooltip: TSTooltipState;
+    title: ReactNode;
+    formatValue: (v: number) => ReactNode;
+}) {
+    const divRef = useRef<HTMLDivElement>(null);
+
+    // Reposition the tooltip before each paint using Floating UI so it never
+    // bleeds off the viewport edge. computePosition resolves as a microtask
+    // (sync middleware), which still runs before the browser paints.
+    useLayoutEffect(() => {
+        const el = divRef.current;
+        if (!el) return;
+        const virtualEl = {
+            getBoundingClientRect() {
+                return {
+                    x: tooltip.clientX,
+                    y: tooltip.clientY,
+                    width: 0,
+                    height: 0,
+                    top: tooltip.clientY,
+                    left: tooltip.clientX,
+                    right: tooltip.clientX,
+                    bottom: tooltip.clientY,
+                };
+            },
+        };
+        computePosition(virtualEl, el, {
+            placement: "right-start",
+            strategy: "fixed",
+            middleware: [
+                offset({ mainAxis: 14, crossAxis: 8 }),
+                flip(),
+                shift({ padding: 8 }),
+            ],
+        }).then(({ x, y }) => {
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+        });
+    }, [tooltip]);
+
+    const total = tooltip.stacked
+        ? tooltip.entries.reduce((s, e) => s + e.value, 0)
+        : null;
+
+    return (
+        <div
+            ref={divRef}
+            style={{
+                position: "fixed",
+                left: tooltip.clientX + 14,
+                top: tooltip.clientY + 8,
+                pointerEvents: "none",
+                zIndex: 9999,
+            }}
+            className="bg-neutral-100 dark:bg-neutral-700 border border-border rounded shadow-lg p-2 text-xs"
+        >
+            <div className="font-semibold mb-1 pb-1 border-b border-border/50">
+                {title}
+            </div>
+            <table>
+                <tbody>
+                    {tooltip.entries.map((entry) => (
+                        <tr key={entry.key}>
+                            <td className="pr-1 align-middle">
+                                <div
+                                    className="w-2.5 h-2.5 rounded-sm inline-block"
+                                    style={{ backgroundColor: entry.color }}
+                                />
+                            </td>
+                            <td className="pr-3 whitespace-nowrap align-middle">
+                                {entry.label}
+                            </td>
+                            <td className="text-right font-mono whitespace-nowrap align-middle">
+                                {formatValue(entry.value)}
+                            </td>
+                        </tr>
+                    ))}
+                    {total !== null && (
+                        <tr className="border-t border-border/50">
+                            <td
+                                colSpan={2}
+                                className="pt-1 pr-3 font-semibold align-middle"
+                            >
+                                Total
+                            </td>
+                            <td className="pt-1 text-right font-mono font-semibold whitespace-nowrap align-middle">
+                                {formatValue(total)}
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+// ── Nice tick intervals (game-seconds) ───────────────────────────────────────
+
+const NICE_INTERVALS_S = [
+    60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800, 432000,
+    604800, 1209600, 2592000,
+];
+
+/**
+ * The round time between two x-axis labels that gives about 6 labels across
+ * `visibleSeconds`. A chart lined up with this one can space its labels the
+ * same way.
+ */
+export function labelIntervalSeconds(visibleSeconds: number): number {
+    const target = visibleSeconds / 6;
+    return NICE_INTERVALS_S.reduce((a, b) =>
+        Math.abs(b - target) < Math.abs(a - target) ? b : a,
+    );
+}
+
+// ── Blackout stripes ──────────────────────────────────────────────────────────
+
+const stripePatterns = new Map<string, HTMLCanvasElement>();
+
+/**
+ * A tile of faint diagonal stripes in `color`, for the blackout region. Each
+ * color's tile is drawn once, rather than each time a chart's option is built.
+ */
+function stripePattern(color: string): HTMLCanvasElement {
+    const cached = stripePatterns.get(color);
+    if (cached) return cached;
+    const size = 10;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    stripePatterns.set(color, canvas);
+    const context = canvas.getContext("2d");
+    if (!context) return canvas;
+    context.globalAlpha = 0.3;
+    context.strokeStyle = color;
+    context.lineWidth = 3;
+    // The diagonal, plus its ends at the tile's corners, so the stripes join
+    // up from one tile to the next.
+    for (const offset of [-size, 0, size]) {
+        context.beginPath();
+        context.moveTo(offset, size);
+        context.lineTo(offset + size, 0);
+        context.stroke();
+    }
+    return canvas;
+}
+
+// ── TimeSeriesChart ───────────────────────────────────────────────────────────
+
+/**
+ * Generic ECharts time-series chart component, on the time axis it is given.
+ *
+ * Callers should memoize the `config` and `timeAxis` objects to prevent
+ * unnecessary re-renders.
+ */
+export function TimeSeriesChart({
+    data,
+    config,
+    timeAxis,
+    isLoading = false,
+    isError = false,
+    markerTick,
+    blackouts,
+    highlight,
+    onTickClick,
+    zoom,
+    onZoomChange,
+    highlightedKey,
+}: TimeSeriesChartProps) {
+    const chartRef = useRef<HTMLDivElement>(null);
+    const instanceRef = useRef<echarts.ECharts | null>(null);
+    const dataKeyRef = useRef<string>("");
+    const structuralKeyRef = useRef<string>("");
+
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [tooltip, setTooltip] = useState<TSTooltipState | null>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [zoomRange, setZoomRange] = useState(FULL_ZOOM);
+    // The shared zoom window, read when the chart is rebuilt.
+    const zoomRef = useRef(zoom);
+    useEffect(() => {
+        zoomRef.current = zoom;
+    }, [zoom]);
+    // Set while the chart applies the shared zoom window, so the zoom it
+    // causes is not reported back as the player's.
+    const isSyncingRef = useRef(false);
+    // The zoom window the chart shows, as of its last zoom.
+    const shownZoomRef = useRef(FULL_ZOOM);
+
+    // Reorder data keys according to the config's key order
+    const processedData = useMemo(() => {
+        const keyOrder = config.keyOrder;
+        if (!keyOrder) return data;
+        return data.map((dp) => reorderObjectKeys(dp, keyOrder));
+    }, [data, config.keyOrder]);
+
+    // Extract and filter visible series keys
+    const visibleKeys = useMemo(() => {
+        if (processedData.length === 0) return [];
+        const firstPoint = processedData[0];
+        if (!firstPoint) return [];
+        const allKeys = Object.keys(firstPoint).filter((k) => k !== "tick");
+        if (!config.filterDataKeys) return allKeys;
+        return allKeys.filter((key) =>
+            config.filterDataKeys!.every((f) => f(key, processedData)),
+        );
+    }, [processedData, config.filterDataKeys]);
+
+    // Structural key: triggers a full zoom reset when chart identity or
+    // resolution changes. New ticks arriving with the same data length
+    // keep the same key so the current zoom window is preserved.
+    const structuralKey = useMemo(
+        () =>
+            `${config.kind}:${config.chartVariant}:${config.stacked}:${data.length}`,
+        [data.length, config.kind, config.chartVariant, config.stacked],
+    );
+
+    // Lags behind structuralKey during the post-setOption microtask window so
+    // stale circles are suppressed at render time rather than after a deferred
+    // setState fires.
+    const [appliedStructuralKey, setAppliedStructuralKey] =
+        useState(structuralKey);
+
+    // Full data key: changes on every new tick arrival. Used as effect dep so
+    // series are re-rendered on fresh data even without a zoom reset.
+    const dataKey = useMemo(() => {
+        const first = data[0]?.tick;
+        const last = data[data.length - 1]?.tick;
+        return `${config.kind}:${config.chartVariant}:${config.stacked}:${data.length}:${first}:${last}`;
+    }, [data, config.kind, config.chartVariant, config.stacked]);
+
+    // Live ref keeps tooltip/circle handlers fresh without rebinding ZRender
+    // listeners or triggering option recomputation.
+    const liveDataRef = useRef({
+        processedData,
+        visibleKeys,
+        getColor: config.getColor,
+        hideZeroValues: config.hideZeroValues ?? true,
+        formatLabel: config.formatLabel,
+        stacked: config.stacked ?? false,
+        onTickClick,
+        onZoomChange,
+    });
+    useEffect(() => {
+        liveDataRef.current = {
+            processedData,
+            visibleKeys,
+            getColor: config.getColor,
+            hideZeroValues: config.hideZeroValues ?? true,
+            formatLabel: config.formatLabel,
+            stacked: config.stacked ?? false,
+            onTickClick,
+            onZoomChange,
+        };
+    }, [
+        processedData,
+        visibleKeys,
+        config.getColor,
+        config.hideZeroValues,
+        config.formatLabel,
+        config.stacked,
+        onTickClick,
+        onZoomChange,
+    ]);
+
+    // Forward wheel events to the page so trackpad/mouse scroll works normally.
+    // ECharts' ZRender calls stopPropagation(), so we need capture phase.
+    useEffect(() => {
+        const el = chartRef.current;
+        if (!el) return;
+        const handler = (e: WheelEvent) => window.scrollBy(0, e.deltaY);
+        el.addEventListener("wheel", handler, { capture: true, passive: true });
+        return () =>
+            el.removeEventListener("wheel", handler, { capture: true });
+    }, []);
+
+    // When the page scrolls, the fixed-position circles drift out of alignment
+    // with the chart. ZRender doesn't fire mouseout on scroll (the mouse didn't
+    // move), so we clear the tooltip explicitly.
+    useEffect(() => {
+        const clear = () => setTooltip(null);
+        window.addEventListener("scroll", clear, {
+            capture: true,
+            passive: true,
+        });
+        return () =>
+            window.removeEventListener("scroll", clear, { capture: true });
+    }, []);
+
+    // ── ECharts option ────────────────────────────────────────────────────────
+
+    const option = useMemo((): ECOption => {
+        const ticks = processedData.map((d) => d.tick as number);
+        const isBar = config.chartVariant === "area";
+
+        const lastTick = ticks[ticks.length - 1] ?? -1;
+        const formatXTick = (value: string | number): string => {
+            const t = Number(value);
+            return timeAxis.formatTick(t, t === lastTick);
+        };
+
+        // Visible tick count based on current zoom window — drives both barWidth
+        // (bars only) and tick label interval selection (all variants).
+        const visibleFraction = (zoomRange.end - zoomRange.start) / 100;
+        const visibleTickCount = Math.max(
+            1,
+            Math.ceil(ticks.length * visibleFraction),
+        );
+
+        // Choose a round label interval giving ~6 labels across the visible
+        // range. Falls back to ticks/7 when the time per tick isn't known yet.
+        const tickResolution =
+            ticks.length >= 2
+                ? ((ticks[ticks.length - 1] ?? 0) - (ticks[0] ?? 0)) /
+                  (ticks.length - 1)
+                : 1;
+        const secondsPerDataPoint = tickResolution * timeAxis.secondsPerTick;
+        const tickInterval = (() => {
+            if (!secondsPerDataPoint)
+                return Math.max(0, Math.round(ticks.length / 7) - 1);
+            const niceSeconds = labelIntervalSeconds(
+                visibleTickCount * secondsPerDataPoint,
+            );
+            return Math.max(1, Math.round(niceSeconds / secondsPerDataPoint));
+        })();
+
+        // Stacked bar width: ceil so adjacent bars overlap by 1px, closing
+        // sub-pixel rounding gaps. plotWidth mirrors the grid margins (l:70, r:20).
+        const plotWidth = 1.005 * Math.max(1, containerWidth - 90);
+        const barWidth =
+            ticks.length > 0
+                ? config.barGap
+                    ? Math.max(
+                          1,
+                          (plotWidth / visibleTickCount) * (1 - config.barGap),
+                      )
+                    : Math.ceil(plotWidth / visibleTickCount)
+                : 1;
+
+        // Resolve CSS variables for canvas renderer
+        const successColor = resolveCSSVar("--success");
+        const destructiveColor = resolveCSSVar("--destructive");
+
+        // Gradient offsets for line-variant gradient fills
+        const gradientOffsets: Record<string, number> = {};
+        if (!isBar) {
+            for (const key of config.gradientKeys ?? []) {
+                const values = processedData
+                    .map((d) =>
+                        typeof d[key] === "number" ? (d[key] as number) : 0,
+                    )
+                    .filter((v) => !isNaN(v));
+                if (values.length === 0) continue;
+                const dataMax = Math.max(...values);
+                const dataMin = Math.min(...values);
+                if (dataMax <= 0) gradientOffsets[key] = 0;
+                else if (
+                    dataMin >= 0 ||
+                    Math.abs(dataMin) < (dataMax - dataMin) * 0.01
+                )
+                    gradientOffsets[key] = 1;
+                else gradientOffsets[key] = dataMax / (dataMax - dataMin);
+            }
+        }
+
+        // A marker on one tick, drawn on the first series. Its value on a
+        // category axis is the tick's index.
+        const markerIndex =
+            markerTick === undefined ? -1 : ticks.indexOf(markerTick);
+        const markLine: MarkLineComponentOption | undefined =
+            markerIndex < 0
+                ? undefined
+                : {
+                      silent: true,
+                      symbol: ["none", "none"],
+                      animation: false,
+                      label: { show: false },
+                      lineStyle: {
+                          color: resolveCSSVar("--foreground"),
+                          type: "solid",
+                          width: 2,
+                      },
+                      data: [{ xAxis: markerIndex }],
+                  };
+
+        // The blackout regions, each from the first tick at or after the
+        // blackout to the first tick the grid is back at, drawn on the first
+        // series like the marker. A region that runs past the last tick is
+        // left open, so ECharts runs it to the plot's right edge rather than
+        // to the middle of the last bar. On bars, ECharts puts a region's end
+        // at the right edge of the bar it is given, so it is given the last
+        // bar the grid is down at.
+        const blackoutAreas = (blackouts ?? []).flatMap(({ start, end }) => {
+            const from = ticks.findIndex((tick) => tick >= start);
+            if (from < 0 || (ticks[from] ?? Infinity) >= end) return [];
+            const to = ticks.findIndex((tick) => tick >= end);
+            if (to < 0) return [[{ xAxis: from }, {}]];
+            return [[{ xAxis: from }, { xAxis: isBar ? to - 1 : to }]];
+        });
+        const highlightFrom =
+            highlight === undefined
+                ? -1
+                : ticks.findIndex((tick) => tick >= highlight.start);
+        const highlightTo =
+            highlight === undefined
+                ? -1
+                : ticks.findLastIndex((tick) => tick < highlight.end);
+        const primaryColor = resolveCSSVar("--primary");
+        const highlightAreas =
+            highlightFrom < 0 || highlightTo < highlightFrom
+                ? []
+                : [
+                      [
+                          {
+                              xAxis: highlightFrom,
+                              itemStyle: {
+                                  color: primaryColor,
+                                  opacity: 0.15,
+                                  borderColor: primaryColor,
+                                  borderWidth: 1.5,
+                              },
+                              label: { show: false },
+                          },
+                          { xAxis: highlightTo },
+                      ],
+                  ];
+        blackoutAreas.push(...(highlightAreas as typeof blackoutAreas));
+        const markArea: MarkAreaComponentOption | undefined =
+            blackoutAreas.length === 0
+                ? undefined
+                : {
+                      silent: true,
+                      animation: false,
+                      itemStyle: {
+                          color: {
+                              image: stripePattern(destructiveColor),
+                              repeat: "repeat",
+                          },
+                      },
+                      label: {
+                          show: true,
+                          position: "insideTop",
+                          formatter: "Blackout",
+                          color: destructiveColor,
+                          fontWeight: "bold",
+                      },
+                      data: blackoutAreas as NonNullable<
+                          MarkAreaComponentOption["data"]
+                      >,
+                  };
+        const marks = {
+            ...(markLine ? { markLine } : {}),
+            ...(markArea ? { markArea } : {}),
+        };
+
+        const series: ECOption["series"] = visibleKeys.map((key, index) => {
+            const marker = index === 0 ? marks : {};
+            const rawColor = config.getColor?.(key) ?? "#888";
+            const color = resolveColor(rawColor);
+            const useGradient = (config.gradientKeys ?? []).includes(key);
+            const opacity = seriesOpacity(key, highlightedKey, visibleKeys);
+
+            if (isBar) {
+                // "area" → stacked bars, 0-gap, 1px overlap to seal sub-pixel seams.
+                // Gradient keys: color each bar green (≥0) or red (<0) by value.
+                return {
+                    name: key,
+                    type: "bar",
+                    stack: config.stacked ? "total" : undefined,
+                    barWidth,
+                    emphasis: { disabled: true },
+                    data: processedData.map((d) => Number(d[key] ?? 0)),
+                    itemStyle: {
+                        borderWidth: 0,
+                        opacity,
+                        color: useGradient
+                            ? (params: { value: unknown }) =>
+                                  Number(params.value) >= 0
+                                      ? successColor
+                                      : destructiveColor
+                            : color,
+                    },
+                    animation: false,
+                    ...marker,
+                } satisfies BarSeriesOption;
+            }
+
+            // Line variants
+            const base: LineSeriesOption = {
+                name: key,
+                type: "line",
+                symbol: "none",
+                stack: config.stacked ? "total" : undefined,
+                emphasis: { disabled: true },
+                data: processedData.map((d) => Number(d[key] ?? 0)),
+                itemStyle: { color, opacity },
+                animation: false,
+                ...marker,
+            };
+
+            if (config.chartVariant === "smoothLine") {
+                const areaColor = useGradient
+                    ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                          { offset: 0, color: successColor },
+                          {
+                              offset: gradientOffsets[key] ?? 0.5,
+                              color: successColor,
+                          },
+                          {
+                              offset: gradientOffsets[key] ?? 0.5,
+                              color: destructiveColor,
+                          },
+                          { offset: 1, color: destructiveColor },
+                      ])
+                    : undefined;
+                return {
+                    ...base,
+                    smooth: true,
+                    lineStyle: { width: 2, color, opacity },
+                    ...(areaColor
+                        ? {
+                              areaStyle: {
+                                  opacity: 0.3 * opacity,
+                                  color: areaColor,
+                              },
+                          }
+                        : {}),
+                };
+            }
+
+            // steppedLine
+            const areaColor = useGradient
+                ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                      { offset: 0, color: successColor },
+                      {
+                          offset: gradientOffsets[key] ?? 0.5,
+                          color: successColor,
+                      },
+                      {
+                          offset: gradientOffsets[key] ?? 0.5,
+                          color: destructiveColor,
+                      },
+                      { offset: 1, color: destructiveColor },
+                  ])
+                : undefined;
+            return {
+                ...base,
+                step: "end",
+                lineStyle: { width: 2, color, opacity },
+                ...(areaColor
+                    ? {
+                          areaStyle: {
+                              opacity: 0.3 * opacity,
+                              color: areaColor,
+                          },
+                      }
+                    : {}),
+            };
+        });
+
+        // With no series shown, an empty one still carries the marker and the
+        // blackout region, so the chart stays lined up with whatever picks the
+        // tick.
+        if (series.length === 0 && (markLine || markArea)) {
+            series.push({
+                name: "marker",
+                type: "line",
+                data: [],
+                silent: true,
+                ...marks,
+            });
+        }
+
+        return {
+            animation: false,
+            grid: { left: 70, right: 20, top: 15, bottom: 45 },
+            xAxis: {
+                type: "category",
+                data: ticks,
+                // boundaryGap: true (default) for bars so first bar isn't cut;
+                // false for lines so the series starts at the left edge.
+                boundaryGap: isBar,
+                axisLabel: {
+                    formatter: formatXTick,
+                    fontSize: 11,
+                    // Right-anchored: the rightmost data point always gets a
+                    // label, then every tickInterval steps leftward. Left-
+                    // anchored: the same from the leftmost point.
+                    interval: (index: number) =>
+                        (timeAxis.anchor === "right"
+                            ? ticks.length - 1 - index
+                            : index) %
+                            tickInterval ===
+                        0,
+                    hideOverlap: true,
+                },
+                // On bars, ECharts places a blackout region's edges on the
+                // axis ticks, halfway between two ticks when there is none at
+                // the edge. A tick at every category, hidden like the rest,
+                // puts each edge exactly on its bar.
+                axisTick: { show: false, interval: 0 },
+                splitLine: { show: false },
+            },
+            yAxis: {
+                type: "value",
+                axisLabel: { formatter: config.formatYAxis, fontSize: 11 },
+                min: config.yAxisMin,
+                max: config.yAxisMax,
+                ...(config.yAxisLabel
+                    ? {
+                          name: config.yAxisLabel,
+                          nameLocation: "middle" as const,
+                          nameGap: 50,
+                      }
+                    : {}),
+                splitLine: {
+                    lineStyle: { color: "rgba(128,128,128,0.15)" },
+                },
+            },
+            dataZoom: [
+                {
+                    type: "inside",
+                    xAxisIndex: 0,
+                    // start/end omitted — preserves live zoom window across
+                    // every setOption call. Initial 0/100 is set by the first
+                    // notMerge call in the apply-options effect.
+                    zoomLock: true,
+                },
+            ],
+            toolbox: {
+                show: true,
+                feature: {
+                    dataZoom: {
+                        yAxisIndex: "none",
+                        brushStyle: {
+                            borderWidth: 1,
+                            color: "rgba(99,102,241,0.12)",
+                            borderColor: "rgba(99,102,241,0.5)",
+                        },
+                    },
+                },
+                // Icons hidden; zoom mode permanently activated via
+                // takeGlobalCursor dispatch.
+                iconStyle: { opacity: 0 },
+                emphasis: { iconStyle: { opacity: 0 } },
+                right: 80,
+                bottom: 8,
+            },
+            // showContent: false keeps the vertical axis pointer visible but
+            // suppresses ECharts' own popup — our React overlay handles display.
+            tooltip: {
+                trigger: "axis",
+                showContent: false,
+                axisPointer: {
+                    type: "line",
+                    lineStyle: {
+                        color: "rgba(128,128,128,0.45)",
+                        type: "solid",
+                        width: 1,
+                    },
+                },
+            },
+            series,
+        };
+    }, [
+        processedData,
+        visibleKeys,
+        config,
+        timeAxis,
+        containerWidth,
+        zoomRange,
+        markerTick,
+        blackouts,
+        highlight,
+        highlightedKey,
+    ]);
+
+    // ── Chart lifecycle ───────────────────────────────────────────────────────
+
+    useEffect(() => {
+        if (!chartRef.current) return;
+        const chart = echarts.init(chartRef.current, undefined, {
+            renderer: "canvas",
+        });
+        instanceRef.current = chart;
+
+        // Put the chart into permanent drag-to-select zoom mode.
+        chart.dispatchAction({
+            type: "takeGlobalCursor",
+            key: "dataZoomSelect",
+            dataZoomSelectActive: true,
+        });
+
+        // Track whether a zoom window is currently applied.
+        chart.on("datazoom", () => {
+            const opt = chart.getOption();
+            const dz = Array.isArray(opt.dataZoom) ? opt.dataZoom[0] : null;
+            if (dz) {
+                const { start, end } = dz as { start?: number; end?: number };
+                const range = { start: start ?? 0, end: end ?? 100 };
+                shownZoomRef.current = range;
+                setIsZoomed(!isFullZoom(range));
+                setZoomRange(range);
+                if (!isSyncingRef.current) {
+                    liveDataRef.current.onZoomChange?.(range);
+                }
+            }
+        });
+
+        // React tooltip: listen at the ZRender level to receive every
+        // mousemove over the canvas, even when no series is directly hit.
+        const zr = chart.getZr();
+
+        zr.on(
+            "mousemove",
+            (e: { offsetX: number; offsetY: number; event: Event }) => {
+                const { offsetX, offsetY } = e;
+                const nativeEvent = e.event as MouseEvent;
+
+                if (!chart.containPixel("grid", [offsetX, offsetY])) {
+                    setTooltip(null);
+                    return;
+                }
+
+                const rawIndex = chart.convertFromPixel(
+                    { xAxisIndex: 0 },
+                    offsetX,
+                ) as number;
+
+                const {
+                    processedData: pd,
+                    visibleKeys: vk,
+                    getColor: gc,
+                    hideZeroValues: hzv,
+                    formatLabel: fl,
+                    stacked: st,
+                } = liveDataRef.current;
+
+                if (!pd.length) return;
+
+                const dataIndex = Math.max(
+                    0,
+                    Math.min(Math.round(rawIndex), pd.length - 1),
+                );
+                const tick = pd[dataIndex]?.tick as number;
+
+                // Stacked charts: topmost series first in tooltip; others: natural order
+                const orderedKeys = st ? [...vk].reverse() : vk;
+
+                const entries: TooltipEntry[] = orderedKeys
+                    .map((key) => {
+                        const rawColor = gc?.(key) ?? "#888";
+                        const color = resolveColor(rawColor);
+                        const value = Number(pd[dataIndex]?.[key] ?? 0);
+                        const label: ReactNode = fl ? fl(key) : key;
+                        return { key, color, value, label };
+                    })
+                    .filter((e) => !hzv || e.value !== 0);
+
+                if (!entries.length) {
+                    setTooltip(null);
+                    return;
+                }
+
+                // Circles on the axis pointer line: one dot per visible non-zero series.
+                // For stacked charts: at the cumulative top of each segment.
+                // For non-stacked: at each series' own value.
+                const rect = chartRef.current?.getBoundingClientRect();
+                const pixelX = chart.convertToPixel(
+                    { xAxisIndex: 0 },
+                    dataIndex,
+                ) as number;
+                const lineClientX = rect
+                    ? rect.left + pixelX
+                    : nativeEvent.clientX;
+
+                const circles: Circle[] = [];
+                if (st) {
+                    let cumulative = 0;
+                    for (const key of vk) {
+                        const val = Number(pd[dataIndex]?.[key] ?? 0);
+                        cumulative += val;
+                        if (val <= 0) continue;
+                        const pixelY = chart.convertToPixel(
+                            { yAxisIndex: 0 },
+                            cumulative,
+                        ) as number;
+                        circles.push({
+                            seriesKey: key,
+                            clientX: lineClientX,
+                            clientY: rect
+                                ? rect.top + pixelY
+                                : nativeEvent.clientY,
+                            color: resolveColor(gc?.(key) ?? "#888"),
+                        });
+                    }
+                } else {
+                    for (const key of vk) {
+                        const val = Number(pd[dataIndex]?.[key] ?? 0);
+                        if (val === 0 && hzv) continue;
+                        const pixelY = chart.convertToPixel(
+                            { yAxisIndex: 0 },
+                            val,
+                        ) as number;
+                        circles.push({
+                            seriesKey: key,
+                            clientX: lineClientX,
+                            clientY: rect
+                                ? rect.top + pixelY
+                                : nativeEvent.clientY,
+                            color: resolveColor(gc?.(key) ?? "#888"),
+                        });
+                    }
+                }
+
+                setTooltip({
+                    clientX: nativeEvent.clientX,
+                    clientY: nativeEvent.clientY,
+                    tick,
+                    entries,
+                    stacked: st,
+                    circles,
+                });
+            },
+        );
+
+        zr.on("mouseout", () => setTooltip(null));
+
+        // A click without a drag selects the tick under the pointer. A drag
+        // zooms instead, and fires no click.
+        zr.on("click", (e: { offsetX: number; offsetY: number }) => {
+            const { processedData: pd, onTickClick: onClick } =
+                liveDataRef.current;
+            if (!onClick || !pd.length) return;
+            if (!chart.containPixel("grid", [e.offsetX, e.offsetY])) return;
+            const rawIndex = chart.convertFromPixel(
+                { xAxisIndex: 0 },
+                e.offsetX,
+            ) as number;
+            const index = Math.max(
+                0,
+                Math.min(Math.round(rawIndex), pd.length - 1),
+            );
+            const tick = pd[index]?.tick;
+            if (typeof tick === "number") onClick(tick);
+        });
+
+        return () => {
+            chart.off("datazoom");
+            chart.getZr().off("mousemove");
+            chart.getZr().off("mouseout");
+            chart.getZr().off("click");
+            chart.dispose();
+            instanceRef.current = null;
+        };
+    }, []);
+
+    // Apply option updates with the right merge strategy:
+    //   • notMerge: true  on structural changes (type / resolution) → resets zoom.
+    //   • replaceMerge: ['series'] otherwise → zoom window preserved.
+    //     This includes new-tick arrivals so the view just shifts left.
+    useEffect(() => {
+        const inst = instanceRef.current;
+        if (!inst) return;
+
+        dataKeyRef.current = dataKey;
+
+        const isStructuralChange = structuralKey !== structuralKeyRef.current;
+        structuralKeyRef.current = structuralKey;
+
+        if (isStructuralChange) {
+            inst.setOption(option, { notMerge: true });
+            // A rebuilt chart shows all its data, or the shared zoom window.
+            const kept = zoomRef.current ?? FULL_ZOOM;
+            shownZoomRef.current = FULL_ZOOM;
+            if (!isFullZoom(kept)) {
+                isSyncingRef.current = true;
+                inst.dispatchAction({ type: "dataZoom", ...kept });
+                isSyncingRef.current = false;
+            }
+            queueMicrotask(() => {
+                setAppliedStructuralKey(structuralKey);
+                setTooltip(null);
+                setIsZoomed(!isFullZoom(kept));
+                setZoomRange(kept);
+            });
+        } else {
+            inst.setOption(option, { replaceMerge: ["series"] });
+        }
+
+        // Re-activate drag-to-zoom after each setOption because notMerge
+        // resets the toolbox cursor state.
+        inst.dispatchAction({
+            type: "takeGlobalCursor",
+            key: "dataZoomSelect",
+            dataZoomSelectActive: true,
+        });
+    }, [option, dataKey, structuralKey]);
+
+    // Follow the shared zoom window when another chart changes it.
+    useEffect(() => {
+        const inst = instanceRef.current;
+        if (!inst || !zoom || isSameZoom(zoom, shownZoomRef.current)) return;
+        isSyncingRef.current = true;
+        inst.dispatchAction({ type: "dataZoom", ...zoom });
+        isSyncingRef.current = false;
+    }, [zoom]);
+
+    // Respond to container resize — also updates containerWidth so barWidth
+    // recomputes on the next option useMemo run.
+    useEffect(() => {
+        const el = chartRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(() => {
+            instanceRef.current?.resize();
+            setContainerWidth(el.offsetWidth);
+        });
+        observer.observe(el);
+        setContainerWidth(el.offsetWidth);
+        return () => observer.disconnect();
+    }, []);
+
+    const handleResetZoom = useCallback(() => {
+        const inst = instanceRef.current;
+        if (!inst) return;
+        // The datazoom handler updates the state and reports the reset.
+        inst.dispatchAction({ type: "dataZoom", ...FULL_ZOOM });
+        inst.dispatchAction({
+            type: "takeGlobalCursor",
+            key: "dataZoomSelect",
+            dataZoomSelectActive: true,
+        });
+    }, []);
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    const height = config.height ?? 500;
+
+    // Chart div always rendered to keep the ECharts instance stable.
+    // Loading and error states are overlaid so the chart never unmounts.
+    return (
+        <div className="relative min-w-0 overflow-hidden">
+            <div
+                ref={chartRef}
+                className="w-full"
+                style={{ height: `${height}px` }}
+            />
+
+            {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                    <span className="text-muted-foreground">Loading data…</span>
+                </div>
+            )}
+
+            {isError && !isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-alert-red">
+                        Failed to load chart data
+                    </span>
+                </div>
+            )}
+
+            {isZoomed && (
+                <button
+                    onClick={handleResetZoom}
+                    className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 border border-border rounded transition-colors text-foreground"
+                    title="Reset zoom to full range"
+                >
+                    <ZoomOut className="w-3 h-3" />
+                    Reset
+                </button>
+            )}
+
+            {/* Portal into the body: a transformed or filtered ancestor would
+                otherwise position these fixed elements against itself, not the
+                viewport, and they would drift once the page is scrolled. */}
+            {tooltip &&
+                !isLoading &&
+                appliedStructuralKey === structuralKey &&
+                createPortal(
+                    <>
+                        {tooltip.circles.map((c) => (
+                            <div
+                                key={c.seriesKey}
+                                style={{
+                                    position: "fixed",
+                                    left: c.clientX - 5,
+                                    top: c.clientY - 5,
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: "50%",
+                                    backgroundColor: c.color,
+                                    border: "2px solid white",
+                                    pointerEvents: "none",
+                                    zIndex: 9998,
+                                }}
+                            />
+                        ))}
+                        <TSTooltip
+                            tooltip={tooltip}
+                            title={timeAxis.formatTooltipTitle(tooltip.tick)}
+                            formatValue={config.formatValue}
+                        />
+                    </>,
+                    document.body,
+                )}
+        </div>
+    );
+}

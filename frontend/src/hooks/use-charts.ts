@@ -29,7 +29,6 @@ import { chartsApi } from "@/lib/api/charts";
 import {
     ChartDataPoint,
     KEY_ORDER_BY_CHART_TYPE,
-    reorderObjectKeys,
 } from "@/lib/charts/key-order";
 import {
     ChartQueryConfig,
@@ -41,6 +40,7 @@ import {
 import { queryKeys } from "@/lib/query-client";
 import { ApiResponse } from "@/types/api-helpers";
 import { ChartType, Resolution, TickRange } from "@/types/charts";
+import { reorderObjectKeys } from "@energetica/charts/lib/key-order";
 
 /**
  * Main exported hook. Returns all chart datapoints relevant to the request.

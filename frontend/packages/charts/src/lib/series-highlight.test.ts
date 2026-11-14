@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { FADED_SERIES_OPACITY, seriesOpacity } from "./series-highlight";
+import {
+    FADED_SERIES_OPACITY,
+    seriesOpacity,
+} from "#charts/lib/series-highlight";
 
 const visible = ["coal", "wind", "solar"];
 
