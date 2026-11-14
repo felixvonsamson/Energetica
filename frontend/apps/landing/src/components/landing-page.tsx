@@ -27,6 +27,7 @@ import landingBanner from "@/assets/energetica_landing_banner.webp";
 import investmentStrategies from "@/assets/investment_strategies.webp";
 import renewableIntermittency from "@/assets/renewable_intermittency.webp";
 import resourcesManagement from "@/assets/resources_management.webp";
+import { HeroScenePrototype } from "@/components/hero-scene-prototype/hero-scene-prototype";
 import { HomeLayout } from "@/components/home-layout";
 
 type ImageTile =
@@ -240,10 +241,9 @@ export function LandingPage() {
                                 </TypographyLead>
                             </div>
                             <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
-                                <img
-                                    src={landingBanner}
-                                    alt="Energetica game interface showing power grid management"
-                                    className="w-full h-auto"
+                                {/* PROTOTYPE: hero scene, issue #1440 */}
+                                <HeroScenePrototype
+                                    originalSrc={landingBanner}
                                 />
                             </div>
                         </div>

@@ -1,0 +1,100 @@
+/* PROTOTYPE — hero scene, issue #1440 round 2. Throwaway; see hero-scene-prototype.tsx.
+   Shared by the SVG variants (projected, facilities, traced). */
+
+.hs {
+    --amp: 40;
+    position: relative;
+}
+
+.hs svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.hs .hs-asset svg {
+    height: 100%;
+}
+
+/* Window parallax. Any element with class "px" and --d (0 = nearest, 1 = at infinity) lags behind the card
+   as the page scrolls, so distant things sink behind near ones. SVG user units are banner
+   pixels, so --amp is in banner pixels. */
+.hs .px {
+    transform: translateY(calc(var(--s, 0) * var(--d) * var(--amp) * 1px));
+}
+
+/* ---------- Ambient motion ----------
+   Elements set their own pivot inline: style="transform-origin: 812px 233px". */
+
+.hs .spin {
+    transform-box: view-box;
+    transform-origin: 0 0;
+    animation: hs-spin var(--period, 9s) linear infinite;
+}
+.hs .spin-ccw {
+    animation-direction: reverse;
+}
+.hs .steam {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: hs-steam var(--period, 10s) linear infinite;
+    animation-delay: var(--delay, 0s);
+    opacity: 0;
+}
+.hs .flow {
+    stroke-dasharray: 10 16;
+    animation: hs-flow var(--period, 0.8s) linear infinite;
+}
+.hs .drift {
+    animation: hs-drift var(--period, 120s) ease-in-out infinite alternate;
+}
+.hs .shimmer {
+    animation: hs-shimmer var(--period, 3s) ease-in-out infinite alternate;
+    animation-delay: var(--delay, 0s);
+}
+
+@keyframes hs-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@keyframes hs-steam {
+    0% {
+        transform: translate(0, 0) scale(0.5);
+        opacity: 0;
+    }
+    12% {
+        opacity: 0.95;
+    }
+    100% {
+        transform: translate(var(--wind, 70px), calc(-1 * var(--rise, 140px)))
+            scale(1.7);
+        opacity: 0;
+    }
+}
+@keyframes hs-flow {
+    to {
+        stroke-dashoffset: -26;
+    }
+}
+@keyframes hs-drift {
+    to {
+        transform: translateX(var(--drift, 80px));
+    }
+}
+@keyframes hs-shimmer {
+    to {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hs *,
+    .hs .px {
+        animation: none !important;
+        transform: none !important;
+    }
+    .hs .steam {
+        opacity: 0 !important;
+    }
+}
