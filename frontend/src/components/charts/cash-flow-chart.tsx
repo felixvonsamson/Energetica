@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
+    chartTypeConfig,
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
-import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
-import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
+import { useChartFilters } from "@energetica/charts/hooks/use-chart-filters";
 import { formatCashFlow, formatMoney } from "@energetica/core/format-utils";
+import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 export type CashFlowType = "revenues" | "expenses" | "net-profit";
 export type NetProfitViewMode = "net" | "breakdown";
@@ -149,7 +150,7 @@ export function CashFlowChart({
                   : undefined; // net-profit uses synthetic keys
 
         return {
-            chartType,
+            ...(chartType ? chartTypeConfig(chartType) : {}),
             chartVariant: "area",
             stacked: true,
             getColor: isBreakdownMode ? getBreakdownColor : getColor,

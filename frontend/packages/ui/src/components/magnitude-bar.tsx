@@ -11,7 +11,7 @@
  * The softer `rounded-md` (vs the gauge's `rounded-full`) is the quiet cue that
  * these two bars mean different things while staying the same family.
  */
-import { readableTextColor } from "@/lib/charts/color-utils";
+import { readableTextColor } from "#ui/lib/color-utils";
 
 interface MagnitudeBarProps {
     /** This row's magnitude. Only its absolute value drives the bar width. */

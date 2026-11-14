@@ -4,6 +4,7 @@
   "workspaces": {
     "": {
       "dependencies": {
+        "@energetica/charts": "workspace:*",
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
         "@energetica/instance": "workspace:*",
@@ -96,6 +97,26 @@
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "^4.7.0",
         "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/charts": {
+      "name": "@energetica/charts",
+      "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@floating-ui/dom": "^1.7.4",
+        "echarts": "^6.0.0",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+      },
+      "devDependencies": {
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vite-plugin-svgr": "catalog:",
@@ -291,6 +312,8 @@
     "@emnapi/runtime": ["@emnapi/runtime@1.8.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-mehfKSMWjjNol8659Z8KxEMrdSJDDot5SXMq00dM8BN4o+CLNXQ0xH2V7EchNHV4RmbZLmmPdEaXZc5H2FXmDg=="],
 
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.1.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-WI0DdZ8xFSbgMjR1sFsKABJ/C5OnRrjT06JXbZKexJGrDuPTzZdDYfFlsgcCXCyf+suG5QU2e/y1Wo2V/OapLQ=="],
+
+    "@energetica/charts": ["@energetica/charts@workspace:packages/charts"],
 
     "@energetica/content": ["@energetica/content@workspace:packages/content"],
 

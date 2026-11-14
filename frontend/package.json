@@ -48,6 +48,7 @@
         "test:watch": "vitest"
     },
     "dependencies": {
+        "@energetica/charts": "workspace:*",
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
         "@energetica/instance": "workspace:*",

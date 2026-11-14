@@ -5,10 +5,11 @@ import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
 import { useState } from "react";
 
 import {
-    PowerChart,
-    PowerOverviewTable,
-    type PowerChartViewMode,
-} from "@/components/charts/power-chart";
+    chartTypeConfig,
+    formatFacilityLabel,
+    useGameTimeAxis,
+} from "@/components/charts/echarts-time-series";
+import { PowerOverviewTable } from "@/components/charts/power-overview-table";
 import { GameLayout } from "@/components/layout/game-layout";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useResolution } from "@/contexts/resolution-context";
@@ -16,6 +17,10 @@ import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
+import {
+    PowerChart,
+    type PowerChartViewMode,
+} from "@energetica/charts/components/power-chart";
 import { CardContent, PageCard } from "@energetica/ui/components/card";
 import { ChartCard } from "@energetica/ui/components/chart-card";
 import { Label } from "@energetica/ui/components/label";
@@ -98,6 +103,7 @@ function PowerOverviewContent() {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
+    const timeAxis = useGameTimeAxis();
     const [chartType, setChartType] = useLocalStorage<
         "power-sources" | "power-sinks"
     >("energetica:chart:power:chartType", "power-sources");
@@ -185,7 +191,9 @@ function PowerOverviewContent() {
                 }
             >
                 <PowerChart
-                    chartType={chartType}
+                    {...chartTypeConfig(chartType)}
+                    formatLabel={formatFacilityLabel}
+                    timeAxis={timeAxis}
                     chartData={chartData}
                     isLoading={isChartLoading}
                     isError={isError}

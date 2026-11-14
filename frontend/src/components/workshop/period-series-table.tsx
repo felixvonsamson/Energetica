@@ -7,11 +7,11 @@
 
 import type { ReactNode } from "react";
 
-import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { InfoMark, MetricTooltip } from "@/components/workshop/metric-tooltip";
 import { type ChartRow, seriesEnergy } from "@/lib/workshop-review";
 import { formatEnergy } from "@energetica/core/format-utils";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
 
 interface PeriodSeriesTableProps {
     rows: ChartRow[];

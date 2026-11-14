@@ -35,6 +35,7 @@ import { type DayWindow, sliceDays } from "@/lib/workshop-review";
 import { withSettlementProgress } from "@/lib/workshop-settlement";
 import { withBallot } from "@/lib/workshop-vote";
 import type { ApiSchema } from "@/types/api-helpers";
+import { usePlayerColors } from "@energetica/charts/hooks/use-player-colors";
 import { ApiClientError } from "@energetica/core/api-client";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
@@ -127,6 +128,28 @@ export function useWorkshopTeams() {
             teammateIds,
         };
     }, [players, me]);
+}
+
+/**
+ * Each player's chart color in the Workshop: the current player's own color,
+ * their teammates' shades, and every other player's. See
+ * {@link usePlayerColors}. The facilitator has no player, so every player gets
+ * an other player's shade.
+ */
+export function useWorkshopPlayerColors(): (playerId: number) => string {
+    const { data: entry } = useWorkshopEntry();
+    const { data: session } = useWorkshopSession();
+    const { teammateIds } = useWorkshopTeams();
+    const players = session?.players;
+    const playerIds = useMemo(
+        () => (players ?? []).map((player) => player.account_id),
+        [players],
+    );
+    return usePlayerColors(
+        entry?.player?.account_id ?? null,
+        playerIds,
+        teammateIds,
+    );
 }
 
 /**

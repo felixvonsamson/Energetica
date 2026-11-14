@@ -8,11 +8,11 @@ import { GameTickProvider } from "@/contexts/game-tick-context";
 import { ResolutionProvider } from "@/contexts/resolution-context";
 import { SocketProvider } from "@/contexts/socket-context";
 import { useRunMode } from "@/hooks/use-run-mode";
-import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
 import { Button } from "@energetica/ui/components/button";
 import { Spinner } from "@energetica/ui/components/spinner";
 import { ThemeProvider } from "@energetica/ui/contexts/theme-context";
+import { clearAssetColorCache } from "@energetica/ui/lib/asset-colors";
 
 import { routeTree } from "./routeTree.gen";
 

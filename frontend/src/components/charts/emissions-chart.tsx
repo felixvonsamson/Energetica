@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
+    chartTypeConfig,
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
-import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
-import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
+import { useChartFilters } from "@energetica/charts/hooks/use-chart-filters";
 import { formatEmissions, formatMassRate } from "@energetica/core/format-utils";
 import { Label } from "@energetica/ui/components/label";
+import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 // Emissions Chart Component
 interface EmissionsChartProps {
@@ -145,7 +146,7 @@ export function EmissionsChart({
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: "emissions",
+            ...chartTypeConfig("emissions"),
             chartVariant: "area",
             stacked: true,
             height: 400,

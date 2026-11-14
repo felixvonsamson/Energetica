@@ -1,161 +1,26 @@
 /**
- * Power chart: stacked bar chart of facility production per tick.
- *
- * This is a thin wrapper around EChartsTimeSeries that handles the
- * power-chart-specific concerns:
- *
- * - Deriving visible keys from the canonical facility order (hidden + zero
- *   filtering)
- * - Percent-mode normalization of the data
- * - Facility icon + name labels in the tooltip
- *
- * It takes its data as props. The persistent world's facility order, colors and
- * labels are the defaults, and Workshop passes its own, with its own time
- * axis.
+ * The persistent world's power overview table: each facility type's energy over
+ * the chart's time range, with its installed capacity and capacity factor for
+ * generation. It sits below the power chart.
  */
 
 import { Link } from "@tanstack/react-router";
-import { type ReactNode, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import {
-    type ChartSyncProps,
-    type EChartsTimeSeriesConfig,
-    TimeSeriesChartOnAxis,
-} from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
-import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useFacilities } from "@/hooks/use-facilities";
 import { useGameEngine } from "@/hooks/use-game";
-import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
 import type { ChartType } from "@/types/charts";
 import { formatEnergy, formatPower } from "@energetica/core/format-utils";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from "@energetica/ui/components/tooltip";
-
-export type PowerChartViewMode = "absolute" | "percent";
-
-interface PowerChartProps extends ChartSyncProps {
-    /** The persistent world's chart type. Sets the default key order. */
-    chartType?: ChartType;
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
-    hiddenFacilities: Set<string>;
-    viewMode: PowerChartViewMode;
-    /** The series keys in stack order, bottom first. Defaults to `chartType`'s. */
-    keyOrder?: readonly string[];
-    /** Each series' color. Defaults to the asset colors. */
-    getColor?: (key: string) => string;
-    /** Each series' tooltip label. Defaults to the facility's icon and name. */
-    formatLabel?: (key: string) => ReactNode;
-    height?: number;
-    /** The share of each tick's slot left between bars. */
-    barGap?: number;
-}
-
-// Stable label renderer — defined outside the component so it never causes
-// unnecessary config re-memos.
-function formatFacilityLabel(key: string) {
-    return (
-        <div className="flex items-center gap-1">
-            <FacilityIcon facility={key} size={14} />
-            <FacilityName facility={key} mode="long" />
-        </div>
-    );
-}
-
-export function PowerChart({
-    chartType,
-    chartData,
-    isLoading,
-    isError,
-    hiddenFacilities,
-    viewMode,
-    keyOrder,
-    getColor: getColorProp,
-    formatLabel = formatFacilityLabel,
-    height,
-    barGap,
-    ...chart
-}: PowerChartProps) {
-    const getAssetColor = useAssetColorGetter();
-    const getColor = getColorProp ?? getAssetColor;
-
-    // Derive visible keys in canonical stack order, excluding hidden facilities
-    // and series that are all-zero across the entire data set.
-    const visibleKeys = useMemo(() => {
-        if (!chartData.length) return [];
-        const order: readonly string[] =
-            keyOrder ?? (chartType ? KEY_ORDER_BY_CHART_TYPE[chartType] : []);
-        return order.filter(
-            (key) =>
-                !hiddenFacilities.has(key) &&
-                chartData.some((d) => Number(d[key] ?? 0) > 0),
-        );
-    }, [chartData, chartType, keyOrder, hiddenFacilities]);
-
-    // Build display data containing only visible keys, optionally normalized
-    // to percentages. Pre-filtering here means EChartsTimeSeries sees exactly
-    // the series it should render — no filterDataKeys needed.
-    const displayData = useMemo(() => {
-        return chartData.map((dataPoint) => {
-            const total =
-                viewMode === "percent"
-                    ? visibleKeys.reduce(
-                          (s, k) => s + Number(dataPoint[k] ?? 0),
-                          0,
-                      )
-                    : 0;
-            const row: Record<string, unknown> = { tick: dataPoint.tick };
-            for (const k of visibleKeys) {
-                const v = Number(dataPoint[k] ?? 0);
-                row[k] =
-                    viewMode === "percent" && total > 0 ? (v / total) * 100 : v;
-            }
-            return row;
-        });
-    }, [chartData, visibleKeys, viewMode]);
-
-    const config = useMemo(
-        (): EChartsTimeSeriesConfig => ({
-            chartType,
-            chartVariant: "area",
-            stacked: true,
-            getColor,
-            formatLabel,
-            formatValue: (v) =>
-                viewMode === "percent" ? `${v.toFixed(1)}%` : formatPower(v),
-            formatYAxis:
-                viewMode === "percent"
-                    ? (v: number) => `${v.toFixed(0)}%`
-                    : (v: number) => formatPower(v),
-            yAxisMin: 0,
-            yAxisMax: viewMode === "percent" ? 100 : undefined,
-            hideZeroValues: true,
-            height,
-            barGap,
-        }),
-        [chartType, getColor, formatLabel, viewMode, height, barGap],
-    );
-
-    return (
-        <TimeSeriesChartOnAxis
-            data={displayData}
-            config={config}
-            isLoading={isLoading}
-            isError={isError}
-            {...chart}
-        />
-    );
-}
-
-// ── PowerOverviewTable ────────────────────────────────────────────────────────
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 interface PowerOverviewTableProps {
     chartType: ChartType;

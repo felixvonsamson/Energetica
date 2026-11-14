@@ -1,23 +1,24 @@
 import { useMemo, useState } from "react";
 
 import {
+    chartTypeConfig,
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { FacilityName } from "@/components/ui/asset-name";
-import { MagnitudeBar } from "@/components/ui/magnitude-bar";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
-import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePlayerColorGetter } from "@/hooks/use-player-color-getter";
 import { usePlayerMap } from "@/hooks/use-players";
-import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
 import { ChartType, ResolutionOption } from "@/types/charts";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
+import { useChartFilters } from "@energetica/charts/hooks/use-chart-filters";
+import { createIncludeKeysFilter } from "@energetica/charts/lib/filter-utils";
 import { formatEnergy, formatPower } from "@energetica/core/format-utils";
 import { Button } from "@energetica/ui/components/button";
+import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 export type BreakdownType = "supply" | "demand";
 export type BreakdownMode = "player" | "type";
@@ -119,7 +120,7 @@ export function MarketClearingVolumeChart({
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType,
+            ...chartTypeConfig(chartType),
             chartVariant: "area",
             stacked: breakdownEnabled,
             getColor: !breakdownEnabled

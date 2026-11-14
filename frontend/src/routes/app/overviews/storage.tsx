@@ -5,11 +5,10 @@ import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
 import { useState } from "react";
 
 import {
-    STORAGE_VIEW_OPTIONS,
-    StorageChart,
-    StorageOverviewTable,
-    type StorageView,
-} from "@/components/charts/storage-chart";
+    formatAssetLabel,
+    useGameTimeAxis,
+} from "@/components/charts/echarts-time-series";
+import { StorageOverviewTable } from "@/components/charts/storage-overview-table";
 import { GameLayout } from "@/components/layout/game-layout";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useResolution } from "@/contexts/resolution-context";
@@ -17,6 +16,11 @@ import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
+import {
+    STORAGE_VIEW_OPTIONS,
+    StorageChart,
+    type StorageView,
+} from "@energetica/charts/components/storage-chart";
 import { CardContent, PageCard } from "@energetica/ui/components/card";
 import { ChartCard } from "@energetica/ui/components/chart-card";
 import { Label } from "@energetica/ui/components/label";
@@ -99,6 +103,7 @@ function StorageOverviewContent() {
     // The series whose table row the player hovers, highlighted on the chart.
     const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
     const { currentTick } = useGameTick();
+    const timeAxis = useGameTimeAxis();
     const [view, setView] = useLocalStorage<StorageView>(
         "energetica:chart:storage:view",
         "soc",
@@ -179,6 +184,8 @@ function StorageOverviewContent() {
                     isError={isError}
                     hiddenFacilities={hiddenFacilities}
                     view={view}
+                    formatLabel={formatAssetLabel}
+                    timeAxis={timeAxis}
                     highlightedKey={highlightedKey}
                 />
 

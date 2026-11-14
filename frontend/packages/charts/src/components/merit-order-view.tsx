@@ -9,6 +9,14 @@
  * real price.
  */
 
+import { formatMoney, formatPower } from "@energetica/core/format-utils";
+import { CoinIcon } from "@energetica/ui/components/coin-icon";
+import { Label } from "@energetica/ui/components/label";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { resolveColor, resolveCSSVar } from "@energetica/ui/lib/color-utils";
 import { CustomChart, LineChart as ELineChart } from "echarts/charts";
 import type { CustomSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
@@ -42,15 +50,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
-import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
-import { formatMoney, formatPower } from "@energetica/core/format-utils";
-import { CoinIcon } from "@energetica/ui/components/coin-icon";
-import { Label } from "@energetica/ui/components/label";
-import {
-    SegmentedPicker,
-    SegmentedPickerOption,
-} from "@energetica/ui/components/segmented-picker";
+import { createSteppedCurve, interpolateAtX } from "#charts/lib/ui-utils";
 
 echarts.use([
     ELineChart,

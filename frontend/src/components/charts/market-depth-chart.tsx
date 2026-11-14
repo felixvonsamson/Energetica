@@ -27,9 +27,9 @@ import {
 import { createPortal } from "react-dom";
 
 import { useMarketData } from "@/hooks/use-charts";
-import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import { formatMoney, formatPower } from "@energetica/core/format-utils";
 import { Money } from "@energetica/ui/components/money";
+import { resolveColor, resolveCSSVar } from "@energetica/ui/lib/color-utils";
 
 echarts.use([
     ELineChart,

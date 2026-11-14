@@ -23,8 +23,8 @@ import hydrogenStorage from "@/assets/facilities/storage/hydrogen_storage.webp";
 import largePumpedHydro from "@/assets/facilities/storage/large_pumped_hydro.webp";
 import lithiumIonBatteries from "@/assets/facilities/storage/lithium_ion_batteries.webp";
 import solidStateBatteries from "@/assets/facilities/storage/solid_state_batteries.webp";
-import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import type { ApiSchema } from "@/types/api-helpers";
+import { assetCSSColourVariable } from "@energetica/ui/lib/asset-colors";
 
 type FacilityId = ApiSchema<"FacilityId">;
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;

@@ -34,11 +34,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import {
-    labelIntervalSeconds,
-    type ZoomRange,
-} from "@/components/charts/echarts-time-series";
-import { resolveCSSVar } from "@/lib/charts/color-utils";
-import {
     clampWindow,
     type DayWindow,
     dateOfDay,
@@ -46,8 +41,13 @@ import {
     windowLabel,
 } from "@/lib/workshop-review";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    labelIntervalSeconds,
+    type ZoomRange,
+} from "@energetica/charts/components/time-series-chart";
 import { formatMoney } from "@energetica/core/format-utils";
 import { Button } from "@energetica/ui/components/button";
+import { resolveCSSVar } from "@energetica/ui/lib/color-utils";
 
 echarts.use([
     LineChart,

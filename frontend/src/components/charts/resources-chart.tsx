@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 
 import {
+    chartTypeConfig,
     EChartsTimeSeries,
-    EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
 import { ResourceIcon } from "@/components/ui/asset-icon";
 import { ResourceName } from "@/components/ui/asset-name";
-import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
-import { useChartFilters } from "@/hooks/use-chart-filters";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { Fuel } from "@/types/fuel";
+import type { EChartsTimeSeriesConfig } from "@energetica/charts/components/time-series-chart";
+import { useChartFilters } from "@energetica/charts/hooks/use-chart-filters";
 import { formatMass } from "@energetica/core/format-utils";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { useAssetColorGetter } from "@energetica/ui/hooks/use-asset-color-getter";
 
 interface ResourcesChartProps {
     chartData: Array<Record<string, unknown>>;
@@ -53,7 +54,9 @@ export function ResourcesChart({
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: viewMode === "mass" ? "resources" : "resources-soc",
+            ...chartTypeConfig(
+                viewMode === "mass" ? "resources" : "resources-soc",
+            ),
             chartVariant: viewMode === "mass" ? "area" : "smoothLine",
             stacked: false,
             getColor,

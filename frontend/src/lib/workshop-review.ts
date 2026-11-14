@@ -19,9 +19,9 @@
  *   state of charge: that energy over the type's capacity.
  */
 
-import type { MeritOrderData } from "@/components/charts/merit-order-view";
-import type { StorageView } from "@/components/charts/storage-chart";
 import type { ApiSchema } from "@/types/api-helpers";
+import type { MeritOrderData } from "@energetica/charts/components/merit-order-view";
+import type { StorageView } from "@energetica/charts/components/storage-chart";
 
 type PeriodDays = ApiSchema<"WorkshopPeriodDaysOut">;
 type Pool = ApiSchema<"WorkshopPoolSeriesOut">;

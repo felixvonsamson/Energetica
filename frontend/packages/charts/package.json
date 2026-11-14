@@ -1,0 +1,37 @@
+{
+    "name": "@energetica/charts",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./components/*": "./src/components/*.tsx",
+        "./hooks/*": "./src/hooks/*.ts",
+        "./lib/*": "./src/lib/*.ts",
+        "./styles/sources.css": "./src/styles/sources.css"
+    },
+    "imports": {
+        "#charts/components/*": "./src/components/*.tsx",
+        "#charts/hooks/*": "./src/hooks/*.ts",
+        "#charts/lib/*": "./src/lib/*.ts"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@floating-ui/dom": "^1.7.4",
+        "echarts": "^6.0.0",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:"
+    },
+    "devDependencies": {
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:"
+    }
+}
