@@ -48,4 +48,8 @@ python3 -m venv ~/.cache/energetica-proto-1440/venv
 ~/.cache/energetica-proto-1440/venv/bin/python projector/hero.py      # and gallery.py, traced/trace_banner.py, ...
 ```
 
+Scroll performance: with a dev server running, `bun bench/bench.ts http://localhost:5175
+projected raster-depth original` scrolls each variant in headless Chrome. It reports frame
+rate and main-thread time. Headless numbers are only comparable with each other.
+
 `screenshots/` holds stills for the issue. They can't show the motion.

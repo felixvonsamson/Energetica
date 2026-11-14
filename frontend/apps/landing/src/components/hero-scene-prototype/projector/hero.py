@@ -16,6 +16,7 @@ run:
 """
 
 import importlib
+import json
 import math
 import random
 import sys
@@ -31,6 +32,9 @@ from core import Camera, Item, Look, Scene, fmt, mix, path_d  # noqa: E402
 W_, H_ = 2167, 725
 HORIZON = 268
 F = 1500.0
+# Every facility shares one site grid, turned this much from the camera: the banner's three-quarter
+# view, fronts and left-hand sides showing. (Negative turns +x away from the camera.)
+SITE_YAW = -28.0
 CAM = Camera((0.0, 100.0, 0.0), 0.0, 0.0, F, (W_, H_), center=(W_ / 2, HORIZON))
 OUT = HERE.parent / "projected" / "hero.svg"
 PREV = HERE / "previews"
@@ -217,7 +221,7 @@ def load(key):
         return None
 
 
-def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w=None, yaw=0.0, **kw):
+def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w=None, yaw=None, **kw):
     """Put facility `key` with its base centre at banner pixel (u, v) and depth z, scaled so its
     height (or width) spans px_h (px_w) banner pixels."""
     mod = load(key)
@@ -230,7 +234,7 @@ def place(s: Scene, key, u, v, z, *, px_h=None, px_w=None, model_h=None, model_w
         k = px_h / ((model_h or eh) * ppm)
     else:
         k = px_w / ((model_w or ew) * ppm)
-    with s.frame(origin, yaw, k):
+    with s.frame(origin, SITE_YAW if yaw is None else yaw, k):
         with s.group(anchor=(0, 0, 0)):
             mod.build(s, **kw)
 
@@ -473,7 +477,30 @@ def build(outline=0.0):
     # dam valley: left forest slope, dam, lake
     left_slope = [(-20, 272), (40, 286), (90, 318), (130, 360), (165, 430), (185, 520)]
     curtain(s, left_slope, 1400, P.forest, crest_k=0.2, decorate=lambda pts: treeline(s, pts, 1400, 30, 14, seed=6))
-    place(s, "hydro_dam", 300, 452, 1300, px_w=480, reservoir=False, pool=True)
+    place(s, "hydro_dam", 250, 455, 1300, px_w=430, reservoir=False, pool=True)
+    # grassy knoll the dam's right-hand end runs into, wooded where it meets the wall, as on
+    # the banner (no bare cross-section of the dam)
+    knoll = [
+        (410, 800),
+        (425, 472),
+        (462, 422),
+        (500, 380),
+        (540, 356),
+        (585, 362),
+        (640, 398),
+        (710, 428),
+        (790, 446),
+        (880, 454),
+    ]
+    curtain(
+        s,
+        knoll,
+        1180,
+        P.hill,
+        foot=P.grass,
+        crest_k=0.35,
+        decorate=lambda pts: treeline(s, pts[1:5], 1180, 32, 9, kind="conifer", seed=21, color=P.forest),
+    )
 
     # big plant cluster
     place(s, "nuclear", 1215, 455, 880, px_h=275, model_h=150)
@@ -482,33 +509,87 @@ def build(outline=0.0):
     place(s, "hydrogen", 830, 556, 520, px_h=140)
 
     # foreground
-    place(s, "solar", 1470, 718, 390, px_w=800, model_w=8 * 6.35, yaw=-8, rows=10, cols=8)
+    place(s, "solar", 1540, 718, 390, px_w=800, model_w=8 * 6.35, rows=10, cols=8)
     place(s, "battery", 735, 672, 380, px_w=430)
 
-    coal_hill = [
-        (-20, 446),
-        (70, 452),
-        (160, 470),
-        (240, 484),
-        (310, 506),
-        (380, 534),
-        (430, 570),
-        (470, 640),
-        (480, 760),
-    ]
-    curtain(
-        s,
-        coal_hill,
-        470,
-        P.hill_shade,
-        foot=P.dirt,
-        crest_k=0.3,
-        foot_k=-0.2,
-        decorate=lambda pts: treeline(s, pts[:6], 470, 26, 30, kind="tree", seed=12),
-    )
-    place(s, "coal_mine", 235, 690, 395, px_w=540)
+    mine(s)
 
     return s
+
+
+def mine(s: Scene):
+    """The coal mine composed for the hero from the facility's parts, set into a natural dark
+    hillside that runs off the left edge (no slab, no cut-off end), as on the banner."""
+    cm = load("coal_mine")
+    if cm is None:
+        return
+    # the hillside: a dark cut face under a grassy, wooded rim
+    rim = [(-20, 446), (80, 452), (170, 470), (250, 488), (320, 512), (375, 546), (415, 594), (440, 660), (450, 760)]
+    curtain(
+        s,
+        rim,
+        480,
+        P.hill_shade,
+        foot=P.hill_shade,
+        crest_k=0.3,
+        decorate=lambda pts: treeline(s, pts[:6], 480, 24, 26, kind="tree", seed=12),
+    )
+    face = [(-20, 462), (80, 468), (170, 486), (250, 504), (320, 528), (372, 562), (410, 610), (432, 668), (440, 760)]
+
+    def strata(pts):
+        # bands that follow the crest down the cut face: brown topsoil, then two coal seams
+        a = at(200, 600, 470)
+        for d0, d1, col, k in (
+            (0, 14, P.dirt_dark, 0.1),
+            (58, 72, P.coal, -0.2),
+            (104, 112, P.coal_light, 0.0),
+            (150, 166, P.coal, -0.3),
+        ):
+            band = [(u, v + d0) for u, v, _ in pts] + [(u, v + d1) for u, v, _ in reversed(pts)]
+            s.emit(f'<path d="{path_d(band)}" fill="{s.tone(col, k=k, at_world=a)}"/>', a, prio=-4)
+
+    curtain(s, face, 470, cm.CUT, foot=P.coal, crest_k=0.2, foot_k=-0.3, decorate=strata)
+    # headframe and gallery standing on the rim, at the left edge as on the banner
+    z = 466
+    with s.frame(at(40, 466, z), SITE_YAW, 520 / (38 * F / z)):
+        with s.group(anchor=(0, 0, 0)):
+            cm.headframe(s, (0, 0, 0), scale=0.75)
+
+    # the yard in front: portal at the foot of the face, conveyor, heap, excavator, screen, truck
+    z = 400
+    with s.frame(at(210, 700, z), SITE_YAW, 560 / (38 * F / z)):
+        with s.group(anchor=(0, 0, 0)):
+            with s.group(anchor=(0, 0, -40), flat=True):
+                s.ground([(-60, -15), (30, -15), (30, 6), (-60, 6)], cm.YARD, prio=0)
+                s.ground([(-2, -9), (7, -9.5), (9, -2), (6, 2), (-1, 2), (-3, -4)], P.coal, prio=1)
+                s.road([(-60, -12.5), (-12, -11.5), (0, -11), (10, -10.5), (30, -8)], 3.2, P.dirt_dark, prio=1)
+            portal(s, cm, (-9.0, 0, 4.0))
+            cm.conveyor(s, (-8.5, 0.6, 3.0), (2.0, 4.6, -1.3))
+            with s.group(anchor=(3, 0, 0)):
+                cm.stockpile(s, (3, 0, -2.4), r=4.4, h=3.5, seed=1)
+            cm.excavator(s, (7.5, 0, 3.5), yaw=0)
+            cm.screen(s, (15.6, 0, 4.2))
+            cm.dump_truck(s, (-8.5, 0, -8.5), yaw=14)
+
+
+def portal(s: Scene, cm, at_local, pw=6.5, ph=6.0, pd=4.0):
+    """Concrete mine portal (from coal_mine.hill_portal, without its slab of hill)."""
+    x, y, z = at_local
+    with s.group(anchor=(x, 0, z)):
+        s.box((x, y, z), (pw, ph, pd), P.concrete_dark, prio=1)
+        s.box((x, y + ph, z - 0.2), (pw + 0.6, 0.5, pd + 0.4), P.concrete, prio=1.2, shadow=False)
+        fp = s.plane((x - pw / 2, y, z - pd / 2 - 0.02), (1, 0, 0), (0, 1, 0))
+        jamb, oh = 0.9, ph - 1.3
+        fp.rect(jamb, 0, pw - 2 * jamb, oh, cm.OPENING, prio=1.1, shade=False)
+        fp.rect(jamb, oh - 0.7, pw - 2 * jamb, 0.7, "#2a3036", prio=1.15, shade=False)
+        sw = (pw - 2 * jamb) / 5
+        for i in range(5):
+            x0 = jamb + i * sw
+            fp.poly(
+                [(x0, oh + 0.2), (x0 + sw * 0.5, oh + 0.2), (x0 + sw * 0.8, oh + 0.6), (x0 + sw * 0.3, oh + 0.6)],
+                P.yellow,
+                prio=1.16,
+            )
 
 
 def preview_svg(svg, s_val, amp):
@@ -529,8 +610,17 @@ def main(argv):
     s = build(outline)
     svg = s.to_svg(viewbox=(0, 0, W_, H_), parallax=True)
     if not outline and not s_val:
+        # The page uses hero.json: one SVG per depth layer, so scrolling only moves
+        # compositor layers instead of repainting one big SVG. hero.svg is kept as a single
+        # file for previews and for opening in an editor.
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(svg)
+        defs, layers = s.to_layers()
+        OUT.with_suffix(".json").write_text(
+            json.dumps(
+                {"viewBox": [0, 0, W_, H_], "defs": defs, "layers": [{"d": d, "svg": body} for d, body in layers]}
+            )
+        )
     import resvg_py
 
     PREV.mkdir(exist_ok=True)

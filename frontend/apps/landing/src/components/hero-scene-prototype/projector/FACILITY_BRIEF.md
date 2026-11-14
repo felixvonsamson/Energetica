@@ -93,7 +93,7 @@ Use CSS classes from `../hero-scene.prototype.css`; previews are static, which i
 
 - `plane.spinner(x, y, body, period)`: rotating rotors and fans. Draw `body` centred on (0, 0)
   in plane units.
-- `effects.steam(...)` / `effects.plume(...)`: exhaust and steam.
+- `effects.steam(...)`: exhaust and steam; `plume=True` for a dense cooling-tower plume.
 - Flowing water or conveyors: a stroked path with `class="flow"` (dash animation;
   `style="--period:…"`).
 

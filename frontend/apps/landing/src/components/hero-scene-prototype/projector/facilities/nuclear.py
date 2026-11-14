@@ -16,9 +16,8 @@ def cooling_tower(s: Scene, x, z, steam=True, seed=0):
         s.lathe((x, 0, z), hyperboloid_profile(56, 36, 40, h), P.concrete, top="open", inner="#56636c")
         # a thin darker band at the rim, as on the banner
         s.lathe((x, h - 6, z), [(39.2, 0), (40.3, 6)], P.concrete_dark, shadow=False, prio=1)
-    if steam:
-        fx.plume(s, (x, h, z), size=17, height=48, lean=34)
-        fx.steam(s, (x, h + 8, z), size=17, n=6, period=12, seed=seed)
+        if steam:  # inside the tower's group, so the puffs always paint over the rim
+            fx.steam(s, (x, h + 2, z), size=24, n=26, period=12, rise=140, wind=105, seed=seed, plume=True)
 
 
 def build(s: Scene):

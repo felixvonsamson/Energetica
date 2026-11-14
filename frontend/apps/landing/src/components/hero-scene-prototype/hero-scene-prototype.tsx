@@ -14,13 +14,29 @@
  * away) and `--amp`, and `progress.current` holds the same number for canvas
  * code.
  */
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import "./hero-scene.prototype.css";
-import { FacilitiesVariant } from "./variants/facilities";
-import { ProjectedVariant } from "./variants/projected";
-import { RasterDepthVariant } from "./variants/raster-depth";
-import { TracedVariant } from "./variants/traced";
+
+// Lazy, so one variant failing to load (e.g. mid-edit) doesn't take the page down.
+const FacilitiesVariant = lazy(() =>
+    import("./variants/facilities").then((m) => ({
+        default: m.FacilitiesVariant,
+    })),
+);
+const ProjectedVariant = lazy(() =>
+    import("./variants/projected").then((m) => ({
+        default: m.ProjectedVariant,
+    })),
+);
+const RasterDepthVariant = lazy(() =>
+    import("./variants/raster-depth").then((m) => ({
+        default: m.RasterDepthVariant,
+    })),
+);
+const TracedVariant = lazy(() =>
+    import("./variants/traced").then((m) => ({ default: m.TracedVariant })),
+);
 
 export type VariantProps = {
     originalSrc: string;
@@ -72,7 +88,10 @@ export function HeroScenePrototype({ originalSrc }: { originalSrc: string }) {
                       Math.max(0, window.scrollY / (top + rect.height)),
                   );
             progress.current = s;
-            el.style.setProperty("--s", s.toFixed(4));
+            // Custom properties inherit, so changing --s here restyles every node below. The
+            // projected variant moves its layers itself from `progress` instead.
+            if (variant !== "projected")
+                el.style.setProperty("--s", s.toFixed(4));
         };
         const onScroll = () => {
             if (!frame) frame = requestAnimationFrame(update);
@@ -87,6 +106,54 @@ export function HeroScenePrototype({ originalSrc }: { originalSrc: string }) {
         };
     }, [variant]);
 
+    // `?bench`: scroll down and back up over 4 s, then sit idle for 2 s, recording frame
+    // intervals. The result lands on window.__heroBench (read by a headless Chrome script).
+    useEffect(() => {
+        if (!new URLSearchParams(window.location.search).has("bench")) return;
+        const frames = (ms: number, onFrame?: (t: number) => void) =>
+            new Promise<number[]>((resolve) => {
+                const deltas: number[] = [];
+                const t0 = performance.now();
+                let last = t0;
+                const step = (now: number) => {
+                    deltas.push(now - last);
+                    last = now;
+                    onFrame?.((now - t0) / ms);
+                    if (now - t0 < ms) requestAnimationFrame(step);
+                    else resolve(deltas.slice(1));
+                };
+                requestAnimationFrame(step);
+            });
+        const stats = (d: number[]) => {
+            const s = [...d].sort((a, b) => a - b);
+            const mean = d.reduce((a, b) => a + b, 0) / d.length;
+            return {
+                fps: Math.round(1000 / mean),
+                p95ms: Math.round(s[Math.floor(s.length * 0.95)] ?? 0),
+                over33ms: d.filter((x) => x > 33.4).length,
+                frames: d.length,
+            };
+        };
+        const max = Math.min(
+            document.documentElement.scrollHeight - window.innerHeight,
+            1000,
+        );
+        (window as unknown as { __heroBench: Promise<unknown> }).__heroBench =
+            (async () => {
+                await new Promise((r) => setTimeout(r, 2000));
+                const scroll = await frames(4000, (t) =>
+                    window.scrollTo(
+                        0,
+                        max *
+                            (0.5 -
+                                0.5 * Math.cos(Math.min(t, 1) * 2 * Math.PI)),
+                    ),
+                );
+                const idle = await frames(2000);
+                return { scroll: stats(scroll), idle: stats(idle) };
+            })();
+    }, []);
+
     const props: VariantProps = { originalSrc, amp, progress };
     return (
         <>
@@ -95,12 +162,18 @@ export function HeroScenePrototype({ originalSrc }: { originalSrc: string }) {
                 className="hs"
                 style={{ "--amp": amp } as React.CSSProperties}
             >
-                {variant === "projected" && <ProjectedVariant {...props} />}
-                {variant === "facilities" && <FacilitiesVariant {...props} />}
-                {variant === "traced" && <TracedVariant {...props} />}
-                {variant === "raster-depth" && (
-                    <RasterDepthVariant {...props} />
-                )}
+                <Suspense
+                    fallback={<div className="aspect-[2167/725] bg-sky-200" />}
+                >
+                    {variant === "projected" && <ProjectedVariant {...props} />}
+                    {variant === "facilities" && (
+                        <FacilitiesVariant {...props} />
+                    )}
+                    {variant === "traced" && <TracedVariant {...props} />}
+                    {variant === "raster-depth" && (
+                        <RasterDepthVariant {...props} />
+                    )}
+                </Suspense>
                 {variant === "original" && (
                     <img
                         src={originalSrc}

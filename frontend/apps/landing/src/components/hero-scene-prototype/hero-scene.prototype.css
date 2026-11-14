@@ -16,6 +16,29 @@
     height: 100%;
 }
 
+/* Layered parallax (projected): each depth layer is its own <svg> in its own compositor
+   layer. translateY in % is relative to the layer's own height, i.e. the 725-unit viewBox. */
+.hs .hs-stack {
+    position: relative;
+    overflow: hidden;
+}
+.hs .hs-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+.hs .hs-layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+}
+.hs .hs-layer svg {
+    height: 100%;
+    /* content drawn above the frame (sky, steam) must slide in; the stack clips instead */
+    overflow: visible;
+}
+
 /* Window parallax. Any element with class "px" and --d (0 = nearest, 1 = at infinity) lags behind the card
    as the page scrolls, so distant things sink behind near ones. SVG user units are banner
    pixels, so --amp is in banner pixels. */
@@ -88,13 +111,51 @@
     }
 }
 
+/* Cooling-tower plumes: bigger growth, and the puffs stay opaque for most of their rise so
+   consecutive puffs merge into one continuous plume. */
+.hs .steam-plume {
+    animation-name: hs-plume;
+}
+@keyframes hs-plume {
+    0% {
+        transform: translate(0, 0) scale(0.6);
+        opacity: 0;
+    }
+    3% {
+        opacity: 1;
+    }
+    45% {
+        opacity: 0.95;
+    }
+    100% {
+        transform: translate(var(--wind, 70px), calc(-1 * var(--rise, 140px)))
+            scale(1.75);
+        opacity: 0;
+    }
+}
+
+/* The static plume only stands in for the animated puffs when motion is reduced. */
+.hs .steam-static {
+    display: none;
+}
+
+/* Only stop the animated classes: a blanket `transform: none` would also wipe the SVG
+   transform attributes that place billboards, decals and rotors. */
 @media (prefers-reduced-motion: reduce) {
-    .hs *,
-    .hs .px {
+    .hs .spin,
+    .hs .steam,
+    .hs .flow,
+    .hs .drift,
+    .hs .shimmer {
         animation: none !important;
+    }
+    .hs .px {
         transform: none !important;
     }
     .hs .steam {
         opacity: 0 !important;
+    }
+    .hs .steam-static {
+        display: inline;
     }
 }

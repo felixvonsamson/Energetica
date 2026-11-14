@@ -2,35 +2,40 @@
  * PROTOTYPE — throwaway (issue #1440), variant "raster-depth".
  *
  * Tests whether the original AI banner, pixels unchanged, can get scroll
- * parallax and ambient motion without being redrawn. A WebGL fragment shader
- * displaces every pixel down by `progress * amp * (1 - depth)` (backward
- * mapping, a few fixed-point iterations), and adds: steam puffs over the
- * cooling towers and gas chimneys, a shimmer on the dam spillways and lake,
- * slow cloud drift, and rotating turbine rotors (blades painted out of the
- * banner and redrawn rotated around each hub; three of the four turbines, the
- * faint one left of the big turbine stays static).
+ * parallax and ambient motion without being redrawn. The banner is split
+ * offline into two layers: a foreground (cooling towers with their steam
+ * plumes, vent stack, reactor, gas plant, turbine masts, H2 plant, dry cooler,
+ * batteries) with a soft alpha matte, and a background with those objects
+ * inpainted away. A WebGL fragment shader displaces each layer down by
+ * `progress * amp * (1 - depth)` using its own depth (backward mapping, a few
+ * fixed-point iterations) and composites them with a depth test, so near
+ * objects slide over a real background instead of stretching it. It also adds:
+ * steam puffs over the cooling towers and gas chimneys, a shimmer on the dam
+ * spillways and lake, slow cloud drift, and rotating rotors on all four
+ * turbines (blades painted out and redrawn rotated around each hub).
  *
  * Assets in ../raster-depth/ come from the original banner and
  * ../depth/banner-depth.png (Depth Anything V2 Small, see
  * ../depth/make_depth.py). Regenerate them with:
  * ~/.cache/energetica-proto-1440/venv/bin/python raster-depth/make_maps.py
- * Positions of turbines, emitters and the patch crop are duplicated between
- * make_maps.py and raster-depth/shaders.ts.
+ * Turbine and steam-emitter positions are duplicated between make_maps.py and
+ * raster-depth/shaders.ts.
  *
  * Prefers-reduced-motion or no WebGL: plain <img> of the original banner.
  */
 import { useEffect, useRef, useState } from "react";
 
 import type { VariantProps } from "@/components/hero-scene-prototype/hero-scene-prototype";
+import bgSrc from "@/components/hero-scene-prototype/raster-depth/bg.png";
+import fgSrc from "@/components/hero-scene-prototype/raster-depth/fg.png";
+import layersSrc from "@/components/hero-scene-prototype/raster-depth/layers.png";
 import mapsSrc from "@/components/hero-scene-prototype/raster-depth/maps.png";
-import patchSrc from "@/components/hero-scene-prototype/raster-depth/patch.png";
 import rotorSrc from "@/components/hero-scene-prototype/raster-depth/rotor.png";
 import {
     BANNER_H,
     BANNER_W,
     EMITTERS,
     FRAGMENT,
-    PATCH_RECT,
     TURBINES,
     VERTEX,
 } from "@/components/hero-scene-prototype/raster-depth/shaders";
@@ -102,17 +107,19 @@ export function RasterDepthVariant({
 
         Promise.all([
             loadImage(originalSrc),
+            loadImage(bgSrc),
+            loadImage(fgSrc),
+            loadImage(layersSrc),
             loadImage(mapsSrc),
             loadImage(rotorSrc),
-            loadImage(patchSrc),
             loadImage(skySrc),
         ])
-            .then(([img, maps, rotor, patch, sky]) => {
+            .then(([img, bg, fg, layers, maps, rotor, sky]) => {
                 if (disposed) return;
                 draw = setup(
                     gl,
                     canvas,
-                    { img, maps, rotor, patch, sky },
+                    { img, bg, fg, layers, maps, rotor, sky },
                     () => ({
                         shift: progress.current * ampRef.current,
                         time: performance.now() / 1000,
@@ -163,7 +170,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 type Images = Record<
-    "img" | "maps" | "rotor" | "patch" | "sky",
+    "img" | "bg" | "fg" | "layers" | "maps" | "rotor" | "sky",
     HTMLImageElement
 >;
 
@@ -210,9 +217,11 @@ function setup(
 
     const textures: [string, HTMLImageElement, boolean][] = [
         ["u_img", images.img, true],
+        ["u_bg", images.bg, true],
+        ["u_fg", images.fg, true],
+        ["u_layers", images.layers, false],
         ["u_maps", images.maps, false],
         ["u_rotor", images.rotor, false],
-        ["u_patch", images.patch, true],
         ["u_sky", images.sky, true],
     ];
     textures.forEach(([name, image, isColour], unit) => {
@@ -238,7 +247,6 @@ function setup(
     });
 
     const u = (name: string) => gl.getUniformLocation(program, name);
-    gl.uniform4f(u("u_patchRect"), ...PATCH_RECT);
     gl.uniform4fv(
         u("u_turb"),
         TURBINES.flatMap((t) => [t.hub[0], t.hub[1], t.R, t.core]),

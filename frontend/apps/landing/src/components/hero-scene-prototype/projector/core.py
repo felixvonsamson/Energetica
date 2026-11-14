@@ -376,6 +376,26 @@ class Scene:
             dz = self.cam.depth(dz_world) if dz_world is not None else z
             self.items.append(Item(z, flat, svg, dz))
 
+    def to_layers(self, *, z_near=None, d_step=0.08):
+        """Split the painted items into depth layers for compositor parallax: returns
+        (defs, [(d, body), ...]) far to near, where each body is SVG content in output pixels.
+        Consecutive items whose --d rounds to the same step share a layer, so painter order
+        is preserved exactly."""
+        items = sorted(self.items, key=lambda it: (not it.flat, -it.z))
+        zn = z_near or min(it.dz for it in items if it.dz > 0)
+        layers, cur, buf = [], None, []
+        for it in items:
+            d = 1.0 if math.isinf(it.dz) else max(0.0, 1 - zn / max(it.dz, zn))
+            q = round(round(d / d_step) * d_step, 3)
+            if q != cur and buf:
+                layers.append((cur, "".join(buf)))
+                buf = []
+            cur = q
+            buf.append(it.svg)
+        if buf:
+            layers.append((cur, "".join(buf)))
+        return "".join(self.defs), layers
+
     def to_svg(
         self, *, viewbox=None, parallax=True, z_near=None, d_step=0.02, background=None, extra_defs="", fit="slice"
     ):
