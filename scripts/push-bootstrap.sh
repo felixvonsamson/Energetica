@@ -34,8 +34,13 @@ done
 [ -n "$REMOTE_HOST" ] || { echo "✗ --server is required (or set DEPLOY_HOST)"; exit 1; }
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
+# -rltzO, not -az. Because the source ends in /, rsync applies the source folder's own attributes
+# to /tmp itself, and /tmp belongs to root, so the deploy user cannot change its group (-g), mode
+# (-p) or modification time (-t on folders). Any of those fails with exit code 23, even though
+# every file copies (#1411). -O keeps -t for the files only. The files need no particular
+# permissions: they are run with `sudo bash`.
 echo "→ Pushing scripts/infra/ → ${SSH}:/tmp/ (flattened)..."
-rsync -az ./scripts/infra/ "${SSH}:/tmp/"
+rsync -rltzO ./scripts/infra/ "${SSH}:/tmp/"
 
 echo "✓ Bootstrap scripts are in /tmp on ${REMOTE_HOST}. Run them from there, e.g.:"
 echo "    ssh ${SSH}"

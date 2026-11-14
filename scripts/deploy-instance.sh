@@ -208,7 +208,8 @@ sync_backend "$SSH:$REMOTE_PATH" dist-app main.py
 
 # --- 3b. rsync instance-scoped scripts (flattened: scripts/instance/* → scripts/*) --------
 log_step "Syncing instance scripts..."
-rsync -az --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
+# -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
+rsync -rlptz --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
 log_success "Instance scripts synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
@@ -218,7 +219,8 @@ log_success "Instance scripts synced"
 # worker is inside the bundle (build:sw writes it there), so it needs no rsync of its own.
 # APP_BUNDLE_SUBPATH in src/energetica/routers/health.py names this same path.
 log_step "Syncing app bundle..."
-rsync -az --delete ./frontend/dist-app/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
+# -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
+rsync -rlptz --delete ./frontend/dist-app/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
 log_success "App bundle synced"
 
 # --- 5. Install the backend into the server venv --------------------------------

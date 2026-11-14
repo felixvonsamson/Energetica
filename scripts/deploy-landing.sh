@@ -75,20 +75,30 @@ log_step "Syncing landing files..."
 # the build's assets/ hashed, and only the ones the landing actually renders. Letting
 # --delete see static/ is what removes the old tree from hosts that still carry it; once it
 # is gone the exclude would have nothing left to protect.
-rsync -az --delete \
+#
+# -rlptz, not -az: -g would copy the local dist/ dir's group onto $LANDING_DIR, replacing
+# `energetica`. The instance services write instances.json into $LANDING_DIR through that group,
+# so the lobby list silently went stale. rsync only does this when the server's deploy user
+# belongs to the deployer's local group (#1412); scripts/lib/backend-sync.sh has the details.
+rsync -rlptz --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
     --exclude='recaps/' \
     ./frontend/apps/landing/dist/ "$SSH:$LANDING_DIR/" >/dev/null
 log_success "Landing bundle deployed"
 
-# rsync -a applies the source dir's mode to $LANDING_DIR itself, stripping the setgid +
+# rsync -p applies the source dir's mode to $LANDING_DIR itself, stripping the setgid +
 # group-write bits setup-landing.sh set (2775). Those bits are load-bearing: the instance
 # backends (group energetica) atomically write instances.json *into this dir*, so without
 # group-write the aggregate write fails with EPERM — and because the instances/ fragment dir
 # is --excluded (keeps its 2775), per-instance fragments still write while the aggregate
-# manifest silently goes stale (a new instance never appears in the lobby picker). openrsync
-# (macOS) lacks --chmod, so re-assert the mode over ssh after the sync. The deploy user owns
+# manifest silently goes stale (a new instance never appears in the lobby picker). macOS's
+# openrsync either rejects --chmod or ignores it (see scripts/lib/backend-sync.sh), so re-assert
+# the mode over ssh after the sync. The deploy user owns
 # $LANDING_DIR, so it can restore the setgid bit.
-ssh "$SSH" "chmod 2775 '$LANDING_DIR'"
-log_success "Landing dir perms re-asserted (2775, setgid energetica)"
+#
+# The group is re-asserted too. The sync above no longer changes it, but deploys made before
+# #1412 left it as `deploy` on some hosts. The deploy user owns $LANDING_DIR and is in the
+# energetica group, so it can set the group without root.
+ssh "$SSH" "chgrp energetica '$LANDING_DIR' && chmod 2775 '$LANDING_DIR'"
+log_success "Landing dir group and perms re-asserted (energetica, 2775)"

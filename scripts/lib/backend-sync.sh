@@ -55,16 +55,26 @@ sync_backend() (
         cp "$_BACKEND_SYNC_REPO_ROOT/$entry_point" "$staging/"
     done
 
-    # The service user reaches the code through the `energetica` group only, and `rsync -a` carries
+    # The service user reaches the code through the `energetica` group only, and rsync's -p carries
     # local modes across, so a deployer with a restrictive umask would ship files the service cannot
-    # read. Normalise locally to dirs 755 and files 644, as build_backend_wheel does for the wheel:
-    # macOS ships openrsync, which rejects rsync's --chmod. This covers the staging root too, which
-    # rsync applies to the remote root. mktemp creates it 700, which would lock out the service and
-    # Apache. 755 is what a default checkout's root gave it when the deploy synced the repo root.
+    # read. Normalise locally to dirs 755 and files 644, as build_backend_wheel does for the wheel.
+    # rsync's --chmod would do this during the transfer, but the openrsync that macOS ships cannot be
+    # trusted with it. On macOS 26 it rejects `--chmod=D755,F644` as an invalid argument, and it
+    # accepts `--chmod=u=rwX,g=rX,o=rX` but leaves the modes unchanged.
+    #
+    # The normalising covers the staging root too, which rsync applies to the remote root. mktemp
+    # creates it 700, which would lock out the service and Apache. 755 is what a default checkout's
+    # root gave it when the deploy synced the repo root.
     chmod -R u=rwX,g=rX,o=rX "$staging"
 
+    # -rlptz is -az without -g, -o and -D. -g would copy the staging root's group onto the remote
+    # root, replacing the `energetica` group the setup scripts gave it. rsync does that whenever the
+    # server's deploy user belongs to the group the deployer's local group maps to (by name, or by
+    # numeric ID when the name is unknown on the server). So it can happen for one deployer and not
+    # another (#1412). -o and -D do nothing for a non-root receiver or for this payload. openrsync
+    # has no --no-group, hence the spelled-out flags.
     log_step "Syncing backend code..."
-    rsync -az --delete \
+    rsync -rlptz --delete \
         --filter='P /instance/' \
         --filter='P /checkpoints/' \
         --filter='P /.venv/' \

@@ -329,8 +329,10 @@ fi
 # as the recap preflight. set -e would catch this anyway; it is spelled out for the message.
 log_section "LANDING FRAGMENT"
 if ! run_landing_py "print('deleted' if instance_config.retire_fragment('$INSTANCE') else 'kept')"; then
-    log_error "Could not retire the fragment (ran against $CODE_ROOT). Stopping before anything is deleted."
-    log_error "The picker would otherwise keep listing $INSTANCE with nothing behind it."
+    log_error "Could not retire the fragment (ran against $CODE_ROOT)."
+    log_error "Stopping before the vhost, folders and certificate are removed. The service is already"
+    log_error "stopped and removed, and the fragment may already be deleted. Fix the cause and re-run:"
+    log_error "the finished steps are safe to repeat (--archive-to takes another copy of the pickle)."
     exit 1
 fi
 log_success "Fragment retired and instances.json re-aggregated"
