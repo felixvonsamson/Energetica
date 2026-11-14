@@ -146,7 +146,15 @@ export default defineConfig(async ({ mode, command }) => {
             react(),
         ],
         resolve: {
-            alias: { "@": path.resolve(import.meta.dirname, "./src") },
+            alias: {
+                // Shared packages import this app's API types through `@api`. Those
+                // imports are type-only, so this alias is only a safety net.
+                "@api": path.resolve(
+                    import.meta.dirname,
+                    "./src/types/api-helpers.ts",
+                ),
+                "@": path.resolve(import.meta.dirname, "./src"),
+            },
         },
         define: {
             "import.meta.env.VITE_DEV_INSTANCE_SLUG":

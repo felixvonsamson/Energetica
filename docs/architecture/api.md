@@ -43,7 +43,7 @@ This script:
 2. Creates TypeScript types from each: the merged `frontend/src/types/api.generated.ts`, `api.freeplay.generated.ts` and `api.workshop.generated.ts` next to it, and the lobby's `frontend/apps/lobby/src/types/api.generated.ts`
 3. Formats output with Prettier
 
-The combined freeplay and workshop bundle imports the merged file, through `src/types/api-helpers.ts`. Each per-app file lists only the routes that app serves. The lobby app imports only its own file, through `apps/lobby/src/types/api-helpers.ts`, so it cannot type-check against a route the lobby backend does not serve. The freeplay and workshop files are not imported yet; they get their own apps next (#1171).
+The combined freeplay and workshop bundle imports the merged file, through `src/types/api-helpers.ts`. Each per-app file lists only the routes that app serves. The lobby app imports only its own file, through `apps/lobby/src/types/api-helpers.ts`, so it cannot type-check against a route the lobby backend does not serve. Shared packages, such as `@energetica/instance`, import the types of whichever app compiles them through the `@api` alias (see [the overview](overview.md#frontend)). The freeplay file is only read by `src/types/api-helpers.freeplay.ts`, which the instance package's own tsconfig points `@api` at, and the workshop file is not imported yet. Both get their own apps next (#1171).
 
 **Note:** Don't edit the generated files manually.
 

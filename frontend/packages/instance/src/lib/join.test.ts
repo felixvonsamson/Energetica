@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { rememberPendingJoinToken, takePendingJoinToken } from "./join";
+import {
+    rememberPendingJoinToken,
+    takePendingJoinToken,
+} from "#instance/lib/join";
 
 /**
  * Minimal in-memory `Storage` stand-in — no DOM environment needed to test the

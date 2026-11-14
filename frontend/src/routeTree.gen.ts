@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppSettleRouteImport } from './routes/app/settle'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
-import { Route as AppLogoutRouteImport } from './routes/app/logout'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
 import { Route as AppWorkshopRouteRouteImport } from './routes/app/workshop/route'
@@ -69,11 +68,6 @@ const AppSettleRoute = AppSettleRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/app/settings',
   path: '/app/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppLogoutRoute = AppLogoutRouteImport.update({
-  id: '/app/logout',
-  path: '/app/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -298,7 +292,6 @@ export interface FileRoutesByFullPath {
   '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
   '/app': typeof AppIndexRoute
@@ -345,7 +338,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
   '/app': typeof AppIndexRoute
@@ -394,7 +386,6 @@ export interface FileRoutesById {
   '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
   '/app/': typeof AppIndexRoute
@@ -444,7 +435,6 @@ export interface FileRouteTypes {
     | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/logout'
     | '/app/settings'
     | '/app/settle'
     | '/app'
@@ -491,7 +481,6 @@ export interface FileRouteTypes {
   to:
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/logout'
     | '/app/settings'
     | '/app/settle'
     | '/app'
@@ -539,7 +528,6 @@ export interface FileRouteTypes {
     | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/logout'
     | '/app/settings'
     | '/app/settle'
     | '/app/'
@@ -588,7 +576,6 @@ export interface RootRouteChildren {
   AppWorkshopRouteRoute: typeof AppWorkshopRouteRouteWithChildren
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
-  AppLogoutRoute: typeof AppLogoutRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSettleRoute: typeof AppSettleRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -645,13 +632,6 @@ declare module '@tanstack/react-router' {
       path: '/app/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/logout': {
-      id: '/app/logout'
-      path: '/app/logout'
-      fullPath: '/app/logout'
-      preLoaderRoute: typeof AppLogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/dashboard': {
@@ -992,7 +972,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppWorkshopRouteRoute: AppWorkshopRouteRouteWithChildren,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
-  AppLogoutRoute: AppLogoutRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSettleRoute: AppSettleRoute,
   AppIndexRoute: AppIndexRoute,

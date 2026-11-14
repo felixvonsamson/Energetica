@@ -345,13 +345,6 @@ export const queryKeys = {
     browserNotifications: {
         vapidKey: ["push-subscriptions", "vapid-key"] as const,
     },
-    facilitator: {
-        access: ["facilitator", "access"] as const,
-        roster: ["facilitator", "roster"] as const,
-        rosterCandidates: (prefix: string) =>
-            ["facilitator", "roster", "candidates", prefix] as const,
-    },
-    join: {
-        link: (token: string) => ["join", "link", token] as const,
-    },
+    // `facilitator` and `join` belong to `@energetica/instance`, which owns their queries: see
+    // `instanceQueryKeys` there.
 } as const;

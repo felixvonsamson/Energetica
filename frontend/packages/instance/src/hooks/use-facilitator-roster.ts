@@ -3,11 +3,11 @@
  * add-control's account search, and the add/ban mutations.
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { facilitatorApi } from "@/lib/api/facilitator";
-import { queryClient, queryKeys } from "@/lib/query-client";
+import { facilitatorApi } from "#instance/lib/api/facilitator";
+import { instanceQueryKeys } from "#instance/lib/query-keys";
 
 /**
  * This instance's roster: every account allowed to enter it.
@@ -23,7 +23,7 @@ import { queryClient, queryKeys } from "@/lib/query-client";
  */
 export function useFacilitatorRoster() {
     return useQuery({
-        queryKey: queryKeys.facilitator.roster,
+        queryKey: instanceQueryKeys.facilitator.roster,
         queryFn: facilitatorApi.getRoster,
         staleTime: 5 * 1000, // 5 seconds, matched to refetchInterval below
         refetchInterval: 5 * 1000,
@@ -37,7 +37,7 @@ export function useFacilitatorRoster() {
  */
 export function useRosterCandidates(prefix: string) {
     return useQuery({
-        queryKey: queryKeys.facilitator.rosterCandidates(prefix),
+        queryKey: instanceQueryKeys.facilitator.rosterCandidates(prefix),
         queryFn: () => facilitatorApi.searchRosterCandidates(prefix),
         enabled: prefix.length > 0,
     });
@@ -51,13 +51,14 @@ export function useRosterCandidates(prefix: string) {
  *     addToRoster("carol");
  */
 export function useAddToRoster() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (username: string) =>
             facilitatorApi.addToRoster({ username }),
         onSuccess: (_data, username) => {
             toast.success(`${username} added to the roster`);
             queryClient.invalidateQueries({
-                queryKey: queryKeys.facilitator.roster,
+                queryKey: instanceQueryKeys.facilitator.roster,
             });
         },
     });
@@ -73,13 +74,14 @@ export function useAddToRoster() {
  *     removeFromRoster("carol");
  */
 export function useRemoveFromRoster() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (username: string) =>
             facilitatorApi.removeFromRoster(username),
         onSuccess: (_data, username) => {
             toast.success(`${username} removed from the roster`);
             queryClient.invalidateQueries({
-                queryKey: queryKeys.facilitator.roster,
+                queryKey: instanceQueryKeys.facilitator.roster,
             });
         },
     });

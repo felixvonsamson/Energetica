@@ -13,7 +13,7 @@ Guide for integrating backend API calls with automatic type generation.
      getData: () => apiClient.get<ApiResponse<"/api/v1/path", "get">>("/path"),
    };
    ```
-3. **Add query key** in `src/lib/query-client.ts`:
+3. **Add query key** in `src/lib/query-client.ts` (a hook in a shared package adds it to that package's own keys instead, such as `instanceQueryKeys` in `@energetica/instance`):
    ```ts
    queryKeys: {
      myFeature: {

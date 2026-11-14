@@ -59,26 +59,26 @@ describe("computeRedirect", () => {
         ).toBeNull();
     });
 
-    it("redirects a non-facilitator (player) account away from a facilitator-required route", () => {
+    it("logs a non-facilitator (player) account out of a facilitator-required route", () => {
         expect(
             computeRedirect(
                 { requiredRole: "facilitator" },
                 player(),
                 CAPABILITIES,
             ),
-        ).toBe("/app/logout");
+        ).toBe("log-out");
     });
 
     // --- player routes (pre-existing behaviour, unchanged by the extraction) ----------------
 
-    it("redirects a facilitator account away from a player-required route", () => {
+    it("logs a facilitator account out of a player-required route", () => {
         expect(
             computeRedirect(
                 { requiredRole: "player", requiresSettledTile: true },
                 facilitator(),
                 null,
             ),
-        ).toBe("/app/logout");
+        ).toBe("log-out");
     });
 
     it("sends an unsettled player to /app/settle on a route that requires a settled tile", () => {

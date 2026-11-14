@@ -12,9 +12,9 @@
 import { ExternalLink, MessageSquareHeart, Star } from "lucide-react";
 import { useId, useState } from "react";
 
-import { JoinQrCode } from "@/components/facilitator/join-qr-code";
 import { useSendFeedback, useWorkshopFeedback } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
+import { JoinQrCode } from "@energetica/instance/components/join-qr-code";
 import { Button } from "@energetica/ui/components/button";
 import {
     Card,

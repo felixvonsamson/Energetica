@@ -32,16 +32,21 @@ export function isAnnouncedTakeover(
     return phase === "announced" && routeConfig?.requiredRole !== "facilitator";
 }
 
+/**
+ * Returns `"log-out"` when the account must be logged out at the lobby, a path
+ * to send it to within the app, or `null` to show the route.
+ */
 export function computeRedirect(
     routeConfig: StaticDataRouteOption["routeConfig"],
     user: User,
     capabilities: PlayerCapabilities | null,
-): string | null {
+): "log-out" | "/app/settle" | "/app/dashboard" | null {
     if (!routeConfig || routeConfig.requiredRole === null) return null;
     // A route declares one required role; an account whose own role doesn't match has nothing to
-    // do here at all (not just "not settled yet" or "not unlocked yet") — sent to logout rather
-    // than any in-app page, the same way an unauthenticated visitor leaves the app entirely.
-    if (routeConfig.requiredRole !== user.role) return "/app/logout";
+    // do here at all (not just "not settled yet" or "not unlocked yet"). It is logged out at the
+    // lobby rather than sent to any in-app page, the same way an unauthenticated visitor leaves
+    // the app entirely.
+    if (routeConfig.requiredRole !== user.role) return "log-out";
 
     const requiredRole = routeConfig.requiredRole;
     switch (requiredRole) {

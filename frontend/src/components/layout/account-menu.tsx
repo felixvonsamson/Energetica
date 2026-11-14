@@ -352,10 +352,10 @@ export function AccountMenu({
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/app/logout">
+                    <a href={lobbyHref("/logout")}>
                         <LogOut size={16} />
                         Logout
-                    </Link>
+                    </a>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

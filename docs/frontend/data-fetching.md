@@ -44,7 +44,7 @@ Energetica uses a three-layer data fetching architecture:
 
 **Key architectural decisions:**
 
-- **Centralized query keys**: All query keys defined in `lib/query-client.ts`
+- **Centralized query keys**: All of the app's query keys defined in `lib/query-client.ts`. A shared package that queries the API owns its own keys, such as `instanceQueryKeys` in `@energetica/instance`
 - **Type safety**: TypeScript types generated from OpenAPI schema
 - **Separation of concerns**: API calls separated from query logic
 - **Cache synchronization**: Backend-driven invalidation via Socket.IO
@@ -665,7 +665,7 @@ function CreateProjectButton() {
 
 **✅ Do:**
 
-- Use centralized query keys from `lib/query-client.ts`
+- Use centralized query keys from `lib/query-client.ts`, or from the shared package that owns the query
 - Make keys hierarchical: `["players", "me", "money"]`
 - Include parameters in keys: `deliveryTime(askId)`
 

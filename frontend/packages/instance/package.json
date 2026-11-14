@@ -1,0 +1,36 @@
+{
+    "name": "@energetica/instance",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./components/*": "./src/components/*.tsx",
+        "./hooks/*": "./src/hooks/*.ts",
+        "./lib/*": "./src/lib/*.ts"
+    },
+    "imports": {
+        "#instance/components/*": "./src/components/*.tsx",
+        "#instance/hooks/*": "./src/hooks/*.ts",
+        "#instance/lib/*": "./src/lib/*.ts"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@tanstack/react-query": "catalog:",
+        "lucide-react": "catalog:",
+        "qrcode": "^1.5.4",
+        "react": "catalog:",
+        "sonner": "catalog:"
+    },
+    "devDependencies": {
+        "@types/qrcode": "^1.5.6",
+        "@types/react": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:"
+    }
+}
