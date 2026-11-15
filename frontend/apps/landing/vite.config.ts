@@ -42,7 +42,7 @@ export default defineConfig(() => {
             react(),
             // The landing has no backend to serve /healthz, so deployed-versions.sh
             // fetches this stamp straight from the apex as /build-info.json.
-            buildInfoPlugin(),
+            buildInfoPlugin("landing"),
         ],
         resolve: {
             alias: { "@": path.resolve(import.meta.dirname, "./src") },

@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
-            buildInfoPlugin(),
+            buildInfoPlugin("lobby"),
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
                 target: "react",

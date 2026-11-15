@@ -127,9 +127,14 @@ From your local machine:
 ./scripts/list-instances.sh  --server energetica-game
 ```
 
-- `deploy-instance.sh` builds the app bundle locally (baking `VITE_APEX_DOMAIN` so
-  cross-origin links resolve) and the backend wheel, rsyncs `main.py`, the wheel and the bundle,
-  installs the wheel into the server venv, restarts the service, and polls `/healthz`. On
+- `deploy-instance.sh` builds the app for the instance's Run mode locally (baking
+  `VITE_APEX_DOMAIN` so cross-origin links resolve) and the backend wheel, rsyncs `main.py`, the
+  wheel and the bundle, installs the wheel into the server venv, restarts the service, and polls
+  `/healthz`. It reads the Run mode from `run.mode` in the instance's `instance.json`: `freeplay`
+  ships `frontend/apps/freeplay`, `workshop` ships `frontend/apps/workshop`. Either app lands in
+  the same `dist-app/` directory, so the vhost does not depend on the mode. Nothing at runtime
+  checks that an instance serves the right app, so the health check does: it fails if the
+  `build-info.json` Apache serves at `/static/app/` names the other app. On
   restart the instance re-reads `instance.json` and re-publishes its landing fragment, so
   admin policy edits take effect. Before any of that, it checks the instance's `instance.json`
   against the backend it is about to ship, and refuses to deploy if the new code would reject it.
@@ -535,7 +540,10 @@ read its own commit from git. Instead each half is stamped, and both are reporte
   deploy root just before the restart, capturing the commit, branch, dirty flag, deployer, and
   timestamp. It goes in before the restart because a backend also names its commit in the
   `X-Energetica-Caller` header it sends the lobby service, and the backend reads the stamp only once.
-- **Frontend** — the vite build writes `build-info.json` into the bundle it emits.
+- **Frontend** — the vite build writes `build-info.json` into the bundle it emits. Its `app`
+  field names the app that was built (`freeplay`, `workshop`, `lobby` or `landing`).
+  `deploy-instance.sh` checks that an instance serves the app for its Run mode by comparing this
+  field with `run.mode`.
 
 `/healthz` reads both and returns a `version` block:
 
@@ -550,6 +558,7 @@ read its own commit from git. Instead each half is stamped, and both are reporte
       "source": "deploy"
     },
     "frontend": {
+      "app": "freeplay",
       "commit_short": "abc123def",
       "dirty": false,
       "source": "build"

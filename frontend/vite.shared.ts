@@ -221,14 +221,26 @@ export function gitBuildInfo(): Record<string, string | boolean | null> {
 }
 
 /**
+ * The apps under `frontend/apps/`, each named after its directory. The two apps
+ * an Instance can serve, freeplay and workshop, are named after their Run mode
+ * (`RunModeTag` in src/energetica/identity/instance_config.py).
+ */
+export type AppName = "freeplay" | "workshop" | "lobby" | "landing";
+
+/**
  * Write build-info.json into the build output dir so the backend's /healthz can
  * report the deployed frontend version (the landing, which has no backend,
  * serves the file itself). Build-only (`apply: "build"`): a dev server serves
  * the app from vite, not from a bundle, so there is nothing to stamp. Runs at
  * closeBundle — after Vite has emitted (and, with emptyOutDir, cleared then
  * repopulated) the dir — so the stamp survives.
+ *
+ * The stamp names the `app` that was built. An Instance serves either freeplay
+ * or workshop from the same `dist-app/` directory, so deploy-instance.sh
+ * compares this field with the Instance's Run mode to catch the wrong app being
+ * served.
  */
-export function buildInfoPlugin(): Plugin {
+export function buildInfoPlugin(app: AppName): Plugin {
     let outDir = "";
     return {
         name: "energetica-build-info",
@@ -241,7 +253,7 @@ export function buildInfoPlugin(): Plugin {
             fs.mkdirSync(outDir, { recursive: true });
             fs.writeFileSync(
                 path.join(outDir, "build-info.json"),
-                JSON.stringify(gitBuildInfo(), null, 2) + "\n",
+                JSON.stringify({ app, ...gitBuildInfo() }, null, 2) + "\n",
             );
         },
     };

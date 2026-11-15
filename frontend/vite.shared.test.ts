@@ -6,6 +6,7 @@ import type { ResolvedConfig } from "vite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+    type AppName,
     buildInfoPlugin,
     explicitBackendUrl,
     instanceSlugFromBackend,
@@ -109,8 +110,12 @@ describe("buildInfoPlugin", () => {
 
     // Run the plugin's two hooks the way Vite would, with only the config
     // fields it reads.
-    function runPlugin(root: string, outDir: string) {
-        const plugin = buildInfoPlugin();
+    function runPlugin(
+        root: string,
+        outDir: string,
+        app: AppName = "freeplay",
+    ) {
+        const plugin = buildInfoPlugin(app);
         const config = { root, build: { outDir } } as ResolvedConfig;
         (plugin.configResolved as (c: ResolvedConfig) => void)(config);
         (plugin.closeBundle as () => void)();
@@ -132,5 +137,16 @@ describe("buildInfoPlugin", () => {
         const outDir = path.join(makeTmpDir(), "out");
         runPlugin(makeTmpDir(), outDir);
         expect(fs.existsSync(path.join(outDir, "build-info.json"))).toBe(true);
+    });
+
+    // deploy-instance.sh compares this field with the Instance's Run mode, so it
+    // catches an Instance that serves the other app's bundle.
+    it("names the app that was built", () => {
+        const root = makeTmpDir();
+        runPlugin(root, "dist", "workshop");
+        const stamp = JSON.parse(
+            fs.readFileSync(path.join(root, "dist", "build-info.json"), "utf8"),
+        );
+        expect(stamp.app).toBe("workshop");
     });
 });
