@@ -64,10 +64,10 @@ climate_events = {
             ControllableFacilityType.COAL_BURNER: 0.03,
             ControllableFacilityType.GAS_BURNER: 0.03,
             ControllableFacilityType.COMBINED_CYCLE: 0.02,
-            ControllableFacilityType.NUCLEAR_REACTOR: 0.01,  # not a dangerous accident but the plant has to be shut down permanently for safety reasons
-            # safety reasons
-            ControllableFacilityType.NUCLEAR_REACTOR_GEN4: 0.005,  # not a dangerous accident but the plant has to be shut down permanently for
-            # safety reasons
+            # For both reactors, not a dangerous accident, but the plant has to be shut down permanently for safety
+            # reasons.
+            ControllableFacilityType.NUCLEAR_REACTOR: 0.01,
+            ControllableFacilityType.NUCLEAR_REACTOR_GEN4: 0.005,
         },
         industry_destruction_chance=0.5,
     ),

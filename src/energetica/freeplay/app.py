@@ -218,7 +218,7 @@ def create_app(
             if not simulate_file:
 
                 def job_listener(event: JobExecutionEvent) -> None:
-                    """This function allows to restart normal server behavior after re-simulation has finished successfully."""
+                    """Restart normal server behavior once a re-simulation has finished successfully."""
                     if event.job_id != "replay" or not event.retval:
                         # The simulation was not successful, stop here.
                         return

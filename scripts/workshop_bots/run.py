@@ -184,7 +184,8 @@ class Bot:
                 self.api.set_fuel_order(fuel, quantity)
                 need = ctx.fuel[fuel]["season_need"] or 1
                 log(
-                    f"{self.name} orders {quantity / need:.0%} of its {fuel} need (holds {ctx.fuel[fuel]['stock'] / need:.0%})"
+                    f"{self.name} orders {quantity / need:.0%} of its {fuel} need (holds "
+                    f"{ctx.fuel[fuel]['stock'] / need:.0%})"
                 )
         if self.live:
             # Second thoughts partway through the window, unless the facilitator moves on first.
@@ -254,9 +255,9 @@ def setup(args: argparse.Namespace) -> None:
     ]
     if remote:
         sys.exit(
-            f"setup only works on a local Run, but {' and '.join(remote)}. It creates accounts through the local lobby service and "
-            "gives every account the password <name>1234, including the facilitator. On a deployed Run, an operator "
-            "creates the accounts on the server with random passwords; pass those to the bots with "
+            f"setup only works on a local Run, but {' and '.join(remote)}. It creates accounts through the local "
+            "lobby service and gives every account the password <name>1234, including the facilitator. On a deployed "
+            "Run, an operator creates the accounts on the server with random passwords; pass those to the bots with "
             "ENERGETICA_BOT_PASSWORDS."
         )
     # Only this command needs the backend.

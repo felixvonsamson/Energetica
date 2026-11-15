@@ -124,8 +124,10 @@ def national_demand_curve() -> DemandCurve:
     up so day 0 is a Monday, and not smoothed: 364 x 96 values, one per 15 minutes. It ships as package data in
     ``workshop/data/`` (see ``package-data`` in pyproject.toml). The notebook that makes it is described in #1201.
     """
+    # Package data holding plain floats, so it names no class that could move. Workshop must not import
+    # freeplay's legacy_pickle anyway.
     with open(_DATA_DIR / "national_demand_year_15min.pck", "rb") as file:
-        return DemandCurve(tuple(float(value) for value in pickle.load(file)))
+        return DemandCurve(tuple(float(value) for value in pickle.load(file)))  # noqa: TID251
 
 
 def round_one_amplitude(per_player_base_amplitude: float, headcount: int) -> float:

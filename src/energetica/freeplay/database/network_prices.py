@@ -76,7 +76,8 @@ class NetworkPrices:
     def init_prices_with_randomness(self, player: Player) -> None:
         """Initialize the prices of the player with added random values."""
         for ask_name in self.ask_prices:
-            # TODO: The hash calculation uses "bid" for ask prices, but should use "ask" to match the comment and variable name
+            # TODO: The hash calculation uses "bid" for ask prices, but should use "ask" to match the comment and
+            # variable name
             seed_hash = stable_hash((engine.random_seed, "bid", ask_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
@@ -84,7 +85,8 @@ class NetworkPrices:
             self.ask_prices[ask_name] = round(self.ask_prices[ask_name], 2)
 
         for bid_name in self.bid_prices:
-            # TODO: The hash calculation uses "ask" for bid prices, but should use "bid" to match the comment and variable name.
+            # TODO: The hash calculation uses "ask" for bid prices, but should use "bid" to match the comment and
+            # variable name.
             seed_hash = stable_hash((engine.random_seed, "ask", bid_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)

@@ -70,8 +70,8 @@ class Api:
 
     def __init__(self, username: str, password: str | None = None):
         self.username = username
-        # Drop an idle connection before Apache's 5-second keep-alive timeout closes it, so a request that is not safe to
-        # repeat rarely goes out on a connection that is closing.
+        # Drop an idle connection before Apache's 5-second keep-alive timeout closes it, so a request that is not safe
+        # to repeat rarely goes out on a connection that is closing.
         self.client = httpx.Client(base_url=APP_URL, timeout=60, limits=httpx.Limits(keepalive_expiry=3))
         login = self.request(
             "POST",

@@ -22,11 +22,11 @@ Recap opens, each blackout in the Round costs every player a share of their oper
 
 A full season can take a minute to simulate, so settling happens in three steps (#1004).
 :meth:`WorkshopSession.start_settlement` takes what the engine needs under the session's lock,
-:meth:`WorkshopSession.run_settlement` runs the engine without holding it, reporting each day it has
-done, and :meth:`WorkshopSession.finish_settlement` pays the players. The app runs the middle step in
-the background. The session cannot advance while a period is being simulated. Paying the players also
-charges them for fuel (#1009) and saves the period's :class:`~energetica.workshop.period_record.TradingPeriodRecord`, every settlement point
-it cleared, to its own file in :attr:`WorkshopSession.records_dir`, for the period's review (#1007).
+:meth:`WorkshopSession.run_settlement` runs the engine without holding it, reporting each day it has done, and
+:meth:`WorkshopSession.finish_settlement` pays the players. The app runs the middle step in the background. The session
+cannot advance while a period is being simulated. Paying the players also charges them for fuel (#1009) and saves the
+period's :class:`~energetica.workshop.period_record.TradingPeriodRecord`, every settlement point it cleared, to its own
+file in :attr:`WorkshopSession.records_dir`, for the period's review (#1007).
 
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
 Round plans and phase timers, the running phase's countdown, and the Run's single shared
@@ -994,8 +994,8 @@ class WorkshopSession:
             checkpoint = self._next_checkpoint()
             duration = phase_duration(checkpoint, self.timers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
-            # Saved before it is applied, so a failed write leaves the session where the file says. A
-            # purchase, retirement, round-start cash or new fuel price is saved in the same write, so it happens only if the
+            # Saved before it is applied, so a failed write leaves the session where the file says. A purchase,
+            # retirement, round-start cash or new fuel price is saved in the same write, so it happens only if the
             # advance does.
             undos: list[Callable[[], None]] = []
             try:
@@ -1784,9 +1784,9 @@ class WorkshopSession:
             return self._set_plans(plans)
 
     def add_round(self) -> None:
-        """Add a Round after the last one (#1298). Its plan copies the last Round's levers, without its events, and stays
-        open to change until it locks. Before the session starts, the facility prices follow the new length too; once
-        it has started, they stay as they were.
+        """Add a Round after the last one (#1298). Its plan copies the last Round's levers, without its events, and
+        stays open to change until it locks. Before the session starts, the facility prices follow the new length too;
+        once it has started, they stay as they were.
 
         Raises :class:`LastRecapOpenError` once the last Round's Recap has opened, since it shows the final scores.
         """

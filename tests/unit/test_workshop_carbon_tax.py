@@ -1,5 +1,5 @@
-"""The carbon tax (#1015): each Trading period, the CO₂ every settled player emitted is taxed, and the takings are shared
-out equally among them.
+"""The carbon tax (#1015): each Trading period, the CO₂ every settled player emitted is taxed, and the takings are
+shared out equally among them.
 """
 
 from __future__ import annotations

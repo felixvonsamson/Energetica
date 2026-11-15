@@ -6,9 +6,10 @@ each blackout that follows. The next Round starts with demand back at its full l
 
 Each blackout in a Round also costs every player :data:`BLACKOUT_COST_SHARE` of the operating profit the blackouts
 before it left them, charged when its Recap opens: ``n`` blackouts leave them ``(1 - BLACKOUT_COST_SHARE) ** n`` of it.
-Compounding the cost this way keeps a Round with several blackouts from taking all of a player's profit. Taking a share rather than a fixed sum costs the players earning most
-the most, which closes the gap to the others. A player who made a loss pays nothing. The cost comes out of cash but
-is left out of the score (:mod:`~energetica.workshop.score`), like the floor top-up.
+Compounding the cost this way keeps a Round with several blackouts from taking all of a player's profit. Taking a share
+rather than a fixed sum costs the players earning most the most, which closes the gap to the others. A player who made a
+loss pays nothing. The cost comes out of cash but is left out of the score (:mod:`~energetica.workshop.score`), like the
+floor top-up.
 """
 
 from __future__ import annotations

@@ -121,7 +121,8 @@ def _get_time_series_data(
     if start_tick % window_size != 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"start_tick must be aligned to resolution. For resolution {resolution}, start_tick must be a multiple of {window_size}",
+            detail=f"start_tick must be aligned to resolution. For resolution {resolution}, start_tick must be a "
+            f"multiple of {window_size}",
         )
 
     current_tick = engine.total_t
@@ -141,7 +142,8 @@ def _get_time_series_data(
     if start_tick < oldest_valid_tick:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Requested start_tick ({start_tick}) is too old for resolution {resolution}. Maximum lookback: {max_ticks_at_resolution} ticks (360 datapoints). Oldest valid tick: {oldest_valid_tick}",
+            detail=f"Requested start_tick ({start_tick}) is too old for resolution {resolution}. Maximum lookback: "
+            f"{max_ticks_at_resolution} ticks (360 datapoints). Oldest valid tick: {oldest_valid_tick}",
         )
 
     # Validate that not too many datapoints are being requested
@@ -150,7 +152,8 @@ def _get_time_series_data(
     if count > available_datapoints:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Requested number of datapoint ({count}) after tick {start_tick} is more than {available_datapoints}, the number of available datapoints.",
+            detail=f"Requested number of datapoint ({count}) after tick {start_tick} is more than "
+            f"{available_datapoints}, the number of available datapoints.",
         )
 
     # Load pickle data

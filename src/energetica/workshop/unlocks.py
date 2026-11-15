@@ -1,11 +1,11 @@
 """Which facilities a Workshop session offers its players (#998), and what unlocks more (#1011).
 
-A player only ever sees a facility once it is available, so each unlock comes as a surprise. Every
-session starts with the base tier of each category (#975). An upgrade unlocks once the money every
-player has spent on its base tier reaches that technology's threshold. The check happens when a Round ends, and the upgrade can be bought from the next Round. Concentrated solar
-power has no base tier, so it unlocks from a set Round instead. Hydrogen storage and pumped hydro unlock
-the first Round the storage lever allows every type. The session keeps each
-:class:`Unlock`, so the Recap can announce it.
+A player only ever sees a facility once it is available, so each unlock comes as a surprise. Every session starts with
+the base tier of each category (#975). An upgrade unlocks once the money every player has spent on its base tier reaches
+that technology's threshold. The check happens when a Round ends, and the upgrade can be bought from the next Round.
+Concentrated solar power has no base tier, so it unlocks from a set Round instead. Hydrogen storage and pumped hydro
+unlock the first Round the storage lever allows every type. The session keeps each :class:`Unlock`, so the Recap can
+announce it.
 
 Storage follows the Round's storage lever (#1004): none, batteries only, or every type. Hydrogen storage
 and pumped hydro are offered only with every type, which needs the full-season format. If the facilitator

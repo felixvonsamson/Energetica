@@ -96,7 +96,10 @@ def tick() -> None:
         engine.new_daily_question()
     check_events_completion()
     production_update.update_electricity()
-    check_climate_events()  # climate events should happen after electricity production because destruction of storage facilities will write directly into player's circular buffer, and this should write should happen on the new tick's data since values for old ticks should be considered read-only, since they represent the past, and we shouldn't rewrite the past retroactively.
+    # Climate events come after electricity production. Destroying a storage facility writes directly into the
+    # player's circular buffer, and that write must land on the new tick's data: values for old ticks represent the
+    # past, so they are read-only.
+    check_climate_events()
 
     log_entry = TickAction(
         timestamp=start,

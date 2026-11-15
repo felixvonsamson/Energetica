@@ -84,7 +84,7 @@ version = { attr = "energetica.__version__" }
 energetica = ["freeplay/data/*", "workshop/data/*"]
 
 [tool.ruff]
-line-length = 120 # Let's keep this at 120 for now, there are some files that need it
+line-length = 120
 target-version = "py312"
 # Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
 # its sibling modules (api, market, strategies) import as top-level names and would otherwise
@@ -113,6 +113,10 @@ lint.select = [
     "F404",
     "I",
     "N",
+    # Line length, comments and docstrings included: the formatter wraps code but leaves them alone.
+    "E501",
+    # Banned APIs, configured in [tool.ruff.lint.flake8-tidy-imports.banned-api] below.
+    "TID251",
 ]
 # select = ["ALL"]
 lint.ignore = [
@@ -126,6 +130,14 @@ lint.ignore = [
     # two are a service's documented refusal, two are test signals. It cannot tell the difference.
     "N818",
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# A pickle records each class by its module path, so a file pickled before a class moved names a
+# path that no longer exists. legacy_pickle.load maps the old paths to the new ones. #1056 broke
+# the chart history files this way: the engine save went through legacy_pickle, they did not.
+# A file that no earlier layout ever wrote (package data, a file a test just wrote) may use
+# pickle.load, with `# noqa: TID251` and a comment saying why.
+"pickle.load".msg = "Read instance files with energetica.freeplay.legacy_pickle.load, so files pickled before a module moved still load."
 
 [tool.pyright]
 include = ["src", "tests", "scripts", "main.py", "main_lobby.py"]

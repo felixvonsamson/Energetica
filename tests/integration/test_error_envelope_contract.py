@@ -1,10 +1,9 @@
 """Contract test: every app serialises errors identically, and returns only its own error codes.
 
-Two exception handlers produce every non-``HTTPException`` error the frontend sees — one for
-``GameError`` (400, or the status its class sets) and one for ``RequestValidationError`` (422). Each app installs them with
-``install_error_handlers``. The generated-types freshness check structurally cannot see them,
-because both envelopes are hand-built ``JSONResponse`` bodies rather than declared response models,
-so neither reaches the OpenAPI schema.
+Two exception handlers produce every non-``HTTPException`` error the frontend sees — one for ``GameError`` (400, or the
+status its class sets) and one for ``RequestValidationError`` (422). Each app installs them with
+``install_error_handlers``. The generated-types freshness check structurally cannot see them, because both envelopes are
+hand-built ``JSONResponse`` bodies rather than declared response models, so neither reaches the OpenAPI schema.
 
 Each app is driven through probe routes registered here, one per envelope shape plus one raising a
 code of the app's own. Probes rather than real endpoints because the game side raises ``GameError``

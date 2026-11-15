@@ -1,21 +1,20 @@
 """Workshop's HTTP routes, under ``/api/v1/workshop``.
 
 Every route goes through the same entry gate as the persistent world
-(:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
-accounts. Advancing the session, extending its running phase, changing the phase timers and editing each Round's
-plan (#1190) are the facilitator's alone, and each tells every open page (#1140). So is reading how close each
-technology is to unlocking (#1011), and so are the events: planning them, and reading what fired (#1012). A player's
-investment selection (#999)
-and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in the
-Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the
-player's own. A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the
-current Round's carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how
-anyone else voted, or how many did, and casting a ballot tells no other page, so the room never learns a tally.
-The scoreboard (#1017) is open to everyone in the Run all game (#1250), and only the facilitator sets the teams' bonus
-multipliers on it. A player's loan (#1225) is theirs alone. The credentials of a Run with teams (#1385) are the
-facilitator's alone. The control room (#1289) is open to everyone in the Run, and names no player. Its capacity counts
-every player's selection (#1287), so changing a selection tells every open page to re-read it. Once the session is
-finished, each player can send feedback on the game, and read back only their own.
+(:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same accounts. Advancing
+the session, extending its running phase, changing the phase timers and editing each Round's plan (#1190) are the
+facilitator's alone, and each tells every open page (#1140). So is reading how close each technology is to unlocking
+(#1011), and so are the events: planning them, and reading what fired (#1012). A player's investment selection (#999)
+and prices (#1002) and fuel (#1009) are theirs alone. A settled Trading period's review (#1007) is open to everyone in
+the Run: players see every bid, as they do in the persistent world. A Round's balance sheet (#1008) is the player's own.
+A Round's Recap (#1013) is open to everyone in the Run, but only once it has opened. Everyone reads the current Round's
+carbon tax vote (#1014), but only a player casts a ballot, and only their own. No answer tells how anyone else voted, or
+how many did, and casting a ballot tells no other page, so the room never learns a tally. The scoreboard (#1017) is open
+to everyone in the Run all game (#1250), and only the facilitator sets the teams' bonus multipliers on it. A player's
+loan (#1225) is theirs alone. The credentials of a Run with teams (#1385) are the facilitator's alone. The control room
+(#1289) is open to everyone in the Run, and names no player. Its capacity counts every player's selection (#1287), so
+changing a selection tells every open page to re-read it. Once the session is finished, each player can send feedback on
+the game, and read back only their own.
 """
 
 from __future__ import annotations

@@ -5,10 +5,10 @@ geopolitics, and demand shift. The facilitator picks a vignette and one of its s
 (:mod:`~energetica.workshop.round_plan`, #1190). At its boundary, the start of the Round or of one of its Trading
 periods, it fires, and the session keeps a :class:`FiredEvent` so the Recap can tell its headline (#1013).
 
-Each category can hold one pick per boundary (:func:`slot`). Climate events fire when a Trading period
-opens, and each only in the seasons its weather can happen in (:attr:`WorkshopEvent.seasons`). Demand shifts fire when a Round's Investment phase opens. A price shock on facilities fires with the Round,
-since facilities are bought only in the Investment phase, and a price shock on fuel fires with the Trading period,
-since fuel is bought every season.
+Each category can hold one pick per boundary (:func:`slot`). Climate events fire when a Trading period opens, and each
+only in the seasons its weather can happen in (:attr:`WorkshopEvent.seasons`). Demand shifts fire when a Round's
+Investment phase opens. A price shock on facilities fires with the Round, since facilities are bought only in the
+Investment phase, and a price shock on fuel fires with the Trading period, since fuel is bought every season.
 
 What a fired event does depends on its effect kind:
 
@@ -676,10 +676,10 @@ EVENTS: dict[str, WorkshopEvent] = {
     ]
 }
 
-#: The CO₂ per player, in kg, from which a climate event's suggested severity is at least each graded severity.
-#: Only the CO₂ facilities emit while running counts, since building them emits nothing (#1414). Scaled with demand by the first recalibration (#1227)
-#: and still open to the game-balance pass (#1145): one coal burner running half the time for a Round emits about
-#: 440,000,000 kg.
+#: The CO₂ per player, in kg, from which a climate event's suggested severity is at least each graded severity. Only the
+#: CO₂ facilities emit while running counts, since building them emits nothing (#1414). Scaled with demand by the first
+#: recalibration (#1227) and still open to the game-balance pass (#1145): one coal burner running half the time for a
+#: Round emits about 440,000,000 kg.
 CLIMATE_SEVERITY_THRESHOLDS: dict[Severity, float] = {
     "minor": 0.0,
     "moderate": 300_000_000.0,

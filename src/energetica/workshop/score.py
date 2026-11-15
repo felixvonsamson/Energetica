@@ -22,11 +22,12 @@ moves with the top-up and the blackout cost, which the score leaves out. Leaving
 anyone's score, even when they cover a loan payment. A player who overspends on facilities or goes deep into debt
 keeps that loss in their score.
 
-A facility's residual value is its price for the length the session started with (#1306, #1298), scaled by the share
-of its lifetime it has left after the last completed Round: ``session_price × remaining_lifetime_rounds /
+A facility's residual value is its price for the length the session started with (#1306, #1298), scaled by the share of
+its lifetime it has left after the last completed Round: ``session_price × remaining_lifetime_rounds /
 lifetime_rounds``. The Rounds left are counted from the Round after it, so at the end of the session a facility that
-worked its final Round in the last Round is worth nothing. One still under construction keeps its whole lifetime, so it pays back its full price. Any price
-shock the player paid is left out. Only the facility counts: the energy a storage facility still holds is worth nothing.
+worked its final Round in the last Round is worth nothing. One still under construction keeps its whole lifetime, so it
+pays back its full price. Any price shock the player paid is left out. Only the facility counts: the energy a storage
+facility still holds is worth nothing.
 
 In a Run with teams (#1384), a team's score is the sum of its members' scores, times the team's bonus multiplier. The
 facilitator sets the multipliers, for example to reward a quiz held outside the game. A team without one is multiplied
@@ -108,7 +109,8 @@ class TeamScore(BaseModel):
 
     name: str
     account_ids: list[int] = Field(
-        description="The team's players, in the order they joined. A member who never entered has no player, so is left out"
+        description="The team's players, in the order they joined. "
+        "A member who never entered has no player, so is left out"
     )
     operating_profit: float
     investments: float

@@ -1,10 +1,10 @@
 """The persistent world: the game engine, its in-memory model store, and its entity models.
 
 The engine (:mod:`~energetica.freeplay.game_engine`), the model base class and the id-keyed store
-(:mod:`~energetica.freeplay.database`), the entity models beneath it, and the action log the engine
-writes and replays (:mod:`~energetica.freeplay.action_log`, :mod:`~energetica.freeplay.schemas.simulate`)
-live here (see #1055). They look generic, but each is justified by the persistent world's needs:
-a large player count, a per-tick scan of the whole game graph, and years of pickled state. Workshop Mode shares none of that, so it must not import this package.
+(:mod:`~energetica.freeplay.database`), the entity models beneath it, and the action log the engine writes and replays
+(:mod:`~energetica.freeplay.action_log`, :mod:`~energetica.freeplay.schemas.simulate`) live here (see #1055). They look
+generic, but each is justified by the persistent world's needs: a large player count, a per-tick scan of the whole game
+graph, and years of pickled state. Workshop Mode shares none of that, so it must not import this package.
 
 The persistent world's simulation and configuration live here too (see #1056): the per-tick
 production update (:mod:`~energetica.freeplay.production_update`), technology effects

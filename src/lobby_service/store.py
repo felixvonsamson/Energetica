@@ -290,7 +290,8 @@ def grant_facilitator(*, account_id: int, slug: str | None) -> None:
             ).fetchone()
             if existing is None:
                 conn.execute(
-                    "INSERT INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'facilitator', ?)",
+                    "INSERT INTO instance_membership (account_id, slug, role, created_at) "
+                    "VALUES (?, ?, 'facilitator', ?)",
                     (account_id, slug, _now()),
                 )
         except BaseException:
