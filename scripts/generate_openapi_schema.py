@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """Generate the OpenAPI schemas from the FastAPI apps without running a server.
 
-Writes one schema per app (``openapi-schema.<app>.json``) and one merged schema
-(``openapi-schema.json``), all next to this script. ``scripts/generate-types.sh`` turns each app's
-schema into that app's types file. No frontend app uses the merged schema any more; #1183 deletes
-it.
+Writes one schema per app (``openapi-schema.<app>.json``) next to this script.
+``scripts/generate-types.sh`` turns each app's schema into that app's types file.
 """
 
-import copy
 import json
 import sys
 from collections.abc import Callable, Iterable
@@ -26,8 +23,7 @@ from lobby.game_error import LobbyErrorCode
 
 SCRIPT_DIR = Path(__file__).parent
 
-# Each app's schema-only builder, keyed by the name used in its file names. The order is the order
-# the merge reads them in, so freeplay's version of a same-named component schema wins.
+# Each app's schema-only builder, keyed by the name used in its file names.
 APPS: dict[str, Callable[[], FastAPI]] = {
     "freeplay": lambda: create_app(env="dev", schema_only=True),
     "lobby": lambda: create_lobby_app(schema_only=True),
@@ -68,22 +64,6 @@ def add_error_codes(spec: dict, error_codes: Iterable[type[ErrorCode]]) -> None:
     }
 
 
-def merge_spec(openapi_spec: dict, other_spec: dict) -> None:
-    """Add ``other_spec``'s paths and component schemas to ``openapi_spec``.
-
-    The backends never define the same (path, method) with a different shape, so last-writer-wins
-    on a collision is safe. Same-named component schemas are kept from the first spec. They are
-    usually the same Python model, but not always: freeplay's and Workshop's ``Fuel`` differ, and
-    the merged file keeps freeplay's. The per-app files each keep their own.
-    """
-    paths = openapi_spec.setdefault("paths", {})
-    for path, item in other_spec.get("paths", {}).items():
-        paths.setdefault(path, {}).update(item)
-    schemas = openapi_spec.setdefault("components", {}).setdefault("schemas", {})
-    for name, schema in other_spec.get("components", {}).get("schemas", {}).items():
-        schemas.setdefault(name, schema)
-
-
 def write_spec(spec: dict, filename: str) -> None:
     """Write ``spec`` as JSON to ``filename`` next to this script."""
     output_path = SCRIPT_DIR / filename
@@ -93,35 +73,20 @@ def write_spec(spec: dict, filename: str) -> None:
 
 
 def build_schemas() -> dict[str, dict]:
-    """Build each app's schema and the merged schema, keyed by app name and ``"merged"``.
+    """Build each app's schema, keyed by app name.
 
     Each app's schema describes only the routes that app serves and the error codes it can return.
-    The merged schema is the union of all three. It used to back a single ``api.generated.ts``
-    shared by every frontend bundle. Each app now has its own types file, so nothing reads it, and
-    #1183 deletes it.
     """
     specs = {name: app_spec(name) for name in APPS}
-
-    first, *rest = specs.values()
-    merged = copy.deepcopy(first)
-    for spec in rest:
-        merge_spec(merged, spec)
-
     for name, spec in specs.items():
         add_error_codes(spec, APP_ERROR_CODES[name])
-    add_error_codes(merged, (enum for enums in APP_ERROR_CODES.values() for enum in enums))
-    return {**specs, "merged": merged}
+    return specs
 
 
 def generate_schemas() -> None:
-    """Write each app's schema to ``openapi-schema.<app>.json`` and the merged one to
-    ``openapi-schema.json``.
-    """
-    schemas = build_schemas()
-    merged = schemas.pop("merged")
-    for name, spec in schemas.items():
+    """Write each app's schema to ``openapi-schema.<app>.json``."""
+    for name, spec in build_schemas().items():
         write_spec(spec, f"openapi-schema.{name}.json")
-    write_spec(merged, "openapi-schema.json")
 
 
 if __name__ == "__main__":

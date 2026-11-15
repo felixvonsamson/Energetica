@@ -26,7 +26,6 @@ from energetica.identity.instance_config import InstanceConfig
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
 from energetica.identity.lobby_service_client import install_refusal_handler
-from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from energetica.workshop.credentials import CREDENTIALS_PATH, delete_expired_credentials
@@ -79,7 +78,6 @@ def create_workshop_app(
     app.add_middleware(GZipMiddleware, minimum_size=1_000)
     install_error_handlers(app)
     install_refusal_handler(app)
-    app.include_router(run_router("workshop"), prefix="/api/v1")
     # A private Run admits accounts through the join link and the facilitator's roster.
     app.include_router(join_router, prefix="/api/v1")
     app.include_router(facilitator_router, prefix="/api/v1")

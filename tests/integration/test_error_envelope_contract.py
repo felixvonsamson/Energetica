@@ -181,7 +181,7 @@ def test_every_app_serialises_the_same_error_identically(path: str, method: str,
 
 @pytest.fixture(scope="module")
 def schemas() -> dict[str, dict]:
-    """Each app's OpenAPI schema and the merged one, as `bun run generate-types` writes them."""
+    """Each app's OpenAPI schema, as `bun run generate-types` writes them."""
     spec = importlib.util.spec_from_file_location("generate_openapi_schema", _GENERATOR)
     assert spec is not None and spec.loader is not None
     generator: ModuleType = importlib.util.module_from_spec(spec)
@@ -211,9 +211,9 @@ def test_no_workshop_code_outside_the_workshop(schemas: dict[str, dict], app_nam
         assert not {code for code in codes if code.startswith("WORKSHOP_")}
 
 
-def test_merged_schema_keeps_every_code(schemas: dict[str, dict]) -> None:
-    """Until the merged schema is deleted (#1183), the bundles that still use it see every code."""
-    assert _schema_codes(schemas["merged"]) == set().union(*(_schema_codes(schemas[app]) for app in APP_CODES))
+def test_only_per_app_schemas_are_built(schemas: dict[str, dict]) -> None:
+    """The generator builds one schema per app and no merged one."""
+    assert schemas.keys() == APP_CODES.keys()
 
 
 def test_no_two_codes_share_a_value() -> None:

@@ -13,7 +13,6 @@ from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, Ap
 from energetica.identity.facilitator import router as facilitator_router
 from energetica.identity.join import router as join_router
 from energetica.identity.lobby_service_client import LobbyServiceUnavailable, install_refusal_handler
-from energetica.identity.run import run_router
 from energetica.identity.web import get_standing, replayed_account
 from energetica.kernel.error_envelope import install_error_handlers
 
@@ -201,7 +200,6 @@ def setup_routes(app: FastAPI) -> None:
 
     for router in api_routers:
         app.include_router(router, prefix="/api/v1")
-    app.include_router(run_router("freeplay"), prefix="/api/v1")
     app.include_router(health_router)
     # Static assets (/static/*, /service-worker.js, /manifest.json) are served
     # directly by Apache from disk after the RFC Phase 5 cutover — see
