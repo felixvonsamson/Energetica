@@ -139,7 +139,9 @@ def _run_rollback(
     bin_dir.mkdir()
     record = tmp_path / "a2dissite.log"
     (bin_dir / "a2dissite").write_text(
-        f'#!/bin/bash\nif [ -e "$VHOST" ]; then echo present > "{record}"; else echo absent > "{record}"; fi\nexit {a2dissite_exit}\n'
+        "#!/bin/bash\n"
+        f'if [ -e "$VHOST" ]; then echo present > "{record}"; else echo absent > "{record}"; fi\n'
+        f"exit {a2dissite_exit}\n"
     )
     (bin_dir / "a2dissite").chmod(0o755)
 

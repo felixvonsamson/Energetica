@@ -157,7 +157,10 @@ def calculate_river_speed(total_seconds: float, days_per_year: int) -> float:
     mean resampling the table.
     """
     if days_per_year != len(RIVER_FLOW_SPEED_SEASONAL):
-        msg = f"days_per_year must be {len(RIVER_FLOW_SPEED_SEASONAL)}, the length of the river table, not {days_per_year}"
+        msg = (
+            f"days_per_year must be {len(RIVER_FLOW_SPEED_SEASONAL)}, the length of the river table, "
+            f"not {days_per_year}"
+        )
         raise ValueError(msg)
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)

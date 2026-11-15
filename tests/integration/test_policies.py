@@ -2,7 +2,12 @@
 
 # from energetica.freeplay.database.active_facility import ActiveFacility
 # from energetica.freeplay.database.ongoing_project import OngoingProject
-# from energetica.freeplay.enums import ControllableFacilityType, FunctionalFacilityType, HydroFacilityType, WindFacilityType
+# from energetica.freeplay.enums import (
+#     ControllableFacilityType,
+#     FunctionalFacilityType,
+#     HydroFacilityType,
+#     WindFacilityType,
+# )
 # from tests.policy import QueueProjectPolicy, StarterPolicy
 # from tests.policy_runner import run_policies
 
@@ -21,7 +26,8 @@
 #     player = players[0]
 #     print(f"Industry: {player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]}")
 #     print(
-#         f"Steam engines: {ActiveFacility.count_when(player=player, facility_type=ControllableFacilityType.STEAM_ENGINE)}",
+#         "Steam engines: "
+#         f"{ActiveFacility.count_when(player=player, facility_type=ControllableFacilityType.STEAM_ENGINE)}",
 #     )
 #     print(f"Watermills: {ActiveFacility.count_when(player=player, facility_type=HydroFacilityType.WATERMILL)}")
 #     print(f"Windmills: {ActiveFacility.count_when(player=player, facility_type=WindFacilityType.WINDMILL)}")

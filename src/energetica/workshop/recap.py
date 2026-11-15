@@ -3,11 +3,11 @@
 The Recap that closes Round N has two sections, kept strictly apart:
 
 - **The Year in Review** tells what happened in Round N: every seasonal event that fired in it, with its headline
-  and a line of plain numbers in the past tense (:func:`~energetica.workshop.events.effect_line`). A Round event is
-  left out, since the Year Ahead before already told it with its exact effect. It also tells each time the grid went
-  down, with how far
-  rationing cut demand and what the blackouts cost (#1286), the room's figures for the Round, and each season's
-  weather: how its wind and sunshine compared with a normal season (#1200). The weather only tells what happened, never what is coming.
+  and a line of plain numbers in the past tense (:func:`~energetica.workshop.events.effect_line`). A Round event is left
+  out, since the Year Ahead before already told it with its exact effect. It also tells each time the grid went down,
+  with how far rationing cut demand and what the blackouts cost (#1286), the room's figures for the Round, and each
+  season's weather: how its wind and sunshine compared with a normal season (#1200). The weather only tells what
+  happened, never what is coming.
 - **The Year Ahead** tells what Round N+1 holds. Its plan locks when Recap N opens (#1190), so what the Recap tells
   holds. Round events are told with their headline and exact effect, and seasonal events only as a forecast with
   no figures (#1189). The facilities that unlock for Round N+1 are announced here, the first place players learn
@@ -298,7 +298,10 @@ def _demand_article(shift: FiredEvent | None, growth: float) -> DemandArticle:
         )
     elif change > 0:
         title = f"{event.name} slows electricity demand growth"
-        outcome = "The economy and the population are still growing, but electricity demand will grow less than usual next year."
+        outcome = (
+            "The economy and the population are still growing, but electricity demand will grow less than usual "
+            "next year."
+        )
     elif change == 0:
         title = f"{event.name} keeps electricity demand steady"
         outcome = (

@@ -1,9 +1,9 @@
 """Instance-side lobby reads.
 
-The lobby (a separate service) owns signup/login/session. Each instance additionally serves
-``my-runs`` from its **own** origin so the in-run switcher makes no cross-origin call: identical
-read logic (``energetica.identity.my_runs.build_my_runs``, shared with the lobby backend), over
-the memberships the lobby service reports, deployed in every service. Serves only the cookie-authenticated account's runs.
+The lobby (a separate service) owns signup/login/session. Each instance additionally serves ``my-runs`` from its **own**
+origin so the in-run switcher makes no cross-origin call: identical read logic
+(``energetica.identity.my_runs.build_my_runs``, shared with the lobby backend), over the memberships the lobby service
+reports, deployed in every service. Serves only the cookie-authenticated account's runs.
 """
 
 from __future__ import annotations

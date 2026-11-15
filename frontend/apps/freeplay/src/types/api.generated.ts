@@ -115,7 +115,7 @@ export interface paths {
         put?: never;
         /**
          * Test Push Notification
-         * @description Send a test push notification. If endpoint is provided, sends only to that subscription; otherwise broadcasts to all.
+         * @description Send a test push notification to the given endpoint's subscription, or to all of them if none is given.
          */
         post: operations["test_push_notification_api_v1_push_subscriptions_test_post"];
         delete?: never;
@@ -989,7 +989,8 @@ export interface paths {
         put?: never;
         /**
          * Dismantle Facility
-         * @description Dismantle a facility. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks.
+         * @description Dismantle a facility. We allow players to dismantle facilities even if this will put them in debt to avoid
+         *     deadlocks.
          *
          *     Returns `draining: true` when the facility is a storage facility that still
          *     holds energy and has entered a drain phase instead of being removed
@@ -1013,7 +1014,8 @@ export interface paths {
         put?: never;
         /**
          * Dismantle All Of Type
-         * @description Dismantle all facilities of a certain type. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks.
+         * @description Dismantle all facilities of a certain type. We allow players to dismantle facilities even if this will put them
+         *     in debt to avoid deadlocks.
          *
          *     Returns `draining: true` when the facility type is a storage facility
          *     (facilities will drain before being removed).

@@ -20,8 +20,9 @@ costs nothing, since it was charged when it was bought.
 A climate event's revenue tax (#1012) takes a share of the season's sale revenue. It comes off inside operating
 income, above fuel.
 
-The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂
-emitted generating and the player's share of the takings coming back. The Round's net profit takes it off along with the investments.
+The carbon tax (#1015) sits below operating income, which leaves it out. It breaks down into the tax on the CO₂ emitted
+generating and the player's share of the takings coming back. The Round's net profit takes it off along with the
+investments.
 
 Each blackout in the Round costs the player a share of their operating income for it (#1286,
 :mod:`~energetica.workshop.blackout`). The cost sits below operating income, and the Round's net profit takes it off

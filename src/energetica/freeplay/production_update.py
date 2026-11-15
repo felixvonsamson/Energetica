@@ -383,7 +383,9 @@ def calculate_demand(new_values: dict, player: Player) -> None:
     shipment_demand(player, demand)
     storage_demand(player, demand)
 
-    # consider cost of climate events if any TODO (Felix): the placement of this function call is very questionable, we are talking about power here and this is calculating costs.
+    # consider cost of climate events if any
+    # TODO (Felix): the placement of this function call is very questionable, we are talking about power here and this
+    # is calculating costs.
     climate_event_recovery_cost(player, revenues)
 
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
@@ -465,7 +467,8 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
-    # are used and replace it with a cached property or something similar that generates a list of all demands and offer types
+    # are used and replace it with a cached property or something similar that generates a list of all demands and
+    # offer types
     for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
             bid_q = demand[demand_type]

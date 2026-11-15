@@ -1,4 +1,4 @@
-"""The credentials file of a Workshop Run with teams (#1385): only the Run's process reads it, and it ends at its expiry."""
+"""The credentials file of a Workshop Run with teams (#1385): only the Run's process reads it, until it expires."""
 
 from __future__ import annotations
 

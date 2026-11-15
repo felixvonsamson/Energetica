@@ -175,10 +175,9 @@ def _storage(
 # Each player can own only a few of each dam (#1223), so hydro cannot cover a room's demand on its own.
 _MAX_DAMS = 3
 
-# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants and CSP 3, and
-# wind and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from the
-# persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable
-# facilities (#992).
+# Construction lags are the #975 table. Since #1227, hydro and nuclear last 6 Rounds, fossil plants and CSP 3, and wind
+# and PV 2, so renewables last about as long as fossil plants, as they do in reality. The fixed shares of O&M start from
+# the persistent world's: 1.0 for renewables and storage, 0.5 for nuclear, 0.2 for other controllable facilities (#992).
 _FACILITIES = [
     _generator(
         FacilityId.ONSHORE_WIND_TURBINE, "Onshore wind turbine", FacilityCategory.WIND,
@@ -224,13 +223,13 @@ _FACILITIES = [
     ),
     _generator(
         FacilityId.NUCLEAR_REACTOR, "Nuclear reactor", FacilityCategory.NUCLEAR,
-        price=70_000_000, power=100_000_000, construction_lag=1, lifetime=6, om_per_round=13_000_000, om_fixed_share=0.5,
-        pollution=2, ramping_time=46_800, fuel=Fuel.URANIUM,
+        price=70_000_000, power=100_000_000, construction_lag=1, lifetime=6, om_per_round=13_000_000,
+        om_fixed_share=0.5, pollution=2, ramping_time=46_800, fuel=Fuel.URANIUM,
     ),
     _generator(
         FacilityId.NUCLEAR_REACTOR_GEN4, "Gen-IV nuclear reactor", FacilityCategory.NUCLEAR,
-        price=110_000_000, power=170_000_000, construction_lag=1, lifetime=6, om_per_round=18_000_000, om_fixed_share=0.5,
-        pollution=3, ramping_time=30_000, fuel=Fuel.URANIUM,
+        price=110_000_000, power=170_000_000, construction_lag=1, lifetime=6, om_per_round=18_000_000,
+        om_fixed_share=0.5, pollution=3, ramping_time=30_000, fuel=Fuel.URANIUM,
     ),
     _generator(
         FacilityId.PV_SOLAR, "PV solar", FacilityCategory.PV,

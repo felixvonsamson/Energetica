@@ -51,7 +51,7 @@ def test_push_notification(
     player: Annotated[Player, Depends(get_settled_player)],
     body: TestPushBody = TestPushBody(),
 ) -> None:
-    """Send a test push notification. If endpoint is provided, sends only to that subscription; otherwise broadcasts to all."""
+    """Send a test push notification to the given endpoint's subscription, or to all of them if none is given."""
     payload = PushNotificationTestPayload()
     if body.endpoint is not None:
         subscriptions = [s for s in player.push_subscriptions if s.endpoint == body.endpoint]

@@ -63,7 +63,8 @@ def _settle(players: tuple[Player, Player], market: dict, new_values: dict) -> d
     for p in players:
         nv = new_values[p.id]
         result[p.id] = {
-            # ``money`` is a large float that carries rounding noise near 1e-9; the revenues below pin the exact arithmetic.
+            # ``money`` is a large float that carries rounding noise near 1e-9; the revenues below pin the exact
+            # arithmetic.
             "money": round(p.money - before[p.id], 9),
             **{
                 category: {k: v for k, v in nv[category].items() if v}

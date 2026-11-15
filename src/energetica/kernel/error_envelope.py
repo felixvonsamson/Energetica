@@ -1,11 +1,10 @@
 """The error envelope: the JSON shape every error response takes, and the handlers that produce it.
 
-The frontend decodes errors in one format, whichever app sent them. A :class:`GameError` becomes a
-``400``, or the status its class sets, whose body is a :class:`GameErrorOut`. A request that fails schema validation becomes a
-``422`` whose body lists the validation errors under ``detail`` and marks itself with
-``meta.error_type == "request_validation_error"``. Each app calls :func:`install_error_handlers`
-rather than defining its own handlers, so the format has one definition and a new app, such as
-Workshop's, gets it by making the same call.
+The frontend decodes errors in one format, whichever app sent them. A :class:`GameError` becomes a ``400``, or the
+status its class sets, whose body is a :class:`GameErrorOut`. A request that fails schema validation becomes a ``422``
+whose body lists the validation errors under ``detail`` and marks itself with ``meta.error_type ==
+"request_validation_error"``. Each app calls :func:`install_error_handlers` rather than defining its own handlers, so
+the format has one definition and a new app, such as Workshop's, gets it by making the same call.
 """
 
 from __future__ import annotations

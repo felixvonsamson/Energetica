@@ -96,7 +96,8 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -
     cleanup_cost = 0.1 * facility.total_cost
     player.money -= cleanup_cost
     if facility.facility_type in StorageFacilityType:
-        # The player looses the stored energy in that facility. Assume energy is stored uniformly across storage facilities of that type.
+        # The player looses the stored energy in that facility. Assume energy is stored uniformly across storage
+        # facilities of that type.
         n = ActiveFacility.count_when(facility_type=facility.facility_type)
         stored = player.rolling_history.get_last_data("storage", facility.facility_type)
         player.rolling_history._data["storage"][facility.facility_type][-1] = stored * (n - 1) / n
@@ -112,7 +113,7 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -
 
 
 def dismantle_facility(facility: ActiveFacility) -> None:
-    """Dismantle a facility. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks."""
+    """Dismantle a facility, even if it puts the player in debt, so that a player can never get stuck."""
     dismantle_cost = facility.dismantle_cost
     player = facility.player
     player.money -= dismantle_cost

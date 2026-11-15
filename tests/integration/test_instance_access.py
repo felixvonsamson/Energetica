@@ -1,11 +1,11 @@
 """Integration tests for instance access-policy gating at the entry gate (``GET /auth/me``).
 
-Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a
-login POST (which no longer exists). A public (or unconfigured) instance admits any server-wide
-account; a private instance admits only accounts that have joined it (the run's membership in
-the lobby service, ADR-0007, ADR-0009 — ``instance.json`` carries no allowlist any more). The policy file is read fresh on every entry, so a lockdown takes effect even for an
-account that has already settled (#817, ADR-0003). There is nothing to auto-provision any more
-(ADR-0004): entry never creates a ``Player`` — only settling does.
+Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a login POST (which no
+longer exists). A public (or unconfigured) instance admits any server-wide account; a private instance admits only
+accounts that have joined it (the run's membership in the lobby service, ADR-0007, ADR-0009 — ``instance.json`` carries
+no allowlist any more). The policy file is read fresh on every entry, so a lockdown takes effect even for an account
+that has already settled (#817, ADR-0003). There is nothing to auto-provision any more (ADR-0004): entry never creates a
+``Player`` — only settling does.
 """
 
 from __future__ import annotations

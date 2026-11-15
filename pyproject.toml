@@ -84,7 +84,7 @@ version = { attr = "energetica.__version__" }
 energetica = ["freeplay/data/*", "workshop/data/*"]
 
 [tool.ruff]
-line-length = 120 # Let's keep this at 120 for now, there are some files that need it
+line-length = 120
 target-version = "py312"
 # Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
 # its sibling modules (api, market, strategies) import as top-level names and would otherwise
@@ -113,6 +113,8 @@ lint.select = [
     "F404",
     "I",
     "N",
+    # Line length, comments and docstrings included: the formatter wraps code but leaves them alone.
+    "E501",
 ]
 # select = ["ALL"]
 lint.ignore = [
