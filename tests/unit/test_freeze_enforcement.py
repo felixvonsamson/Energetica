@@ -20,8 +20,8 @@ import pytest
 from fastapi import HTTPException, status
 
 from energetica.freeplay.game_error import FreeplayErrorCode
+from energetica.freeplay.utils import auth, tick_execution
 from energetica.identity import instance_config
-from energetica.utils import auth, tick_execution
 
 
 @pytest.mark.parametrize("frozen_phase", ["freeze", "ended"])

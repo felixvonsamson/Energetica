@@ -131,7 +131,7 @@ Add tests for every new feature and bug fix.
 Configured via `pyproject.toml`.
 
 - Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
-  `tests/`, `scripts/`, `map_generation/`, `main.py`, `main_lobby.py` — and both run as
+  `tests/`, `scripts/`, `tools/`, `main.py`, `main_lobby.py` — and both run as
   the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
@@ -153,8 +153,8 @@ the fixing and formatting forms — both write to your files, neither is read-on
   - There are three apps: Workshop (`energetica.workshop`), the lobby (`lobby`) and the
     freeplay code. None of them imports another.
   - A new top-level module under `src/energetica/` must be added to a layer, or the check
-    fails. If it is freeplay code, add it to each of the four freeplay lists there.
-    `tests/unit/test_import_contracts.py` fails if the lists differ.
+    fails. New app code goes inside its app's package (`energetica.freeplay` or
+    `energetica.workshop`) rather than beside it, so the contracts already cover it.
 
 ```
 lint-imports          # check the import contracts

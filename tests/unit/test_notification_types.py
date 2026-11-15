@@ -3,7 +3,7 @@
 from typing import get_args, get_type_hints
 
 from energetica.freeplay.database.messages import NotificationType
-from energetica.schemas.notifications import PersistableNotificationPayload
+from energetica.freeplay.schemas.notifications import PersistableNotificationPayload
 
 
 def test_notification_type_matches_payload_union() -> None:

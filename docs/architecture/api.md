@@ -6,7 +6,7 @@ Note that there is an intention for players to be able to use the API themselves
 
 ## Design: AIP-136
 
-APIs use AIP-136 style syntax, .i.e. POST requests with a verb, e.g. in energetica/routers/resource_market.py:
+APIs use AIP-136 style syntax, .i.e. POST requests with a verb, e.g. in energetica/freeplay/routers/resource_market.py:
 
 Use POST with verb suffixes for actions:
 

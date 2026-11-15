@@ -1,0 +1,22 @@
+"""Schemas for API routes related to authentication."""
+
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+from energetica.freeplay.schemas.capabilities import PlayerCapabilities
+from energetica.identity.account import Role
+
+
+class UserOut(BaseModel):
+    """Response model for authenticated user information."""
+
+    id: int = Field(description="The account's account_id (server-wide, ADR-0002)")
+    username: str = Field(description="Username of the user")
+    role: Role = Field(description="User role")
+    player_id: int | None = Field(None, description="Player ID if role is 'player' and settled")
+    is_settled: bool = Field(description="Whether the user has chosen a location (only relevant for players)")
+    capabilities: PlayerCapabilities | None = Field(
+        None,
+        description="Feature capability flags (null for non-players or unsettled players)",
+    )

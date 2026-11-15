@@ -1,0 +1,21 @@
+"""Routes for the leaderboards."""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.schemas.leaderboards import LeaderboardsOut, PlayerDetailStats
+from energetica.freeplay.utils.auth import get_settled_player
+
+router = APIRouter(prefix="/leaderboards", tags=["Leaderboards"])
+
+
+@router.get("")
+def get_leaderboards(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> LeaderboardsOut:
+    """Get the leaderboards data."""
+    players = Player.all()
+    rows = [PlayerDetailStats.from_player(player) for player in players]
+    return LeaderboardsOut(rows=rows)

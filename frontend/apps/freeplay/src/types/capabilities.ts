@@ -1,7 +1,8 @@
 /**
  * Type definitions for player capabilities.
  *
- * These types correspond to backend schemas in energetica/schemas/auth.py
+ * These types correspond to backend schemas in
+ * energetica/freeplay/schemas/auth.py
  */
 
 import type { ApiSchema } from "@/types/api-helpers";

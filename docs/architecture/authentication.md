@@ -38,7 +38,7 @@ To authenticate via API:
 
 ## Backend Implementation
 
-**Entry point:** `energetica/routers/auth.py`
+**Entry point:** `energetica/freeplay/routers/auth.py`
 
 - `POST /auth/login` - Validates credentials, sets session cookie
 - `GET /auth/me` - Returns current user
@@ -54,20 +54,20 @@ and this instance's access policy. The persistent world's `GET /auth/me` and Wor
 - `add_session_cookie_to_response()` - Sets the session cookie on responses
 - Session tokens are signed using `itsdangerous` serializer
 
-**Middleware:** `energetica/routers/__init__.py`
+**Middleware:** `energetica/freeplay/routers/__init__.py`
 
 - The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/apps/freeplay/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
 - POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
 
 **Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication.
 The account and role checks live in `energetica/identity/web.py`, so every game mode can use them.
-The checks that need the persistent world live in `energetica/utils/auth.py`.
+The checks that need the persistent world live in `energetica/freeplay/utils/auth.py`.
 
 ```
 get_current_account()   - Returns the Account or None            (identity/web.py)
 get_playing_account()   - Requires an account with the "player" role  (identity/web.py)
 get_facilitator()       - Requires an account with the "facilitator" role  (identity/web.py)
-get_settled_player()    - Requires a player who has chosen a location  (utils/auth.py)
+get_settled_player()    - Requires a player who has chosen a location  (freeplay/utils/auth.py)
 ```
 
 ## Frontend Implementation

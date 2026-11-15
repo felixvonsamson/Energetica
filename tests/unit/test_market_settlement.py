@@ -13,9 +13,9 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.production_update import market_logic
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
 from energetica.sim.market import init_market, place_ask, place_bid, place_must_run_ask
-from energetica.utils.map_helpers import confirm_location
 
 # The persistent world's price floor, written out rather than imported so these tests also pin it. Its dump
 # cost (5 per MWh) is pinned by the dumping revenue in EXPECTED_DUMPING.

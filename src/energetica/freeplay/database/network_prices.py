@@ -20,9 +20,9 @@ from energetica.freeplay.enums import (
 )
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
+from energetica.freeplay.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 from energetica.kernel.game_error import GameError
 from energetica.kernel.hashing import stable_hash
-from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 
 
 @dataclass

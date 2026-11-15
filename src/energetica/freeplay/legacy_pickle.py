@@ -10,6 +10,10 @@ Likewise, every copy written before #1056 names the enumerations the models hold
 ``instance/data/`` (player and network history, market snapshots) can hold enums too, as keys, so
 anything that reads an instance pickle reads it through :func:`load`.
 
+Every copy written before #1057 names the API schemas a player holds ``energetica.schemas.*``. A
+player who has turned on push notifications holds :class:`Subscription` objects, for example. Those
+schemas now live under ``energetica.freeplay.schemas``.
+
 :func:`load` reads such a file by translating each old module path to its new one as the pickle
 names it. The next save writes the new paths, so a file that is rewritten only needs this once.
 Old checkpoints, and chart files that are never rewritten, such as market snapshots, keep needing
@@ -25,6 +29,7 @@ from typing import IO, Any
 MOVED_MODULES = {
     "energetica.database": "energetica.freeplay.database",
     "energetica.enums": "energetica.freeplay.enums",
+    "energetica.schemas": "energetica.freeplay.schemas",
 }
 
 

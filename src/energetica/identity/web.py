@@ -6,7 +6,7 @@ use them: the persistent world's routes and real-time layer, and Workshop's rout
 :func:`resolve_entry_account`, is here too, so both apps admit accounts by the same access policy,
 and so is its Socket.IO form, :func:`admit_socket_connection`. Dependencies that need the persistent
 world, such as resolving a settled ``Player`` or refusing writes after freeze, live in
-``energetica.utils.auth``.
+``energetica.freeplay.utils.auth``.
 """
 
 import logging
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 REPLAYED_ACCOUNT_SCOPE_KEY = "energetica.replayed_account"
 """The ASGI scope key under which replay passes the account a logged request came from (#1342).
 
-Replay calls the app in-process (:mod:`energetica.simulate`) and sets this key itself. The server
+Replay calls the app in-process (:mod:`energetica.freeplay.simulate`) and sets this key itself. The server
 builds the scope of a real request from the connection and never sets it, so no client can.
 """
 

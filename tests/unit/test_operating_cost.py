@@ -22,10 +22,10 @@ from energetica.freeplay.enums import (
     WindFacilityType,
     power_facility_types,
 )
+from energetica.freeplay.init_test_players import add_asset
 from energetica.freeplay.production_update import resources_and_pollution
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.map_helpers import confirm_location
 
 WIND = WindFacilityType.ONSHORE_WIND_TURBINE
 BATTERY = StorageFacilityType.LITHIUM_ION_BATTERIES

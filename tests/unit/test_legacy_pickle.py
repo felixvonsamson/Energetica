@@ -1,9 +1,11 @@
-"""Engine state pickled before a module moved still loads (#1055, #1056).
+"""Engine state pickled before a module moved still loads (#1055, #1056, #1057).
 
 Pickle records each object's class by its module path. Every ``instance/engine_data.pck`` and
 checkpoint written before #1055 names the entity models ``energetica.database.*``, which now live
 under ``energetica.freeplay.database``. Every one written before #1056 names the enumerations
-``energetica.enums``, which now live at ``energetica.freeplay.enums``. The pickles here are written
+``energetica.enums``, which now live at ``energetica.freeplay.enums``. Every one written before #1057
+names the API schemas a player holds, such as push subscriptions, ``energetica.schemas.*``, which now
+live under ``energetica.freeplay.schemas``. The pickles here are written
 at protocol 0, whose opcodes are plain text, so an old-layout pickle can be made by rewriting the
 module path in the bytes.
 """
@@ -20,10 +22,11 @@ from energetica.freeplay.database.engine_data.cumulative_emissions_data import C
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.enums import ControllableFacilityType, Fuel
+from energetica.freeplay.routers import charts
+from energetica.freeplay.schemas.browser_notifications import Subscription, SubscriptionKeys
+from energetica.freeplay.utils.map_helpers import confirm_location
+from energetica.freeplay.utils.misc import save_past_data
 from energetica.identity.account import Account
-from energetica.routers import charts
-from energetica.utils.map_helpers import confirm_location
-from energetica.utils.misc import save_past_data
 
 
 def _account() -> Account:
@@ -31,8 +34,9 @@ def _account() -> Account:
 
 
 def _to_old_layout(current: bytes) -> bytes:
-    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055 and #1056."""
-    old_layout = current.replace(b"energetica.freeplay.database", b"energetica.database")
+    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055, #1056 and #1057."""
+    old_layout = current.replace(b"energetica.freeplay.schemas", b"energetica.schemas")
+    old_layout = old_layout.replace(b"energetica.freeplay.database", b"energetica.database")
     old_layout = old_layout.replace(b"energetica.freeplay.enums", b"energetica.enums")
     assert b"energetica.freeplay" not in old_layout
     return old_layout
@@ -95,6 +99,29 @@ def test_a_full_engine_save_under_the_old_module_paths_loads_through_engine_load
     assert loaded.username == "username"
     assert loaded.tile is not None and loaded.tile.coordinates == player.tile.coordinates
     assert HexTile.count() == tile_count
+
+
+def test_a_push_subscription_saved_under_the_old_module_path_loads_through_engine_load() -> None:
+    """A player who turned on push notifications holds ``Subscription`` objects in the engine save."""
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+    player = confirm_location(_account(), HexTile.getitem(1))
+    subscription = Subscription(
+        endpoint="https://push.example.com/abc", keys=SubscriptionKeys(p256dh="p256dh-key", auth="auth-key")
+    )
+    player.push_subscriptions.append(subscription)
+    engine.save()
+
+    engine_data = Path("instance/engine_data.pck")
+    with engine_data.open("rb") as file:
+        state = pickle.load(file)
+    old_layout = _to_old_layout(pickle.dumps(state, protocol=0))
+    assert b"energetica.schemas.browser_notifications" in old_layout
+    engine_data.write_bytes(old_layout)
+    engine.clear_db()
+
+    engine.load()
+
+    assert Player.getitem(player.id).push_subscriptions == [subscription]
 
 
 def _rewrite_to_old_layout(path: Path) -> None:

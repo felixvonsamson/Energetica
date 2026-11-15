@@ -254,7 +254,7 @@ log_success "Instance scripts synced"
 # would be misleading. Both apps land at the same path so that the vhost serves either one
 # unchanged. The persistent world's service worker is inside its bundle (the app's build:sw writes
 # it there), so it needs no rsync of its own.
-# APP_BUNDLE_SUBPATH in src/energetica/routers/health.py names this same path.
+# APP_BUNDLE_SUBPATH in src/energetica/freeplay/routers/health.py names this same path.
 log_step "Syncing app bundle..."
 # -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
 rsync -rlptz --delete "./$APP_DIST/" "$SSH:$REMOTE_PATH/dist-app/" >/dev/null

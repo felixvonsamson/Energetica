@@ -16,10 +16,8 @@ from energetica.freeplay.enums import (
     WorkerType,
 )
 from energetica.freeplay.globals import engine
-from energetica.identity.account import Account
-from energetica.kernel.game_error import GameError
-from energetica.utils.map_helpers import confirm_location
-from energetica.utils.projects import (
+from energetica.freeplay.utils.map_helpers import confirm_location
+from energetica.freeplay.utils.projects import (
     cancel_project,
     complete_project,
     decrease_project_priority,
@@ -28,6 +26,8 @@ from energetica.utils.projects import (
     queue_project,
     toggle_pause_project,
 )
+from energetica.identity.account import Account
+from energetica.kernel.game_error import GameError
 
 
 def validate_rules(player: Player) -> None:

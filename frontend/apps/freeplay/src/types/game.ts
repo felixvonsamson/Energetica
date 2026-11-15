@@ -1,7 +1,8 @@
 /**
  * Type definitions for game engine and configuration.
  *
- * These types correspond to backend schemas in energetica/schemas/game.py
+ * These types correspond to backend schemas in
+ * energetica/freeplay/schemas/game.py
  */
 
 import type { ApiSchema } from "@/types/api-helpers";

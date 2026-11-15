@@ -8,11 +8,11 @@ from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.enums import StorageFacilityType
+from energetica.freeplay.init_test_players import add_asset
+from energetica.freeplay.utils.facilities import dismantle_facility
+from energetica.freeplay.utils.map_helpers import confirm_location
+from energetica.freeplay.utils.tick_execution import tick
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.facilities import dismantle_facility
-from energetica.utils.map_helpers import confirm_location
-from energetica.utils.tick_execution import tick
 
 STORAGE_TYPE = StorageFacilityType.LITHIUM_ION_BATTERIES
 
@@ -111,7 +111,7 @@ def test_decommissioning_facility_state_of_charge_is_finite() -> None:
     from math import isfinite
 
     from energetica.freeplay.production_update import set_facilities_usage
-    from energetica.schemas.facilities import StorageFacilityOut
+    from energetica.freeplay.schemas.facilities import StorageFacilityOut
 
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
     player = _make_player("decomm_soc")

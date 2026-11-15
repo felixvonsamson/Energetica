@@ -1,0 +1,56 @@
+"""Routes for the map."""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.schemas.map import HexTileOut, SettleRequest, SettleResponse
+from energetica.freeplay.utils import map_helpers
+from energetica.freeplay.utils.auth import reject_when_frozen
+from energetica.identity.account import Account
+from energetica.identity.web import get_playing_account, reject_temporary_account
+
+router = APIRouter(prefix="/map", tags=["Map"])
+
+
+@router.get("")
+def get_map() -> list[HexTileOut]:
+    """Get the map data."""
+    from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.enums import Fuel, Renewable
+
+    hex_map = HexTile.all()
+    hex_list = [
+        HexTileOut(
+            id=tile.id,
+            q=tile.coordinates[0],
+            r=tile.coordinates[1],
+            solar=tile.potentials[Renewable.SOLAR],
+            wind=tile.potentials[Renewable.WIND],
+            hydro=tile.potentials[Renewable.HYDRO],
+            coal=tile.fuel_reserves[Fuel.COAL],
+            gas=tile.fuel_reserves[Fuel.GAS],
+            uranium=tile.fuel_reserves[Fuel.URANIUM],
+            climate_risk=tile.climate_risk,
+            player_id=tile.player.id if tile.player else None,
+        )
+        for tile in hex_map
+    ]
+    return hex_list
+
+
+@router.post("/settle", dependencies=[Depends(reject_when_frozen), Depends(reject_temporary_account)])
+def settle_region(
+    account: Annotated[Account, Depends(get_playing_account)],
+    request_data: SettleRequest,
+) -> SettleResponse:
+    region = HexTile.getitem(
+        request_data.region_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region not found"),
+    )
+    # confirm_location itself rejects an account that already has a player (GameError ->
+    # CHOICE_UNMODIFIABLE, 400) — no need to duplicate that check here.
+    player = map_helpers.confirm_location(account, region)
+    # Returning player_id will probably be useful for debugging in the future
+    return SettleResponse(player_id=player.id)

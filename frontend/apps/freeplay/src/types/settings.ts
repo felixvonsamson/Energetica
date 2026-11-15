@@ -1,7 +1,8 @@
 /**
  * Type definitions for user settings.
  *
- * These types correspond to backend schemas in energetica/schemas/settings.py
+ * These types correspond to backend schemas in
+ * energetica/freeplay/schemas/players.py
  */
 
 import type { ApiRequestBody } from "@/types/api-helpers";

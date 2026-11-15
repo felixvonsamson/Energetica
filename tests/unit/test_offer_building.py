@@ -21,11 +21,11 @@ from energetica.freeplay.enums import (
     NonFacilityBidType,
     StorageFacilityType,
 )
+from energetica.freeplay.init_test_players import add_asset
 from energetica.freeplay.production_update import calculate_generation_with_market, calculate_generation_without_market
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
 from energetica.sim.market import init_market
-from energetica.utils.map_helpers import confirm_location
 
 STEAM = ControllableFacilityType.STEAM_ENGINE
 COAL = ControllableFacilityType.COAL_BURNER

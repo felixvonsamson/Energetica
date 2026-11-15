@@ -16,10 +16,10 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.enums import ControllableFacilityType, Fuel, StorageFacilityType
 from energetica.freeplay.globals import engine
+from energetica.freeplay.init_test_players import add_asset
 from energetica.freeplay.production_update import calculate_prod
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.map_helpers import confirm_location
 
 COAL = ControllableFacilityType.COAL_BURNER
 BATTERY = StorageFacilityType.LITHIUM_ION_BATTERIES
