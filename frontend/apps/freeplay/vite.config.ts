@@ -99,7 +99,7 @@ export default defineConfig(async ({ mode, command }) => {
     return {
         plugins: [
             devRootRedirect,
-            buildInfoPlugin(),
+            buildInfoPlugin("freeplay"),
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
                 target: "react",

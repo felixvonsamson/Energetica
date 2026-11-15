@@ -184,8 +184,9 @@ autumn-2025.energetica-game.org
 ```
 
 Those right-hand paths are relative to the instance directory, `/var/www/energetica-{instance}/`.
-`dist-app/` is the app bundle, built to `frontend/apps/freeplay/dist/` and flattened to the instance root
-on deploy, the same way the lobby ships `dist-lobby/`.
+`dist-app/` is the app bundle for the instance's Run mode, built to `frontend/apps/freeplay/dist/` or
+`frontend/apps/workshop/dist/` and flattened to the instance root on deploy, the same way the lobby
+ships `dist-lobby/`. Both apps land at the same path, so the vhost is the same for either mode.
 
 The public URL `/static/app/` and the directory `dist-app/` do not match, on purpose, and the
 vhost aliases map one to the other. The URL is frozen: `scripts/infra/apache-ethz-proxy.conf` proxies
@@ -478,10 +479,10 @@ Two separate config files:
 
 Both build outputs are **gitignored** and deployed via rsync:
 
-| Bundle  | Output dir                     | Gitignored | Deployed to                                       |
-| ------- | ------------------------------ | ---------- | ------------------------------------------------- |
-| app     | `frontend/apps/freeplay/dist/` | yes        | `server:/var/www/energetica-{instance}/dist-app/` |
-| landing | `frontend/apps/landing/dist/`  | yes        | `server:/var/www/energetica-landing/`             |
+| Bundle  | Output dir                                             | Gitignored | Deployed to                                       |
+| ------- | ------------------------------------------------------ | ---------- | ------------------------------------------------- |
+| app     | `frontend/apps/{freeplay,workshop}/dist/`, by Run mode | yes        | `server:/var/www/energetica-{instance}/dist-app/` |
+| landing | `frontend/apps/landing/dist/`                          | yes        | `server:/var/www/energetica-landing/`             |
 
 `.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`. ✅ (Phase 1)
 
@@ -553,13 +554,13 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 
 ### `deploy-instance.sh` flow
 
-1. Build the persistent world's app (`bun run build:freeplay`)
+1. Build the app for the instance's Run mode, read from `run.mode` in its `instance.json` (`bun run build:freeplay` or `bun run build:workshop`). Before anything is synced, the bundle's `build-info.json` must name that app.
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` the backend to the server. This ships an allowlist, not the working tree: `main.py`, which the systemd unit runs, and the backend wheel in `dist/`, which step 5 installs. The sync runs with `--delete`, so anything else in the instance dir is removed, except the paths the server owns or other steps sync. See `docs/backend/deployment.md` § What a deploy ships. `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
-4. `rsync` app bundle to server (`frontend/apps/freeplay/dist/` → `{instance dir}/dist-app/`). The service worker is inside it: the app's `build:sw` writes `dist/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — the app's `build` script chains them in that order.
+4. `rsync` app bundle to server (`frontend/apps/{freeplay,workshop}/dist/` → `{instance dir}/dist-app/`). The persistent world's service worker is inside its bundle: the app's `build:sw` writes `dist/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — the app's `build` script chains them in that order.
 5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
-7. Health check
+7. Health check: `/healthz` must be ok, the app shell and its bundle must load, and `https://{instance}.{domain}/static/app/build-info.json` must name the app for the instance's Run mode. The stamp is fetched through Apache rather than read from `/healthz`, which reads `dist-app/` off disk, so the check covers what players are actually served. There is no runtime check of the mode, so this is the only guard against serving the wrong app.
 
 Scripts accept all inputs via arguments or env vars and support `--yes` to suppress confirmation prompts, making them callable from a CI job without modification. No commitment to a CI platform is made here.
 

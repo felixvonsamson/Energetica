@@ -13,7 +13,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
 #        [--yes] [--skip-build]
 #
-# Builds the app bundle and the backend wheel locally, rsyncs main.py, the wheel and the bundle to
+# Builds the app for the Run mode in the instance's instance.json (frontend/apps/freeplay or
+# frontend/apps/workshop) and the backend wheel locally, rsyncs main.py, the wheel and the bundle to
 # the instance dir, installs the project into the server-side venv, and restarts the service.
 # The install is not optional: the backend lives under src/ and is imported as an installed
 # package, so a deploy that skips it leaves the service unable to start. On restart the
@@ -120,8 +121,11 @@ fi
 # added the required `run` block). Check it with this checkout's own code, since that is exactly
 # what is about to be installed, and before anything is synced, so a refusal changes nothing.
 # The file holds the join token, so it is streamed into the check and never written locally.
-CONFIG_FILE="/etc/energetica/$INSTANCE/instance.json"
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+#
+# The same check reads the Run mode (`run.mode`), which picks the app this deploy builds and ships:
+# frontend/apps/freeplay for a persistent-world run, frontend/apps/workshop for a Workshop Run.
+# Each app is named after the Run mode it serves. The check prints the mode on stdout and its
+# reasons for refusing on stderr, so only the mode is captured into RUN_MODE.
 #
 # The check needs the backend's dependencies (pydantic) on this machine, which building the wheel
 # does not. Without them it cannot run, and the deploy refuses with that as the reason rather than
@@ -138,15 +142,16 @@ try:
     from pydantic import ValidationError
     from energetica.identity.instance_config import InstanceConfig
 except ImportError as exc:
-    print(f"  {exc}")
+    print(f"  {exc}", file=sys.stderr)
     sys.exit(2)
 try:
-    InstanceConfig.model_validate_json(sys.stdin.read())
+    config = InstanceConfig.model_validate_json(sys.stdin.read())
 except ValidationError as exc:
     # include_input=False keeps the values in the file, the join token among them, off the terminal.
     for error in exc.errors(include_input=False):
-        print("  " + ".".join(str(part) for part in error["loc"]) + ": " + error["msg"])
+        print("  " + ".".join(str(part) for part in error["loc"]) + ": " + error["msg"], file=sys.stderr)
     sys.exit(1)
+print(config.run.mode)
 '
 if [ -z "$LOCAL_PYTHON" ]; then
     log_error "No Python found to check $CONFIG_FILE. Create the project venv — see docs/getting-started/installation.md."
@@ -157,7 +162,7 @@ if ! CONFIG_JSON="$(ssh "$SSH" "cat '$CONFIG_FILE'")"; then
     exit 1
 fi
 CHECK_STATUS=0
-printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG" || CHECK_STATUS=$?
+RUN_MODE=$(printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG") || CHECK_STATUS=$?
 unset CONFIG_JSON
 case "$CHECK_STATUS" in
     0) ;;
@@ -174,18 +179,47 @@ case "$CHECK_STATUS" in
         exit 1
         ;;
 esac
+# The mode names a directory under frontend/apps/ and is compared with the bundle's stamp below,
+# so refuse anything but the two apps an instance can serve rather than build or ship another one.
+# These are the modes of RunModeTag in src/energetica/identity/instance_config.py; a new mode needs
+# an app, and a line here.
+case "$RUN_MODE" in
+    freeplay) APP_LABEL="the persistent world's app" ;;
+    workshop) APP_LABEL="the Workshop's app" ;;
+    *)
+        log_error "$CONFIG_FILE has Run mode '$RUN_MODE', which no app in frontend/apps/ serves."
+        exit 1
+        ;;
+esac
+APP_DIST="frontend/apps/$RUN_MODE/dist"
+
+# Every build stamps the app it built into build-info.json (buildInfoPlugin in
+# frontend/vite.shared.ts). This reads that name from a stamp on stdin, or prints nothing if there
+# is no stamp or it names no app. Used twice: on the local build before syncing, and on the bundle
+# Apache serves after the restart.
+stamped_app() {
+    jq -r '.app // empty' 2>/dev/null || true
+}
 
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
-    log_step "Building the persistent world's app (vite build + service worker)..."
+    log_step "Building $APP_LABEL (Run mode: $RUN_MODE)..."
     # VITE_APEX_DOMAIN bakes the apex into the bundle so cross-origin links resolve:
     # the app's "Learn more" links point back to https://$DOMAIN (the Apache landing),
     # not the instance subdomain. Without it landingHref() falls back to a same-origin
     # relative path, which 404s on the instance vhost (it only serves /app/*).
-    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build:freeplay )
+    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run "build:$RUN_MODE" )
     log_success "App bundle built"
 else
     log_info "Skipping build (--skip-build)"
+fi
+# Check the local bundle's stamp before anything is synced, so a missing bundle (say, --skip-build
+# with nothing built) changes nothing on the server.
+LOCAL_APP=$( { stamped_app < "$APP_DIST/build-info.json"; } 2>/dev/null || true)
+if [ "$LOCAL_APP" != "$RUN_MODE" ]; then
+    log_error "$APP_DIST/build-info.json names app '${LOCAL_APP:-none}', but $INSTANCE's Run mode is '$RUN_MODE'."
+    echo "Build it (drop --skip-build, or run 'bun run build:$RUN_MODE' in frontend/), then deploy again."
+    exit 1
 fi
 build_backend_wheel   # see scripts/lib/backend-wheel.sh for why this is not behind --skip-build
 
@@ -193,8 +227,9 @@ build_backend_wheel   # see scripts/lib/backend-wheel.sh for why this is not beh
 echo
 log_step "Deployment summary:"
 echo "  Instance:  $INSTANCE   (https://$FQDN)"
+echo "  App:       $RUN_MODE   ($APP_DIST/ → dist-app/)"
 echo "  Remote:    $SSH:$REMOTE_PATH"
-echo "  Steps:     rsync backend → rsync app bundle → install backend → restart → health check (API + app shell)"
+echo "  Steps:     rsync backend → rsync app bundle → install backend → restart → health check (API + served app + app shell)"
 echo
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "Continue? (y/n) " -n 1 -r; echo
@@ -213,15 +248,16 @@ rsync -rlptz --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/nul
 log_success "Instance scripts synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
-# The bundle is built to frontend/apps/freeplay/dist/ but lands at the instance root as dist-app/,
-# the same flattening deploy-lobby.sh does with dist-lobby/: the server carries no frontend
-# source, so a frontend/ directory holding nothing but build output would be misleading. The
-# service worker is inside the bundle (the app's build:sw writes it there), so it needs no rsync
-# of its own.
+# The bundle is built to frontend/apps/{freeplay,workshop}/dist/ but lands at the instance root as
+# dist-app/ whatever the Run mode, the same flattening deploy-lobby.sh does with dist-lobby/: the
+# server carries no frontend source, so a frontend/ directory holding nothing but build output
+# would be misleading. Both apps land at the same path so that the vhost serves either one
+# unchanged. The persistent world's service worker is inside its bundle (the app's build:sw writes
+# it there), so it needs no rsync of its own.
 # APP_BUNDLE_SUBPATH in src/energetica/routers/health.py names this same path.
 log_step "Syncing app bundle..."
 # -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
-rsync -rlptz --delete ./frontend/apps/freeplay/dist/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
+rsync -rlptz --delete "./$APP_DIST/" "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
 log_success "App bundle synced"
 
 # --- 5. Install the backend into the server venv --------------------------------
@@ -253,7 +289,9 @@ fi
 log_success "Service is running"
 
 # --- 7. Health check ------------------------------------------------------------
-# Two conditions, not one. /healthz proves uvicorn is serving, but it is reached through the
+# Three conditions: /healthz is ok, the app loads, and the app Apache serves is the one for this
+# Run mode (checked after the loop). Whether the app loads is a separate check from /healthz:
+# /healthz proves uvicorn is serving, but it is reached through the
 # ProxyPass — it says nothing about the Alias directives that serve the app bundle off disk. A
 # vhost pointing at the wrong path leaves the API perfectly healthy while every player gets a
 # 404 for the app itself, which is a deploy that "succeeded" and broke the site. So whether the
@@ -330,7 +368,21 @@ if [ "$HEALTH_OK" != true ]; then
     fi
     exit 1
 fi
-log_success "/healthz status=ok, app and its bundle load"
+# The app Apache serves must be the one for this Run mode. Each app assumes it is on an instance of
+# its own mode and nothing checks it at runtime, so this is the only guard against serving the
+# wrong app. The stamp is fetched through Apache, the same Alias the app is served from, rather
+# than read from /healthz: /healthz reads dist-app/ off disk, which proves what was synced but not
+# what a vhost pointing somewhere else would serve. The app has loaded by now, so the answer will
+# not change by waiting: check once.
+SERVED_APP=$(curl -fsS --max-time 5 "https://$FQDN/static/app/build-info.json" 2>/dev/null | stamped_app || true)
+if [ "$SERVED_APP" != "$RUN_MODE" ]; then
+    log_error "https://$FQDN/static/app/build-info.json names app '${SERVED_APP:-none}', but $INSTANCE's Run mode is '$RUN_MODE'."
+    echo "Players are getting the wrong app. Compare what was synced with what Apache serves:"
+    echo "  ssh $SSH 'cat $REMOTE_PATH/dist-app/build-info.json'"
+    echo "  ssh $SSH 'grep static /etc/apache2/sites-available/energetica-$INSTANCE.conf'"
+    exit 1
+fi
+log_success "/healthz status=ok, the app and its bundle load, and Apache serves the $RUN_MODE app"
 
 echo
 log_success "Deployed $INSTANCE → https://$FQDN"
