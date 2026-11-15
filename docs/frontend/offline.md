@@ -1,259 +1,51 @@
 # Offline Resilience
 
-How the app handles spotty connections, server downtime, and offline scenarios.
+How the persistent world's frontend (the `freeplay` app) behaves when the player's connection drops or the server goes down, and what it does to recover.
 
-## The Problem
+Two different outages reach the app, and they behave differently:
 
-Mobile users on 4G/5G experience:
+- **The browser is offline.** The device has no network, and the browser fires its `offline` event.
+- **The server is unreachable.** The browser still believes it is online, but requests fail. This happens when the server restarts, or when a mobile connection is technically up but drops packets.
 
-- Intermittent connectivity (tunnels, rural areas, network switching)
-- Temporary server unavailability (restarts, maintenance)
-- Slow/unreliable connections (high latency, packet loss)
+## When the browser is offline
 
-## Default Behavior
+TanStack Query listens to the browser's `online` and `offline` events itself, through its `onlineManager`. With `networkMode: "online"`, which is the default for both queries and mutations:
 
-When connection is lost:
+- **Queries pause.** A query that would fetch does not send a request. It keeps its cached data and does not use up its retries. When the browser comes back online, active queries whose data is stale refetch (`refetchOnReconnect: true`).
+- **Mutations pause, then send.** A mutation started while offline waits, and TanStack Query sends it when the browser comes back online. The action is not dropped, but it can reach the server long after the player clicked.
 
-1. SocketIO disconnects (no tick events)
-2. Queries become stale after `staleTime` (60s for game data)
-3. Refetch attempts fail (network error)
-4. TanStack Query retries with exponential backoff (1s, 2s, 4s)
-5. After 3 failed attempts, query enters error state
-6. **Stale data remains available** in cache
+The Socket.IO connection drops at once too: its client closes the connection when the browser fires `offline`. It skips this on `localhost`, so in local development the socket only notices when its heartbeat times out. The next section describes what a disconnected socket does.
 
-### Key Insight: Data Doesn't Disappear
+## When the server is unreachable
 
-```ts
-const { data, error, isError } = usePlayerMoney();
+- **Socket.IO disconnects and reconnects on its own.** It retries with a growing delay, using the library defaults (1 s, growing to at most 5 s). Tick and `invalidate` events stop arriving while it is down.
+- **Queries retry, then fail.** A failed fetch is retried up to 3 times, after 1 s, 2 s and 4 s. Client errors (4xx) are not retried. After the last retry the query is in its error state, but **its cached data stays available**, so components keep showing the last known values.
+- **Mutations fail at once.** Mutations are not retried by default, because a write that reached the server but lost its response would otherwise apply twice. The comment in `frontend/packages/core/src/query-client.ts` explains this. Each mutation shows its own error, usually through `toastActionError`.
 
-// Connection failed
-// data still has last successful value
-// error has network error
-// isError = true
-```
+## Recovering when the socket reconnects
+
+`GameTickProvider` (`frontend/apps/freeplay/src/contexts/game-tick-context.tsx`) handles the return of the socket:
+
+- It marks the current tick as stale while the socket is down, and reads the tick again over HTTP as soon as the socket reconnects. It does the same when a hidden tab becomes visible, because the browser may have frozen the tab and missed tick events.
+- Queries registered with `useTickQuery` refetch on the next tick event.
+
+## What the player sees
+
+The only connection indicator today is on the money display in the top bar (`frontend/apps/freeplay/src/components/layout/top-bar.tsx`). When the money query is in its error state, the amount is dimmed. If the socket is also disconnected, an alert icon appears next to it. The worker counts next to it also dim when their query fails, but show no icon.
+
+## Known gaps
+
+- **Missed invalidations are not replayed.** The server tells the client which queries to refetch through `invalidate` socket events. Events sent while the socket is down are lost, and nothing refetches those queries on reconnect. They keep showing out-of-date data until their `staleTime` runs out; only after that does a window focus, a remount or a browser reconnect refetch them. Queries registered with `useTickQuery` are not affected, because they refetch on the next tick anyway.
+- **No global connection banner.** Apart from the money indicator, nothing tells the player that the connection is down.
+- **Actions stay enabled while disconnected.** Buttons do not check `useSocket().isConnected`, so a player can start a mutation while the server is unreachable and get an error toast.
 
 ## Configuration
 
-### Query Client
+The retry, refetch and network-mode settings described above are the shared defaults in `createQueryClient` (`frontend/packages/core/src/query-client.ts`), which each app builds its query client from. Read that file for the exact values. Individual hooks override `staleTime` as needed.
 
-These defaults are set by `createQueryClient` in `frontend/packages/core/src/query-client.ts`.
+## Testing by hand
 
-```ts
-queries: {
-    // Retry with exponential backoff: 1s, 2s, 4s
-    retry: (failureCount, error) => {
-        // Don't retry client errors (401, 404, etc.)
-        if (status >= 400 && status < 500) return false;
-        // Retry network errors up to 3 times
-        return failureCount < 3;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+The two outages need different setups:
 
-    // Auto-refetch when connection restored
-    refetchOnReconnect: true,
-
-    // Only fetch when online
-    networkMode: 'online',
-}
-```
-
-### SocketIO
-
-SocketIO has built-in reconnection:
-
-- Automatically tries to reconnect on disconnect
-- Uses exponential backoff
-- Emits `connect` event when successful
-
-## Recommended UX Patterns
-
-### Global Connection Banner
-
-Shows at top of app when disconnected.
-
-```ts
-import { ConnectionStatus } from "@/components/ConnectionStatus";
-
-export function RootLayout() {
-    return (
-        <>
-            <ConnectionStatus />
-            <TopBar />
-            <main>...</main>
-        </>
-    );
-}
-```
-
-**States:**
-
-- Connection lost: "Connection lost. Showing cached data."
-- Cannot connect: "Cannot connect to server."
-- Reconnected: "Reconnected! Your data is up to date." (auto-hides after 3s)
-
-### Inline Error Indicators
-
-Show subtle indicators on specific data that failed to update.
-
-```ts
-const { data, isError, error } = usePlayerMoney();
-
-<div className="relative">
-    {isError && (
-        <span className="absolute -top-1 -right-1 text-xs text-red-600">
-            <i className="fa fa-exclamation-circle"></i>
-        </span>
-    )}
-    <span className={isError ? "opacity-75" : ""}>
-        ${data?.money ?? 0}
-    </span>
-</div>
-```
-
-### Disable Actions When Offline
-
-Prevent desyncs by blocking mutations while disconnected.
-
-```ts
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-
-function BuildFacilityButton() {
-    const { canPerformActions } = useOnlineStatus();
-    const buildMutation = useBuildFacility();
-
-    return (
-        <button
-            onClick={() => buildMutation.mutate(...)}
-            disabled={!canPerformActions || buildMutation.isPending}
-            title={!canPerformActions ? "Action disabled - no connection" : ""}
-        >
-            Build Facility
-        </button>
-    );
-}
-```
-
-**Status checks:**
-
-- `isOnline`: Browser's `navigator.onLine` (has internet)
-- `isConnected`: SocketIO is connected to server
-- `canPerformActions`: Both true (safe to mutate)
-
-## Behavior Scenarios
-
-### Scenario 1: User Loses Connection Mid-Session
-
-```
-T+0s:  Connection drops
-       → SocketIO: "Disconnected"
-       → Banner: "Connection lost. Showing cached data."
-       → Mutations: Disabled
-
-T+30s: User navigates to facilities page
-       → Query tries to refetch (stale)
-       → Fails (no connection)
-       → Shows stale facility list + error indicator
-
-T+60s: Connection restored
-       → SocketIO: "Connected"
-       → Banner: "Reconnected!" (3s)
-       → All active queries: Auto-refetch
-       → Mutations: Re-enabled
-```
-
-### Scenario 2: Server Restarts (30s downtime)
-
-```
-T+0s:  Server down
-       → SocketIO: "Disconnected"
-       → Queries continue using cached data
-
-T+10s: User tries to build facility
-       → Button disabled (no connection)
-
-T+30s: Server up
-       → SocketIO: Auto-reconnects
-       → Tick event received
-       → All tick-registered queries: Auto-refetch
-```
-
-### Scenario 3: Spotty 4G (Intermittent Drops)
-
-```
-T+0s:  Connection drops
-       → TanStack Query: Retry #1 after 1s
-T+1s:  Retry #1 fails
-       → Retry #2 after 2s
-T+3s:  Connection back
-       → Retry #2 succeeds
-       → User never saw error (seamless)
-```
-
-**If connection stays down:**
-
-```
-T+0s:  Connection drops
-T+1s:  Retry #1 fails
-T+3s:  Retry #2 fails
-T+7s:  Retry #3 fails
-       → Query enters error state
-       → Shows stale data + error indicator
-```
-
-## When to Show What
-
-| State                    | Display                      |
-| ------------------------ | ---------------------------- |
-| Initial load             | Skeleton/spinner             |
-| Success                  | Data                         |
-| Refetching in background | Data + subtle spinner        |
-| Error, no stale data     | Error message + retry button |
-| Error, has stale data    | Stale data + indicator       |
-| Offline (global)         | Banner at top                |
-
-## Testing
-
-### Chrome DevTools
-
-1. Open DevTools → Network tab
-2. Throttling dropdown → "Offline"
-3. Verify "Connection lost" banner appears
-4. Re-enable → "Reconnected!" banner
-5. Verify queries refetch
-
-### Checklist
-
-- Connection lost banner appears
-- Stale data still visible
-- Mutations disabled (buttons grayed out)
-- Reconnect banner appears when back online
-- Data refreshes automatically
-- No console errors during offline period
-
-## Recommendations
-
-**Do:**
-
-- Show stale data with error indicator
-- Display global connection status banner
-- Disable mutations when offline
-- Auto-refetch on reconnect
-- Use exponential backoff for retries
-
-**Don't:**
-
-- Show blank screens when offline
-- Allow mutations while disconnected (causes desyncs)
-- Retry indefinitely (wastes battery/data)
-- Hide connection status (confuses users)
-
-## Configuration Trade-offs
-
-| Setting                    | Current                | Alternative | Trade-off                               |
-| -------------------------- | ---------------------- | ----------- | --------------------------------------- |
-| `retry: 3`                 | 3 retries              | `retry: 0`  | More resilient vs faster error feedback |
-| `networkMode: 'online'`    | Only fetch when online | `'always'`  | Clean errors vs trying anyway           |
-| `refetchOnReconnect: true` | Auto-refetch           | `false`     | Fresh data vs saving bandwidth          |
-| `staleTime: 60s`           | 1 minute               | `5 * 60s`   | More requests vs fresher data           |
-
-Current settings optimize for mobile users with intermittent connections while maintaining data freshness for the game.
+- **Browser offline:** in Chrome DevTools, open the Network tab and set throttling to "Offline". Queries and mutations pause instead of failing. Set it back to "No throttling" and check that stale queries refetch and that any paused mutation is sent.
+- **Server unreachable:** stop the backend while the app is open. Check that cached data stays visible, that the money display dims and shows the alert icon once its query fails, and that a mutation shows an error toast. Restart the backend and check that the socket reconnects and the tick resumes.
