@@ -103,6 +103,36 @@
         "vitest": "catalog:",
       },
     },
+    "apps/workshop": {
+      "name": "@energetica/workshop",
+      "dependencies": {
+        "@energetica/charts": "workspace:*",
+        "@energetica/core": "workspace:*",
+        "@energetica/instance": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@tanstack/react-query": "catalog:",
+        "@tanstack/react-router": "catalog:",
+        "echarts": "catalog:",
+        "framer-motion": "^12.38.0",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "socket.io-client": "^4.8.1",
+        "sonner": "catalog:",
+      },
+      "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
+        "@tanstack/router-plugin": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^4.7.0",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/charts": {
       "name": "@energetica/charts",
       "dependencies": {
@@ -330,6 +360,8 @@
     "@energetica/map": ["@energetica/map@workspace:packages/map"],
 
     "@energetica/ui": ["@energetica/ui@workspace:packages/ui"],
+
+    "@energetica/workshop": ["@energetica/workshop@workspace:apps/workshop"],
 
     "@es-joy/jsdoccomment": ["@es-joy/jsdoccomment@0.76.0", "", { "dependencies": { "@types/estree": "^1.0.8", "@typescript-eslint/types": "^8.46.0", "comment-parser": "1.4.1", "esquery": "^1.6.0", "jsdoc-type-pratt-parser": "~6.10.0" } }, "sha512-g+RihtzFgGTx2WYCuTHbdOXJeAlGnROws0TeALx9ow/ZmOROOZkVg5wp/B44n0WJgI4SQFP1eWM2iRPlU2Y14w=="],
 

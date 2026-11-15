@@ -12,22 +12,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
-import { useRunMode } from "@/hooks/use-run-mode";
-import { useWorkshopEntry } from "@/hooks/use-workshop";
-import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
-import {
-    computeRedirect,
-    isAnnouncedTakeover,
-    workshopRedirect,
-} from "@/lib/route-guard";
+import { computeRedirect, isAnnouncedTakeover } from "@/lib/route-guard";
 import {
     documentTitle,
     pageTitleFromMatches,
 } from "@energetica/core/document-title";
 import { lobbyHref, lobbyLoginHref } from "@energetica/core/instances";
-import { isSingleOriginHost } from "@energetica/core/single-origin";
-import { LogOutButton } from "@energetica/instance/components/top-bar";
-import { Button } from "@energetica/ui/components/button";
 import { Spinner } from "@energetica/ui/components/spinner";
 
 export const Route = createRootRoute({
@@ -45,17 +35,11 @@ export const Route = createRootRoute({
     }),
 });
 
-/**
- * Each Run mode has its own gate. `main.tsx` resolves the mode before the
- * router renders, so it is known here, and in a Workshop Run the persistent
- * world's auth and game hooks are never called (#995).
- */
 function RootComponent() {
-    const { data: mode } = useRunMode();
     return (
         <>
             <HeadContent />
-            {mode === "workshop" ? <WorkshopRoot /> : <FreeplayRoot />}
+            <FreeplayRoot />
         </>
     );
 }
@@ -66,71 +50,6 @@ function FullPageSpinner() {
             <Spinner />
         </div>
     );
-}
-
-/**
- * The gate in a Workshop Run (#995). The visitor enters through `POST
- * /workshop/enter` rather than `/auth/me`, and sees only the Workshop pages and
- * the pages shared by both Run modes, such as the join page. A shared page is
- * public, so it does not enter at all: a visitor on the join page has not been
- * admitted yet.
- */
-function WorkshopRoot() {
-    const matches = useMatches();
-    const navigate = useNavigate();
-    const staticData = matches[matches.length - 1]?.staticData;
-    const isSharedPage = staticData?.runMode === "any";
-    const {
-        data: entry,
-        isLoading,
-        isError,
-        error,
-        refetch,
-    } = useWorkshopEntry({ enabled: !isSharedPage });
-    const redirect =
-        isLoading || isError || staticData === undefined
-            ? null
-            : workshopRedirect(staticData.runMode, !!entry);
-
-    useEffect(() => {
-        if (redirect === "log-in") window.location.assign(lobbyLoginHref());
-        else if (redirect) void navigate({ to: redirect });
-    }, [redirect, navigate]);
-
-    if (isLoading) return <FullPageSpinner />;
-    if (isError) {
-        // An account on no team in a Run with teams (#1384) is refused for good, so trying again cannot help.
-        // The player may be signed in with the wrong account, so they can log out or go back to the lobby, as
-        // from the Workshop's account menu.
-        if (isErrorType(error, "WORKSHOP_NOT_ON_A_TEAM")) {
-            return (
-                <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center">
-                    <p>{getUserFriendlyError(error)}</p>
-                    <div className="flex gap-2">
-                        {/* On a single-origin host the lobby sends a logged-in
-                            account straight back here, so there is no lobby to go to. */}
-                        {!isSingleOriginHost() && (
-                            <Button variant="outline" asChild>
-                                <a href={lobbyHref("/")}>Back to lobby</a>
-                            </Button>
-                        )}
-                        <LogOutButton />
-                    </div>
-                </div>
-            );
-        }
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-                <p>Could not enter the Workshop.</p>
-                <Button variant="outline" onClick={() => void refetch()}>
-                    Try again
-                </Button>
-            </div>
-        );
-    }
-    if (staticData === undefined) return "Unknown page";
-    if (redirect) return null;
-    return <Outlet />;
 }
 
 function FreeplayRoot() {
@@ -169,13 +88,10 @@ function FreeplayRoot() {
         isAuthenticated &&
         !!user &&
         isAnnouncedTakeover(routeConfig, phase);
-    // A Workshop page has nothing to show in the persistent world.
     const redirectTo =
-        staticData?.runMode === "workshop"
-            ? "/app"
-            : !announced && authResolved && isAuthenticated && user
-              ? computeRedirect(routeConfig, user, capabilities)
-              : null;
+        !announced && authResolved && isAuthenticated && user
+            ? computeRedirect(routeConfig, user, capabilities)
+            : null;
 
     useEffect(() => {
         if (mustLogIn) {

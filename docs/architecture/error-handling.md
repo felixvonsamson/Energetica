@@ -34,14 +34,16 @@ class WorkshopErrorCode(ErrorCode):
 
 Players receive a code's string value, so values are unique across all the enums.
 
-The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). The frontend consumes it via `ApiSchema<"ErrorCode">`, re-exported as `ErrorCode` from `lib/game-messages.ts`.
+The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). Each frontend app reads its own app's `ErrorCode`: the Workshop and the lobby through `ApiSchema<"ErrorCode">` in their own generated types, and the combined freeplay bundle from `api.freeplay.generated.ts`, re-exported as `ErrorCode` from `lib/game-messages.ts`.
+
+Each app has one table of error messages, keyed by its own `ErrorCode`. The messages of the codes several apps share are defined once: the kernel's shared codes in `SHARED_ERROR_MESSAGES` (`@energetica/core/error-messages`), and the identity layer's in `IDENTITY_ERROR_MESSAGES` (`@energetica/instance/lib/error-messages`), which both Instance apps return. An app builds its table with `errorMessageTable<ErrorCode>()(shared, own)`, which joins the shared tables it is given with its own messages for the rest of its codes.
 
 This creates a closed loop:
 
-- `GAME_ERROR_MESSAGES: Record<ErrorCode, string>` — compile error if any code is missing a message, or if a non-existent code is used as a key.
+- `errorMessageTable` — compile error if any code is missing a message, or if a shared table or the app's own messages hold a code the app cannot return.
 - `isErrorType(error, errorType: ErrorCode)` — compile error at every call site using an unknown code.
 
-When adding a new backend error: add it to the enum of the layer or app that raises it, run `generate-types`, then add the corresponding entry to `GAME_ERROR_MESSAGES`. The compiler will tell you if you miss either step.
+When adding a new backend error: add it to the enum of the layer or app that raises it, run `generate-types`, then add the corresponding message to the table of each app that can return it (see the list below). The compiler will tell you if you miss either step.
 
 A `GameError` is answered with a 400 unless its class sets another `status_code`, such as 404 for something that does not exist. The body is the same either way.
 
@@ -53,14 +55,19 @@ Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.
 
 ## Utilities
 
-**`lib/game-messages.ts`**
+**`@energetica/core/error-messages`**, shared by every app:
 
-- `GAME_ERROR_MESSAGES` — typed map from error code to display string.
-- `PYDANTIC_VALIDATION_MESSAGES` — untyped partial-match map for Pydantic error prefixes (`"String should have at least"`, etc.). These are framework-level messages, not game codes.
-- `resolveErrorMessage(error)` — resolves an error to a display string, checking `GAME_ERROR_MESSAGES` first, then `PYDANTIC_VALIDATION_MESSAGES` by prefix.
-- `formatCancelProjectError(error)` — specialised formatter for `HasDependents` errors, which include structured `kwargs` (dependent project names).
+- `createErrorMessages(messages)` — returns the helpers below for an app's table of messages: `getUserFriendlyError`, `isErrorType` and `resolveErrorMessage`.
+- `resolveErrorMessage(error)` — resolves an error to a display string, checking the app's messages first, then rewording a Pydantic validation message by its prefix (`"String should have at least"`, etc.). Those are framework-level messages, not game codes.
+- `SHARED_ERROR_MESSAGES` and `errorMessageTable`, described above.
 
-**`lib/error-utils.ts`**
+Each app's table:
+
+- the combined freeplay bundle: `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts`, which also has `formatCancelProjectError(error)`, a specialised formatter for `HasDependents` errors, which include structured `kwargs` (dependent project names);
+- the Workshop: `ERROR_MESSAGES` in `frontend/apps/workshop/src/lib/error-messages.ts`, with its helpers and `formatLeverChangeError(error)`;
+- the lobby: `frontend/apps/lobby/src/lib/error-utils.ts`.
+
+**`lib/error-utils.ts`**, in the combined freeplay bundle
 
 - `getUserFriendlyError(error)` — exact-match lookup in `GAME_ERROR_MESSAGES`, falls back to the raw error message. Use in form `catch` blocks.
 - `handleApiError(error, fallback?)` — same as above, but also logs to the console. Use in mutation `onError` handlers or anywhere logging is appropriate.
@@ -116,5 +123,5 @@ Clear all error state at the top of the submit handler, before validation.
 1. Add the value to the enum of the layer or app that raises it (see the table above). Use `SCREAMING_CASE` for the string value. Only codes every app can return go in the kernel's `SharedErrorCode`.
 2. Raise it from the appropriate backend route via `HTTPException` (to preserve a meaningful HTTP status code) or `GameError` (for business logic errors where 400 is acceptable).
 3. Run `bun run generate-types`.
-4. Add an entry to `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts` — the compiler will flag the missing key.
+4. Add its message to the table of each app that can return it (see [Utilities](#utilities)), or to `SHARED_ERROR_MESSAGES` or `IDENTITY_ERROR_MESSAGES` for a kernel or identity code — the compiler will flag the missing key.
 5. If the error needs specific UI treatment in a form, use `isErrorType` at the call site.

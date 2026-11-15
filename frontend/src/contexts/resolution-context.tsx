@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ResolutionOption, resolutions } from "@/types/charts";
+import { useLocalStorage } from "@energetica/ui/hooks/use-local-storage";
 
 interface ResolutionContextValue {
     selectedResolution: ResolutionOption;

@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,6 +10,7 @@ import { contentMdx } from "@energetica/content/vite-plugin";
 import {
     buildInfoPlugin,
     DEV_PORTS,
+    devRootRedirect,
     explicitBackendUrl,
     instanceSlugFromBackend,
     loadDeploymentEnv,
@@ -80,27 +81,6 @@ async function resolveBackendUrl(
 
     return "http://localhost:8000";
 }
-
-/**
- * Dev-only: mirror production's Apache `RedirectMatch ^/$ → /app/`. The app
- * bundle only routes `/app/*` (there is no `/` route), so without this the bare
- * root 404s in dev — in prod Apache handles it. `apply: "serve"` keeps it out
- * of builds.
- */
-const devRootRedirect: Plugin = {
-    name: "dev-root-redirect",
-    apply: "serve",
-    configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-            if (req.url === "/") {
-                res.writeHead(302, { Location: "/app/" });
-                res.end();
-                return;
-            }
-            next();
-        });
-    },
-};
 
 export default defineConfig(async ({ mode, command }) => {
     const env = loadDeploymentEnv(mode);

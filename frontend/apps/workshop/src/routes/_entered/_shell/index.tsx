@@ -1,0 +1,38 @@
+/**
+ * The Workshop home (#995): sends the visitor to the page for where the session
+ * is now, or the facilitator to their console during an Investment phase.
+ * Before the session starts, that is the intro (#1254).
+ */
+
+import { InfoBanner } from "@energetica/ui/components/info-banner";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+
+import { useWorkshopEntry, useWorkshopSession } from "@/hooks/use-workshop";
+import { homePage } from "@/lib/workshop-timeline";
+
+export const Route = createFileRoute("/_entered/_shell/")({
+    component: WorkshopHome,
+    staticData: { title: "Workshop" },
+});
+
+function WorkshopHome() {
+    const { data: entry } = useWorkshopEntry();
+    const { data: session, isError } = useWorkshopSession();
+
+    if (isError) {
+        return (
+            <InfoBanner variant="error">
+                Could not load the session. It is retried every few seconds.
+            </InfoBanner>
+        );
+    }
+    if (!session || !entry) {
+        return (
+            <div className="flex justify-center py-12">
+                <Spinner />
+            </div>
+        );
+    }
+    return <Navigate {...homePage(session.checkpoint, entry.role)} replace />;
+}

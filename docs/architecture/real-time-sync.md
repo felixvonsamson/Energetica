@@ -271,7 +271,7 @@ useSocketEvent("invalidate", (data) => {
 
 A Workshop Run does not use `SocketProvider` or `GameTickContext`. Its server is in
 `src/energetica/workshop/realtime.py`, and the frontend connects in `useWorkshopSocket`
-(`frontend/src/hooks/use-workshop.ts`), which the Workshop's root layout calls once. That hook
+(`frontend/apps/workshop/src/hooks/use-workshop.ts`), which the Workshop's page shell calls once. That hook
 opens its own socket and holds all of the Workshop's listeners:
 
 - `invalidate`: re-read the queries the message names, as in freeplay. The server sends it to
