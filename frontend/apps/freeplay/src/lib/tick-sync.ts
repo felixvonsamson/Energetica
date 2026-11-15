@@ -35,9 +35,12 @@ export function tickSyncReducer(
 ): TickSyncState {
     switch (event.type) {
         case "tick":
+            // Socket ticks arrive in order, so the latest one is always
+            // right, even when it is lower (the server was reset).
+            return { tick: event.tick, isFresh: true };
         case "resynced":
-            // Ticks only move forward. A re-read that was in flight while a
-            // socket tick arrived can return an older value.
+            // A re-read that was in flight while a socket tick arrived can
+            // return an older value, so a re-read never moves the tick back.
             return {
                 tick: Math.max(state.tick ?? event.tick, event.tick),
                 isFresh: true,

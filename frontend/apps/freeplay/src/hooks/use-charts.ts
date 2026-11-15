@@ -95,12 +95,12 @@ export function useChartData<T extends ChartType>({
         range,
         isTickFresh,
     });
-    const { isLoading: isFetching, isError } = useFetchChartGaps({
+    const { isLoading: isLoadingGaps, isError } = useFetchChartGaps({
         config,
         rangesToFetch,
         onStaleTickRejection: reportStaleTick,
     });
-    const isLoading = isFetching || isWaitingForTick;
+    const isLoading = isLoadingGaps || isWaitingForTick;
 
     // Determine what data to return
     if (isLoading && cachedFallbackData.length > 0) {
@@ -120,7 +120,7 @@ export function useChartData<T extends ChartType>({
 }
 
 /** Calculate the tick range for a given current tick and resolution */
-function computeRange({
+export function computeRange({
     currentTick,
     resolution,
     maxDatapoints,

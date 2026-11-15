@@ -29,4 +29,12 @@ describe("tickSyncReducer", () => {
         });
         expect(afterLateResync).toEqual({ tick: 25206, isFresh: true });
     });
+
+    it("accepts a lower socket tick, as after a server reset", () => {
+        const afterReset = tickSyncReducer(
+            { tick: 25206, isFresh: true },
+            { type: "tick", tick: 3 },
+        );
+        expect(afterReset).toEqual({ tick: 3, isFresh: true });
+    });
 });
