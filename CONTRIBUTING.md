@@ -155,8 +155,8 @@ Ruff is configured in `ruff.toml` and pyright in `pyrightconfig.json`, both at t
 One configuration covers the whole Python tree, so no other file declares ruff or pyright
 settings.
 
-- Ruff (linter and formatter). Both cover every Python file in the repo — `backend/`,
-  `scripts/` and `tools/` — and both run as
+- Ruff (linter and formatter). Both cover every Python file in the repo — `backend/` and
+  `scripts/` — and both run as
   the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
@@ -172,9 +172,9 @@ the fixing and formatting forms — both write to your files, neither is read-on
 - import-linter checks which backend packages may import which. Each rule is a contract,
   written in `backend/pyproject.toml` under `[tool.importlinter]`, and CI checks them in the
   `python-lint` job. Imports through another module count too.
-  - `kernel`, `identity` and `sim` are layers, in that order from the bottom. A module may
-    import from the layers below it but not from those above, and none of them imports app
-    code.
+  - `kernel`, `identity`, `sim` and `worldmap` are layers, in that order from the bottom. A
+    module may import from the layers below it but not from those above, and none of them
+    imports app code.
   - There are three apps above them: the persistent world (`energetica.freeplay`), Workshop
     (`energetica.workshop`) and the lobby (`energetica.lobby`). None of them imports another.
   - `energetica.entry` sits on top and builds whichever app an instance runs.

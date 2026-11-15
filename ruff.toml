@@ -1,4 +1,4 @@
-# Ruff's configuration for every Python file in the repository: the backend, scripts/ and tools/.
+# Ruff's configuration for every Python file in the repository: the backend and scripts/.
 # It lives at the root, not in the backend's pyproject.toml, because one Python tree gets one
 # linter configuration (#1095). No other file may declare ruff settings: ruff uses the nearest
 # configuration file it finds, so a second one would silently override this one below it.
