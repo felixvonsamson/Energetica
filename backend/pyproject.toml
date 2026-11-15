@@ -50,8 +50,8 @@ Issues = "https://github.com/felixvonsamson/Energetica/issues"
 
 [tool.setuptools]
 # src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests` and the
-# launchers live beside src/, and `scripts` and `tools` at the repo root; none of them is part of
-# the distribution.
+# launchers live beside src/, and `scripts` at the repo root; none of them is part of the
+# distribution.
 package-dir = { "" = "src" }
 include-package-data = false
 

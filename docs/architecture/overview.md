@@ -20,8 +20,6 @@ Energetica/
 ├── frontend/                 # React/TypeScript frontend (see Frontend below)
 ├── docs/                     # This documentation, for both halves
 ├── scripts/                  # Developer, deploy, provisioning and operator scripts (see Scripts below)
-├── tools/
-│   └── map_generation/       # Offline map-authoring tool, outside the import graph
 ├── package.json              # The `bun run` commands, which call into scripts/, frontend/ and .venv/
 ├── ruff.toml, pyrightconfig.json, pytest.ini  # Python checks and tests, configured for the whole tree
 ├── CONTEXT.md                # Glossary of the project's domain terms
@@ -31,7 +29,7 @@ Energetica/
 ```
 
 Each top-level directory holds one kind of thing. `backend/` and `frontend/` are the two halves of
-the game. `docs/`, `scripts/` and `tools/` serve both halves, or the servers they run on, so they sit
+the game. `docs/` and `scripts/` serve both halves, or the servers they run on, so they sit
 at the root rather than inside either half. The root also holds the configuration that spans the
 repository: `package.json` for the commands, and one ruff, pyright and pytest configuration for
 all of the Python, `scripts/` included. Run every command from the root.
@@ -72,6 +70,7 @@ backend/src/
 │   │                     #   configuration, my-runs, and the request dependencies for the caller's account and role
 │   ├── sim/              # The shared simulation layer: market clearing and settlement, dispatch,
 │   │                     #   renewables and their weather, fuel and pollution, operating cost, facility statuses
+│   ├── worldmap/         # Generates a hex map of resources and climate risk (see backend/world-map.md)
 │   ├── lobby/            # The lobby backend, the server-wide front door
 │   ├── workshop/         # Workshop Mode: its app, its session state machine and its own persistence
 │   └── freeplay/         # The persistent world
@@ -105,8 +104,8 @@ backend/src/
     └── migrations/       # Schema migrations for lobby.db
 ```
 
-`kernel`, `identity` and `sim` are layers, in that order from the bottom: each may import only the
-layers below it. The three apps, `freeplay`, `workshop` and `lobby`, sit above them and never
+`kernel`, `identity`, `sim` and `worldmap` are layers, in that order from the bottom: each may
+import only the layers below it. The three apps, `freeplay`, `workshop` and `lobby`, sit above them and never
 import one another. `entry` sits on top. `lobby_service` sits outside `energetica`: no module in
 `energetica` imports it, and it imports only `identity` and `kernel`. The import contracts in
 `backend/pyproject.toml` enforce this in CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting &
