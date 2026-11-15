@@ -17,10 +17,11 @@ import argparse
 import functools
 import math
 import random
-from collections.abc import Iterable
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, fields
 from datetime import UTC, datetime
 from pathlib import Path
+from types import MappingProxyType
 
 import numpy as np
 
@@ -32,9 +33,14 @@ __all__ = ["MapTile", "generate_map", "write_csv"]
 SIZE_PARAM = 10
 MAP_SIZE = SIZE_PARAM * (SIZE_PARAM + 1) * 3 + 1
 
-DIRECTIONS = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+DIRECTIONS = ((1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1))
 
-CSV_COLUMNS = ("q", "r", "solar", "wind", "hydro", "coal", "gas", "uranium", "climate_risk", "score")
+# What a fraction of 1 of each fuel is in kg, the unit the game counts reserves in.
+COAL_RESERVE_KG = 2_000_000_000
+GAS_RESERVE_KG = 600_000_000
+URANIUM_RESERVE_KG = 8_000_000
+# Turns a climate risk between 0 and 1 into a level from 0 to 10.
+CLIMATE_RISK_LEVELS = 10.9
 
 
 @dataclass(frozen=True)
@@ -42,8 +48,8 @@ class MapTile:
     """
     One tile of a generated map, in the units the game reads.
 
-    The renewable potentials and ``score`` are fractions between 0 and 1. The fuel reserves are
-    amounts of fuel, and ``climate_risk`` is a level from 0 to 10.
+    The renewable potentials and ``score`` are fractions between 0 and 1. The fuel reserves are in
+    kg, and ``climate_risk`` is a level from 0 to 10.
     """
 
     q: int
@@ -56,6 +62,9 @@ class MapTile:
     uranium: float
     climate_risk: int
     score: float
+
+
+CSV_COLUMNS = tuple(field.name for field in fields(MapTile))
 
 
 class _Tile:
@@ -223,10 +232,10 @@ def generate_map(rng: random.Random) -> list[MapTile]:
             solar=tile.solar,
             wind=tile.wind,
             hydro=tile.hydro,
-            coal=tile.coal * 2_000_000_000,
-            gas=tile.gas * 600_000_000,
-            uranium=tile.uranium * 8_000_000,
-            climate_risk=math.floor(tile.risk * 10.9),
+            coal=tile.coal * COAL_RESERVE_KG,
+            gas=tile.gas * GAS_RESERVE_KG,
+            uranium=tile.uranium * URANIUM_RESERVE_KG,
+            climate_risk=math.floor(tile.risk * CLIMATE_RISK_LEVELS),
             score=tile.score,
         )
         for tile in tiles
@@ -235,16 +244,17 @@ def generate_map(rng: random.Random) -> list[MapTile]:
 
 def write_csv(tiles: Iterable[MapTile], path: Path) -> None:
     """Write a map to `path` as CSV, with the columns of the persistent world's map.csv."""
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(",".join(CSV_COLUMNS) + "\n")
         for tile in tiles:
             f.write(",".join(f"{getattr(tile, column)}" for column in CSV_COLUMNS) + "\n")
 
 
 @functools.cache
-def calculate_solar_potentials() -> dict[int, float]:
+def calculate_solar_potentials() -> Mapping[int, float]:
     """Calculate the solar potentials for each latitude."""
-    # In UTC, so the potentials do not depend on the time zone of the machine that runs this.
+    # The year starts at midnight UTC, matching the longitude of 0 passed below. It used to start at
+    # the local midnight of whichever machine ran this, so the same seed gave different maps.
     start_date = datetime(2023, 1, 1, tzinfo=UTC).timestamp()
     end_date = datetime(2024, 1, 1, tzinfo=UTC).timestamp()
     timesteps = np.linspace(start_date, end_date, 365 * 24)
@@ -252,10 +262,11 @@ def calculate_solar_potentials() -> dict[int, float]:
     latitudes = np.array([(r - 10) * 85 / 21 for r in rows])
     potentials = direct_horizontal_irradiance(timesteps[None, :], latitudes[:, None], 0).mean(axis=1)
     potentials /= potentials.max()
-    return dict(zip(rows, potentials))
+    # Read-only, because the cache hands the same mapping to every caller.
+    return MappingProxyType(dict(zip(rows, potentials)))
 
 
-def generate_solar(tiles: list[_Tile], potentials: dict[int, float]) -> None:
+def generate_solar(tiles: list[_Tile], potentials: Mapping[int, float]) -> None:
     """Generate solar resources on the map based on the internal clear sky model and depending on the latitude."""
     for tile in tiles:
         tile.solar = potentials[tile.r]

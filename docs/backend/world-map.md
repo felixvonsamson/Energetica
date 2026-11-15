@@ -41,6 +41,9 @@ The map the game ships was chosen by hand:
 3. Copy the chosen file over `backend/src/energetica/freeplay/data/map.csv`.
 
 The shipped `map.csv` is the `map1.csv` of such a run. That run predates seeding, so its seed is
-unknown and the map cannot be generated again.
+unknown and the map cannot be generated again. Its solar column also differs slightly, from the
+fifth significant figure, from what the generator now computes. The generator then started the year
+at the local midnight of the machine that ran it, Zurich time for this map, and now starts it at
+midnight UTC.
 
 Generating a map for each new run, and letting a facilitator choose it, is planned in #1065.

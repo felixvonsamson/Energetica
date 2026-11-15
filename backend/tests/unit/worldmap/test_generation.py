@@ -2,7 +2,8 @@
 The world-map generator, called in-process as a server would call it.
 
 The pinned map in ``map_seed_0.csv`` is what the generator produced for seed 0 before it moved into
-the package (#1112), so the move is checked against the old code's output rather than the new code's.
+the package (#1112), run in UTC, so the move is checked against the old code's output rather than the
+new code's. The old code bounded the year by the machine's local midnight, and the move fixed it to UTC.
 """
 
 from __future__ import annotations
@@ -20,8 +21,8 @@ import pytest
 from energetica.worldmap.generation import generate_map, write_csv
 
 _PINNED_MAP = Path(__file__).with_name("map_seed_0.csv")
-_SHIPPED_MAP = Path(__file__).resolve().parents[3] / "src" / "energetica" / "freeplay" / "data" / "map.csv"
 _BACKEND_SRC = Path(__file__).resolve().parents[3] / "src"
+_SHIPPED_MAP = _BACKEND_SRC / "energetica" / "freeplay" / "data" / "map.csv"
 
 
 def _read_rows(path: Path) -> list[dict[str, float]]:
@@ -32,9 +33,7 @@ def _read_rows(path: Path) -> list[dict[str, float]]:
 def test_seed_0_reproduces_the_pinned_map() -> None:
     tiles = generate_map(random.Random(0))
 
-    expected = _read_rows(_PINNED_MAP)
-    assert len(tiles) == len(expected)
-    for tile, row in zip(tiles, expected, strict=True):
+    for tile, row in zip(tiles, _read_rows(_PINNED_MAP), strict=True):
         # A relative tolerance rather than exact equality: the solar column comes from numpy's
         # trigonometry, whose last bit can differ between CPUs.
         assert asdict(tile) == pytest.approx(row, rel=1e-9)
