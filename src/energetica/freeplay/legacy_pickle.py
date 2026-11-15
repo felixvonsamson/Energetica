@@ -1,15 +1,19 @@
-"""Load engine state that was pickled before its classes moved.
+"""Load instance files that were pickled before the classes they name moved.
 
 Pickle records each object's class by its module path, and reimports that path to rebuild the
 object. ``instance/engine_data.pck`` holds the whole model store, so every copy of it written before
 #1055, including the ones inside checkpoints, names the entity models ``energetica.database.*``.
 Those modules now live under ``energetica.freeplay.database``, and nothing is left at the old path.
+
 Likewise, every copy written before #1056 names the enumerations the models hold
-``energetica.enums``, which now lives at ``energetica.freeplay.enums``.
+``energetica.enums``, which now lives at ``energetica.freeplay.enums``. The chart files under
+``instance/data/`` (player and network history, market snapshots) can hold enums too, as keys, so
+anything that reads an instance pickle reads it through :func:`load`.
 
 :func:`load` reads such a file by translating each old module path to its new one as the pickle
-names it. The next save writes the new paths, so a live instance only needs this once. Old
-checkpoints keep needing it for as long as they are kept.
+names it. The next save writes the new paths, so a file that is rewritten only needs this once.
+Old checkpoints, and chart files that are never rewritten, such as market snapshots, keep needing
+it for as long as they are kept.
 """
 
 from __future__ import annotations
