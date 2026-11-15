@@ -22,12 +22,12 @@ export const showcaseFacilities = [
         "for_sale": true,
         "price": 6000000.0,
         "fuel_use": null,
-        "capacity_factor": 0.12226012199445044,
+        "capacity_factor": 0.122260122,
         "om_fixed_per_season": 25000.0,
         "om_variable_per_mwh": 0.0,
         "full_output_per_season": 207480000000.0,
         "expected_generation": {
-            "spring": 30727788000.000004,
+            "spring": 30727788000.0,
             "summer": 39773916000.0,
             "autumn": 19814340000.0,
             "winter": 10664472000.0
@@ -52,14 +52,14 @@ export const showcaseFacilities = [
         "for_sale": true,
         "price": 25000000.0,
         "fuel_use": null,
-        "capacity_factor": 0.4465468464656943,
+        "capacity_factor": 0.446546846,
         "om_fixed_per_season": 500000.0,
         "om_variable_per_mwh": 0.0,
         "full_output_per_season": 218400000000.0,
         "expected_generation": {
             "spring": 91400400000.0,
             "summer": 51127440000.0,
-            "autumn": 112803599999.99998,
+            "autumn": 112803600000.0,
             "winter": 139055280000.0
         }
     },
@@ -109,7 +109,7 @@ export const showcaseFacilities = [
         "fuel_use": 0.04,
         "capacity_factor": null,
         "om_fixed_per_season": 1625000.0,
-        "om_variable_per_mwh": 7.440476190476191,
+        "om_variable_per_mwh": 7.44047619,
         "full_output_per_season": 218400000000.0,
         "expected_generation": null
     },
@@ -134,7 +134,7 @@ export const showcaseFacilities = [
         "fuel_use": 400.0,
         "capacity_factor": null,
         "om_fixed_per_season": 250000.0,
-        "om_variable_per_mwh": 13.082155939298797,
+        "om_variable_per_mwh": 13.0821559,
         "full_output_per_season": 76440000000.0,
         "expected_generation": null
     }

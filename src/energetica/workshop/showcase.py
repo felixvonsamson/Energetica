@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from pathlib import PurePosixPath
+from typing import Any
 
 from energetica.workshop.facilities import CATALOG, FacilityId, session_price
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES
@@ -35,6 +36,10 @@ SHOWCASE_FACILITIES = (
 #: changes when the catalog or the weather model does.
 SHOWCASE_WEATHER_SEED = 0
 
+#: How many significant digits each number keeps. The weather-derived figures come out of NumPy, whose last digits can
+#: differ between machines; rounding keeps the file the same everywhere, and nine digits is far more than a card shows.
+SIGNIFICANT_DIGITS = 9
+
 
 def showcase_facilities() -> list[WorkshopFacilityOut]:
     """The showcase's facilities as the facilities route would serve them in a session of the default length, with no
@@ -52,12 +57,23 @@ def showcase_facilities() -> list[WorkshopFacilityOut]:
     ]
 
 
+def _rounded(value: Any) -> Any:
+    """``value`` with every float in it rounded to :data:`SIGNIFICANT_DIGITS` significant digits."""
+    if isinstance(value, float):
+        return float(f"{value:.{SIGNIFICANT_DIGITS}g}")
+    if isinstance(value, dict):
+        return {key: _rounded(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_rounded(item) for item in value]
+    return value
+
+
 def render_showcase_data() -> str:
     """The contents of :data:`SHOWCASE_DATA_PATH`: the showcase's facilities and each fuel's catalog price per kg, which
     the cards' fuel-cost tooltip needs.
     """
-    facilities = [facility.model_dump(mode="json") for facility in showcase_facilities()]
-    fuel_prices = {fuel.value: price for fuel, price in CATALOG_FUEL_PRICES.items()}
+    facilities = _rounded([facility.model_dump(mode="json") for facility in showcase_facilities()])
+    fuel_prices = _rounded({fuel.value: price for fuel, price in CATALOG_FUEL_PRICES.items()})
     return (
         "// Generated from the Workshop backend by `bun run generate-showcase-data`. Do not edit by hand: change the\n"
         "// backend and run it again. `tests/unit/test_workshop_showcase.py` fails when this file is stale (#1482).\n"
