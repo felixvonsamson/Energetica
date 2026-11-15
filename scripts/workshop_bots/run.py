@@ -1,4 +1,6 @@
 #!.venv/bin/python
+# Pyright flags a comparison with a literal the backend's type no longer has, such as a renamed checkpoint kind.
+# pyright: reportUnnecessaryComparison=true
 """Fill a Workshop session with five bot players. See README.md beside this file.
 
 .venv/bin/python scripts/workshop_bots/run.py setup                       # once: accounts and roster
@@ -24,7 +26,7 @@ import httpx
 from api import Api, ApiError, Facilitator, LoginError, Plan
 from energetica.workshop.facilities import FacilityId
 from energetica.workshop.schemas import WorkshopSessionOut
-from energetica.workshop.seasons import SEASONS
+from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.session import Checkpoint, Finished, Investment, NotStarted, Recap, TradingPeriod
 from market import Ctx, PeriodView, read_period
 from strategies import PERSONAS, STAND_IN, Prices, Strategy
@@ -50,7 +52,7 @@ class History:
 
     def __init__(self, api: Api):
         self.api = api
-        self.views: dict[tuple[int, str], PeriodView] = {}
+        self.views: dict[tuple[int, Season], PeriodView] = {}
         self.lock = threading.Lock()
 
     def until(self, session: WorkshopSessionOut) -> list[PeriodView]:
@@ -154,6 +156,7 @@ class Bot:
                 break
             picked.append(facility)
             self.pause(0.5, 2)
+        # Keyed by the plain string, so the log shows 'coal_burner' rather than the enum's repr.
         counts = {str(facility): picked.count(facility) for facility in dict.fromkeys(picked)}
         log(f"{self.name} picks {counts or 'nothing'} (cash {ctx.money / 1e6:.1f}M)")
 

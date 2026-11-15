@@ -1,3 +1,5 @@
+# Pyright flags a comparison with a literal the backend's type no longer has, such as a renamed season.
+# pyright: reportUnnecessaryComparison=true
 """Five bot personas for testing a Workshop session, and a stand-in for a human player.
 
 Each persona has a plain idea of the game and changes its mind as the session goes on. None of them plays well on

@@ -1,3 +1,5 @@
+# Pyright flags a comparison with a literal the backend's type no longer has.
+# pyright: reportUnnecessaryComparison=true
 """A small client for the Workshop API, logged in through the lobby like a browser.
 
 Each method parses its response into the backend's own Pydantic model, and builds its request body from the backend's
@@ -14,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 from energetica.identity.schemas.auth import LoginRequest
 from energetica.workshop.balance_sheet import BalanceSheet
@@ -54,20 +56,40 @@ SAFE_TO_REPEAT = {"GET", "PUT", "PATCH"}
 # A JSON file {"<username>": "<password>", ...} for accounts that do not use the local default password.
 PASSWORDS_FILE = os.environ.get("ENERGETICA_BOT_PASSWORDS")
 
-_FACILITIES = TypeAdapter(list[WorkshopFacilityOut])
-_FLEET = TypeAdapter(list[WorkshopOwnedFacilityOut])
+_FACILITY_LIST = TypeAdapter(list[WorkshopFacilityOut])
+_FLEET_LIST = TypeAdapter(list[WorkshopOwnedFacilityOut])
 
 
 class ApiError(Exception):
-    """A request the backend refused."""
+    """A request the backend refused. ``code`` is its error code, such as ``WORKSHOP_NO_PERIOD_RECORD``, if it gave
+    one.
+    """
+
+    def __init__(self, message: str, code: str | None = None):
+        super().__init__(message)
+        self.code = code
 
 
 class LoginError(ApiError):
     """An account the script has no password for, whose login the lobby refused, or that cannot enter the Run."""
 
 
+def _error_code(response: httpx.Response) -> str | None:
+    """The error code in a refusal's body: a game error's ``game_exception_type``, or an HTTP error's ``detail``."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    if not isinstance(body, dict):
+        return None
+    code = body.get("game_exception_type", body.get("detail"))
+    return code if isinstance(code, str) else None
+
+
 class Plan(BaseModel):
-    """A plan file in plans/: the levers to change and the events to plan, by Round."""
+    """A plan file in plans/: the levers to change and the events to plan, by Round. A misspelled key is refused."""
+
+    model_config = ConfigDict(extra="forbid")
 
     levers: dict[int, LeverChanges] = {}
     events: dict[int, list[PlannedEvent]] = {}
@@ -150,7 +172,7 @@ class Api:
         json_body = body.model_dump(mode="json", exclude_unset=True) if body is not None else None
         response = self.request(method, "/workshop" + path, json=json_body)
         if response.status_code >= 400:
-            raise ApiError(f"{method} {path}: {response.status_code} {response.text[:200]}")
+            raise ApiError(f"{method} {path}: {response.status_code} {response.text[:200]}", _error_code(response))
         return response.content
 
     # What everyone in the Run can read.
@@ -158,7 +180,7 @@ class Api:
         return WorkshopSessionOut.model_validate_json(self._send("GET", "/session"))
 
     def facilities(self) -> list[WorkshopFacilityOut]:
-        return _FACILITIES.validate_json(self._send("GET", "/facilities"))
+        return _FACILITY_LIST.validate_json(self._send("GET", "/facilities"))
 
     def period(self, round_number: int, season: Season) -> WorkshopPeriodOut:
         return WorkshopPeriodOut.model_validate_json(self._send("GET", f"/periods/{round_number}/{season}"))
@@ -178,7 +200,7 @@ class Api:
 
     # A player's own state.
     def fleet(self) -> list[WorkshopOwnedFacilityOut]:
-        return _FLEET.validate_json(self._send("GET", "/fleet"))
+        return _FLEET_LIST.validate_json(self._send("GET", "/fleet"))
 
     def selection(self) -> WorkshopSelectionOut:
         return WorkshopSelectionOut.model_validate_json(self._send("GET", "/selection"))

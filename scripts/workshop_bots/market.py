@@ -1,3 +1,5 @@
+# Pyright flags a comparison with a literal the backend's type no longer has, such as a renamed trading format.
+# pyright: reportUnnecessaryComparison=true
 """What a bot sees when it decides: its own state, and the public record of the Trading periods settled so far.
 
 Bots read only what a player can read through the API. The period records are public: everyone can see each
@@ -16,7 +18,8 @@ from typing import Any
 from api import Api, ApiError
 from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, FUEL_USE, FuelProcurement
-from energetica.workshop.recap import WorkshopRecap
+from energetica.workshop.game_error import WorkshopErrorCode
+from energetica.workshop.recap import WorkshopRecap, YearAhead
 from energetica.workshop.schemas import (
     WorkshopFacilityOut,
     WorkshopFuelLineOut,
@@ -95,12 +98,16 @@ class PeriodView:
 
 
 def read_period(api: Api, round_number: int, season: Season) -> PeriodView | None:
-    """The period's view, or None if it has not been settled."""
+    """The period's view, or None if it has not been settled. Any other refusal is raised, so that a route the backend
+    moved or renamed stops the bot loudly rather than leaving it to play without any history.
+    """
     try:
         period = api.period(round_number, season)
-        week = api.period_days(round_number, season, 0, min(WEEK_DAYS, len(period.days)))
-    except ApiError:
-        return None
+    except ApiError as error:
+        if error.code == WorkshopErrorCode.WORKSHOP_NO_PERIOD_RECORD:
+            return None
+        raise
+    week = api.period_days(round_number, season, 0, min(WEEK_DAYS, len(period.days)))
     generation: dict[int, dict[FacilityId, Sequence[float]]] = {}
     for pool in week.pools:
         generation.setdefault(pool.player_id, {})[pool.facility] = pool.generation
@@ -190,10 +197,14 @@ class Ctx:
         # Before any trading: 80 MW per player, all of it must-serve, peaking about 45% over the average.
         return max(seen) if seen else 80e6 * self.player_count * 1.45
 
+    @property
+    def year_ahead(self) -> YearAhead | None:
+        """What the Recap before this Round said about it, or None in Round 1."""
+        return self.recap.year_ahead if self.recap is not None else None
+
     def growth(self) -> float:
         """How much the Recap says peak demand moves into this Round, with demand growth and events. 1 in Round 1."""
-        year_ahead = self.recap.year_ahead if self.recap is not None else None
-        outlook = year_ahead.demand if year_ahead is not None else None
+        outlook = self.year_ahead.demand if self.year_ahead is not None else None
         if outlook is None or not outlook.peak_this_round:
             return 1.0
         return outlook.peak_next_round / outlook.peak_this_round
@@ -214,8 +225,8 @@ class Ctx:
             used += last.output(self.me, facility)
         for owned in self.fleet:
             # Only what was already working then: a reactor works from the Round after it is built.
-            catalog = CATALOG[owned.facility]
-            if catalog.fuel_type == fuel and owned.built_round + catalog.construction_lag_rounds <= last.round:
+            entry = CATALOG[owned.facility]
+            if entry.fuel_type == fuel and owned.built_round + entry.construction_lag_rounds <= last.round:
                 capacity += self.power(owned.facility)
         # Someone who sold little still expects to run some, or they would soon stop buying fuel.
         return max(0.4, used / capacity) if capacity else 1.0
@@ -246,5 +257,4 @@ class Ctx:
 
     def forecast_seasons(self) -> set[Season]:
         """This Round's seasons that the Recap before it warned about."""
-        year_ahead = self.recap.year_ahead if self.recap is not None else None
-        return {forecast.season for forecast in year_ahead.forecasts} if year_ahead is not None else set()
+        return {forecast.season for forecast in self.year_ahead.forecasts} if self.year_ahead is not None else set()
