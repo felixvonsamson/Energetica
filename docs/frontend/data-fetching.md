@@ -45,7 +45,7 @@ Energetica uses a three-layer data fetching architecture:
 **Key architectural decisions:**
 
 - **Centralized query keys**: All of the app's query keys defined in `lib/query-client.ts`. A shared package that queries the API owns its own keys, such as `instanceQueryKeys` in `@energetica/instance`
-- **Type safety**: TypeScript types generated from OpenAPI schema
+- **Type safety**: TypeScript types generated from the app's own OpenAPI schema
 - **Separation of concerns**: API calls separated from query logic
 - **Cache synchronization**: Backend-driven invalidation via Socket.IO
 
@@ -170,7 +170,7 @@ export const playerApi = {
 };
 ```
 
-**Type safety:** `ApiResponse` is a helper type that extracts response types from the generated OpenAPI schema.
+**Type safety:** `ApiResponse` is a helper type that extracts response types from the app's generated OpenAPI types.
 
 ## Query Patterns
 

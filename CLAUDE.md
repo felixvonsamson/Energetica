@@ -14,7 +14,7 @@ terms are fine). In-session conversational style is exempt.
 Backend(`src/energetica/`, `src/lobby/`): Python + FastAPI, an installed project (`pip install -e '.[dev]'`)
 Frontend(`frontend/`): TSX + Tailwind v4 (no `tailwind.config.ts`)
 Components: customised shadcn components + global stylesheet in `frontend/packages/ui` (`@energetica/ui`)
-Workspaces: apps in `frontend/apps/` (so far the landing page) and shared packages in `frontend/packages/` are Bun workspaces with isolated installs; see `docs/architecture/overview.md` § Frontend
+Workspaces: apps in `frontend/apps/` and shared packages in `frontend/packages/` are Bun workspaces with isolated installs; see `docs/architecture/overview.md` § Frontend
 Package manager: `bun`
 Project docs: `docs/README.md`
 
@@ -39,7 +39,10 @@ from the repo root:
   - lobby app: `frontend/apps/lobby/src/types/api.generated.ts`, consumed through `frontend/apps/lobby/src/types/api-helpers.ts`
   - workshop app: `frontend/apps/workshop/src/types/api.generated.ts`, consumed through `frontend/apps/workshop/src/types/api-helpers.ts`
   - freeplay app: `frontend/apps/freeplay/src/types/api.generated.ts`, consumed through `frontend/apps/freeplay/src/types/api-helpers.ts`
-- shared packages (such as `@energetica/instance`) import API types only through the `@api` alias, with `import type`; each app points `@api` at its own `api-helpers.ts`
+- an app imports only its own `src/` and the shared packages; lint enforces this
+- code more than one app uses goes in a shared package under `frontend/packages/`
+- shared packages (such as `@energetica/instance`) import API types only through the `@api` alias, with `import type`; each app that depends on such a package points `@api` at its own `api-helpers.ts`, so the package type-checks against that app's routes
+- a shared package that only displays data declares the shapes it needs itself and takes no API types
 
 ## Agent skills
 
