@@ -380,6 +380,7 @@ dev:login      # mint a lobby session for CLI use (lobby must be running)
 serve:app      serve:app:fast   serve:app:test
 serve:lobby
 typecheck  typecheck:py  lint  format  format:check  generate-types  ruff:check  ruff:format
+generate-showcase-data   # the landing workshop page's facility-card data, from the Workshop backend
 rm-instance    # full local reset (see below)
 ```
 

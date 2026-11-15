@@ -20,9 +20,17 @@ from energetica.workshop.events import (
     WorkshopEvent,
     effect_summary,
 )
-from energetica.workshop.facilities import FacilityId, Fuel, WorkshopFacility
+from energetica.workshop.facilities import (
+    FacilityId,
+    Fuel,
+    WorkshopFacility,
+    full_output_per_season,
+    om_fixed_per_season,
+    om_variable_per_mwh,
+    session_price,
+)
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
-from energetica.workshop.fuel import FuelProcurement
+from energetica.workshop.fuel import FUEL_USE, FuelProcurement
 from energetica.workshop.period_record import MeritOrder, TradingPeriodRecord
 from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSheet
 from energetica.workshop.round_format import RoundFormat
@@ -31,6 +39,7 @@ from energetica.workshop.seasons import Season
 from energetica.workshop.session import Checkpoint, SettlementProgress
 from energetica.workshop.unlocks import Unlock
 from energetica.workshop.votes import Ballot
+from energetica.workshop.weather import capacity_factor, expected_generation
 
 
 class WorkshopPlayerOut(BaseModel):
@@ -164,6 +173,33 @@ class WorkshopFacilityOut(WorkshopFacility):
         description="The energy it generates in each season on average over many Runs' weather, in Wh, or null for "
         "a facility that does not follow the weather"
     )
+
+    @classmethod
+    def from_catalog(
+        cls,
+        facility: WorkshopFacility,
+        *,
+        price_round_count: int,
+        price: float,
+        for_sale: bool,
+        weather_seed: int,
+    ) -> WorkshopFacilityOut:
+        """``facility`` as a session sees it: priced for a session of ``price_round_count`` Rounds, at ``price`` once
+        any price shock is applied, under the weather of ``weather_seed``. The facilities route and the landing
+        site's facility-card showcase (#1482) both build their facilities here, so the two cannot drift apart.
+        """
+        return cls(
+            **facility.model_dump(exclude={"base_price"}),
+            base_price=session_price(facility.id, price_round_count),
+            for_sale=for_sale,
+            price=price,
+            fuel_use=FUEL_USE.get(facility.id),
+            capacity_factor=capacity_factor(weather_seed, facility.id),
+            om_fixed_per_season=om_fixed_per_season(facility),
+            om_variable_per_mwh=om_variable_per_mwh(facility),
+            full_output_per_season=full_output_per_season(facility),
+            expected_generation=expected_generation(facility.id),
+        )
 
 
 class WorkshopSelectionIn(BaseModel):
