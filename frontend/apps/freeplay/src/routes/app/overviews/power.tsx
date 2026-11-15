@@ -1,0 +1,216 @@
+/** Power overview page - Electricity generation visualization. */
+
+import {
+    PowerChart,
+    type PowerChartViewMode,
+} from "@energetica/charts/components/power-chart";
+import { CardContent, PageCard } from "@energetica/ui/components/card";
+import { ChartCard } from "@energetica/ui/components/chart-card";
+import { Label } from "@energetica/ui/components/label";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@energetica/ui/components/segmented-picker";
+import { useLocalStorage } from "@energetica/ui/hooks/use-local-storage";
+import { useToggleSet } from "@energetica/ui/hooks/use-toggle-set";
+import { createFileRoute } from "@tanstack/react-router";
+import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
+import { useState } from "react";
+
+import {
+    chartTypeConfig,
+    formatFacilityLabel,
+    useGameTimeAxis,
+} from "@/components/charts/echarts-time-series";
+import { PowerOverviewTable } from "@/components/charts/power-overview-table";
+import { GameLayout } from "@/components/layout/game-layout";
+import { ResolutionPicker } from "@/components/ui/resolution-picker";
+import { useResolution } from "@/contexts/resolution-context";
+import { useChartData } from "@/hooks/use-charts";
+import { useGameTick } from "@/hooks/use-game-tick";
+
+export const Route = createFileRoute("/app/overviews/power")({
+    component: PowerOverviewPage,
+    staticData: {
+        title: "Power Overview",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => ({ unlocked: true }),
+        },
+        infoDialog: {
+            contents: <PowerOverviewHelp />,
+        },
+    },
+});
+
+function PowerOverviewHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This page shows the electricity generation and consumption of
+                your facilities over time.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Power Generation (Sources):</b> View electricity
+                        produced by your power facilities and electricity market
+                        imports
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Power Consumption (Sinks):</b> View electricity
+                        consumed by your facilities and electricity market
+                        exports
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Funnel className="w-4 h-4 shrink-0" />
+                    <span>
+                        Use the table to toggle individual facilities on/off in
+                        the chart
+                    </span>
+                </li>
+            </ul>
+            <p>Use different time resolutions to spot trends.</p>
+        </div>
+    );
+}
+
+function PowerOverviewPage() {
+    return (
+        <GameLayout>
+            <PowerOverviewContent />
+        </GameLayout>
+    );
+}
+
+const CHART_TYPE_OPTIONS = [
+    { value: "power-sources", label: "Generation (Sources)" },
+    { value: "power-sinks", label: "Consumption (Sinks)" },
+] as const;
+
+const VIEW_MODE_OPTIONS = [
+    { value: "absolute", label: "Absolute" },
+    { value: "percent", label: "Percentage" },
+] as const;
+
+function PowerOverviewContent() {
+    // The series whose table row the player hovers, highlighted on the chart.
+    const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
+    const { currentTick } = useGameTick();
+    const timeAxis = useGameTimeAxis();
+    const [chartType, setChartType] = useLocalStorage<
+        "power-sources" | "power-sinks"
+    >("energetica:chart:power:chartType", "power-sources");
+    const [viewMode, setViewMode] = useLocalStorage<PowerChartViewMode>(
+        "energetica:chart:power:viewMode",
+        "absolute",
+    );
+    const [hiddenSources, toggleSource] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:power:hiddenSources",
+    );
+    const [hiddenSinks, toggleSink] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:power:hiddenSinks",
+    );
+
+    const { selectedResolution } = useResolution();
+    // Fetch chart data to share between chart and table
+    const {
+        chartData,
+        isLoading: isChartLoading,
+        isError,
+    } = useChartData({
+        config: { chartType, resolution: selectedResolution.resolution },
+        maxDatapoints: selectedResolution.datapoints,
+    });
+
+    // Get the appropriate hidden set and toggle function based on chart type
+    const hiddenFacilities =
+        chartType === "power-sources" ? hiddenSources : hiddenSinks;
+    const toggleFacility =
+        chartType === "power-sources" ? toggleSource : toggleSink;
+
+    return (
+        <div className="py-4 md:p-8 space-y-6">
+            <PageCard>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2">Chart Type</Label>
+                            <SegmentedPicker
+                                value={chartType}
+                                onValueChange={(value) => setChartType(value)}
+                            >
+                                {CHART_TYPE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
+                        </div>
+                        <div>
+                            <Label className="mb-2">Display Mode</Label>
+                            <SegmentedPicker
+                                value={viewMode}
+                                onValueChange={(value) =>
+                                    setViewMode(value as PowerChartViewMode)
+                                }
+                            >
+                                {VIEW_MODE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
+                        </div>
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
+                </CardContent>
+            </PageCard>
+
+            <ChartCard
+                icon={Zap}
+                iconClassName="text-primary"
+                title={
+                    chartType === "power-sources"
+                        ? "Power Generation"
+                        : "Power Consumption"
+                }
+            >
+                <PowerChart
+                    {...chartTypeConfig(chartType)}
+                    formatLabel={formatFacilityLabel}
+                    timeAxis={timeAxis}
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                    hiddenFacilities={hiddenFacilities}
+                    viewMode={viewMode}
+                    highlightedKey={highlightedKey}
+                />
+
+                <PowerOverviewTable
+                    chartType={chartType}
+                    chartData={chartData}
+                    resolution={selectedResolution.resolution}
+                    hiddenFacilities={hiddenFacilities}
+                    onToggleFacility={toggleFacility}
+                    onHoverRow={setHighlightedKey}
+                />
+            </ChartCard>
+        </div>
+    );
+}

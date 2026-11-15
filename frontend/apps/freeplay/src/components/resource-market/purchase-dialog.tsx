@@ -1,0 +1,216 @@
+import { formatMass } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { Input } from "@energetica/ui/components/input";
+import { Label } from "@energetica/ui/components/label";
+import { Money } from "@energetica/ui/components/money";
+import { Spinner } from "@energetica/ui/components/spinner";
+import { useState } from "react";
+
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
+import { useLastDefined } from "@/hooks/use-last-defined";
+import { useIsReadOnly } from "@/hooks/use-phase";
+import { usePurchaseAsk } from "@/hooks/use-resource-market";
+import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
+
+export interface PurchaseDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    ask: {
+        id: number;
+        resource_type: string;
+        quantity: number;
+        unit_price: number;
+    } | null;
+}
+
+export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
+    const displayedAsk = useLastDefined(ask);
+    const [buyAll, setBuyAll] = useState(true);
+    const [quantity, setQuantity] = useState(
+        ((ask?.quantity ?? 0) / 1000).toString(),
+    );
+
+    if (ask !== null && ask !== displayedAsk) {
+        setBuyAll(true);
+        setQuantity((ask.quantity / 1000).toString());
+    }
+
+    const purchaseMutation = usePurchaseAsk();
+    const readOnly = useIsReadOnly();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (ask === null) return;
+        try {
+            await purchaseMutation.mutateAsync({
+                askId: ask.id,
+                quantity: buyAll ? undefined : parseFloat(quantity) * 1000,
+            });
+            onClose();
+        } catch (error) {
+            console.error("Failed to purchase:", error);
+        }
+    };
+
+    const maxQuantityTons = (displayedAsk?.quantity ?? 0) / 1000;
+    const purchaseQuantityTons = buyAll
+        ? maxQuantityTons
+        : parseFloat(quantity || "0");
+    const totalCost =
+        purchaseQuantityTons * (displayedAsk?.unit_price ?? 0) * 1000;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            {displayedAsk !== null && (
+                <form onSubmit={handleSubmit} id="purchase-form">
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Purchase Resources</DialogTitle>
+                            <DialogDescription>
+                                Buy resources from another player's listing.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4">
+                            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="font-semibold">
+                                        Resource:
+                                    </span>
+                                    <span className="capitalize">
+                                        {
+                                            RESOURCE_LABELS[
+                                                displayedAsk.resource_type as ResourceType
+                                            ]
+                                        }
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="font-semibold">
+                                        Available:
+                                    </span>
+                                    <span className="font-mono">
+                                        {formatMass(displayedAsk.quantity)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="font-semibold">
+                                        Price per ton:
+                                    </span>
+                                    <Money
+                                        amount={displayedAsk.unit_price * 1000}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Label>Purchase Amount</Label>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={buyAll ? "default" : "outline"}
+                                        onClick={() => setBuyAll(true)}
+                                        className="flex-1"
+                                    >
+                                        Buy All
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={
+                                            !buyAll ? "default" : "outline"
+                                        }
+                                        onClick={() => setBuyAll(false)}
+                                        className="flex-1"
+                                    >
+                                        Custom Amount
+                                    </Button>
+                                </div>
+
+                                {!buyAll && (
+                                    <div className="space-y-2">
+                                        <Input
+                                            type="number"
+                                            value={quantity}
+                                            onChange={(e) =>
+                                                setQuantity(e.target.value)
+                                            }
+                                            min="0.01"
+                                            max={maxQuantityTons}
+                                            step="0.01"
+                                            placeholder="Enter quantity in tons"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Max: {maxQuantityTons.toFixed(2)}{" "}
+                                            tons
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">
+                                        Purchasing:
+                                    </span>
+                                    <span className="font-mono font-semibold">
+                                        {formatMass(
+                                            purchaseQuantityTons * 1000,
+                                        )}
+                                    </span>
+                                </div>
+                                <div className="border-t border-border pt-2 flex justify-between items-center">
+                                    <span className="font-semibold text-lg">
+                                        Total Cost:
+                                    </span>
+                                    <span className="text-lg font-bold">
+                                        <Money amount={totalCost} />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button
+                                    variant="outline"
+                                    disabled={purchaseMutation.isPending}
+                                >
+                                    Cancel
+                                </Button>
+                            </DialogClose>
+                            <ReadOnlyTooltip readOnly={readOnly}>
+                                <Button
+                                    type="submit"
+                                    form="purchase-form"
+                                    variant={
+                                        purchaseMutation.isPending
+                                            ? "outline"
+                                            : "default"
+                                    }
+                                    disabled={
+                                        purchaseMutation.isPending ||
+                                        readOnly ||
+                                        (!buyAll && !quantity)
+                                    }
+                                    className="flex items-center gap-2"
+                                >
+                                    {purchaseMutation.isPending && <Spinner />}
+                                    Purchase
+                                </Button>
+                            </ReadOnlyTooltip>
+                        </DialogFooter>
+                    </DialogContent>
+                </form>
+            )}
+        </Dialog>
+    );
+}

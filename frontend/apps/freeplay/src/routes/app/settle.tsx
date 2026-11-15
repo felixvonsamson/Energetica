@@ -1,0 +1,400 @@
+/** Settlement page - allows player to choose their starting location on the map. */
+
+import { formatMass } from "@energetica/core/format-utils";
+import { MapCanvas } from "@energetica/map/components/map-canvas";
+import { MapHoverBorder } from "@energetica/map/components/map-hover-border";
+import { MapTiles } from "@energetica/map/components/map-tiles";
+import { ResourceButton } from "@energetica/map/components/resource-button";
+import {
+    RESOURCES,
+    MAX_VALUES,
+    ResourceId,
+    getResourceValue,
+    oklchToString,
+} from "@energetica/map/lib/map-resources";
+import { Button } from "@energetica/ui/components/button";
+import { ButtonGroup } from "@energetica/ui/components/button-group";
+import {
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@energetica/ui/components/dialog";
+import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
+import {
+    TypographyH1,
+    TypographyH2,
+} from "@energetica/ui/components/typography";
+import { Dialog } from "@radix-ui/react-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { HelpCircle } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+
+import { LifecycleBanner } from "@/components/lifecycle/lifecycle-banner";
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
+import { useAuth } from "@/hooks/use-auth";
+import { useMap } from "@/hooks/use-map";
+import { useIsReadOnly } from "@/hooks/use-phase";
+import { usePlayers } from "@/hooks/use-players";
+import { mapApi } from "@/lib/api/map";
+import { isInstanceFrozenError } from "@/lib/lifecycle";
+import { queryKeys } from "@/lib/query-client";
+import { HexTileResources } from "@/types/map";
+
+function SettleHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                The first decisions you have to make in the game is to choose an
+                available location on the map. The menu on the left allows you
+                to see where different natural resources are located.
+            </p>
+            <p>
+                The location choice is <strong>definitive</strong>, you will not
+                be able to change it during the game so choose wisely.
+            </p>
+            <p>
+                For more detailed information about the map, the resources you
+                can find on it and the climate risks, refer to the Map section
+                in the wiki.
+            </p>
+        </div>
+    );
+}
+
+export const Route = createFileRoute("/app/settle")({
+    component: SettlePage,
+    staticData: {
+        title: "Location choice",
+        infoDialog: {
+            contents: <SettleHelp />,
+        },
+    },
+});
+
+interface TileInfoProps {
+    selectedTile: HexTileResources;
+    playerMap: Record<number, string>;
+}
+
+function SettlePage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const navigate = useNavigate();
+
+    // Navigate to dashboard reactively once the backend confirms settlement.
+    // Avoids a race between concurrent socket invalidations (map/players) and
+    // an imperative refetchAuth() + navigate() sequence.
+    useEffect(() => {
+        if (!isAuthLoading && user?.is_settled) {
+            navigate({ to: "/app/dashboard" });
+        }
+    }, [user?.is_settled, isAuthLoading, navigate]);
+
+    // The settle page renders outside GameLayout, so it mounts the lifecycle banner itself: an
+    // unsettled player arriving during freeze still learns the game has ended (#866). On large
+    // screens the page fills the viewport without scrolling, so the banner takes its height out
+    // of the content rather than adding to it.
+    return (
+        <div className="flex flex-col lg:h-screen">
+            <LifecycleBanner />
+            <SettleContent />
+        </div>
+    );
+}
+
+function SettleContent() {
+    const [activeResourceId, setActiveResourceId] = useState<
+        ResourceId | undefined
+    >(undefined);
+    const [selectedTileId, setSelectedTileId] = useState<number | null>(null);
+
+    const { data: mapData, isLoading: isMapLoading } = useMap();
+    const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
+
+    // Create a map of player IDs to usernames
+    const playerMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        if (playersData) {
+            playersData.forEach((player) => {
+                map[player.id] = player.username;
+            });
+        }
+        return map;
+    }, [playersData]);
+
+    // Get selected tile
+    const selectedTile = useMemo(() => {
+        if (selectedTileId === null || !mapData) return null;
+        return mapData.find((t) => t.id === selectedTileId) || null;
+    }, [selectedTileId, mapData]);
+
+    const handleTileClick = (tile: HexTileResources) => {
+        // Can't select occupied tiles
+        // if (tile.player_id) return;
+
+        // Toggle selection
+        if (selectedTileId === tile.id) {
+            setSelectedTileId(null);
+        } else {
+            setSelectedTileId(tile.id);
+        }
+    };
+
+    const handleResourceButtonClick = (resourceId: ResourceId) => {
+        if (activeResourceId === resourceId) {
+            setActiveResourceId(undefined);
+        } else {
+            setActiveResourceId(resourceId);
+        }
+    };
+
+    const [isShowingHelp, setShowingHelp] = useState(false);
+    const handleShowHelp = useCallback(() => setShowingHelp(true), []);
+    const handleCloseHelp = useCallback(() => setShowingHelp(false), []);
+
+    if (isMapLoading || isPlayersLoading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <p className="text-lg">Loading map...</p>
+            </div>
+        );
+    }
+
+    if (!mapData) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <p className="text-lg text-red-500">Failed to load map data</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-4 flex flex-col lg:flex-1 lg:min-h-0">
+            {/* Title with theme toggle */}
+            <div className="flex items-center gap-3 mb-6 lg:shrink-0">
+                <div className="flex-1" />
+                <TypographyH1 className="text-center">
+                    Location choice
+                </TypographyH1>
+                <div className="flex-1 flex justify-end">
+                    <ButtonGroup>
+                        <Button
+                            onClick={() => handleShowHelp()}
+                            variant="outline"
+                            size="icon"
+                            aria-label="Show help"
+                        >
+                            <HelpCircle size={20} />
+                        </Button>
+                        <ThemeToggle />
+                    </ButtonGroup>
+                </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
+                {/* Left sidebar - Resource filters */}
+                <div className="grid grid-cols-3 md:grid-cols-7 lg:grid-cols-1 gap-2 lg:w-32 lg:shrink-0 lg:self-center">
+                    {RESOURCES.map((resource) => (
+                        <ResourceButton
+                            key={resource.id}
+                            resource={resource}
+                            isActive={activeResourceId === resource.id}
+                            onClick={() =>
+                                handleResourceButtonClick(resource.id)
+                            }
+                        />
+                    ))}
+                </div>
+
+                {/* Map */}
+                {/* Using padding-based aspect ratio for Safari compatibility on mobile */}
+                <div className="w-full relative pt-[86.60%] lg:pt-0 lg:flex-2 lg:h-full">
+                    <MapCanvas className="absolute inset-0" mapData={mapData}>
+                        <MapTiles
+                            mapData={mapData}
+                            activeResourceId={activeResourceId}
+                            onTileClick={handleTileClick}
+                            playerMap={playerMap}
+                        />
+                        <MapHoverBorder tile={selectedTile} strokeWidth={4} />
+                    </MapCanvas>
+                </div>
+
+                {/* Right sidebar - Info/Resources panel */}
+                <div className="bg-card p-4 rounded-lg lg:flex-1 lg:min-w-64 lg:max-w-96 lg:flex lg:flex-col">
+                    {!selectedTile ? (
+                        <div>
+                            <TypographyH2 className="mb-3 text-center">
+                                Welcome!
+                            </TypographyH2>
+                            <p className="text-sm mb-3">
+                                Choose an available location on the map. The
+                                location choice is <b>definitive</b> - you will
+                                not be able to change it during the game.
+                            </p>
+                            <p className="text-sm mb-3">
+                                Use the buttons to see where different natural
+                                resources are located on the map to make an
+                                informed decision.
+                            </p>
+                            <p className="text-sm">
+                                If you need help, click on the help button in
+                                the top right corner.
+                            </p>
+                        </div>
+                    ) : (
+                        <TileInfo
+                            selectedTile={selectedTile}
+                            playerMap={playerMap}
+                        />
+                    )}
+                </div>
+            </div>
+            <Dialog
+                open={isShowingHelp}
+                onOpenChange={(open) => !open && handleCloseHelp()}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{"Help: Location Choice"}</DialogTitle>
+                        <DialogDescription>
+                            Information and help for this page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <SettleHelp />
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+
+function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
+    const queryClient = useQueryClient();
+    const [isSettling, setIsSettling] = useState(false);
+    const readOnly = useIsReadOnly();
+
+    const handleSettleLocation = useCallback(async () => {
+        if (isSettling) return;
+
+        setIsSettling(true);
+        try {
+            await mapApi.settleRegion(selectedTile.id);
+            // Invalidate auth so SettlePage's useEffect detects is_settled = true
+            // and navigates. Avoids racing concurrent socket invalidations with
+            // an awaited refetch + imperative navigate.
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+        } catch (error) {
+            setIsSettling(false);
+            // The run froze under a stale `freeze_at` (#866): re-read it and the button disables
+            // itself, rather than asking the player to retry an action that can't succeed.
+            if (isInstanceFrozenError(error)) {
+                void queryClient.invalidateQueries({
+                    queryKey: queryKeys.game.engine,
+                });
+                return;
+            }
+            console.error("Error settling location:", error);
+            alert("Failed to settle location. Please try again.");
+            setIsSettling(false);
+        }
+    }, [selectedTile, isSettling, queryClient]);
+
+    return (
+        <div className="lg:flex lg:flex-col lg:h-full animate-fadeIn">
+            <TypographyH2 className="mb-3 text-center lg:shrink-0 animate-slideDown">
+                Resources
+            </TypographyH2>
+            <div className="space-y-3 lg:flex-1 lg:overflow-y-auto lg:min-h-0">
+                {RESOURCES.map((resource, index) => {
+                    const value = getResourceValue(selectedTile, resource.id);
+                    const maxValue = MAX_VALUES[resource.id];
+                    const barWidth = (value / maxValue) * 100;
+
+                    return (
+                        <div
+                            key={resource.name}
+                            className="animate-fadeIn"
+                            style={{
+                                animationDelay: `${index * 50}ms`,
+                            }}
+                        >
+                            <div className="flex justify-between text-sm mb-1">
+                                <span>{resource.name}</span>
+                            </div>
+                            {[3, 4, 5].includes(resource.id) && (
+                                <div className="text-xs text-right mb-1">
+                                    {formatMass(
+                                        value,
+                                        10000,
+                                        `of ${resource.name.toLowerCase()} in the ground`,
+                                    )}
+                                </div>
+                            )}
+                            <div className="relative h-4 bg-muted rounded overflow-hidden">
+                                <div
+                                    className="absolute h-full rounded transition-all duration-500 ease-out"
+                                    style={{
+                                        width: `${barWidth}%`,
+                                        backgroundColor: oklchToString(
+                                            resource.color,
+                                        ),
+                                    }}
+                                />
+                            </div>
+                            {resource.id === 0 && (
+                                <div className="text-xs text-right mt-1">
+                                    {Math.round(selectedTile.solar * 1000)} W/m²
+                                    irradiation
+                                </div>
+                            )}
+                            {resource.id === 1 && (
+                                <div className="text-xs text-right mt-1">
+                                    {Math.round(
+                                        Math.pow(selectedTile.wind, 0.5) * 50,
+                                    )}{" "}
+                                    km/h windspeed
+                                </div>
+                            )}
+                            {resource.id === 2 && (
+                                <div className="text-xs text-right mt-1">
+                                    {Math.round(selectedTile.hydro * 150)} m³/s
+                                    river discharge
+                                </div>
+                            )}
+                            {resource.id === 6 && (
+                                <div className="text-xs text-right mt-1">
+                                    {selectedTile.climate_risk} / 10 score (high
+                                    is bad)
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="lg:shrink-0 animate-slideUp">
+                {selectedTile.player_id ? (
+                    <div className="mt-6 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded text-center text-sm animate-scaleIn">
+                        This tile is already occupied by{" "}
+                        {playerMap[selectedTile.player_id]}!
+                    </div>
+                ) : (
+                    <ReadOnlyTooltip readOnly={readOnly} className="block">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            className="mt-6 w-full font-bold"
+                            onClick={handleSettleLocation}
+                            disabled={isSettling || readOnly}
+                        >
+                            {isSettling
+                                ? "Settling..."
+                                : "Choose this location"}
+                        </Button>
+                    </ReadOnlyTooltip>
+                )}
+            </div>
+        </div>
+    );
+}

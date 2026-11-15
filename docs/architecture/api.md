@@ -24,7 +24,7 @@ See auth.md
 
 ## Frontend patterns
 
-See the package json script for generating types. It's the .generated file. See frontend/src/types. See hooks.
+See the package json script for generating types. It's the .generated file. See frontend/apps/freeplay/src/types. See hooks.
 
 See api_integration for more details.
 
@@ -40,10 +40,10 @@ bun generate-types
 This script:
 
 1. Generates an OpenAPI spec from each FastAPI app (freeplay, Workshop and the lobby), plus one that merges all three. The backend doesn't need to be running.
-2. Creates TypeScript types from each: the merged `frontend/src/types/api.generated.ts` and `api.freeplay.generated.ts` next to it, the Workshop's `frontend/apps/workshop/src/types/api.generated.ts` and the lobby's `frontend/apps/lobby/src/types/api.generated.ts`
+2. Creates one TypeScript types file per app: `frontend/apps/freeplay/src/types/api.generated.ts`, the Workshop's `frontend/apps/workshop/src/types/api.generated.ts` and the lobby's `frontend/apps/lobby/src/types/api.generated.ts`. The merged spec gets no types file, since no app uses it.
 3. Formats output with Prettier
 
-The combined freeplay bundle imports the merged file, through `src/types/api-helpers.ts`. Each per-app file lists only the routes that app serves. The Workshop and lobby apps import only their own file, through the `api-helpers.ts` beside it, so neither can type-check against a route its backend does not serve. Shared packages, such as `@energetica/instance`, import the types of whichever app compiles them through the `@api` alias (see [the overview](overview.md#frontend)). The freeplay file is read by `src/types/api-helpers.freeplay.ts`, which the instance package's own tsconfig points `@api` at, and by the combined bundle's error messages (`src/lib/game-messages.ts`), through that helpers file, so they cover only the persistent world's codes. Freeplay gets its own app next (#1181).
+Each per-app file lists only the routes that app serves. Each app imports only its own file, through the `api-helpers.ts` beside it, so no app can type-check against a route its backend does not serve. Shared packages, such as `@energetica/instance`, import the types of whichever app compiles them through the `@api` alias (see [the overview](overview.md#frontend)).
 
 **Note:** Don't edit the generated files manually.
 

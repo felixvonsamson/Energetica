@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "types": ["vite/client", "vite-plugin-svgr/client"],
+        // `@api` is how shared packages, such as @energetica/instance, reach this
+        // app's API types: the persistent world's own.
+        "paths": {
+            "@/*": ["./src/*"],
+            "@api": ["./src/types/api-helpers.ts"]
+        }
+    },
+    "include": ["src"],
+    "exclude": ["**/*.mdx", "src/service-worker.ts"]
+}

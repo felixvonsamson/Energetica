@@ -44,7 +44,6 @@ jobs:
               # outside frontend/.
               - scripts/**/*.ts
               - package.json
-              - tsconfig.json
             python:
               - .github/workflows/ci.yml
               - "**/*.py"
@@ -58,7 +57,6 @@ jobs:
               - .pre-commit-config.yaml
             api-types:
               - .github/workflows/ci.yml
-              - frontend/src/types/api*.generated.ts
               - frontend/apps/*/src/types/api*.generated.ts
               - scripts/generate-types.sh
               # Defines the generate-types command the job runs.
@@ -333,7 +331,7 @@ jobs:
       - name: Fail on drift
         run: |
           # The untracked check catches a types file the generator writes but nobody committed.
-          generated=('frontend/src/types/api*.generated.ts' 'frontend/apps/*/src/types/api*.generated.ts')
+          generated=('frontend/apps/*/src/types/api*.generated.ts')
           untracked=$(git ls-files --others --exclude-standard -- "${generated[@]}")
           if ! git diff --exit-code -- "${generated[@]}" || [ -n "$untracked" ]; then
             if [ -n "$untracked" ]; then echo "Not committed: $untracked"; fi

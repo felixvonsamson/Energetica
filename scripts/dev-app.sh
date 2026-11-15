@@ -7,12 +7,12 @@ set -euo pipefail
 #
 #   bun run serve:app                 # this script — app backend on :8000, plus the lobby service
 #   bun run serve:lobby               # the lobby backend it authenticates against (:8001)
-#   cd frontend && bun run dev:app    # the app frontend, in another terminal
+#   cd frontend && bun run dev:freeplay    # the app frontend, in another terminal
 #
 # The app no longer mints sessions (post-cutover it is a pure entry gate — see
 # docs/architecture/lobby.md), so you still need a session from the lobby: log in on the lobby
 # frontend, or run `bash scripts/dev-login.sh`. To skip local backends entirely and point the
-# frontend at a live deployment, use `BACKEND=game bun run dev:app` instead.
+# frontend at a live deployment, use `BACKEND=game bun run dev:freeplay` instead.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"

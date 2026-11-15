@@ -12,7 +12,7 @@ cannot quietly ship. And a hashed filename can safely carry the year-long
 ## Where images live
 
 ```
-frontend/src/assets/
+frontend/apps/freeplay/src/assets/
 ├── facilities/{power,storage,extraction,functional}/   # facility card artwork
 ├── technologies/                                       # technology card artwork
 └── quiz.png                                            # dashboard quiz icon
@@ -45,7 +45,7 @@ import for you — see [Wiki Pages](wiki-pages.md#figures).
 ## Facility and technology artwork
 
 These are looked up by a name the API supplies, so there is no import statement at
-the call site. `frontend/src/lib/assets/asset-images.ts` holds the join, typed
+the call site. `frontend/apps/freeplay/src/lib/assets/asset-images.ts` holds the join, typed
 `Record<ProjectType, string>`:
 
 ```tsx

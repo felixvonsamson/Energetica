@@ -259,8 +259,8 @@ export function runFacilitatorHref(slug: string): string {
  *   host-only cookie reaches a `localhost` app session. → the local lobby.
  *
  * The case this deliberately does **not** serve is "app dev server proxied to a
- * _remote_ backend" (`BACKEND=game bun run dev:app`): a remote lobby sets its
- * cookie on `.{apex}`, which `localhost` can never read, and its post-login
+ * _remote_ backend" (`BACKEND=game bun run dev:freeplay`): a remote lobby sets
+ * its cookie on `.{apex}`, which `localhost` can never read, and its post-login
  * redirect targets the real instance host — so it cannot authenticate a
  * `localhost:5173` session no matter which lobby URL we point at. Rather than
  * derive a "correct" remote lobby that still can't log you in, dev always
@@ -358,7 +358,7 @@ export function lobbyLoginHref(): string {
  * bundle). Absolute to the apex in production, like {@link lobbyHref} and
  * {@link runAppHref}.
  *
- * When no apex is configured (local `bun run dev:app`) it falls back to a
+ * When no apex is configured (local `bun run dev:freeplay`) it falls back to a
  * relative path. The landing routes live in the separate landing bundle (served
  * by `bun run dev:landing` on its own port), so this fallback does not resolve
  * inside the app dev server — these are secondary "learn more" links and the

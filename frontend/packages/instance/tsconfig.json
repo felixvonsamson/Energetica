@@ -7,7 +7,7 @@
         // `@api` alias. This mapping only serves this package's own typecheck, lint and
         // editor, which need some app's types: the persistent world's, which serves
         // every route the package calls.
-        "paths": { "@api": ["../../src/types/api-helpers.freeplay.ts"] }
+        "paths": { "@api": ["../../apps/freeplay/src/types/api-helpers.ts"] }
     },
     "include": ["src"]
 }

@@ -177,12 +177,12 @@ esac
 
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
-    log_step "Building app bundle (vite build + service worker)..."
+    log_step "Building the persistent world's app (vite build + service worker)..."
     # VITE_APEX_DOMAIN bakes the apex into the bundle so cross-origin links resolve:
     # the app's "Learn more" links point back to https://$DOMAIN (the Apache landing),
     # not the instance subdomain. Without it landingHref() falls back to a same-origin
     # relative path, which 404s on the instance vhost (it only serves /app/*).
-    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build:app )
+    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build:freeplay )
     log_success "App bundle built"
 else
     log_info "Skipping build (--skip-build)"
@@ -213,14 +213,15 @@ rsync -rlptz --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/nul
 log_success "Instance scripts synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
-# The bundle is built to frontend/dist-app/ but lands at the instance root as dist-app/, the
-# same flattening deploy-lobby.sh does with dist-lobby/: the server carries no frontend source,
-# so a frontend/ directory holding nothing but build output would be misleading. The service
-# worker is inside the bundle (build:sw writes it there), so it needs no rsync of its own.
+# The bundle is built to frontend/apps/freeplay/dist/ but lands at the instance root as dist-app/,
+# the same flattening deploy-lobby.sh does with dist-lobby/: the server carries no frontend
+# source, so a frontend/ directory holding nothing but build output would be misleading. The
+# service worker is inside the bundle (the app's build:sw writes it there), so it needs no rsync
+# of its own.
 # APP_BUNDLE_SUBPATH in src/energetica/routers/health.py names this same path.
 log_step "Syncing app bundle..."
 # -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
-rsync -rlptz --delete ./frontend/dist-app/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
+rsync -rlptz --delete ./frontend/apps/freeplay/dist/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
 log_success "App bundle synced"
 
 # --- 5. Install the backend into the server venv --------------------------------

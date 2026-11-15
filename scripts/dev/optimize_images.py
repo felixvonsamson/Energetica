@@ -26,12 +26,10 @@ from typing import NamedTuple
 ROOT = Path(__file__).parent.parent.parent
 
 # The same roots guard-image-weight.ts weighs, and for the same reason: the
-# bundled trees Vite hashes and emits (the combined app's and each workspace
-# package's), plus the verbatim-copied public/ dir that holds the one icon
+# bundled trees Vite hashes and emits (each workspace package's), plus the verbatim-copied public/ dir that holds the one icon
 # needing a URL no bundler owns. Walking them all keeps the script able to fix
 # everything the guard can reject.
 IMAGE_ROOTS = (
-    ROOT / "frontend/src/assets",
     *sorted((ROOT / "frontend").glob("apps/*/src/assets")),
     *sorted((ROOT / "frontend").glob("packages/*/src/assets")),
     ROOT / "frontend/public",
@@ -86,7 +84,7 @@ DEFAULT_POLICY = Policy(max_width=1600, quality=85)
 # one compares whole paths for the same reason. An unanchored match here would
 # skip a file the guard then fails, and the failure would tell you to run this
 # script -- the one that just skipped it.
-EXEMPT_FILES = ("frontend/public/icon_green.png", "frontend/src/assets/quiz.png")
+EXEMPT_FILES = ("frontend/public/icon_green.png", "frontend/apps/freeplay/src/assets/quiz.png")
 
 # Matched against a lowercased suffix, so `photo.JPG` off a camera is picked up
 # rather than silently skipped. guard-image-weight.ts lowercases the extension

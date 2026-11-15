@@ -56,7 +56,7 @@ and this instance's access policy. The persistent world's `GET /auth/me` and Wor
 
 **Middleware:** `energetica/routers/__init__.py`
 
-- The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
+- The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/apps/freeplay/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
 - POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
 
 **Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication.
@@ -72,7 +72,7 @@ get_settled_player()    - Requires a player who has chosen a location  (utils/au
 
 ## Frontend Implementation
 
-**Auth state:** `frontend/src/contexts/AuthContext.tsx`
+**Auth state:** `frontend/apps/freeplay/src/contexts/AuthContext.tsx`
 
 - Manages global auth state (user, isAuthenticated, isLoading)
 - Fetches `/auth/me` on app startup
@@ -88,12 +88,12 @@ facilitator. The combined freeplay bundle still reads the Run mode from `GET /ap
 anything else renders, and shows nothing in a Workshop Run, until each Instance is served the app
 for its Run mode (#1181, #1182).
 
-**Auth hook:** `frontend/src/hooks/useAuth.ts`
+**Auth hook:** `frontend/apps/freeplay/src/hooks/useAuth.ts`
 
 - Provides `user`, `isAuthenticated`, `isLoading`, `refetch()`, `logout()`
 - Must be used within `AuthProvider`
 
-**Protected routes:** `frontend/src/components/auth/ProtectedRoute.tsx`
+**Protected routes:** `frontend/apps/freeplay/src/components/auth/ProtectedRoute.tsx`
 
 - TODO: explain and fill in details in [routing.md](../frontend/routing.md)
 

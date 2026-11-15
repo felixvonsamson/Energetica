@@ -45,15 +45,13 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /**
  * Where the frontend keeps images, as repo-relative prefixes.
  *
- * `frontend/src/assets/` and each workspace package's `src/assets/` are the
- * bundled trees — imported, hashed, and emitted only into the bundles that use
- * them. `frontend/public/` is copied verbatim and holds the one icon that needs
- * a URL no bundler owns (see the comment on FORMAT_EXEMPT), so it is covered
- * here too: being exempt from hashing is not a reason to be exempt from
- * weighing.
+ * Each workspace package's `src/assets/` is a bundled tree: its images are
+ * imported, hashed, and emitted only into the bundles that use them.
+ * `frontend/public/` is copied verbatim and holds the one icon that needs a URL
+ * no bundler owns (see the comment on FORMAT_EXEMPT), so it is covered here
+ * too: being exempt from hashing is not a reason to be exempt from weighing.
  */
 const IMAGE_ROOTS = [
-    "frontend/src/assets/",
     ...(["apps", "packages"] as const).flatMap((group) =>
         frontendWorkspaces(group).map(
             (name) => `frontend/${group}/${name}/src/assets/`,
@@ -107,7 +105,7 @@ const IMAGE_EXTENSIONS = [...RASTER_TO_CONVERT, ".webp", ".avif", ".svg"];
  */
 const FORMAT_EXEMPT = [
     /^frontend\/public\/icon_green\.png$/,
-    /^frontend\/src\/assets\/quiz\.png$/,
+    /^frontend\/apps\/freeplay\/src\/assets\/quiz\.png$/,
 ];
 
 /** Tracked image files under the roots above, as repo-relative paths. */

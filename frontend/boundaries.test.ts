@@ -46,11 +46,11 @@ describe("frontend boundaries", () => {
         ).toEqual([]);
     });
 
-    it("rejects the lobby importing the combined app's files", async () => {
+    it("rejects the lobby importing the persistent world's API types", async () => {
         expect(
             await violatedRules(
                 "apps/lobby/src/routes/example.tsx",
-                'import type { ApiSchema } from "../../../../src/types/api-helpers";\nexport type X = ApiSchema<"HexTileOut">;\n',
+                'import type { ApiSchema } from "../../../freeplay/src/types/api-helpers";\nexport type X = ApiSchema<"HexTileOut">;\n',
             ),
         ).toContain("import/no-relative-packages");
     });
@@ -63,11 +63,11 @@ describe("frontend boundaries", () => {
         ).toEqual([]);
     });
 
-    it("rejects an app under apps/ importing the combined app's files", async () => {
+    it("rejects the workshop importing the persistent world's files", async () => {
         expect(
             await violatedRules(
-                "apps/landing/src/example.tsx",
-                'import { queryKeys } from "../../../src/lib/query-client";\nexport const x = queryKeys;\n',
+                "apps/workshop/src/example.tsx",
+                'import { queryKeys } from "../../freeplay/src/lib/query-client";\nexport const x = queryKeys;\n',
             ),
         ).toContain("import/no-relative-packages");
     });
@@ -81,21 +81,30 @@ describe("frontend boundaries", () => {
         ).toContain("import/no-relative-packages");
     });
 
-    it("rejects the combined app importing an app under apps/", async () => {
+    it("rejects the persistent world importing the workshop's files", async () => {
         expect(
             await violatedRules(
-                "src/routes/example.tsx",
-                'import { Header } from "../../apps/landing/src/components/header";\nexport const x = Header;\n',
+                "apps/freeplay/src/routes/example.tsx",
+                'import { WorkshopTopBar } from "../../../workshop/src/components/workshop-top-bar";\nexport const x = Header;\n',
             ),
         ).toContain("import/no-relative-packages");
     });
 
-    // The root package declares echarts, so it resolves from the landing app too.
     it("rejects a dependency an app under apps/ does not declare", async () => {
         expect(
             await violatedRules(
                 "apps/landing/src/example.ts",
                 'import * as echarts from "echarts";\nexport const x = echarts;\n',
+            ),
+        ).toContain("import/no-unresolved");
+    });
+
+    // The root package declares the frontend's tooling, so it resolves from every app.
+    it("rejects a dependency only the root package declares", async () => {
+        expect(
+            await violatedRules(
+                "apps/freeplay/src/example.ts",
+                'import openapiTS from "openapi-typescript";\nexport const x = openapiTS;\n',
             ),
         ).toContain("import/no-extraneous-dependencies");
     });
@@ -174,8 +183,8 @@ describe("frontend boundaries", () => {
         ).toContain("no-restricted-imports");
     });
 
-    // The root package declares these, so they resolve from a shared package.
-    it.each(["react", "react-dom", "echarts"])(
+    // The root package declares their types, so they resolve from a shared package.
+    it.each(["react", "react-dom"])(
         "rejects an undeclared %s import in a shared package",
         async (name) => {
             expect(

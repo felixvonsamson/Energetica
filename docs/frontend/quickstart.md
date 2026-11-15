@@ -61,7 +61,7 @@ Backend logs show:
 1. Create route file:
 
 ```ts
-// frontend/src/routes/app/my-page.tsx
+// frontend/apps/freeplay/src/routes/app/my-page.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 

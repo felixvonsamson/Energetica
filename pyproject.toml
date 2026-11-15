@@ -76,7 +76,7 @@ version = { attr = "energetica.__version__" }
 # The data tables are the only non-Python files in the wheel. The persistent world's own tables sit
 # next to the game engine that reads them (#1055). Workshop's demand curve sits in workshop/data/, next to
 # the demand block that reads it (#1201). No web assets ship here: since #1064 the app bundle and
-# its service worker are built to frontend/dist-app/ and served by Apache straight off the rsynced
+# its service worker are built to frontend/apps/freeplay/dist/ and served by Apache straight off the rsynced
 # tree (docs/architecture/static-serving-and-deployment.md), never read through the installed
 # package.
 energetica = ["freeplay/data/*", "workshop/data/*"]

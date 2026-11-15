@@ -27,7 +27,7 @@ router = APIRouter(prefix="", tags=["Health"])
 
 # Where the built app bundle (and its build-info.json stamp) lives on the server, relative to
 # the instance directory that systemd pins as the working directory. deploy-instance.sh rsyncs
-# frontend/dist-app/ to exactly this path, mirroring how the lobby ships dist-lobby/.
+# frontend/apps/freeplay/dist/ to exactly this path, mirroring how the lobby ships dist-lobby/.
 APP_BUNDLE_SUBPATH = "dist-app"
 PICKLE_PATH = "instance/engine_data.pck"
 

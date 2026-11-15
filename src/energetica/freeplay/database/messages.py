@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 #       a. Add a *Payload class with `type: Literal["your_type"]`.
 #       b. Add it to PersistableNotificationPayload.
 #    3. Run `bun run generate-types`.
-#    4. In frontend/src/lib/notification-config.tsx:
+#    4. In frontend/apps/freeplay/src/lib/notification-config.tsx:
 #       Add an entry to INBOX_NOTIFICATION_CONFIG (TypeScript will error if missing).
 #    5. Run `bun run generate-types`.
 #    6. Call player.notify(YourPayload(...)) at the relevant backend site.
@@ -35,9 +35,9 @@ if TYPE_CHECKING:
 #       a. Add a *Payload class with `type: Literal["your_type"]`.
 #       b. Add it to PushOnlyPayload.
 #    2. Run `bun run generate-types`.
-#    3. In frontend/src/lib/notification-config.tsx:
+#    3. In frontend/apps/freeplay/src/lib/notification-config.tsx:
 #       Add an entry to PUSH_ONLY_CONFIG (NOT INBOX_NOTIFICATION_CONFIG).
-#    4. In frontend/src/types/notifications.ts:
+#    4. In frontend/apps/freeplay/src/types/notifications.ts:
 #       If needed, add a new PushCategory for user opt-out.
 #    5. Call player.push_only(YourPayload(...)) at the relevant backend site.
 # ---------------------------------------------------------------------------

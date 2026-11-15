@@ -374,7 +374,7 @@ class GameEngine(object):
         Invalidate React Query caches on the frontend.
 
         Tells the frontend that specific query caches are stale and should be refetched.
-        Query keys must match those defined in frontend/src/lib/query-client.ts
+        Query keys must match those defined in frontend/apps/freeplay/src/lib/query-client.ts
 
         Args:
             query_keys: One or more query keys to invalidate.

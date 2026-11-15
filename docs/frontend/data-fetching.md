@@ -55,7 +55,7 @@ Pre-configured query client with sensible defaults for Energetica's game mechani
 
 ### Configuration
 
-Each app creates its query client with `createQueryClient` from `@energetica/core/query-client`. The combined app does this in `lib/query-client.ts`, which also holds its query keys. The factory sets these defaults:
+Each app creates its query client with `createQueryClient` from `@energetica/core/query-client`. The persistent world's app does this in `lib/query-client.ts`, which also holds its query keys. The factory sets these defaults:
 
 ```ts
 {
@@ -474,7 +474,7 @@ useSocketEvent<InvalidateEventData>("invalidate", (data) => {
 });
 ```
 
-**Critical:** Query keys in backend events must match `frontend/src/lib/query-client.ts` exactly.
+**Critical:** Query keys in backend events must match `frontend/apps/freeplay/src/lib/query-client.ts` exactly.
 
 ## Tick-Based Queries
 

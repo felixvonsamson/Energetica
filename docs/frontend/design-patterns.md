@@ -11,7 +11,7 @@ Quick reference for dummy data and preview patterns when rapidly iterating on fr
 Switch between scenarios by changing the URL—no code edits needed.
 
 ```ts
-// frontend/src/data/dummyFacilities.ts
+// frontend/apps/freeplay/src/data/dummyFacilities.ts
 export const scenarios = {
     "best-case": [{ id: 1, name: "Solar Farm A", capacity: 500 }],
     "worst-case": [{ id: 1, name: "Solar Farm (Degraded)", capacity: 50 }],
@@ -37,7 +37,7 @@ Visit: `http://localhost:5173/page?scenario=worst-case`
 Show all scenarios side-by-side on a dedicated debug page.
 
 ```ts
-// frontend/src/routes/app/_debug/facilities.tsx
+// frontend/apps/freeplay/src/routes/app/_debug/facilities.tsx
 import { scenarios } from "@/data/dummyFacilities";
 
 export function FacilitiesDebug() {
@@ -64,7 +64,7 @@ Visit: `/app/_debug/facilities` to see all at once.
 If you want something more structured and polished:
 
 ```ts
-// frontend/src/components/YourPage.stories.tsx
+// frontend/apps/freeplay/src/components/YourPage.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react";
 import YourPage from "./YourPage";
 import { scenarios } from "@/data/dummyFacilities";

@@ -42,10 +42,10 @@ repos:
         name: eslint
         entry: bash -c 'cd frontend && npx eslint --max-warnings 0 --no-warn-ignored --fix --cache "${@#frontend/}"' --
         language: system
-        files: ^frontend/src/.*\.(ts|tsx)$
+        files: ^frontend/(apps|packages)/.*\.(ts|tsx)$
       - id: frontend-typecheck
         name: frontend typecheck
         entry: bash -c 'cd frontend && bun run typecheck'
         language: system
-        files: ^frontend/src/.*\.(ts|tsx)$
+        files: ^frontend/(apps|packages)/.*\.(ts|tsx)$
         pass_filenames: false

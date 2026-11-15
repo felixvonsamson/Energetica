@@ -61,7 +61,7 @@ def repo(tmp_path: Path) -> Path:
         "junk.txt",
         ".claude/worktrees/x/main.py",
         ".claude/settings.local.json",
-        "frontend/dist-app/index.html",
+        "frontend/apps/freeplay/dist/index.html",
     ]:
         _touch(root, relative)
     return root

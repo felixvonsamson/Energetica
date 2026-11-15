@@ -19,7 +19,7 @@ BASE_URL = f"http://localhost:{PORT}"
 ROOT = Path(__file__).parent.parent.parent
 CONTENT_SRC = ROOT / "frontend/packages/content/src"
 WIKI_DIR = CONTENT_SRC / "wiki"
-ROUTES_DIR = ROOT / "frontend/src/routes"
+ROUTES_DIR = ROOT / "frontend/apps/freeplay/src/routes"
 
 OUT_FILE = ROOT / "wiki-links.md"
 

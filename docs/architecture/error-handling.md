@@ -34,7 +34,7 @@ class WorkshopErrorCode(ErrorCode):
 
 Players receive a code's string value, so values are unique across all the enums.
 
-The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema behind `api.generated.ts` gets every code, until the merged schema itself is removed (#1183). Each frontend app reads its own app's `ErrorCode`: the Workshop and the lobby through `ApiSchema<"ErrorCode">` in their own generated types, and the combined freeplay bundle from `api.freeplay.generated.ts`, re-exported as `ErrorCode` from `lib/game-messages.ts`.
+The codes are injected into each OpenAPI schema at generation time (`scripts/generate_openapi_schema.py`), so `bun run generate-types` produces a TypeScript union type. Each app's schema gets the codes that app can return, listed in `APP_ERROR_CODES`: the freeplay and Workshop schemas get the kernel's, the identity layer's and their own, and the lobby's gets the kernel's and its own. The schema is always called `ErrorCode`. The merged schema gets every code, until it is removed (#1183); no frontend app reads it. Each frontend app reads its own app's `ErrorCode` through `ApiSchema<"ErrorCode">` in its own generated types. The persistent world's app re-exports it as `ErrorCode` from `lib/game-messages.ts`.
 
 Each app has one table of error messages, keyed by its own `ErrorCode`. The messages of the codes several apps share are defined once: the kernel's shared codes in `SHARED_ERROR_MESSAGES` (`@energetica/core/error-messages`), and the identity layer's in `IDENTITY_ERROR_MESSAGES` (`@energetica/instance/lib/error-messages`), which both Instance apps return. An app builds its table with `errorMessageTable<ErrorCode>()(shared, own)`, which joins the shared tables it is given with its own messages for the rest of its codes.
 
@@ -63,11 +63,11 @@ Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.
 
 Each app's table:
 
-- the combined freeplay bundle: `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts`, which also has `formatCancelProjectError(error)`, a specialised formatter for `HasDependents` errors, which include structured `kwargs` (dependent project names);
+- the persistent world: `GAME_ERROR_MESSAGES` in `frontend/apps/freeplay/src/lib/game-messages.ts`, which also has `formatCancelProjectError(error)`, a specialised formatter for `HasDependents` errors, which include structured `kwargs` (dependent project names);
 - the Workshop: `ERROR_MESSAGES` in `frontend/apps/workshop/src/lib/error-messages.ts`, with its helpers and `formatLeverChangeError(error)`;
 - the lobby: `frontend/apps/lobby/src/lib/error-utils.ts`.
 
-**`lib/error-utils.ts`**, in the combined freeplay bundle
+**`lib/error-utils.ts`**, in the persistent world's app
 
 - `getUserFriendlyError(error)` — exact-match lookup in `GAME_ERROR_MESSAGES`, falls back to the raw error message. Use in form `catch` blocks.
 - `handleApiError(error, fallback?)` — same as above, but also logs to the console. Use in mutation `onError` handlers or anywhere logging is appropriate.

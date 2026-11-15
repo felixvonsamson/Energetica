@@ -67,7 +67,7 @@ if [ -n "${BACKEND:-}" ]; then
     app)
         echo "[dev] live app stack (BACKEND=$BACKEND) → app http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"
         start bash -c 'cd frontend && exec bun run dev:lobby'
-        start bash -c 'cd frontend && exec bun run dev:app'
+        start bash -c 'cd frontend && exec bun run dev:freeplay'
         ;;
     lobby)
         echo "[dev] live lobby stack (BACKEND=$BACKEND) → lobby http://localhost:5174"
@@ -97,7 +97,7 @@ app)
     start .venv/bin/python main_lobby.py --port 8001
     start .venv/bin/python main.py --env dev
     start bash -c 'cd frontend && exec bun run dev:lobby'
-    start bash -c 'cd frontend && exec bun run dev:app'
+    start bash -c 'cd frontend && exec bun run dev:freeplay'
     ;;
 workshop)
     echo "[dev] workshop stack ($ENERGETICA_INSTANCE_SLUG) → workshop http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"

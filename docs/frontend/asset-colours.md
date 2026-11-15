@@ -87,5 +87,5 @@ const chartColor = getComputedStyle(document.documentElement)
 ## Related Files
 
 - `frontend/packages/ui/src/styles/global.css` - Color definitions (lines 63-181)
-- `frontend/src/routes/app/profile.tsx` - Example usage in gauges (lines 152-374)
+- `frontend/apps/freeplay/src/routes/app/profile.tsx` - Example usage in gauges (lines 152-374)
 - `energetica/static/energetica.css` - Legacy source (lines 65-200)

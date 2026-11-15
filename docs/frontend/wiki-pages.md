@@ -29,7 +29,7 @@ frontend/packages/content/src/
 ```
 
 Each app has its own route that looks the slug up in `wikiPages`:
-`frontend/src/routes/app/wiki/$slug.tsx` in the game and
+`frontend/apps/freeplay/src/routes/app/wiki/$slug.tsx` in the game and
 `frontend/apps/landing/src/routes/wiki/$slug.tsx` on the landing page. A new `.mdx`
 file in `wiki/` is a new page in both; see [Dynamic Route](#dynamic-route) for the
 navigation links.
@@ -264,7 +264,7 @@ Each app's `$slug.tsx` route maps URL slugs to MDX files through `wikiPages`:
 Add new pages by:
 
 1. Creating the `.mdx` file in `frontend/packages/content/src/wiki/`
-2. Adding a navigation link to both sidebars: `frontend/src/components/wiki/wiki-sidebar.tsx`
+2. Adding a navigation link to both sidebars: `frontend/apps/freeplay/src/components/wiki/wiki-sidebar.tsx`
    in the game and `frontend/apps/landing/src/components/wiki/wiki-sidebar-public.tsx` on
    the landing page
 

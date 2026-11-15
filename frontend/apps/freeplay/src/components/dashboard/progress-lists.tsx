@@ -1,0 +1,431 @@
+import { formatMass } from "@energetica/core/format-utils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@energetica/ui/components/alert-dialog";
+import { Button } from "@energetica/ui/components/button";
+import { Money } from "@energetica/ui/components/money";
+import { ProgressBar } from "@energetica/ui/components/progress-bar";
+import { StatusBadge } from "@energetica/ui/components/status-badge";
+import { DataValue, TypographyP } from "@energetica/ui/components/typography";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
+import { ReactNode } from "react";
+
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
+import { Duration } from "@/components/ui";
+import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
+import { CashFlow } from "@/components/ui/cash-flow";
+import { Countdown } from "@/components/ui/countdown";
+import { useIsReadOnly } from "@/hooks/use-phase";
+import {
+    useCancelProject,
+    useDecreaseProjectPriority,
+    useIncreaseProjectPriority,
+    usePauseProject,
+    useResumeProject,
+} from "@/hooks/use-projects";
+import { useShipments } from "@/hooks/use-shipments";
+import { useClimateEventRecoveries } from "@/hooks/use-weather";
+import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
+import {
+    useClimateEventRecoveryProgress,
+    useProjectProgress,
+    useShipmentProgress,
+} from "@/lib/progress-utils";
+import { useProjectQueue } from "@/lib/project-utils";
+import type { components } from "@/types/api.generated";
+import { Project, ProjectCategory, ProjectStatus } from "@/types/projects";
+import { Shipment } from "@/types/shipments";
+
+type ClimateEventRecovery = components["schemas"]["ClimateEventRecoveryOut"];
+
+type ProjectListProps = {
+    projectCategory: ProjectCategory;
+};
+
+export function ProjectList({ projectCategory }: ProjectListProps) {
+    const projects = useProjectQueue(projectCategory);
+
+    if (projects === undefined) {
+        return (
+            <div className="text-center text-muted-foreground">
+                Loading {projectCategory} projects...
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            <AnimatePresence initial={false}>
+                {projects.map((project) => (
+                    <motion.div
+                        key={project.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ProjectItem project={project} />
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+export function ShipmentList() {
+    const { data } = useShipments();
+
+    if (data === undefined) {
+        return (
+            <div className="text-center text-muted-foreground">
+                Loading shipments...
+            </div>
+        );
+    }
+
+    const shipments = data.shipments;
+
+    if (shipments.length === 0) return null;
+
+    return (
+        <div className="space-y-2">
+            {shipments.map((shipment) => (
+                <ShipmentItem key={shipment.id} shipment={shipment} />
+            ))}
+        </div>
+    );
+}
+
+type ProjectItemProps = {
+    project: Project & { isFirst: boolean; isLast: boolean };
+};
+
+function ProjectItem({ project }: ProjectItemProps) {
+    const progress = useProjectProgress(
+        project.duration,
+        project.end_tick,
+        project.ticks_passed,
+        project.status,
+        project.speed,
+    );
+    const resumeMutation = useResumeProject();
+    const onResume = () => resumeMutation.mutate(project.id);
+    const pauseMutation = usePauseProject();
+    const onPause = () => pauseMutation.mutate(project.id);
+    const increasePriorityMutation = useIncreaseProjectPriority();
+    const onIncreasePriority = () =>
+        increasePriorityMutation.mutate(project.id);
+    const decreasePriorityMutation = useDecreaseProjectPriority();
+    const onDecreasePriority = () =>
+        decreasePriorityMutation.mutate(project.id);
+    const cancelMutation = useCancelProject();
+    const onCancel = () => cancelMutation.mutate(project.id);
+    const readOnly = useIsReadOnly();
+
+    const cardActions = (
+        <>
+            <ReadOnlyTooltip readOnly={readOnly}>
+                {/* Pause/Resume button */}
+                {project.status === "paused" ? (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onResume}
+                        disabled={resumeMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Resume project"
+                    >
+                        <Play size={14} />
+                    </Button>
+                ) : (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onPause}
+                        disabled={pauseMutation.isPending || readOnly}
+                        className="p-1"
+                        aria-label="Pause project"
+                    >
+                        <Pause size={14} />
+                    </Button>
+                )}
+            </ReadOnlyTooltip>
+
+            {/* Cancel button. It stays enabled while frozen, so the refund details can still be read;
+                the dialog's Continue button is the one disabled. */}
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={cancelMutation.isPending}
+                        className="p-1"
+                        aria-label="Cancel project"
+                    >
+                        <Trash2 size={14} />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Are you sure you want to cancel this project?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="flex gap-1 text-foreground font-medium">
+                            Cancel{" "}
+                            <TechnologyName
+                                technology={project.type}
+                                level={project.level}
+                            />
+                        </AlertDialogDescription>
+                        <AlertDialogDescription className="text-foreground">
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                        <AlertDialogDescription className="text-foreground">
+                            You will be refunded{" "}
+                            <Money amount={project.cancellation_refund} /> i.e.{" "}
+                            <DataValue>
+                                {project.cancellation_refund_percentage.toFixed(
+                                    0,
+                                )}
+                                %
+                            </DataValue>{" "}
+                            of the original cost of the project.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <ReadOnlyTooltip readOnly={readOnly}>
+                            <AlertDialogAction variant="destructive" asChild>
+                                <Button
+                                    onClick={onCancel}
+                                    disabled={
+                                        cancelMutation.isPending || readOnly
+                                    }
+                                >
+                                    Continue
+                                </Button>
+                            </AlertDialogAction>
+                        </ReadOnlyTooltip>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+
+    return (
+        <div className="flex items-stretch gap-2">
+            {/* Priority arrows — outside the card, left side, matching card bg */}
+            <ReadOnlyTooltip readOnly={readOnly}>
+                <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
+                    {!project.isFirst ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onIncreasePriority}
+                            disabled={
+                                increasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Increase priority"
+                        >
+                            <ChevronUp size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                    {!project.isLast ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onDecreasePriority}
+                            disabled={
+                                decreasePriorityMutation.isPending || readOnly
+                            }
+                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                            aria-label="Decrease priority"
+                        >
+                            <ChevronDown size={14} />
+                        </Button>
+                    ) : (
+                        <div className="h-6 w-6" />
+                    )}
+                </div>
+            </ReadOnlyTooltip>
+
+            {/* Card */}
+            <div className="flex-1">
+                <ProgressCard
+                    status={project.status}
+                    progress={progress}
+                    endTick={project.end_tick}
+                    speed={project.speed}
+                    remainingTicks={
+                        project.duration - (project.ticks_passed ?? 0)
+                    }
+                    label={
+                        <TechnologyName
+                            technology={project.type}
+                            level={project.level}
+                        />
+                    }
+                    actions={cardActions}
+                />
+            </div>
+        </div>
+    );
+}
+
+export function ClimateEventRecoveryList() {
+    const { data } = useClimateEventRecoveries();
+    const recoveries = data?.recoveries ?? [];
+
+    return (
+        <div className="space-y-2">
+            <AnimatePresence initial={false}>
+                {recoveries.map((recovery) => (
+                    <motion.div
+                        key={recovery.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ClimateEventRecoveryItem recovery={recovery} />
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function ClimateEventRecoveryItem({
+    recovery,
+}: {
+    recovery: ClimateEventRecovery;
+}) {
+    const progress = useClimateEventRecoveryProgress(
+        recovery.duration,
+        recovery.end_tick,
+    );
+    const name = CLIMATE_EVENT_CONFIG[recovery.event_key].name;
+    return (
+        <ProgressCard
+            status="recovering"
+            progress={progress}
+            label={
+                <span className="font-semibold text-sm text-foreground">
+                    {name}
+                </span>
+            }
+            speed={undefined}
+            endTick={recovery.end_tick}
+            actions={null}
+            info={<CashFlow amountPerTick={-recovery.recovery_cost} />}
+        />
+    );
+}
+
+function ShipmentItem({ shipment }: { shipment: Shipment }) {
+    const progress = useShipmentProgress(
+        shipment.duration,
+        shipment.arrival_tick,
+    );
+    return (
+        <ProgressCard
+            status="in-transit"
+            progress={progress}
+            label={
+                <div className="flex flex-row gap-2">
+                    <ResourceName resource={shipment.resource} />
+                    <div className="text-muted-foreground">
+                        {formatMass(shipment.quantity)}
+                    </div>
+                </div>
+            }
+            speed={shipment.speed}
+            endTick={shipment.arrival_tick}
+            actions={null}
+        />
+    );
+}
+
+interface ProgressCardProps {
+    status: ProjectStatus | "in-transit" | "recovering";
+    progress: number;
+    speed: number | undefined;
+    endTick: number | null;
+    /** Ticks remaining (used for waiting status display) */
+    remainingTicks?: number;
+    label: ReactNode;
+    actions: ReactNode;
+    /** Optional extra info shown next to the countdown (e.g. cost rate). */
+    info?: ReactNode;
+}
+
+function ProgressCard({
+    status,
+    progress,
+    speed,
+    endTick,
+    remainingTicks,
+    label,
+    actions,
+    info,
+}: ProgressCardProps) {
+    return (
+        <div className="px-3 pt-2 pb-1 rounded-lg bg-muted/30">
+            {/* Header row: Badge, Title, Actions */}
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {speed !== undefined && speed < 1.0 ? (
+                        <StatusBadge
+                            status={speed > 0 ? "slowed" : "stopped"}
+                            size="sm"
+                        />
+                    ) : status !== "recovering" ? (
+                        <StatusBadge status={status} size="sm" />
+                    ) : null}
+                    {label}
+                </div>
+                {/* Action buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                    {actions}
+                </div>
+            </div>
+
+            {/* Progress bar */}
+            <ProgressBar value={progress} showPercentage={false} />
+
+            {/* Info row: Time remaining, speed */}
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                    <TypographyP>
+                        {status === "paused" || status === "waiting" ? (
+                            remainingTicks !== undefined ? (
+                                <Duration ticks={remainingTicks} />
+                            ) : null
+                        ) : (
+                            <Countdown endTick={endTick} speed={speed} />
+                        )}
+                    </TypographyP>
+                    {speed !== undefined && speed < 1.0 && (
+                        <>×{speed.toFixed(1)} speed</>
+                    )}
+                    {info}
+                </div>
+                <span className="font-medium">{progress.toFixed(0)}%</span>
+            </div>
+        </div>
+    );
+}
