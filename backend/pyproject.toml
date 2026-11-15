@@ -99,7 +99,7 @@ energetica = ["freeplay/data/*", "workshop/data/*"]
 root_packages = ["energetica", "lobby_service"]
 
 [[tool.importlinter.contracts]]
-name = "kernel, identity and sim are layered below three independent apps, and entry sits above them"
+name = "kernel, identity, sim and worldmap are layered below three independent apps, and entry sits above them"
 type = "layers"
 containers = ["energetica"]
 # Every top-level module of energetica must be named in a layer, so a new one cannot slip past
@@ -112,6 +112,9 @@ layers = [
     # "|" makes the modules independent: none of them may import another. A new app goes here and
     # in the lobby service's forbidden_modules below.
     "freeplay | workshop | lobby",
+    # Map generation (#1112). Above sim, because Workshop has no map and sim holds only what every
+    # mode shares. Below the apps rather than inside freeplay, so the lobby may generate a map too.
+    "worldmap",
     "sim",
     "identity",
     "kernel",
@@ -136,4 +139,5 @@ forbidden_modules = [
     "energetica.workshop",
     "energetica.lobby",
     "energetica.sim",
+    "energetica.worldmap",
 ]

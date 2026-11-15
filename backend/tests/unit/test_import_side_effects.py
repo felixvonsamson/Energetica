@@ -89,6 +89,7 @@ def _first_module_that_loads(package: str, forbidden: list[str]) -> tuple[str, l
         ("energetica.kernel", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
         ("energetica.identity", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
         ("energetica.sim", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
+        ("energetica.worldmap", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
         ("energetica.lobby", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
         ("energetica.workshop", [_ENGINE_PACKAGE, _LOBBY_SERVICE_PACKAGE]),
         ("energetica.freeplay", [_LOBBY_SERVICE_PACKAGE]),
