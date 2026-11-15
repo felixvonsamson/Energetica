@@ -10,6 +10,7 @@ import {
     TypographyLead,
     TypographyP,
 } from "@energetica/ui/components/typography";
+import { useSearch } from "@tanstack/react-router";
 import {
     GraduationCap,
     Landmark,
@@ -28,6 +29,8 @@ import facilityCards from "@/assets/workshop_facility_cards.webp";
 import roundLoop from "@/assets/workshop_round_loop.webp";
 import { HomeLayout } from "@/components/home-layout";
 import { workshopEnquiryHref } from "@/lib/contact";
+import { PrototypeSwitcher } from "@/prototype-showcase/prototype-switcher";
+import { VARIANTS, type VariantKey } from "@/prototype-showcase/variants";
 
 const facts = [
     "2–4 hours",
@@ -166,17 +169,29 @@ function CheckList({ title, items }: { title: string; items: string[] }) {
 }
 
 export function WorkshopPage() {
+    const { variant } = useSearch({ from: "/workshop" });
+    const current: VariantKey =
+        variant !== undefined && variant in VARIANTS
+            ? (variant as VariantKey)
+            : "A";
+    const Showcase = VARIANTS[current].Component;
     return (
         <HomeLayout>
             <div className="flex flex-col gap-20 px-6 lg:px-8">
-                {/* Banner image */}
-                <section className="max-w-6xl mx-auto w-full">
-                    <img
-                        src={facilityCards}
-                        alt="Five facility cards from the game's catalog, each with its price tag: PV solar, offshore wind turbine, lithium-ion batteries, nuclear reactor and coal burner"
-                        className="w-full"
-                    />
-                </section>
+                {/* PROTOTYPE (#1462): the showcase variants, or the old
+                screenshot with ?variant=0 to compare. */}
+                {variant === "0" ? (
+                    <section className="max-w-6xl mx-auto w-full">
+                        <img
+                            src={facilityCards}
+                            alt="Five facility cards from the game's catalog, each with its price tag: PV solar, offshore wind turbine, lithium-ion batteries, nuclear reactor and coal burner"
+                            className="w-full"
+                        />
+                    </section>
+                ) : (
+                    <Showcase />
+                )}
+                <PrototypeSwitcher current={current} />
 
                 {/* Header */}
                 <section className="flex flex-col items-center gap-6 max-w-3xl mx-auto text-center">
