@@ -4,26 +4,6 @@
  */
 
 export interface paths {
-    "/api/v1/run": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Run
-         * @description Which kind of Run this instance is.
-         */
-        get: operations["get_run_api_v1_run_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/join/{token}": {
         parameters: {
             query?: never;
@@ -2090,18 +2070,6 @@ export interface components {
             carbon_tax_vote: boolean;
         };
         /**
-         * RunOut
-         * @description What the frontend needs to know about this Run before choosing which pages to show.
-         */
-        RunOut: {
-            /**
-             * Mode
-             * @description The kind of Run: the persistent world (freeplay) or a Workshop
-             * @enum {string}
-             */
-            mode: "freeplay" | "workshop";
-        };
-        /**
          * Score
          * @description One player's score after the Rounds completed so far, and what it adds up from.
          */
@@ -3508,26 +3476,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get_run_api_v1_run_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RunOut"];
-                };
-            };
-        };
-    };
     get_join_link_api_v1_join__token__get: {
         parameters: {
             query?: never;

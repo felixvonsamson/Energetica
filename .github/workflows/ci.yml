@@ -57,7 +57,7 @@ jobs:
               - .pre-commit-config.yaml
             api-types:
               - .github/workflows/ci.yml
-              - frontend/apps/*/src/types/api*.generated.ts
+              - frontend/apps/*/src/types/api.generated.ts
               - scripts/generate-types.sh
               # Defines the generate-types command the job runs.
               - package.json
@@ -296,9 +296,8 @@ jobs:
           PY
 
   api-types-freshness:
-    # Regenerate every API types file (the merged api.generated.ts, one
-    # api.<app>.generated.ts per app still in src/, and the api.generated.ts of each
-    # app under apps/) and fail if any drifts from what's committed.
+    # Regenerate each app's API types file (frontend/apps/<app>/src/types/api.generated.ts)
+    # and fail if any drifts from what's committed.
     # Generation boots the FastAPI apps to emit the OpenAPI schemas (needs Python
     # + deps) then runs openapi-typescript (needs bun).
     needs: changes
@@ -331,7 +330,7 @@ jobs:
       - name: Fail on drift
         run: |
           # The untracked check catches a types file the generator writes but nobody committed.
-          generated=('frontend/apps/*/src/types/api*.generated.ts')
+          generated=('frontend/apps/*/src/types/api.generated.ts')
           untracked=$(git ls-files --others --exclude-standard -- "${generated[@]}")
           if ! git diff --exit-code -- "${generated[@]}" || [ -n "$untracked" ]; then
             if [ -n "$untracked" ]; then echo "Not committed: $untracked"; fi

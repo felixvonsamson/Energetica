@@ -146,7 +146,6 @@ FREEPLAY_API_ROUTES = IDENTITY_ROUTES | {
     "PATCH /api/v1/resource-market/asks/{ask_id}",
     "DELETE /api/v1/resource-market/asks/{ask_id}",
     "POST /api/v1/resource-market/asks/{ask_id}:calculate-delivery",
-    "GET /api/v1/run",
     "GET /api/v1/shipments",
     "GET /api/v1/leaderboards",
     "GET /api/v1/weather",
@@ -154,7 +153,6 @@ FREEPLAY_API_ROUTES = IDENTITY_ROUTES | {
 }
 
 WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
-    "GET /api/v1/run",
     "POST /api/v1/workshop/enter",
     "GET /api/v1/workshop/session",
     "POST /api/v1/workshop/session/advance",

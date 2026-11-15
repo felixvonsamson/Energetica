@@ -27,8 +27,7 @@ echo "📋 Generating OpenAPI schemas from backend..."
     exit 1
 }
 
-# Generate TypeScript types: one file per app. The merged schema has no types file:
-# no app compiles against it (#1183 deletes it).
+# Generate TypeScript types: one file per app.
 for app in freeplay workshop lobby; do
     bunx openapi-typescript "$SCRIPT_DIR/openapi-schema.$app.json" -o "$PROJECT_ROOT/frontend/apps/$app/$TYPES_DIR/api.generated.ts"
 done

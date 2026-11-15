@@ -39,9 +39,8 @@ bun generate-types
 
 This script:
 
-1. Generates an OpenAPI spec from each FastAPI app (freeplay, Workshop and the lobby), plus one that merges all three. The backend doesn't need to be running.
-2. Creates one TypeScript types file per app: `frontend/apps/freeplay/src/types/api.generated.ts`, the Workshop's `frontend/apps/workshop/src/types/api.generated.ts` and the lobby's `frontend/apps/lobby/src/types/api.generated.ts`. The merged spec gets no types file, since no app uses it.
-3. Formats output with Prettier
+1. Generates an OpenAPI spec from each FastAPI app (freeplay, Workshop and the lobby). The backend doesn't need to be running.
+2. Creates one TypeScript types file per app: `frontend/apps/freeplay/src/types/api.generated.ts`, the Workshop's `frontend/apps/workshop/src/types/api.generated.ts` and the lobby's `frontend/apps/lobby/src/types/api.generated.ts`. Prettier leaves these files as generated (see `.prettierignore`).
 
 Each per-app file lists only the routes that app serves. Each app imports only its own file, through the `api-helpers.ts` beside it, so no app can type-check against a route its backend does not serve. Shared packages, such as `@energetica/instance`, import the types of whichever app compiles them through the `@api` alias (see [the overview](overview.md#frontend)).
 

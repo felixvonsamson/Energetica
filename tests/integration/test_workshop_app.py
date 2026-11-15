@@ -135,14 +135,7 @@ def _checkpoint(kind: str, round_number: int | None = None, season: str | None =
     return checkpoint
 
 
-# --- the Run mode ---------------------------------------------------------------------------
-
-
-def test_reports_the_workshop_run_mode(session_path: Path) -> None:
-    response = _client(session_path).get("/api/v1/run")
-
-    assert response.status_code == 200
-    assert response.json() == {"mode": "workshop"}
+# --- the app ---------------------------------------------------------------------------------
 
 
 def test_serves_none_of_the_persistent_world(session_path: Path) -> None:

@@ -210,7 +210,7 @@ run go there, so the two cannot run at once.
 Check that the backend is in Workshop Mode:
 
 ```bash
-curl localhost:8000/api/v1/run     # {"mode":"workshop"}
+curl localhost:8000/healthz     # a Workshop Run's reply has a "workshop" key
 ```
 
 Unset `ENERGETICA_INSTANCE_SLUG` to go back to the persistent world.
