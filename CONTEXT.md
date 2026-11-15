@@ -14,6 +14,8 @@ that all sound like "saving") unambiguous.
 - **Accounts & users** — players, server-wide accounts, auth, the lobby. _Documented below._
 - **Real-time sync** — socket.io state propagation to the frontend. _Not yet documented._
 - **Frontend** — TSX/Tailwind app and the generated API type bridge. _Not yet documented._
+- **Run modes** — the kinds of Run, and what each is called in code and in prose.
+  _Documented below._
 - **Workshop Mode** — the moderated, Round-based Run type (#992). _Partly documented below._
 
 When a new context's terms get pinned, add a `## <Context>` section below (or split
@@ -184,6 +186,37 @@ _Avoid_: guest account, workshop account (a permanent account can play a worksho
   the game, which the lobby keeps; the **instance** is the deployment it is played on, which the
   server keeps. Code and data about the game say "run" (`runs`, `run_membership`); code about the
   deployment says "instance".
+
+---
+
+## Run modes
+
+A **Run**'s mode says what kind of game it is. Each mode has its own app, under its own package in
+the backend and its own app in the frontend. The mode is fixed when the run is created
+(ADR-0010).
+
+### Language
+
+**The persistent world**:
+The long-running mode of play: players settle a tile on a shared map and build up their power
+network over weeks of real time, while the engine's clock ticks the simulation on continuously. Its state
+lives in the engine's in-memory model store and is saved by pickling (see § Persistence & Replay).
+Write `freeplay` in code, configuration and file paths, such as the Run mode tag
+`"freeplay"`, the package `energetica.freeplay` and the frontend app `@energetica/freeplay`.
+Write "the persistent world" in prose: docs, docstrings, comments, issues and commit messages.
+_Avoid_: free play, free-play, and Freeplay as a word in prose; "the game" or "the main game"
+for this mode alone.
+
+**Workshop**:
+The moderated, Round-based mode for a live session, whose terms are pinned in § Workshop Mode.
+Write `workshop` in code and "Workshop" or "Workshop Mode" in prose.
+
+### Flagged ambiguities
+
+- **`freeplay` vs "the persistent world".** One mode had three names: "free play", `freeplay`
+  and "the persistent world". Resolved (#1049): the code says `freeplay` and the prose says "the
+  persistent world", on purpose. "Free play" is not used. A name in backticks, such as the
+  package `freeplay`, is code and keeps its code spelling in prose too.
 
 ---
 

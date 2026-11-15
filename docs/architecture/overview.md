@@ -4,21 +4,28 @@ Overview of the project and directory structure.
 
 ```
 Energetica/
-├── docs/                 # This documentation
 ├── src/
-│   ├── energetica/       # Python/FastAPI backend — the game instance apps and the lobby
-│   └── lobby_service/    # The one process that opens lobby.db, behind an internal API
-├── main.py               # Launcher for a game instance
+│   ├── energetica/       # Python/FastAPI backend: the instance apps (persistent world, Workshop) and the lobby
+│   └── lobby_service/    # The one process that opens lobby.db, behind an internal API (ADR-0009)
+├── main.py               # Launcher for an instance (persistent world or Workshop, by Run mode)
 ├── main_lobby.py         # Launcher for the lobby backend
-├── main_lobby_service.py # Launcher for the lobby service (owns lobby.db)
-├── tests/                # Backend unit/integration tests
-├── frontend/             # React/TypeScript frontend
-├── scripts/              # Deploy, provisioning and one-off operational scripts
+├── main_lobby_service.py # Launcher for the lobby service
+├── tests/
+│   ├── unit/             # Fast, isolated tests
+│   └── integration/      # App, router, game-loop and real-process tests
+├── frontend/             # React/TypeScript frontend (see Frontend below)
+├── scripts/              # Developer, deploy, provisioning and operator scripts (see Scripts below)
 ├── tools/
 │   └── map_generation/   # Offline map-authoring tool, outside the import graph
-├── instance/             # Game saves
-└── checkpoints/          # Game backups
+├── docs/                 # This documentation
+├── CONTEXT.md            # Glossary of the project's domain terms
+├── instance/             # Local game state (not committed)
+└── checkpoints/          # Local game backups (not committed)
 ```
+
+Each launcher at the root parses its command-line arguments and starts its app under uvicorn, the
+web server. `main.py` builds its app through `energetica.entry`, which picks the persistent world
+or the Workshop by the instance's Run mode. The deployed services run the same launchers.
 
 The backend is an installed Python project: `pip install -e '.[dev]'` (see
 [installation.md](../getting-started/installation.md)). The `src/` layout means the packages are
@@ -42,35 +49,83 @@ production import the same code the same way.
 ## Backend
 
 ```
-src/energetica/       # Python/FastAPI backend
-├── entry.py          # Builds the app for this instance's Run mode
-├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
-├── identity/         # Accounts store, instance and server configuration, my-runs
-├── sim/              # Market clearing and settlement, facility statuses
-├── lobby/            # The lobby backend, the server-wide front door
-├── workshop/         # Workshop Mode
-└── freeplay/         # The persistent world
-    ├── app.py        # Application factory (create_app)
-    ├── routers/      # API endpoints
-    ├── schemas/      # Pydantic models for the API and the action log
-    ├── socketio.py   # Real-time layer (Socket.IO server)
-    ├── utils/        # Helpers for routers and the tick loop (auth, map, projects, tick execution, ...)
-    ├── simulate.py   # Replays the action log
-    ├── init_test_players.py  # Test-player fixture for local development
-    ├── game_engine.py  # Core game logic
-    ├── database/     # Model base class, id-keyed store, and game state models
-    ├── production_update.py   # Per-tick production, demand and market update
-    ├── technology_effects.py  # How technology levels change facilities and prices
-    ├── config/       # Asset, achievement and climate-event configuration
-    ├── enums.py      # The game's enumerations (facility types, fuels, technologies, ...)
-    ├── action_log.py # Reader for the action log the engine writes and replays
-    └── data/         # The game's data tables (map, quiz, demand curves)
+src/
+├── energetica/
+│   ├── entry.py          # Builds the app for this instance's Run mode
+│   ├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
+│   ├── identity/         # The run-side account type, the lobby service client, instance and server
+│   │                     #   configuration, my-runs, and the request dependencies for the caller's account and role
+│   ├── sim/              # The shared simulation layer: market clearing and settlement, dispatch,
+│   │                     #   renewables and their weather, fuel and pollution, operating cost, facility statuses
+│   ├── lobby/            # The lobby backend, the server-wide front door
+│   ├── workshop/         # Workshop Mode: its app, its session state machine and its own persistence
+│   └── freeplay/         # The persistent world
+│       ├── app.py        # Application factory (create_app)
+│       ├── game_engine.py    # The engine: clock, lock, save and checkpoint (see ADR-0011)
+│       ├── globals.py    # The process's one engine
+│       ├── database/     # Model base class, the in-memory id-keyed model store, and game state models
+│       ├── action_log.py # Reader for the action log the engine writes and replays
+│       ├── simulate.py   # Replays the action log
+│       ├── legacy_pickle.py  # Loads saves pickled before the classes they name moved
+│       ├── production_update.py   # Per-tick production, demand and market update
+│       ├── technology_effects.py  # How technology levels change facilities and prices
+│       ├── national_demand.py     # The national demand curve
+│       ├── demand_shape.py        # Interpolates a demand curve onto the tick grid
+│       ├── config/       # Asset, achievement and climate-event configuration
+│       ├── enums.py      # The game's enumerations (facility types, fuels, technologies, ...)
+│       ├── constants.py  # Constants of the persistent world's rules
+│       ├── game_error.py # The persistent world's own error codes
+│       ├── routers/      # API endpoints
+│       ├── schemas/      # Pydantic models for the API and the action log
+│       ├── socketio.py   # Real-time layer (Socket.IO server)
+│       ├── utils/        # Helpers for routers and the tick loop (auth, map, projects, tick execution, ...)
+│       ├── init_test_players.py  # Test-player fixture for local development
+│       └── data/         # The game's data tables (map, quiz, demand curves)
+└── lobby_service/        # Owns lobby.db: accounts, memberships, facilitator grants, run config (ADR-0009, ADR-0010)
+    ├── app.py            # Its internal API, reached only over a Unix socket
+    ├── store.py          # The SQL behind the API
+    ├── schema.py         # The lobby.db schema
+    ├── session.py        # The session-signing secret, password hashing, session tokens
+    └── migrations/       # Schema migrations for lobby.db
 ```
 
 `kernel`, `identity` and `sim` are layers, in that order from the bottom: each may import only the
 layers below it. The three apps, `freeplay`, `workshop` and `lobby`, sit above them and never
-import one another. `entry` sits on top. The import contracts in `pyproject.toml` enforce this in
-CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting & Formatting.
+import one another. `entry` sits on top. `lobby_service` sits outside `energetica`: no module in
+`energetica` imports it, and it imports only `identity` and `kernel`. The import contracts in
+`pyproject.toml` enforce this in CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting &
+Formatting.
+
+`freeplay` is the persistent world's name in code. Prose calls it "the persistent world"
+(`CONTEXT.md` § Run modes).
+
+The game engine and the model store look like shared infrastructure, but they belong to
+`freeplay`, so the Workshop cannot inherit them by accident.
+[ADR-0011](../adr/0011-engine-and-model-store-belong-to-freeplay.md) records why.
+
+## Scripts
+
+```
+scripts/
+├── dev.sh                # One-terminal launcher for a full local stack (see local-development.md)
+├── dev-app.sh, dev-lobby.sh, dev-login.sh   # Run one part of the local stack, or mint a dev session
+├── setup-worktree.sh     # Run once after `git worktree add`
+├── generate-types.sh     # `bun run generate-types`: OpenAPI schemas to TypeScript types, one file per app
+├── generate_openapi_schema.py               # Writes each backend app's OpenAPI schema, for the above
+├── guard-*.ts            # CI guards on the frontend (file names, image weight, dummy data, raw HTML)
+├── deploy-instance.sh, deploy-lobby.sh, deploy-landing.sh   # Deploys (see deployment.md)
+├── deployed-versions.sh, list-instances.sh, download-instance.sh, push-bootstrap.sh   # Operating a server
+├── lib/                  # Shell helpers the deploy and dev scripts share
+├── infra/                # Server setup and teardown, systemd units, Apache config, and their templates
+├── lobby/                # Operator clients of the lobby service: runs, facilitators, private rosters, Workshop teams
+├── instance/             # One-off scripts against a persistent-world instance's saved state
+├── workshop_bots/        # Bots that play a Workshop Run through its API
+├── workshop_lcoe.py      # Each Workshop generator's levelized cost of electricity
+└── dev/                  # Asset and docs utilities: wiki-link check, image optimisation, logo and coin generators
+```
+
+The scripts are run by people and by CI. They are not part of the backend: nothing under `src/`
+imports them.
 
 ## Frontend
 
