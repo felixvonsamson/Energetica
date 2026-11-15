@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 import numpy as np
 from noise import pnoise3
 
-from energetica.sim.astro import DrHI
+from energetica.sim.astro import direct_horizontal_irradiance
 from energetica.sim.renewable_curves import RIVER_FLOW_SPEED_SEASONAL, WIND_POWER_CURVE
 
 #: Irradiance, in W/m^2, at which a solar facility produces its full power. Irradiance is capped here too.
@@ -70,7 +70,7 @@ def clear_sky_irradiance(position: tuple[float, float], total_seconds: float, da
     day_of_year = int((total_seconds / 3600 / 24 / days_per_year) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
     weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
-    return DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
+    return direct_horizontal_irradiance(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
 
 
 def calculate_solar_irradiance(

@@ -11,36 +11,36 @@ from energetica.workshop.blackout import Blackout
 from energetica.workshop.control_room import (
     HYDRO_GUARANTEED_SHARE,
     STORAGE_HOURS,
-    BlackoutRisk,
-    RoomCapacity,
-    blackout_risk,
-    room_capacity,
     BlackoutAlarm,
+    BlackoutRisk,
     EventAlarm,
     PowerSource,
     PriceBox,
     RationingAlarm,
+    RoomCapacity,
     RoundEmissions,
     UnlockAlarm,
     VoteAlarm,
     alarms,
+    blackout_risk,
     power_source,
     price_box,
     price_summary,
+    room_capacity,
     room_generation,
     room_prices,
     round_emissions,
 )
 from energetica.workshop.events import EVENTS, FiredEvent, Severity, effect_line
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.recap import average_price
 from energetica.workshop.prices import MarketPrices, PlayerQuotes, QuotedPrice
+from energetica.workshop.recap import average_price
 from energetica.workshop.round_plan import PlannedEvent
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import RATIONING, FacilityPerformance, TradingResult
 from energetica.workshop.unlocks import Unlock
-from energetica.workshop.weather import RunWeather, _hours
 from energetica.workshop.votes import CARBON_TAX_RATE, VoteOutcome
+from energetica.workshop.weather import RunWeather, _hours
 
 
 def _fired(event: str, severity: Severity = "base", *, round_number: int, season: Season | None = None) -> FiredEvent:

@@ -23,8 +23,8 @@ import socketio
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
 from energetica.freeplay import legacy_pickle
-from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 from energetica.freeplay.national_demand import national_demand_curve
+from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 from energetica.kernel.atomic_file import open_atomically
 
 if TYPE_CHECKING:

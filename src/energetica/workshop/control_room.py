@@ -24,8 +24,8 @@ Every chart over seasons shows at most the last :data:`HISTORY_SEASONS`, so a lo
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
 import math
+from collections.abc import Iterable, Mapping, Sequence
 from enum import StrEnum
 from typing import Annotated, Literal, NamedTuple
 

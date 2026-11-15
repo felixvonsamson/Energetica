@@ -85,7 +85,7 @@ def rounded_polygon_path(points: list[Point], radius: float) -> str:
     "shrink each edge, connect with arcs" technique).
     """
     n = len(points)
-    cuts = []  # (A, B) = (entry cut point, exit cut point) for each vertex
+    cuts = []  # (entry cut point, exit cut point) for each vertex
     for i in range(n):
         prev_pt = points[(i - 1) % n]
         cur_pt = points[i]
@@ -99,15 +99,15 @@ def rounded_polygon_path(points: list[Point], radius: float) -> str:
         edge_out_len = math.hypot(*sub(next_pt, cur_pt))
         r = min(radius, edge_in_len * 0.49, edge_out_len * 0.49)
 
-        A = add(cur_pt, scale(v_in, r))
-        B = add(cur_pt, scale(v_out, r))
-        cuts.append((A, B))
+        entry = add(cur_pt, scale(v_in, r))
+        exit_ = add(cur_pt, scale(v_out, r))
+        cuts.append((entry, exit_))
 
     d = f"M {cuts[-1][1][0]:.3f},{cuts[-1][1][1]:.3f} "
     for i in range(n):
-        A, B = cuts[i]
-        d += f"L {A[0]:.3f},{A[1]:.3f} "
-        d += f"A {radius:.3f},{radius:.3f} 0 0,0 {B[0]:.3f},{B[1]:.3f} "
+        entry, exit_ = cuts[i]
+        d += f"L {entry[0]:.3f},{entry[1]:.3f} "
+        d += f"A {radius:.3f},{radius:.3f} 0 0,0 {exit_[0]:.3f},{exit_[1]:.3f} "
     d += "Z"
     return d
 

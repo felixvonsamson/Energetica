@@ -18,12 +18,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.concurrency import run_in_threadpool
+from fastapi.middleware.gzip import GZipMiddleware
 
 from energetica.identity import instance_config
-from energetica.identity.instance_config import InstanceConfig
 from energetica.identity.facilitator import router as facilitator_router
+from energetica.identity.instance_config import InstanceConfig
 from energetica.identity.join import router as join_router
 from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.kernel.error_envelope import install_error_handlers

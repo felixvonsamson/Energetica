@@ -16,9 +16,9 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from urllib.parse import quote
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, status

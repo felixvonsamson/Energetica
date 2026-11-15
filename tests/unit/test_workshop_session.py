@@ -12,10 +12,22 @@ import pytest
 
 from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
+from energetica.workshop import session as session_module
+from energetica.workshop.blackout import Blackout
+from energetica.workshop.demand_block import (
+    PER_PLAYER_BASE_AMPLITUDE,
+    SettlementPeriod,
+    national_demand_curve,
+    nominal_demand,
+    round_one_amplitude,
+)
+from energetica.workshop.demand_growth import growth_factor
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.fleet import OwnedFacility, Purchase
+from energetica.workshop.fleet import OwnedFacility, Purchase, lifetime_left, om_owed
+from energetica.workshop.operating_profit import round_operating_profit
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
+from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
 from energetica.workshop.prices import (
     DEFAULT_PRICES,
     PRICE_CEILING,
@@ -29,6 +41,8 @@ from energetica.workshop.prices import (
 )
 from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import LeverChanges, RoundLevers
+from energetica.workshop.score import ranked, score
+from energetica.workshop.seasons import representative_week
 from energetica.workshop.session import (
     SEASONS,
     Checkpoint,
@@ -56,24 +70,9 @@ from energetica.workshop.session import (
     completed_rounds,
     next_checkpoint,
 )
-from energetica.workshop import session as session_module
 from energetica.workshop.setup import NotAWorkshopRunError
-from energetica.workshop.demand_block import (
-    PER_PLAYER_BASE_AMPLITUDE,
-    SettlementPeriod,
-    national_demand_curve,
-    nominal_demand,
-    round_one_amplitude,
-)
-from energetica.workshop.score import ranked, score
-from energetica.workshop.fleet import lifetime_left, om_owed
-from energetica.workshop.unlocks import Unlock
-from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
-from energetica.workshop.seasons import representative_week
 from energetica.workshop.trading import RATIONING, Bidder, TradingOutcome, demand_scale, simulate_trading_period
-from energetica.workshop.blackout import Blackout
-from energetica.workshop.demand_growth import growth_factor
-from energetica.workshop.operating_profit import round_operating_profit
+from energetica.workshop.unlocks import Unlock
 from energetica.workshop.weather import representative_weather
 
 WORKSHOP_CONFIG = InstanceConfig.model_validate(

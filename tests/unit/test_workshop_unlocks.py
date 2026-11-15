@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import Purchase
+from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
 from energetica.workshop.prices import is_storage
 from energetica.workshop.round_format import StorageAvailability
-from energetica.workshop.player import WORKSHOP_STARTING_BUDGET
 from energetica.workshop.unlocks import (
     THRESHOLD_SHARES,
     UPGRADES,

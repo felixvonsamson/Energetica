@@ -12,10 +12,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.kernel.game_error import SharedErrorCode
 from energetica.identity.my_runs import build_my_runs
 from energetica.identity.schemas.lobby import MyRunsResponse
 from energetica.identity.web import Standing, get_standing, lobby_service
+from energetica.kernel.game_error import SharedErrorCode
 
 router = APIRouter(prefix="/lobby", tags=["Lobby"])
 

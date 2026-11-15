@@ -9,9 +9,9 @@ has already imported the persistent world.
 from __future__ import annotations
 
 import json
-import sqlite3
 import math
 import os
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -28,14 +28,14 @@ from httpx import Response
 
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop import app as workshop_app
+from energetica.workshop import session as session_module
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.credentials import CredentialLine, WorkshopCredentials, write_credentials
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, session_price
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, season_need
-from energetica.workshop import session as session_module
-from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.round_format import TradingFormat
+from energetica.workshop.round_plan import LeverChanges, with_levers
 from energetica.workshop.seasons import representative_week
 from energetica.workshop.session import Investment, TradingPeriod, WorkshopSession
 from energetica.workshop.trading import TradingOutcome

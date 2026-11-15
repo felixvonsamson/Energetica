@@ -6,13 +6,13 @@ import pytest
 
 from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig, Team
+from energetica.workshop.blackout import blackout_cost
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.score import Score, ranked, ranked_teams, residual_value, score
 from energetica.workshop.fleet import OwnedFacility, Purchase
 from energetica.workshop.loan import LOAN_COST, Loan
 from energetica.workshop.network import WorkshopNetwork
-from energetica.workshop.blackout import blackout_cost
 from energetica.workshop.player import WorkshopPlayer, round_start_money
+from energetica.workshop.score import Score, ranked, ranked_teams, residual_value, score
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.trading import FacilityPerformance, TradingResult
 

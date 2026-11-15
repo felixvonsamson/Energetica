@@ -44,8 +44,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from energetica.workshop.blackout import Blackout, blackout_cost, blackout_cost_share
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import Purchase
-from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, Loan, payment_round
 from energetica.workshop.fuel import FUEL_NAMES
+from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, Loan, payment_round
 from energetica.workshop.operating_profit import period_operating_profit, round_operating_profit
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.trading import FacilityPerformance, TradingResult

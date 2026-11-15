@@ -14,14 +14,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from energetica.sim.market import market_optimum, merit_order, MarketEntry
+from energetica.sim.market import MarketEntry, market_optimum, merit_order
 from energetica.workshop.demand_block import DAYS_PER_YEAR, DemandCurve
 from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.prices import DEFAULT_PRICES, PriceSheet
-from energetica.workshop.schemas import WorkshopSeasonOverviewOut
 from energetica.workshop.round_format import ClearingsPerDay, RoundFormat, TradingFormat
+from energetica.workshop.schemas import WorkshopSeasonOverviewOut
 from energetica.workshop.seasons import SEASON_DAYS
 from energetica.workshop.trading import Bidder, TradingOutcome, simulate_trading_period
 from energetica.workshop.weather import Shares
