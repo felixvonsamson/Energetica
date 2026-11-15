@@ -1,4 +1,9 @@
-"""A small client for the Workshop API, logged in through the lobby like a browser."""
+"""A small client for the Workshop API, logged in through the lobby like a browser.
+
+Each method parses its response into the backend's own Pydantic model, and builds its request body from the backend's
+request model. So when the backend renames or reshapes a field, pyright fails on the bots in CI, and a response that
+still slips through fails here with a validation error that names the field, rather than deep inside a strategy.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +14,38 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from pydantic import BaseModel, TypeAdapter
+
+from energetica.identity.schemas.auth import LoginRequest
+from energetica.workshop.balance_sheet import BalanceSheet
+from energetica.workshop.facilities import FacilityId, Fuel
+from energetica.workshop.prices import PRICE_CEILING, PRICE_FLOOR, PriceSide
+from energetica.workshop.recap import WorkshopRecap
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent
+from energetica.workshop.schemas import (
+    WorkshopBallotIn,
+    WorkshopEntryOut,
+    WorkshopFacilityOut,
+    WorkshopFuelOrderIn,
+    WorkshopFuelOut,
+    WorkshopLoanOut,
+    WorkshopOwnedFacilityOut,
+    WorkshopPeriodDaysOut,
+    WorkshopPeriodOut,
+    WorkshopPriceIn,
+    WorkshopPricesOut,
+    WorkshopSelectionIn,
+    WorkshopSelectionOut,
+    WorkshopSessionOut,
+    WorkshopVoteOut,
+)
+from energetica.workshop.score import Scoreboard
+from energetica.workshop.seasons import Season
+from energetica.workshop.session import Checkpoint
+from energetica.workshop.votes import Ballot
 
 APP_URL = os.environ.get("ENERGETICA_APP_URL", "http://localhost:8000") + "/api/v1"
 LOBBY_URL = os.environ.get("ENERGETICA_LOBBY_URL", "http://localhost:8001") + "/api/v1"
-
-# The range the server accepts for a price, both included: energetica.workshop.prices.PRICE_FLOOR and PRICE_CEILING.
-PRICE_FLOOR = -25.0
-PRICE_CEILING = 1000.0
 
 # The methods the bots send whose second copy changes nothing: each PUT and PATCH sets a value or replaces an event.
 SAFE_TO_REPEAT = {"GET", "PUT", "PATCH"}
@@ -24,6 +54,9 @@ SAFE_TO_REPEAT = {"GET", "PUT", "PATCH"}
 # A JSON file {"<username>": "<password>", ...} for accounts that do not use the local default password.
 PASSWORDS_FILE = os.environ.get("ENERGETICA_BOT_PASSWORDS")
 
+_FACILITIES = TypeAdapter(list[WorkshopFacilityOut])
+_FLEET = TypeAdapter(list[WorkshopOwnedFacilityOut])
+
 
 class ApiError(Exception):
     """A request the backend refused."""
@@ -31,6 +64,13 @@ class ApiError(Exception):
 
 class LoginError(ApiError):
     """An account the script has no password for, whose login the lobby refused, or that cannot enter the Run."""
+
+
+class Plan(BaseModel):
+    """A plan file in plans/: the levers to change and the events to plan, by Round."""
+
+    levers: dict[int, LeverChanges] = {}
+    events: dict[int, list[PlannedEvent]] = {}
 
 
 def _passwords() -> dict[str, str] | None:
@@ -73,17 +113,16 @@ class Api:
         # Drop an idle connection before Apache's 5-second keep-alive timeout closes it, so a request that is not safe
         # to repeat rarely goes out on a connection that is closing.
         self.client = httpx.Client(base_url=APP_URL, timeout=60, limits=httpx.Limits(keepalive_expiry=3))
-        login = self.request(
-            "POST",
-            f"{LOBBY_URL}/auth/login",
-            json={"username": username, "password": password if password is not None else password_for(username)},
+        credentials = LoginRequest(
+            username=username, password=password if password is not None else password_for(username)
         )
+        login = self.request("POST", f"{LOBBY_URL}/auth/login", json=credentials.model_dump(mode="json"))
         if login.status_code >= 400:
             raise LoginError(f"the lobby refused the login of {username}: {login.status_code} {login.text[:200]}")
         entry = self.request("POST", "/workshop/enter")
         if entry.status_code >= 400:
             raise LoginError(f"{username} cannot enter the Run: {entry.status_code} {entry.text[:200]}")
-        self.entry: dict[str, Any] = entry.json()
+        self.entry = WorkshopEntryOut.model_validate_json(entry.content)
 
     def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Send a request, and send it once more if the connection dropped before any response came back.
@@ -104,35 +143,75 @@ class Api:
 
     @property
     def account_id(self) -> int | None:
-        player = self.entry.get("player")
-        return player["account_id"] if player else None
+        return self.entry.player.account_id if self.entry.player is not None else None
 
-    def get(self, path: str) -> Any:
-        response = self.request("GET", "/workshop" + path)
-        if response.status_code >= 400:
-            raise ApiError(f"GET {path}: {response.status_code} {response.text[:200]}")
-        return response.json()
-
-    def send(self, method: str, path: str, body: Any = None) -> Any:
-        response = self.request(method, "/workshop" + path, json=body)
+    def _send(self, method: str, path: str, body: BaseModel | None = None) -> bytes:
+        """Send a request under ``/workshop`` and return the response's body. Raise ApiError if the backend refused."""
+        json_body = body.model_dump(mode="json", exclude_unset=True) if body is not None else None
+        response = self.request(method, "/workshop" + path, json=json_body)
         if response.status_code >= 400:
             raise ApiError(f"{method} {path}: {response.status_code} {response.text[:200]}")
-        return response.json()
+        return response.content
+
+    # What everyone in the Run can read.
+    def session(self) -> WorkshopSessionOut:
+        return WorkshopSessionOut.model_validate_json(self._send("GET", "/session"))
+
+    def facilities(self) -> list[WorkshopFacilityOut]:
+        return _FACILITIES.validate_json(self._send("GET", "/facilities"))
+
+    def period(self, round_number: int, season: Season) -> WorkshopPeriodOut:
+        return WorkshopPeriodOut.model_validate_json(self._send("GET", f"/periods/{round_number}/{season}"))
+
+    def period_days(self, round_number: int, season: Season, first_day: int, count: int) -> WorkshopPeriodDaysOut:
+        path = f"/periods/{round_number}/{season}/days/{first_day}/{count}"
+        return WorkshopPeriodDaysOut.model_validate_json(self._send("GET", path))
+
+    def recap(self, round_number: int) -> WorkshopRecap:
+        return WorkshopRecap.model_validate_json(self._send("GET", f"/rounds/{round_number}/recap"))
+
+    def vote(self) -> WorkshopVoteOut:
+        return WorkshopVoteOut.model_validate_json(self._send("GET", "/vote"))
+
+    def scoreboard(self) -> Scoreboard:
+        return Scoreboard.model_validate_json(self._send("GET", "/scoreboard"))
+
+    # A player's own state.
+    def fleet(self) -> list[WorkshopOwnedFacilityOut]:
+        return _FLEET.validate_json(self._send("GET", "/fleet"))
+
+    def selection(self) -> WorkshopSelectionOut:
+        return WorkshopSelectionOut.model_validate_json(self._send("GET", "/selection"))
+
+    def fuel(self) -> WorkshopFuelOut:
+        return WorkshopFuelOut.model_validate_json(self._send("GET", "/fuel"))
+
+    def loan(self) -> WorkshopLoanOut:
+        return WorkshopLoanOut.model_validate_json(self._send("GET", "/loan"))
+
+    def balance_sheet(self, round_number: int) -> BalanceSheet:
+        return BalanceSheet.model_validate_json(self._send("GET", f"/rounds/{round_number}/balance-sheet"))
 
     # Player actions.
-    def select(self, facility: str) -> Any:
-        return self.send("POST", "/selection", {"facility": facility})
+    def select(self, facility: FacilityId) -> WorkshopSelectionOut:
+        body = WorkshopSelectionIn(facility=facility)
+        return WorkshopSelectionOut.model_validate_json(self._send("POST", "/selection", body))
 
-    def set_price(self, facility: str, side: str, price: float) -> Any:
+    def set_price(self, facility: FacilityId, side: PriceSide, price: float) -> WorkshopPricesOut:
         # The server refuses prices outside this range, and the refusal would end the bot's turn.
-        price = min(max(price, PRICE_FLOOR), PRICE_CEILING)
-        return self.send("PUT", f"/prices/{facility}/{side}", {"price": price})
+        body = WorkshopPriceIn(price=min(max(price, PRICE_FLOOR), PRICE_CEILING))
+        return WorkshopPricesOut.model_validate_json(self._send("PUT", f"/prices/{facility}/{side}", body))
 
-    def set_fuel_order(self, fuel: str, quantity: float) -> Any:
-        return self.send("PUT", f"/fuel/{fuel}", {"quantity": quantity})
+    def set_fuel_order(self, fuel: Fuel, quantity: float) -> WorkshopFuelOut:
+        body = WorkshopFuelOrderIn(quantity=quantity)
+        return WorkshopFuelOut.model_validate_json(self._send("PUT", f"/fuel/{fuel}", body))
 
-    def cast_ballot(self, ballot: str) -> Any:
-        return self.send("PUT", "/vote/ballot", {"ballot": ballot})
+    def cast_ballot(self, ballot: Ballot) -> WorkshopVoteOut:
+        body = WorkshopBallotIn(ballot=ballot)
+        return WorkshopVoteOut.model_validate_json(self._send("PUT", "/vote/ballot", body))
+
+    def take_loan(self) -> WorkshopLoanOut:
+        return WorkshopLoanOut.model_validate_json(self._send("POST", "/loan"))
 
 
 class Facilitator(Api):
@@ -141,30 +220,32 @@ class Facilitator(Api):
     def __init__(self, username: str):
         super().__init__(username, facilitator_password_for(username))
 
-    def checkpoint(self) -> dict[str, Any]:
-        return self.get("/session")["checkpoint"]
+    def checkpoint(self) -> Checkpoint:
+        return self.session().checkpoint
 
-    def advance(self) -> dict[str, Any] | None:
+    def advance(self) -> WorkshopSessionOut | None:
         """Advance once. None if the session refused, which it does while a period is being simulated."""
-        response = self.request("POST", "/workshop/session/advance")
-        return response.json() if response.status_code < 400 else None
+        try:
+            return WorkshopSessionOut.model_validate_json(self._send("POST", "/session/advance"))
+        except ApiError:
+            return None
 
-    def advance_to_next_checkpoint(self, timeout: float = 600) -> dict[str, Any]:
+    def advance_to_next_checkpoint(self, timeout: float = 600) -> Checkpoint:
         """Close the open window and keep advancing until the session reaches another checkpoint."""
         before = self.checkpoint()
         self.advance()
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             answer = self.advance()
-            if answer is not None and answer["checkpoint"] != before:
-                return answer["checkpoint"]
+            if answer is not None and answer.checkpoint != before:
+                return answer.checkpoint
             time.sleep(0.5)
         raise TimeoutError(f"the session stayed at {before}")
 
-    def apply_plan(self, plan: dict[str, Any]) -> None:
-        """Set each Round's levers, then plan its events. ``plan`` is a scenario file's contents."""
-        for round_number, levers in plan.get("levers", {}).items():
-            self.send("PATCH", f"/plans/{round_number}/levers", levers)
-        for round_number, events in plan.get("events", {}).items():
+    def apply_plan(self, plan: Plan) -> None:
+        """Set each Round's levers, then plan its events."""
+        for round_number, levers in plan.levers.items():
+            self._send("PATCH", f"/plans/{round_number}/levers", levers)
+        for round_number, events in plan.events.items():
             for event in events:
-                self.send("PUT", f"/plans/{round_number}/events", event)
+                self._send("PUT", f"/plans/{round_number}/events", event)

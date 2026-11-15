@@ -12,9 +12,12 @@ from __future__ import annotations
 
 import random
 
+from energetica.workshop.facilities import CATALOG, FacilityCategory, FacilityId, Fuel
+from energetica.workshop.prices import PriceSide
+from energetica.workshop.votes import Ballot
 from market import FIRM, RENEWABLE, STORAGE, Ctx
 
-Prices = dict[tuple[str, str], float]  # (facility, "sell" or "buy") -> price per MWh
+Prices = dict[tuple[FacilityId, PriceSide], float]  # (facility, side) -> price per MWh
 
 
 class Strategy:
@@ -24,7 +27,7 @@ class Strategy:
     def __init__(self, seed: int = 0):
         self.rng = random.Random(f"{self.name}:{seed}")
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         """The facilities to pick in the Investment phase, one entry per copy."""
         return []
 
@@ -36,12 +39,12 @@ class Strategy:
         """Changes to make halfway through the window, in live runs only."""
         return {}
 
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+    def fuel_orders(self, ctx: Ctx) -> dict[Fuel, float]:
         """kg of each fuel to buy under manual procurement. By default, top the stock up to the season's need."""
-        return {fuel: max(0.0, line["season_need"] - line["stock"]) for fuel, line in ctx.fuel.items()}
+        return {fuel: max(0.0, line.season_need - line.stock) for fuel, line in ctx.fuel.items()}
 
-    def ballot(self, ctx: Ctx) -> str | None:
-        """ "yes" or "no" in a carbon tax vote."""
+    def ballot(self, ctx: Ctx) -> Ballot | None:
+        """The ballot to cast in a carbon tax vote, or None to abstain."""
         return None
 
     def wants_loan(self, ctx: Ctx) -> bool:
@@ -53,32 +56,35 @@ class Strategy:
         ctx.memory.setdefault("notes", []).append(f"R{ctx.round} {ctx.season or 'investment'}: {text}")
 
 
-def shopping(ctx: Ctx, wishes: list[tuple[str | None, int]], budget: float) -> list[str]:
+Wishes = list[tuple[FacilityId | None, int]]
+
+
+def shopping(ctx: Ctx, wishes: Wishes, budget: float) -> list[FacilityId]:
     """Pick from ``wishes``, (facility, count) in order of preference, skipping what is not for sale, too dear or
     over its limit.
     """
-    picks: list[str] = []
+    picks: list[FacilityId] = []
     left = budget
     for facility, count in wishes:
         item = ctx.offered.get(facility) if facility else None
         if item is None:
             continue
         for _ in range(count):
-            if item["price"] > left or picks.count(item["id"]) >= ctx.room_for(item["id"]):
+            if item.price > left or picks.count(item.id) >= ctx.room_for(item.id):
                 break
-            picks.append(item["id"])
-            left -= item["price"]
+            picks.append(item.id)
+            left -= item.price
     return picks
 
 
-def units_for(ctx: Ctx, facility: str | None, watts: float) -> int:
+def units_for(ctx: Ctx, facility: FacilityId | None, watts: float) -> int:
     """How many of ``facility`` it takes to add ``watts``, rounded up."""
     if facility is None or watts <= 0:
         return 0
     return int(-(-watts // ctx.power(facility)))
 
 
-def best_of(ctx: Ctx, *facilities: str) -> str | None:
+def best_of(ctx: Ctx, *facilities: FacilityId) -> FacilityId | None:
     """The first of ``facilities`` for sale. List upgrades first."""
     return next((facility for facility in facilities if facility in ctx.offered), None)
 
@@ -105,15 +111,15 @@ class CoalKing(Strategy):
     name = "coalking"
     persona = "Old-energy incumbent: big coal fleet, cost-plus prices tuned by sales, against the carbon tax"
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         if ctx.round == 1:
             self.note(ctx, "five coal burners")
-            return shopping(ctx, [("coal_burner", 5)], ctx.money)
-        if ctx.session.get("carbon_tax_since") is not None:
-            plant = best_of(ctx, "combined_cycle", "gas_burner")
+            return shopping(ctx, [(FacilityId.COAL_BURNER, 5)], ctx.money)
+        if ctx.carbon_tax_on:
+            plant = best_of(ctx, FacilityId.COMBINED_CYCLE, FacilityId.GAS_BURNER)
             self.note(ctx, f"the carbon tax is on, so {plant} from now on")
         else:
-            plant = best_of(ctx, "modern_coal_plant", "coal_burner")
+            plant = best_of(ctx, FacilityId.MODERN_COAL_PLANT, FacilityId.COAL_BURNER)
         missing = 1.6 * ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM)
         return shopping(ctx, [(plant, max(1, units_for(ctx, plant, missing)))], budget(ctx, 0.8))
 
@@ -129,15 +135,15 @@ class CoalKing(Strategy):
         ctx.memory["markup"] = markup
         return {(f, "sell"): round(ctx.marginal_cost(f) * markup) for f in ctx.operating() if f in FIRM}
 
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+    def fuel_orders(self, ctx: Ctx) -> dict[Fuel, float]:
         orders = {}
         for fuel, line in ctx.fuel.items():
-            share = ctx.fuel_margin(ctx.burn_share(fuel) * (1.3 if (line.get("change") or 0) < -0.02 else 1.15))
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
+            share = ctx.fuel_margin(ctx.burn_share(fuel) * (1.3 if (line.change or 0) < -0.02 else 1.15))
+            orders[fuel] = max(0.0, line.season_need * share - line.stock)
             self.note(ctx, f"burned {ctx.burn_share(fuel):.0%} of his full {fuel} need, orders {share:.0%}")
         return orders
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return "no"
 
     def wants_loan(self, ctx: Ctx) -> bool:
@@ -156,19 +162,19 @@ class Greenie(Strategy):
     name = "greenie"
     persona = "Idealist: renewables only, gives power away at first, adds storage later, for the carbon tax"
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         if ctx.round == 1:
             self.note(ctx, "two wind turbines and two PV farms")
-            return shopping(ctx, [("onshore_wind_turbine", 2), ("pv_solar", 2)], ctx.money)
-        wind = best_of(ctx, "offshore_wind_turbine", "onshore_wind_turbine")
+            return shopping(ctx, [(FacilityId.ONSHORE_WIND_TURBINE, 2), (FacilityId.PV_SOLAR, 2)], ctx.money)
+        wind = best_of(ctx, FacilityId.OFFSHORE_WIND_TURBINE, FacilityId.ONSHORE_WIND_TURBINE)
         missing = 2.0 * ctx.fair_share() - ctx.capacity(RENEWABLE)
-        wishes: list[tuple[str | None, int]] = [
-            (best_of(ctx, "solid_state_batteries", "lithium_ion_batteries"), 1),
-            (best_of(ctx, "pumped_hydro", "hydrogen_storage"), 1),
-            (best_of(ctx, "multi_layer_pv", "pv_solar"), 1),
-            ("csp_solar", 1),
+        wishes: Wishes = [
+            (best_of(ctx, FacilityId.SOLID_STATE_BATTERIES, FacilityId.LITHIUM_ION_BATTERIES), 1),
+            (best_of(ctx, FacilityId.PUMPED_HYDRO, FacilityId.HYDROGEN_STORAGE), 1),
+            (best_of(ctx, FacilityId.MULTI_LAYER_PV, FacilityId.PV_SOLAR), 1),
+            (FacilityId.CSP_SOLAR, 1),
             (wind, units_for(ctx, wind, missing / 2)),
-            (best_of(ctx, "large_water_dam", "small_water_dam"), 2),
+            (best_of(ctx, FacilityId.LARGE_WATER_DAM, FacilityId.SMALL_WATER_DAM), 2),
         ]
         return shopping(ctx, wishes, ctx.money * 0.6)
 
@@ -187,7 +193,7 @@ class Greenie(Strategy):
                 prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.3, 0.7)
         return prices
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return "yes"
 
 
@@ -205,15 +211,17 @@ class Trader(Strategy):
 
     LADDER = (1.3, 2.0, 3.0, 1.6)
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         if ctx.round == 1:
             self.note(ctx, "six gas peakers")
-            return shopping(ctx, [("gas_burner", 6)], ctx.money)
+            return shopping(ctx, [(FacilityId.GAS_BURNER, 6)], ctx.money)
         # In the last Round a plant keeps most of its price as residual value, so he builds more.
         missing = ctx.fair_share() * panic(ctx) * (1.3 if ctx.is_last_round else 1.0) - ctx.capacity(FIRM)
-        battery = best_of(ctx, "lithium_ion_batteries", "solid_state_batteries")
+        battery = best_of(ctx, FacilityId.LITHIUM_ION_BATTERIES, FacilityId.SOLID_STATE_BATTERIES)
         return shopping(
-            ctx, [(battery, 1), ("gas_burner", max(1, units_for(ctx, "gas_burner", missing)))], budget(ctx, 0.7)
+            ctx,
+            [(battery, 1), (FacilityId.GAS_BURNER, max(1, units_for(ctx, FacilityId.GAS_BURNER, missing)))],
+            budget(ctx, 0.7),
         )
 
     def withholds(self, ctx: Ctx) -> bool:
@@ -253,10 +261,10 @@ class Trader(Strategy):
                 prices[(facility, "buy")], prices[(facility, "sell")] = ctx.storage_prices(facility, 0.25, 0.8)
         return prices
 
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+    def fuel_orders(self, ctx: Ctx) -> dict[Fuel, float]:
         orders = {}
         for fuel, line in ctx.fuel.items():
-            change = line.get("change") or 0
+            change = line.change or 0
             share = ctx.burn_share(fuel)
             if change > 0.03:
                 share *= 0.7
@@ -267,10 +275,10 @@ class Trader(Strategy):
             if self.withholds(ctx):
                 share = 0.0
                 self.note(ctx, f"the Recap warned about this season: buys no {fuel}, betting that scarcity pays")
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
+            orders[fuel] = max(0.0, line.season_need * share - line.stock)
         return orders
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return "yes"
 
     def wants_loan(self, ctx: Ctx) -> bool:
@@ -289,14 +297,18 @@ class Nuke(Strategy):
     name = "nuke"
     persona = "Planner: borrows for a reactor in Round 1, nuclear baseload priced at cost; for the carbon tax"
 
-    def invest(self, ctx: Ctx) -> list[str]:
-        reactor = best_of(ctx, "nuclear_reactor_gen4", "nuclear_reactor")
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
+        reactor = best_of(ctx, FacilityId.NUCLEAR_REACTOR_GEN4, FacilityId.NUCLEAR_REACTOR)
         if ctx.round == 1:
             self.note(ctx, "a reactor for Round 2, and gas burners to bridge the wait")
-            return shopping(ctx, [(reactor, 1), ("gas_burner", 2)], ctx.money)
-        missing = ctx.fair_share() * panic(ctx) - ctx.capacity(FIRM | {"small_water_dam", "large_water_dam"})
+            return shopping(ctx, [(reactor, 1), (FacilityId.GAS_BURNER, 2)], ctx.money)
+        missing = ctx.fair_share() * panic(ctx) - ctx.capacity(
+            FIRM | {FacilityId.SMALL_WATER_DAM, FacilityId.LARGE_WATER_DAM}
+        )
         if not ctx.is_last_round:
-            picks = shopping(ctx, [(reactor, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], ctx.money)
+            picks = shopping(
+                ctx, [(reactor, 1), (FacilityId.GAS_BURNER, units_for(ctx, FacilityId.GAS_BURNER, missing))], ctx.money
+            )
             if reactor in picks:
                 self.note(ctx, "another reactor, running next Round")
             else:
@@ -304,13 +316,15 @@ class Nuke(Strategy):
             return picks
         self.note(ctx, "last Round: a reactor would not run, so gas and dams, plenty, since they keep their value")
         missing += 0.3 * ctx.fair_share()
-        dam = best_of(ctx, "large_water_dam", "small_water_dam")
-        return shopping(ctx, [(dam, 1), ("gas_burner", units_for(ctx, "gas_burner", missing))], budget(ctx, 0.8))
+        dam = best_of(ctx, FacilityId.LARGE_WATER_DAM, FacilityId.SMALL_WATER_DAM)
+        return shopping(
+            ctx, [(dam, 1), (FacilityId.GAS_BURNER, units_for(ctx, FacilityId.GAS_BURNER, missing))], budget(ctx, 0.8)
+        )
 
     def prices(self, ctx: Ctx) -> Prices:
         prices: Prices = {}
         for facility in ctx.operating():
-            if facility.startswith("nuclear"):
+            if CATALOG[facility].category == FacilityCategory.NUCLEAR:
                 prices[(facility, "sell")] = round(ctx.marginal_cost(facility) + 15)
             elif facility in FIRM:
                 prices[(facility, "sell")] = round(ctx.marginal_cost(facility) * 1.4)
@@ -318,7 +332,7 @@ class Nuke(Strategy):
                 prices[(facility, "sell")] = 10.0
         return prices
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return "yes"
 
     def wants_loan(self, ctx: Ctx) -> bool:
@@ -337,23 +351,21 @@ class Gambler(Strategy):
     name = "gambler"
     persona = "Copycat: buys last Round's winner, erratic and sometimes wild prices, sloppy with fuel"
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         if ctx.round == 1 or not ctx.history:
-            guess = self.rng.choice(["coal_burner", "gas_burner", "onshore_wind_turbine"])
+            guess = self.rng.choice([FacilityId.COAL_BURNER, FacilityId.GAS_BURNER, FacilityId.ONSHORE_WIND_TURBINE])
             self.note(ctx, f"first guess: {guess}")
             # Even a gambler keeps some plants that run on demand next to his wind.
-            wishes: list[tuple[str | None, int]] = [(guess, 5), ("small_water_dam", 3)]
-            if guess == "onshore_wind_turbine":
-                wishes = [(guess, 3), ("gas_burner", 4)]
+            wishes: Wishes = [(guess, 5), (FacilityId.SMALL_WATER_DAM, 3)]
+            if guess == FacilityId.ONSHORE_WIND_TURBINE:
+                wishes = [(guess, 3), (FacilityId.GAS_BURNER, 4)]
             return shopping(ctx, wishes, ctx.money * self.rng.uniform(0.7, 1.0))
-        earned: dict[str, float] = {}
+        earned: dict[FacilityId, float] = {}
         for view in ctx.history[-4:]:
             for facility, value in view.income_by_facility().items():
                 earned[facility] = earned.get(facility, 0.0) + value
         per_euro = {
-            f: value / ctx.offered[f]["price"]
-            for f, value in earned.items()
-            if f in ctx.offered and ctx.room_for(f) > 0
+            f: value / ctx.offered[f].price for f, value in earned.items() if f in ctx.offered and ctx.room_for(f) > 0
         }
         if not per_euro:
             return []
@@ -385,7 +397,7 @@ class Gambler(Strategy):
         anchor = ctx.last.mean_price if ctx.last else 120.0
         return {(facility, "sell"): round(max(ctx.marginal_cost(facility) * 1.05, anchor * self.rng.uniform(0.8, 1.1)))}
 
-    def fuel_orders(self, ctx: Ctx) -> dict[str, float]:
+    def fuel_orders(self, ctx: Ctx) -> dict[Fuel, float]:
         orders = {}
         for fuel, line in ctx.fuel.items():
             first_time = "fuel_seen" not in ctx.memory
@@ -393,11 +405,11 @@ class Gambler(Strategy):
                 self.note(ctx, f"forgets to change his {fuel} order")
                 continue  # the order stays at what he bought last time
             share = ctx.burn_share(fuel) * self.rng.uniform(0.8, 1.2)
-            orders[fuel] = max(0.0, line["season_need"] * share - line["stock"])
+            orders[fuel] = max(0.0, line.season_need * share - line.stock)
         ctx.memory["fuel_seen"] = True
         return orders
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return self.rng.choice(["yes", "no"])
 
     def wants_loan(self, ctx: Ctx) -> bool:
@@ -411,17 +423,17 @@ class TypicalHuman(Strategy):
     name = "player"
     persona = "Cautious first-timer who keeps the default prices"
 
-    def invest(self, ctx: Ctx) -> list[str]:
+    def invest(self, ctx: Ctx) -> list[FacilityId]:
         if ctx.round == 1:
-            wishes: list[tuple[str | None, int]] = [
-                ("coal_burner", 2),
-                ("gas_burner", 1),
-                ("onshore_wind_turbine", 1),
+            wishes: Wishes = [
+                (FacilityId.COAL_BURNER, 2),
+                (FacilityId.GAS_BURNER, 1),
+                (FacilityId.ONSHORE_WIND_TURBINE, 1),
             ]
             return shopping(ctx, wishes, ctx.money)
-        return shopping(ctx, [("gas_burner", 1), ("onshore_wind_turbine", 1)], ctx.money)
+        return shopping(ctx, [(FacilityId.GAS_BURNER, 1), (FacilityId.ONSHORE_WIND_TURBINE, 1)], ctx.money)
 
-    def ballot(self, ctx: Ctx) -> str:
+    def ballot(self, ctx: Ctx) -> Ballot:
         return "yes"
 
 
