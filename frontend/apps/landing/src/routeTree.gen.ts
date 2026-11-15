@@ -17,6 +17,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WikiIndexRouteImport } from './routes/wiki/index'
 import { Route as WikiSlugRouteImport } from './routes/wiki/$slug'
+import { Route as PrototypeAssetDirectionRouteImport } from './routes/prototype.asset-direction'
 
 const WorkshopRoute = WorkshopRouteImport.update({
   id: '/workshop',
@@ -58,6 +59,11 @@ const WikiSlugRoute = WikiSlugRouteImport.update({
   path: '/wiki/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrototypeAssetDirectionRoute = PrototypeAssetDirectionRouteImport.update({
+  id: '/prototype/asset-direction',
+  path: '/prototype/asset-direction',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
   '/workshop': typeof WorkshopRoute
+  '/prototype/asset-direction': typeof PrototypeAssetDirectionRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki': typeof WikiIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
   '/workshop': typeof WorkshopRoute
+  '/prototype/asset-direction': typeof PrototypeAssetDirectionRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki': typeof WikiIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
   '/workshop': typeof WorkshopRoute
+  '/prototype/asset-direction': typeof PrototypeAssetDirectionRoute
   '/wiki/$slug': typeof WikiSlugRoute
   '/wiki/': typeof WikiIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/for-educators'
     | '/landing-page'
     | '/workshop'
+    | '/prototype/asset-direction'
     | '/wiki/$slug'
     | '/wiki'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/for-educators'
     | '/landing-page'
     | '/workshop'
+    | '/prototype/asset-direction'
     | '/wiki/$slug'
     | '/wiki'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/for-educators'
     | '/landing-page'
     | '/workshop'
+    | '/prototype/asset-direction'
     | '/wiki/$slug'
     | '/wiki/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ForEducatorsRoute: typeof ForEducatorsRoute
   LandingPageRoute: typeof LandingPageRoute
   WorkshopRoute: typeof WorkshopRoute
+  PrototypeAssetDirectionRoute: typeof PrototypeAssetDirectionRoute
   WikiSlugRoute: typeof WikiSlugRoute
   WikiIndexRoute: typeof WikiIndexRoute
 }
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WikiSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prototype/asset-direction': {
+      id: '/prototype/asset-direction'
+      path: '/prototype/asset-direction'
+      fullPath: '/prototype/asset-direction'
+      preLoaderRoute: typeof PrototypeAssetDirectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForEducatorsRoute: ForEducatorsRoute,
   LandingPageRoute: LandingPageRoute,
   WorkshopRoute: WorkshopRoute,
+  PrototypeAssetDirectionRoute: PrototypeAssetDirectionRoute,
   WikiSlugRoute: WikiSlugRoute,
   WikiIndexRoute: WikiIndexRoute,
 }
