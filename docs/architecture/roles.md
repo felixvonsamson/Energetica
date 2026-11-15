@@ -198,9 +198,9 @@ the values of `run.mode` in `instance.json`; `both` means both modes.
 | Regenerate recap                                                          | sysadmin    | n/a      | freeplay | out-of-band | built (stays out-of-band — dev recovery, not a facilitator act, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 
 `setup-instance.sh` writes all three lifecycle timestamps for either mode, and the lobby lists
-every run by the phase they give it. But only the persistent world's engine stops play at
-`freeze_at` and holds it until `starts_at`. In Workshop Mode the facilitator's console drives
-the session instead. The reaper reads `ended_at` for both modes. This is why the in-app freeze
+every run by the phase they give it. But only the persistent world's engine gates play on them: it
+waits until `starts_at` to begin play, and stops play at `freeze_at`. In Workshop Mode the
+facilitator's console drives the session instead. The reaper reads `ended_at` for both modes. This is why the in-app freeze
 and re-anchor levers are `freeplay` only, while ending a run applies to both.
 
 ### Access control and whitelisting
