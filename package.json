@@ -21,6 +21,7 @@
         "generate-showcase-data": "PYTHONPATH=backend/src .venv/bin/python scripts/generate_showcase_data.py",
         "ruff:check": ".venv/bin/ruff check . --fix",
         "ruff:format": ".venv/bin/ruff format .",
+        "lint:imports": "PYTHONPATH=backend/src .venv/bin/lint-imports --config backend/pyproject.toml",
         "check-wiki": ".venv/bin/python scripts/dev/check_wiki_links.py",
         "rm-instance": "rm -rf instance/ checkpoints/ .energetica-dev/ frontend/public/instances.json"
     }

@@ -188,14 +188,15 @@ the fixing and formatting forms — both write to your files, neither is read-on
     persistent world's game engine, or load the lobby service, where it must not.
 
 ```
-lint-imports --config backend/pyproject.toml   # check the import contracts
+bun run lint:imports  # check the import contracts
 ```
 
 `pip install -e './backend[dev]'` installs import-linter. Its contracts are about the backend's
-packages alone, so they live with them rather than with the root's ruff and pyright
-configuration. In a git worktree, run
-`PYTHONPATH=backend/src lint-imports --config backend/pyproject.toml`. The shared `.venv` would
-otherwise resolve `energetica` to the main checkout.
+packages alone, so they live in `backend/pyproject.toml` rather than with the root's ruff and
+pyright configuration, and the shortcut passes that file to `lint-imports` with `--config`. It
+also imports the backend from this checkout's `backend/src/`, so it checks the right code in a
+git worktree too, where the shared `.venv` would otherwise resolve `energetica` to the main
+checkout.
 
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120
@@ -253,7 +254,7 @@ Before opening a PR, ensure:
 - [ ] Branch up to date with `main`
 - [ ] Tests pass locally (`pytest`)
 - [ ] New/changed code is covered by tests
-- [ ] Lint passes (`ruff check .` and `lint-imports --config backend/pyproject.toml`)
+- [ ] Lint passes (`ruff check .` and `bun run lint:imports`)
 - [ ] No stray `print` debugging left (unless intentional & documented)
 - [ ] Updated docs / comments where behavior changed
 - [ ] Large changes broken into logical commits
