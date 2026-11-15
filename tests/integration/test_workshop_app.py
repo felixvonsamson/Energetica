@@ -135,7 +135,7 @@ def _checkpoint(kind: str, round_number: int | None = None, season: str | None =
     return checkpoint
 
 
-# --- the app ---------------------------------------------------------------------------------
+# --- the route surface -----------------------------------------------------------------------
 
 
 def test_serves_none_of_the_persistent_world(session_path: Path) -> None:

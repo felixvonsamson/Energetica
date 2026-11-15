@@ -191,7 +191,7 @@ class WorkshopRun(BaseModel):
 
 RunMode = FreeplayRun | WorkshopRun
 
-# The ``mode`` tags of :data:`RunMode`. ``test_run_route.py`` holds the two equal.
+# The ``mode`` tags of :data:`RunMode`. ``test_instance_config.py`` holds the two equal.
 RunModeTag = Literal["freeplay", "workshop"]
 
 

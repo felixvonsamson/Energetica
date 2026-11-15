@@ -212,7 +212,7 @@ def test_no_workshop_code_outside_the_workshop(schemas: dict[str, dict], app_nam
 
 
 def test_only_per_app_schemas_are_built(schemas: dict[str, dict]) -> None:
-    """There is one schema per app and no merged one, so each app sees only the codes it can return."""
+    """The generator builds one schema per app and no merged one."""
     assert schemas.keys() == APP_CODES.keys()
 
 

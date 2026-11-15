@@ -6,6 +6,7 @@ import json
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import get_args
 
 import pytest
 
@@ -236,6 +237,11 @@ def test_private_access_write_keeps_the_run_mode(configured: Path) -> None:
 def test_run_modes_lists_every_variant_tag() -> None:
     """Provisioning validates `--mode` against this, so it must name exactly the accepted tags."""
     assert instance_config.run_modes() == ("freeplay", "workshop")
+
+
+def test_run_mode_tag_lists_the_modes_instance_json_accepts() -> None:
+    """Schemas type a Run's mode with `RunModeTag`, so it must not drift from the accepted tags."""
+    assert get_args(instance_config.RunModeTag) == instance_config.run_modes()
 
 
 # --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------
