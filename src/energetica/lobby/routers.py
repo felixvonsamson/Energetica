@@ -25,9 +25,9 @@ from energetica.identity.schemas.auth import LoginRequest, SignupRequest
 from energetica.identity.schemas.lobby import MyRunsResponse
 from energetica.identity.schemas.lobby_service import LobbyServiceErrorCode, SessionOut
 from energetica.kernel.game_error import GameError, SharedErrorCode
-from lobby.deps import LobbyService, require_current_account
-from lobby.game_error import LobbyErrorCode
-from lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie
+from energetica.lobby.deps import LobbyService, require_current_account
+from energetica.lobby.game_error import LobbyErrorCode
+from energetica.lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 lobby_router = APIRouter(prefix="/lobby", tags=["Lobby"])

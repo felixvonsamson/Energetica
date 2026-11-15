@@ -16,11 +16,11 @@ from pathlib import Path
 
 import uvicorn
 
-# Import `lobby` from the `src/` next to this file. A git worktree shares the main checkout's
+# Import `energetica` from the `src/` next to this file. A git worktree shares the main checkout's
 # .venv, whose editable install points at the main checkout's `src/`.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from lobby import create_lobby_app
+from energetica.lobby import create_lobby_app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the Energetica lobby backend.")

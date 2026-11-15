@@ -24,7 +24,7 @@ Backend error codes are split by who can return them. Each group is an enum that
 | `IdentityErrorCode` | `energetica/identity/game_error.py` | Codes of the join and facilitator routes, which both Instance apps mount and the lobby does not |
 | `FreeplayErrorCode` | `energetica/freeplay/game_error.py` | The persistent world's own codes                                                                |
 | `WorkshopErrorCode` | `energetica/workshop/game_error.py` | Workshop's own codes                                                                            |
-| `LobbyErrorCode`    | `lobby/game_error.py`               | The lobby's own codes                                                                           |
+| `LobbyErrorCode`    | `energetica/lobby/game_error.py`    | The lobby's own codes                                                                           |
 
 ```python
 class WorkshopErrorCode(ErrorCode):

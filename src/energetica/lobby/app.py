@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from energetica.identity.lobby_service_client import install_refusal_handler
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
-from lobby.routers import auth_router, lobby_router
+from energetica.lobby.routers import auth_router, lobby_router
 
 # The lobby serves its SPA from dist-lobby (see scripts/deploy-lobby.sh), so that is where its
 # frontend build stamp lives — relative to the repo/instance root that version.py resolves against.

@@ -264,12 +264,13 @@ jobs:
           /tmp/wheel-venv/bin/pip install -q dist/*.whl
       - name: Check what the wheel carries
         # Run from /tmp so nothing can resolve off the checkout: this must pass against the
-        # installed package alone. Imports cover both distributed packages and a module from a
-        # namespace subpackage that has no __init__.py; the data check covers package-data.
+        # installed package alone. Imports cover both distributed packages, the lobby app inside
+        # energetica, and a module from a namespace subpackage that has no __init__.py; the data
+        # check covers package-data.
         working-directory: /tmp
         run: |
           /tmp/wheel-venv/bin/python - <<'PY'
-          import energetica, lobby
+          import energetica, energetica.lobby, lobby_service
           from energetica.freeplay.database.map.hex_tile import HexTile
           from energetica.freeplay.database.engine_data.emission_data import EmissionData
           from energetica.freeplay.game_engine import _DATA_DIR as FREEPLAY_DATA_DIR

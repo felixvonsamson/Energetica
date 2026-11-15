@@ -16,10 +16,10 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.identity.game_error import IdentityErrorCode
 from energetica.kernel.game_error import ErrorCode, SharedErrorCode
+from energetica.lobby import create_lobby_app
+from energetica.lobby.game_error import LobbyErrorCode
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.game_error import WorkshopErrorCode
-from lobby import create_lobby_app
-from lobby.game_error import LobbyErrorCode
 
 SCRIPT_DIR = Path(__file__).parent
 

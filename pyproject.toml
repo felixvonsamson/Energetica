@@ -48,7 +48,7 @@ Homepage = "https://github.com/felixvonsamson/Energetica"
 Issues = "https://github.com/felixvonsamson/Energetica/issues"
 
 [tool.setuptools]
-# src/ layout: only the two backend packages ship. `tests`, `scripts` and `tools`
+# src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests`, `scripts` and `tools`
 # live outside src/ and are deliberately not part of the distribution.
 package-dir = { "" = "src" }
 include-package-data = false
@@ -141,7 +141,7 @@ lint.ignore = [
 
 [tool.pyright]
 include = ["src", "tests", "scripts", "main.py", "main_lobby.py"]
-# Resolve `energetica` / `lobby` from the source tree. An editable install points at them
+# Resolve `energetica` / `lobby_service` from the source tree. An editable install points at them
 # through a generated import hook that pyright cannot follow, so name the directory here.
 extraPaths = ["src"]
 pythonVersion = "3.12"
@@ -153,63 +153,58 @@ venvPath = "."
 venv = ".venv"
 
 [tool.importlinter]
-# Which packages may import which, checked by `lint-imports` in CI (#1051). This is the backend
-# counterpart of the frontend's rule against imports between apps (frontend/boundaries.test.ts).
-# Each rule is a contract. Contracts cover indirect imports too: A importing B importing C counts
-# as A importing C.
-# lobby_service has no contract of its own yet, but it is analysed so that chains through it count.
-root_packages = ["energetica", "lobby", "lobby_service"]
-
-# The freeplay code is one package, energetica.freeplay (#1057). It is named in four places below,
-# and tests/unit/test_import_contracts.py fails if they differ, so new app code goes inside an app
-# package rather than beside it.
+# Which packages may import which, checked by `lint-imports` in CI (#1051, #1058). This is the
+# backend counterpart of the frontend's rule against imports between apps
+# (frontend/boundaries.test.ts). Each rule is a contract. Contracts cover indirect imports too: A
+# importing B importing C counts as A importing C.
+#
+# A contract cannot see what importing a module runs. tests/unit/test_import_side_effects.py checks
+# that importing a package does not build the game engine or load the lobby service when it must not.
+root_packages = ["energetica", "lobby_service"]
 
 [[tool.importlinter.contracts]]
-name = "kernel, identity and sim are layered below the apps, and entry sits above them"
+name = "kernel, identity and sim are layered below three independent apps, and entry sits above them"
 type = "layers"
 containers = ["energetica"]
-# Every top-level module of energetica must be named in a layer, so a new one cannot slip past the
-# contracts below unclassified.
+# Every top-level module of energetica must be named in a layer, so a new one cannot slip past
+# this contract unclassified.
 exhaustive = true
 layers = [
-    # Builds whichever app this instance runs (#994), so it imports both.
+    # Builds whichever app this instance runs (#994), so it imports freeplay and workshop.
     "entry",
-    # App code. A higher layer may import a lower one, never the reverse. Within a layer, ":" lets
-    # these modules import each other; the per-app contracts below keep the apps apart.
-    "workshop : freeplay",
+    # The three apps. A higher layer may import a lower one, never the reverse. Within a layer,
+    # "|" makes the modules independent: none of them may import another. A new app goes here and
+    # in the lobby service's forbidden_modules below.
+    "freeplay | workshop | lobby",
     "sim",
     "identity",
     "kernel",
 ]
 
 [[tool.importlinter.contracts]]
-name = "kernel, identity and sim import none of the lobby"
+name = "Only the lobby service opens the lobby database"
 type = "forbidden"
-source_modules = ["energetica.kernel", "energetica.identity", "energetica.sim"]
-forbidden_modules = ["lobby"]
+# The lobby service owns lobby.db and the signing secret (ADR-0009), which lobby_service.session
+# loads on import. The runs and the lobby backend are its clients and reach it only through its API.
+source_modules = ["energetica"]
+forbidden_modules = ["lobby_service"]
 
 [[tool.importlinter.contracts]]
-name = "Workshop imports neither the lobby nor the freeplay code"
+name = "The lobby service imports only the identity layer and the kernel"
 type = "forbidden"
-source_modules = ["energetica.workshop"]
-# energetica.entry is not listed: the layers contract already keeps Workshop from importing it.
-forbidden_modules = ["lobby", "energetica.freeplay"]
-
-[[tool.importlinter.contracts]]
-name = "The lobby imports neither Workshop nor the freeplay code"
-type = "forbidden"
-source_modules = ["lobby"]
-forbidden_modules = ["energetica.entry", "energetica.workshop", "energetica.freeplay"]
-
-[[tool.importlinter.contracts]]
-name = "The freeplay code imports neither Workshop nor the lobby"
-type = "forbidden"
-source_modules = ["energetica.freeplay"]
-forbidden_modules = ["energetica.workshop", "lobby"]
+# It runs in its own process with no game engine. It needs only the identity layer and the kernel.
+source_modules = ["lobby_service"]
+forbidden_modules = [
+    "energetica.entry",
+    "energetica.freeplay",
+    "energetica.workshop",
+    "energetica.lobby",
+    "energetica.sim",
+]
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
-# Import `energetica` / `lobby` from this checkout's `src/`. A git worktree shares the main
+# Import `energetica` / `lobby_service` from this checkout's `src/`. A git worktree shares the main
 # checkout's .venv, whose editable install points at the main checkout's `src/`; without
 # this, tests in a worktree would silently run the main checkout's code.
 pythonpath = ["src"]
