@@ -14,9 +14,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 #        [--yes] [--skip-build]
 #
 # Builds the app for the Run mode in the instance's instance.json (frontend/apps/freeplay or
-# frontend/apps/workshop) and the backend wheel locally, rsyncs main.py, the wheel and the bundle to
+# frontend/apps/workshop) and the backend wheel locally, rsyncs backend/main.py, the wheel and the bundle to
 # the instance dir, installs the project into the server-side venv, and restarts the service.
-# The install is not optional: the backend lives under src/ and is imported as an installed
+# The install is not optional: the backend lives under backend/src/ and is imported as an installed
 # package, so a deploy that skips it leaves the service unable to start. On restart the
 # instance re-reads /etc/energetica/{instance}/instance.json and re-publishes its landing
 # fragment, so admin edits to the policy take effect here.
@@ -162,7 +162,7 @@ if ! CONFIG_JSON="$(ssh "$SSH" "cat '$CONFIG_FILE'")"; then
     exit 1
 fi
 CHECK_STATUS=0
-RUN_MODE=$(printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG") || CHECK_STATUS=$?
+RUN_MODE=$(printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/backend/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG") || CHECK_STATUS=$?
 unset CONFIG_JSON
 case "$CHECK_STATUS" in
     0) ;;
@@ -181,7 +181,7 @@ case "$CHECK_STATUS" in
 esac
 # The mode names a directory under frontend/apps/ and is compared with the bundle's stamp below,
 # so refuse anything but the two apps an instance can serve rather than build or ship another one.
-# These are the modes of RunModeTag in src/energetica/identity/instance_config.py; a new mode needs
+# These are the modes of RunModeTag in backend/src/energetica/identity/instance_config.py; a new mode needs
 # an app, and a line here.
 case "$RUN_MODE" in
     freeplay) APP_LABEL="the persistent world's app" ;;
@@ -237,7 +237,7 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 3. rsync backend code ------------------------------------------------------
-# Ships main.py, which the unit runs, and the wheel built above, which step 5 installs. Nothing
+# Ships backend/main.py to the top of the instance dir, where the unit runs it, and the wheel built above, which step 5 installs. Nothing
 # else: see scripts/lib/backend-sync.sh for the allowlist and for what --delete leaves alone.
 sync_backend "$SSH:$REMOTE_PATH" dist-app main.py
 
@@ -254,7 +254,7 @@ log_success "Instance scripts synced"
 # would be misleading. Both apps land at the same path so that the vhost serves either one
 # unchanged. The persistent world's service worker is inside its bundle (the app's build:sw writes
 # it there), so it needs no rsync of its own.
-# APP_BUNDLE_SUBPATH in src/energetica/freeplay/routers/health.py names this same path.
+# APP_BUNDLE_SUBPATH in backend/src/energetica/freeplay/routers/health.py names this same path.
 log_step "Syncing app bundle..."
 # -rlptz, not -az: -g would copy the local group onto the server dir (see scripts/lib/backend-sync.sh).
 rsync -rlptz --delete "./$APP_DIST/" "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
@@ -266,7 +266,7 @@ install_backend_wheel "$SSH" "$REMOTE_PATH"
 # --- 5b. Stamp the deployed backend version -------------------------------------
 # The server has no .git (the deploy ships no source tree), so the commit is captured here on the
 # deploy machine and written to the instance root as DEPLOYED_VERSION.json, read by
-# src/energetica/kernel/version.py. Written before the restart because the backend also reads it,
+# backend/src/energetica/kernel/version.py. Written before the restart because the backend also reads it,
 # once per process on first use, to name itself in the X-Energetica-Caller header it sends the
 # lobby service. If the stamp were written after the restart, a run would name the previous
 # deploy's commit until its next restart (#1356). The cost is that /healthz reports the new commit from here on even if

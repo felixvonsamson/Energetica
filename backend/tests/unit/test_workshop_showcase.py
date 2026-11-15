@@ -8,7 +8,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId, session_price
 from energetica.workshop.session import DEFAULT_ROUND_COUNT
 from energetica.workshop.showcase import SHOWCASE_DATA_PATH, render_showcase_data, showcase_facilities
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_the_checked_in_showcase_data_is_up_to_date() -> None:

@@ -68,7 +68,7 @@ fi
 # nothing is left running. Run before seed_dev_data, which goes through the service.
 start_lobby_service() {
     rm -f "$ENERGETICA_LOBBY_SERVICE_SOCKET"
-    "$DEV_REPO_ROOT/.venv/bin/python" main_lobby_service.py --uds "$ENERGETICA_LOBBY_SERVICE_SOCKET" &
+    "$DEV_REPO_ROOT/.venv/bin/python" backend/main_lobby_service.py --uds "$ENERGETICA_LOBBY_SERVICE_SOCKET" &
     LOBBY_SERVICE_PID=$!
     local _
     for _ in $(seq 50); do

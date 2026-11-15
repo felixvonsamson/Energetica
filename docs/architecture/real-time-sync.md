@@ -274,7 +274,7 @@ useSocketEvent("invalidate", (data) => {
 ### Workshop Runs
 
 A Workshop Run does not use `SocketProvider` or `GameTickContext`. Its server is in
-`src/energetica/workshop/realtime.py`, and the frontend connects in `useWorkshopSocket`
+`backend/src/energetica/workshop/realtime.py`, and the frontend connects in `useWorkshopSocket`
 (`frontend/apps/workshop/src/hooks/use-workshop.ts`), which the Workshop's page shell calls once. That hook
 opens its own socket and holds all of the Workshop's listeners:
 

@@ -2,11 +2,11 @@
 # Shared by deploy-instance.sh and deploy-lobby.sh: build the backend wheel here, install it
 # into the service virtual environment there.
 #
-#   build_backend_wheel                          # writes dist/<wheel> at the repo root,
+#   build_backend_wheel                          # builds backend/, writes dist/<wheel> at the repo root,
 #                                                # and sets BACKEND_WHEEL to its filename
 #   install_backend_wheel <ssh-target> <remote-path>
 #
-# The backend lives under src/ and is imported as an installed package, so this step is not
+# The backend lives under backend/src/ and is imported as an installed package, so this step is not
 # optional: a deploy that skips it leaves the service unable to import `energetica` at all.
 #
 # The wheel is built on the deploy machine rather than on the server for two reasons. The
@@ -57,8 +57,8 @@ build_backend_wheel() {
     #
     # The .egg-info directory for the same reason: its SOURCES.txt is regenerated from whatever
     # the previous build left behind.
-    rm -rf "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT/build" "$_BACKEND_WHEEL_REPO_ROOT"/src/*.egg-info
-    "$python" -m pip wheel --quiet --no-deps --wheel-dir "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT" || {
+    rm -rf "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT/backend/build" "$_BACKEND_WHEEL_REPO_ROOT"/backend/src/*.egg-info
+    "$python" -m pip wheel --quiet --no-deps --wheel-dir "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT/backend" || {
         log_error "Backend wheel build failed"
         exit 1
     }

@@ -68,12 +68,12 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 The lobby is an instance-independent part of the server, on `lobby.{apex}`. It ships from one
 checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
 
-- **Lobby backend** (`src/energetica/lobby/`, `main_lobby.py`; uvicorn + Apache vhost + the
+- **Lobby backend** (`backend/src/energetica/lobby/`, `backend/main_lobby.py`; uvicorn + Apache vhost + the
   `energetica-lobby` unit): the public web app. It serves `signup`, `login`,
   `change-password`, `logout`, `my-runs` and the public-run join, and reads the on-disk
   instance fragments for run metadata. It holds no database and no signing secret: every
   account, session and membership operation is a call to the lobby service.
-- **Lobby service** (`src/lobby_service/`, `main_lobby_service.py`; the
+- **Lobby service** (`backend/src/lobby_service/`, `backend/main_lobby_service.py`; the
   `energetica-lobby-service` unit, socket-activated): the one process that opens the
   server-wide database (`lobby.db`) and holds the signing secret and the password hashes
   (ADR-0009). It runs as its own Unix user, `energetica-lobby-service`, the only one that can
@@ -87,8 +87,8 @@ checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
   page with all logged-in/out states.
 
 The lobby service runs its schema migrations when it starts, before it serves
-(`src/lobby_service/schema.py`). The state version is SQLite's `PRAGMA user_version`; steps live
-in `src/lobby_service/migrations/` as `NNNN_<slug>.py`, each with one `migrate(conn)`; all pending
+(`backend/src/lobby_service/schema.py`). The state version is SQLite's `PRAGMA user_version`; steps live
+in `backend/src/lobby_service/migrations/` as `NNNN_<slug>.py`, each with one `migrate(conn)`; all pending
 steps and the version bump share one transaction; and a database newer than the code stops the
 service from starting. Before migrating, it keeps one copy of the database at
 `<name>.pre-migration`.

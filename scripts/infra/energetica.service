@@ -6,7 +6,7 @@
 # differ in this file only by name.
 #
 # The EnvironmentFile= line is load-bearing. It carries the contract between the deployment and
-# src/energetica/identity/instance_config.py + src/energetica/identity/lobby_service_client.py, and it
+# backend/src/energetica/identity/instance_config.py + backend/src/energetica/identity/lobby_service_client.py, and it
 # supplies the three values ExecStart expands into main.py flags. It has no `-` prefix, so a
 # missing or unreadable file stops the unit rather than starting an instance with no
 # ENERGETICA_INSTANCE_SLUG — which would treat itself as public, never read its own instance.json

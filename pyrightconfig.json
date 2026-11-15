@@ -2,10 +2,19 @@
 // lives at the root, not in the backend's pyproject.toml, so that one configuration covers the
 // whole Python tree (#1095). Pyright reads comments in this file.
 {
-    "include": ["src", "tests", "scripts", "main.py", "main_lobby.py"],
+    // The backend is listed by part rather than as a whole, so a wheel build's backend/build/
+    // copy of the packages is never checked a second time.
+    "include": [
+        "backend/src",
+        "backend/tests",
+        "backend/main.py",
+        "backend/main_lobby.py",
+        "backend/main_lobby_service.py",
+        "scripts"
+    ],
     // Resolve `energetica` / `lobby_service` from the source tree. An editable install points at
     // them through a generated import hook that pyright cannot follow, so name the directory here.
-    "extraPaths": ["src"],
+    "extraPaths": ["backend/src"],
     "pythonVersion": "3.12",
     "typeCheckingMode": "standard",
     // Resolve imports against the project venv so a bare `pyright` sees installed deps

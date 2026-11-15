@@ -8,13 +8,13 @@ target-version = "py312"
 # Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
 # its sibling modules (api, market, strategies) import as top-level names and would otherwise
 # sort as third-party.
-src = [".", "src", "scripts/workshop_bots"]
-# Every rule below applies to the whole Python tree — tests/ and scripts/ included. There are
-# deliberately no per-file-ignores (#1081): when the hooks were widened past src/energetica/,
-# the rest of the tree already satisfied the docstring rules (D100, D400, D415) with nothing
-# to fix, so relaxing them there would only have licensed new violations. If a docstring rule
-# ever becomes genuinely unwanted in tests/ or scripts/, relax it here rather than narrowing
-# the hooks again.
+src = [".", "backend/src", "scripts/workshop_bots"]
+# Every rule below applies to the whole Python tree, the backend's tests and scripts/ included.
+# There are deliberately no per-file-ignores (#1081): when the hooks were widened past the
+# backend's own package, the rest of the tree already satisfied the docstring rules (D100, D400,
+# D415) with nothing to fix, so relaxing them there would only have licensed new violations. If a
+# docstring rule ever becomes genuinely unwanted in tests or scripts, relax it here rather than
+# narrowing the hooks again.
 lint.select = [
     "D100",
     "D200",

@@ -94,21 +94,21 @@ seed_dev_data
 case "$TARGET" in
 app)
     echo "[dev] app stack → app http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"
-    start .venv/bin/python main_lobby.py --port 8001
-    start .venv/bin/python main.py --env dev
+    start .venv/bin/python backend/main_lobby.py --port 8001
+    start .venv/bin/python backend/main.py --env dev
     start bash -c 'cd frontend && exec bun run dev:lobby'
     start bash -c 'cd frontend && exec bun run dev:freeplay'
     ;;
 workshop)
     echo "[dev] workshop stack ($ENERGETICA_INSTANCE_SLUG) → workshop http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"
-    start .venv/bin/python main_lobby.py --port 8001
-    start .venv/bin/python main.py --env dev
+    start .venv/bin/python backend/main_lobby.py --port 8001
+    start .venv/bin/python backend/main.py --env dev
     start bash -c 'cd frontend && exec bun run dev:lobby'
     start bash -c 'cd frontend && exec bun run dev:workshop'
     ;;
 lobby)
     echo "[dev] lobby stack → lobby http://localhost:5174"
-    start .venv/bin/python main_lobby.py --port 8001
+    start .venv/bin/python backend/main_lobby.py --port 8001
     start bash -c 'cd frontend && exec bun run dev:lobby'
     ;;
 *)

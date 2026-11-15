@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "energetica"
 description = "Energetica — a web game about energy systems, with a focus on electricity."
-readme = "README.md"
+# No readme: the project README is at the repo root, outside this directory, and setuptools reads
+# files only from inside it. The wheel is never published, so nothing reads its description.
 requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
@@ -35,7 +36,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # Everything needed to develop and check the backend, on top of the runtime deps, so that
-# `pip install -e '.[dev]'` is the whole local setup step. The deploy installs the project
+# `pip install -e './backend[dev]'`, run from the repo root, is the whole local setup step. The deploy installs the project
 # without this extra — the server runs the code, it does not check it.
 # ruff is pinned to the same version as the `rev:` in .pre-commit-config.yaml. Bump the two
 # together: two ruffs that disagree about formatting is worse than one.
@@ -48,8 +49,9 @@ Homepage = "https://github.com/felixvonsamson/Energetica"
 Issues = "https://github.com/felixvonsamson/Energetica/issues"
 
 [tool.setuptools]
-# src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests`, `scripts` and `tools`
-# live outside src/ and are deliberately not part of the distribution.
+# src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests` and the
+# launchers live beside src/, and `scripts` and `tools` at the repo root; none of them is part of
+# the distribution.
 package-dir = { "" = "src" }
 include-package-data = false
 
@@ -84,8 +86,11 @@ version = { attr = "energetica.__version__" }
 energetica = ["freeplay/data/*", "workshop/data/*"]
 
 [tool.importlinter]
-# Which packages may import which, checked by `lint-imports` in CI (#1051, #1058). This is the
-# backend counterpart of the frontend's rule against imports between apps
+# Which packages may import which, checked by `lint-imports --config backend/pyproject.toml` in CI
+# (#1051, #1058). Unlike the ruff and pyright settings, which cover the whole Python tree from the
+# repo root, these contracts are about the backend's own packages, so they stay with them.
+#
+# This is the backend counterpart of the frontend's rule against imports between apps
 # (frontend/boundaries.test.ts). Each rule is a contract. Contracts cover indirect imports too: A
 # importing B importing C counts as A importing C.
 #
@@ -131,21 +136,4 @@ forbidden_modules = [
     "energetica.workshop",
     "energetica.lobby",
     "energetica.sim",
-]
-
-[tool.pytest.ini_options]
-testpaths = [ "tests" ]
-# Import `energetica` / `lobby_service` from this checkout's `src/`. A git worktree shares the main
-# checkout's .venv, whose editable install points at the main checkout's `src/`; without
-# this, tests in a worktree would silently run the main checkout's code.
-pythonpath = ["src"]
-filterwarnings = ["ignore::DeprecationWarning"]
-python_files = "tests/**/*.py"
-# Exclude the slow, network-dependent external_links tests by default so a bare
-# `pytest` matches what CI runs on normal branches and doesn't fail on an offline
-# machine. Run them explicitly with `pytest -m external_links`, or the whole suite
-# (including them) with `pytest -m ""`. CI runs the full suite on release/* branches.
-addopts = ["-m", "not external_links"]
-markers = [
-    "external_links: tests that make external HTTP requests (slow, network-dependent, run before releases)",
 ]

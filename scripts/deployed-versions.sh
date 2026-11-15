@@ -51,7 +51,7 @@ echo
 # energetica-lobby, energetica-lobby-service and energetica-reaper share the prefix but are not
 # game instances, so they are dropped from SLUGS by name (the lobby and the lobby service get
 # their own rows below). list-instances.sh applies the same exclusion;
-# tests/unit/scripts/test_reserved_unit_names.py keeps both in step with the units in scripts/infra.
+# backend/tests/unit/scripts/test_reserved_unit_names.py keeps both in step with the units in scripts/infra.
 SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -vE "^(lobby|lobby-service|reaper)$"' || true)
 
 # Classify a deployed backend commit against the reference by git ancestry, so a deploy that is

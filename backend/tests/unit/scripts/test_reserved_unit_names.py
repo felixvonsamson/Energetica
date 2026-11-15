@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-_SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
+_SCRIPTS = Path(__file__).resolve().parents[4] / "scripts"
 _INFRA = _SCRIPTS / "infra"
 
 

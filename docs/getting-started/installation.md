@@ -21,14 +21,18 @@ cd Energetica
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -e '.[dev]'
+pip install -e './backend[dev]'
 ```
 
 That one command is the whole backend setup. It installs the dependencies and the project itself,
 in editable mode, so the code you edit is the code that runs. The backend packages live under
-`src/`, which means nothing is importable until this install has happened — `pytest` and `python
-main.py` both fail with `ModuleNotFoundError: energetica` if you skip it. Re-run the same command
-after pulling a change to the dependency list.
+`backend/src/`, which means nothing is importable until this install has happened — `pytest` and
+`python backend/main.py` both fail with `ModuleNotFoundError: energetica` if you skip it. Re-run the
+same command after pulling a change to the dependency list.
+
+Run every command from the repository root, including `pytest`, `ruff` and `pyright`. Their
+configuration lives there (`pytest.ini`, `ruff.toml`, `pyrightconfig.json`), and so does the
+virtual environment, because it also runs the Python under `scripts/`, not only the backend.
 
 The project scripts invoke the interpreter at `.venv/bin/python` directly, so you don't need the
 venv activated to run them — but activate it when running `python`, `pytest`, `ruff`, or `pyright`

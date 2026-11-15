@@ -13,7 +13,7 @@ bun install
 
 ```bash
 # From project root
-python main.py --env dev
+python backend/main.py --env dev
 ```
 
 ### 2. Start Frontend

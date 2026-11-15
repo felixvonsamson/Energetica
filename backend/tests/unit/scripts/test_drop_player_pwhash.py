@@ -22,7 +22,7 @@ from energetica.freeplay.database.player import Player
 from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
 
-_SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "instance" / "drop_player_pwhash.py"
+_SCRIPT = Path(__file__).resolve().parents[4] / "scripts" / "instance" / "drop_player_pwhash.py"
 _PICKLE = Path("instance/engine_data.pck")
 
 

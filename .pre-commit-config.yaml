@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version. Kept in lockstep with the `ruff==` pin in pyproject.toml's dev extra —
+    # Ruff version. Kept in lockstep with the `ruff==` pin in backend/pyproject.toml's dev extra —
     # bump the two together, so the hook and a local `ruff` agree about formatting.
     rev: v0.12.10
     hooks:

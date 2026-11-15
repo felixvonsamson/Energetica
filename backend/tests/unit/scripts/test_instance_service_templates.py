@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-_INFRA = Path(__file__).resolve().parents[3] / "scripts" / "infra"
+_INFRA = Path(__file__).resolve().parents[4] / "scripts" / "infra"
 _UNIT_TEMPLATE = _INFRA / "energetica.service"
 _ENV_TEMPLATE = _INFRA / "instance.env.tmpl"
 _SETUP_SCRIPT = _INFRA / "setup-instance.sh"

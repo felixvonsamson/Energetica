@@ -18,7 +18,7 @@ import pytest
 from energetica.identity import instance_config
 from energetica.identity.instance_config import InstanceConfig, PrivateAccess, PublicAccess
 
-_RENDERER = Path(__file__).resolve().parents[3] / "scripts" / "infra" / "render-instance-json.sh"
+_RENDERER = Path(__file__).resolve().parents[4] / "scripts" / "infra" / "render-instance-json.sh"
 
 
 def _render(*extra: str, mode: str | None = "freeplay") -> subprocess.CompletedProcess[str]:

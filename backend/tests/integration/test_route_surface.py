@@ -31,7 +31,7 @@ from energetica.identity.instance_config import InstanceConfig
 from energetica.lobby import create_lobby_app
 from energetica.workshop.app import create_workshop_app
 
-_GENERATOR = Path(__file__).resolve().parents[2] / "scripts" / "generate_openapi_schema.py"
+_GENERATOR = Path(__file__).resolve().parents[3] / "scripts" / "generate_openapi_schema.py"
 
 APPS = ("freeplay", "workshop", "lobby")
 

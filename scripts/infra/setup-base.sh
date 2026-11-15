@@ -163,7 +163,7 @@ log_section "SHARED CONFIG DIRECTORIES"
 install -d -o root -g energetica -m 0750 /etc/energetica
 log_success "/etc/energetica (0750 root:energetica)"
 
-# Server-wide config: the lobby's signup toggle (src/energetica/identity/server_config.py — reads
+# Server-wide config: the lobby's signup toggle (backend/src/energetica/identity/server_config.py — reads
 # fresh per request, fails closed when missing/malformed). Admin-edited like instance.json.
 if [ -f /etc/energetica/server.json ]; then
     log_success "/etc/energetica/server.json already exists — leaving admin's copy untouched"
