@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field
 
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
@@ -17,7 +17,7 @@ from energetica.enums import (
     TechnologyType,
 )
 from energetica.freeplay.globals import engine
-from energetica.technology_effects import (
+from energetica.freeplay.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
     package_functional_facilities,

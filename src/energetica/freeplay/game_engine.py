@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any, Callable, Literal
 import numpy as np
 import socketio
 
-from energetica.config.assets import config, const_config
-from energetica.enums import Fuel, Renewable
 from energetica.freeplay import legacy_pickle
+from energetica.freeplay.config.assets import config, const_config
+from energetica.freeplay.enums import Fuel, Renewable
 from energetica.freeplay.national_demand import national_demand_curve
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 from energetica.kernel.atomic_file import open_atomically

@@ -11,7 +11,8 @@ from energetica.freeplay.globals import engine
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
-    from energetica.enums import (
+    from energetica.freeplay.database.player import Player
+    from energetica.freeplay.enums import (
         ExtractionFacilityType,
         PowerFacilityType,
         ProjectStatus,
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
         StorageFacilityType,
         WorkerType,
     )
-    from energetica.freeplay.database.player import Player
 
 T = TypeVar("T", bound="DBModel")
 

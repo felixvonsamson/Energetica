@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,

@@ -3,7 +3,7 @@
 # from energetica import __version__
 # from energetica.freeplay.database.map.hex_tile import HexTile
 # from energetica.freeplay.database.player import Player
-# from energetica.enums import Renewable
+# from energetica.freeplay.enums import Renewable
 # from energetica.freeplay.globals import engine
 # from energetica.simulate import tick
 # from energetica.utils import map_helpers

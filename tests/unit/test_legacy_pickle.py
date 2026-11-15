@@ -1,9 +1,11 @@
-"""Engine state pickled before a module moved still loads (#1055).
+"""Engine state pickled before a module moved still loads (#1055, #1056).
 
 Pickle records each object's class by its module path. Every ``instance/engine_data.pck`` and
 checkpoint written before #1055 names the entity models ``energetica.database.*``, which now live
-under ``energetica.freeplay.database``. The pickles here are written at protocol 0, whose opcodes are
-plain text, so an old-layout pickle can be made by rewriting the module path in the bytes.
+under ``energetica.freeplay.database``. Every one written before #1056 names the enumerations
+``energetica.enums``, which now live at ``energetica.freeplay.enums``. The pickles here are written
+at protocol 0, whose opcodes are plain text, so an old-layout pickle can be made by rewriting the
+module path in the bytes.
 """
 
 from __future__ import annotations
@@ -17,8 +19,11 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import ControllableFacilityType, Fuel
 from energetica.identity.account import Account
+from energetica.routers import charts
 from energetica.utils.map_helpers import confirm_location
+from energetica.utils.misc import save_past_data
 
 
 def _account() -> Account:
@@ -26,8 +31,9 @@ def _account() -> Account:
 
 
 def _to_old_layout(current: bytes) -> bytes:
-    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055."""
+    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055 and #1056."""
     old_layout = current.replace(b"energetica.freeplay.database", b"energetica.database")
+    old_layout = old_layout.replace(b"energetica.freeplay.enums", b"energetica.enums")
     assert b"energetica.freeplay" not in old_layout
     return old_layout
 
@@ -46,6 +52,16 @@ def test_a_pickle_naming_the_old_module_path_loads_as_the_moved_class() -> None:
 
     assert isinstance(loaded["current_climate_data"], CumulativeEmissionsData)
     assert loaded["current_climate_data"].get_all() == {"steam_engine": 12.5, "construction": 0.0}
+
+
+def test_an_enumeration_pickled_under_its_old_module_path_loads_as_the_moved_enumeration() -> None:
+    current = pickle.dumps({"reserves": {Fuel.COAL: 3.0}}, protocol=0)
+    old_layout = _to_old_layout(current)
+
+    loaded = legacy_pickle.load(io.BytesIO(old_layout))
+
+    assert loaded == {"reserves": {Fuel.COAL: 3.0}}
+    assert type(next(iter(loaded["reserves"]))) is Fuel
 
 
 def test_a_pickle_naming_the_current_module_path_still_loads() -> None:
@@ -79,3 +95,46 @@ def test_a_full_engine_save_under_the_old_module_paths_loads_through_engine_load
     assert loaded.username == "username"
     assert loaded.tile is not None and loaded.tile.coordinates == player.tile.coordinates
     assert HexTile.count() == tile_count
+
+
+def _rewrite_to_old_layout(path: Path) -> None:
+    """Rewrite a pickle file in place to name its classes as they were pickled before #1056."""
+    with path.open("rb") as file:
+        state = pickle.load(file)
+    old_layout = _to_old_layout(pickle.dumps(state, protocol=0))
+    assert b"energetica.enums" in old_layout
+    path.write_bytes(old_layout)
+
+
+def _player_with_saved_history() -> tuple[Player, Path]:
+    """A player whose chart history file holds an enum key, as after building a coal burner.
+
+    A new player's file starts from a template with string keys. A facility type outside that
+    template is added under its enum, which the next 216-tick save writes to the file.
+    """
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+    player = confirm_location(_account(), HexTile.getitem(1))
+    player.rolling_history.add_subcategory("generation", ControllableFacilityType.COAL_BURNER)
+    save_past_data()
+    return player, Path(f"instance/data/players/player_{player.id}.pck")
+
+
+def test_the_history_save_extends_a_player_history_file_written_under_the_old_module_paths() -> None:
+    """Chart history files are pickled too, and their keys include enums such as facility types."""
+    _player, history = _player_with_saved_history()
+    _rewrite_to_old_layout(history)
+
+    save_past_data()
+
+    with history.open("rb") as file:
+        saved = pickle.load(file)
+    assert ControllableFacilityType.COAL_BURNER in saved["generation"]
+
+
+def test_the_chart_reader_reads_a_player_history_file_written_under_the_old_module_paths() -> None:
+    _player, history = _player_with_saved_history()
+    _rewrite_to_old_layout(history)
+
+    loaded = charts._load_pickle_data(str(history))
+
+    assert ControllableFacilityType.COAL_BURNER in loaded["generation"]

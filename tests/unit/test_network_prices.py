@@ -6,9 +6,9 @@ import subprocess
 import sys
 import textwrap
 
-from energetica.enums import ControllableFacilityType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.enums import ControllableFacilityType
 from energetica.freeplay.globals import engine
 from energetica.identity.account import Account
 from energetica.utils.map_helpers import confirm_location

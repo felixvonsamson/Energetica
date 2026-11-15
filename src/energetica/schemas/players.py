@@ -99,7 +99,7 @@ class WorkersOut(BaseModel):
 
     @classmethod
     def from_player(cls, player: Player) -> WorkersOut:
-        from energetica.enums import WorkerType
+        from energetica.freeplay.enums import WorkerType
 
         return WorkersOut(
             construction=WorkerInfo(
@@ -130,7 +130,7 @@ class ResourcesOut(BaseModel):
 
     @classmethod
     def from_player(cls, player: Player) -> ResourcesOut:
-        from energetica.enums import Fuel
+        from energetica.freeplay.enums import Fuel
 
         warehouse_capacities = player.config["warehouse_capacities"]
 
@@ -208,7 +208,7 @@ class ProfileOut(BaseModel):
 
     @classmethod
     def from_player(cls, player: Player) -> ProfileOut:
-        from energetica.enums import FunctionalFacilityType, TechnologyType
+        from energetica.freeplay.enums import FunctionalFacilityType, TechnologyType
 
         # Get functional facility levels
         functional_facility_lvl = FunctionalFacilityLevels(

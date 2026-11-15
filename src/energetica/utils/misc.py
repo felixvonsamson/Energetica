@@ -9,13 +9,13 @@ from pathlib import Path
 import numpy as np
 from fastapi import Request
 
-from energetica import technology_effects
-from energetica.enums import ControllableFacilityType
+from energetica.freeplay import legacy_pickle, technology_effects
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.messages import Chat, Message
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import ControllableFacilityType
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import CreateUserAction
@@ -137,7 +137,7 @@ def save_past_data() -> None:
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
     # save climate data
     with open("instance/data/servers/climate_data.pck", "rb") as file:
-        past_climate_data = pickle.load(file)
+        past_climate_data = legacy_pickle.load(file)
     new_climate_data = engine.current_climate_data.get_data()
     for category in new_climate_data:
         for element in new_climate_data[category]:
@@ -157,7 +157,7 @@ def save_past_data() -> None:
             f"instance/data/players/player_{player.id}.pck",
             "rb",
         ) as file:
-            past_data = pickle.load(file)
+            past_data = legacy_pickle.load(file)
         new_data = player.rolling_history.get_data()
         for category in new_data:
             if category not in past_data:
@@ -193,7 +193,7 @@ def save_past_data() -> None:
             f"instance/data/networks/{network.id}/time_series.pck",
             "rb",
         ) as file:
-            past_data = pickle.load(file)
+            past_data = legacy_pickle.load(file)
 
         new_data = network.rolling_history.get_data()
         for category in new_data:

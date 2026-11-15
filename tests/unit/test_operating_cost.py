@@ -11,20 +11,20 @@ from __future__ import annotations
 
 import pytest
 
-from energetica.config.assets import const_config
-from energetica.enums import (
+from energetica.freeplay.app import create_app
+from energetica.freeplay.config.assets import const_config
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     StorageFacilityType,
     WindFacilityType,
     power_facility_types,
 )
-from energetica.freeplay.app import create_app
-from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.freeplay.database.player import Player
+from energetica.freeplay.production_update import resources_and_pollution
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.production_update import resources_and_pollution
 from energetica.utils.map_helpers import confirm_location
 
 WIND = WindFacilityType.ONSHORE_WIND_TURBINE

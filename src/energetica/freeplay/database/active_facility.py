@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from energetica import technology_effects
-from energetica.config.assets import const_config
-from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.freeplay import technology_effects
+from energetica.freeplay.config.assets import const_config
 from energetica.freeplay.database import DBModel
+from energetica.freeplay.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:

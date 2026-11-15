@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import pytest
 
-from energetica.enums import ControllableFacilityType, Fuel, StorageFacilityType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import ControllableFacilityType, Fuel, StorageFacilityType
 from energetica.freeplay.globals import engine
+from energetica.freeplay.production_update import calculate_prod
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.production_update import calculate_prod
 from energetica.utils.map_helpers import confirm_location
 
 COAL = ControllableFacilityType.COAL_BURNER

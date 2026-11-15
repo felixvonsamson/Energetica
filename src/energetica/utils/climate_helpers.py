@@ -8,8 +8,7 @@ from typing import cast
 import numpy as np
 from numpy.typing import ArrayLike
 
-from energetica.config.climate_events import climate_events
-from energetica.enums import ClimateEventType, FunctionalFacilityType, Renewable
+from energetica.freeplay.config.climate_events import climate_events
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
 from energetica.freeplay.database.engine_data.emission_data import (
@@ -17,6 +16,7 @@ from energetica.freeplay.database.engine_data.emission_data import (
     calculate_temperature_deviation,
 )
 from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.enums import ClimateEventType, FunctionalFacilityType, Renewable
 from energetica.freeplay.globals import engine
 from energetica.kernel.hashing import stable_hash
 from energetica.schemas.notifications import ClimateEventPayload, FacilityDestroyedPayload

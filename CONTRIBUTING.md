@@ -203,8 +203,8 @@ Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_
 
 ## Adding / Modifying Game Logic
 
-1. Locate relevant engine modules under `src/energetica/` (e.g. production updates, climate events, technology effects).
-2. Add or update enums in `enums.py` carefully—changing identifiers may break saved state.
+1. Locate relevant engine modules under `src/energetica/freeplay/` (e.g. production updates, climate events, technology effects).
+2. Add or update enums in `src/energetica/freeplay/enums.py` carefully—changing identifiers may break saved state.
 3. Provide migration / compatibility handling if saved engine data format changes.
 4. Add unit tests that cover both the new behavior and backward compatibility paths.
 

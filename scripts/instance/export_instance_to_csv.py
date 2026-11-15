@@ -18,7 +18,6 @@ Outputs (one file per resolution: 1d, 6d, 36d, 216d):
 
 import argparse
 import os
-import pickle
 import re
 import sys
 from datetime import datetime, timedelta
@@ -33,6 +32,19 @@ RESOLUTIONS = [
     (2, 36, "36d"),
     (3, 216, "216d"),
 ]
+
+
+def load_pickle(path: str) -> Any:
+    """Load an instance pickle file, including one written before a module it names moved.
+
+    Engine state and chart files name classes by module path, and some of those modules have
+    moved since (#1055, #1056). The import is deferred because importing energetica.freeplay
+    constructs the engine, which creates an instance/ folder in the working directory.
+    """
+    from energetica.freeplay import legacy_pickle
+
+    with open(path, "rb") as f:
+        return legacy_pickle.load(f)
 
 
 def key_name(k: str | Enum) -> str:
@@ -71,8 +83,7 @@ def export_players(base: str, out: str, eng: dict[str, Any], id_to_username: dic
             pfile = f"{base}/data/players/player_{pid}.pck"
             if not os.path.exists(pfile):
                 continue
-            with open(pfile, "rb") as f:
-                d = pickle.load(f)
+            d = load_pickle(pfile)
 
             username = id_to_username.get(pid, str(pid))
 
@@ -127,8 +138,7 @@ def export_networks(base: str, out: str, eng: dict[str, Any], id_to_username: di
             ts_path = f"{base}/data/networks/{net_id}/time_series.pck"
             if not os.path.exists(ts_path):
                 continue
-            with open(ts_path, "rb") as f:
-                ts = pickle.load(f)
+            ts = load_pickle(ts_path)
 
             net_name = net.name.strip()
             for i, tick, timestamp in pts:
@@ -173,8 +183,7 @@ def export_market_last(base: str, out: str, eng: dict[str, Any], id_to_username:
             continue
         tick_num, last_file = max(matched)
 
-        with open(f"{charts_dir}/{last_file}", "rb") as f:
-            chart = pickle.load(f)
+        chart = load_pickle(f"{charts_dir}/{last_file}")
 
         for side, section in [("supply", "capacities"), ("demand", "demands")]:
             data = chart[section]
@@ -211,8 +220,7 @@ def export_climate(base: str, out: str, eng: dict[str, Any]) -> None:
     if not os.path.exists(climate_path):
         print(f"Warning: {climate_path} not found, skipping climate export.", file=sys.stderr)
         return
-    with open(climate_path, "rb") as f:
-        climate = pickle.load(f)
+    climate = load_pickle(climate_path)
 
     for res_idx, factor, name in RESOLUTIONS:
         print(f"Building climate_{name}.csv ...")
@@ -249,11 +257,7 @@ def main() -> None:
         print(f"Error: {engine_file} not found.", file=sys.stderr)
         sys.exit(1)
 
-    # Engine state written before #1055 names its classes by their old module paths.
-    from energetica.freeplay import legacy_pickle
-
-    with open(engine_file, "rb") as f:
-        eng = legacy_pickle.load(f)
+    eng = load_pickle(engine_file)
 
     id_to_username = {pid: p.username for pid, p in eng["db_model_instances"]["Player"].items()}
 

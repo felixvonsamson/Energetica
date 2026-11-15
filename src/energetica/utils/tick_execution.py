@@ -5,13 +5,13 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from energetica import production_update
-from energetica.enums import ProjectStatus, StorageFacilityType
+from energetica.freeplay import production_update
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
 from energetica.freeplay.database.ongoing_project import OngoingProject
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import ProjectStatus, StorageFacilityType
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import TickAction
 from energetica.identity import instance_config

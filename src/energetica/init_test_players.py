@@ -1,7 +1,12 @@
 """Module to initialize the database with test players and networks."""
 
-from energetica.config.climate_events import climate_events
-from energetica.enums import (
+from energetica.freeplay.config.climate_events import climate_events
+from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
@@ -13,11 +18,6 @@ from energetica.enums import (
     TechnologyType,
     WindFacilityType,
 )
-from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
-from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.freeplay.database.network import Network
-from energetica.freeplay.database.ongoing_shipment import OngoingShipment
-from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.identity.account import Account

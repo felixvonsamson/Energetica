@@ -7,7 +7,7 @@ import { ProjectCategory } from "@/types/projects";
 
 /**
  * List of all technology types (research projects). Based on TechnologyType
- * enum from energetica/enums.py
+ * enum from energetica/freeplay/enums.py
  */
 const TECHNOLOGY_TYPES = [
     "mathematics",

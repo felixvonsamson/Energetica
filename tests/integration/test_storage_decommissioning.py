@@ -3,11 +3,11 @@
 Regression tests for https://github.com/felixvonsamson/Energetica/issues/762
 """
 
-from energetica.enums import StorageFacilityType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import StorageFacilityType
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
 from energetica.utils.facilities import dismantle_facility
@@ -110,7 +110,7 @@ def test_decommissioning_facility_state_of_charge_is_finite() -> None:
     """
     from math import isfinite
 
-    from energetica.production_update import set_facilities_usage
+    from energetica.freeplay.production_update import set_facilities_usage
     from energetica.schemas.facilities import StorageFacilityOut
 
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")

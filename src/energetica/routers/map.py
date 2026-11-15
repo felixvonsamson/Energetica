@@ -17,8 +17,8 @@ router = APIRouter(prefix="/map", tags=["Map"])
 @router.get("")
 def get_map() -> list[HexTileOut]:
     """Get the map data."""
-    from energetica.enums import Fuel, Renewable
     from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.enums import Fuel, Renewable
 
     hex_map = HexTile.all()
     hex_list = [

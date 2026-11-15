@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
-from energetica.enums import ClimateEventType
+from energetica.freeplay.enums import ClimateEventType
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery

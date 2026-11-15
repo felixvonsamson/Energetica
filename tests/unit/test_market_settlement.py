@@ -12,8 +12,8 @@ import pytest
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.production_update import market_logic
 from energetica.identity.account import Account
-from energetica.production_update import market_logic
 from energetica.sim.market import init_market, place_ask, place_bid, place_must_run_ask
 from energetica.utils.map_helpers import confirm_location
 

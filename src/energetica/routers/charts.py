@@ -15,7 +15,6 @@ Key Constraints:
   - When referring to non 1-1 resolutions, use multiples of 6 / 36 / 216 / 1296
 """
 
-import pickle
 from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Literal
@@ -23,6 +22,7 @@ from typing import Annotated, Literal
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from energetica.freeplay import legacy_pickle
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
@@ -76,7 +76,7 @@ def _load_pickle_data(
         return defaultdict(lambda: defaultdict(list))
     try:
         with open(file_path, "rb") as file:
-            return pickle.load(file)
+            return legacy_pickle.load(file)
     except Exception:
         # Return empty structure if pickle is corrupted
         return defaultdict(lambda: defaultdict(list))
@@ -735,7 +735,7 @@ def get_market_data(
 
     try:
         with open(market_file_path, "rb") as file:
-            market_data = pickle.load(file)
+            market_data = legacy_pickle.load(file)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

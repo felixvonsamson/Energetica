@@ -1,12 +1,12 @@
 """Test upgrading active facilities."""
 
-from energetica.enums import (
-    TechnologyType,
-    WindFacilityType,
-)
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.enums import (
+    TechnologyType,
+    WindFacilityType,
+)
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
 from energetica.utils.facilities import upgrade_facility

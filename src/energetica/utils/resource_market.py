@@ -2,10 +2,10 @@
 
 import math
 
-from energetica.enums import Fuel
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.database.resource_on_sale import ResourceOnSale
+from energetica.freeplay.enums import Fuel
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.kernel.formatting import format_mass, format_money

@@ -1,7 +1,7 @@
 """Utility functions for workers."""
 
-from energetica.enums import ProjectStatus, WorkerType
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import ProjectStatus, WorkerType
 
 
 def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_now: bool = False) -> None:

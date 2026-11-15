@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from energetica.enums import RenewableFacilityType
+from energetica.freeplay.enums import RenewableFacilityType
 from energetica.schemas.electricity_markets import PowerPriorityItem
 
 if TYPE_CHECKING:

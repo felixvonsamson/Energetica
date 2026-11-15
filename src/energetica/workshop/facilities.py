@@ -1,7 +1,7 @@
 """Workshop's own facility catalog (#998): the fixed values of every facility a player can buy.
 
 Workshop authors its facilities itself (#975) and never reads the persistent world's
-``config/assets.py``. Fuels are Workshop's own list too, not the persistent world's ``Fuel`` enum
+``freeplay/config/assets.py``. Fuels are Workshop's own list too, not the persistent world's ``Fuel`` enum
 (#1049). The fields follow #977, plus ``om_fixed_share`` (#992).
 
 This module holds only each facility's values. Which facilities a session offers is not a property
