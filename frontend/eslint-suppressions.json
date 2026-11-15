@@ -1,0 +1,217 @@
+{
+  "apps/freeplay/src/components/charts/cash-flow-chart.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 3
+    }
+  },
+  "apps/freeplay/src/components/charts/power-overview-table.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "apps/freeplay/src/components/charts/resources-chart.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 4
+    }
+  },
+  "apps/freeplay/src/components/charts/storage-overview-table.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 6
+    }
+  },
+  "apps/freeplay/src/components/chat/message-input.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 3
+    }
+  },
+  "apps/freeplay/src/components/dashboard/daily-quiz.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 3
+    }
+  },
+  "apps/freeplay/src/components/dashboard/quick-link-card.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 2
+    }
+  },
+  "apps/freeplay/src/components/electricity-markets/market-detail-dialog.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 2
+    }
+  },
+  "apps/freeplay/src/components/electricity-markets/market-item.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 3
+    }
+  },
+  "apps/freeplay/src/components/facilities/facility-comparison-dialog.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/facilities/facility-group-table.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 6
+    }
+  },
+  "apps/freeplay/src/components/facilities/facility-item.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/layout/app-sidebar.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/map/map-tooltip.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/power-priorities/priority-table.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/technologies/technology-effects-table.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/components/technologies/technology-item.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/community/electricity-markets.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 2
+    }
+  },
+  "apps/freeplay/src/routes/app/community/leaderboards.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 36
+    }
+  },
+  "apps/freeplay/src/routes/app/community/resource-market.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/extraction.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/functional.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/manage.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/power.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/storage.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/facilities/technology.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/internal/index.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/freeplay/src/routes/app/overviews/electricity-markets.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 2
+    }
+  },
+  "apps/freeplay/src/routes/app/settle.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "apps/landing/src/components/header.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/lobby/src/components/recap/recap-map-tooltip.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/lobby/src/routes/runs.$slug.recap.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/lobby/src/routes/signup.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "apps/workshop/src/components/game-feedback.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "packages/charts/src/components/time-series-chart.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "packages/map/src/components/hex-tile.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "packages/ui/src/components/button-group.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "packages/ui/src/components/button.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 4
+    }
+  },
+  "packages/ui/src/components/input.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 4
+    }
+  },
+  "packages/ui/src/components/sheet.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "packages/ui/src/components/slider.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "packages/ui/src/components/switch.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 3
+    }
+  },
+  "packages/ui/src/components/tabs.tsx": {
+    "better-tailwindcss/no-unknown-classes": {
+      "count": 5
+    }
+  }
+}

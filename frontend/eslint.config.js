@@ -8,6 +8,7 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import pluginQuery from "@tanstack/eslint-plugin-query";
+import betterTailwindcss from "eslint-plugin-better-tailwindcss";
 
 // The workspace packages in a folder. Only folders with a package.json count,
 // so stray files such as macOS's .DS_Store are skipped.
@@ -213,6 +214,36 @@ export default defineConfig([
             ],
         },
     })),
+    // Tailwind silently emits nothing for a class it does not know, such as a colour
+    // whose theme token was renamed or deleted. These rules report such classes. Every
+    // app takes its theme from the shared @energetica/ui stylesheet, so that one file
+    // is the entry point for all of them. `cwd` points at the ui package because
+    // Tailwind is installed there, not in frontend/.
+    {
+        files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+        plugins: { "better-tailwindcss": betterTailwindcss },
+        settings: {
+            "better-tailwindcss": {
+                cwd: "packages/ui",
+                entryPoint: "src/styles/global.css",
+            },
+        },
+        rules: {
+            "better-tailwindcss/no-unknown-classes": [
+                "error",
+                {
+                    ignore: [
+                        // Plain CSS classes in global.css. The plugin only sees
+                        // classes inside `@layer components`, and these are outside it.
+                        "^player-self-(row|card)$",
+                        // A hook for the Sonner toast library, not a style.
+                        "^toaster$",
+                    ],
+                },
+            ],
+            "better-tailwindcss/no-conflicting-classes": "error",
+        },
+    },
     reactHooks.configs.flat["recommended-latest"],
     jsxA11y.flatConfigs.recommended,
     ...pluginQuery.configs["flat/recommended"],
