@@ -39,9 +39,9 @@ dependencies = [
 # without this extra — the server runs the code, it does not check it.
 # ruff is pinned to the same version as the `rev:` in .pre-commit-config.yaml. Bump the two
 # together: two ruffs that disagree about formatting is worse than one.
-# import-linter checks the [tool.importlinter] contracts below; 2.16 is the version they were
-# written against, and they use its exhaustive layers and ":" layer syntax.
-dev = ["pytest", "pyright==1.1.407", "pre-commit", "ruff==0.12.10", "import-linter>=2.16"]
+# import-linter is pinned too, because its contract options change between releases, and a new
+# release that reads [tool.importlinter] differently should not fail CI on an unrelated PR.
+dev = ["pytest", "pyright==1.1.407", "pre-commit", "ruff==0.12.10", "import-linter==2.16"]
 
 [project.urls]
 Homepage = "https://github.com/felixvonsamson/Energetica"
@@ -131,15 +131,17 @@ venvPath = "."
 venv = ".venv"
 
 [tool.importlinter]
-# Which packages may import which, checked by `lint-imports` in CI (#1051). The backend
+# Which packages may import which, checked by `lint-imports` in CI (#1051). This is the backend
 # counterpart of the frontend's rule against imports between apps (frontend/boundaries.test.ts).
-# Contracts cover indirect imports too: A importing B importing C counts as A importing C.
+# Each rule is a contract. Contracts cover indirect imports too: A importing B importing C counts
+# as A importing C.
 # lobby_service has no contract of its own yet, but it is analysed so that chains through it count.
 root_packages = ["energetica", "lobby", "lobby_service"]
 
 # The freeplay code is not one package yet (#1057 carves it): it is energetica.freeplay plus the
-# top-level modules it still owns. They are listed in each contract below, so a module that moves
-# into energetica.freeplay comes out of every list.
+# top-level modules it still owns. The same list appears in four places below, and
+# tests/unit/test_import_contracts.py fails if they differ. A module that moves into
+# energetica.freeplay comes out of all four.
 
 [[tool.importlinter.contracts]]
 name = "kernel, identity and sim are layered below the apps, and entry sits above them"
@@ -151,7 +153,8 @@ exhaustive = true
 layers = [
     # Builds whichever app this instance runs (#994), so it imports both.
     "entry",
-    # App code. ":" lets these import each other; the per-app contracts below keep the apps apart.
+    # App code. A higher layer may import a lower one, never the reverse. Within a layer, ":" lets
+    # these modules import each other; the per-app contracts below keep the apps apart.
     "workshop : freeplay : config : enums : init_test_players : production_update : routers : schemas : simulate : socketio : technology_effects : utils",
     "sim",
     "identity",
@@ -168,9 +171,9 @@ forbidden_modules = ["lobby"]
 name = "Workshop imports neither the lobby nor the freeplay code"
 type = "forbidden"
 source_modules = ["energetica.workshop"]
+# energetica.entry is not listed: the layers contract already keeps Workshop from importing it.
 forbidden_modules = [
     "lobby",
-    "energetica.entry",
     "energetica.freeplay",
     "energetica.config",
     "energetica.enums",
@@ -220,7 +223,7 @@ source_modules = [
     "energetica.technology_effects",
     "energetica.utils",
 ]
-forbidden_modules = ["energetica.entry", "energetica.workshop", "lobby"]
+forbidden_modules = ["energetica.workshop", "lobby"]
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
