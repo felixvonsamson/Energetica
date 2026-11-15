@@ -98,7 +98,8 @@ class Bot:
             money=self.api.selection().money,
             fleet=self.api.fleet(),
             offered={f.id: f for f in self.api.facilities() if f.for_sale},
-            fuel={line.fuel: line for line in fuel.fuels},
+            # Only the fuels the bot's operating facilities burn: the server refuses an order for any other (#1512).
+            fuel={line.fuel: line for line in fuel.fuels if line.burned},
             procurement=fuel.procurement,
             history=history.until(session),
             recap=recap,

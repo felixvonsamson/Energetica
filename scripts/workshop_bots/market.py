@@ -132,7 +132,7 @@ class Ctx:
     money: float
     fleet: list[WorkshopOwnedFacilityOut]
     offered: dict[FacilityId, WorkshopFacilityOut]  # catalog entries with this Round's price, for sale only
-    fuel: dict[Fuel, WorkshopFuelLineOut]
+    fuel: dict[Fuel, WorkshopFuelLineOut]  # the fuels the bot's operating facilities burn, the only ones it may order
     procurement: FuelProcurement
     history: list[PeriodView]  # every settled period, oldest first
     recap: WorkshopRecap | None  # the Recap before this Round
