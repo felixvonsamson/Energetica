@@ -29,7 +29,7 @@ from pathlib import Path
 
 import requests
 
-# main.py sits in backend/, two levels up from tests/integration/
+# main.py sits in backend/, two levels up from tests/integration/.
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 MAIN_PY = BACKEND_ROOT / "main.py"
 

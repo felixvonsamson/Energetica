@@ -67,7 +67,8 @@ pip install -e './backend[dev]'
 
 The backend packages live under `backend/src/`, so that editable install is what makes `energetica`
 and `lobby_service` importable at all — without it, `pytest` and `python backend/main.py` both fail
-with `ModuleNotFoundError`. Run it, and every other command here, from the repository root. Re-run it after a change to the dependency list.
+with `ModuleNotFoundError`. Run it, and every other command here, from the repository root.
+Re-run it after a change to the dependency list.
 
 (Optional) Use `conda` if preferred.
 
@@ -190,10 +191,11 @@ the fixing and formatting forms — both write to your files, neither is read-on
 lint-imports --config backend/pyproject.toml   # check the import contracts
 ```
 
-`pip install -e './backend[dev]'` installs import-linter. Its contracts are about the backend's packages
-alone, so they live with them rather than with the root's ruff and pyright configuration. In a git
-worktree, run `PYTHONPATH=backend/src lint-imports --config backend/pyproject.toml`. The shared `.venv` would otherwise resolve `energetica` to
-the main checkout.
+`pip install -e './backend[dev]'` installs import-linter. Its contracts are about the backend's
+packages alone, so they live with them rather than with the root's ruff and pyright
+configuration. In a git worktree, run
+`PYTHONPATH=backend/src lint-imports --config backend/pyproject.toml`. The shared `.venv` would
+otherwise resolve `energetica` to the main checkout.
 
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120

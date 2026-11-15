@@ -63,7 +63,7 @@ print(json.dumps(culprit))
 
 
 def _first_module_that_loads(package: str, forbidden: list[str]) -> tuple[str, list[str]] | None:
-    # Import from this checkout's src/, as pytest itself does (`pythonpath` in pytest.ini).
+    # Import from this checkout's backend/src/, as pytest itself does (`pythonpath` in pytest.ini).
     # Otherwise a git worktree's shared .venv would resolve `energetica` to the main checkout.
     env = {
         **os.environ,

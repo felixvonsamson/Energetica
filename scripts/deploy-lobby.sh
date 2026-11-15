@@ -135,8 +135,9 @@ fi
 
 # --- 4. rsync backend code ----------------------------------------------------------
 # Ships the two entry points the lobby units run, backend/main_lobby.py and
-# backend/main_lobby_service.py, to the top of the lobby dir, and the wheel built above, which step 6 installs. Nothing else: see scripts/lib/backend-sync.sh for the
-# allowlist and for what --delete leaves alone.
+# backend/main_lobby_service.py, to the top of the lobby dir, and the wheel built above, which
+# step 6 installs. Nothing else: see scripts/lib/backend-sync.sh for the allowlist and for what
+# --delete leaves alone.
 sync_backend "$SSH:$REMOTE_PATH" dist-lobby main_lobby.py main_lobby_service.py
 
 # --- 4b. rsync lobby-scoped scripts (flattened: scripts/lobby/* → scripts/*) --------------

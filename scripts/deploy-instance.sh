@@ -237,8 +237,9 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 3. rsync backend code ------------------------------------------------------
-# Ships backend/main.py to the top of the instance dir, where the unit runs it, and the wheel built above, which step 5 installs. Nothing
-# else: see scripts/lib/backend-sync.sh for the allowlist and for what --delete leaves alone.
+# Ships backend/main.py to the top of the instance dir, where the unit runs it, and the wheel
+# built above, which step 5 installs. Nothing else: see scripts/lib/backend-sync.sh for the
+# allowlist and for what --delete leaves alone.
 sync_backend "$SSH:$REMOTE_PATH" dist-app main.py
 
 # --- 3b. rsync instance-scoped scripts (flattened: scripts/instance/* → scripts/*) --------

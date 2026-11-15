@@ -36,8 +36,8 @@ dependencies = [
 
 [project.optional-dependencies]
 # Everything needed to develop and check the backend, on top of the runtime deps, so that
-# `pip install -e './backend[dev]'`, run from the repo root, is the whole local setup step. The deploy installs the project
-# without this extra — the server runs the code, it does not check it.
+# `pip install -e './backend[dev]'`, run from the repo root, is the whole local setup step. The
+# deploy installs the project without this extra — the server runs the code, it does not check it.
 # ruff is pinned to the same version as the `rev:` in .pre-commit-config.yaml. Bump the two
 # together: two ruffs that disagree about formatting is worse than one.
 # import-linter is pinned too, because its contract options change between releases, and a new
