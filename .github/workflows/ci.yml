@@ -52,6 +52,8 @@ jobs:
               - tests/**
               # The tests also read deploy scripts, Apache configs and templates under scripts/.
               - scripts/**
+              # Generated from the backend; a test fails when it is stale (#1482).
+              - frontend/apps/landing/src/lib/facility-showcase.generated.ts
               - pyproject.toml
               # python-lint checks that the ruff pin here matches pyproject.toml.
               - .pre-commit-config.yaml
