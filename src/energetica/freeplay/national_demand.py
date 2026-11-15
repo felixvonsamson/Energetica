@@ -28,10 +28,11 @@ class DemandCurve:
 @cache
 def national_demand_curve() -> DemandCurve:
     """Load the national demand curve. Read from disk once, then shared."""
+    # Both files are package data holding plain lists of floats, so they name no class that could move.
     with open(_DATA_DIR / "national_demand_intraday.pck", "rb") as file:
         # length 1440: one sample per minute of the day
-        intraday = pickle.load(file)
+        intraday = pickle.load(file)  # noqa: TID251
     with open(_DATA_DIR / "national_demand_seasonal.pck", "rb") as file:
         # length 365: one sample per real calendar day of the year
-        seasonal = pickle.load(file)
+        seasonal = pickle.load(file)  # noqa: TID251
     return DemandCurve(intraday, seasonal)

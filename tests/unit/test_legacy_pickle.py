@@ -88,8 +88,9 @@ def test_a_full_engine_save_under_the_old_module_paths_loads_through_engine_load
     engine.save()
 
     engine_data = Path("instance/engine_data.pck")
+    # Written just above, under the current module paths.
     with engine_data.open("rb") as file:
-        state = pickle.load(file)
+        state = pickle.load(file)  # noqa: TID251
     engine_data.write_bytes(_to_old_layout(pickle.dumps(state, protocol=0)))
     engine.clear_db()
 
@@ -112,8 +113,9 @@ def test_a_push_subscription_saved_under_the_old_module_path_loads_through_engin
     engine.save()
 
     engine_data = Path("instance/engine_data.pck")
+    # Written just above, under the current module paths.
     with engine_data.open("rb") as file:
-        state = pickle.load(file)
+        state = pickle.load(file)  # noqa: TID251
     old_layout = _to_old_layout(pickle.dumps(state, protocol=0))
     assert b"energetica.schemas.browser_notifications" in old_layout
     engine_data.write_bytes(old_layout)
@@ -126,8 +128,9 @@ def test_a_push_subscription_saved_under_the_old_module_path_loads_through_engin
 
 def _rewrite_to_old_layout(path: Path) -> None:
     """Rewrite a pickle file in place to name its classes as they were pickled before #1056."""
+    # The caller has just written the file under the current module paths.
     with path.open("rb") as file:
-        state = pickle.load(file)
+        state = pickle.load(file)  # noqa: TID251
     old_layout = _to_old_layout(pickle.dumps(state, protocol=0))
     assert b"energetica.enums" in old_layout
     path.write_bytes(old_layout)
@@ -153,8 +156,9 @@ def test_the_history_save_extends_a_player_history_file_written_under_the_old_mo
 
     save_past_data()
 
+    # The save above rewrote the file under the current module paths.
     with history.open("rb") as file:
-        saved = pickle.load(file)
+        saved = pickle.load(file)  # noqa: TID251
     assert ControllableFacilityType.COAL_BURNER in saved["generation"]
 
 
