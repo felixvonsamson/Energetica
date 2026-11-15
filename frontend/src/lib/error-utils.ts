@@ -21,9 +21,8 @@
  *     ```;
  */
 
-import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
+import { getUserFriendlyError } from "@/lib/game-messages";
 import { ApiClientError } from "@energetica/core/api-client";
-import { createErrorMessages } from "@energetica/core/error-messages";
 
 /**
  * `getUserFriendlyError(error)` gives a readable message for any error, using
@@ -31,8 +30,7 @@ import { createErrorMessages } from "@energetica/core/error-messages";
  * checks whether an error is an API error with that code. See
  * `@energetica/core/error-messages`.
  */
-export const { getUserFriendlyError, isErrorType } =
-    createErrorMessages(GAME_ERROR_MESSAGES);
+export { getUserFriendlyError, isErrorType } from "@/lib/game-messages";
 
 /**
  * Handle API errors with logging and user-friendly messaging.

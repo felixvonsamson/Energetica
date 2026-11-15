@@ -72,6 +72,15 @@ describe("frontend boundaries", () => {
         ).toContain("import/no-relative-packages");
     });
 
+    it("rejects an app under apps/ importing another app's files", async () => {
+        expect(
+            await violatedRules(
+                "apps/workshop/src/routes/example.tsx",
+                'import { getUserFriendlyError } from "../../../lobby/src/lib/error-utils";\nexport const x = getUserFriendlyError;\n',
+            ),
+        ).toContain("import/no-relative-packages");
+    });
+
     it("rejects the combined app importing an app under apps/", async () => {
         expect(
             await violatedRules(

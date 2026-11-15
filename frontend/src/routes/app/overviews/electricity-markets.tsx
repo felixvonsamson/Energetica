@@ -35,8 +35,6 @@ import {
     useElectricityMarket,
 } from "@/hooks/use-electricity-markets";
 import { useGameTick } from "@/hooks/use-game-tick";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useToggleSet } from "@/hooks/use-toggle-set";
 import { formatPower } from "@energetica/core/format-utils";
 import { Button } from "@energetica/ui/components/button";
 import {
@@ -54,6 +52,8 @@ import {
     SegmentedPickerOption,
 } from "@energetica/ui/components/segmented-picker";
 import { Switch } from "@energetica/ui/components/switch";
+import { useLocalStorage } from "@energetica/ui/hooks/use-local-storage";
+import { useToggleSet } from "@energetica/ui/hooks/use-toggle-set";
 
 interface MarketsSearchParams {
     marketId?: number;

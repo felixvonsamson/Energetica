@@ -11,8 +11,34 @@ import { loadEnv, type Plugin, type ProxyOptions } from "vite";
  * The app bundle's dev login redirect (`lobbyHref` in
  * `@energetica/core/instances`) hard-codes the lobby port, so the two must
  * agree.
+ *
+ * `app` is the port of an Instance's frontend, whichever app it runs: the
+ * persistent world's or the Workshop's. The lobby's dev links into a run go
+ * there. The two never run at once, since the local app backend runs one Run
+ * mode at a time.
  */
 export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
+
+/**
+ * Dev-only: mirror production's Apache `RedirectMatch ^/$ → /app/`. An
+ * Instance's app only routes `/app/*` (there is no `/` route), so without this
+ * the bare root 404s in dev; in production Apache handles it. `apply: "serve"`
+ * keeps it out of builds.
+ */
+export const devRootRedirect: Plugin = {
+    name: "dev-root-redirect",
+    apply: "serve",
+    configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+            if (req.url === "/") {
+                res.writeHead(302, { Location: "/app/" });
+                res.end();
+                return;
+            }
+            next();
+        });
+    },
+};
 
 /**
  * The directory holding the env files (`.env.local`, `.env.game`, ...): the

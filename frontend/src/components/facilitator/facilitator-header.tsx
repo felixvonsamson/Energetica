@@ -1,14 +1,11 @@
 /**
  * The top bar of the facilitator pages (#1020 join link, #1022 roster), with a
- * small nav between the two. In a Workshop Run, it also links back to the
- * facilitator's console (#1018). The parts come from `@energetica/instance`;
- * this app only arranges them with its own routes.
+ * small nav between the two. The parts come from `@energetica/instance`; this
+ * app only arranges them with its own routes.
  */
 
 import { Link, useLocation } from "@tanstack/react-router";
-import { SlidersHorizontal } from "lucide-react";
 
-import { useRunMode } from "@/hooks/use-run-mode";
 import {
     BackToLobbyButton,
     LogOutButton,
@@ -16,7 +13,6 @@ import {
     TopBar,
     TopBarLogo,
 } from "@energetica/instance/components/top-bar";
-import { Button } from "@energetica/ui/components/button";
 import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 
 const NAV_LINKS = [
@@ -26,7 +22,6 @@ const NAV_LINKS = [
 
 export function FacilitatorHeader() {
     const location = useLocation();
-    const { data: runMode } = useRunMode();
 
     return (
         <TopBar
@@ -45,14 +40,6 @@ export function FacilitatorHeader() {
             </Link>
             <div className="flex items-center gap-2">
                 <ThemeToggle variant="icon-only" />
-                {runMode === "workshop" && (
-                    <Button variant="outline" asChild>
-                        <Link to="/app/workshop/console">
-                            <SlidersHorizontal className="size-4" />
-                            Console
-                        </Link>
-                    </Button>
-                )}
                 <BackToLobbyButton />
                 <LogOutButton />
             </div>

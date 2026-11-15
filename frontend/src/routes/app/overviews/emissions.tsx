@@ -15,14 +15,14 @@ import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useToggleSet } from "@/hooks/use-toggle-set";
 import { CardContent, PageCard } from "@energetica/ui/components/card";
 import { ChartCard } from "@energetica/ui/components/chart-card";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@energetica/ui/components/segmented-picker";
+import { useLocalStorage } from "@energetica/ui/hooks/use-local-storage";
+import { useToggleSet } from "@energetica/ui/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/emissions")({
     component: EmissionsOverviewPage,

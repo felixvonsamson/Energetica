@@ -38,8 +38,6 @@ export const Route = createFileRoute("/app/join/$token")({
     staticData: {
         title: "Join",
         routeConfig: { requiredRole: null },
-        // A private Workshop Run is joined through this page too (#995).
-        runMode: "any",
         infoDialog: { contents: <JoinHelp /> },
     },
 });
@@ -50,17 +48,11 @@ function JoinPage() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
-    // Once joined, `/app` re-resolves the now-passing entry gate and lands the visitor on their
-    // role-appropriate page — the same redirect any returning player gets, not a special case for
-    // joining. The gate is `GET /auth/me` in the persistent world and `POST /workshop/enter` in a
-    // Workshop Run. Refreshing the other mode's query does nothing, since it was never loaded.
+    // Once joined, `/app` re-resolves the now-passing entry gate, `GET /auth/me`, and lands the
+    // visitor on their role-appropriate page — the same redirect any returning player gets, not a
+    // special case for joining.
     const onJoined = async () => {
-        await Promise.all([
-            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me }),
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.workshop.entry,
-            }),
-        ]);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         void navigate({ to: "/app" });
     };
 

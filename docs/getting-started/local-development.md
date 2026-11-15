@@ -194,14 +194,18 @@ Once the Run is up, the facilitator can also add players from the roster page or
 
 ### 3. Start the stack with the Run's slug
 
-Two environment variables tell the app backend which `instance.json` to read. Set them for any of
-the full-stack commands above:
+Two environment variables tell the app backend which `instance.json` to read. A Workshop Run has its
+own frontend app, `frontend/apps/workshop`, so start the workshop stack, which runs it in place of
+the persistent world's:
 
 ```bash
 export ENERGETICA_INSTANCE_CONFIG_DIR="$PWD/.energetica-dev/etc"
 export ENERGETICA_INSTANCE_SLUG=workshop-demo
-bun run dev            # or bun run serve:app in its own terminal, next to the lobby and frontends
+bun run dev:workshop   # or, each in its own terminal: bun run serve:lobby, bun run serve:app, and cd frontend && bun run dev:workshop
 ```
+
+The Workshop's dev server takes the persistent world's port, 5173, since the lobby's links into a
+run go there, so the two cannot run at once.
 
 Check that the backend is in Workshop Mode:
 
@@ -217,7 +221,7 @@ Open http://localhost:5173 and log in. The session cookie is shared by every `lo
 browser window holds one account. Use a private window, or a second browser, for the other one.
 
 - As the **facilitator**, the top bar has the buttons that advance the session and extend the running
-  phase. The **Console** page (`/app/workshop/console`, #1018) plans each Round's levers, events and
+  phase. The **Console** page (`/app/console`, #1018) plans each Round's levers, events and
   votes, sets the phase timers, and links to the join link and roster.
 - As a **player**, you buy facilities in the Investment phase and set prices in each Trading period.
 

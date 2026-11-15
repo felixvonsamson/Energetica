@@ -78,14 +78,15 @@ get_settled_player()    - Requires a player who has chosen a location  (utils/au
 - Fetches `/auth/me` on app startup
 - Handles 401 errors gracefully (user not authenticated)
 
-**In a Workshop Run** the app enters through `POST /api/v1/workshop/enter` instead of `/auth/me`,
-which the Workshop backend does not serve. `frontend/src/main.tsx` reads the Run mode from
-`GET /api/v1/run` before anything else renders. In a Workshop Run it leaves out `AuthProvider` and
-the other persistent-world providers, and the root route (`frontend/src/routes/__root.tsx`) uses the
-Workshop gate (`workshopRedirect` in `frontend/src/lib/route-guard.ts`). As with `/auth/me`, a 401
-or a denied account sends the visitor to the lobby. Routes declare which Run mode shows them with
-`staticData.runMode`: unset for the persistent world only, `"workshop"` for the Workshop pages under
-`/app/workshop`, and `"any"` for pages both use, such as the join page.
+**In a Workshop Run** the Workshop's own app (`frontend/apps/workshop`) enters through
+`POST /api/v1/workshop/enter` instead of `/auth/me`, which the Workshop backend does not serve. The
+gate is the pathless `_entered` route (`frontend/apps/workshop/src/routes/_entered.tsx`), in front
+of every page of the Run. As with `/auth/me`, a 401 or a denied account sends the visitor to the
+lobby. The join page and the facilitator pages sit outside the gate: a visitor on the join page has
+not been admitted yet, and the backend refuses the facilitator pages' calls to anyone but the
+facilitator. The combined freeplay bundle still reads the Run mode from `GET /api/v1/run` before
+anything else renders, and shows nothing in a Workshop Run, until each Instance is served the app
+for its Run mode (#1181, #1182).
 
 **Auth hook:** `frontend/src/hooks/useAuth.ts`
 

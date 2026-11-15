@@ -3,8 +3,9 @@ set -euo pipefail
 
 # One-terminal launcher for a full local stack. See docs/getting-started/local-development.md.
 #
-#   bun run dev         # app stack:  lobby + app backends (shared scratch) + lobby + app frontends
-#   bun run dev:lobby   # lobby stack: lobby backend + lobby frontend
+#   bun run dev            # app stack:  lobby + app backends (shared scratch) + lobby + app frontends
+#   bun run dev:workshop   # the app stack with the Workshop's frontend, for a Workshop Run
+#   bun run dev:lobby      # lobby stack: lobby backend + lobby frontend
 #
 # Ctrl-C tears the whole process tree down. For finer control — a single piece, or a frontend
 # pointed at a live deployment via BACKEND=… — run the serve:* / dev:* scripts individually.
@@ -12,6 +13,15 @@ set -euo pipefail
 TARGET="${1:-app}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
+
+# The app backend runs a Workshop Run only when told which Run's instance.json to read. Without
+# it, the backend runs the persistent world, which the Workshop's frontend cannot show.
+if [ "$TARGET" = workshop ] && [ -z "${ENERGETICA_INSTANCE_SLUG:-}" ]; then
+    echo "[dev] the workshop stack needs a Workshop Run: set ENERGETICA_INSTANCE_CONFIG_DIR and" >&2
+    echo "      ENERGETICA_INSTANCE_SLUG, see docs/getting-started/local-development.md" >&2
+    echo "      § Running a Workshop Run locally." >&2
+    exit 1
+fi
 
 # Monitor mode: each background job below runs in its own process group (PGID == the job's PID),
 # so cleanup can signal the whole group at once — reliably taking down grandchildren that a plain
@@ -64,6 +74,7 @@ if [ -n "${BACKEND:-}" ]; then
         start bash -c 'cd frontend && exec bun run dev:lobby'
         ;;
     *)
+        # No Workshop Run is deployed, so the workshop stack only runs locally.
         echo "usage: [BACKEND=game] bash scripts/dev.sh [app|lobby]" >&2
         exit 1
         ;;
@@ -88,13 +99,20 @@ app)
     start bash -c 'cd frontend && exec bun run dev:lobby'
     start bash -c 'cd frontend && exec bun run dev:app'
     ;;
+workshop)
+    echo "[dev] workshop stack ($ENERGETICA_INSTANCE_SLUG) → workshop http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"
+    start .venv/bin/python main_lobby.py --port 8001
+    start .venv/bin/python main.py --env dev
+    start bash -c 'cd frontend && exec bun run dev:lobby'
+    start bash -c 'cd frontend && exec bun run dev:workshop'
+    ;;
 lobby)
     echo "[dev] lobby stack → lobby http://localhost:5174"
     start .venv/bin/python main_lobby.py --port 8001
     start bash -c 'cd frontend && exec bun run dev:lobby'
     ;;
 *)
-    echo "usage: bash scripts/dev.sh [app|lobby]" >&2
+    echo "usage: bash scripts/dev.sh [app|workshop|lobby]" >&2
     exit 1
     ;;
 esac

@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "bash scripts/dev.sh app",
         "dev:lobby": "bash scripts/dev.sh lobby",
+        "dev:workshop": "bash scripts/dev.sh workshop",
         "dev:login": "bash scripts/dev-login.sh",
         "serve:app": "bash scripts/dev-app.sh",
         "serve:app:fast": "bash scripts/dev-app.sh --clock_time 1 --in_game_seconds_per_tick 3600",

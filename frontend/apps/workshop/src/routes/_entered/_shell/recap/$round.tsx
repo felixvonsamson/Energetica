@@ -1,0 +1,37 @@
+/**
+ * The Recap that closes a Round (#1013). With `?window=1`, it covers the
+ * Workshop's chrome, for a window of its own on a projector.
+ */
+
+import { createFileRoute } from "@tanstack/react-router";
+
+import { LoanReminder } from "@/components/loan-offer";
+import { RecapForRound } from "@/components/recap-view";
+
+export const Route = createFileRoute("/_entered/_shell/recap/$round")({
+    component: RecapPage,
+    staticData: { title: "Recap", wide: true },
+    validateSearch: (search: Record<string, unknown>): { window?: 1 } =>
+        search.window ? { window: 1 } : {},
+});
+
+function RecapPage() {
+    const { round } = Route.useParams();
+    const search = Route.useSearch();
+    if (search.window)
+        return (
+            <div className="fixed inset-0 z-50 overflow-auto bg-background p-4 md:p-8">
+                <RecapForRound round={Number(round)} />
+            </div>
+        );
+    // The projector window above is the room's, so only this page reminds a
+    // player of their loan payment (#1225).
+    return (
+        <div className="pb-16">
+            <RecapForRound
+                round={Number(round)}
+                note={<LoanReminder round={Number(round)} />}
+            />
+        </div>
+    );
+}

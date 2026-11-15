@@ -68,8 +68,10 @@ declare module "@tanstack/react-router" {
 /**
  * The providers for this instance's Run mode (#995). The persistent world's
  * auth, socket and tick providers all call persistent-world endpoints on mount,
- * which a Workshop Run's backend does not serve, so a Workshop Run gets none of
- * them. Its root route enters through `/workshop/enter` instead.
+ * which a Workshop Run's backend does not serve. A Workshop Run is served by
+ * its own app, in `apps/workshop/`, so this one has nothing to show there.
+ * Checking the mode at runtime goes once each Instance is served the app for
+ * its Run mode (#1181, #1182).
  */
 function RunModeProviders({ children }: { children: ReactNode }) {
     const { data: mode, isError, refetch } = useRunMode();
@@ -91,7 +93,13 @@ function RunModeProviders({ children }: { children: ReactNode }) {
             </div>
         );
     }
-    if (mode === "workshop") return children;
+    if (mode === "workshop") {
+        return (
+            <div className="flex min-h-screen items-center justify-center p-4 text-center">
+                <p>This Run is a Workshop, which this app does not serve.</p>
+            </div>
+        );
+    }
     return (
         <AuthProvider>
             <SocketProvider>

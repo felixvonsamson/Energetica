@@ -14,16 +14,9 @@ import { Route as AppSettleRouteImport } from './routes/app/settle'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
-import { Route as AppWorkshopRouteRouteImport } from './routes/app/workshop/route'
-import { Route as AppWorkshopIndexRouteImport } from './routes/app/workshop/index'
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
-import { Route as AppWorkshopControlRoomRouteImport } from './routes/app/workshop_.control-room'
-import { Route as AppWorkshopScoreboardRouteImport } from './routes/app/workshop/scoreboard'
-import { Route as AppWorkshopIntroRouteImport } from './routes/app/workshop/intro'
-import { Route as AppWorkshopFacilitiesRouteImport } from './routes/app/workshop/facilities'
-import { Route as AppWorkshopConsoleRouteImport } from './routes/app/workshop/console'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
 import { Route as AppOverviewsStorageRouteImport } from './routes/app/overviews/storage'
 import { Route as AppOverviewsResourcesRouteImport } from './routes/app/overviews/resources'
@@ -43,7 +36,6 @@ import { Route as AppFacilitiesPowerRouteImport } from './routes/app/facilities/
 import { Route as AppFacilitiesManageRouteImport } from './routes/app/facilities/manage'
 import { Route as AppFacilitiesFunctionalRouteImport } from './routes/app/facilities/functional'
 import { Route as AppFacilitiesExtractionRouteImport } from './routes/app/facilities/extraction'
-import { Route as AppFacilitatorSlipsRouteImport } from './routes/app/facilitator/slips'
 import { Route as AppFacilitatorPlayersRouteImport } from './routes/app/facilitator/players'
 import { Route as AppDashboardQuizRouteImport } from './routes/app/dashboard/quiz'
 import { Route as AppCommunityResourceMarketRouteImport } from './routes/app/community/resource-market'
@@ -51,9 +43,6 @@ import { Route as AppCommunityMessagesRouteImport } from './routes/app/community
 import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
 import { Route as AppCommunityLeaderboardsRouteImport } from './routes/app/community/leaderboards'
 import { Route as AppCommunityElectricityMarketsRouteImport } from './routes/app/community/electricity-markets'
-import { Route as AppWorkshopRecapRoundRouteImport } from './routes/app/workshop/recap/$round'
-import { Route as AppWorkshopRoundRoundIndexRouteImport } from './routes/app/workshop/round/$round/index'
-import { Route as AppWorkshopRoundRoundSeasonRouteImport } from './routes/app/workshop/round/$round/$season'
 
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
@@ -80,16 +69,6 @@ const AppChangelogRoute = AppChangelogRouteImport.update({
   path: '/app/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppWorkshopRouteRoute = AppWorkshopRouteRouteImport.update({
-  id: '/app/workshop',
-  path: '/app/workshop',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppWorkshopIndexRoute = AppWorkshopIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppWorkshopRouteRoute,
-} as any)
 const AppWikiIndexRoute = AppWikiIndexRouteImport.update({
   id: '/app/wiki/',
   path: '/app/wiki/',
@@ -104,31 +83,6 @@ const AppFacilitatorIndexRoute = AppFacilitatorIndexRouteImport.update({
   id: '/app/facilitator/',
   path: '/app/facilitator/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppWorkshopControlRoomRoute = AppWorkshopControlRoomRouteImport.update({
-  id: '/app/workshop_/control-room',
-  path: '/app/workshop/control-room',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppWorkshopScoreboardRoute = AppWorkshopScoreboardRouteImport.update({
-  id: '/scoreboard',
-  path: '/scoreboard',
-  getParentRoute: () => AppWorkshopRouteRoute,
-} as any)
-const AppWorkshopIntroRoute = AppWorkshopIntroRouteImport.update({
-  id: '/intro',
-  path: '/intro',
-  getParentRoute: () => AppWorkshopRouteRoute,
-} as any)
-const AppWorkshopFacilitiesRoute = AppWorkshopFacilitiesRouteImport.update({
-  id: '/facilities',
-  path: '/facilities',
-  getParentRoute: () => AppWorkshopRouteRoute,
-} as any)
-const AppWorkshopConsoleRoute = AppWorkshopConsoleRouteImport.update({
-  id: '/console',
-  path: '/console',
-  getParentRoute: () => AppWorkshopRouteRoute,
 } as any)
 const AppWikiSlugRoute = AppWikiSlugRouteImport.update({
   id: '/app/wiki/$slug',
@@ -227,11 +181,6 @@ const AppFacilitiesExtractionRoute = AppFacilitiesExtractionRouteImport.update({
   path: '/app/facilities/extraction',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppFacilitatorSlipsRoute = AppFacilitatorSlipsRouteImport.update({
-  id: '/app/facilitator/slips',
-  path: '/app/facilitator/slips',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppFacilitatorPlayersRoute = AppFacilitatorPlayersRouteImport.update({
   id: '/app/facilitator/players',
   path: '/app/facilitator/players',
@@ -270,26 +219,8 @@ const AppCommunityElectricityMarketsRoute =
     path: '/app/community/electricity-markets',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppWorkshopRecapRoundRoute = AppWorkshopRecapRoundRouteImport.update({
-  id: '/recap/$round',
-  path: '/recap/$round',
-  getParentRoute: () => AppWorkshopRouteRoute,
-} as any)
-const AppWorkshopRoundRoundIndexRoute =
-  AppWorkshopRoundRoundIndexRouteImport.update({
-    id: '/round/$round/',
-    path: '/round/$round/',
-    getParentRoute: () => AppWorkshopRouteRoute,
-  } as any)
-const AppWorkshopRoundRoundSeasonRoute =
-  AppWorkshopRoundRoundSeasonRouteImport.update({
-    id: '/round/$round/$season',
-    path: '/round/$round/$season',
-    getParentRoute: () => AppWorkshopRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
-  '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
@@ -302,7 +233,6 @@ export interface FileRoutesByFullPath {
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
-  '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -322,18 +252,9 @@ export interface FileRoutesByFullPath {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
-  '/app/workshop/console': typeof AppWorkshopConsoleRoute
-  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
-  '/app/workshop/intro': typeof AppWorkshopIntroRoute
-  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
-  '/app/workshop/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
-  '/app/workshop/': typeof AppWorkshopIndexRoute
-  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
-  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
-  '/app/workshop/round/$round': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRoutesByTo {
   '/app/changelog': typeof AppChangelogRoute
@@ -348,7 +269,6 @@ export interface FileRoutesByTo {
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
-  '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -368,22 +288,12 @@ export interface FileRoutesByTo {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
-  '/app/workshop/console': typeof AppWorkshopConsoleRoute
-  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
-  '/app/workshop/intro': typeof AppWorkshopIntroRoute
-  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
-  '/app/workshop/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
-  '/app/workshop': typeof AppWorkshopIndexRoute
-  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
-  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
-  '/app/workshop/round/$round': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/app/workshop': typeof AppWorkshopRouteRouteWithChildren
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
@@ -396,7 +306,6 @@ export interface FileRoutesById {
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
-  '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -416,23 +325,13 @@ export interface FileRoutesById {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
-  '/app/workshop/console': typeof AppWorkshopConsoleRoute
-  '/app/workshop/facilities': typeof AppWorkshopFacilitiesRoute
-  '/app/workshop/intro': typeof AppWorkshopIntroRoute
-  '/app/workshop/scoreboard': typeof AppWorkshopScoreboardRoute
-  '/app/workshop_/control-room': typeof AppWorkshopControlRoomRoute
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
-  '/app/workshop/': typeof AppWorkshopIndexRoute
-  '/app/workshop/recap/$round': typeof AppWorkshopRecapRoundRoute
-  '/app/workshop/round/$round/$season': typeof AppWorkshopRoundRoundSeasonRoute
-  '/app/workshop/round/$round/': typeof AppWorkshopRoundRoundIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/settings'
@@ -445,7 +344,6 @@ export interface FileRouteTypes {
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
     | '/app/facilitator/players'
-    | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -465,18 +363,9 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
-    | '/app/workshop/console'
-    | '/app/workshop/facilities'
-    | '/app/workshop/intro'
-    | '/app/workshop/scoreboard'
-    | '/app/workshop/control-room'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
-    | '/app/workshop/'
-    | '/app/workshop/recap/$round'
-    | '/app/workshop/round/$round/$season'
-    | '/app/workshop/round/$round'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/app/changelog'
@@ -491,7 +380,6 @@ export interface FileRouteTypes {
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
     | '/app/facilitator/players'
-    | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -511,21 +399,11 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
-    | '/app/workshop/console'
-    | '/app/workshop/facilities'
-    | '/app/workshop/intro'
-    | '/app/workshop/scoreboard'
-    | '/app/workshop/control-room'
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
-    | '/app/workshop'
-    | '/app/workshop/recap/$round'
-    | '/app/workshop/round/$round/$season'
-    | '/app/workshop/round/$round'
   id:
     | '__root__'
-    | '/app/workshop'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/settings'
@@ -538,7 +416,6 @@ export interface FileRouteTypes {
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
     | '/app/facilitator/players'
-    | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -558,22 +435,12 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
-    | '/app/workshop/console'
-    | '/app/workshop/facilities'
-    | '/app/workshop/intro'
-    | '/app/workshop/scoreboard'
-    | '/app/workshop_/control-room'
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
-    | '/app/workshop/'
-    | '/app/workshop/recap/$round'
-    | '/app/workshop/round/$round/$season'
-    | '/app/workshop/round/$round/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppWorkshopRouteRoute: typeof AppWorkshopRouteRouteWithChildren
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
@@ -585,7 +452,6 @@ export interface RootRouteChildren {
   AppCommunityMessagesRoute: typeof AppCommunityMessagesRoute
   AppCommunityResourceMarketRoute: typeof AppCommunityResourceMarketRoute
   AppFacilitatorPlayersRoute: typeof AppFacilitatorPlayersRoute
-  AppFacilitatorSlipsRoute: typeof AppFacilitatorSlipsRoute
   AppFacilitiesExtractionRoute: typeof AppFacilitiesExtractionRoute
   AppFacilitiesFunctionalRoute: typeof AppFacilitiesFunctionalRoute
   AppFacilitiesManageRoute: typeof AppFacilitiesManageRoute
@@ -605,7 +471,6 @@ export interface RootRouteChildren {
   AppOverviewsResourcesRoute: typeof AppOverviewsResourcesRoute
   AppOverviewsStorageRoute: typeof AppOverviewsStorageRoute
   AppWikiSlugRoute: typeof AppWikiSlugRoute
-  AppWorkshopControlRoomRoute: typeof AppWorkshopControlRoomRoute
   AppFacilitatorIndexRoute: typeof AppFacilitatorIndexRoute
   AppInternalIndexRoute: typeof AppInternalIndexRoute
   AppWikiIndexRoute: typeof AppWikiIndexRoute
@@ -648,20 +513,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/workshop': {
-      id: '/app/workshop'
-      path: '/app/workshop'
-      fullPath: '/app/workshop'
-      preLoaderRoute: typeof AppWorkshopRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/workshop/': {
-      id: '/app/workshop/'
-      path: '/'
-      fullPath: '/app/workshop/'
-      preLoaderRoute: typeof AppWorkshopIndexRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
     '/app/wiki/': {
       id: '/app/wiki/'
       path: '/app/wiki'
@@ -682,41 +533,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/facilitator'
       preLoaderRoute: typeof AppFacilitatorIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/app/workshop_/control-room': {
-      id: '/app/workshop_/control-room'
-      path: '/app/workshop/control-room'
-      fullPath: '/app/workshop/control-room'
-      preLoaderRoute: typeof AppWorkshopControlRoomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/workshop/scoreboard': {
-      id: '/app/workshop/scoreboard'
-      path: '/scoreboard'
-      fullPath: '/app/workshop/scoreboard'
-      preLoaderRoute: typeof AppWorkshopScoreboardRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
-    '/app/workshop/intro': {
-      id: '/app/workshop/intro'
-      path: '/intro'
-      fullPath: '/app/workshop/intro'
-      preLoaderRoute: typeof AppWorkshopIntroRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
-    '/app/workshop/facilities': {
-      id: '/app/workshop/facilities'
-      path: '/facilities'
-      fullPath: '/app/workshop/facilities'
-      preLoaderRoute: typeof AppWorkshopFacilitiesRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
-    '/app/workshop/console': {
-      id: '/app/workshop/console'
-      path: '/console'
-      fullPath: '/app/workshop/console'
-      preLoaderRoute: typeof AppWorkshopConsoleRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
     }
     '/app/wiki/$slug': {
       id: '/app/wiki/$slug'
@@ -851,13 +667,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFacilitiesExtractionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/facilitator/slips': {
-      id: '/app/facilitator/slips'
-      path: '/app/facilitator/slips'
-      fullPath: '/app/facilitator/slips'
-      preLoaderRoute: typeof AppFacilitatorSlipsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/facilitator/players': {
       id: '/app/facilitator/players'
       path: '/app/facilitator/players'
@@ -907,54 +716,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunityElectricityMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/workshop/recap/$round': {
-      id: '/app/workshop/recap/$round'
-      path: '/recap/$round'
-      fullPath: '/app/workshop/recap/$round'
-      preLoaderRoute: typeof AppWorkshopRecapRoundRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
-    '/app/workshop/round/$round/': {
-      id: '/app/workshop/round/$round/'
-      path: '/round/$round'
-      fullPath: '/app/workshop/round/$round'
-      preLoaderRoute: typeof AppWorkshopRoundRoundIndexRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
-    '/app/workshop/round/$round/$season': {
-      id: '/app/workshop/round/$round/$season'
-      path: '/round/$round/$season'
-      fullPath: '/app/workshop/round/$round/$season'
-      preLoaderRoute: typeof AppWorkshopRoundRoundSeasonRouteImport
-      parentRoute: typeof AppWorkshopRouteRoute
-    }
   }
 }
-
-interface AppWorkshopRouteRouteChildren {
-  AppWorkshopConsoleRoute: typeof AppWorkshopConsoleRoute
-  AppWorkshopFacilitiesRoute: typeof AppWorkshopFacilitiesRoute
-  AppWorkshopIntroRoute: typeof AppWorkshopIntroRoute
-  AppWorkshopScoreboardRoute: typeof AppWorkshopScoreboardRoute
-  AppWorkshopIndexRoute: typeof AppWorkshopIndexRoute
-  AppWorkshopRecapRoundRoute: typeof AppWorkshopRecapRoundRoute
-  AppWorkshopRoundRoundSeasonRoute: typeof AppWorkshopRoundRoundSeasonRoute
-  AppWorkshopRoundRoundIndexRoute: typeof AppWorkshopRoundRoundIndexRoute
-}
-
-const AppWorkshopRouteRouteChildren: AppWorkshopRouteRouteChildren = {
-  AppWorkshopConsoleRoute: AppWorkshopConsoleRoute,
-  AppWorkshopFacilitiesRoute: AppWorkshopFacilitiesRoute,
-  AppWorkshopIntroRoute: AppWorkshopIntroRoute,
-  AppWorkshopScoreboardRoute: AppWorkshopScoreboardRoute,
-  AppWorkshopIndexRoute: AppWorkshopIndexRoute,
-  AppWorkshopRecapRoundRoute: AppWorkshopRecapRoundRoute,
-  AppWorkshopRoundRoundSeasonRoute: AppWorkshopRoundRoundSeasonRoute,
-  AppWorkshopRoundRoundIndexRoute: AppWorkshopRoundRoundIndexRoute,
-}
-
-const AppWorkshopRouteRouteWithChildren =
-  AppWorkshopRouteRoute._addFileChildren(AppWorkshopRouteRouteChildren)
 
 interface AppDashboardRouteChildren {
   AppDashboardQuizRoute: typeof AppDashboardQuizRoute
@@ -969,7 +732,6 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  AppWorkshopRouteRoute: AppWorkshopRouteRouteWithChildren,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
@@ -981,7 +743,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppCommunityMessagesRoute: AppCommunityMessagesRoute,
   AppCommunityResourceMarketRoute: AppCommunityResourceMarketRoute,
   AppFacilitatorPlayersRoute: AppFacilitatorPlayersRoute,
-  AppFacilitatorSlipsRoute: AppFacilitatorSlipsRoute,
   AppFacilitiesExtractionRoute: AppFacilitiesExtractionRoute,
   AppFacilitiesFunctionalRoute: AppFacilitiesFunctionalRoute,
   AppFacilitiesManageRoute: AppFacilitiesManageRoute,
@@ -1001,7 +762,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppOverviewsResourcesRoute: AppOverviewsResourcesRoute,
   AppOverviewsStorageRoute: AppOverviewsStorageRoute,
   AppWikiSlugRoute: AppWikiSlugRoute,
-  AppWorkshopControlRoomRoute: AppWorkshopControlRoomRoute,
   AppFacilitatorIndexRoute: AppFacilitatorIndexRoute,
   AppInternalIndexRoute: AppInternalIndexRoute,
   AppWikiIndexRoute: AppWikiIndexRoute,

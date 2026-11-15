@@ -14,33 +14,6 @@
  * reached from a bundle are shipped with it.
  */
 
-import coalMine from "@/assets/facilities/extraction/coal_mine.webp";
-import gasDrillingSite from "@/assets/facilities/extraction/gas_drilling_site.webp";
-import uraniumMine from "@/assets/facilities/extraction/uranium_mine.webp";
-import carbonCapture from "@/assets/facilities/functional/carbon_capture.webp";
-import industry from "@/assets/facilities/functional/industry.webp";
-import laboratory from "@/assets/facilities/functional/laboratory.webp";
-import warehouse from "@/assets/facilities/functional/warehouse.webp";
-import coalBurner from "@/assets/facilities/power/coal_burner.webp";
-import combinedCycle from "@/assets/facilities/power/combined_cycle.webp";
-import cspSolar from "@/assets/facilities/power/CSP_solar.webp";
-import gasBurner from "@/assets/facilities/power/gas_burner.webp";
-import largeWaterDam from "@/assets/facilities/power/large_water_dam.webp";
-import nuclearReactor from "@/assets/facilities/power/nuclear_reactor.webp";
-import nuclearReactorGen4 from "@/assets/facilities/power/nuclear_reactor_gen4.webp";
-import offshoreWindTurbine from "@/assets/facilities/power/offshore_wind_turbine.webp";
-import onshoreWindTurbine from "@/assets/facilities/power/onshore_wind_turbine.webp";
-import pvSolar from "@/assets/facilities/power/PV_solar.webp";
-import smallWaterDam from "@/assets/facilities/power/small_water_dam.webp";
-import steamEngine from "@/assets/facilities/power/steam_engine.webp";
-import watermill from "@/assets/facilities/power/watermill.webp";
-import windmill from "@/assets/facilities/power/windmill.webp";
-import hydrogenStorage from "@/assets/facilities/storage/hydrogen_storage.webp";
-import largePumpedHydro from "@/assets/facilities/storage/large_pumped_hydro.webp";
-import lithiumIonBatteries from "@/assets/facilities/storage/lithium_ion_batteries.webp";
-import moltenSalt from "@/assets/facilities/storage/molten_salt.webp";
-import smallPumpedHydro from "@/assets/facilities/storage/small_pumped_hydro.webp";
-import solidStateBatteries from "@/assets/facilities/storage/solid_state_batteries.webp";
 import aerodynamics from "@/assets/technologies/aerodynamics.webp";
 import buildingTechnology from "@/assets/technologies/building_technology.webp";
 import chemistry from "@/assets/technologies/chemistry.webp";
@@ -54,6 +27,33 @@ import physics from "@/assets/technologies/physics.webp";
 import thermodynamics from "@/assets/technologies/thermodynamics.webp";
 import transportTechnology from "@/assets/technologies/transport_technology.webp";
 import { ProjectType } from "@/types/projects";
+import coalMine from "@energetica/ui/assets/facilities/extraction/coal_mine.webp";
+import gasDrillingSite from "@energetica/ui/assets/facilities/extraction/gas_drilling_site.webp";
+import uraniumMine from "@energetica/ui/assets/facilities/extraction/uranium_mine.webp";
+import carbonCapture from "@energetica/ui/assets/facilities/functional/carbon_capture.webp";
+import industry from "@energetica/ui/assets/facilities/functional/industry.webp";
+import laboratory from "@energetica/ui/assets/facilities/functional/laboratory.webp";
+import warehouse from "@energetica/ui/assets/facilities/functional/warehouse.webp";
+import coalBurner from "@energetica/ui/assets/facilities/power/coal_burner.webp";
+import combinedCycle from "@energetica/ui/assets/facilities/power/combined_cycle.webp";
+import cspSolar from "@energetica/ui/assets/facilities/power/CSP_solar.webp";
+import gasBurner from "@energetica/ui/assets/facilities/power/gas_burner.webp";
+import largeWaterDam from "@energetica/ui/assets/facilities/power/large_water_dam.webp";
+import nuclearReactor from "@energetica/ui/assets/facilities/power/nuclear_reactor.webp";
+import nuclearReactorGen4 from "@energetica/ui/assets/facilities/power/nuclear_reactor_gen4.webp";
+import offshoreWindTurbine from "@energetica/ui/assets/facilities/power/offshore_wind_turbine.webp";
+import onshoreWindTurbine from "@energetica/ui/assets/facilities/power/onshore_wind_turbine.webp";
+import pvSolar from "@energetica/ui/assets/facilities/power/PV_solar.webp";
+import smallWaterDam from "@energetica/ui/assets/facilities/power/small_water_dam.webp";
+import steamEngine from "@energetica/ui/assets/facilities/power/steam_engine.webp";
+import watermill from "@energetica/ui/assets/facilities/power/watermill.webp";
+import windmill from "@energetica/ui/assets/facilities/power/windmill.webp";
+import hydrogenStorage from "@energetica/ui/assets/facilities/storage/hydrogen_storage.webp";
+import largePumpedHydro from "@energetica/ui/assets/facilities/storage/large_pumped_hydro.webp";
+import lithiumIonBatteries from "@energetica/ui/assets/facilities/storage/lithium_ion_batteries.webp";
+import moltenSalt from "@energetica/ui/assets/facilities/storage/molten_salt.webp";
+import smallPumpedHydro from "@energetica/ui/assets/facilities/storage/small_pumped_hydro.webp";
+import solidStateBatteries from "@energetica/ui/assets/facilities/storage/solid_state_batteries.webp";
 
 /**
  * The image for every project type the API can name. Indexing this with a
