@@ -1,9 +1,11 @@
 /**
- * The artwork and colour of each Workshop facility (#998).
+ * The artwork and colour of each Workshop facility (#998), and the labels its
+ * card and price tag show.
  *
  * Workshop's facilities are its own (#975), so they are keyed by Workshop's
  * `FacilityId`, not the persistent world's `ProjectType`. Typed as a full
- * record, so a facility the backend adds without artwork fails the typecheck.
+ * record, so a facility added to `FacilityId` without artwork fails the
+ * typecheck.
  */
 
 import coalBurner from "@energetica/ui/assets/facilities/power/coal_burner.webp";
@@ -25,10 +27,10 @@ import lithiumIonBatteries from "@energetica/ui/assets/facilities/storage/lithiu
 import solidStateBatteries from "@energetica/ui/assets/facilities/storage/solid_state_batteries.webp";
 import { assetCSSColourVariable } from "@energetica/ui/lib/asset-colors";
 
-import type { ApiSchema } from "@/types/api-helpers";
-
-type FacilityId = ApiSchema<"FacilityId">;
-type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
+import type {
+    FacilityCardData,
+    FacilityId,
+} from "#facility-cards/lib/facility-card-data";
 
 export const workshopFacilityImages: Record<FacilityId, string> = {
     onshore_wind_turbine: onshoreWindTurbine,
@@ -62,9 +64,14 @@ export function workshopFacilityColor(id: FacilityId): string {
  * Whether the facility stores energy. Storage has a capacity and an efficiency
  * and generators have neither, so a storage facility has both set.
  */
-export function isStorage(
-    facility: WorkshopFacility,
-): facility is WorkshopFacility & {
+export function isStorage<
+    F extends Pick<
+        FacilityCardData,
+        "base_storage_capacity" | "base_efficiency"
+    >,
+>(
+    facility: F,
+): facility is F & {
     base_storage_capacity: number;
     base_efficiency: number;
 } {
@@ -94,4 +101,18 @@ export function formatCatalogPrice(amount: number): string {
  */
 export function formatFuelUse(kgPerMWh: number): string {
     return `${Number(kgPerMWh.toPrecision(3))} kg/MWh`;
+}
+
+/** "2 Rounds", or "1 Round". */
+export function roundsLabel(rounds: number): string {
+    return `${rounds} ${rounds === 1 ? "Round" : "Rounds"}`;
+}
+
+/**
+ * "Needs 1 Round to build", for a facility that only starts working Rounds
+ * after the one it is bought in, or null for one that works straight away
+ * (#1414). Working straight away is the default, so it goes unsaid.
+ */
+export function constructionLagLabel(lagRounds: number): string | null {
+    return lagRounds > 0 ? `Needs ${roundsLabel(lagRounds)} to build` : null;
 }

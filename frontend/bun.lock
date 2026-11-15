@@ -70,6 +70,7 @@
       "dependencies": {
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/facility-cards": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@tanstack/react-router": "catalog:",
         "lucide-react": "catalog:",
@@ -118,6 +119,7 @@
       "dependencies": {
         "@energetica/charts": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/facility-cards": "workspace:*",
         "@energetica/instance": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@tanstack/react-query": "catalog:",
@@ -197,6 +199,24 @@
       "devDependencies": {
         "typescript": "catalog:",
         "vite": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/facility-cards": {
+      "name": "@energetica/facility-cards",
+      "dependencies": {
+        "@energetica/core": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+      },
+      "devDependencies": {
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
         "vitest": "catalog:",
       },
     },
@@ -360,6 +380,8 @@
     "@energetica/content": ["@energetica/content@workspace:packages/content"],
 
     "@energetica/core": ["@energetica/core@workspace:packages/core"],
+
+    "@energetica/facility-cards": ["@energetica/facility-cards@workspace:packages/facility-cards"],
 
     "@energetica/freeplay": ["@energetica/freeplay@workspace:apps/freeplay"],
 

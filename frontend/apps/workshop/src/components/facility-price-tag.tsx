@@ -12,14 +12,22 @@
  * A facility a player can own only a few of, such as a dam (#1223), shows how
  * many they have out of the limit, and its back is disabled at the limit.
  *
- * Prices are always in millions ("8M", #1247), unlike money elsewhere.
+ * Adding a facility that does not work in the Round it is bought in, such as a
+ * nuclear reactor, asks the player to confirm first (#1414).
  *
- * A facility that does not work in the Round it is bought in, such as a nuclear
- * reactor, says how many Rounds it needs to build, and adding it asks the
- * player to confirm first (#1414). Every other facility works straight away,
- * which is the default, so its tag says nothing about building.
+ * The tag's look, and its front, are in @energetica/facility-cards.
  */
 
+import {
+    MetricTooltip,
+    TooltipFigure,
+} from "@energetica/facility-cards/components/metric-tooltip";
+import {
+    PriceTagFace,
+    PriceTagSide,
+    PriceTagString,
+} from "@energetica/facility-cards/components/price-tag";
+import { constructionLagLabel } from "@energetica/facility-cards/lib/workshop-facilities";
 import { Button } from "@energetica/ui/components/button";
 import {
     Dialog,
@@ -30,19 +38,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@energetica/ui/components/dialog";
-import { Money } from "@energetica/ui/components/money";
 import { cn } from "@energetica/ui/lib/utils";
 import { useAnimate } from "framer-motion";
 import { type PointerEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { MetricTooltip, TooltipFigure } from "@/components/metric-tooltip";
 import { ERROR_MESSAGES } from "@/lib/error-messages";
-import { formatCatalogPrice } from "@/lib/workshop-facilities";
-import {
-    constructionLagLabel,
-    constructionLagWarning,
-} from "@/lib/workshop-fleet";
+import { constructionLagWarning } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
@@ -60,9 +62,11 @@ const BOUNCE = [1, 0.88, 1.06, 0.98, 1];
  */
 const UNFLIP_DELAY = 150;
 
-/** The look shared by both faces of the tag. */
-const FACE =
-    "relative col-start-1 row-start-1 flex flex-col items-center justify-center rounded-md border border-border bg-amber-100 px-3 py-1.5 text-stone-900 shadow-sm backface-hidden";
+/**
+ * Where each face of the tag sits: both in the same grid cell, back to back, so
+ * the tag turns over between them.
+ */
+const FACE = "col-start-1 row-start-1 backface-hidden";
 
 export interface PriceTagOptions {
     facility: WorkshopFacility;
@@ -215,8 +219,7 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
             {/* The string counts as part of the tag for hovering, so the pointer
             goes straight from the card's hover area to the tag's. */}
             <div className="flex flex-col items-center" {...tag.hoverHandlers}>
-                {/* The string the tag hangs from. */}
-                <div className="h-4 w-px bg-muted-foreground" />
+                <PriceTagString />
                 <div
                     ref={scope}
                     className={cn(
@@ -236,37 +239,22 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                             inert={flipped}
                             className={FACE}
                         >
-                            <PinHole />
-                            {/* The coin sits a little low next to these bold digits. */}
-                            <Money
-                                amount={facility.price}
-                                format={formatCatalogPrice}
-                                className="block text-center text-sm font-extrabold [&>svg]:translate-y-[0.08em]"
-                            />
-                            {/* A price shock this Round moved the price (#1012). */}
-                            {facility.price !== facility.base_price && (
-                                <Money
-                                    amount={facility.base_price}
-                                    format={formatCatalogPrice}
-                                    className="block text-center text-[10px] line-through opacity-60"
-                                />
-                            )}
-                            {lagLabel && (
-                                <span className="mt-0.5 text-[10px] font-bold whitespace-nowrap">
-                                    {lagLabel}
-                                </span>
-                            )}
-                            {limit !== null && (
-                                <MetricTooltip
-                                    content={
-                                        <TooltipFigure label="The most you can own at once, counting those in your selection" />
-                                    }
-                                >
-                                    <span className="mt-0.5 text-[10px] font-bold">
-                                        {owned + selected} of {limit}
-                                    </span>
-                                </MetricTooltip>
-                            )}
+                            <PriceTagFace
+                                facility={facility}
+                                className="size-full"
+                            >
+                                {limit !== null && (
+                                    <MetricTooltip
+                                        content={
+                                            <TooltipFigure label="The most you can own at once, counting those in your selection" />
+                                        }
+                                    >
+                                        <span className="mt-0.5 text-[10px] font-bold">
+                                            {owned + selected} of {limit}
+                                        </span>
+                                    </MetricTooltip>
+                                )}
+                            </PriceTagFace>
                         </button>
                         <button
                             type="button"
@@ -278,22 +266,24 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                                 "rotate-y-180 disabled:cursor-not-allowed",
                             )}
                         >
-                            <PinHole />
-                            <span
-                                className={cn(
-                                    "text-sm font-extrabold",
-                                    (!affordable || atLimit) && "opacity-50",
-                                )}
-                            >
-                                {atLimit
-                                    ? "Limit reached"
-                                    : affordable
-                                      ? "Click to add"
-                                      : "Not enough money"}
-                            </span>
-                            <span className="mt-0.5 text-[10px] whitespace-nowrap">
-                                {countsLabel(owned, selected)}
-                            </span>
+                            <PriceTagSide className="size-full">
+                                <span
+                                    className={cn(
+                                        "text-sm font-extrabold",
+                                        (!affordable || atLimit) &&
+                                            "opacity-50",
+                                    )}
+                                >
+                                    {atLimit
+                                        ? "Limit reached"
+                                        : affordable
+                                          ? "Click to add"
+                                          : "Not enough money"}
+                                </span>
+                                <span className="mt-0.5 text-[10px] whitespace-nowrap">
+                                    {countsLabel(owned, selected)}
+                                </span>
+                            </PriceTagSide>
                         </button>
                     </div>
                 </div>
@@ -325,13 +315,6 @@ export function FacilityPriceTag({ tag }: { tag: PriceTag }) {
                 </DialogContent>
             </Dialog>
         </>
-    );
-}
-
-/** The hole the string goes through. */
-function PinHole() {
-    return (
-        <span className="absolute -top-1 left-1/2 size-2 -translate-x-1/2 rounded-full border border-stone-400 bg-background" />
     );
 }
 

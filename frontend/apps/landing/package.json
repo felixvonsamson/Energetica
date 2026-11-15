@@ -10,6 +10,7 @@
     "dependencies": {
         "@energetica/content": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/facility-cards": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@tanstack/react-router": "catalog:",
         "lucide-react": "catalog:",

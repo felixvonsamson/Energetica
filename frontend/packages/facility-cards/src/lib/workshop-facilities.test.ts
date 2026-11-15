@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCatalogPrice, formatFuelUse } from "./workshop-facilities";
+import {
+    constructionLagLabel,
+    formatCatalogPrice,
+    formatFuelUse,
+    roundsLabel,
+} from "#facility-cards/lib/workshop-facilities";
 
 describe("formatCatalogPrice", () => {
     it("shows a whole number of millions without decimals", () => {
@@ -27,5 +32,23 @@ describe("formatFuelUse", () => {
         expect(formatFuelUse(640)).toBe("640 kg/MWh");
         expect(formatFuelUse(0.044)).toBe("0.044 kg/MWh");
         expect(formatFuelUse(0.000_57)).toBe("0.00057 kg/MWh");
+    });
+});
+
+describe("roundsLabel", () => {
+    it("says Round for one and Rounds for more", () => {
+        expect(roundsLabel(1)).toBe("1 Round");
+        expect(roundsLabel(3)).toBe("3 Rounds");
+    });
+});
+
+describe("constructionLagLabel", () => {
+    it("says nothing for a facility that works in the Round it is built in", () => {
+        expect(constructionLagLabel(0)).toBeNull();
+    });
+
+    it("says how many Rounds a facility needs to build", () => {
+        expect(constructionLagLabel(1)).toBe("Needs 1 Round to build");
+        expect(constructionLagLabel(2)).toBe("Needs 2 Rounds to build");
     });
 });

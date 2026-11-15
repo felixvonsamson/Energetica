@@ -11,14 +11,15 @@
  * off one copy. A touch screen cannot hover, so there the button always shows.
  */
 
+import { cardFrame } from "@energetica/facility-cards/components/facility-card";
+import { workshopFacilityColor } from "@energetica/facility-cards/lib/workshop-facilities";
 import { Money } from "@energetica/ui/components/money";
 import { useContainerDimensions } from "@energetica/ui/hooks/use-container-dimensions";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useRef } from "react";
 
-import { cardFrame, FacilityCard } from "@/components/facility-card";
-import { workshopFacilityColor } from "@/lib/workshop-facilities";
+import { WorkshopFacilityCard } from "@/components/workshop-facility-card";
 import { overlapMargin, selectionStacks } from "@/lib/workshop-selection";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -186,7 +187,7 @@ function SelectionStackCards({
             </AnimatePresence>
             <div className="relative" style={{ width: CARD_WIDTH }}>
                 <div style={{ zoom: CARD_ZOOM }}>
-                    <FacilityCard facility={facility} />
+                    <WorkshopFacilityCard facility={facility} />
                 </div>
                 {count > 1 && (
                     <span

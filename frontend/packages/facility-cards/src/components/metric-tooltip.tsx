@@ -15,8 +15,8 @@ import {
 import { Info } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 
-import { formatRate } from "@/lib/workshop-balance-sheet";
-import { storageMarkup } from "@/lib/workshop-metrics";
+import { storageMarkup } from "#facility-cards/lib/facility-metrics";
+import { formatRate } from "#facility-cards/lib/number-format";
 
 /**
  * Shows `content` when `children` is hovered. With no content, `children` shows

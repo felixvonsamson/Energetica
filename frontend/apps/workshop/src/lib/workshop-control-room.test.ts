@@ -14,7 +14,6 @@ import {
     fuelPrice,
     periodLabel,
     priceScales,
-    taxPerTonne,
 } from "./workshop-control-room";
 
 type Session = ApiSchema<"WorkshopSessionOut">;
@@ -140,12 +139,6 @@ describe("alarmLine", () => {
         expect(
             alarmLine({ ...vote, season: "spring", passed: false }).text,
         ).toBe("Carbon tax rejected");
-    });
-});
-
-describe("taxPerTonne", () => {
-    it("gives the rate per tonne of CO₂ from the rate per kg", () => {
-        expect(taxPerTonne(0.025)).toBe(25);
     });
 });
 

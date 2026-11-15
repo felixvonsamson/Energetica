@@ -24,6 +24,11 @@
  * on the game.
  */
 
+import {
+    InfoMark,
+    MetricTooltip,
+    TooltipFigure,
+} from "@energetica/facility-cards/components/metric-tooltip";
 import { Money } from "@energetica/ui/components/money";
 import { Spinner } from "@energetica/ui/components/spinner";
 import {
@@ -35,11 +40,6 @@ import { Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { GameFeedback } from "@/components/game-feedback";
-import {
-    InfoMark,
-    MetricTooltip,
-    TooltipFigure,
-} from "@/components/metric-tooltip";
 import { useWorkshopEntry, useWorkshopScoreboard } from "@/hooks/use-workshop";
 import type { ApiSchema } from "@/types/api-helpers";
 

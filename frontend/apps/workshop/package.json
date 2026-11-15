@@ -11,6 +11,7 @@
     "dependencies": {
         "@energetica/charts": "workspace:*",
         "@energetica/core": "workspace:*",
+        "@energetica/facility-cards": "workspace:*",
         "@energetica/instance": "workspace:*",
         "@energetica/ui": "workspace:*",
         "@tanstack/react-query": "catalog:",
