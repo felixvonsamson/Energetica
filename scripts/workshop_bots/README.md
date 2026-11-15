@@ -7,6 +7,11 @@ a room of first-time players might. With the `blackout` plan, the grid goes down
 The bots use only the public API, as a player's browser does. They read their own state and the public record of
 past Trading periods, and nothing else.
 
+The bots read each response into the backend's own Pydantic model, and build each request from the backend's request
+model. They take facility ids, fuels, seasons and the catalog's fixed values from the backend's modules too. Pyright
+checks `scripts/` in CI, so a backend change that renames or reshapes a field the bots use fails the pull request that
+makes it. Run it locally with `bun run typecheck:py`.
+
 ## The personas
 
 | Bot        | Plays as                                                                                                                                                                                                                                                                                                                              |

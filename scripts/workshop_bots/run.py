@@ -1,4 +1,6 @@
 #!.venv/bin/python
+# Pyright flags a comparison with a literal the backend's type no longer has, such as a renamed checkpoint kind.
+# pyright: reportUnnecessaryComparison=true
 """Fill a Workshop session with five bot players. See README.md beside this file.
 
 .venv/bin/python scripts/workshop_bots/run.py setup                       # once: accounts and roster
@@ -9,7 +11,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import random
 import sys
@@ -22,8 +23,12 @@ from urllib.parse import urlparse
 
 import httpx
 
-from api import Api, ApiError, Facilitator, LoginError
-from market import SEASONS, Ctx, PeriodView, read_period
+from api import Api, ApiError, Facilitator, LoginError, Plan
+from energetica.workshop.facilities import FacilityId
+from energetica.workshop.schemas import WorkshopSessionOut
+from energetica.workshop.seasons import SEASONS, Season
+from energetica.workshop.session import Checkpoint, Finished, Investment, NotStarted, Recap, TradingPeriod
+from market import Ctx, PeriodView, read_period
 from strategies import PERSONAS, STAND_IN, Prices, Strategy
 
 HERE = Path(__file__).resolve().parent
@@ -47,12 +52,13 @@ class History:
 
     def __init__(self, api: Api):
         self.api = api
-        self.views: dict[tuple[int, str], PeriodView] = {}
+        self.views: dict[tuple[int, Season], PeriodView] = {}
         self.lock = threading.Lock()
 
-    def until(self, session: dict[str, Any]) -> list[PeriodView]:
+    def until(self, session: WorkshopSessionOut) -> list[PeriodView]:
         with self.lock:
-            current = session["checkpoint"].get("round", 0)
+            checkpoint = session.checkpoint
+            current = 0 if isinstance(checkpoint, NotStarted | Finished) else checkpoint.round
             for round_number in range(1, current + 1):
                 for season in SEASONS:
                     if (round_number, season) not in self.views:
@@ -71,33 +77,32 @@ class Bot:
         self.api = Api(strategy.name)
         self.live = live
         self.memory: dict[str, Any] = {}
-        self.handled: set[str] = set()
+        self.handled: set[Checkpoint] = set()
         self.notes_shown = 0
 
-    def context(self, session: dict[str, Any], history: History) -> Ctx:
-        checkpoint = session["checkpoint"]
-        round_number = checkpoint.get("round", 1)
+    def context(self, session: WorkshopSessionOut, checkpoint: Investment | TradingPeriod, history: History) -> Ctx:
+        round_number = checkpoint.round
         recap = None
         if round_number > 1:
             try:
-                recap = self.api.get(f"/rounds/{round_number - 1}/recap")
+                recap = self.api.recap(round_number - 1)
             except ApiError:
                 pass
-        fuel = self.api.get("/fuel")
-        me = self.api.account_id or next(p["account_id"] for p in session["players"] if p["username"] == self.name)
+        fuel = self.api.fuel()
+        me = self.api.account_id or next(p.account_id for p in session.players if p.username == self.name)
         return Ctx(
             me=me,
             session=session,
             round=round_number,
-            season=checkpoint.get("season"),
-            money=self.api.get("/selection")["money"],
-            fleet=self.api.get("/fleet"),
-            offered={f["id"]: f for f in self.api.get("/facilities") if f["for_sale"]},
-            fuel={line["fuel"]: line for line in fuel["fuels"]},
-            procurement=fuel["procurement"],
+            season=checkpoint.season if isinstance(checkpoint, TradingPeriod) else None,
+            money=self.api.selection().money,
+            fleet=self.api.fleet(),
+            offered={f.id: f for f in self.api.facilities() if f.for_sale},
+            fuel={line.fuel: line for line in fuel.fuels},
+            procurement=fuel.procurement,
             history=history.until(session),
             recap=recap,
-            loan=self.api.get("/loan"),
+            loan=self.api.loan(),
             memory=self.memory,
         )
 
@@ -106,24 +111,23 @@ class Bot:
         if self.live:
             time.sleep(random.uniform(low, high))
 
-    def handle(self, session: dict[str, Any], history: History) -> None:
+    def handle(self, session: WorkshopSessionOut, history: History) -> None:
         """Act once on the session's current checkpoint."""
-        checkpoint = session["checkpoint"]
-        key = json.dumps(checkpoint, sort_keys=True)
-        if key in self.handled or checkpoint["kind"] not in ("investment", "trading_period"):
+        checkpoint = session.checkpoint
+        if checkpoint in self.handled or not isinstance(checkpoint, Investment | TradingPeriod):
             return
-        self.handled.add(key)
+        self.handled.add(checkpoint)
         try:
-            if checkpoint["kind"] == "investment":
+            if isinstance(checkpoint, Investment):
                 self.pause(5, 25)
                 if self.moved_on(checkpoint):
                     return
-                self.invest(session, history)
+                self.invest(session, checkpoint, history)
             else:
                 self.pause(3, 15)
                 if self.moved_on(checkpoint):
                     return
-                self.trade(session, history)
+                self.trade(session, checkpoint, history)
         except ApiError as error:
             # Most often the facilitator closed the window before the bot was done.
             log(f"{self.name}: {error}")
@@ -132,19 +136,18 @@ class Bot:
             log(f"{self.name}: lost the connection: {error!r}")
         self.show_notes()
 
-    def invest(self, session: dict[str, Any], history: History) -> None:
-        ctx = self.context(session, history)
-        vote = self.api.get("/vote")
-        if vote["held"]:
+    def invest(self, session: WorkshopSessionOut, checkpoint: Investment, history: History) -> None:
+        ctx = self.context(session, checkpoint, history)
+        if self.api.vote().held:
             ballot = self.strategy.ballot(ctx)
             if ballot:
                 self.api.cast_ballot(ballot)
                 log(f"{self.name} votes {ballot}")
-        if ctx.loan["available"] and self.strategy.wants_loan(ctx):
-            self.api.send("POST", "/loan")
-            ctx.money += ctx.loan["amount"]
-            log(f"{self.name} takes the {ctx.loan['amount'] / 1e6:.0f}M loan")
-        picked: list[str] = []
+        if ctx.loan.available and self.strategy.wants_loan(ctx):
+            self.api.take_loan()
+            ctx.money += ctx.loan.amount
+            log(f"{self.name} takes the {ctx.loan.amount / 1e6:.0f}M loan")
+        picked: list[FacilityId] = []
         for facility in self.strategy.invest(ctx):
             try:
                 self.api.select(facility)
@@ -153,20 +156,21 @@ class Bot:
                 break
             picked.append(facility)
             self.pause(0.5, 2)
-        counts = {facility: picked.count(facility) for facility in dict.fromkeys(picked)}
+        # Keyed by the plain string, so the log shows 'coal_burner' rather than the enum's repr.
+        counts = {str(facility): picked.count(facility) for facility in dict.fromkeys(picked)}
         log(f"{self.name} picks {counts or 'nothing'} (cash {ctx.money / 1e6:.1f}M)")
 
-    def moved_on(self, checkpoint: dict[str, Any]) -> bool:
+    def moved_on(self, checkpoint: Checkpoint) -> bool:
         """Whether the session left ``checkpoint`` while the bot was thinking. Only live runs pause, so only they check.
 
         The next season's window accepts prices and fuel orders too, so a late write would land in the wrong season.
         """
-        if not self.live or self.api.get("/session")["checkpoint"] == checkpoint:
+        if not self.live or self.api.session().checkpoint == checkpoint:
             return False
         log(f"{self.name}: too slow, the session has moved on from {checkpoint}")
         return True
 
-    def set_prices(self, prices: Prices, checkpoint: dict[str, Any]) -> None:
+    def set_prices(self, prices: Prices, checkpoint: Checkpoint) -> None:
         for (facility, side), price in prices.items():
             if self.moved_on(checkpoint):
                 return
@@ -175,25 +179,24 @@ class Bot:
         if prices:
             log(f"{self.name} prices " + ", ".join(f"{f} {s} {p:g}" for (f, s), p in prices.items()))
 
-    def trade(self, session: dict[str, Any], history: History) -> None:
-        ctx = self.context(session, history)
-        checkpoint = session["checkpoint"]
+    def trade(self, session: WorkshopSessionOut, checkpoint: TradingPeriod, history: History) -> None:
+        ctx = self.context(session, checkpoint, history)
         self.set_prices(self.strategy.prices(ctx), checkpoint)
         if ctx.procurement == "manual" and not self.moved_on(checkpoint):
             for fuel, quantity in self.strategy.fuel_orders(ctx).items():
                 self.api.set_fuel_order(fuel, quantity)
-                need = ctx.fuel[fuel]["season_need"] or 1
+                need = ctx.fuel[fuel].season_need or 1
                 log(
                     f"{self.name} orders {quantity / need:.0%} of its {fuel} need (holds "
-                    f"{ctx.fuel[fuel]['stock'] / need:.0%})"
+                    f"{ctx.fuel[fuel].stock / need:.0%})"
                 )
         if self.live:
             # Second thoughts partway through the window, unless the facilitator moves on first.
-            remaining = (session.get("phase_timer") or {}).get("remaining_seconds", 60)
+            remaining = session.phase_timer.remaining_seconds if session.phase_timer is not None else 60
             deadline = time.monotonic() + random.uniform(0.3, 0.6) * remaining
             while time.monotonic() < deadline:
                 time.sleep(1)
-                if self.api.get("/session")["checkpoint"] != checkpoint:
+                if self.api.session().checkpoint != checkpoint:
                     return
             self.set_prices(self.strategy.revise_prices(ctx), checkpoint)
 
@@ -204,11 +207,12 @@ class Bot:
         self.notes_shown = len(notes)
 
 
-def load_plan(name: str | None) -> dict[str, Any] | None:
+def load_plan(name: str | None) -> Plan | None:
+    """The plan in plans/ or the JSON file ``name``, checked against the backend's lever and event models."""
     if name is None:
         return None
     path = Path(name) if Path(name).exists() else PLANS / f"{name}.json"
-    return json.loads(path.read_text())
+    return Plan.model_validate_json(path.read_text())
 
 
 def make_bots(names: list[str], seed: int, *, live: bool) -> list[Bot]:
@@ -219,16 +223,14 @@ def make_bots(names: list[str], seed: int, *, live: bool) -> list[Bot]:
 def balance_summary(bots: list[Bot], round_count: int) -> None:
     """Each bot's operating income per season and its cash now, in millions."""
     for bot in bots:
-        cash = bot.api.get("/selection")["money"]
+        cash = bot.api.selection().money
         rounds = []
         for round_number in range(1, round_count + 1):
             try:
-                sheet = bot.api.get(f"/rounds/{round_number}/balance-sheet")
+                sheet = bot.api.balance_sheet(round_number)
             except ApiError:
                 continue
-            cells = [
-                f"{s['sheet']['operating_income'] / 1e6:7.1f}" if s["sheet"] else "      -" for s in sheet["seasons"]
-            ]
+            cells = [f"{s.sheet.operating_income / 1e6:7.1f}" if s.sheet else "      -" for s in sheet.seasons]
             rounds.append(f"R{round_number}" + "".join(cells))
         log(f"{bot.name:9s} " + " |".join(rounds) + f" | cash {cash / 1e6:.1f}")
 
@@ -236,11 +238,9 @@ def balance_summary(bots: list[Bot], round_count: int) -> None:
 def scoreboard(api: Api) -> None:
     """The final scores and what they are made of, in millions."""
     log("player     score = operating profit - investments - carbon tax + residual value")
-    for score in api.get("/scoreboard")["scores"]:
-        parts = (
-            score[key] / 1e6 for key in ("score", "operating_profit", "investments", "carbon_tax", "residual_value")
-        )
-        log(f"{score['username']:9s} " + "".join(f"{part:10.1f}" for part in parts))
+    for score in api.scoreboard().scores:
+        parts = (score.score, score.operating_profit, score.investments, score.carbon_tax, score.residual_value)
+        log(f"{score.username:9s} " + "".join(f"{part / 1e6:10.1f}" for part in parts))
 
 
 # --- commands --------------------------------------------------------------------------------------------------
@@ -297,23 +297,23 @@ def live(args: argparse.Namespace) -> None:
     log(f"bots entered: {', '.join(bot.name for bot in bots)}")
     if plan is not None and facilitator is not None:
         # Once the session has started, some Rounds are locked and the server refuses the whole plan.
-        if facilitator.checkpoint()["kind"] == "not_started":
+        if isinstance(facilitator.checkpoint(), NotStarted):
             facilitator.apply_plan(plan)
             log(f"applied the {args.plan} plan; check it on the console before you start")
         else:
             log(f"the session has started, so the {args.plan} plan is not applied again")
     history = History(bots[0].api)
     threads: dict[str, threading.Thread] = {}
-    last_kind = None
+    last_checkpoint = None
     while True:
-        session = bots[0].api.get("/session")
-        checkpoint = session["checkpoint"]
-        if checkpoint != last_kind:
+        session = bots[0].api.session()
+        checkpoint = session.checkpoint
+        if checkpoint != last_checkpoint:
             log(f"== {checkpoint}")
-            if checkpoint["kind"] in ("recap", "finished"):
-                balance_summary(bots, session["round_count"])
-            last_kind = checkpoint
-        if checkpoint["kind"] == "finished":
+            if isinstance(checkpoint, Recap | Finished):
+                balance_summary(bots, session.round_count)
+            last_checkpoint = checkpoint
+        if isinstance(checkpoint, Finished):
             scoreboard(bots[0].api)
             return
         for bot in bots:
@@ -333,15 +333,15 @@ def headless(args: argparse.Namespace) -> None:
         facilitator.apply_plan(plan)
     history = History(facilitator)
     while True:
-        session = facilitator.get("/session")
-        checkpoint = session["checkpoint"]
-        if checkpoint["kind"] == "finished":
+        session = facilitator.session()
+        checkpoint = session.checkpoint
+        if isinstance(checkpoint, Finished):
             break
         for bot in bots:
             bot.handle(session, history)
-        if checkpoint["kind"] == "trading_period":
+        if isinstance(checkpoint, TradingPeriod):
             facilitator.advance_to_next_checkpoint()
-            view = read_period(facilitator, checkpoint["round"], checkpoint["season"])
+            view = read_period(facilitator, checkpoint.round, checkpoint.season)
             if view is not None:
                 log(
                     f"-- R{view.round} {view.season}: mean price {view.mean_price:.0f}, peak must-serve "
@@ -349,11 +349,11 @@ def headless(args: argparse.Namespace) -> None:
                 )
         else:
             facilitator.advance()
-            if checkpoint["kind"] == "investment":
+            if isinstance(checkpoint, Investment):
                 time.sleep(1.5)  # the purchase happens just after the phase closes
                 facilitator.advance()
-            if checkpoint["kind"] == "recap":
-                balance_summary(bots, session["round_count"])
+            if isinstance(checkpoint, Recap):
+                balance_summary(bots, session.round_count)
     scoreboard(facilitator)
 
 
