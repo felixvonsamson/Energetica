@@ -150,7 +150,9 @@ of its suite. Add a new helper when the same setup keeps repeating across test f
 
 ## Linting & Formatting
 
-Configured via `pyproject.toml`.
+Ruff is configured in `ruff.toml` and pyright in `pyrightconfig.json`, both at the repo root.
+One configuration covers the whole Python tree, so no other file declares ruff or pyright
+settings.
 
 - Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
   `tests/`, `scripts/`, `tools/` and the three `main*.py` launchers — and both run as
