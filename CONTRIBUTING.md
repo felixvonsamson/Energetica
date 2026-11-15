@@ -67,7 +67,7 @@ pip install -e '.[dev]'
 ```
 
 The backend packages live under `src/`, so that editable install is what makes `energetica` and
-`lobby` importable at all — without it, `pytest` and `python main.py` both fail with
+`lobby_service` importable at all — without it, `pytest` and `python main.py` both fail with
 `ModuleNotFoundError`. Re-run it after a change to the dependency list.
 
 (Optional) Use `conda` if preferred.
@@ -150,11 +150,17 @@ the fixing and formatting forms — both write to your files, neither is read-on
   - `kernel`, `identity` and `sim` are layers, in that order from the bottom. A module may
     import from the layers below it but not from those above, and none of them imports app
     code.
-  - There are three apps: Workshop (`energetica.workshop`), the lobby (`lobby`) and the
-    freeplay code. None of them imports another.
+  - There are three apps above them: the persistent world (`energetica.freeplay`), Workshop
+    (`energetica.workshop`) and the lobby (`energetica.lobby`). None of them imports another.
+  - `energetica.entry` sits on top and builds whichever app an instance runs.
+  - No module under `energetica` imports the lobby service (`lobby_service`), and the lobby
+    service imports only `identity` and `kernel`.
   - A new top-level module under `src/energetica/` must be added to a layer, or the check
-    fails. New app code goes inside its app's package (`energetica.freeplay` or
-    `energetica.workshop`) rather than beside it, so the contracts already cover it.
+    fails. New app code goes inside its app's package rather than beside it, so the contracts
+    already cover it.
+  - A contract cannot see what importing a module runs.
+    `tests/unit/test_import_side_effects.py` checks that importing a package does not build the
+    persistent world's game engine, or load the lobby service, where it must not.
 
 ```
 lint-imports          # check the import contracts

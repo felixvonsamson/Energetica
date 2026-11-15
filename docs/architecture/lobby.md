@@ -68,7 +68,7 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 The lobby is an instance-independent part of the server, on `lobby.{apex}`. It ships from one
 checkout in one deploy (`deploy-lobby.sh`), as two processes plus a frontend:
 
-- **Lobby backend** (`src/lobby/`, `main_lobby.py`; uvicorn + Apache vhost + the
+- **Lobby backend** (`src/energetica/lobby/`, `main_lobby.py`; uvicorn + Apache vhost + the
   `energetica-lobby` unit): the public web app. It serves `signup`, `login`,
   `change-password`, `logout`, `my-runs` and the public-run join, and reads the on-disk
   instance fragments for run metadata. It holds no database and no signing secret: every

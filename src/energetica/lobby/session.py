@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import Request, Response
 
 from energetica.kernel.session_cookie import SESSION_COOKIE_NAME, set_session_cookie
-from lobby.config import cookie_domain
+from energetica.lobby.config import cookie_domain
 
 
 def set_lobby_session_cookie(response: Response, token: str, request: Request) -> Response:

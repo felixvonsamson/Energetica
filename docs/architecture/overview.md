@@ -6,8 +6,7 @@ Overview of the project and directory structure.
 Energetica/
 ├── docs/                 # This documentation
 ├── src/
-│   ├── energetica/       # Python/FastAPI backend — one game instance
-│   ├── lobby/            # Python/FastAPI backend — the server-wide front door
+│   ├── energetica/       # Python/FastAPI backend — the game instance apps and the lobby
 │   └── lobby_service/    # The one process that opens lobby.db, behind an internal API
 ├── main.py               # Launcher for a game instance
 ├── main_lobby.py         # Launcher for the lobby backend
@@ -48,6 +47,7 @@ src/energetica/       # Python/FastAPI backend
 ├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
 ├── identity/         # Accounts store, instance and server configuration, my-runs
 ├── sim/              # Market clearing and settlement, facility statuses
+├── lobby/            # The lobby backend, the server-wide front door
 ├── workshop/         # Workshop Mode
 └── freeplay/         # The persistent world
     ├── app.py        # Application factory (create_app)
@@ -66,6 +66,11 @@ src/energetica/       # Python/FastAPI backend
     ├── action_log.py # Reader for the action log the engine writes and replays
     └── data/         # The game's data tables (map, quiz, demand curves)
 ```
+
+`kernel`, `identity` and `sim` are layers, in that order from the bottom: each may import only the
+layers below it. The three apps, `freeplay`, `workshop` and `lobby`, sit above them and never
+import one another. `entry` sits on top. The import contracts in `pyproject.toml` enforce this in
+CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting & Formatting.
 
 ## Frontend
 

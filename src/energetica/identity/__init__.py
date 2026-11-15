@@ -12,5 +12,7 @@ login and sign-up bodies (:mod:`~energetica.identity.schemas.auth`).
 
 The layer sits directly above :mod:`energetica.kernel` and imports from nothing else in the
 namespace. That is what lets the lobby depend on it without pulling in the persistent world's
-domain, routers, or real-time layer (ADR-0002); ``tests/unit/test_module_boundary.py`` checks it.
+domain, routers, or real-time layer (ADR-0002). The import contracts in ``pyproject.toml`` check
+what it imports, and ``tests/unit/test_import_side_effects.py`` checks that importing it does not
+build the game engine.
 """
