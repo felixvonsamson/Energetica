@@ -6,7 +6,7 @@ import {
 } from "@energetica/ui/components/typography";
 import { cn } from "@energetica/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { Bell, HelpCircle } from "lucide-react";
+import { Bell, Check, HelpCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
@@ -157,33 +157,33 @@ export function DailyQuizSection() {
         }
     };
 
-    // Helper to render answer icon/indicator
+    // Shows a tick on correct answers and a cross on a wrong pick, in the
+    // button's right padding. It is an icon rather than a text label so that
+    // padding can stay narrow and the answer text does not wrap early. Screen
+    // readers get the full label, including which answer the player picked.
     const getAnswerIndicator = (answer: "answer1" | "answer2" | "answer3") => {
         if (!hasAnswered) return null;
 
         const isCorrect = isCorrectAnswer(answer);
         const wasSelected = quizData.player_answer === answer;
+        if (!wasSelected && !isCorrect) return null;
 
-        if (wasSelected && isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold whitespace-nowrap">
-                    ✓ Your answer
+        const Icon = isCorrect ? Check : X;
+        return (
+            <span
+                className={cn(
+                    "absolute right-3 top-1/2 -translate-y-1/2",
+                    isCorrect ? "text-success" : "text-destructive",
+                )}
+            >
+                <Icon className="w-5 h-5" strokeWidth={3} aria-hidden />
+                <span className="sr-only">
+                    {wasSelected
+                        ? `Your answer, ${isCorrect ? "correct" : "wrong"}`
+                        : "Correct answer"}
                 </span>
-            );
-        } else if (wasSelected && !isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive font-bold whitespace-nowrap">
-                    ✗ Your answer
-                </span>
-            );
-        } else if (isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold whitespace-nowrap">
-                    ✓ Correct
-                </span>
-            );
-        }
-        return null;
+            </span>
+        );
     };
 
     return (
@@ -219,7 +219,7 @@ export function DailyQuizSection() {
                                         }
                                         className={getButtonClass(key)}
                                     >
-                                        <span className="block text-center px-28">
+                                        <span className="block text-center px-6">
                                             {quizData[key]}
                                         </span>
                                         {getAnswerIndicator(key)}
