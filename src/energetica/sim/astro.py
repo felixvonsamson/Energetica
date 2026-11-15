@@ -16,9 +16,9 @@ T0 = 15011250  # Earth's orbit initial phase
 T1 = 33400  # Earth's spin initial phase
 
 
-def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
+def direct_horizontal_irradiance(unix_time: Any, latitude: Any, longitude: Any) -> Any:
     """
-    Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
+    Calculate direct horizontal irradiance at a given time and location.
 
     Parameters
     ----------
@@ -28,7 +28,7 @@ def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
 
     Returns
     -------
-    - DrHI: Direct horizontal irradiance in W/m^2
+    Direct horizontal irradiance in W/m^2
 
     """
     # Validate inputs
@@ -75,11 +75,6 @@ def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
     # Calculate solar elevation angle
     elevation = np.maximum(0, pi / 2 - zenith_angle)
 
-    # Calculate Direct Normal Irradiance (DrNI)
     sin_elevation = sin(elevation)
-    DrNI = exp(-ABSORPTION_FACTOR / np.maximum(sin_elevation, 1e-8)) * TSI
-
-    # Calculate Direct Horizontal Irradiance (DrHI)
-    DrHI = DrNI * sin_elevation
-
-    return DrHI
+    direct_normal_irradiance = exp(-ABSORPTION_FACTOR / np.maximum(sin_elevation, 1e-8)) * TSI
+    return direct_normal_irradiance * sin_elevation

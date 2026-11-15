@@ -39,8 +39,8 @@ from energetica.identity.schemas.lobby_service import (
     AccountOut,
     CreatedAccount,
     Credentials,
-    GrantedRun,
     FacilitatorGrantRequest,
+    GrantedRun,
     HealthOut,
     JoinedRun,
     JoinTokenOut,
@@ -55,14 +55,14 @@ from energetica.identity.schemas.lobby_service import (
     SessionOut,
     SessionToken,
 )
+from lobby_service import store
+from lobby_service.schema import SCHEMA_VERSION
 from lobby_service.session import (
     account_id_from_token,
     check_password_hash,
     generate_password_hash,
     mint_session_token,
 )
-from lobby_service import store
-from lobby_service.schema import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
 run_journal = logging.getLogger("lobby_service.runs")

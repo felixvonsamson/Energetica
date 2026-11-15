@@ -82,9 +82,9 @@ def create_app(
         # Simulate the game run from a file. This dev/CI path replays an arbitrary, dev-chosen
         # file and still parses it in full — it carries no production crash-loop exposure.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
-        TypeAdapterAction = TypeAdapter(Action)
+        action_adapter = TypeAdapter(Action)
         with open(simulate_file, "r", encoding="utf-8") as file:
-            actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
+            actions = cast(list[Action], [action_adapter.validate_json(line) for line in file])
         assert actions[0].action_type == "init_engine"
         init_action = cast(InitEngineAction, actions[0])
 

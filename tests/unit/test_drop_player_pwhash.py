@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import pickle
-from pathlib import Path
 from collections.abc import Iterator
+from pathlib import Path
 from types import ModuleType
 
 import pytest

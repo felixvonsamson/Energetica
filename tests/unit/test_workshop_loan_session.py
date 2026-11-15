@@ -13,10 +13,10 @@ from energetica.identity.account import Account
 from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop.balance_sheet import balance_sheet
 from energetica.workshop.facilities import FacilityId
-from energetica.workshop.score import score
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_COST, LOAN_PAYMENT, Loan
 from energetica.workshop.player import WORKSHOP_CASH_FLOOR, WORKSHOP_STARTING_BUDGET, WorkshopPlayer
+from energetica.workshop.score import score
 from energetica.workshop.session import (
     Finished,
     Investment,

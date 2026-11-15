@@ -12,7 +12,6 @@ from energetica.workshop.facilities import CATALOG, FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
-    fuel_price_history,
     FUEL_USE,
     MAX_SEASON_CHANGE,
     MAX_STEP,
@@ -22,6 +21,7 @@ from energetica.workshop.fuel import (
     burned_fuels,
     capped_order,
     default_orders,
+    fuel_price_history,
     next_fuel_price,
     season_need,
     season_needs_by_facility,

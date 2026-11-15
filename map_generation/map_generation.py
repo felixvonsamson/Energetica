@@ -8,7 +8,7 @@ from datetime import datetime
 
 import numpy as np
 
-from energetica.sim.astro import DrHI
+from energetica.sim.astro import direct_horizontal_irradiance
 
 # Parameters
 size_param = 10
@@ -110,17 +110,17 @@ def id_to_coordinates(tile_id: int) -> tuple[int, int]:
     """Convert the id of a tile to its coordinates (outwards spiral)."""
 
     def sgn(x: int) -> int:
-        sgnArray = [0, 1, 1, 0, -1, -1]
-        return sgnArray[x % 6]
+        signs = [0, 1, 1, 0, -1, -1]
+        return signs[x % 6]
 
     if tile_id == 0:
         return (0, 0)
-    L = 1 + math.floor((math.sqrt(12 * tile_id - 3) - 3) / 6)
-    tile_id -= 3 * L * (L - 1) + 1
-    S = math.floor(tile_id / L)
-    R = tile_id % L + 1
-    x = sgn(S + 2) * L + sgn(S + 4) * R
-    y = sgn(S) * L + sgn(S + 2) * R
+    ring = 1 + math.floor((math.sqrt(12 * tile_id - 3) - 3) / 6)
+    tile_id -= 3 * ring * (ring - 1) + 1
+    side = math.floor(tile_id / ring)
+    step = tile_id % ring + 1
+    x = sgn(side + 2) * ring + sgn(side + 4) * step
+    y = sgn(side) * ring + sgn(side + 2) * step
     return (x, y)
 
 
@@ -128,19 +128,19 @@ def coordinates_to_id(x: int, y: int) -> int:
     """Convert the coordinates of a tile to its id (outwards spiral)."""
     if x == 0 and y == 0:
         return 0
-    L = 0.5 * (abs(x) + abs(y) + abs(x + y))
-    n = 3 * L * (L - 1)
-    if x == L:
-        return int(n + y + 6 * L)
-    if x + y == L:
+    ring = 0.5 * (abs(x) + abs(y) + abs(x + y))
+    n = 3 * ring * (ring - 1)
+    if x == ring:
+        return int(n + y + 6 * ring)
+    if x + y == ring:
         return int(n + y)
-    if y == L:
-        return int(n + L - x)
-    if x == -L:
-        return int(n + 3 * L - y)
-    if x + y == -L:
-        return int(n + 3 * L - y)
-    return int(n + 4 * L + x)
+    if y == ring:
+        return int(n + ring - x)
+    if x == -ring:
+        return int(n + 3 * ring - y)
+    if x + y == -ring:
+        return int(n + 3 * ring - y)
+    return int(n + 4 * ring + x)
 
 
 def save_as_csv(map: list[Tile], m: int) -> None:
@@ -160,11 +160,11 @@ def calculate_solar_potentials() -> dict[int, float]:
     start_date = datetime(2023, 1, 1).timestamp()
     end_date = datetime(2024, 1, 1).timestamp()
     timesteps = np.linspace(start_date, end_date, 365 * 24)
-    Rs = range(-10, 11)
-    latitudes = np.array([(r - 10) * 85 / 21 for r in Rs])
-    potentials = DrHI(timesteps[None, :], latitudes[:, None], 0).mean(axis=1)
+    rows = range(-10, 11)
+    latitudes = np.array([(r - 10) * 85 / 21 for r in rows])
+    potentials = direct_horizontal_irradiance(timesteps[None, :], latitudes[:, None], 0).mean(axis=1)
     potentials /= potentials.max()
-    return dict(zip(Rs, potentials))
+    return dict(zip(rows, potentials))
 
 
 def generate_solar(map: list[Tile], potentials: dict[int, float]) -> None:

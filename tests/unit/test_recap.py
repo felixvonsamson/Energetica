@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from energetica.identity import instance_config
 from energetica.enums import Fuel, Renewable
+from energetica.identity import instance_config
 from energetica.identity.instance_config import FreeplayRun, InstanceConfig, PublicAccess
 from energetica.identity.schemas.recap import Recap
 from energetica.utils import recap as recap_util

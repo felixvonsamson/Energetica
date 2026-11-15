@@ -84,6 +84,10 @@ energetica = ["freeplay/data/*", "workshop/data/*"]
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
+# Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
+# its sibling modules (api, market, strategies) import as top-level names and would otherwise
+# sort as third-party.
+src = [".", "src", "scripts/workshop_bots"]
 # Every rule below applies to the whole Python tree — tests/ and scripts/ included. There are
 # deliberately no per-file-ignores (#1081): when the hooks were widened past src/energetica/,
 # the rest of the tree already satisfied the docstring rules (D100, D400, D415) with nothing
@@ -104,7 +108,9 @@ lint.select = [
     "PIE794",
     "ANN001",
     "ANN201",
-    "F404"
+    "F404",
+    "I",
+    "N",
 ]
 # select = ["ALL"]
 lint.ignore = [
@@ -113,6 +119,10 @@ lint.ignore = [
     "RET503",
     "DTZ005",
     "COM812",
+    # N818 wants every exception class named `...Error`. PEP 8 asks for that only when the
+    # exception really is an error, and none of the four it flagged when N landed (#969) was:
+    # two are a service's documented refusal, two are test signals. It cannot tell the difference.
+    "N818",
 ]
 
 [tool.pyright]

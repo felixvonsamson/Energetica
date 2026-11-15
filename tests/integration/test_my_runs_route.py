@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
+
 from ._session_helpers import authenticate, join, make_account
 
 PORT = 8000

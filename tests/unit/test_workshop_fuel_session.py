@@ -5,7 +5,6 @@ quantities a player orders in the price-setting window, and what settling a Trad
 from __future__ import annotations
 
 import math
-
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -16,8 +15,8 @@ from energetica.identity.instance_config import InstanceConfig
 from energetica.workshop import session as session_module
 from energetica.workshop.facilities import FacilityId, Fuel
 from energetica.workshop.fleet import OwnedFacility
-from energetica.workshop.round_plan import LeverChanges, PlannedEvent, RoundLevers
 from energetica.workshop.fuel import CATALOG_FUEL_PRICES, STOCKPILE_SEASONS, FuelPurchase, season_need
+from energetica.workshop.round_plan import LeverChanges, PlannedEvent, RoundLevers
 from energetica.workshop.session import (
     FuelNotBurnedError,
     FuelNotManualError,

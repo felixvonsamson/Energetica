@@ -89,6 +89,7 @@ from pydantic import BaseModel, Field
 
 from energetica.identity.instance_config import Team, WorkshopRun
 from energetica.kernel.atomic_file import write_atomically
+from energetica.workshop.blackout import Blackout, blackout_cost, rationing, round_blackouts
 from energetica.workshop.carbon_tax import carbon_tax_rate, settle_carbon_tax
 from energetica.workshop.control_room import (
     FUEL_HISTORY_POINTS,
@@ -103,8 +104,8 @@ from energetica.workshop.control_room import (
     alarms,
     blackout_risk,
     price_summary,
-    room_generation,
     room_capacity,
+    room_generation,
     room_prices,
     round_emissions,
 )
@@ -124,7 +125,7 @@ from energetica.workshop.events import (
     revenue_tax_rate,
 )
 from energetica.workshop.facilities import CATALOG, FacilityId, Fuel, WorkshopFacility, session_price
-from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
+from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lifetime_left
 from energetica.workshop.fuel import (
     CATALOG_FUEL_PRICES,
     FUEL_NAMES,
@@ -138,14 +139,13 @@ from energetica.workshop.fuel import (
     next_fuel_price,
     season_need,
 )
-from energetica.workshop.fleet import OwnedFacility, Purchase, is_operating, lifetime_left
+from energetica.workshop.game_error import WorkshopError, WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, Loan, payments_due
 from energetica.workshop.network import WorkshopNetwork
+from energetica.workshop.operating_profit import round_operating_profit
 from energetica.workshop.period_record import TradingPeriodRecord
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.player import round_start_money
-from energetica.workshop.operating_profit import round_operating_profit
-from energetica.workshop.blackout import Blackout, blackout_cost, rationing, round_blackouts
 from energetica.workshop.prices import (
     PRICE_CEILING,
     PRICE_FLOOR,
@@ -163,8 +163,8 @@ from energetica.workshop.round_format import RoundFormat
 from energetica.workshop.round_plan import (
     DEFAULT_PLAN,
     EventStatus,
-    PlannedEvent,
     LeverChanges,
+    PlannedEvent,
     RoundPlan,
     event_status,
     plans_from,
