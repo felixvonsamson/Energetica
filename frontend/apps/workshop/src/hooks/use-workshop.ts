@@ -70,11 +70,10 @@ async function enterWorkshop(): Promise<WorkshopEntry | null> {
  * safe to repeat (the same player comes back), so it is read like `/auth/me`:
  * once, and again only when invalidated.
  */
-export function useWorkshopEntry({ enabled = true } = {}) {
+export function useWorkshopEntry() {
     return useQuery({
         queryKey: queryKeys.workshop.entry,
         queryFn: enterWorkshop,
-        enabled,
         staleTime: Infinity,
         refetchOnWindowFocus: false,
     });
@@ -85,13 +84,11 @@ export function useWorkshopEntry({ enabled = true } = {}) {
  * the socket {@link useWorkshopSocket} opens.
  */
 export function useWorkshopSession({
-    enabled = true,
     refetchInterval,
-}: { enabled?: boolean; refetchInterval?: number } = {}) {
+}: { refetchInterval?: number } = {}) {
     return useQuery({
         queryKey: queryKeys.workshop.session,
         queryFn: workshopApi.getSession,
-        enabled,
         refetchInterval,
     });
 }

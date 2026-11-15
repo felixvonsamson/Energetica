@@ -201,7 +201,7 @@ the persistent world's:
 ```bash
 export ENERGETICA_INSTANCE_CONFIG_DIR="$PWD/.energetica-dev/etc"
 export ENERGETICA_INSTANCE_SLUG=workshop-demo
-bun run dev:workshop   # or bun run serve:app and the lobby in their own terminals, then `cd frontend && bun run dev:workshop`
+bun run dev:workshop   # or, each in its own terminal: bun run serve:lobby, bun run serve:app, and cd frontend && bun run dev:workshop
 ```
 
 The Workshop's dev server takes the persistent world's port, 5173, since the lobby's links into a

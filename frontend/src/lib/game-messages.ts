@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import { isInstanceFrozenError } from "@/lib/lifecycle";
-import type { components } from "@/types/api.freeplay.generated";
+import type { ApiSchema } from "@/types/api-helpers.freeplay";
 import { ApiClientError, isGameError } from "@energetica/core/api-client";
 import {
     createErrorMessages,
@@ -29,7 +29,7 @@ import { IDENTITY_ERROR_MESSAGES } from "@energetica/instance/lib/error-messages
  * generated types rather than the merged ones, which also hold the Workshop's
  * and the lobby's codes.
  */
-export type ErrorCode = components["schemas"]["ErrorCode"];
+export type ErrorCode = ApiSchema<"ErrorCode">;
 
 // ---------------------------------------------------------------------------
 // Error message map
@@ -125,11 +125,14 @@ export const GAME_ERROR_MESSAGES = errorMessageTable<ErrorCode>()(
 );
 
 /**
- * Resolve any unknown error to a human-readable string using
- * `GAME_ERROR_MESSAGES`. Falls back to rewording a validation error, then the
- * raw backend message. See `@energetica/core/error-messages`.
+ * The helpers for `GAME_ERROR_MESSAGES`, re-exported by `lib/error-utils.ts`
+ * where most callers look for them. `resolveErrorMessage(error)` resolves any
+ * unknown error to a readable string, rewording a validation error, then
+ * falling back to the raw backend message. See
+ * `@energetica/core/error-messages`.
  */
-export const { resolveErrorMessage } = createErrorMessages(GAME_ERROR_MESSAGES);
+export const { getUserFriendlyError, isErrorType, resolveErrorMessage } =
+    createErrorMessages(GAME_ERROR_MESSAGES);
 
 /**
  * Toast a failed game action, except the backend's frozen-instance `409`

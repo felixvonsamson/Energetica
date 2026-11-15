@@ -36,7 +36,8 @@ from the repo root:
 
 - backend: `src/energetica/schemas/`, `src/energetica/routers/` and `src/lobby/` are the source of truth
 - one types file per app, so code only type-checks against routes its own backend serves:
-  - lobby and workshop apps: `frontend/apps/{lobby,workshop}/src/types/api.generated.ts`, consumed through the `api-helpers.ts` beside it
+  - lobby app: `frontend/apps/lobby/src/types/api.generated.ts`, consumed through `frontend/apps/lobby/src/types/api-helpers.ts`
+  - workshop app: `frontend/apps/workshop/src/types/api.generated.ts`, consumed through `frontend/apps/workshop/src/types/api-helpers.ts`
   - combined freeplay bundle: still uses the merged `frontend/src/types/api.generated.ts`, consumed through `frontend/src/types/api-helpers.ts`. `api.freeplay.generated.ts` sits beside it, for when freeplay splits out (#1181).
 - shared packages (such as `@energetica/instance`) import API types only through the `@api` alias, with `import type`; each app points `@api` at its own `api-helpers.ts`
 
