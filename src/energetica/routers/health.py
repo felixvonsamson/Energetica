@@ -18,8 +18,6 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-import energetica.workshop  # noqa: F401  # deliberate cross-app import for #1051, to be reverted
-
 from energetica.freeplay.database.network import Network
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
