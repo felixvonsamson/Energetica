@@ -3,7 +3,7 @@
 This is the only test that exercises the real startup path end to end: argument
 parsing in main.py, the ENERGETICA_APP_CONFIG handoff to the uvicorn subprocess, and
 uvicorn actually binding a port and serving requests. Every other test uses an
-in-process TestClient (see test_health_route.py), which builds the app object but
+in-process TestClient (see freeplay/test_health_route.py), which builds the app object but
 never boots uvicorn, so a broken boot path would otherwise slip through.
 
 It is also the packaging seam. The server is booted from a scratch directory, never

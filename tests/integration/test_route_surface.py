@@ -2,7 +2,7 @@
 
 FastAPI answers only `/api/*`, `/socket.io`, and the `/healthz` probe (see
 docs/architecture/static-serving-and-deployment.md § What FastAPI keeps); Apache serves
-every static asset and SPA shell. `test_templates_routes.py` checks that specific retired
+every static asset and SPA shell. `freeplay/test_templates_routes.py` checks that specific retired
 paths return 404. This file checks the inverse: that nothing else is registered.
 
 Each app's API routes are pinned below, so adding or removing a route means editing this file.

@@ -58,7 +58,7 @@ The recap presents information matter-of-factly and lets the reader draw the con
   categories of `cumul_emissions` — capture is recorded as a _negative_ `carbon_capture`
   entry — exposed as `Player.calculate_produced_co2` in `energetica/database/player.py`,
   mirroring the existing `calculate_net_emissions`. This is the subtlety a future reader will
-  trip on, and the reason `tests/unit/test_player_emissions.py` exists.
+  trip on, and the reason `tests/unit/freeplay/test_player_emissions.py` exists.
 - `total_net_emissions` is retained in the header, sourced from the players rather than from a
   row column. The netted figure is still _available_; it is simply not the presentation.
 - **The recap page must not reintroduce a podium.** The page (#864) is not yet on `main`, and

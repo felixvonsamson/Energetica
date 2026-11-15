@@ -105,7 +105,13 @@ We use `pytest`.
 
 - Place fast, isolated tests in `tests/unit/`
 - Cross-module/API/game-loop tests in `tests/integration/`
-- Name test files: `test_<thing>.py`
+- Inside each suite, put a test in the folder named after the package it tests: `kernel/`, `identity/`, `sim/`,
+  `freeplay/`, `workshop/`, `lobby/` or `lobby_service/`. For example, the tests for
+  `src/energetica/sim/market.py` go in `tests/unit/sim/`. Tests of the scripts under `scripts/` go in `tests/unit/scripts/`.
+  A test that checks several packages at once, such as the import side-effect check or the error-envelope contract,
+  stays at the top of its suite.
+- Name test files: `test_<thing>.py`. The folder already names the package, so drop it from the file name:
+  `tests/unit/workshop/test_fuel.py`, not `test_workshop_fuel.py`.
 - Write descriptive test function names.
 - Run full suite:
 
@@ -116,15 +122,30 @@ pytest -q
 - Run a subset:
 
 ```
-pytest tests/unit/test_player.py::test_new_player
+pytest tests/unit/freeplay/test_player.py::test_player_hashable
 ```
 
 Add tests for every new feature and bug fix.
 
 ### Test Helpers
 
-- Use existing sample tests as templates (`sample_unit_test.py`, etc.)
-- Consider adding factory helpers if object setup becomes repetitive.
+Shared fixtures live in `conftest.py` files, which pytest applies to every test in the folder and below it.
+
+- `tests/conftest.py` applies to every test. Two fixtures run automatically: one puts `engine.serve_local`
+  back after each test, and one makes password hashing cheap. Request `lobby_service` for a real lobby
+  service over a fresh `lobby.db`, and `no_demand_growth` to keep Workshop demand flat between Rounds.
+- `tests/integration/conftest.py` gives every integration test a lobby service automatically.
+
+Helper module names start with an underscore to set them apart from test files. Import them with a relative
+import:
+
+- `tests/integration/_session_helpers.py` creates accounts through the lobby service and logs a `TestClient`
+  in as one of them: `make_account`, `authenticate`, `join` and `grant_facilitator`.
+- `tests/integration/_socketio_helpers.py` connects a `TestClient` to an app's Socket.IO server.
+- `tests/unit/workshop/_weather_helpers.py` has fixed-weather fakes for the Workshop's Trading-period tests.
+
+A helper used by one package's tests goes in that package's folder. A helper used across packages goes at the top
+of its suite. Add a new helper when the same setup keeps repeating across test files.
 
 ## Linting & Formatting
 
