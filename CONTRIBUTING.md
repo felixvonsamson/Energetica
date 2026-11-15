@@ -144,6 +144,20 @@ ruff format .         # format
 hook. From the repo root, `bun run ruff:check` and `bun run ruff:format` are shorthands for
 the fixing and formatting forms — both write to your files, neither is read-only.
 
+- import-linter checks which backend packages may import which. `kernel`, `identity` and
+  `sim` are layered in that order from the bottom and import no app code. The three apps,
+  Workshop (`energetica.workshop`), the lobby (`lobby`) and the freeplay code, never import
+  each other, not even through another module. The contracts are in `pyproject.toml` under
+  `[tool.importlinter]`, and CI runs them in the `python-lint` job. A new top-level module
+  under `src/energetica/` must be added to a layer there, or the check fails:
+
+```
+lint-imports          # check the import contracts
+```
+
+In a git worktree, run `PYTHONPATH=src lint-imports`. The shared `.venv` would otherwise
+resolve `energetica` to the main checkout.
+
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120
 - Docstring style: If docstring fits on one line, open & close quotes on that line; otherwise use multi-line form with triple quotes on their own lines.
@@ -200,7 +214,7 @@ Before opening a PR, ensure:
 - [ ] Branch up to date with `main`
 - [ ] Tests pass locally (`pytest`)
 - [ ] New/changed code is covered by tests
-- [ ] Lint passes (`ruff check .`)
+- [ ] Lint passes (`ruff check .` and `lint-imports`)
 - [ ] No stray `print` debugging left (unless intentional & documented)
 - [ ] Updated docs / comments where behavior changed
 - [ ] Large changes broken into logical commits

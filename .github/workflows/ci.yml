@@ -202,6 +202,11 @@ jobs:
         run: ruff check .
       - name: Ruff format
         run: ruff format --check .
+      - name: Import contracts
+        # Which backend packages may import which: kernel, identity and sim are layered below
+        # the apps, and Workshop, the lobby and the freeplay code never import each other (#1051).
+        # The contracts are in pyproject.toml under [tool.importlinter].
+        run: lint-imports
 
   unit-tests:
     needs: changes
