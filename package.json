@@ -18,6 +18,7 @@
         "format": "frontend/node_modules/.bin/prettier --write .",
         "format:check": "frontend/node_modules/.bin/prettier --check .",
         "generate-types": "cd frontend && bun run generate-types",
+        "generate-showcase-data": "PYTHONPATH=src .venv/bin/python scripts/generate_showcase_data.py",
         "ruff:check": ".venv/bin/ruff check . --fix",
         "ruff:format": ".venv/bin/ruff format .",
         "check-wiki": ".venv/bin/python scripts/dev/check_wiki_links.py",

@@ -37,13 +37,9 @@ from energetica.workshop.facilities import (
     CATALOG,
     FacilityId,
     Fuel,
-    full_output_per_season,
-    om_fixed_per_season,
-    om_variable_per_mwh,
-    session_price,
 )
 from energetica.workshop.feedback import FeedbackNotOpenError, FeedbackStore, WorkshopFeedback
-from energetica.workshop.fuel import FUEL_NAMES, FUEL_USE, STOCKPILE_SEASONS, season_needs_by_facility
+from energetica.workshop.fuel import FUEL_NAMES, STOCKPILE_SEASONS, season_needs_by_facility
 from energetica.workshop.game_error import WorkshopErrorCode
 from energetica.workshop.loan import LOAN_AMOUNT, LOAN_PAYMENT, LOAN_PAYMENTS, payment_round
 from energetica.workshop.period_record import TradingPeriodRecord
@@ -103,7 +99,6 @@ from energetica.workshop.session import (
 from energetica.workshop.storage import energy_at_risk
 from energetica.workshop.unlocks import CSP_UNLOCK_ROUND, UPGRADES
 from energetica.workshop.votes import CARBON_TAX_RATE
-from energetica.workshop.weather import capacity_factor, expected_generation
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -425,17 +420,12 @@ def get_facilities(
     player = session.player(account.account_id)
     owned = {owned.facility for owned in player.owned_facilities} if player is not None else set()
     return [
-        WorkshopFacilityOut(
-            **facility.model_dump(exclude={"base_price"}),
-            base_price=session_price(facility.id, session.price_round_count),
-            for_sale=facility.id in for_sale,
+        WorkshopFacilityOut.from_catalog(
+            facility,
+            price_round_count=session.price_round_count,
             price=session.facility_price(facility.id),
-            fuel_use=FUEL_USE.get(facility.id),
-            capacity_factor=capacity_factor(session.weather_seed, facility.id),
-            om_fixed_per_season=om_fixed_per_season(facility),
-            om_variable_per_mwh=om_variable_per_mwh(facility),
-            full_output_per_season=full_output_per_season(facility),
-            expected_generation=expected_generation(facility.id),
+            for_sale=facility.id in for_sale,
+            weather_seed=session.weather_seed,
         )
         for facility in CATALOG.values()
         if facility.id in for_sale or facility.id in owned
