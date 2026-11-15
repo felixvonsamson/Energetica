@@ -12,8 +12,8 @@ Energetica/
 ├── main_lobby_service.py # Launcher for the lobby service
 ├── tests/
 │   ├── conftest.py       # Fixtures every test can use
-│   ├── unit/             # Fast, isolated tests
-│   ├── integration/      # App, router, game-loop and real-process tests
+│   ├── unit/             # Fast, isolated tests, in a folder per package (kernel/, sim/, ...) plus scripts/
+│   ├── integration/      # App, router, game-loop and real-process tests, in a folder per package
 │   └── policy.py, policy_runner.py  # A bot-player harness for the persistent world that nothing runs
 ├── frontend/             # React/TypeScript frontend (see Frontend below)
 ├── scripts/              # Developer, deploy, provisioning and operator scripts (see Scripts below)
@@ -115,6 +115,7 @@ scripts/
 ├── setup-worktree.sh     # Run once after `git worktree add`
 ├── generate-types.sh     # `bun run generate-types`: OpenAPI schemas to TypeScript types, one file per app
 ├── generate_openapi_schema.py               # Writes each backend app's OpenAPI schema, for the above
+├── generate_showcase_data.py                # `bun run generate-showcase-data`: the landing page's facility card data
 ├── guard-*.ts            # CI guards on the frontend (file names, image weight, dummy data, raw HTML)
 ├── deploy-instance.sh, deploy-lobby.sh, deploy-landing.sh   # Deploys (see deployment.md)
 ├── deployed-versions.sh, list-instances.sh, download-instance.sh, push-bootstrap.sh   # Operating a server
