@@ -171,72 +171,79 @@ scope — see [Out of scope](#out-of-scope-for-this-spec).
 ## Capability matrix
 
 Scope `n/a` means the capability is not gated by reach (either it is sysadmin/out-of-band,
-or it applies uniformly). Format is a non-empty subset of {persistent, workshop}.
+or it applies uniformly). Format is a non-empty subset of the Run modes {`freeplay`, `workshop`},
+the values of `run.mode` in `instance.json`; `both` means both modes.
 
 ### Instance lifecycle and provisioning
 
-| Capability                                                                | Owner       | Scope    | Format     | Plane       | Status                                                                                                                           |
-| ------------------------------------------------------------------------- | ----------- | -------- | ---------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Base server setup                                                         | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Provision instance                                                        | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Provision lobby                                                           | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Deploy instance code                                                      | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Deploy lobby code                                                         | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Set lifecycle timestamps at creation (`starts_at`/`freeze_at`/`ended_at`) | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Force-freeze / adjust `freeze_at`                                         | facilitator | instance | persistent | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
-| Re-anchor start / adjust `starts_at`                                      | facilitator | instance | persistent | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
-| Set `ended_at` (end instance)                                             | facilitator | instance | persistent | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
-| Reap / teardown ended instance (OS-level)                                 | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Advertise / hide instance                                                 | sysadmin    | n/a      | persistent | out-of-band | built (stays out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                       |
-| Set display name                                                          | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| List instances                                                            | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Download / back up instance state                                         | sysadmin    | n/a      | both       | out-of-band | built                                                                                                                            |
-| Export instance to CSV                                                    | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Backfill instance membership (one-time migration)                         | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Migrate to server accounts (one-time migration)                           | sysadmin    | n/a      | persistent | out-of-band | built                                                                                                                            |
-| Regenerate recap                                                          | sysadmin    | n/a      | persistent | out-of-band | built (stays out-of-band — dev recovery, not a facilitator act, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Capability                                                                | Owner       | Scope    | Format   | Plane       | Status                                                                                                                           |
+| ------------------------------------------------------------------------- | ----------- | -------- | -------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Base server setup                                                         | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Provision instance                                                        | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Provision lobby                                                           | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Deploy instance code                                                      | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Deploy lobby code                                                         | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Set lifecycle timestamps at creation (`starts_at`/`freeze_at`/`ended_at`) | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Force-freeze / adjust `freeze_at`                                         | facilitator | instance | freeplay | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
+| Re-anchor start / adjust `starts_at`                                      | facilitator | instance | freeplay | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
+| Set `ended_at` (end instance)                                             | facilitator | instance | both     | in-app      | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                       |
+| Reap / teardown ended instance (OS-level)                                 | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Advertise / hide instance                                                 | sysadmin    | n/a      | both     | out-of-band | built (stays out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                       |
+| Set display name                                                          | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| List instances                                                            | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Download / back up instance state                                         | sysadmin    | n/a      | both     | out-of-band | built                                                                                                                            |
+| Export instance to CSV                                                    | sysadmin    | n/a      | freeplay | out-of-band | built                                                                                                                            |
+| Backfill instance membership (one-time migration)                         | sysadmin    | n/a      | freeplay | out-of-band | built                                                                                                                            |
+| Migrate to server accounts (one-time migration)                           | sysadmin    | n/a      | freeplay | out-of-band | built                                                                                                                            |
+| Regenerate recap                                                          | sysadmin    | n/a      | freeplay | out-of-band | built (stays out-of-band — dev recovery, not a facilitator act, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+
+`setup-instance.sh` writes all three lifecycle timestamps for either mode, and the lobby lists
+every run by the phase they give it. But only the persistent world's engine gates play on them: it
+waits until `starts_at` to begin play, and stops play at `freeze_at`. In Workshop Mode the
+facilitator's console drives the session instead. The reaper reads `ended_at` for both modes. This is why the in-app freeze
+and re-anchor levers are `freeplay` only, while ending a run applies to both.
 
 ### Access control and whitelisting
 
-| Capability                                                   | Owner       | Scope                   | Format     | Plane       | Status                                                                                                                                                                                |
-| ------------------------------------------------------------ | ----------- | ----------------------- | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Set access policy (public / private)                         | sysadmin    | n/a                     | both       | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                                                           |
-| Manage instance whitelist                                    | facilitator | instance                | persistent | in-app      | built (graduated from out-of-band; the roster lives in `lobby.db`, ADR-0007 — `scripts/lobby/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
-| Server-wide signup toggle                                    | sysadmin    | n/a                     | both       | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                                                           |
-| Facilitator bypasses access allowlist                        | facilitator | server-wide or instance | both       | in-app      | built (ADR-0004)                                                                                                                                                                      |
-| Discover own scoped facilitator run(s) from the lobby picker | facilitator | instance                | both       | in-app      | built ([#1032](https://github.com/felixvonsamson/Energetica/issues/1032))                                                                                                             |
+| Capability                                                   | Owner       | Scope                   | Format | Plane       | Status                                                                                                                                                                                |
+| ------------------------------------------------------------ | ----------- | ----------------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Set access policy (public / private)                         | sysadmin    | n/a                     | both   | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                                                           |
+| Manage instance whitelist                                    | facilitator | instance                | both   | in-app      | built (graduated from out-of-band; the roster lives in `lobby.db`, ADR-0007 — `scripts/lobby/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
+| Server-wide signup toggle                                    | sysadmin    | n/a                     | both   | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898))                                                                           |
+| Facilitator bypasses access allowlist                        | facilitator | server-wide or instance | both   | in-app      | built (ADR-0004)                                                                                                                                                                      |
+| Discover own scoped facilitator run(s) from the lobby picker | facilitator | instance                | both   | in-app      | built ([#1032](https://github.com/felixvonsamson/Energetica/issues/1032))                                                                                                             |
 
 ### Identity and grants
 
-| Capability                        | Owner                      | Scope                   | Format     | Plane             | Status                                                                                                |
-| --------------------------------- | -------------------------- | ----------------------- | ---------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| Role model (`UserRole`)           | n/a (mechanism)            | n/a                     | both       | —                 | to migrate (`admin` → `facilitator`, [#899](https://github.com/felixvonsamson/Energetica/issues/899)) |
-| Seed the first facilitator grant  | sysadmin                   | server-wide (default)   | both       | out-of-band (CLI) | aspirational                                                                                          |
-| Auto-provisioned `admin` account  | —                          | —                       | persistent | —                 | retired (removed; replaced by CLI grant seed)                                                         |
-| Issue / revoke facilitator grants | facilitator (server-wide)  | server-wide             | both       | in-app (lobby)    | aspirational (grant-admin view, downstream)                                                           |
-| Change own password               | any user                   | n/a                     | both       | in-app (lobby)    | aspirational ([#323](https://github.com/felixvonsamson/Energetica/issues/323))                        |
-| Delete account (primitive)        | facilitator (once exposed) | server-wide or instance | both       | in-app            | built (primitive only; no surface)                                                                    |
+| Capability                        | Owner                      | Scope                   | Format   | Plane             | Status                                                                                                |
+| --------------------------------- | -------------------------- | ----------------------- | -------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| Role model (`UserRole`)           | n/a (mechanism)            | n/a                     | both     | —                 | to migrate (`admin` → `facilitator`, [#899](https://github.com/felixvonsamson/Energetica/issues/899)) |
+| Seed the first facilitator grant  | sysadmin                   | server-wide (default)   | both     | out-of-band (CLI) | aspirational                                                                                          |
+| Auto-provisioned `admin` account  | —                          | —                       | freeplay | —                 | retired (removed; replaced by CLI grant seed)                                                         |
+| Issue / revoke facilitator grants | facilitator (server-wide)  | server-wide             | both     | in-app (lobby)    | aspirational (grant-admin view, downstream)                                                           |
+| Change own password               | any user                   | n/a                     | both     | in-app (lobby)    | aspirational ([#323](https://github.com/felixvonsamson/Energetica/issues/323))                        |
+| Delete account (primitive)        | facilitator (once exposed) | server-wide or instance | both     | in-app            | built (primitive only; no surface)                                                                    |
 
 ### In-instance moderation and elevated powers
 
-| Capability                                       | Owner                  | Scope                   | Format     | Plane  | Status                                                                                            |
-| ------------------------------------------------ | ---------------------- | ----------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------- |
-| Spectator views (spy on any account)             | facilitator            | instance                | persistent | in-app | aspirational ([#279](https://github.com/felixvonsamson/Energetica/issues/279))                    |
-| API reshaping to support spectator views         | facilitator (enabler)  | instance                | persistent | in-app | aspirational ([#617](https://github.com/felixvonsamson/Energetica/issues/617))                    |
-| Ban / force-delete a player (non-diegetic)       | facilitator            | server-wide or instance | both       | in-app | aspirational ([#677](https://github.com/felixvonsamson/Energetica/issues/677))                    |
-| `sudo` / give actions (money, resources, levels) | facilitator            | instance                | persistent | in-app | aspirational ([#310](https://github.com/felixvonsamson/Energetica/issues/310))                    |
-| Pause / resume a player's simulation (manual)    | facilitator            | instance                | persistent | in-app | aspirational ([#403](https://github.com/felixvonsamson/Energetica/issues/403))                    |
-| Workshop: session / round / phase control        | facilitator            | instance                | workshop   | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
-| Workshop: live scenario override                 | facilitator            | instance                | workshop   | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
-| Workshop: propose vote events                    | facilitator (proposes) | instance                | workshop   | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
+| Capability                                       | Owner                  | Scope                   | Format   | Plane  | Status                                                                                            |
+| ------------------------------------------------ | ---------------------- | ----------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
+| Spectator views (spy on any account)             | facilitator            | instance                | freeplay | in-app | aspirational ([#279](https://github.com/felixvonsamson/Energetica/issues/279))                    |
+| API reshaping to support spectator views         | facilitator (enabler)  | instance                | freeplay | in-app | aspirational ([#617](https://github.com/felixvonsamson/Energetica/issues/617))                    |
+| Ban / force-delete a player (non-diegetic)       | facilitator            | server-wide or instance | both     | in-app | aspirational ([#677](https://github.com/felixvonsamson/Energetica/issues/677))                    |
+| `sudo` / give actions (money, resources, levels) | facilitator            | instance                | freeplay | in-app | aspirational ([#310](https://github.com/felixvonsamson/Energetica/issues/310))                    |
+| Pause / resume a player's simulation (manual)    | facilitator            | instance                | freeplay | in-app | aspirational ([#403](https://github.com/felixvonsamson/Energetica/issues/403))                    |
+| Workshop: session / round / phase control        | facilitator            | instance                | workshop | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
+| Workshop: live scenario override                 | facilitator            | instance                | workshop | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
+| Workshop: propose vote events                    | facilitator (proposes) | instance                | workshop | in-app | aspirational; **design owned by [#880](https://github.com/felixvonsamson/Energetica/issues/880)** |
 
 ### Observability and ops
 
-| Capability                    | Owner    | Scope | Format     | Plane       | Status                                                                         |
-| ----------------------------- | -------- | ----- | ---------- | ----------- | ------------------------------------------------------------------------------ |
-| Server health check and alert | sysadmin | n/a   | both       | out-of-band | aspirational ([#802](https://github.com/felixvonsamson/Energetica/issues/802)) |
-| Anonymise action-history logs | sysadmin | n/a   | persistent | out-of-band | aspirational ([#322](https://github.com/felixvonsamson/Energetica/issues/322)) |
-| Instance discovery (ops read) | sysadmin | n/a   | both       | out-of-band | built                                                                          |
+| Capability                    | Owner    | Scope | Format   | Plane       | Status                                                                         |
+| ----------------------------- | -------- | ----- | -------- | ----------- | ------------------------------------------------------------------------------ |
+| Server health check and alert | sysadmin | n/a   | both     | out-of-band | aspirational ([#802](https://github.com/felixvonsamson/Energetica/issues/802)) |
+| Anonymise action-history logs | sysadmin | n/a   | freeplay | out-of-band | aspirational ([#322](https://github.com/felixvonsamson/Energetica/issues/322)) |
+| Instance discovery (ops read) | sysadmin | n/a   | both     | out-of-band | built                                                                          |
 
 ## Out of scope for this spec
 

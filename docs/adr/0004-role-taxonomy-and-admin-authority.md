@@ -61,6 +61,10 @@ gap outright.
 and Workshop Mode expose different facilitator capabilities. The grant confers the role;
 the format decides which capabilities are available.
 
+_Update (#1131):_ the format is now the Run's mode, the `run.mode` tag in
+`instance.json`. The two modes are named `freeplay` (the persistent world) and `workshop` in
+code, and the Format column in `docs/architecture/roles.md` uses those names.
+
 **The matrix catalogues non-diegetic authority only.** Acting _on_ the system from outside
 the fiction (freeze, ban-for-abuse, spectate) is authority and is in scope. Mechanisms
 _inside_ the fiction — players voting to embargo a market manipulator, in-game policy votes
