@@ -33,6 +33,24 @@ export function isAnnouncedTakeover(
 }
 
 /**
+ * Whether to send the visitor to the lobby to log in: the route needs a role
+ * and there is no signed-in account.
+ *
+ * A failed session check (the server is down, or answered with a 5xx) is not
+ * the same as having no session, so it never sends anyone to log in. The root
+ * route offers a retry instead. A 401 or a refused account is not a failure:
+ * `fetchCurrentUser` turns those into a `null` user.
+ */
+export function mustLogIn(
+    routeConfig: StaticDataRouteOption["routeConfig"],
+    user: User | null,
+    authError: Error | null,
+): boolean {
+    if (!routeConfig || routeConfig.requiredRole === null) return false;
+    return user === null && authError === null;
+}
+
+/**
  * Returns `"log-out"` when the account must be logged out at the lobby, a path
  * to send it to within the app, or `null` to show the route.
  */

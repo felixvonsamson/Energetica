@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
 
-import { computeRedirect, isAnnouncedTakeover } from "./route-guard";
+import { computeRedirect, isAnnouncedTakeover, mustLogIn } from "./route-guard";
 
 type User = ApiSchema<"UserOut">;
 
@@ -171,6 +171,33 @@ describe("isAnnouncedTakeover", () => {
                 { requiredRole: "player", requiresSettledTile: true },
                 undefined,
             ),
+        ).toBe(false);
+    });
+});
+
+describe("mustLogIn", () => {
+    const PLAYER_ROUTE = {
+        requiredRole: "player",
+        requiresSettledTile: true,
+    } as const;
+
+    it("sends a visitor with no session on a protected route to log in", () => {
+        expect(mustLogIn(PLAYER_ROUTE, null, null)).toBe(true);
+    });
+
+    it("lets a signed-in account through", () => {
+        expect(mustLogIn(PLAYER_ROUTE, player(), null)).toBe(false);
+    });
+
+    it("never sends anyone to log in from a public route", () => {
+        expect(mustLogIn({ requiredRole: null }, null, null)).toBe(false);
+    });
+
+    // A failed session check (the server is down, or answered with a 5xx) says nothing about
+    // whether the visitor is signed in, so it must not send them to the lobby's login.
+    it("does not send a visitor to log in when the session check failed", () => {
+        expect(
+            mustLogIn(PLAYER_ROUTE, null, new Error("Failed to fetch")),
         ).toBe(false);
     });
 });
