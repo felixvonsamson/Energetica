@@ -19,8 +19,8 @@ from energetica.freeplay import engine
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.utils.map_helpers import confirm_location
 
 _SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "instance" / "drop_player_pwhash.py"
 _PICKLE = Path("instance/engine_data.pck")

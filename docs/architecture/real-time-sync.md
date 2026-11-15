@@ -49,7 +49,7 @@ def send_worker_info(self):
 ```python
 # In player.py
 def send_worker_info(self):
-    from energetica.schemas.players import WorkersOut
+    from energetica.freeplay.schemas.players import WorkersOut
 
     data = WorkersOut.from_player(self).model_dump()
     self.emit("worker_info", data)
@@ -110,7 +110,7 @@ player.invalidate_queries(["facilities", "all"])
 # Backend
 def update_money(self, amount: float):
     self.money = amount
-    from energetica.schemas.players import MoneyOut
+    from energetica.freeplay.schemas.players import MoneyOut
     self.emit("money_updated", MoneyOut.from_player(self).model_dump())
 ```
 
@@ -136,7 +136,7 @@ def build_facility(player: Player, facility_type: str):
     # ... build facility
 
     # Send small critical data for instant UI update
-    from energetica.schemas.players import MoneyOut, WorkersOut
+    from energetica.freeplay.schemas.players import MoneyOut, WorkersOut
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
     player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 
@@ -194,11 +194,11 @@ TanStack Query only refetches if data is actively displayed.
 
 ```python
 # Money (~20 bytes)
-from energetica.schemas.players import MoneyOut
+from energetica.freeplay.schemas.players import MoneyOut
 player.emit("money_updated", MoneyOut.from_player(player).model_dump())
 
 # Workers (~50 bytes)
-from energetica.schemas.players import WorkersOut
+from energetica.freeplay.schemas.players import WorkersOut
 player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 ```
 
@@ -222,7 +222,7 @@ player.invalidate_queries(["charts", "production"])
 player.emit("worker_info", {"construction": {...}})
 
 # ✅ GOOD: Use schemas (single source of truth)
-from energetica.schemas.players import WorkersOut
+from energetica.freeplay.schemas.players import WorkersOut
 player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 
 # ❌ BAD: Sending large data frequently
@@ -296,7 +296,7 @@ def build_facility(player: Player, facility_type: str):
     player.money -= cost
 
     # Hybrid: send small critical data + invalidate large data
-    from energetica.schemas.players import MoneyOut
+    from energetica.freeplay.schemas.players import MoneyOut
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
     player.invalidate_queries(["facilities", "all"], ["networks", "capacities"])
 ```

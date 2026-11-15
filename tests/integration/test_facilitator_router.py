@@ -180,8 +180,8 @@ def test_roster_lists_members_whether_or_not_they_have_settled(instance_json: Pa
     The roster is one allowlist, so both are listed the same way.
     """
     from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.utils.map_helpers import confirm_location
     from energetica.identity.account import Account
-    from energetica.utils.map_helpers import confirm_location
 
     client = _facilitator_client(instance_json)
     alice_id = make_account("alice")

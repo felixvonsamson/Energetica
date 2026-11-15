@@ -12,9 +12,9 @@ import pytest
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
 from energetica.identity.lobby_service_client import LobbyServiceClient, LobbyServiceUnavailable
-from energetica.utils.map_helpers import confirm_location
 
 
 def test_settling_joins_the_account_to_this_run(

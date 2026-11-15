@@ -1,7 +1,8 @@
 /**
  * Type definitions for authentication-related API operations.
  *
- * These types correspond to backend schemas in energetica/schemas/auth.py
+ * These types correspond to backend schemas in
+ * energetica/identity/schemas/auth.py
  */
 
 import type { ApiRequestBody } from "@/types/api-helpers";

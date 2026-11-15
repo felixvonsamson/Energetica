@@ -7,11 +7,11 @@ from energetica.freeplay.enums import (
     TechnologyType,
     WindFacilityType,
 )
+from energetica.freeplay.init_test_players import add_asset
+from energetica.freeplay.utils.facilities import upgrade_facility
+from energetica.freeplay.utils.map_helpers import confirm_location
+from energetica.freeplay.utils.tick_execution import tick
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.facilities import upgrade_facility
-from energetica.utils.map_helpers import confirm_location
-from energetica.utils.tick_execution import tick
 
 
 def test_upgrading_active_facilities() -> None:

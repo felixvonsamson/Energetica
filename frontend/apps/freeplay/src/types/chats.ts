@@ -6,7 +6,8 @@
  * 1. **OpenAPI Schema Types** - Extracted from backend API schemas using ApiSchema
  * 2. **Derived Types** - Custom interfaces derived from OpenAPI responses
  *
- * All types correspond to backend schemas in energetica/schemas/chats.py
+ * All types correspond to backend schemas in
+ * energetica/freeplay/schemas/chats.py
  */
 
 import type { ApiSchema } from "@/types/api-helpers";

@@ -11,8 +11,8 @@ from energetica.freeplay.technology_effects import (
     construction_time,
     knowledge_spillover_discount,
 )
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.utils.map_helpers import confirm_location
 
 
 def test_knowledge_spillover_discount() -> None:

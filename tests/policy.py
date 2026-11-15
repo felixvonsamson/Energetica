@@ -18,8 +18,8 @@ from energetica.freeplay.enums import (
     WorkerType,
 )
 from energetica.freeplay.globals import engine
+from energetica.freeplay.utils import projects
 from energetica.kernel.game_error import GameError
-from energetica.utils import projects
 
 
 def str_to_policy(txt: str) -> Policy:

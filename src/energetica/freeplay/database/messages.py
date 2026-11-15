@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 #    Use player.notify(YourPayload(...)).
 #
 #    1. Add the type string to NotificationType below.
-#    2. In energetica/schemas/notifications.py:
+#    2. In energetica/freeplay/schemas/notifications.py:
 #       a. Add a *Payload class with `type: Literal["your_type"]`.
 #       b. Add it to PersistableNotificationPayload.
 #    3. Run `bun run generate-types`.
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 # B) PUSH-ONLY — triggers a browser push but NO inbox entry.
 #    Use player.push_only(YourPayload(...)).
 #
-#    1. In energetica/schemas/notifications.py:
+#    1. In energetica/freeplay/schemas/notifications.py:
 #       a. Add a *Payload class with `type: Literal["your_type"]`.
 #       b. Add it to PushOnlyPayload.
 #    2. Run `bun run generate-types`.

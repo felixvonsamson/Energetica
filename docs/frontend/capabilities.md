@@ -8,7 +8,7 @@ Player capabilities are boolean flags that determine which features/pages a play
 
 ### Schema: `PlayerCapabilities`
 
-Location: `energetica/schemas/capabilities.py`
+Location: `energetica/freeplay/schemas/capabilities.py`
 
 ```python
 class PlayerCapabilities(BaseModel):

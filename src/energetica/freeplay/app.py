@@ -48,13 +48,13 @@ def create_app(
     # engine object itself is constructed when ``energetica.freeplay`` is imported (it is light and
     # the ORM needs it at model-import time).
     from energetica.freeplay.action_log import read_init_action, stream_actions_after_tick
+    from energetica.freeplay.init_test_players import init_test_players
+    from energetica.freeplay.routers import setup_routes
     from energetica.freeplay.schemas.simulate import Action, InitEngineAction
-    from energetica.init_test_players import init_test_players
-    from energetica.routers import setup_routes
-    from energetica.simulate import simulate
-    from energetica.socketio import setup_socketio
-    from energetica.utils.browser_notifications import load_or_create_vapid_keys
-    from energetica.utils.tick_execution import state_update
+    from energetica.freeplay.simulate import simulate
+    from energetica.freeplay.socketio import setup_socketio
+    from energetica.freeplay.utils.browser_notifications import load_or_create_vapid_keys
+    from energetica.freeplay.utils.tick_execution import state_update
 
     if schema_only:
         # Minimal FastAPI app for OpenAPI schema generation only

@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from py_vapid import Vapid
 
 from energetica.freeplay.game_engine import GameEngine
-from energetica.utils.browser_notifications import load_or_create_vapid_keys
+from energetica.freeplay.utils.browser_notifications import load_or_create_vapid_keys
 
 
 class _KeyHolder:

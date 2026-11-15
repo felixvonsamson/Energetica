@@ -34,9 +34,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ENGINE_MARKERS = (
     "energetica.freeplay",
     "energetica.freeplay.database.player",
-    "energetica.routers",
-    "energetica.socketio",
-    "energetica.utils.tick_execution",
+    "energetica.freeplay.routers",
+    "energetica.freeplay.socketio",
+    "energetica.freeplay.utils.tick_execution",
 )
 
 
@@ -101,10 +101,10 @@ def test_the_lobby_backend_loads_none_of_the_lobby_service() -> None:
     "module",
     [
         "energetica.freeplay.app",
-        "energetica.routers",
-        "energetica.socketio",
-        "energetica.simulate",
-        "energetica.init_test_players",
+        "energetica.freeplay.routers",
+        "energetica.freeplay.socketio",
+        "energetica.freeplay.simulate",
+        "energetica.freeplay.init_test_players",
         "energetica.workshop.app",
         "energetica.workshop.routes",
     ],

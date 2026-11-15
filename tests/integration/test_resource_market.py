@@ -7,10 +7,10 @@ from energetica.freeplay.enums import (
     Fuel,
     FunctionalFacilityType,
 )
+from energetica.freeplay.init_test_players import add_asset
+from energetica.freeplay.utils.map_helpers import confirm_location
+from energetica.freeplay.utils.resource_market import create_ask, purchase_resource, store_import
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.map_helpers import confirm_location
-from energetica.utils.resource_market import create_ask, purchase_resource, store_import
 
 
 def test_store_import() -> None:

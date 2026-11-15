@@ -39,17 +39,10 @@ from energetica.freeplay.enums import (
     WorkerType,
 )
 from energetica.freeplay.globals import engine
-from energetica.freeplay.technology_effects import (
-    package_available_technologies,
-    package_extraction_facilities,
-    package_functional_facilities,
-    package_power_facilities,
-    package_storage_facilities,
-)
-from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
-from energetica.schemas.browser_notifications import Subscription
-from energetica.schemas.electricity_markets import AskType, BidType
-from energetica.schemas.notifications import (
+from energetica.freeplay.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
+from energetica.freeplay.schemas.browser_notifications import Subscription
+from energetica.freeplay.schemas.electricity_markets import AskType, BidType
+from energetica.freeplay.schemas.notifications import (
     AchievementMilestoneBasePayload,
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestonePowerConsumptionPayload,
@@ -57,6 +50,13 @@ from energetica.schemas.notifications import (
     NotificationPayload,
     PersistableNotificationPayload,
     PushOnlyPayload,
+)
+from energetica.freeplay.technology_effects import (
+    package_available_technologies,
+    package_extraction_facilities,
+    package_functional_facilities,
+    package_power_facilities,
+    package_storage_facilities,
 )
 from energetica.sim.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
@@ -535,7 +535,7 @@ class Player(DBModel):
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""
-        from energetica.schemas.players import WorkersOut
+        from energetica.freeplay.schemas.players import WorkersOut
 
         # Use the same schema as the API endpoint to avoid duplication
         data = WorkersOut.from_player(self).model_dump()
@@ -745,7 +745,7 @@ class Player(DBModel):
         """
         Package the player's active facilities.
 
-        This function is deprecated and superseded by PowerFacilityOut in energetica/schemas/facilities.py
+        This function is deprecated and superseded by PowerFacilityOut in energetica/freeplay/schemas/facilities.py
         """
         return {
             "power_facilities": self.package_active_power_facilities(),

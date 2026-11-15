@@ -18,13 +18,13 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from energetica import simulate as simulate_module
+from energetica.freeplay import simulate as simulate_module
 from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action, ApiAction, ApiActionRequest, ApiActionResponse
+from energetica.freeplay.simulate import simulate
 from energetica.identity.account import Account
 from energetica.identity.web import resolve_entry_account
-from energetica.simulate import simulate
 from lobby_service import session
 
 from ._session_helpers import authenticate, make_account

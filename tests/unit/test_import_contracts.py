@@ -1,10 +1,9 @@
 """The import-linter contracts in ``pyproject.toml`` name the freeplay code in four places (#1051).
 
-The freeplay code is not one package yet (#1057), so each contract lists ``energetica.freeplay``
-and the top-level modules it still owns. The layers contract is exhaustive, so a new top-level
-module must go into a layer. Nothing in import-linter makes it go into the per-app contracts too,
-and a module missing from them could import Workshop or the lobby unchecked. This test keeps the
-four lists the same.
+Since #1057 the freeplay code is one package, ``energetica.freeplay``. The layers contract is
+exhaustive, so a new top-level module must go into a layer. Nothing in import-linter makes a module
+added to the app layer go into the per-app contracts too, and a module missing from them could
+import Workshop or the lobby unchecked. This test keeps the four lists the same.
 """
 
 from __future__ import annotations

@@ -13,10 +13,10 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.enums import ControllableFacilityType, Fuel
+from energetica.freeplay.init_test_players import add_asset
 from energetica.freeplay.production_update import resources_and_pollution
+from energetica.freeplay.utils.map_helpers import confirm_location
 from energetica.identity.account import Account
-from energetica.init_test_players import add_asset
-from energetica.utils.map_helpers import confirm_location
 
 COAL = ControllableFacilityType.COAL_BURNER
 NUCLEAR = ControllableFacilityType.NUCLEAR_REACTOR

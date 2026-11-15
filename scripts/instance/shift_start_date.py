@@ -13,11 +13,11 @@ This script shifts the persisted ``start_date`` forward (or back), so the instan
 no time had passed — no catch-up burst. The shift can be given as a whole number of days
 (``--days``) or as a whole number of ticks (``--ticks``, each ``clock_time`` seconds long); either
 way, it must be a whole multiple of the instance's ``clock_time`` to keep tick alignment intact —
-in particular the daily-quiz trigger (``utils/tick_execution.py``, ``% 86400 == 9*3600``), which
-depends on ``start_date`` landing on the same second-of-day it did before the shift. A ``--days``
-shift always satisfies that for every ``clock_time`` game_engine.py actually allows (they all
-divide 86400 evenly); ``--ticks`` satisfies it by construction, and additionally lets the shift
-match a real-world gap exactly instead of rounding to a whole day.
+in particular the daily-quiz trigger (``energetica/freeplay/utils/tick_execution.py``,
+``% 86400 == 9*3600``), which depends on ``start_date`` landing on the same second-of-day it did
+before the shift. A ``--days`` shift always satisfies that for every ``clock_time`` game_engine.py
+actually allows (they all divide 86400 evenly); ``--ticks`` satisfies it by construction, and
+additionally lets the shift match a real-world gap exactly instead of rounding to a whole day.
 
 Only affects tick catch-up pacing, nothing else — see issue #1024 for the full trace of every
 ``total_t``/wall-clock consumer. All gameplay state is keyed off simulated ticks, not

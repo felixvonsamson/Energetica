@@ -46,7 +46,7 @@ Guide for integrating backend API calls with automatic type generation.
 Some legacy Jinja templates inject data directly from the server without API endpoints:
 
 ```python
-# energetica/routers/templates.py
+# energetica/freeplay/routers/templates.py
 @router.get("/dashboard")
 def render_dashboard(user: User):
     return templates.TemplateResponse("dashboard.jinja", {
@@ -71,7 +71,7 @@ def render_dashboard(user: User):
 **Design the schema:**
 
 ```python
-# energetica/schemas/daily_quiz.py
+# energetica/freeplay/schemas/daily_quiz.py
 from pydantic import BaseModel
 
 class DailyQuizOut(BaseModel):
@@ -87,11 +87,11 @@ class DailyQuizOut(BaseModel):
 **Add router:**
 
 ```python
-# energetica/routers/daily_quiz.py
+# energetica/freeplay/routers/daily_quiz.py
 from fastapi import APIRouter, Depends
 from energetica.freeplay.database.player import Player
-from energetica.schemas.daily_quiz import DailyQuizOut
-from energetica.utils.auth import get_settled_player
+from energetica.freeplay.schemas.daily_quiz import DailyQuizOut
+from energetica.freeplay.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/daily-quiz", tags=["Daily Quiz"])
 
@@ -126,8 +126,8 @@ def submit_quiz_answer(
 **Register the router:**
 
 ```python
-# energetica/routers/__init__.py
-from energetica.routers import daily_quiz
+# energetica/freeplay/routers/__init__.py
+from energetica.freeplay.routers import daily_quiz
 
 app.include_router(daily_quiz.router, prefix="/api/v1")
 ```
@@ -248,18 +248,18 @@ energetica/templates/[page-name].jinja
 energetica/static/[page-name].js
 
 # Python router (backend endpoint)
-energetica/routers/[feature].py
+energetica/freeplay/routers/[feature].py
 
 # Schema (data structure)
-energetica/schemas/[feature].py
+energetica/freeplay/schemas/[feature].py
 ```
 
 **Example - Dashboard weather section:**
 
 - Template: `energetica/templates/dashboard.jinja` (lines 45-50)
 - JavaScript: `energetica/static/dashboard.js` (complete implementation)
-- Router: `energetica/routers/weather.py`
-- Schema: `energetica/schemas/weather.py`
+- Router: `energetica/freeplay/routers/weather.py`
+- Schema: `energetica/freeplay/schemas/weather.py`
 
 ### Step 2: Analyze the Legacy Behaviour
 

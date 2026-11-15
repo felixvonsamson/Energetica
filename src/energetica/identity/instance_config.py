@@ -644,7 +644,7 @@ def publish_on_startup() -> None:
 # rarely — folding it in would bloat the manifest the picker downloads on every visit). Discovery
 # rides the existing fragment pointer: the lobby offers "View recap" ⟺ the fragment's ``freeze_at``
 # has passed. These primitives stay free of the game domain (the module-boundary rule) — the mint
-# side that reads ``Player`` lives in ``energetica.utils.recap``.
+# side that reads ``Player`` lives in ``energetica.freeplay.utils.recap``.
 
 
 def recap_path(slug: str) -> Path:

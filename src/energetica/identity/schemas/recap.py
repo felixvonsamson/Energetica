@@ -3,7 +3,7 @@
 A recap is a **write-once, immutable snapshot** minted at the ``active → freeze`` transition and
 published to the lobby (``recaps/{slug}.json``), where it outlives the instance process (T7). It is a
 **curated projection** — a single per-player table plus a small instance-totals header — *not* the
-verbatim :class:`~energetica.schemas.leaderboards.PlayerDetailStats`: the extra columns are cheap as
+verbatim :class:`~energetica.freeplay.schemas.leaderboards.PlayerDetailStats`: the extra columns are cheap as
 data but costly as render/parse surface, and they graduate from the fog as full-recap features later.
 
 **A retrospective, not a scoreboard (ADR-0005, supersedes G1's competitive framing).** The recap
@@ -72,7 +72,7 @@ class RecapRow(BaseModel):
 class RecapTile(BaseModel):
     """One frozen map tile: its terrain plus who settled it, at freeze (G1 addendum, #859).
 
-    The in-game :class:`~energetica.schemas.map.HexTileOut` shape minus the throwaway ``id``, with the
+    The in-game :class:`~energetica.freeplay.schemas.map.HexTileOut` shape minus the throwaway ``id``, with the
     live ``player_id`` swapped for the durable ``owner_account_id``. Tiles join the leaderboard
     :class:`RecapRow` s by ``account_id`` — settlement is 1:1 (one player per tile) — so no ``tile_id``
     is needed on the rows and no second identity system enters the tombstone.

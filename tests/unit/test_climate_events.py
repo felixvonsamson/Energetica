@@ -4,7 +4,7 @@ import numpy as np
 
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.utils.climate_helpers import climate_event_impact
+from energetica.freeplay.utils.climate_helpers import climate_event_impact
 
 
 def test_climate_events_exists() -> None:

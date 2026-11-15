@@ -15,7 +15,8 @@ Energetica/
 ├── tests/                # Backend unit/integration tests
 ├── frontend/             # React/TypeScript frontend
 ├── scripts/              # Deploy, provisioning and one-off operational scripts
-├── map_generation/       # Offline map-authoring tool
+├── tools/
+│   └── map_generation/   # Offline map-authoring tool, outside the import graph
 ├── instance/             # Game saves
 └── checkpoints/          # Game backups
 ```
@@ -43,13 +44,19 @@ production import the same code the same way.
 
 ```
 src/energetica/       # Python/FastAPI backend
-├── routers/          # API endpoints
-├── schemas/          # Pydantic models
+├── entry.py          # Builds the app for this instance's Run mode
 ├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
 ├── identity/         # Accounts store, instance and server configuration, my-runs
 ├── sim/              # Market clearing and settlement, facility statuses
+├── workshop/         # Workshop Mode
 └── freeplay/         # The persistent world
     ├── app.py        # Application factory (create_app)
+    ├── routers/      # API endpoints
+    ├── schemas/      # Pydantic models for the API and the action log
+    ├── socketio.py   # Real-time layer (Socket.IO server)
+    ├── utils/        # Helpers for routers and the tick loop (auth, map, projects, tick execution, ...)
+    ├── simulate.py   # Replays the action log
+    ├── init_test_players.py  # Test-player fixture for local development
     ├── game_engine.py  # Core game logic
     ├── database/     # Model base class, id-keyed store, and game state models
     ├── production_update.py   # Per-tick production, demand and market update

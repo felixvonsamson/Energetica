@@ -6,7 +6,7 @@ the frontend's ``invalidate`` message, which names cached queries for the page t
 Trading period is being simulated, it also sends ``settlement_progress`` as the days go by (#1155), which
 carries the progress itself so that pages do not re-read the whole session that often.
 
-This is Workshop's own module rather than the persistent world's ``energetica.socketio``, which is
+This is Workshop's own module rather than the persistent world's ``energetica.freeplay.socketio``, which is
 built around that world's players and game engine.
 """
 

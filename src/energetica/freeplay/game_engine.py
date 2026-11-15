@@ -118,7 +118,7 @@ class GameEngine(object):
         from energetica.freeplay.database.engine_data.emission_data import EmissionData
         from energetica.freeplay.database.map.hex_tile import HexTile
         from energetica.freeplay.database.messages import Chat
-        from energetica.utils.climate_helpers import data_init_climate
+        from energetica.freeplay.utils.climate_helpers import data_init_climate
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
         self.clock_time = clock_time
@@ -310,7 +310,7 @@ class GameEngine(object):
         from datetime import datetime, timedelta, timezone
 
         from energetica.freeplay.database.player import Player
-        from energetica.schemas.notifications import (
+        from energetica.freeplay.schemas.notifications import (
             QuizReminderPayload,
             TutorialDailyQuizPayload,
             TutorialQuizPushNotificationsPayload,

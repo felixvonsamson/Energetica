@@ -5,8 +5,8 @@
 # from energetica.freeplay.database.player import Player
 # from energetica.freeplay.enums import Renewable
 # from energetica.freeplay.globals import engine
-# from energetica.simulate import tick
-# from energetica.utils import map_helpers
+# from energetica.freeplay.simulate import tick
+# from energetica.freeplay.utils import map_helpers
 # from tests.policy import Policy
 
 

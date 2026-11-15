@@ -34,7 +34,7 @@ from the repo root:
 
 `bun run generate-types` generates TypeScript types from each backend app's OpenAPI schema. They are the bridge for full stack type safety.
 
-- backend: `src/energetica/schemas/`, `src/energetica/routers/` and `src/lobby/` are the source of truth
+- backend: `src/energetica/freeplay/schemas/`, `src/energetica/freeplay/routers/` and `src/lobby/` are the source of truth
 - one types file per app, so code only type-checks against routes its own backend serves:
   - lobby app: `frontend/apps/lobby/src/types/api.generated.ts`, consumed through `frontend/apps/lobby/src/types/api-helpers.ts`
   - workshop app: `frontend/apps/workshop/src/types/api.generated.ts`, consumed through `frontend/apps/workshop/src/types/api-helpers.ts`

@@ -12,6 +12,12 @@ production update (:mod:`~energetica.freeplay.production_update`), technology ef
 configuration (:mod:`~energetica.freeplay.config`), and the game's enumerations
 (:mod:`~energetica.freeplay.enums`).
 
+So does its HTTP and real-time surface (see #1057): the routers (:mod:`~energetica.freeplay.routers`),
+the API schemas (:mod:`~energetica.freeplay.schemas`), the Socket.IO server
+(:mod:`~energetica.freeplay.socketio`), the helpers they share (:mod:`~energetica.freeplay.utils`),
+action-log replay (:mod:`~energetica.freeplay.simulate`) and the test-player fixture
+(:mod:`~energetica.freeplay.init_test_players`).
+
 Importing this package constructs the engine and binds it to :data:`energetica.freeplay.globals.engine`.
 That happens before any submodule loads, and it is load-bearing: the model base class registers every
 subclass into the engine at class-definition time, and many modules copy ``globals.engine`` into their
