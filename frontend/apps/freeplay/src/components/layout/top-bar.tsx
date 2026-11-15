@@ -34,10 +34,10 @@ import { useCallback, useEffect, useState } from "react";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
+import { useSocket } from "@/contexts/socket-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
-import { useOnlineStatus } from "@/hooks/use-online-status";
 import { usePlayerMoney } from "@/hooks/use-player-money";
 import { usePlayerWorkers } from "@/hooks/use-player-workers";
 import { Money } from "@/types/money";
@@ -58,7 +58,7 @@ export function TopBar() {
         isLoading: isWorkersLoading,
         isError: isWorkersError,
     } = usePlayerWorkers();
-    const { isConnected } = useOnlineStatus();
+    const { isConnected } = useSocket();
     const unreadCount = useUnreadNotificationsCount();
     const [showNotifications, setShowNotifications] = useState(false);
     const matches = useMatches();
