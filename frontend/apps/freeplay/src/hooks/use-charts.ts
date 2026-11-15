@@ -16,14 +16,16 @@
  */
 
 import { reorderObjectKeys } from "@energetica/charts/lib/key-order";
+import { ApiClientError } from "@energetica/core/api-client";
 import {
+    hashKey,
     Query,
     QueryClient,
     useQueries,
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import { useGameTick } from "@/hooks/use-game-tick";
 import { chartsApi } from "@/lib/api/charts";
@@ -48,6 +50,9 @@ import { ChartType, Resolution, TickRange } from "@/types/charts";
  * Includes jitter prevention: while loading new data for the current tick,
  * displays cached data from the previous range (if available) to prevent empty
  * states and UI flicker during tick transitions.
+ *
+ * While the tick may be behind the server, no data is requested and the hook
+ * reports loading instead (see `planChartFetches`).
  */
 export function useChartData<T extends ChartType>({
     config,
@@ -61,7 +66,7 @@ export function useChartData<T extends ChartType>({
     isError: boolean;
 } {
     const queryClient = useQueryClient();
-    const { currentTick } = useGameTick();
+    const { currentTick, isTickFresh, reportStaleTick } = useGameTick();
     const resolution = config.resolution;
     const range = computeRange({ currentTick, resolution, maxDatapoints });
     const rangeOld = computeRange({
@@ -84,15 +89,18 @@ export function useChartData<T extends ChartType>({
     });
 
     // Also, trigger fetches
-    const rangesToFetch = getCacheGaps({
+    const { rangesToFetch, isWaitingForTick } = planChartFetches({
         queryClient,
         config,
         range,
+        isTickFresh,
     });
-    const { isLoading, isError } = useFetchChartGaps({
+    const { isLoading: isFetching, isError } = useFetchChartGaps({
         config,
         rangesToFetch,
+        onStaleTickRejection: reportStaleTick,
     });
+    const isLoading = isFetching || isWaitingForTick;
 
     // Determine what data to return
     if (isLoading && cachedFallbackData.length > 0) {
@@ -271,24 +279,43 @@ function useChartDataOnRange<T extends ChartType>({
     };
 }
 
-/** Fetches ranges concurrently. */
+/**
+ * Fetches ranges concurrently. Calls `onStaleTickRejection` when a rejection
+ * suggests the range was built from a stale tick (see
+ * `claimStaleTickRejection`).
+ */
 function useFetchChartGaps({
     config,
     rangesToFetch,
+    onStaleTickRejection,
 }: {
     config: ChartQueryConfig;
     rangesToFetch: TickRange[];
+    onStaleTickRejection: () => void;
 }) {
+    const reportedRejections = useRef(new Set<string>());
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
+            const queryKey = buildChartQueryKey(config, range);
             return {
-                queryKey: buildChartQueryKey(config, range),
-                queryFn: () =>
-                    chartsApi.getChartData({
-                        identifier: config,
-                        resolution: config.resolution,
-                        range,
-                    }),
+                queryKey,
+                queryFn: async () => {
+                    try {
+                        return await chartsApi.getChartData({
+                            identifier: config,
+                            resolution: config.resolution,
+                            range,
+                        });
+                    } catch (error) {
+                        const isStale = claimStaleTickRejection({
+                            error,
+                            queryKey,
+                            reported: reportedRejections.current,
+                        });
+                        if (isStale) onStaleTickRejection();
+                        throw error;
+                    }
+                },
                 staleTime: 60 * 1000,
             };
         }),
@@ -307,6 +334,64 @@ interface CachedTickRange {
 
 interface ChartDataResponse {
     series: Record<string, number[]>;
+}
+
+/**
+ * Decides which chart ranges to request now.
+ *
+ * Ranges are built from the client's copy of the current tick. While that copy
+ * may be behind the server (the socket dropped or the tab was frozen), a range
+ * built from it can start before the oldest datapoint the server keeps, and the
+ * server rejects it with 400. So nothing is requested until the tick is fresh,
+ * and `isWaitingForTick` tells the caller to keep showing what it has.
+ */
+export function planChartFetches({
+    queryClient,
+    config,
+    range,
+    isTickFresh,
+}: {
+    queryClient: QueryClient;
+    config: ChartQueryConfig;
+    range: TickRange;
+    isTickFresh: boolean;
+}): {
+    rangesToFetch: TickRange[];
+    isWaitingForTick: boolean;
+} {
+    const gaps = getCacheGaps({ queryClient, config, range });
+    if (!isTickFresh) {
+        return { rangesToFetch: [], isWaitingForTick: gaps.length > 0 };
+    }
+    return { rangesToFetch: gaps, isWaitingForTick: false };
+}
+
+/**
+ * Whether a failed chart request should be reported as a stale tick, recording
+ * the range in `reported` if so.
+ *
+ * A 400 can mean the range was built from a tick that went stale in a way
+ * nothing else noticed: a request sent just before the tab froze, or the server
+ * moving past a datapoint boundary while the request was in flight. Re-reading
+ * the tick fixes those. Each range is reported once: if it fails again after
+ * the tick was re-read, the error is real, and reporting it again would loop.
+ */
+export function claimStaleTickRejection({
+    error,
+    queryKey,
+    reported,
+}: {
+    error: unknown;
+    queryKey: readonly unknown[];
+    reported: Set<string>;
+}): boolean {
+    if (!(error instanceof ApiClientError) || error.status !== 400) {
+        return false;
+    }
+    const hash = hashKey(queryKey);
+    if (reported.has(hash)) return false;
+    reported.add(hash);
+    return true;
 }
 
 /**
