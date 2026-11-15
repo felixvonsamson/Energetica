@@ -147,9 +147,10 @@ _Avoid_: accounts service, and `accounts.db` for its database (the names before 
 
 **Joined a run**:
 An account that has explicitly, deliberately joined a run — the lobby's two-click join for a
-public run (#1030), or a private run's roster add / join-link confirm — recorded as a row in
-`instance_membership` the moment that happens, before the account has necessarily settled. The
-lobby's "your runs" view is keyed on this, not on settling. See the flagged ambiguity below.
+public run (#1030), or, for a private run, a facilitator's add or a join-link confirm —
+recorded as a row in `instance_membership` the moment that happens, before the account has
+necessarily settled. The lobby's "your runs" view is keyed on this, not on settling. See the
+flagged ambiguity below.
 
 **Settled**:
 An account that has picked a tile — has a **Player** in that run's engine. A later, separate

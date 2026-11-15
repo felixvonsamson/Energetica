@@ -49,11 +49,11 @@ export function AddAccountCard() {
         <Card>
             <CardHeader>
                 <CardTitle>
-                    <TypographyH2>Add to roster</TypographyH2>
+                    <TypographyH2>Add a player</TypographyH2>
                 </CardTitle>
                 <TypographyMuted>
-                    Search for an existing account by username and add it to
-                    this instance's allowlist.
+                    Search for an existing account by username and add it as a
+                    player.
                 </TypographyMuted>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -153,9 +153,9 @@ export function RosterCard({ formatError, renderMembers }: RosterCardProps) {
 
     return (
         <RosterSection
-            title={`Members (${data.members.length})`}
+            title={`Players (${data.members.length})`}
             usernames={data.members}
-            emptyLabel="No one is on the roster yet."
+            emptyLabel="No players yet."
             onBan={roster.onBan}
             pendingUsername={roster.pendingUsername}
         />
@@ -225,7 +225,7 @@ export function RosterSection({
                                             </Button>
                                         }
                                         title={`Ban ${username}?`}
-                                        description={`This removes ${username} from the allowlist. Their next entry attempt is denied — a session already in progress isn't interrupted.`}
+                                        description={`This removes ${username} as a player. Their next attempt to enter is denied — a session already in progress isn't interrupted.`}
                                         confirmLabel="Ban"
                                         variant="danger"
                                         isPending={pendingUsername === username}

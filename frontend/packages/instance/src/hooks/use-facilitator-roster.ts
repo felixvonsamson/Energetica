@@ -56,7 +56,7 @@ export function useAddToRoster() {
         mutationFn: (username: string) =>
             facilitatorApi.addToRoster({ username }),
         onSuccess: (_data, username) => {
-            toast.success(`${username} added to the roster`);
+            toast.success(`${username} added as a player`);
             queryClient.invalidateQueries({
                 queryKey: instanceQueryKeys.facilitator.roster,
             });
@@ -79,7 +79,7 @@ export function useRemoveFromRoster() {
         mutationFn: (username: string) =>
             facilitatorApi.removeFromRoster(username),
         onSuccess: (_data, username) => {
-            toast.success(`${username} removed from the roster`);
+            toast.success(`${username} removed as a player`);
             queryClient.invalidateQueries({
                 queryKey: instanceQueryKeys.facilitator.roster,
             });
