@@ -22,12 +22,14 @@
  * over HTTP. See `@/lib/tick-sync`.
  */
 
+import { ApiClientError } from "@energetica/core/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
     createContext,
     useContext,
     useEffect,
     useReducer,
+    useRef,
     useState,
     useCallback,
     type ReactNode,
@@ -89,27 +91,46 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
         Set<string>
     >(new Set());
 
-    // Read the current tick over HTTP
+    // Read the current tick over HTTP. Charts wait for a fresh tick, and a
+    // frozen run sends no socket ticks, so a failed read is retried with
+    // backoff rather than leaving them waiting. Client errors (4xx) are not
+    // retried, matching the query client's defaults.
+    const resyncRetryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const resyncTick = useCallback(() => {
-        playerApi
-            .getGameState()
-            .then((gameState) => {
-                console.log(
-                    `[GameTick] Tick loaded: ${gameState.current_tick}`,
-                );
-                dispatchTickSync({
-                    type: "resynced",
-                    tick: gameState.current_tick,
+        const attempt = (attemptIndex: number) => {
+            clearTimeout(resyncRetryTimer.current);
+            playerApi
+                .getGameState()
+                .then((gameState) => {
+                    console.log(
+                        `[GameTick] Tick loaded: ${gameState.current_tick}`,
+                    );
+                    dispatchTickSync({
+                        type: "resynced",
+                        tick: gameState.current_tick,
+                    });
+                })
+                .catch((error) => {
+                    console.error("[GameTick] Failed to fetch tick:", error);
+                    const isClientError =
+                        error instanceof ApiClientError &&
+                        error.status >= 400 &&
+                        error.status < 500;
+                    if (isClientError) return;
+                    resyncRetryTimer.current = setTimeout(
+                        () => attempt(attemptIndex + 1),
+                        Math.min(1000 * 2 ** attemptIndex, 30_000),
+                    );
+                })
+                .finally(() => {
+                    // Still mark as loaded to avoid blocking forever
+                    setIsLoadingTick(false);
                 });
-            })
-            .catch((error) => {
-                console.error("[GameTick] Failed to fetch tick:", error);
-            })
-            .finally(() => {
-                // Still mark as loaded to avoid blocking forever
-                setIsLoadingTick(false);
-            });
+        };
+        attempt(0);
     }, []);
+
+    useEffect(() => () => clearTimeout(resyncRetryTimer.current), []);
 
     const reportStaleTick = useCallback(() => {
         dispatchTickSync({ type: "stale" });
