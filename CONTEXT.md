@@ -191,15 +191,15 @@ _Avoid_: guest account, workshop account (a permanent account can play a worksho
 
 ## Run modes
 
-A **Run**'s mode says what kind of game it is. Each mode has its own app, under its own package in
-the backend and its own app in the frontend. The mode is fixed when the run is created
-(ADR-0010).
+A **Run**'s mode says what kind of game it is. Each mode has its own backend package and its own
+frontend. The mode is fixed when the **Run** is created (ADR-0010).
 
 ### Language
 
 **The persistent world**:
 The long-running mode of play: players settle a tile on a shared map and build up their power
-network over weeks of real time, while the engine's clock ticks the simulation on continuously. Its state
+network over weeks of real time. The engine advances the simulation one tick at a time, on a
+clock, whether or not anyone is playing. Its state
 lives in the engine's in-memory model store and is saved by pickling (see § Persistence & Replay).
 Write `freeplay` in code, configuration and file paths, such as the Run mode tag
 `"freeplay"`, the package `energetica.freeplay` and the frontend app `@energetica/freeplay`.
@@ -214,9 +214,9 @@ Write `workshop` in code and "Workshop" or "Workshop Mode" in prose.
 ### Flagged ambiguities
 
 - **`freeplay` vs "the persistent world".** One mode had three names: "free play", `freeplay`
-  and "the persistent world". Resolved (#1049): the code says `freeplay` and the prose says "the
-  persistent world", on purpose. "Free play" is not used. A name in backticks, such as the
-  package `freeplay`, is code and keeps its code spelling in prose too.
+  and "the persistent world". Resolved (#1049) as pinned above: the code and the prose differ on
+  purpose. A name in backticks, such as the package `freeplay`, is code and keeps its code
+  spelling in prose too.
 
 ---
 

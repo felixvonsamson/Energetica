@@ -15,8 +15,8 @@ Two pieces of the persistent world look like shared infrastructure:
 
 - **The game engine** (`freeplay/game_engine.py`, with the process's one engine in
   `freeplay/globals.py`): a clock that ticks the simulation, a lock that requests and ticks share,
-  and the machinery that pickles the whole game to a save and to checkpoints and writes the action
-  log.
+  and the machinery that writes the action log and saves the whole game to a file and to
+  checkpoints. It saves with pickle, Python's built-in way of turning objects into bytes.
 - **The model store** (`freeplay/database/`): the `DBModel` base class and the id-keyed store that
   holds every entity in memory for the life of the process.
 
@@ -43,8 +43,8 @@ Each argument for the engine and the store is about the persistent world specifi
 - **Existing data.** The risk that dominates #924 is converting years of existing pickled saves.
   Workshop starts with no saved data.
 
-Domain-neutral helpers stay shared. Writing a file atomically is in `kernel/atomic_file.py`, and
-both modes use it. The line is between a helper that knows nothing about how a mode keeps its
+Domain-neutral helpers stay shared. Writing a file atomically, so that a crash partway leaves the
+old file whole, is in `kernel/atomic_file.py`, and both modes use it. The line is between a helper that knows nothing about how a mode keeps its
 state and a store whose shape is one mode's state.
 
 ## What this decides, and what it does not
@@ -87,8 +87,10 @@ It does not decide:
 
 - **Workshop builds its own persistence.** It did, in #994, and that persistence shares nothing
   with the persistent world's.
-- **A change to the persistent world's persistence stays inside `freeplay`.** Nothing outside it
-  imports the engine or the store; `energetica.entry` imports only the persistent world's app.
-  If #924 moves the persistent world to a database, no other package changes.
+- **A change to the persistent world's persistence stays inside `freeplay`.** No other package
+  under `src/` uses the engine or the store. `energetica.entry` reaches them only by building the
+  persistent world's app, which it imports only on a persistent-world instance. If #924 moves the
+  persistent world to a database, no other package changes, though the tests and the scripts in
+  `scripts/instance/` that load a saved game would.
 - **Sharing the engine later is a deliberate change.** A mode that wants it must move it down a
   layer, and that move should be argued against this record.

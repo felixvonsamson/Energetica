@@ -11,8 +11,10 @@ Energetica/
 ├── main_lobby.py         # Launcher for the lobby backend
 ├── main_lobby_service.py # Launcher for the lobby service
 ├── tests/
+│   ├── conftest.py       # Fixtures every test can use
 │   ├── unit/             # Fast, isolated tests
-│   └── integration/      # App, router, game-loop and real-process tests
+│   ├── integration/      # App, router, game-loop and real-process tests
+│   └── policy.py, policy_runner.py  # A bot-player harness for the persistent world that nothing runs
 ├── frontend/             # React/TypeScript frontend (see Frontend below)
 ├── scripts/              # Developer, deploy, provisioning and operator scripts (see Scripts below)
 ├── tools/
@@ -82,7 +84,8 @@ src/
 │       ├── init_test_players.py  # Test-player fixture for local development
 │       └── data/         # The game's data tables (map, quiz, demand curves)
 └── lobby_service/        # Owns lobby.db: accounts, memberships, facilitator grants, run config (ADR-0009, ADR-0010)
-    ├── app.py            # Its internal API, reached only over a Unix socket
+    ├── app.py            # Its internal API, reached only over a Unix socket (a local file, not a network port)
+    ├── config.py         # Its configuration, read from the environment
     ├── store.py          # The SQL behind the API
     ├── schema.py         # The lobby.db schema
     ├── session.py        # The session-signing secret, password hashing, session tokens
