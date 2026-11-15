@@ -72,7 +72,7 @@ def _client() -> TestClient:
     app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
     # The request-logging middleware 503s any non-GET request whose X-Forwarded-For isn't
     # 127.0.0.1 when `serve_local` is set; TestClient requests don't carry that header, so the
-    # PATCH calls below need it off (mirrors ``test_admin_dependency_route.py``).
+    # PATCH calls below need it off (mirrors ``test_facilitator_dependency_route.py``).
     engine.serve_local = False
     return TestClient(app)
 

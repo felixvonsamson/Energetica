@@ -3,7 +3,7 @@
 ``get_facilitator`` is the backend gate every facilitator route depends on: it restricts a route
 to an account holding a facilitator grant (ADR-0004), which the lobby service reports with the
 session — so these tests monkeypatch ``web.get_standing`` the same way
-``test_freeze_enforcement.py`` monkeypatches ``instance_config.current_phase`` for
+``tests/unit/freeplay/test_freeze_enforcement.py`` monkeypatches ``instance_config.current_phase`` for
 ``reject_when_frozen``, rather than driving a real HTTP request through a route.
 """
 
