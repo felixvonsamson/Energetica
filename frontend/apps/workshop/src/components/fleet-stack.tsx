@@ -11,28 +11,30 @@
  * the grid below moves down.
  */
 
-import { cn } from "@energetica/ui/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import { Construction } from "lucide-react";
-import { useState } from "react";
-
 import {
     CARD_ROW_HEIGHT,
     CardFace,
     CardFooterRow,
     cardFrame,
-    FacilityCard,
     LifetimePips,
     LifetimeTooltip,
-} from "@/components/facility-card";
+} from "@energetica/facility-cards/components/facility-card";
+import { workingRounds } from "@energetica/facility-cards/lib/facility-metrics";
+import {
+    roundsLabel,
+    workshopFacilityColor,
+} from "@energetica/facility-cards/lib/workshop-facilities";
+import { cn } from "@energetica/ui/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import { Construction } from "lucide-react";
+import { useState } from "react";
+
+import { WorkshopFacilityCard } from "@/components/workshop-facility-card";
 import { useWorkshopSession } from "@/hooks/use-workshop";
-import { workshopFacilityColor } from "@/lib/workshop-facilities";
 import {
     lifetimeRangeLabel,
-    roundsLabel,
     type FleetStack as Stack,
 } from "@/lib/workshop-fleet";
-import { workingRounds } from "@/lib/workshop-metrics";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
@@ -87,7 +89,7 @@ export function FleetStack({
                         />
                     ))}
                     <div className="relative z-10">
-                        <FacilityCard
+                        <WorkshopFacilityCard
                             facility={facility}
                             badge={
                                 many && (

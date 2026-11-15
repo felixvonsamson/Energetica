@@ -31,10 +31,10 @@ import {
     formatMoney,
     formatPower,
 } from "@energetica/core/format-utils";
+import { workshopFacilityImages } from "@energetica/facility-cards/lib/workshop-facilities";
 import { type ReactNode, useEffect } from "react";
 
 import { blackoutReport } from "@/lib/workshop-blackout-report";
-import { workshopFacilityImages } from "@/lib/workshop-facilities";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import { taxPerTonne } from "@/lib/workshop-vote";
 // Kept for the hidden weather section below.

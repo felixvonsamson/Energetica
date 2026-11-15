@@ -30,16 +30,16 @@
  */
 
 import { formatMoney } from "@energetica/core/format-utils";
+import {
+    InfoMark,
+    MetricTooltip,
+    TooltipFigure,
+} from "@energetica/facility-cards/components/metric-tooltip";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { Input } from "@energetica/ui/components/input";
 import { cn } from "@energetica/ui/lib/utils";
 import { useEffect, useId, useRef, useState } from "react";
 
-import {
-    InfoMark,
-    MetricTooltip,
-    TooltipFigure,
-} from "@/components/metric-tooltip";
 import { useSetFuelOrder } from "@/hooks/use-workshop";
 import { fuelPrice } from "@/lib/workshop-control-room";
 import {

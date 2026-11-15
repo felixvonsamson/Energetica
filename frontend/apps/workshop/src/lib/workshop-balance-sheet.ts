@@ -27,6 +27,8 @@ type FacilityFuelLine = ApiSchema<"FacilityFuelLine">;
 const WH_PER_MWH = 1_000_000;
 
 // --- Number formats --------------------------------------------------------
+// Volumes and rates are formatted by `formatVolume` and `formatRate` in
+// @energetica/facility-cards, which the cards' tooltips share.
 
 /** Groups thousands with an apostrophe: 9800 → "9'800". */
 function group(value: number): string {
@@ -45,13 +47,6 @@ export function formatAmount(value: number): string {
     return sign + (size >= 10_000 ? `${group(size / 1_000)}k` : group(size));
 }
 
-/** A volume: whole numbers with thousands grouped, one decimal below 10. */
-export function formatVolume(value: number): string {
-    return Math.abs(value) < 10 && value % 1 !== 0
-        ? value.toFixed(1)
-        : group(value);
-}
-
 /**
  * Fuel in tonnes: like a volume, but to the nearest kg below 10 t, since a
  * season's uranium can be a few kg.
@@ -59,16 +54,6 @@ export function formatVolume(value: number): string {
 export function formatFuelVolume(tonnes: number): string {
     const rounded = Number(tonnes.toFixed(3));
     return Math.abs(rounded) < 10 ? String(rounded) : group(tonnes);
-}
-
-/** A rate: one decimal unless it is a whole number. */
-export function formatRate(value: number): string {
-    const rounded = Math.round(value * 10) / 10;
-    if (rounded % 1 === 0) return group(rounded);
-    const [whole = "0", decimal = "0"] = Math.abs(rounded)
-        .toFixed(1)
-        .split(".");
-    return `${rounded < 0 ? "−" : ""}${group(Number(whole))}.${decimal}`;
 }
 
 // --- Rows -----------------------------------------------------------------

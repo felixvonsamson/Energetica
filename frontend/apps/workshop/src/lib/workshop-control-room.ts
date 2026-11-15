@@ -9,6 +9,8 @@
  * `components/workshop/control-room/`.
  */
 
+import { taxPerTonne } from "@energetica/facility-cards/lib/facility-metrics";
+
 import {
     type Checkpoint,
     SEASON_LABELS,
@@ -90,11 +92,6 @@ function clockTime(minute: number): string {
     const hours = Math.floor(minute / 60);
     const minutes = minute % 60;
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-/** What the carbon tax charges per tonne of CO₂, from its rate per kg. */
-export function taxPerTonne(ratePerKg: number): number {
-    return Math.round(ratePerKg * 1000);
 }
 
 /** How the alarm panel lists `alarm`. */

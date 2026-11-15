@@ -4,6 +4,8 @@
  * copy has left.
  */
 
+import { roundsLabel } from "@energetica/facility-cards/lib/workshop-facilities";
+
 import type { ApiSchema } from "@/types/api-helpers";
 
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
@@ -30,20 +32,6 @@ export function fleetStacks(fleet: OwnedFacility[]): FleetStack[] {
         facility,
         copies: copies.slice().sort((a, b) => b.rounds_left - a.rounds_left),
     }));
-}
-
-/** "2 Rounds", or "1 Round". */
-export function roundsLabel(rounds: number): string {
-    return `${rounds} ${rounds === 1 ? "Round" : "Rounds"}`;
-}
-
-/**
- * "Needs 1 Round to build", for a facility that only starts working Rounds
- * after the one it is bought in, or null for one that works straight away
- * (#1414). Working straight away is the default, so it goes unsaid.
- */
-export function constructionLagLabel(lagRounds: number): string | null {
-    return lagRounds > 0 ? `Needs ${roundsLabel(lagRounds)} to build` : null;
 }
 
 /**

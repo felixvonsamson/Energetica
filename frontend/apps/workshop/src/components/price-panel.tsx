@@ -21,6 +21,16 @@ import {
     formatMoney,
     formatPower,
 } from "@energetica/core/format-utils";
+import {
+    InfoMark,
+    MetricTooltip,
+    StorageMarkupNote,
+} from "@energetica/facility-cards/components/metric-tooltip";
+import {
+    isStorage,
+    workshopFacilityColor,
+    workshopFacilityImages,
+} from "@energetica/facility-cards/lib/workshop-facilities";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { Input } from "@energetica/ui/components/input";
 import { Spinner } from "@energetica/ui/components/spinner";
@@ -28,11 +38,6 @@ import { AlertTriangle, X, Zap } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { FuelOrders } from "@/components/fuel-orders";
-import {
-    InfoMark,
-    MetricTooltip,
-    StorageMarkupNote,
-} from "@/components/metric-tooltip";
 import {
     usePriceSettingOpen,
     useSetPrice,
@@ -42,11 +47,6 @@ import {
     useWorkshopPrices,
     useWorkshopSession,
 } from "@/hooks/use-workshop";
-import {
-    isStorage,
-    workshopFacilityColor,
-    workshopFacilityImages,
-} from "@/lib/workshop-facilities";
 import {
     installedCapacity,
     type InvalidPriceReason,

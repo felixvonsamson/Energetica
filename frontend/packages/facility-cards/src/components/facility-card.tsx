@@ -11,7 +11,11 @@
  * force, and so on. Players add up the costs per MWh themselves to find their
  * marginal cost, so the card never shows it.
  *
- * What it costs to buy is deliberately not on the card: see `FacilityPriceTag`.
+ * What it costs to buy is deliberately not on the card: see `PriceTagFace`.
+ *
+ * The card loads nothing itself. What its tooltips need beyond the facility
+ * comes in as `tooltipInputs`, and `tooltips={false}` drops every tooltip and
+ * info mark, for a card shown outside the game.
  */
 
 import {
@@ -39,57 +43,65 @@ import {
     MoneyPerMWh,
     StorageMarkupNote,
     TooltipFigure,
-} from "@/components/metric-tooltip";
-import {
-    useWorkshopFuel,
-    useWorkshopSession,
-    useWorkshopVote,
-} from "@/hooks/use-workshop";
-import { formatVolume } from "@/lib/workshop-balance-sheet";
-import { taxPerTonne } from "@/lib/workshop-control-room";
-import {
-    formatFuelUse,
-    isStorage,
-    workshopFacilityColor,
-    workshopFacilityImages,
-} from "@/lib/workshop-facilities";
-import { roundsLabel } from "@/lib/workshop-fleet";
+} from "#facility-cards/components/metric-tooltip";
+import type {
+    FacilityCardData,
+    Fuel as FuelType,
+    Season,
+    TooltipInputs,
+} from "#facility-cards/lib/facility-card-data";
 import {
     carbonTaxPerMWh,
     fuelCostPerMWh,
     maxFuelPerSeason,
-    nextBuyRound,
+    taxPerTonne,
     workingRounds,
-} from "@/lib/workshop-metrics";
-import { SEASON_LABELS, SEASONS } from "@/lib/workshop-timeline";
-import type { ApiSchema } from "@/types/api-helpers";
-
-type WorkshopFacility = ApiSchema<"WorkshopFacilityOut">;
-type FuelType = ApiSchema<"Fuel">;
+} from "#facility-cards/lib/facility-metrics";
+import { formatVolume } from "#facility-cards/lib/number-format";
+import {
+    formatFuelUse,
+    isStorage,
+    roundsLabel,
+    workshopFacilityColor,
+    workshopFacilityImages,
+} from "#facility-cards/lib/workshop-facilities";
 
 const WH_PER_MWH = 1_000_000;
+
+/** The seasons of a Round, in the order they run, with their names. */
+const SEASON_LABELS: [Season, string][] = [
+    ["spring", "Spring"],
+    ["summer", "Summer"],
+    ["autumn", "Autumn"],
+    ["winter", "Winter"],
+];
 
 /** Height of a card's bottom row, which an opened fleet stack lines up with. */
 export const CARD_ROW_HEIGHT = 30;
 
 /** The frame's gradient, also used by the rows an opened stack shows. */
-export function cardFrame(facility: WorkshopFacility): string {
+export function cardFrame(facility: Pick<FacilityCardData, "id">): string {
     const color = workshopFacilityColor(facility.id);
     return `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 45%, white))`;
 }
 
 export function FacilityCard({
     facility,
+    tooltipInputs: inputs,
+    tooltips = true,
     footer,
     badge,
 }: {
-    facility: WorkshopFacility;
+    facility: FacilityCardData;
+    /** What the tooltips need beyond the facility itself. */
+    tooltipInputs: TooltipInputs;
+    /** False drops every tooltip and info mark. */
+    tooltips?: boolean;
     /** The bottom row. Defaults to the facility's whole lifetime. */
     footer?: ReactNode;
     /** Drawn over the card's top-right corner, such as a stack's count. */
     badge?: ReactNode;
 }) {
-    const inputs = useTooltipInputs();
     const { buyRound } = inputs;
     return (
         <div
@@ -117,7 +129,10 @@ export function FacilityCard({
                 />
                 <ul className="divide-y divide-stone-300 text-xs dark:divide-stone-700">
                     {facilityStats(facility, inputs).map((stat) => (
-                        <MetricTooltip key={stat.label} content={stat.tooltip}>
+                        <MetricTooltip
+                            key={stat.label}
+                            content={tooltips && stat.tooltip}
+                        >
                             <li className="flex items-center gap-2 py-1">
                                 <stat.icon
                                     className="size-3.5 shrink-0"
@@ -129,7 +144,7 @@ export function FacilityCard({
                                 />
                                 <span className="flex flex-1 items-center gap-1">
                                     {stat.label}
-                                    {stat.tooltip && <InfoMark />}
+                                    {tooltips && stat.tooltip && <InfoMark />}
                                 </span>
                                 <span className="font-bold">{stat.value}</span>
                             </li>
@@ -140,6 +155,7 @@ export function FacilityCard({
                     <CardFooterRow
                         left="Lifetime"
                         tooltip={
+                            tooltips &&
                             buyRound !== null && (
                                 <LifetimeTooltip
                                     rounds={workingRounds(buyRound, facility)}
@@ -251,46 +267,6 @@ export function LifetimeTooltip({
     );
 }
 
-/**
- * What the card's tooltips need beyond the facility itself: the season's fuel
- * prices, the carbon tax and the session's Rounds. The card loads these itself,
- * so every place that shows a card gets its tooltips.
- */
-interface TooltipInputs {
-    /**
-     * Each fuel's price per kg this season, or its catalog price before the
-     * first season. Empty until it loads.
-     */
-    fuelPrices: Partial<Record<FuelType, number>>;
-    /** What a carbon tax charges per kg of CO₂, or null until it loads. */
-    taxRate: number | null;
-    /**
-     * Whether a carbon tax vote has passed, so the tax is charged. Until then
-     * the emissions have no tooltip.
-     */
-    taxInForce: boolean;
-    /** The Round a facility bought next is bought in, or null if none is. */
-    buyRound: number | null;
-    roundCount: number | null;
-}
-
-function useTooltipInputs(): TooltipInputs {
-    const { data: fuel } = useWorkshopFuel();
-    const { data: session } = useWorkshopSession();
-    const { data: vote } = useWorkshopVote();
-    return {
-        fuelPrices: Object.fromEntries(
-            (fuel?.fuels ?? []).map((line) => [line.fuel, line.price]),
-        ),
-        taxRate: vote?.tax_rate ?? null,
-        taxInForce: (session?.carbon_tax_since ?? null) !== null,
-        buyRound: session
-            ? nextBuyRound(session.checkpoint, session.round_count)
-            : null,
-        roundCount: session?.round_count ?? null,
-    };
-}
-
 /** One dot per Round of lifetime, filled for each Round left. */
 export function LifetimePips({
     left,
@@ -322,7 +298,7 @@ export function LifetimePips({
  * generator, and both the power and the capacity for storage, which matter
  * equally there.
  */
-function HeadlineFigures({ facility }: { facility: WorkshopFacility }) {
+function HeadlineFigures({ facility }: { facility: FacilityCardData }) {
     const power = (
         <span className="flex items-center gap-0.5">
             <Zap className="size-3 fill-yellow-400 text-yellow-500" />
@@ -356,7 +332,7 @@ interface Stat {
 }
 
 function facilityStats(
-    facility: WorkshopFacility,
+    facility: FacilityCardData,
     inputs: TooltipInputs,
 ): Stat[] {
     const stats: Stat[] = [];
@@ -424,7 +400,7 @@ function facilityStats(
  * What the capacity factor means, and the energy the facility generates in each
  * season on average over many Runs' weather.
  */
-function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
+function CapacityFactorFigures({ facility }: { facility: FacilityCardData }) {
     const expected = facility.expected_generation;
     return (
         <>
@@ -438,11 +414,9 @@ function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
                         Expected generation per season
                     </div>
                     <dl className="grid grid-cols-[auto_auto] justify-start gap-x-3">
-                        {SEASONS.map((season) => (
+                        {SEASON_LABELS.map(([season, label]) => (
                             <div key={season} className="contents">
-                                <dt className="opacity-75">
-                                    {SEASON_LABELS[season]}
-                                </dt>
+                                <dt className="opacity-75">{label}</dt>
                                 <dd className="text-right">
                                     {formatVolume(
                                         (expected[season] ?? 0) / WH_PER_MWH,
@@ -462,7 +436,7 @@ function CapacityFactorFigures({ facility }: { facility: WorkshopFacility }) {
  * The O&M split into what is charged whatever the use and per MWh, each with
  * its share of the O&M.
  */
-function OmFigures({ facility }: { facility: WorkshopFacility }) {
+function OmFigures({ facility }: { facility: FacilityCardData }) {
     const fixedShare = Math.round(facility.om_fixed_share * 100);
     return (
         <>
@@ -504,7 +478,7 @@ function FuelUseFigures({
     kgPerMWh,
     pricePerKg,
 }: {
-    facility: WorkshopFacility;
+    facility: FacilityCardData;
     fuel: FuelType;
     kgPerMWh: number;
     pricePerKg: number | undefined;

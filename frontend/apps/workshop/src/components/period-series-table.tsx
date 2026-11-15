@@ -6,11 +6,14 @@
  */
 
 import { formatEnergy } from "@energetica/core/format-utils";
+import {
+    InfoMark,
+    MetricTooltip,
+} from "@energetica/facility-cards/components/metric-tooltip";
 import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
 import { MagnitudeBar } from "@energetica/ui/components/magnitude-bar";
 import type { ReactNode } from "react";
 
-import { InfoMark, MetricTooltip } from "@/components/metric-tooltip";
 import { type ChartRow, seriesEnergy } from "@/lib/workshop-review";
 
 interface PeriodSeriesTableProps {

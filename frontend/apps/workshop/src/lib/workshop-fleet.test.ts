@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-    constructionLagLabel,
     constructionLagWarning,
     fleetStacks,
     lifetimeRangeLabel,
@@ -54,17 +53,6 @@ describe("lifetimeRangeLabel", () => {
     it("shows one figure when every copy has the same lifetime left", () => {
         expect(lifetimeRangeLabel([wind(2, 2), wind(2, 2)])).toBe("2 Rounds");
         expect(lifetimeRangeLabel([wind(2, 1)])).toBe("1 Round");
-    });
-});
-
-describe("constructionLagLabel", () => {
-    it("says nothing for a facility that works in the Round it is built in", () => {
-        expect(constructionLagLabel(0)).toBeNull();
-    });
-
-    it("says how many Rounds a facility needs to build", () => {
-        expect(constructionLagLabel(1)).toBe("Needs 1 Round to build");
-        expect(constructionLagLabel(2)).toBe("Needs 2 Rounds to build");
     });
 });
 

@@ -16,6 +16,15 @@
  * belong to the sheet, not the theme, so it reads as paper in dark mode too.
  */
 
+import {
+    InfoMark,
+    MetricTooltip,
+    TooltipFigure,
+} from "@energetica/facility-cards/components/metric-tooltip";
+import {
+    formatRate,
+    formatVolume,
+} from "@energetica/facility-cards/lib/number-format";
 import Logo from "@energetica/ui/assets/simplified_logo.svg?react";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { useContainerDimensions } from "@energetica/ui/hooks/use-container-dimensions";
@@ -25,11 +34,6 @@ import { ZapOff } from "lucide-react";
 import { type CSSProperties, type ReactNode, useRef, useState } from "react";
 
 import {
-    InfoMark,
-    MetricTooltip,
-    TooltipFigure,
-} from "@/components/metric-tooltip";
-import {
     type BalanceSheet,
     type Row,
     type RowNotes,
@@ -38,9 +42,7 @@ import {
     type SeasonSheet,
     balanceSheetRows,
     formatAmount,
-    formatRate,
     formatFuelVolume,
-    formatVolume,
     initialPeriod,
     UNIT_NAMES,
     waterfallScale,

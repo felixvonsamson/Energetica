@@ -30,7 +30,6 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Layers } from "lucide-react";
 
 import { CarbonTaxBallot, CarbonTaxNotice } from "@/components/carbon-tax-vote";
-import { FacilityCard } from "@/components/facility-card";
 import {
     FacilityPriceTag,
     type PriceTagOptions,
@@ -40,6 +39,7 @@ import { FleetStack } from "@/components/fleet-stack";
 import { InvestmentSelection } from "@/components/investment-selection";
 import { LoanOffer } from "@/components/loan-offer";
 import { StoredEnergyWarning } from "@/components/stored-energy-warning";
+import { WorkshopFacilityCard } from "@/components/workshop-facility-card";
 import {
     useAddToSelection,
     useInvestmentOpen,
@@ -248,7 +248,7 @@ function CatalogItem({
                         tag.flipped && tag.canAdd && "cursor-pointer",
                     )}
                 >
-                    <FacilityCard facility={options.facility} />
+                    <WorkshopFacilityCard facility={options.facility} />
                 </div>
             </div>
             {/* The cell's second row, under the card. */}

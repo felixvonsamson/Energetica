@@ -4,6 +4,7 @@
  * chart.
  */
 
+import { taxPerTonne } from "@energetica/facility-cards/lib/facility-metrics";
 import { CoinIcon } from "@energetica/ui/components/coin-icon";
 import { cn } from "@energetica/ui/lib/utils";
 import { type ReactNode, useMemo } from "react";
@@ -21,7 +22,6 @@ import {
     periodLabel,
     priceScales,
     riskLabel,
-    taxPerTonne,
 } from "@/lib/workshop-control-room";
 import { SEASON_LABELS } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
