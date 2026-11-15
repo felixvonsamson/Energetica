@@ -267,6 +267,10 @@ useSocketEvent("invalidate", (data) => {
 - All of freeplay's socket logic in one place
 - Prevents stale data from missed events
 
+### Keeping the tick in sync
+
+`GameTickContext` takes the current tick from socket `tick` events. When the socket drops, or the tab becomes visible again after being hidden (browsers may freeze background tabs without the socket noticing straight away), the context marks the tick stale and re-reads it from the game state endpoint. The rules for which value wins live in `frontend/apps/freeplay/src/lib/tick-sync.ts`.
+
 ### Workshop Runs
 
 A Workshop Run does not use `SocketProvider` or `GameTickContext`. Its server is in

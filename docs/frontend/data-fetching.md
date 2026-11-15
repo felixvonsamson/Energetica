@@ -516,7 +516,7 @@ export function usePlayerMoney() {
 ### Tick Context API
 
 ```ts
-import { useGameTick } from "@/hooks/useGameTick";
+import { useGameTick } from "@/hooks/use-game-tick";
 
 function GameClock() {
     const { currentTick, isLoadingTick } = useGameTick();
@@ -524,6 +524,8 @@ function GameClock() {
     return <div>Current tick: {currentTick}</div>;
 }
 ```
+
+`currentTick` can fall behind the server while the socket is down or the browser has frozen a background tab. `isTickFresh` is false during that time, until the tick is re-read over HTTP or the next socket tick arrives. Code that builds requests from the tick, such as chart ranges, should wait for `isTickFresh` before sending them. If the server rejects such a request because the tick was out of date, call `reportStaleTick()` to mark the tick stale and re-read it. `useChartData` does both; see `planChartFetches` and `claimStaleTickRejection` in `frontend/apps/freeplay/src/hooks/use-charts.ts`.
 
 ## Error Handling
 

@@ -15,24 +15,44 @@
  *
  * This means invalidated data won't cause network requests unless it's actually
  * being displayed.
+ *
+ * The tick itself comes from socket `tick` events. When the socket drops or the
+ * tab becomes visible again after being hidden (browsers may freeze background
+ * tabs), the tick may be behind the server, so it is marked stale and re-read
+ * over HTTP. See `@/lib/tick-sync`.
  */
 
+import { ApiClientError } from "@energetica/core/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
     createContext,
     useContext,
     useEffect,
+    useReducer,
+    useRef,
     useState,
     useCallback,
     type ReactNode,
 } from "react";
 
-import { useSocketEvent } from "@/contexts/socket-context";
+import { useSocket, useSocketEvent } from "@/contexts/socket-context";
 import { playerApi } from "@/lib/api/player";
+import { INITIAL_TICK_SYNC, tickSyncReducer } from "@/lib/tick-sync";
 
 interface GameTickContextValue {
     /** Current tick number from the server */
     currentTick: number | undefined;
+    /**
+     * Whether `currentTick` is known to match the server. False after the
+     * socket drops or the tab comes back from the background, until the tick is
+     * re-read or a socket tick arrives.
+     */
+    isTickFresh: boolean;
+    /**
+     * Mark the tick as possibly behind the server and re-read it. Call this
+     * when the server rejects a request built from the tick.
+     */
+    reportStaleTick: () => void;
     /** Whether the initial tick is still loading */
     isLoadingTick: boolean;
     /** Real-world timestamp (ms) when the last tick was received */
@@ -58,8 +78,10 @@ interface InvalidateEventData {
 
 export function GameTickProvider({ children }: GameTickProviderProps) {
     const queryClient = useQueryClient();
-    const [currentTick, setCurrentTick] = useState<number | undefined>(
-        undefined,
+    const { isConnected } = useSocket();
+    const [tickSync, dispatchTickSync] = useReducer(
+        tickSyncReducer,
+        INITIAL_TICK_SYNC,
     );
     const [isLoadingTick, setIsLoadingTick] = useState(true);
     const [lastTickTimestamp, setLastTickTimestamp] = useState<
@@ -69,26 +91,80 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
         Set<string>
     >(new Set());
 
+    // Read the current tick over HTTP. Charts wait for a fresh tick, and a
+    // frozen run sends no socket ticks, so a failed read is retried with
+    // backoff rather than leaving them waiting. Client errors (4xx) are not
+    // retried, matching the query client's defaults.
+    const resyncRetryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+    const resyncTick = useCallback(() => {
+        const attempt = (attemptIndex: number) => {
+            clearTimeout(resyncRetryTimer.current);
+            playerApi
+                .getGameState()
+                .then((gameState) => {
+                    console.log(
+                        `[GameTick] Tick loaded: ${gameState.current_tick}`,
+                    );
+                    dispatchTickSync({
+                        type: "resynced",
+                        tick: gameState.current_tick,
+                    });
+                })
+                .catch((error) => {
+                    console.error("[GameTick] Failed to fetch tick:", error);
+                    const isClientError =
+                        error instanceof ApiClientError &&
+                        error.status >= 400 &&
+                        error.status < 500;
+                    if (isClientError) return;
+                    resyncRetryTimer.current = setTimeout(
+                        () => attempt(attemptIndex + 1),
+                        Math.min(1000 * 2 ** attemptIndex, 30_000),
+                    );
+                })
+                .finally(() => {
+                    // Still mark as loaded to avoid blocking forever
+                    setIsLoadingTick(false);
+                });
+        };
+        attempt(0);
+    }, []);
+
+    useEffect(() => () => clearTimeout(resyncRetryTimer.current), []);
+
+    const reportStaleTick = useCallback(() => {
+        dispatchTickSync({ type: "stale" });
+        resyncTick();
+    }, [resyncTick]);
+
     // Fetch initial current tick on mount
     useEffect(() => {
-        playerApi
-            .getGameState()
-            .then((gameState) => {
-                console.log(
-                    `[GameTick] Initial tick loaded: ${gameState.current_tick}`,
-                );
-                setCurrentTick(gameState.current_tick);
-                setIsLoadingTick(false);
-            })
-            .catch((error) => {
-                console.error(
-                    "[GameTick] Failed to fetch initial tick:",
-                    error,
-                );
-                // Still mark as loaded to avoid blocking forever
-                setIsLoadingTick(false);
-            });
-    }, []);
+        resyncTick();
+    }, [resyncTick]);
+
+    // Tick events stop while the socket is down, so the tick goes stale.
+    // Re-read it on reconnect rather than waiting for the next tick event.
+    useEffect(() => {
+        if (isConnected) {
+            resyncTick();
+        } else {
+            dispatchTickSync({ type: "stale" });
+        }
+    }, [isConnected, resyncTick]);
+
+    // A hidden tab may have been frozen, missing tick events without the
+    // socket noticing yet.
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") reportStaleTick();
+        };
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        return () =>
+            document.removeEventListener(
+                "visibilitychange",
+                onVisibilityChange,
+            );
+    }, [reportStaleTick]);
 
     // Invalidate all tick-registered queries
     const invalidateTickQueries = useCallback(async () => {
@@ -138,7 +214,7 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
     // Listen for tick events from the server
     useSocketEvent<TickEventData>("tick", (data) => {
         console.log(`[GameTick] Tick event received: ${data.tick}`);
-        setCurrentTick(data.tick);
+        dispatchTickSync({ type: "tick", tick: data.tick });
         setLastTickTimestamp(Date.now());
         invalidateTickQueries();
     });
@@ -153,7 +229,9 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
     });
 
     const value: GameTickContextValue = {
-        currentTick,
+        currentTick: tickSync.tick,
+        isTickFresh: tickSync.isFresh,
+        reportStaleTick,
         isLoadingTick,
         lastTickTimestamp,
     };
