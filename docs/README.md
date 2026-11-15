@@ -44,7 +44,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 - [**Style Guide**](frontend/style-guide.md) - TODO
 - [**Capabilities System**](frontend/capabilities.md) - Feature flags, unlocking content
 - [**Asset Colors**](frontend/asset-colours.md) - Facility and resource color system
-- [**Offline Handling**](frontend/offline.md) - Progressive enhancement, offline mode
+- [**Offline Handling**](frontend/offline.md) - What happens when the connection drops, and how the app recovers
 - [**Design Patterns**](frontend/design-patterns.md) - Rapid prototyping, dummy data patterns, Storybook
 
 ## Game Logic
