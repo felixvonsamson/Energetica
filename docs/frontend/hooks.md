@@ -385,7 +385,7 @@ $ curl http://localhost:8000/api/v1/weather
 
 ## Type Generation
 
-Types are automatically generated from the FastAPI OpenAPI schema.
+Types are generated from each backend app's OpenAPI schema. Each app with a backend gets its own types file, which lists only the routes that app serves.
 
 ### Generate Types
 
@@ -393,9 +393,11 @@ Types are automatically generated from the FastAPI OpenAPI schema.
 bun generate-types
 ```
 
-This creates `src/types/api.generated.ts` with all API types.
+This writes `src/types/api.generated.ts` in each of `frontend/apps/freeplay`, `frontend/apps/workshop` and `frontend/apps/lobby`. See [API](../architecture/api.md#type-generation).
 
 ### Using Generated Types
+
+Inside an app, import the helpers from the app's own `api-helpers.ts`:
 
 ```ts
 import { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
@@ -409,6 +411,14 @@ type LoginRequest = ApiRequestBody<"/auth/login", "post">;
 // Use in your code
 const user: User = await apiClient.get("/auth/me");
 ```
+
+A shared package under `frontend/packages/` has no generated types of its own. When it calls the API, it imports the same helpers through the `@api` alias, always with `import type`:
+
+```ts
+import type { ApiResponse } from "@api";
+```
+
+Each app that compiles the package points `@api` at its own `api-helpers.ts`, so the package's code is type-checked against that app's routes. See [the architecture overview](../architecture/overview.md#frontend).
 
 ### Type Helpers
 

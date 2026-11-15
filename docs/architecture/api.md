@@ -1,6 +1,6 @@
 # Overview of API
 
-APIs are defined in the backed using FastAPI + Pydantic. See `<URL>/docs` for Swagger docs and `<URL>/openapi.json` for an OpenAPI compliant definition of the HTTP APIs. On the frontend, requests are managed by Tanstack Query. The openapi json file is used to automatically generate typescript types for the frontend. Furthermore, since data regularly becomes stale, invalidation messages are sent using Socket.IO. See the [Real-time Synchronisation](real-time-sync.md) for more details.
+APIs are defined in the backed using FastAPI + Pydantic. See `<URL>/docs` for Swagger docs and `<URL>/openapi.json` for an OpenAPI compliant definition of the HTTP APIs. On the frontend, requests are managed by Tanstack Query. Each backend app's OpenAPI schema is used to generate that app's TypeScript types (see [Type Generation](#type-generation)). Furthermore, since data regularly becomes stale, invalidation messages are sent using Socket.IO. See the [Real-time Synchronisation](real-time-sync.md) for more details.
 
 Note that there is an intention for players to be able to use the API themselves directly. Hence swagger.
 
@@ -24,7 +24,7 @@ See auth.md
 
 ## Frontend patterns
 
-See the package json script for generating types. It's the .generated file. See frontend/apps/freeplay/src/types. See hooks.
+Each app with a backend has its own generated types in `src/types/api.generated.ts`, read through the `api-helpers.ts` beside it (see [Type Generation](#type-generation)). See hooks.
 
 See api_integration for more details.
 
