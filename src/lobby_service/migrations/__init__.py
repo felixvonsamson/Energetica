@@ -7,5 +7,5 @@ Each step is a module named ``NNNN_<slug>.py``, numbered from 0001 with no gaps,
 it opens and commits, so a step must not commit itself.
 
 A new step must also change :func:`lobby_service.schema.create_current_schema`, so that a new
-database matches one that ran every step. ``tests/unit/test_lobby_db_migrations.py`` checks this.
+database matches one that ran every step. ``tests/unit/lobby_service/test_lobby_db_migrations.py`` checks this.
 """

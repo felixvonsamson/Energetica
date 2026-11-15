@@ -105,7 +105,13 @@ We use `pytest`.
 
 - Place fast, isolated tests in `tests/unit/`
 - Cross-module/API/game-loop tests in `tests/integration/`
-- Name test files: `test_<thing>.py`
+- Inside each suite, put a test in the folder named after the package it tests: `kernel/`, `identity/`, `sim/`,
+  `freeplay/`, `workshop/`, `lobby/` or `lobby_service/`. For example, the tests for
+  `src/energetica/sim/market.py` go in `tests/unit/sim/`. Tests of the deploy scripts go in `tests/unit/scripts/`.
+  A test that checks several packages at once, such as the import side-effect check or the error-envelope contract,
+  stays at the top of its suite.
+- Name test files: `test_<thing>.py`. The folder already names the package, so drop it from the file name:
+  `tests/unit/workshop/test_fuel.py`, not `test_workshop_fuel.py`.
 - Write descriptive test function names.
 - Run full suite:
 
@@ -116,7 +122,7 @@ pytest -q
 - Run a subset:
 
 ```
-pytest tests/unit/test_player.py::test_new_player
+pytest tests/unit/freeplay/test_player.py::test_new_player
 ```
 
 Add tests for every new feature and bug fix.
