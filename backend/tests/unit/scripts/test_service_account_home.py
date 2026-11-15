@@ -17,7 +17,7 @@ import re
 import subprocess
 from pathlib import Path
 
-_SETUP_BASE = Path(__file__).resolve().parents[3] / "scripts" / "infra" / "setup-base.sh"
+_SETUP_BASE = Path(__file__).resolve().parents[4] / "scripts" / "infra" / "setup-base.sh"
 
 
 def _setup_base_text() -> str:

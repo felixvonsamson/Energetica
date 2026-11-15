@@ -43,4 +43,4 @@ echo
 echo "→ Lobby backend on http://127.0.0.1:$PORT, lobby service on $ENERGETICA_LOBBY_SERVICE_SOCKET"
 echo "  Start the frontend with: cd frontend && bun run dev:lobby"
 echo
-.venv/bin/python main_lobby.py --port "$PORT"
+.venv/bin/python backend/main_lobby.py --port "$PORT"

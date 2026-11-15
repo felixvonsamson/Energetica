@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "energetica"
 description = "Energetica — a web game about energy systems, with a focus on electricity."
-readme = "README.md"
+# No readme: the project README is at the repo root, outside this directory, and setuptools reads
+# files only from inside it. The wheel is never published, so nothing reads its description.
 requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
@@ -35,8 +36,8 @@ dependencies = [
 
 [project.optional-dependencies]
 # Everything needed to develop and check the backend, on top of the runtime deps, so that
-# `pip install -e '.[dev]'` is the whole local setup step. The deploy installs the project
-# without this extra — the server runs the code, it does not check it.
+# `pip install -e './backend[dev]'`, run from the repo root, is the whole local setup step. The
+# deploy installs the project without this extra — the server runs the code, it does not check it.
 # ruff is pinned to the same version as the `rev:` in .pre-commit-config.yaml. Bump the two
 # together: two ruffs that disagree about formatting is worse than one.
 # import-linter is pinned too, because its contract options change between releases, and a new
@@ -48,8 +49,9 @@ Homepage = "https://github.com/felixvonsamson/Energetica"
 Issues = "https://github.com/felixvonsamson/Energetica/issues"
 
 [tool.setuptools]
-# src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests`, `scripts` and `tools`
-# live outside src/ and are deliberately not part of the distribution.
+# src/ layout: only the two backend packages, energetica and lobby_service, ship. `tests` and the
+# launchers live beside src/, and `scripts` and `tools` at the repo root; none of them is part of
+# the distribution.
 package-dir = { "" = "src" }
 include-package-data = false
 
@@ -83,78 +85,12 @@ version = { attr = "energetica.__version__" }
 # package.
 energetica = ["freeplay/data/*", "workshop/data/*"]
 
-[tool.ruff]
-line-length = 120
-target-version = "py312"
-# Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
-# its sibling modules (api, market, strategies) import as top-level names and would otherwise
-# sort as third-party.
-src = [".", "src", "scripts/workshop_bots"]
-# Every rule below applies to the whole Python tree — tests/ and scripts/ included. There are
-# deliberately no per-file-ignores (#1081): when the hooks were widened past src/energetica/,
-# the rest of the tree already satisfied the docstring rules (D100, D400, D415) with nothing
-# to fix, so relaxing them there would only have licensed new violations. If a docstring rule
-# ever becomes genuinely unwanted in tests/ or scripts/, relax it here rather than narrowing
-# the hooks again.
-lint.select = [
-    "D100",
-    "D200",
-    "D201",
-    "D202",
-    "D209",
-    # "D213",
-    "D400",
-    "D415",
-    "F401",
-    # "TD004", TODOs
-    "PIE794",
-    "ANN001",
-    "ANN201",
-    "F404",
-    "I",
-    "N",
-    # Line length, comments and docstrings included: the formatter wraps code but leaves them alone.
-    "E501",
-    # Banned APIs, configured in [tool.ruff.lint.flake8-tidy-imports.banned-api] below.
-    "TID251",
-]
-# select = ["ALL"]
-lint.ignore = [
-    "D212",
-    "ANN401",
-    "RET503",
-    "DTZ005",
-    "COM812",
-    # N818 wants every exception class named `...Error`. PEP 8 asks for that only when the
-    # exception really is an error, and none of the four it flagged when N landed (#969) was:
-    # two are a service's documented refusal, two are test signals. It cannot tell the difference.
-    "N818",
-]
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-# A pickle records each class by its module path, so a file pickled before a class moved names a
-# path that no longer exists. legacy_pickle.load maps the old paths to the new ones. #1056 broke
-# the chart history files this way: the engine save went through legacy_pickle, they did not.
-# A file that no earlier layout ever wrote (package data, a file a test just wrote) may use
-# pickle.load, with `# noqa: TID251` and a comment saying why.
-"pickle.load".msg = "Read instance files with energetica.freeplay.legacy_pickle.load, so files pickled before a module moved still load."
-
-[tool.pyright]
-include = ["src", "tests", "scripts", "main.py", "main_lobby.py"]
-# Resolve `energetica` / `lobby_service` from the source tree. An editable install points at them
-# through a generated import hook that pyright cannot follow, so name the directory here.
-extraPaths = ["src"]
-pythonVersion = "3.12"
-typeCheckingMode = "standard"
-# Resolve imports against the project venv so a bare `pyright` sees installed deps
-# (pydantic, pytest, …) instead of flooding reportMissingImports against its own
-# bundled environment. CI still passes --pythonpath explicitly as belt-and-suspenders.
-venvPath = "."
-venv = ".venv"
-
 [tool.importlinter]
-# Which packages may import which, checked by `lint-imports` in CI (#1051, #1058). This is the
-# backend counterpart of the frontend's rule against imports between apps
+# Which packages may import which, checked by `lint-imports --config backend/pyproject.toml` in CI
+# (#1051, #1058). Unlike the ruff and pyright settings, which cover the whole Python tree from the
+# repo root, these contracts are about the backend's own packages, so they stay with them.
+#
+# This is the backend counterpart of the frontend's rule against imports between apps
 # (frontend/boundaries.test.ts). Each rule is a contract. Contracts cover indirect imports too: A
 # importing B importing C counts as A importing C.
 #
@@ -200,21 +136,4 @@ forbidden_modules = [
     "energetica.workshop",
     "energetica.lobby",
     "energetica.sim",
-]
-
-[tool.pytest.ini_options]
-testpaths = [ "tests" ]
-# Import `energetica` / `lobby_service` from this checkout's `src/`. A git worktree shares the main
-# checkout's .venv, whose editable install points at the main checkout's `src/`; without
-# this, tests in a worktree would silently run the main checkout's code.
-pythonpath = ["src"]
-filterwarnings = ["ignore::DeprecationWarning"]
-python_files = "tests/**/*.py"
-# Exclude the slow, network-dependent external_links tests by default so a bare
-# `pytest` matches what CI runs on normal branches and doesn't fail on an offline
-# machine. Run them explicitly with `pytest -m external_links`, or the whole suite
-# (including them) with `pytest -m ""`. CI runs the full suite on release/* branches.
-addopts = ["-m", "not external_links"]
-markers = [
-    "external_links: tests that make external HTTP requests (slow, network-dependent, run before releases)",
 ]

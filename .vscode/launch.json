@@ -8,7 +8,7 @@
             "name": "Debug Run",
             "type": "debugpy",
             "request": "launch",
-            "program": "main.py",
+            "program": "backend/main.py",
             "console": "integratedTerminal",
             "args": [
                 "--env",
@@ -24,7 +24,7 @@
             "name": "Simulation",
             "type": "debugpy",
             "request": "launch",
-            "program": "main.py",
+            "program": "backend/main.py",
             "console": "integratedTerminal",
             "args": [
                 "--env",

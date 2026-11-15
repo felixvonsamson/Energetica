@@ -18,7 +18,7 @@ OUT = Path(__file__).with_name("data.js")
 
 # Demand as a share of the yearly average, one row of 96 quarter-hours per day. The file is package
 # data holding plain floats, so it names no class that could move.
-demand_file = ROOT / "src/energetica/workshop/data/national_demand_year_15min.pck"
+demand_file = ROOT / "backend/src/energetica/workshop/data/national_demand_year_15min.pck"
 demand = np.asarray(pickle.load(open(demand_file, "rb")))  # noqa: TID251
 demand = demand.reshape(364, 96) / demand.mean()
 daily_mean = demand.mean(1)

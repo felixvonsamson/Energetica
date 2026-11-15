@@ -128,7 +128,7 @@ From your local machine:
 ```
 
 - `deploy-instance.sh` builds the app for the instance's Run mode locally (baking
-  `VITE_APEX_DOMAIN` so cross-origin links resolve) and the backend wheel, rsyncs `main.py`, the
+  `VITE_APEX_DOMAIN` so cross-origin links resolve) and the backend wheel, rsyncs `backend/main.py`, the
   wheel and the bundle, installs the wheel into the server venv, restarts the service, and polls
   `/healthz`. It reads the Run mode from `run.mode` in the instance's `instance.json`: `freeplay`
   ships `frontend/apps/freeplay`, `workshop` ships `frontend/apps/workshop`. Either app lands in
@@ -147,7 +147,7 @@ From your local machine:
   is pure static.
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
-  its own hostname at runtime), rsyncs `main_lobby.py`, `main_lobby_service.py`, the wheel and
+  its own hostname at runtime), rsyncs `backend/main_lobby.py`, `backend/main_lobby_service.py`, the wheel and
   the lobby bundle (built to `frontend/apps/lobby/dist/`) to `dist-lobby/` in `/var/www/energetica-lobby`, and installs the backend wheel into the server venv. It then
   restarts the lobby service (`energetica-lobby-service`), which runs any pending schema
   migrations on `lobby.db` before serving, and checks its `healthz` over the socket.
@@ -197,7 +197,9 @@ file when it starts. `download-instance.sh` leaves it out of backups.
 
 `deploy-instance.sh` and `deploy-lobby.sh` ship an allowlist, not the working tree. The backend
 sync (`scripts/lib/backend-sync.sh`) copies two things into a temporary staging directory: the
-entry points the systemd units run, and the wheel just built in `dist/`. It then rsyncs that
+entry points the systemd units run, taken from `backend/` and placed at the top of the deploy
+directory, and the wheel just built in `dist/`. The server's layout therefore does not follow the
+repository's: the units run `main.py` from the deploy directory, as they always have. It then rsyncs that
 directory to the server with `--delete`. Everything else the services run comes from the
 installed wheel, so the server carries no `src/`, `docs/` or `tests/`, and nothing from the
 deployer's checkout that git does not track.
@@ -221,7 +223,7 @@ the change up on the next request — no restart.
 `deploy-lobby.sh`: `--yes`, `--skip-build`.
 
 `--skip-build` skips only the frontend bundle. There is no way to skip installing the backend:
-the backend lives under `src/` and is imported as an installed package, so a deploy that did
+the backend lives under `backend/src/` and is imported as an installed package, so a deploy that did
 not install it would leave the service unable to start.
 
 The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`,

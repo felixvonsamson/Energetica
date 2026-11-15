@@ -21,7 +21,7 @@ import re
 import subprocess
 from pathlib import Path
 
-_INFRA = Path(__file__).resolve().parents[3] / "scripts" / "infra"
+_INFRA = Path(__file__).resolve().parents[4] / "scripts" / "infra"
 _VHOST_TEMPLATE = _INFRA / "apache-instance.conf"
 _RENDER_SCRIPT = _INFRA / "update-instance-vhost.sh"
 _SETUP_SCRIPT = _INFRA / "setup-instance.sh"

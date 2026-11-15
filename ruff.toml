@@ -1,0 +1,59 @@
+# Ruff's configuration for every Python file in the repository: the backend, scripts/ and tools/.
+# It lives at the root, not in the backend's pyproject.toml, because one Python tree gets one
+# linter configuration (#1095). No other file may declare ruff settings: ruff uses the nearest
+# configuration file it finds, so a second one would silently override this one below it.
+
+line-length = 120
+target-version = "py312"
+# Where import sorting looks for first-party modules. scripts/workshop_bots/ runs as a script, so
+# its sibling modules (api, market, strategies) import as top-level names and would otherwise
+# sort as third-party.
+src = [".", "backend/src", "scripts/workshop_bots"]
+# Every rule below applies to the whole Python tree, the backend's tests and scripts/ included.
+# There are deliberately no per-file-ignores (#1081): when the hooks were widened past the
+# backend's own package, the rest of the tree already satisfied the docstring rules (D100, D400,
+# D415) with nothing to fix, so relaxing them there would only have licensed new violations. If a
+# docstring rule ever becomes genuinely unwanted in tests or scripts, relax it here rather than
+# narrowing the hooks again.
+lint.select = [
+    "D100",
+    "D200",
+    "D201",
+    "D202",
+    "D209",
+    # "D213",
+    "D400",
+    "D415",
+    "F401",
+    # "TD004", TODOs
+    "PIE794",
+    "ANN001",
+    "ANN201",
+    "F404",
+    "I",
+    "N",
+    # Line length, comments and docstrings included: the formatter wraps code but leaves them alone.
+    "E501",
+    # Banned APIs, configured in [lint.flake8-tidy-imports.banned-api] below.
+    "TID251",
+]
+# select = ["ALL"]
+lint.ignore = [
+    "D212",
+    "ANN401",
+    "RET503",
+    "DTZ005",
+    "COM812",
+    # N818 wants every exception class named `...Error`. PEP 8 asks for that only when the
+    # exception really is an error, and none of the four it flagged when N landed (#969) was:
+    # two are a service's documented refusal, two are test signals. It cannot tell the difference.
+    "N818",
+]
+
+[lint.flake8-tidy-imports.banned-api]
+# A pickle records each class by its module path, so a file pickled before a class moved names a
+# path that no longer exists. legacy_pickle.load maps the old paths to the new ones. #1056 broke
+# the chart history files this way: the engine save went through legacy_pickle, they did not.
+# A file that no earlier layout ever wrote (package data, a file a test just wrote) may use
+# pickle.load, with `# noqa: TID251` and a comment saying why.
+"pickle.load".msg = "Read instance files with energetica.freeplay.legacy_pickle.load, so files pickled before a module moved still load."

@@ -9,8 +9,8 @@ Two questions decide every command:
 
 1. **Which surface?** There are three separate frontend bundles — **`app`** (the in-run game SPA),
    **`lobby`** (sign-up / login / run picker), and **`landing`** (the static marketing site) — and
-   two backends — the **app** server (`main.py`, the game instance) and the **lobby** server
-   (`main_lobby.py`, server-wide auth). The scripts name the surface explicitly (`dev:freeplay`,
+   two backends — the **app** server (`backend/main.py`, the game instance) and the **lobby** server
+   (`backend/main_lobby.py`, server-wide auth). The scripts name the surface explicitly (`dev:freeplay`,
    `dev:lobby`, `serve:app`, `serve:lobby`), never a bare `dev`/`serve`.
 
 2. **Where's the backend?** A frontend dev server can proxy to a **local** backend you're running,
@@ -389,7 +389,7 @@ rm-instance    # full local reset (see below)
 
 ### Backend flags
 
-`serve:app:*` forward to `main.py`; run `bash scripts/dev-app.sh --help`-style flags directly for
+`serve:app:*` forward to `backend/main.py`; run `bash scripts/dev-app.sh --help`-style flags directly for
 others:
 
 ```bash

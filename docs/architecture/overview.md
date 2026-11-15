@@ -4,32 +4,45 @@ Overview of the project and directory structure.
 
 ```
 Energetica/
-├── src/
-│   ├── energetica/       # Python/FastAPI backend: the instance apps (persistent world, Workshop) and the lobby
-│   └── lobby_service/    # The one process that opens lobby.db, behind an internal API (ADR-0009)
-├── main.py               # Launcher for an instance (persistent world or Workshop, by Run mode)
-├── main_lobby.py         # Launcher for the lobby backend
-├── main_lobby_service.py # Launcher for the lobby service
-├── tests/
-│   ├── conftest.py       # Fixtures every test can use
-│   ├── unit/             # Fast, isolated tests, in a folder per package (kernel/, sim/, ...) plus scripts/
-│   ├── integration/      # App, router, game-loop and real-process tests, in a folder per package
-│   └── policy.py, policy_runner.py  # A bot-player harness for the persistent world that nothing runs
-├── frontend/             # React/TypeScript frontend (see Frontend below)
-├── scripts/              # Developer, deploy, provisioning and operator scripts (see Scripts below)
+├── backend/                  # The Python backend: build metadata, source and tests (see Backend below)
+│   ├── pyproject.toml        # Build metadata, dependencies and the import contracts
+│   ├── src/
+│   │   ├── energetica/       # Python/FastAPI backend: the instance apps (persistent world, Workshop) and the lobby
+│   │   └── lobby_service/    # The one process that opens lobby.db, behind an internal API (ADR-0009)
+│   ├── main.py               # Launcher for an instance (persistent world or Workshop, by Run mode)
+│   ├── main_lobby.py         # Launcher for the lobby backend
+│   ├── main_lobby_service.py # Launcher for the lobby service
+│   └── tests/
+│       ├── conftest.py       # Fixtures every test can use
+│       ├── unit/             # Fast, isolated tests, in a folder per package (kernel/, sim/, ...) plus scripts/
+│       ├── integration/      # App, router, game-loop and real-process tests, in a folder per package
+│       └── policy.py, policy_runner.py  # A bot-player harness for the persistent world that nothing runs
+├── frontend/                 # React/TypeScript frontend (see Frontend below)
+├── docs/                     # This documentation, for both halves
+├── scripts/                  # Developer, deploy, provisioning and operator scripts (see Scripts below)
 ├── tools/
-│   └── map_generation/   # Offline map-authoring tool, outside the import graph
-├── docs/                 # This documentation
-├── CONTEXT.md            # Glossary of the project's domain terms
-├── instance/             # Local game state (not committed)
-└── checkpoints/          # Local game backups (not committed)
+│   └── map_generation/       # Offline map-authoring tool, outside the import graph
+├── package.json              # The `bun run` commands, which call into scripts/, frontend/ and .venv/
+├── ruff.toml, pyrightconfig.json, pytest.ini  # Python checks and tests, configured for the whole tree
+├── CONTEXT.md                # Glossary of the project's domain terms
+├── .venv/                    # The Python virtual environment (not committed)
+├── instance/                 # Local game state (not committed)
+└── checkpoints/              # Local game backups (not committed)
 ```
 
-Each launcher at the root parses its command-line arguments and starts its app under uvicorn, the
-web server. `main.py` builds its app through `energetica.entry`, which picks the persistent world
-or the Workshop by the instance's Run mode. The deployed services run the same launchers.
+Each top-level directory holds one kind of thing. `backend/` and `frontend/` are the two halves of
+the game. `docs/`, `scripts/` and `tools/` serve both halves, or the servers they run on, so they sit
+at the root rather than inside either half. The root also holds the configuration that spans the
+repository: `package.json` for the commands, and one ruff, pyright and pytest configuration for
+all of the Python, `scripts/` included. Run every command from the root.
 
-The backend is an installed Python project: `pip install -e '.[dev]'` (see
+Each launcher in `backend/` parses its command-line arguments and starts its app under uvicorn,
+the web server. `main.py` builds its app through `energetica.entry`, which picks the persistent
+world or the Workshop by the instance's Run mode. The deployed services run the same launchers. A
+deploy places them at the top of the deploy directory, so the server's layout does not mirror the
+repository's (see [deployment.md](../backend/deployment.md)).
+
+The backend is an installed Python project: `pip install -e './backend[dev]'` (see
 [installation.md](../getting-started/installation.md)). The `src/` layout means the packages are
 never importable just because a process happens to start in the repository root — development and
 production import the same code the same way.
@@ -51,7 +64,7 @@ production import the same code the same way.
 ## Backend
 
 ```
-src/
+backend/src/
 ├── energetica/
 │   ├── entry.py          # Builds the app for this instance's Run mode
 │   ├── kernel/           # Error types, session signing, hashing, version, formatting, atomic file writes
@@ -96,7 +109,7 @@ src/
 layers below it. The three apps, `freeplay`, `workshop` and `lobby`, sit above them and never
 import one another. `entry` sits on top. `lobby_service` sits outside `energetica`: no module in
 `energetica` imports it, and it imports only `identity` and `kernel`. The import contracts in
-`pyproject.toml` enforce this in CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting &
+`backend/pyproject.toml` enforce this in CI; see [CONTRIBUTING.md](../../CONTRIBUTING.md) § Linting &
 Formatting.
 
 `freeplay` is the persistent world's name in code. Prose calls it "the persistent world"
@@ -128,8 +141,8 @@ scripts/
 └── dev/                  # Asset and docs utilities: wiki-link check, image optimisation, logo and coin generators
 ```
 
-The scripts are run by people and by CI. They are not part of the backend: nothing under `src/`
-imports them.
+The scripts are run by people and by CI. They are not part of the backend: nothing under
+`backend/src/` imports them.
 
 ## Frontend
 

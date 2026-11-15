@@ -5,7 +5,8 @@
 #
 # <destination> is an rsync target such as deploy@host:/var/www/energetica-lobby. <bundle-dir> is
 # the app bundle directory the caller syncs separately (dist-app or dist-lobby). Each
-# <entry-point> is a file at the repo root that a systemd unit runs from the working directory.
+# <entry-point> is a launcher in backend/ that a systemd unit runs from the working directory. It
+# lands at the top of <destination>, so the server's layout does not mirror the repo's (#1095).
 #
 # This ships an allowlist, not the working tree: the entry points, and dist/$BACKEND_WHEEL, which
 # install_backend_wheel (backend-wheel.sh) installs into the server venv. Everything else the
@@ -52,7 +53,7 @@ sync_backend() (
     cp "$_BACKEND_SYNC_REPO_ROOT/dist/$BACKEND_WHEEL" "$staging/dist/"
     local entry_point
     for entry_point in "$@"; do
-        cp "$_BACKEND_SYNC_REPO_ROOT/$entry_point" "$staging/"
+        cp "$_BACKEND_SYNC_REPO_ROOT/backend/$entry_point" "$staging/"
     done
 
     # The service user reaches the code through the `energetica` group only, and rsync's -p carries

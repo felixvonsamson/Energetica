@@ -8,7 +8,7 @@ never boots uvicorn, so a broken boot path would otherwise slip through.
 
 It is also the packaging seam. The server is booted from a scratch directory, never
 from the repo root, so the backend packages can only be found through the install
-(`pip install -e '.[dev]'`) — they live under `src/` and no longer sit next to main.py
+(`pip install -e './backend[dev]'`) — they live under `src/` and no longer sit next to main.py
 where a bare interpreter would pick them up. A packaging mistake therefore fails here
 rather than on a deploy.
 
@@ -29,9 +29,9 @@ from pathlib import Path
 
 import requests
 
-# main.py sits at the repo root, two levels up from tests/integration/.
-REPO_ROOT = Path(__file__).resolve().parents[2]
-MAIN_PY = REPO_ROOT / "main.py"
+# main.py sits in backend/, two levels up from tests/integration/.
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+MAIN_PY = BACKEND_ROOT / "main.py"
 
 # Booting uvicorn plus create_app (which loads the game engine) is slow in CI, so allow
 # a generous window before declaring the server dead.

@@ -12,7 +12,7 @@ import re
 import subprocess
 from pathlib import Path
 
-_INFRA = Path(__file__).resolve().parents[3] / "scripts" / "infra"
+_INFRA = Path(__file__).resolve().parents[4] / "scripts" / "infra"
 _TEMPLATE = _INFRA / "apache-instance-redirect.conf"
 _TEARDOWN = _INFRA / "teardown-instance.sh"
 

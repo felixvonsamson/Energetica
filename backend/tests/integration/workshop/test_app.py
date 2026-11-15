@@ -45,7 +45,7 @@ from .. import _socketio_helpers as socket
 from .._session_helpers import authenticate, grant_facilitator, join, make_account
 
 SLUG = "workshop-autumn"
-_REPO_ROOT = Path(__file__).resolve().parents[3]
+_BACKEND_ROOT = Path(__file__).resolve().parents[3]
 
 WORKSHOP_JSON = {
     "name": "Workshop",
@@ -1805,7 +1805,7 @@ def test_instance_app_starts_workshop_without_the_persistent_world(session_path:
     )
     env = {
         **os.environ,
-        "PYTHONPATH": os.pathsep.join(filter(None, [str(_REPO_ROOT / "src"), os.environ.get("PYTHONPATH")])),
+        "PYTHONPATH": os.pathsep.join(filter(None, [str(_BACKEND_ROOT / "src"), os.environ.get("PYTHONPATH")])),
     }
     result = subprocess.run(
         [sys.executable, "-c", code], cwd=tmp_path, env=env, capture_output=True, text=True, check=True

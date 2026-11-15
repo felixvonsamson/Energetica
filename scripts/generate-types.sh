@@ -19,8 +19,8 @@ echo "📋 Generating OpenAPI schemas from backend..."
     cd "$PROJECT_ROOT"
     [ -f .venv/bin/activate ] && source .venv/bin/activate
     # Import the backend from this checkout. A git worktree can share another
-    # checkout's .venv, whose editable install points at that checkout's src/.
-    export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+    # checkout's .venv, whose editable install points at that checkout's backend/src/.
+    export PYTHONPATH="$PROJECT_ROOT/backend/src${PYTHONPATH:+:$PYTHONPATH}"
     python scripts/generate_openapi_schema.py
 ) || {
     echo "❌ Failed to generate OpenAPI schema"

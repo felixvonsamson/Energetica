@@ -10,7 +10,7 @@ The backend produces three distinct error shapes. The API client in `@energetica
 { "detail": "USERNAME_TAKEN" }
 ```
 
-**Game errors** and **validation errors** come from two exception handlers that every app installs with `install_error_handlers` (`energetica/kernel/error_envelope.py`). `tests/integration/test_error_envelope_contract.py` pins both shapes and asserts the freeplay, Workshop and lobby apps agree; read it for the exact status codes and body keys.
+**Game errors** and **validation errors** come from two exception handlers that every app installs with `install_error_handlers` (`energetica/kernel/error_envelope.py`). `backend/tests/integration/test_error_envelope_contract.py` pins both shapes and asserts the freeplay, Workshop and lobby apps agree; read it for the exact status codes and body keys.
 
 `ApiClientError.getErrorMessage()` extracts the meaningful string from whichever format arrived.
 
@@ -51,7 +51,7 @@ Workshop's errors subclass `WorkshopError` (`energetica/workshop/game_error.py`)
 
 Note that `HTTPException`-based errors (`USERNAME_TAKEN`, `USER_NOT_FOUND`, etc.) are included in these enums even though they don't go through the `GameError` handler — the enums serve as the registry of all error codes.
 
-`tests/integration/test_error_envelope_contract.py` pins which enums each app's schema gets, and fails if a Workshop code reaches the kernel or another app's schema.
+`backend/tests/integration/test_error_envelope_contract.py` pins which enums each app's schema gets, and fails if a Workshop code reaches the kernel or another app's schema.
 
 ## Utilities
 

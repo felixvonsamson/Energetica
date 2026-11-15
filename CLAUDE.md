@@ -11,7 +11,7 @@ terms are fine). In-session conversational style is exempt.
 
 ## Stack
 
-Backend(`src/energetica/`, `src/lobby_service/`): Python + FastAPI, an installed project (`pip install -e '.[dev]'`)
+Backend(`backend/src/energetica/`, `backend/src/lobby_service/`): Python + FastAPI, an installed project (`pip install -e './backend[dev]'`, from the repo root)
 Frontend(`frontend/`): TSX + Tailwind v4 (no `tailwind.config.ts`)
 Components: customised shadcn components + global stylesheet in `frontend/packages/ui` (`@energetica/ui`)
 Workspaces: apps in `frontend/apps/` and shared packages in `frontend/packages/` are Bun workspaces with isolated installs; see `docs/architecture/overview.md` § Frontend
@@ -34,7 +34,7 @@ from the repo root:
 
 `bun run generate-types` generates TypeScript types from each backend app's OpenAPI schema. They are the bridge for full stack type safety.
 
-- backend: `src/energetica/freeplay/schemas/`, `src/energetica/freeplay/routers/` and `src/energetica/lobby/` are the source of truth
+- backend: `backend/src/energetica/freeplay/schemas/`, `backend/src/energetica/freeplay/routers/` and `backend/src/energetica/lobby/` are the source of truth
 - one types file per app, so code only type-checks against routes its own backend serves:
   - lobby app: `frontend/apps/lobby/src/types/api.generated.ts`, consumed through `frontend/apps/lobby/src/types/api-helpers.ts`
   - workshop app: `frontend/apps/workshop/src/types/api.generated.ts`, consumed through `frontend/apps/workshop/src/types/api-helpers.ts`

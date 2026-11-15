@@ -142,7 +142,7 @@ The **apex domain always serves the landing page**, never an instance directly.
 
 Canonical source of truth is systemd: `systemctl list-unit-files 'energetica-*.service'`. Filesystem enumeration of `/var/www/energetica-*/` is avoided since it would accidentally include `energetica-landing`.
 
-`energetica-lobby`, `energetica-lobby-service` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126, #1356), and `setup-instance.sh` and `teardown-instance.sh` refuse them as slugs. `tests/unit/scripts/test_reserved_unit_names.py` checks all four scripts against the units in `scripts/infra`. Keying on whether a unit has an `instance.env` (described below) would also drop instances provisioned before the port moved into that file.
+`energetica-lobby`, `energetica-lobby-service` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126, #1356), and `setup-instance.sh` and `teardown-instance.sh` refuse them as slugs. `backend/tests/unit/scripts/test_reserved_unit_names.py` checks all four scripts against the units in `scripts/infra`. Keying on whether a unit has an `instance.env` (described below) would also drop instances provisioned before the port moved into that file.
 
 An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.env`, the unit's `EnvironmentFile` (#1072): the env contract (`ENERGETICA_INSTANCE_SLUG` and the three path variables) plus the port and the two clock values, which the unit expands into `main.py` flags. The unit carries nothing but the slug, so every instance's unit is the same file with one name changed.
 
@@ -195,11 +195,11 @@ prefix would mean asking a third party to edit their config. #1064 moved the bun
 `src/energetica/` — where it was a vestige of the Flask/Jinja era, build output from another
 language sitting inside a Python package — without touching a single public URL.
 
-`src/energetica/freeplay/data/` is deliberately **not** in that list. It holds the daily quiz
+`backend/src/energetica/freeplay/data/` is deliberately **not** in that list. It holds the daily quiz
 questions and answers and the map; the Python engine reads them off the filesystem
-(`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them. It also holds the
+(`backend/src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them. It also holds the
 persistent world's national-demand curves. Workshop's own demand curve is in
-`src/energetica/workshop/data/` (#1201). It holds nothing secret, and no URL maps there either.
+`backend/src/energetica/workshop/data/` (#1201). It holds nothing secret, and no URL maps there either.
 The tables lived at `src/energetica/static/data/` until #1055 moved them next to the engine.
 Apache served that directory until the disclosure fix #1070, which closed a path that let
 anyone who guessed it read the quiz answers. No URL maps into the Python package any more, but
@@ -236,7 +236,7 @@ The `instances.json` manifest and `instances/` fragment directory are populated 
 - `/healthz` — health probe for Apache and the deploy scripts
 
 `/logout` was on this list until the lobby cutover (#817) moved global logout to the lobby;
-the instance mints and clears no sessions of its own. `tests/integration/test_route_surface.py`
+the instance mints and clears no sessions of its own. `backend/tests/integration/test_route_surface.py`
 holds the app to this list.
 
 Everything else (`StaticFiles` mount, all `FileResponse` page handlers) is removed from FastAPI. (Phase 5; in Phase 1 the `FileResponse` handlers for `/`, `/app/*`, `/landing-page` still exist and serve the app bundle's `index.html` for interim compatibility.)
@@ -422,7 +422,7 @@ Why a periodic sweep rather than a timer armed at each `ended_at`: it keeps the 
 
 That case gets its own treatment, because teardown is exactly when it stops being fixable. While the instance lives, a broken recap self-heals — the next freeze tick re-mints it — but teardown is about to delete the service, the venv and the pickle that re-mint depends on. So `teardown-instance.sh` **refuses to run** when the recap file is present but does not load, and points at the recovery: delete the file and let the instance re-mint it. There is no `--force`, because the escape hatch is the same `rm` either way — delete the corrupt file and re-run, and the run either keeps a freshly minted recap or retires as one that never froze. Both beat stranding it.
 
-The rule lives in `instance_config.retire_fragment` (tested in `tests/unit/identity/test_instance_config.py`), which teardown calls through the instance's own venv before deleting it; the shell script is a thin wrapper, the same split as `whitelist-instance.sh` over `jq`. Nothing new is needed to make the kept fragment read as finished: `ended_at` has passed, so the phase derives to `ended`, and the lobby card turns from "Join" into "View recap" by itself.
+The rule lives in `instance_config.retire_fragment` (tested in `backend/tests/unit/identity/test_instance_config.py`), which teardown calls through the instance's own venv before deleting it; the shell script is a thin wrapper, the same split as `whitelist-instance.sh` over `jq`. Nothing new is needed to make the kept fragment read as finished: `ended_at` has passed, so the phase derives to `ended`, and the lobby card turns from "Join" into "View recap" by itself.
 
 Accounts and `instance_membership` rows are server-wide and survive teardown. A membership pointing at a torn-down run with no recap now has no fragment to join against, so `my-runs` filters it out; purging those rows is a separate chore.
 
@@ -556,7 +556,7 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 
 1. Build the app for the instance's Run mode, read from `run.mode` in its `instance.json` (`bun run build:freeplay` or `bun run build:workshop`). Before anything is synced, the bundle's `build-info.json` must name that app.
 2. Confirm deployment summary (skipped with `--yes`)
-3. `rsync` the backend to the server. This ships an allowlist, not the working tree: `main.py`, which the systemd unit runs, and the backend wheel in `dist/`, which step 5 installs. The sync runs with `--delete`, so anything else in the instance dir is removed, except the paths the server owns or other steps sync. See `docs/backend/deployment.md` § What a deploy ships. `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
+3. `rsync` the backend to the server. This ships an allowlist, not the working tree: `backend/main.py`, placed at the top of the instance dir where the systemd unit runs it, and the backend wheel in `dist/`, which step 5 installs. The sync runs with `--delete`, so anything else in the instance dir is removed, except the paths the server owns or other steps sync. See `docs/backend/deployment.md` § What a deploy ships. `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
 4. `rsync` app bundle to server (`frontend/apps/{freeplay,workshop}/dist/` → `{instance dir}/dist-app/`). The persistent world's service worker is inside its bundle: the app's `build:sw` writes `dist/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — the app's `build` script chains them in that order.
 5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start

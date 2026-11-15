@@ -8,7 +8,7 @@ Two packages do work just by being imported:
 - ``lobby_service`` loads the signing secret, and only the lobby service may hold it (ADR-0009). The
   runs and the lobby backend reach it through its API, so nothing in ``energetica`` may load it.
 
-The import-linter contracts in ``pyproject.toml`` already forbid these imports. What they cannot
+The import-linter contracts in ``backend/pyproject.toml`` already forbid these imports. What they cannot
 see is what importing actually runs: an import made by name at run time
 (``importlib.import_module``), or code in a package's ``__init__.py`` that a module runs just by
 sitting beneath it. The lobby sits beneath ``energetica`` (#1058), so ``energetica/__init__.py``
@@ -29,7 +29,10 @@ from pathlib import Path
 
 import pytest
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+# The probe runs from the repo root, as pytest does, so anything an import writes relative to the
+# working directory lands where the rest of the suite's does.
+_REPO_ROOT = _BACKEND_ROOT.parent
 
 _ENGINE_PACKAGE = "energetica.freeplay"
 _LOBBY_SERVICE_PACKAGE = "lobby_service"
@@ -60,11 +63,11 @@ print(json.dumps(culprit))
 
 
 def _first_module_that_loads(package: str, forbidden: list[str]) -> tuple[str, list[str]] | None:
-    # Import from this checkout's src/, as pytest itself does (`pythonpath` in pyproject.toml).
+    # Import from this checkout's backend/src/, as pytest itself does (`pythonpath` in pytest.ini).
     # Otherwise a git worktree's shared .venv would resolve `energetica` to the main checkout.
     env = {
         **os.environ,
-        "PYTHONPATH": os.pathsep.join(filter(None, [str(_REPO_ROOT / "src"), os.environ.get("PYTHONPATH")])),
+        "PYTHONPATH": os.pathsep.join(filter(None, [str(_BACKEND_ROOT / "src"), os.environ.get("PYTHONPATH")])),
     }
     result = subprocess.run(
         [sys.executable, "-c", _PROBE, package, json.dumps(forbidden)],

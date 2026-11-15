@@ -62,19 +62,20 @@ Target version: 3.12 or higher (the ruff target is 3.12). Use a virtual environm
 ```
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'
+pip install -e './backend[dev]'
 ```
 
-The backend packages live under `src/`, so that editable install is what makes `energetica` and
-`lobby_service` importable at all — without it, `pytest` and `python main.py` both fail with
-`ModuleNotFoundError`. Re-run it after a change to the dependency list.
+The backend packages live under `backend/src/`, so that editable install is what makes `energetica`
+and `lobby_service` importable at all — without it, `pytest` and `python backend/main.py` both fail
+with `ModuleNotFoundError`. Run it, and every other command here, from the repository root.
+Re-run it after a change to the dependency list.
 
 (Optional) Use `conda` if preferred.
 
 ## Running the Server (Development)
 
 ```
-python main.py --env dev
+python backend/main.py --env dev
 ```
 
 Helpful flags:
@@ -104,15 +105,15 @@ it, and [the project structure overview](/docs/architecture/overview.md) § Fron
 
 We use `pytest`.
 
-- Place fast, isolated tests in `tests/unit/`
-- Cross-module/API/game-loop tests in `tests/integration/`
+- Place fast, isolated tests in `backend/tests/unit/`
+- Cross-module/API/game-loop tests in `backend/tests/integration/`
 - Inside each suite, put a test in the folder named after the package it tests: `kernel/`, `identity/`, `sim/`,
   `freeplay/`, `workshop/`, `lobby/` or `lobby_service/`. For example, the tests for
-  `src/energetica/sim/market.py` go in `tests/unit/sim/`. Tests of the scripts under `scripts/` go in `tests/unit/scripts/`.
+  `backend/src/energetica/sim/market.py` go in `backend/tests/unit/sim/`. Tests of the scripts under `scripts/` go in `backend/tests/unit/scripts/`.
   A test that checks several packages at once, such as the import side-effect check or the error-envelope contract,
   stays at the top of its suite.
 - Name test files: `test_<thing>.py`. The folder already names the package, so drop it from the file name:
-  `tests/unit/workshop/test_fuel.py`, not `test_workshop_fuel.py`.
+  `backend/tests/unit/workshop/test_fuel.py`, not `test_workshop_fuel.py`.
 - Write descriptive test function names.
 - Run full suite:
 
@@ -123,7 +124,7 @@ pytest -q
 - Run a subset:
 
 ```
-pytest tests/unit/freeplay/test_player.py::test_player_hashable
+pytest backend/tests/unit/freeplay/test_player.py::test_player_hashable
 ```
 
 Add tests for every new feature and bug fix.
@@ -132,28 +133,30 @@ Add tests for every new feature and bug fix.
 
 Shared fixtures live in `conftest.py` files, which pytest applies to every test in the folder and below it.
 
-- `tests/conftest.py` applies to every test. Two fixtures run automatically: one puts `engine.serve_local`
+- `backend/tests/conftest.py` applies to every test. Two fixtures run automatically: one puts `engine.serve_local`
   back after each test, and one makes password hashing cheap. Request `lobby_service` for a real lobby
   service over a fresh `lobby.db`, and `no_demand_growth` to keep Workshop demand flat between Rounds.
-- `tests/integration/conftest.py` gives every integration test a lobby service automatically.
+- `backend/tests/integration/conftest.py` gives every integration test a lobby service automatically.
 
 Helper module names start with an underscore to set them apart from test files. Import them with a relative
 import:
 
-- `tests/integration/_session_helpers.py` creates accounts through the lobby service and logs a `TestClient`
+- `backend/tests/integration/_session_helpers.py` creates accounts through the lobby service and logs a `TestClient`
   in as one of them: `make_account`, `authenticate`, `join` and `grant_facilitator`.
-- `tests/integration/_socketio_helpers.py` connects a `TestClient` to an app's Socket.IO server.
-- `tests/unit/workshop/_weather_helpers.py` has fixed-weather fakes for the Workshop's Trading-period tests.
+- `backend/tests/integration/_socketio_helpers.py` connects a `TestClient` to an app's Socket.IO server.
+- `backend/tests/unit/workshop/_weather_helpers.py` has fixed-weather fakes for the Workshop's Trading-period tests.
 
 A helper used by one package's tests goes in that package's folder. A helper used across packages goes at the top
 of its suite. Add a new helper when the same setup keeps repeating across test files.
 
 ## Linting & Formatting
 
-Configured via `pyproject.toml`.
+Ruff is configured in `ruff.toml` and pyright in `pyrightconfig.json`, both at the repo root.
+One configuration covers the whole Python tree, so no other file declares ruff or pyright
+settings.
 
-- Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
-  `tests/`, `scripts/`, `tools/` and the three `main*.py` launchers — and both run as
+- Ruff (linter and formatter). Both cover every Python file in the repo — `backend/`,
+  `scripts/` and `tools/` — and both run as
   the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
@@ -162,12 +165,12 @@ ruff check . --fix    # lint, applying safe fixes
 ruff format .         # format
 ```
 
-`pip install -e '.[dev]'` installs ruff, pinned to the same version as the pre-commit
+`pip install -e './backend[dev]'` installs ruff, pinned to the same version as the pre-commit
 hook. From the repo root, `bun run ruff:check` and `bun run ruff:format` are shorthands for
 the fixing and formatting forms — both write to your files, neither is read-only.
 
 - import-linter checks which backend packages may import which. Each rule is a contract,
-  written in `pyproject.toml` under `[tool.importlinter]`, and CI checks them in the
+  written in `backend/pyproject.toml` under `[tool.importlinter]`, and CI checks them in the
   `python-lint` job. Imports through another module count too.
   - `kernel`, `identity` and `sim` are layers, in that order from the bottom. A module may
     import from the layers below it but not from those above, and none of them imports app
@@ -177,20 +180,23 @@ the fixing and formatting forms — both write to your files, neither is read-on
   - `energetica.entry` sits on top and builds whichever app an instance runs.
   - No module under `energetica` imports the lobby service (`lobby_service`), and the lobby
     service imports only `identity` and `kernel`.
-  - A new top-level module under `src/energetica/` must be added to a layer, or the check
+  - A new top-level module under `backend/src/energetica/` must be added to a layer, or the check
     fails. New app code goes inside its app's package rather than beside it, so the contracts
     already cover it.
   - A contract cannot see what importing a module runs.
-    `tests/unit/test_import_side_effects.py` checks that importing a package does not build the
+    `backend/tests/unit/test_import_side_effects.py` checks that importing a package does not build the
     persistent world's game engine, or load the lobby service, where it must not.
 
 ```
-lint-imports          # check the import contracts
+bun run lint:imports  # check the import contracts
 ```
 
-`pip install -e '.[dev]'` installs import-linter. In a git worktree, run
-`PYTHONPATH=src lint-imports`. The shared `.venv` would otherwise resolve `energetica` to
-the main checkout.
+`pip install -e './backend[dev]'` installs import-linter. Its contracts are about the backend's
+packages alone, so they live in `backend/pyproject.toml` rather than with the root's ruff and
+pyright configuration, and the shortcut passes that file to `lint-imports` with `--config`. It
+also imports the backend from this checkout's `backend/src/`, so it checks the right code in a
+git worktree too, where the shared `.venv` would otherwise resolve `energetica` to the main
+checkout.
 
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120
@@ -203,7 +209,7 @@ the main checkout.
 Pre-commit hooks ensure code quality by running linters and formatters on staged files before each commit.
 
 ```bash
-pre-commit install # Enable hooks (pre-commit itself comes with `pip install -e '.[dev]'`).
+pre-commit install # Enable hooks (pre-commit itself comes with `pip install -e './backend[dev]'`).
                    # Hooks run automatically on commit.
 pre-commit run --all-files # Manually check all files
 pre-commit autoupdate # Update hooks after having modified `.pre-commit-config.yaml`
@@ -214,7 +220,7 @@ pre-commit autoupdate # Update hooks after having modified `.pre-commit-config.y
 Runtime state lives under `instance/` and `checkpoints/`. Never commit these. To reset quickly:
 
 ```
-python main.py --env dev --rm_instance
+python backend/main.py --env dev --rm_instance
 ```
 
 Or use the "remove instance" VS Code task.
@@ -224,15 +230,15 @@ Or use the "remove instance" VS Code task.
 When replaying logs:
 
 ```
-python main.py --env dev --simulate_file actions_history.log --clock_time 1 --in_game_seconds_per_tick 3600
+python backend/main.py --env dev --simulate_file actions_history.log --clock_time 1 --in_game_seconds_per_tick 3600
 ```
 
 Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_ticks`, `--simulate_checkpoint_ticks 100 500 1000`, `--simulate_profiling`.
 
 ## Adding / Modifying Game Logic
 
-1. Locate relevant engine modules under `src/energetica/freeplay/` (e.g. production updates, climate events, technology effects).
-2. Add or update enums in `src/energetica/freeplay/enums.py` carefully—changing identifiers may break saved state.
+1. Locate relevant engine modules under `backend/src/energetica/freeplay/` (e.g. production updates, climate events, technology effects).
+2. Add or update enums in `backend/src/energetica/freeplay/enums.py` carefully—changing identifiers may break saved state.
 3. Provide migration / compatibility handling if saved engine data format changes.
 4. Add unit tests that cover both the new behavior and backward compatibility paths.
 
@@ -248,7 +254,7 @@ Before opening a PR, ensure:
 - [ ] Branch up to date with `main`
 - [ ] Tests pass locally (`pytest`)
 - [ ] New/changed code is covered by tests
-- [ ] Lint passes (`ruff check .` and `lint-imports`)
+- [ ] Lint passes (`ruff check .` and `bun run lint:imports`)
 - [ ] No stray `print` debugging left (unless intentional & documented)
 - [ ] Updated docs / comments where behavior changed
 - [ ] Large changes broken into logical commits
@@ -278,7 +284,7 @@ See [Backend Style Guide](./docs/backend/style-guide.md) and [Frontend Style Gui
 
 - Justify the need (size, maintenance, security)
 - Prefer widely used, actively maintained libraries
-- Add it to `[project.dependencies]` in `pyproject.toml` (or `[project.optional-dependencies].dev` if it is only a development tool), and pin it if reproducibility matters
+- Add it to `[project.dependencies]` in `backend/pyproject.toml` (or `[project.optional-dependencies].dev` if it is only a development tool), and pin it if reproducibility matters
 - Avoid heavy frameworks for small utilities
 
 ## Getting Help

@@ -30,4 +30,4 @@ trap 'kill "$LOBBY_SERVICE_PID" 2>/dev/null || true' EXIT
 echo "→ App backend on http://localhost:8000 — shared dev scratch: $DEV_SCRATCH"
 echo "  Need a session? Log in via the lobby, or run: bash scripts/dev-login.sh"
 echo
-.venv/bin/python main.py --env dev "$@"
+.venv/bin/python backend/main.py --env dev "$@"

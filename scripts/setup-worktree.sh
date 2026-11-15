@@ -19,4 +19,4 @@ if [ ! -e "$WORKTREE_ROOT/.venv" ] && [ ! -L "$WORKTREE_ROOT/.venv" ]; then
     ln -s "$MAIN_REPO/.venv" "$WORKTREE_ROOT/.venv"
 fi
 
-echo "✓ Done. Start the server from $WORKTREE_ROOT with: python main.py"
+echo "✓ Done. Start the server from $WORKTREE_ROOT with: bun run dev"

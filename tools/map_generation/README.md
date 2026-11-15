@@ -5,9 +5,10 @@ nothing imports it, and it does not ship with the `energetica` package. Its outp
 only interface to the game.
 
 - `map_generation.py` generates ten candidate maps and writes them as `map0.csv` to `map9.csv` in
-  the current directory. It uses `energetica.sim.astro`, so run it with the project installed
-  (`pip install -e '.[dev]'`), from this directory.
+  the current directory. It uses `energetica.sim.astro`, so it needs the project installed: run
+  `pip install -e './backend[dev]'` from the repository root once, then run the tool from this
+  directory.
 - `map_generation.pde` (with `Hex.pde` and `Button.pde`) is a [Processing](https://processing.org/)
   sketch that draws those files so you can compare them.
 
-The game reads its map from `src/energetica/freeplay/data/map.csv`, which has the same columns.
+The game reads its map from `backend/src/energetica/freeplay/data/map.csv`, which has the same columns.

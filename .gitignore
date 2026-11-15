@@ -1,5 +1,5 @@
 instance/*
-tests/*/instance/*
+backend/tests/*/instance/*
 checkpoints/*
 .energetica-dev/
 __pycache__

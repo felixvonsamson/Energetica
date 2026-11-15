@@ -9,7 +9,7 @@ set -euo pipefail
 #
 # setup-instance.sh is the caller. It is split out so the rendering can be tested without root:
 # the backend fails closed on an instance.json it cannot parse, so a bad rendering would lock
-# every player out of the new Run. tests/unit/scripts/test_render_instance_json.py runs this script and
+# every player out of the new Run. backend/tests/unit/scripts/test_render_instance_json.py runs this script and
 # parses the output with the backend's own model.
 #
 # --mode has no default, matching the backend (#1060): the file must say which kind of Run it is.
@@ -19,7 +19,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Must match the modes the backend accepts (instance_config.run_modes()). The backend is not
 # installed on the server when this runs, so the list is repeated here, and
-# tests/unit/scripts/test_render_instance_json.py fails if the two differ.
+# backend/tests/unit/scripts/test_render_instance_json.py fails if the two differ.
 MODE_CHOICES="freeplay workshop"
 MODE=""
 NAME=""

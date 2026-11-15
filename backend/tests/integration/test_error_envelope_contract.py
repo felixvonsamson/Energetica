@@ -38,7 +38,7 @@ from energetica.lobby.game_error import LobbyErrorCode
 from energetica.workshop.app import create_workshop_app
 from energetica.workshop.game_error import WorkshopErrorCode
 
-_GENERATOR = Path(__file__).resolve().parents[2] / "scripts" / "generate_openapi_schema.py"
+_GENERATOR = Path(__file__).resolve().parents[3] / "scripts" / "generate_openapi_schema.py"
 
 GAME_ERROR_PATH = "/probe/game-error"
 OWN_CODE_PATH = "/probe/own-code"

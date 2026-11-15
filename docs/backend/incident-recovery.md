@@ -106,7 +106,7 @@ followed by rapid tick replays (`t = XXXX`). If the engine logs an error instead
 
 ## Checkpoints
 
-Persistence runs at two cadences (see `src/energetica/freeplay/utils/tick_execution.py`):
+Persistence runs at two cadences (see `backend/src/energetica/freeplay/utils/tick_execution.py`):
 
 - **`engine.save()` — every 10 minutes.** Writes only `instance/engine_data.pck` (the in-memory engine state). This is what `engine.load()` reads on a normal restart, so the **loaded tick** is usually at most ~10 minutes old. The save is written to a temporary file and then renamed over `engine_data.pck`, so a save killed partway leaves the previous save whole.
 - **`save_checkpoint()` — every 6 hours.** Writes `checkpoints/last_checkpoint.tar.gz`, a tarball of the entire `instance/` directory (including a fresh `engine_data.pck` and all data files) at a consistent point in time. This is the unit of disaster recovery.

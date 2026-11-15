@@ -22,7 +22,7 @@ import pytest
 # The helper shells out to rsync, which is a deploy prerequisite rather than a Python dependency.
 pytestmark = pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync is not installed")
 
-_HELPER = Path(__file__).resolve().parents[3] / "scripts" / "lib" / "backend-sync.sh"
+_HELPER = Path(__file__).resolve().parents[4] / "scripts" / "lib" / "backend-sync.sh"
 _WHEEL = "energetica-1.0-py3-none-any.whl"
 
 # What the server owns, or what another step of the same deploy syncs. The sync must keep these.
@@ -52,12 +52,12 @@ def repo(tmp_path: Path) -> Path:
     (root / "scripts" / "lib").mkdir(parents=True)
     shutil.copy(_HELPER, root / "scripts" / "lib" / _HELPER.name)
     for relative in [
-        "main.py",
-        "main_lobby.py",
-        "main_lobby_service.py",
+        "backend/main.py",
+        "backend/main_lobby.py",
+        "backend/main_lobby_service.py",
         f"dist/{_WHEEL}",
         "dist/energetica-0.9-py3-none-any.whl",
-        "src/energetica/__init__.py",
+        "backend/src/energetica/__init__.py",
         "junk.txt",
         ".claude/worktrees/x/main.py",
         ".claude/settings.local.json",
@@ -126,7 +126,7 @@ def test_shipped_files_stay_readable_by_the_group_under_a_restrictive_umask(repo
     umask is 077 must not ship files that group cannot read. The target root itself gets the mode
     a default checkout gave it before, so Apache can still reach the bundle beneath it.
     """
-    (repo / "main.py").chmod(0o600)
+    (repo / "backend" / "main.py").chmod(0o600)
     (repo / "dist" / _WHEEL).chmod(0o600)
     target = tmp_path / "server"
     target.mkdir()

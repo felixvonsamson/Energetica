@@ -16,7 +16,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-sync.sh"
 # Builds the lobby bundle and the backend wheel locally, rsyncs the two entry points, the wheel
 # and dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
 # restarts both lobby processes, and health-checks them. The install is not optional:
-# the backend lives under src/ and is imported as an installed package, so a deploy that
+# the backend lives under backend/src/ and is imported as an installed package, so a deploy that
 # skips it leaves the services unable to start.
 #
 # The lobby is two processes from the one checkout (ADR-0009): the lobby service
@@ -134,9 +134,10 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 4. rsync backend code ----------------------------------------------------------
-# Ships the two entry points the lobby units run, main_lobby.py and main_lobby_service.py, and the
-# wheel built above, which step 6 installs. Nothing else: see scripts/lib/backend-sync.sh for the
-# allowlist and for what --delete leaves alone.
+# Ships the two entry points the lobby units run, backend/main_lobby.py and
+# backend/main_lobby_service.py, to the top of the lobby dir, and the wheel built above, which
+# step 6 installs. Nothing else: see scripts/lib/backend-sync.sh for the allowlist and for what
+# --delete leaves alone.
 sync_backend "$SSH:$REMOTE_PATH" dist-lobby main_lobby.py main_lobby_service.py
 
 # --- 4b. rsync lobby-scoped scripts (flattened: scripts/lobby/* → scripts/*) --------------
@@ -167,7 +168,7 @@ install_backend_wheel "$SSH" "$REMOTE_PATH" --as-deploy-user
 
 # --- 6b. Stamp the deployed backend version ----------------------------------------
 # The server has no .git (the deploy ships no source tree), so the commit is captured here on the
-# deploy machine and written as DEPLOYED_VERSION.json, read by src/energetica/kernel/version.py. Both lobby
+# deploy machine and written as DEPLOYED_VERSION.json, read by backend/src/energetica/kernel/version.py. Both lobby
 # processes run from this checkout and report this stamp. Written before the restarts because the
 # lobby backend also reads it, once per process on first use, to name itself in the
 # X-Energetica-Caller header it sends the lobby service. If the stamp were written after the
