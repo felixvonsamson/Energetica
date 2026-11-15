@@ -72,7 +72,7 @@ get_settled_player()    - Requires a player who has chosen a location  (utils/au
 
 ## Frontend Implementation
 
-**Auth state:** `frontend/apps/freeplay/src/contexts/AuthContext.tsx`
+**Auth state:** `frontend/apps/freeplay/src/contexts/auth-context.tsx`
 
 - Manages global auth state (user, isAuthenticated, isLoading)
 - Fetches `/auth/me` on app startup
@@ -84,16 +84,15 @@ gate is the pathless `_entered` route (`frontend/apps/workshop/src/routes/_enter
 of every page of the Run. As with `/auth/me`, a 401 or a denied account sends the visitor to the
 lobby. The join page and the facilitator pages sit outside the gate: a visitor on the join page has
 not been admitted yet, and the backend refuses the facilitator pages' calls to anyone but the
-facilitator. The combined freeplay bundle still reads the Run mode from `GET /api/v1/run` before
-anything else renders, and shows nothing in a Workshop Run, until each Instance is served the app
-for its Run mode (#1181, #1182).
+facilitator. Neither app asks the backend which Run mode it is in: each
+Instance is served the app for its Run mode.
 
-**Auth hook:** `frontend/apps/freeplay/src/hooks/useAuth.ts`
+**Auth hook:** `frontend/apps/freeplay/src/hooks/use-auth.ts`
 
 - Provides `user`, `isAuthenticated`, `isLoading`, `refetch()`, `logout()`
 - Must be used within `AuthProvider`
 
-**Protected routes:** `frontend/apps/freeplay/src/components/auth/ProtectedRoute.tsx`
+**Protected routes:** `frontend/apps/freeplay/src/routes/__root.tsx`, with the rules in `frontend/apps/freeplay/src/lib/route-guard.ts`
 
 - TODO: explain and fill in details in [routing.md](../frontend/routing.md)
 

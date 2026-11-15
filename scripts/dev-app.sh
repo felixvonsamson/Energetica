@@ -5,9 +5,9 @@ set -euo pipefail
 # accounts and sessions through (ADR-0009), on the shared dev scratch, so a lobby-minted SSO cookie
 # logs you in. Any extra args are forwarded to main.py. See docs/getting-started/local-development.md.
 #
-#   bun run serve:app                 # this script — app backend on :8000, plus the lobby service
-#   bun run serve:lobby               # the lobby backend it authenticates against (:8001)
-#   cd frontend && bun run dev:freeplay    # the app frontend, in another terminal
+#   bun run serve:app                    # this script — app backend on :8000, plus the lobby service
+#   bun run serve:lobby                  # the lobby backend it authenticates against (:8001)
+#   cd frontend && bun run dev:freeplay  # the app frontend, in another terminal
 #
 # The app no longer mints sessions (post-cutover it is a pure entry gate — see
 # docs/architecture/lobby.md), so you still need a session from the lobby: log in on the lobby

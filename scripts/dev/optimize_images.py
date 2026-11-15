@@ -26,9 +26,10 @@ from typing import NamedTuple
 ROOT = Path(__file__).parent.parent.parent
 
 # The same roots guard-image-weight.ts weighs, and for the same reason: the
-# bundled trees Vite hashes and emits (each workspace package's), plus the verbatim-copied public/ dir that holds the one icon
-# needing a URL no bundler owns. Walking them all keeps the script able to fix
-# everything the guard can reject.
+# bundled trees Vite hashes and emits (each workspace package's), plus the
+# verbatim-copied public/ dir that holds the one icon needing a URL no bundler
+# owns. Walking them all keeps the script able to fix everything the guard can
+# reject.
 IMAGE_ROOTS = (
     *sorted((ROOT / "frontend").glob("apps/*/src/assets")),
     *sorted((ROOT / "frontend").glob("packages/*/src/assets")),

@@ -40,7 +40,6 @@
         "lint": "eslint . --max-warnings 0 --cache",
         "lint:fix": "eslint . --fix --cache",
         "typecheck": "tsc --noEmit && bun run --filter './apps/*' --filter './packages/*' typecheck",
-        "typecheck:watch": "tsc --noEmit --watch",
         "guard:no-raw-html": "bun ../scripts/guard-no-raw-html.ts",
         "guard:filenames": "bun ../scripts/guard-filenames.ts",
         "guard:no-dummy-data": "bun ../scripts/guard-no-dummy-data.ts",

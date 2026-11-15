@@ -85,7 +85,7 @@ describe("frontend boundaries", () => {
         expect(
             await violatedRules(
                 "apps/freeplay/src/routes/example.tsx",
-                'import { WorkshopTopBar } from "../../../workshop/src/components/workshop-top-bar";\nexport const x = Header;\n',
+                'import { WorkshopTopBar } from "../../../workshop/src/components/workshop-top-bar";\nexport const x = WorkshopTopBar;\n',
             ),
         ).toContain("import/no-relative-packages");
     });

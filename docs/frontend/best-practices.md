@@ -64,7 +64,7 @@ const { data, isLoading, error } = usePlayerMoney();
 
 ### Global State
 
-Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/apps/freeplay/src/contexts/theme-context.tsx) for a real example:
+Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/packages/ui/src/contexts/theme-context.tsx) for a real example:
 
 ```ts
 // @/contexts/ThemeContext.tsx

@@ -47,8 +47,8 @@ No local backend — the dev server proxies to a deployment that already has rea
 
 ```bash
 cd frontend
-BACKEND=game bun run dev:lobby   # lobby SPA  → http://localhost:5174
-BACKEND=game bun run dev:freeplay     # app SPA    → http://localhost:5173
+BACKEND=game bun run dev:lobby     # lobby SPA  → http://localhost:5174
+BACKEND=game bun run dev:freeplay  # app SPA    → http://localhost:5173
 ```
 
 The app config discovers the deployment's current instance subdomain from its public
@@ -115,10 +115,10 @@ seeded **`demo` / `demo1234`**, and return to the app — the entry gate provisi
 Prefer separate terminals (independent logs, hot-reload per server)? Run the pieces yourself:
 
 ```bash
-bun run serve:lobby                 # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
-bun run serve:app                   # app backend    :8000  + its own lobby service
-cd frontend && bun run dev:lobby    # lobby frontend :5174
-cd frontend && bun run dev:freeplay      # app frontend   :5173
+bun run serve:lobby                  # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
+bun run serve:app                    # app backend    :8000  + its own lobby service
+cd frontend && bun run dev:lobby     # lobby frontend :5174
+cd frontend && bun run dev:freeplay  # app frontend   :5173
 ```
 
 **Driving the backend from the CLI (no browser):** with the lobby running, mint a real session into
@@ -366,9 +366,9 @@ Run's `instance.json`, so you would repeat steps 1 and 2.
 **Frontend** (`cd frontend && bun run …`):
 
 ```bash
-dev:freeplay       dev:lobby       dev:landing        # dev servers (prefix BACKEND=game|edu|ethz for a live backend)
-build:freeplay     build:lobby     build:landing      build:all
-typecheck     lint            generate-types
+dev:freeplay     dev:lobby       dev:landing        # dev servers (prefix BACKEND=game|edu|ethz for a live backend)
+build:freeplay   build:lobby     build:landing      build:all
+typecheck        lint            generate-types
 ```
 
 **Backend & ops** (repo root, `bun run …`):
