@@ -18,11 +18,11 @@
  * whose path names it as fixture data may only be imported from a test file or
  * from the internal design-system surface.
  *
- * `frontend/src/routes/app/internal/` is the sanctioned home. It ships to
- * production deliberately — it is a live, indexed design-system surface that
- * cannot rot the way a markdown description of the same colours did — so a
- * showcase belongs there, in the open, rather than hidden behind a constant in
- * a page players use.
+ * `frontend/apps/freeplay/src/routes/app/internal/` is the sanctioned home. It
+ * ships to production deliberately — it is a live, indexed design-system
+ * surface that cannot rot the way a markdown description of the same colours
+ * did — so a showcase belongs there, in the open, rather than hidden behind a
+ * constant in a page players use.
  *
  * Known boundary: this matches module _names_, so a fixture array pasted inline
  * into a component, or a fixture module named `facility-samples-b.ts` with the
@@ -43,10 +43,9 @@ import { readFileSync } from "fs";
 import { frontendWorkspaces } from "./lib/frontend-workspaces";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-// The sources of the combined app, of each app under apps/, and of every shared
+// The sources of each app under apps/ and of every shared
 // package. An app's top-level files are build configs, not shipped code.
 const SCAN_PREFIXES = [
-    "frontend/src/",
     ...frontendWorkspaces("apps").map((name) => `frontend/apps/${name}/src/`),
     "frontend/packages/",
 ];
@@ -156,7 +155,7 @@ console.error(
 for (const v of violations) console.error(`  - ${v}`);
 console.error(
     "\nEither delete the fixture, or move the showcase to\n" +
-        "frontend/src/routes/app/internal/ where it is indexed and visible.\n" +
+        "frontend/apps/freeplay/src/routes/app/internal/ where it is indexed and visible.\n" +
         "Test files may import fixtures freely.",
 );
 

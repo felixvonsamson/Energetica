@@ -58,7 +58,7 @@ src/energetica/       # Python/FastAPI backend
 
 ## Frontend
 
-The frontend is a set of Bun workspaces rooted at `frontend/`. The persistent world's app is still built from `frontend/src/`, the combined app that once also held the Workshop. The landing page (`frontend/apps/landing`, `@energetica/landing`), the lobby (`frontend/apps/lobby`, `@energetica/lobby`) and the Workshop (`frontend/apps/workshop`, `@energetica/workshop`) are workspace packages of their own, and the persistent world's app will follow them into `frontend/apps/` (#1181). An app there has its own `package.json`, `vite.config.ts`, `tsconfig.json` and `index.html`, builds to its own `dist/`, and imports only its own `src/` (through `@/`) and the shared packages. An app with a backend also has its own generated API types in `src/types/api.generated.ts`, so it cannot type-check against routes another app serves. Code the apps share lives in workspace packages under `frontend/packages/`:
+The frontend is a set of Bun workspaces rooted at `frontend/`. Each app is a workspace package of its own under `frontend/apps/`: the persistent world (`frontend/apps/freeplay`, `@energetica/freeplay`), the Workshop (`frontend/apps/workshop`, `@energetica/workshop`), the lobby (`frontend/apps/lobby`, `@energetica/lobby`) and the landing page (`frontend/apps/landing`, `@energetica/landing`). An Instance is served the app for its Run mode, so neither Instance app asks the backend which mode it is in. An app has its own `package.json`, `vite.config.ts`, `tsconfig.json` and `index.html`, builds to its own `dist/`, and imports only its own `src/` (through `@/`) and the shared packages. An app with a backend also has its own generated API types in `src/types/api.generated.ts`, so it cannot type-check against routes another app serves. Code the apps share lives in workspace packages under `frontend/packages/`:
 
 - `@energetica/ui`: the customised shadcn components, the `cn` helper, a few generic React hooks (such as `useContainerDimensions` and `useLocalStorage`), the theme context, the global stylesheet, the logo, and the facility and fuel images both Instance apps show. The stylesheet defines each asset's colour, so the package also has the helpers that read them (`asset-colors`, `useAssetColorGetter`), the CSS colour helpers (`color-utils`) and `MagnitudeBar`, a table's inline bar in a row's colour.
 - `@energetica/core`: the API client, `createErrorMessages` (turns an app's table of error-code messages into readable error helpers), the messages of the error codes every app shares and `errorMessageTable`, which joins them with an app's own (see [Error handling](error-handling.md)), the formatting helpers, `createQueryClient` (the query client factory) and the links between the apex, the lobby and the Instances (`instances.ts`, `single-origin.ts`).
@@ -73,8 +73,10 @@ A Vite config that imports a workspace package, as one using `contentMdx()` does
 
 Bun's isolated install layout means a package can only import the dependencies its own `package.json` declares. Dependency versions shared by several packages are pinned once, in the `catalog` of `frontend/package.json`, and referenced as `"catalog:"`. Lint rejects imports across these boundaries; `frontend/boundaries.test.ts` shows which.
 
+The persistent world's app is laid out like this:
+
 ```
-frontend/src/
+frontend/apps/freeplay/src/
 ├── components/
 │   ├── ui/              # Game-specific UI pieces (Duration, AssetIcon, PlayerName)
 │   ├── layout/          # Layout components (TopBar, Navigation, GameLayout)
@@ -94,7 +96,7 @@ frontend/src/
 
 ### Path Alias
 
-The `@` path alias points to [`src/`](/frontend/src/). This is configured in [`tsconfig.json`](/frontend/tsconfig.json) and [`vite.config.ts`](/frontend/vite.config.ts).
+In each app, the `@` path alias points to that app's `src/`, such as [`frontend/apps/freeplay/src/`](/frontend/apps/freeplay/src/). Each app configures it in its own `tsconfig.json`, `vite.config.ts` and `vitest.config.ts`.
 
 Use this alias instead of relative paths for all internal imports. Shared packages cannot use `@/`, because it means the app's `src/`. Each package declares its own alias instead, as subpath imports under `"imports"` in its `package.json`: inside `@energetica/ui`, import `#ui/lib/utils`. This makes imports more readable and facilitates refactoring:
 

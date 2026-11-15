@@ -30,11 +30,11 @@ describe("resolveLobbyBaseUrl (app → lobby login bounce)", () => {
             { dev: true, apex: undefined, lobbyDevUrl: LOBBY_DEV },
             LOBBY_DEV,
         ],
-        // The crux of the rethink: BACKEND=game bun run dev:app sets an apex, but
+        // The crux of the rethink: BACKEND=game bun run dev:freeplay sets an apex, but
         // dev must STILL point at the local lobby — a remote lobby's cookie can
         // never reach localhost, so deriving lobby.{apex} would be theatre.
         [
-            "dev WITH apex (BACKEND=game dev:app) → local lobby, NOT lobby.{apex}",
+            "dev WITH apex (BACKEND=game dev:freeplay) → local lobby, NOT lobby.{apex}",
             { dev: true, apex: APEX, lobbyDevUrl: LOBBY_DEV },
             LOBBY_DEV,
         ],

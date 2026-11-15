@@ -184,7 +184,7 @@ autumn-2025.energetica-game.org
 ```
 
 Those right-hand paths are relative to the instance directory, `/var/www/energetica-{instance}/`.
-`dist-app/` is the app bundle, built to `frontend/dist-app/` and flattened to the instance root
+`dist-app/` is the app bundle, built to `frontend/apps/freeplay/dist/` and flattened to the instance root
 on deploy, the same way the lobby ships `dist-lobby/`.
 
 The public URL `/static/app/` and the directory `dist-app/` do not match, on purpose, and the
@@ -209,7 +209,7 @@ longer ship `src/` at all: the tables reach the server only inside the wheel, un
 the directory the deny names no longer exists, and the deny is a second line of defence.
 
 Images are not in that list either, and for a different reason: since #1078 there is no
-served image tree. Every image is imported from `frontend/src/assets/`, so Vite resolves it
+served image tree. Every image is imported from an app's or a shared package's `src/assets/`, so Vite resolves it
 at build time, gives it a content-hashed filename and emits it into the bundle that uses it
 — which means `/static/app/assets/` already covers them, including the year-long `immutable`
 caching a stable filename could never safely take. #1078 left `Alias /static/images` dangling
@@ -469,19 +469,19 @@ frontend/src/
 
 Two separate config files:
 
-| File                          | Bundle  | `base`         | Output dir                    |
-| ----------------------------- | ------- | -------------- | ----------------------------- |
-| `vite.config.ts`              | app     | `/static/app/` | `frontend/dist-app/`          |
-| `apps/landing/vite.config.ts` | landing | `/`            | `frontend/apps/landing/dist/` |
+| File                           | Bundle  | `base`         | Output dir                     |
+| ------------------------------ | ------- | -------------- | ------------------------------ |
+| `apps/freeplay/vite.config.ts` | app     | `/static/app/` | `frontend/apps/freeplay/dist/` |
+| `apps/landing/vite.config.ts`  | landing | `/`            | `frontend/apps/landing/dist/`  |
 
 ✅ Both configs land in Phase 1. Since #1176 the landing is its own workspace app, `frontend/apps/landing`, with its own `vite.config.ts` and `tsconfig.json`; the rest of this paragraph describes Phase 1. The landing bundle uses a separate `tsconfig.landing.json` (eslint sees both via `parserOptions.project: [...]`). Because shared components (`landing-page.tsx`, `wiki-sidebar.tsx`, etc.) link into `/app/*` routes that don't exist in the landing route tree, `main-landing.tsx` deliberately does **not** declare a `Register` module augmentation — typed `to` props fall back to `string`. This is acceptable during the interim; when Apache moves the landing to the apex domain, those links become explicit cross-origin `<a href>` and the loose typing is no longer load-bearing.
 
 Both build outputs are **gitignored** and deployed via rsync:
 
-| Bundle  | Output dir                    | Gitignored | Deployed to                                       |
-| ------- | ----------------------------- | ---------- | ------------------------------------------------- |
-| app     | `frontend/dist-app/`          | yes        | `server:/var/www/energetica-{instance}/dist-app/` |
-| landing | `frontend/apps/landing/dist/` | yes        | `server:/var/www/energetica-landing/`             |
+| Bundle  | Output dir                     | Gitignored | Deployed to                                       |
+| ------- | ------------------------------ | ---------- | ------------------------------------------------- |
+| app     | `frontend/apps/freeplay/dist/` | yes        | `server:/var/www/energetica-{instance}/dist-app/` |
+| landing | `frontend/apps/landing/dist/`  | yes        | `server:/var/www/energetica-landing/`             |
 
 `.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`. ✅ (Phase 1)
 
@@ -553,10 +553,10 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 
 ### `deploy-instance.sh` flow
 
-1. Build app bundle (`bun run build:app`)
+1. Build the persistent world's app (`bun run build:freeplay`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` the backend to the server. This ships an allowlist, not the working tree: `main.py`, which the systemd unit runs, and the backend wheel in `dist/`, which step 5 installs. The sync runs with `--delete`, so anything else in the instance dir is removed, except the paths the server owns or other steps sync. See `docs/backend/deployment.md` § What a deploy ships. `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
-4. `rsync` app bundle to server (`frontend/dist-app/` → `{instance dir}/dist-app/`). The service worker is inside it: since #1064 `build:sw` writes `dist-app/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — `build:app` chains them in that order.
+4. `rsync` app bundle to server (`frontend/apps/freeplay/dist/` → `{instance dir}/dist-app/`). The service worker is inside it: the app's `build:sw` writes `dist/service-worker.js`, so there is no second rsync. That step must always run _after_ the production build, which deletes the output directory before writing it — the app's `build` script chains them in that order.
 5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
 7. Health check

@@ -1,0 +1,45 @@
+{
+    "name": "@energetica/freeplay",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite --configLoader runner",
+        "// build": "Not a script — a note. The order matters: the Vite build deletes dist/ before writing it, so build:sw must follow it, never precede it.",
+        "build": "vite build --configLoader runner && bun run build:sw",
+        "build:sw": "bun build src/service-worker.ts --outfile dist/service-worker.js --target browser && { printf '// AUTO-GENERATED — do not edit. Run `bun run build` in frontend/apps/freeplay/ to regenerate.\\n'; cat dist/service-worker.js; } > dist/service-worker.js.tmp && mv dist/service-worker.js.tmp dist/service-worker.js",
+        "dev:sw": "bun build src/service-worker.ts --outfile dist/service-worker.js --target browser --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.sw.json"
+    },
+    "dependencies": {
+        "@energetica/charts": "workspace:*",
+        "@energetica/content": "workspace:*",
+        "@energetica/core": "workspace:*",
+        "@energetica/instance": "workspace:*",
+        "@energetica/map": "workspace:*",
+        "@energetica/ui": "workspace:*",
+        "@lucide/lab": "^0.1.2",
+        "@radix-ui/react-dialog": "catalog:",
+        "@tanstack/react-query": "catalog:",
+        "@tanstack/react-router": "catalog:",
+        "echarts": "catalog:",
+        "framer-motion": "^12.38.0",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "socket.io-client": "^4.8.1",
+        "sonner": "catalog:"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
+        "@tanstack/router-plugin": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^4.7.0",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-plugin-svgr": "catalog:",
+        "vitest": "catalog:"
+    }
+}

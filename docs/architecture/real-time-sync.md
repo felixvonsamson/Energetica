@@ -166,7 +166,7 @@ engine.invalidate_queries(["resource-market", "asks"])
 
 ### Query Keys Must Match Frontend
 
-Backend query keys must match `frontend/src/lib/query-client.ts`:
+Backend query keys must match `frontend/apps/freeplay/src/lib/query-client.ts`:
 
 ```ts
 export const queryKeys = {
@@ -249,7 +249,7 @@ player.invalidate_queries(["facilities", "all"])
 **In a freeplay Run, all SocketIO listeners are centralized in `GameTickContext`** - no per-component listeners needed.
 
 ```ts
-// frontend/src/contexts/game-tick-context.tsx
+// frontend/apps/freeplay/src/contexts/game-tick-context.tsx
 useSocketEvent("money_updated", (data) => {
   queryClient.setQueryData(queryKeys.players.money, data);
 });
@@ -344,7 +344,7 @@ def update_resource_market():
 
 1. **Always use Pydantic schemas** (never hand-crafted dicts)
 2. **Use helper methods** (`player.invalidate_queries()`, not raw `emit()`)
-3. **Query keys must match** `frontend/src/lib/query-client.ts`
+3. **Query keys must match** `frontend/apps/freeplay/src/lib/query-client.ts`
 4. **When unsure, invalidate** (more efficient for large data)
 
 ## See Also

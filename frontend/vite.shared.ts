@@ -50,10 +50,11 @@ export const ENV_DIR = path.dirname(fileURLToPath(import.meta.url));
 /**
  * Load the env for the deployment named by the `BACKEND` variable, else the
  * plain dev env. `BACKEND=game|edu|ethz` selects `.env.{game,edu,ethz}` (which
- * set `VITE_APEX_DOMAIN`), so `BACKEND=game bun run dev:app` points the dev
- * server at the live game deployment; unset falls back to the local backend.
- * Read here (not from a Vite `--mode` flag) so every surface's dev script stays
- * a static `vite`/`vite --config …` and the selector is uniform across them.
+ * set `VITE_APEX_DOMAIN`), so `BACKEND=game bun run dev:freeplay` points the
+ * dev server at the live game deployment; unset falls back to the local
+ * backend. Read here (not from a Vite `--mode` flag) so every surface's dev
+ * script stays a static `vite`/`vite --config …` and the selector is uniform
+ * across them.
  */
 export function loadDeploymentEnv(mode: string): Record<string, string> {
     const deployment = process.env.BACKEND || undefined;
@@ -125,12 +126,12 @@ export function resolveLobbyProxyTarget(env: Record<string, string>): string {
  * `{slug}`), or `null` when the backend isn't a real instance subdomain under
  * `apex` (a local backend, an IP, a pinned non-deployment host, or no apex).
  *
- * Injected into the app bundle at dev-server startup (see `vite.config.ts`) so
- * the in-run switcher knows which single live instance this dev server is
- * pinned to — everything else it would link to is a _prod_ origin, not the
- * local dev app. Build-time only: it reads the config's already-resolved
- * backend, not a request, so it is not the runtime login derivation retired in
- * PR #848.
+ * Injected into the persistent world's bundle at dev-server startup (see
+ * `apps/freeplay/vite.config.ts`) so the in-run switcher knows which single
+ * live instance this dev server is pinned to — everything else it would link to
+ * is a _prod_ origin, not the local dev app. Build-time only: it reads the
+ * config's already-resolved backend, not a request, so it is not the runtime
+ * login derivation retired in PR #848.
  */
 export function instanceSlugFromBackend(
     backendUrl: string,
@@ -160,8 +161,8 @@ export function instanceSlugFromBackend(
  * (`Domain=.{apex}`) cookie — which the lobby backend sets — wouldn't match
  * `localhost` at all. No-op for a local backend, which sets neither attribute.
  *
- * Shared by every dev proxy that fronts an auth backend (vite.config.ts,
- * apps/lobby/vite.config.ts): cookie-attribute handling is auth-critical
+ * Shared by every dev proxy that fronts an auth backend (each app's
+ * vite.config.ts under apps/): cookie-attribute handling is auth-critical
  * plumbing, so a fix here must reach all bundles at once.
  */
 export const rewriteSetCookieForLocalhost: NonNullable<

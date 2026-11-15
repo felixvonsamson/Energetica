@@ -9,25 +9,6 @@ import { defineConfig } from "eslint/config";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 
-// The apps under apps/ are workspace packages of their own, so the package rules
-// below keep them apart from each other and from the combined app in src/.
-//
-// The one exception is an app's API types, which a package imports through `@api`
-// (see the shared package rules below). The alias resolves to the app's helpers file.
-const BOUNDARY_ZONES = [
-    {
-        target: "./packages",
-        from: "./src",
-        except: ["./types/api-helpers.ts", "./types/api-helpers.freeplay.ts"],
-        message: "Shared packages cannot import from an app.",
-    },
-    {
-        target: "./packages",
-        from: "./apps",
-        message: "Shared packages cannot import from an app.",
-    },
-];
-
 // The workspace packages in a folder. Only folders with a package.json count,
 // so stray files such as macOS's .DS_Store are skipped.
 const workspaces = (group) =>
@@ -40,8 +21,22 @@ const workspaces = (group) =>
         );
 const APPS = workspaces("apps");
 const PACKAGES = workspaces("packages");
+
+// Each app under apps/ is a workspace package of its own. The package rules below
+// keep the apps apart from each other, and this zone keeps shared packages from
+// reaching into any app.
+//
+// The one exception is an app's API types, which a package imports through `@api`
+// (see the shared package rules below). The alias resolves to the app's helpers file.
+const BOUNDARY_ZONES = [
+    {
+        target: "./packages",
+        from: "./apps",
+        except: APPS.map((name) => `./${name}/src/types/api-helpers.ts`),
+        message: "Shared packages cannot import from an app.",
+    },
+];
 const TSCONFIGS = [
-    "./tsconfig.json",
     ...APPS.map((name) => `./apps/${name}/tsconfig.json`),
     ...PACKAGES.map((name) => `./packages/${name}/tsconfig.json`),
 ];
@@ -51,22 +46,17 @@ export default defineConfig([
         ignores: [
             "node_modules/",
             "dist/",
-            "dist-app/",
             "apps/*/dist/",
             "*.config.ts",
             "*.config.js",
-            "src/service-worker.ts",
+            "apps/freeplay/src/service-worker.ts",
         ],
     },
     { settings: { react: { version: "detect" } } },
     ...tseslint.configs.recommended,
     react.configs.flat.recommended,
     {
-        files: [
-            "src/**/*.{ts,tsx}",
-            "apps/*/src/**/*.{ts,tsx}",
-            "packages/*/src/**/*.{ts,tsx}",
-        ],
+        files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {

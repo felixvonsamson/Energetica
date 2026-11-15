@@ -1,0 +1,242 @@
+/**
+ * Priority item component - displays a single facility in the priority list.
+ * Self-contained: fetches its own data, and owns its mutation logic for bump
+ * reordering and price editing.
+ */
+
+import { formatPower } from "@energetica/core/format-utils";
+import { Button } from "@energetica/ui/components/button";
+import { FacilityGauge } from "@energetica/ui/components/facility-gauge";
+import { cn } from "@energetica/ui/lib/utils";
+import { motion } from "framer-motion";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useMemo } from "react";
+
+import { ReadOnlyTooltip } from "@/components/lifecycle/read-only-tooltip";
+import { PriceInput } from "@/components/power-priorities/price-input";
+import { StatusBadge } from "@/components/power-priorities/status-badge";
+import type {
+    PowerPriorityItem,
+    ProductionStatus,
+    ConsumptionStatus,
+} from "@/components/power-priorities/types";
+import { AssetName } from "@/components/ui/asset-name";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
+import { useIsReadOnly } from "@/hooks/use-phase";
+import {
+    useUpdateElectricityPrices,
+    useUpdatePowerPriorityBump,
+} from "@/hooks/use-power-priorities";
+import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
+
+interface PriorityItemProps {
+    item: PowerPriorityItem;
+    canBumpUp: boolean;
+    canBumpDown: boolean;
+}
+
+export function PriorityItem({
+    item,
+    canBumpUp,
+    canBumpDown,
+}: PriorityItemProps) {
+    const updatePowerPriorityBump = useUpdatePowerPriorityBump();
+    const updateElectricityPrices = useUpdateElectricityPrices();
+    const readOnly = useIsReadOnly();
+
+    const { data: statusesData } = useFacilityStatuses();
+    const { data: facilitiesData } = useFacilities();
+    const { data: productionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sources",
+    });
+    const { data: consumptionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sinks",
+    });
+
+    const suffix = getPriorityItemDisplayName(item);
+
+    const status: ProductionStatus | ConsumptionStatus | null | undefined =
+        item.side === "ask"
+            ? statusesData?.production[item.type]
+            : statusesData?.consumption[item.type];
+
+    const isConsumption = item.side === "bid";
+    const isProduction = item.side === "ask";
+
+    const currentPowerMW =
+        item.side === "ask"
+            ? productionPowerLevels[item.type]
+            : consumptionPowerLevels[item.type];
+
+    const facilityUsage = useMemo(() => {
+        if (!facilitiesData) return null;
+        const storage = facilitiesData.storage_facilities.find(
+            (f) => f.facility === item.type,
+        );
+        if (storage) {
+            return item.side === "ask"
+                ? Math.max(0, storage.usage)
+                : Math.max(0, -storage.usage);
+        }
+        return (
+            [
+                ...facilitiesData.power_facilities,
+                ...facilitiesData.extraction_facilities,
+            ].find((f) => f.facility === item.type)?.usage ?? null
+        );
+    }, [facilitiesData, item.type, item.side]);
+
+    const handleBump = (direction: "up" | "down") => {
+        updatePowerPriorityBump.mutate({
+            side: item.side,
+            type: String(item.type),
+            direction: direction === "down" ? "increase" : "decrease",
+        });
+    };
+
+    const handlePriceCommit = async (newPrice: number) => {
+        if (item.side === "ask") {
+            await updateElectricityPrices.mutateAsync({
+                asks: [{ type: item.type, price: newPrice }],
+                bids: [],
+            });
+        } else {
+            await updateElectricityPrices.mutateAsync({
+                asks: [],
+                bids: [{ type: item.type, price: newPrice }],
+            });
+        }
+    };
+
+    const bumpButtons = (
+        <ReadOnlyTooltip readOnly={readOnly}>
+            <div className="inline-flex flex-col items-center">
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-6"
+                    onClick={() => handleBump("up")}
+                    disabled={
+                        !canBumpUp ||
+                        updatePowerPriorityBump.isPending ||
+                        readOnly
+                    }
+                    title="Move up (lower priority)"
+                    aria-label="Move up"
+                >
+                    <ChevronUp className="size-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-6"
+                    onClick={() => handleBump("down")}
+                    disabled={
+                        !canBumpDown ||
+                        updatePowerPriorityBump.isPending ||
+                        readOnly
+                    }
+                    title="Move down (higher priority)"
+                    aria-label="Move down"
+                >
+                    <ChevronDown className="size-4" />
+                </Button>
+            </div>
+        </ReadOnlyTooltip>
+    );
+
+    return (
+        <motion.tr
+            layout
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="h-13"
+        >
+            {/* Consumption side cell — bump buttons for bid rows, empty for ask */}
+            <td
+                className={cn(
+                    "py-1 px-2 text-center",
+                    isConsumption
+                        ? "bg-secondary rounded-l-lg"
+                        : "bg-transparent",
+                )}
+            >
+                {isConsumption ? bumpButtons : null}
+            </td>
+
+            {/* Facility name */}
+            <td
+                className={cn(
+                    "py-3 px-3 font-medium bg-secondary",
+                    isProduction && "rounded-l-lg",
+                )}
+            >
+                <div className="flex flex-col lg:flex-row lg:items-baseline lg:gap-1">
+                    <AssetName assetId={item.type} mode="short" />
+                    {suffix && (
+                        <span className="text-muted-foreground">{suffix}</span>
+                    )}
+                </div>
+            </td>
+
+            {/* Status badge */}
+            <td className="py-2 px-3 text-center bg-secondary">
+                <div className="inline-flex justify-center">
+                    <StatusBadge status={status} variant={"iconOnly"} />
+                </div>
+            </td>
+
+            {/* Power gauge (hidden on mobile) */}
+            <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
+                {facilityUsage !== null ? (
+                    <div className="w-30 mx-auto">
+                        <FacilityGauge
+                            facilityType={item.type}
+                            value={facilityUsage * 100}
+                        />
+                    </div>
+                ) : (
+                    <div className="w-30 mx-auto text-center text-xs">—</div>
+                )}
+            </td>
+
+            {/* Current power */}
+            <td className="py-3 px-3 text-right text-xs bg-secondary">
+                <span className="font-mono">
+                    {formatPower(currentPowerMW ?? 0)}
+                </span>
+            </td>
+
+            {/* Price */}
+            <td
+                className={cn(
+                    "py-0 px-3 text-center bg-secondary",
+                    isConsumption && "rounded-r-lg",
+                )}
+            >
+                <ReadOnlyTooltip readOnly={readOnly}>
+                    <PriceInput
+                        value={item.price}
+                        onCommit={handlePriceCommit}
+                        disabled={updateElectricityPrices.isPending || readOnly}
+                    />
+                </ReadOnlyTooltip>
+            </td>
+
+            {/* Production side cell — bump buttons for ask rows, empty for bid */}
+            <td
+                className={cn(
+                    "py-1 px-2 text-center",
+                    isProduction
+                        ? "bg-secondary rounded-r-lg"
+                        : "bg-transparent",
+                )}
+            >
+                {isProduction ? bumpButtons : null}
+            </td>
+        </motion.tr>
+    );
+}

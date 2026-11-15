@@ -2,8 +2,9 @@
 """Generate the OpenAPI schemas from the FastAPI apps without running a server.
 
 Writes one schema per app (``openapi-schema.<app>.json``) and one merged schema
-(``openapi-schema.json``), all next to this script. ``scripts/generate-types.sh`` turns each into a
-types file.
+(``openapi-schema.json``), all next to this script. ``scripts/generate-types.sh`` turns each app's
+schema into that app's types file. No frontend app uses the merged schema any more; #1183 deletes
+it.
 """
 
 import copy
@@ -95,9 +96,9 @@ def build_schemas() -> dict[str, dict]:
     """Build each app's schema and the merged schema, keyed by app name and ``"merged"``.
 
     Each app's schema describes only the routes that app serves and the error codes it can return.
-    The merged schema is the union of all three, and backs the single ``api.generated.ts`` that
-    every frontend bundle uses today: the game instance, the lobby and the landing. Later work
-    (#1171) moves each frontend app onto its own types file and deletes the merged one.
+    The merged schema is the union of all three. It used to back a single ``api.generated.ts``
+    shared by every frontend bundle. Each app now has its own types file, so nothing reads it, and
+    #1183 deletes it.
     """
     specs = {name: app_spec(name) for name in APPS}
 

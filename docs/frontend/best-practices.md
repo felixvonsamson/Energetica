@@ -12,7 +12,7 @@ Standards and patterns for the React migration.
 
 Keep components small and focused where possible.
 
-For components for routes, these can be directly defined in the route. If that component starts to get big, then breaking it up into sub components in that file is fine, e.g. [`@/routes/app/overviews/power.tsx`](/frontend/src/routes/app/overviews/power.tsx). If the route file starts getting too large, consider moving sub components to a feature specific component folder, e.g. [`@/components/chat`](/frontend/src/components/chat).
+For components for routes, these can be directly defined in the route. If that component starts to get big, then breaking it up into sub components in that file is fine, e.g. [`@/routes/app/overviews/power.tsx`](/frontend/apps/freeplay/src/routes/app/overviews/power.tsx). If the route file starts getting too large, consider moving sub components to a feature specific component folder, e.g. [`@/components/chat`](/frontend/apps/freeplay/src/components/chat).
 
 ## Styling
 
@@ -40,7 +40,7 @@ Use `useState` for component-local state:
 const [groupMembers, setGroupMembers] = useState<Player[]>([]);
 ```
 
-See [`NewGroupChatDialog.tsx`](/frontend/src/components/chat/new-group-chat-dialog.tsx) for a full example.
+See [`NewGroupChatDialog.tsx`](/frontend/apps/freeplay/src/components/chat/new-group-chat-dialog.tsx) for a full example.
 
 ### Server State
 
@@ -64,7 +64,7 @@ const { data, isLoading, error } = usePlayerMoney();
 
 ### Global State
 
-Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/src/contexts/theme-context.tsx) for a real example:
+Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/packages/ui/src/contexts/theme-context.tsx) for a real example:
 
 ```ts
 // @/contexts/ThemeContext.tsx

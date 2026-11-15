@@ -1,14 +1,9 @@
 {
+    // The frontend directory's own files: the shared Vite helpers, the configs and
+    // the root tests. Each app and package has its own tsconfig.
     "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "types": ["vite/client"],
-        // `@api` is how shared packages, such as @energetica/instance, reach this
-        // app's API types. The combined app uses the merged types.
-        "paths": {
-            "@/*": ["./src/*"],
-            "@api": ["./src/types/api-helpers.ts"]
-        }
+        "types": ["node"]
     },
-    "include": ["src"],
-    "exclude": ["**/*.mdx", "src/service-worker.ts"]
+    "include": ["*.ts"]
 }

@@ -10,7 +10,7 @@ Two questions decide every command:
 1. **Which surface?** There are three separate frontend bundles — **`app`** (the in-run game SPA),
    **`lobby`** (sign-up / login / run picker), and **`landing`** (the static marketing site) — and
    two backends — the **app** server (`main.py`, the game instance) and the **lobby** server
-   (`main_lobby.py`, server-wide auth). The scripts name the surface explicitly (`dev:app`,
+   (`main_lobby.py`, server-wide auth). The scripts name the surface explicitly (`dev:freeplay`,
    `dev:lobby`, `serve:app`, `serve:lobby`), never a bare `dev`/`serve`.
 
 2. **Where's the backend?** A frontend dev server can proxy to a **local** backend you're running,
@@ -26,16 +26,16 @@ whole repo.)
 
 ## Scenarios
 
-| I want to…                                                    | Command                                         | Backend used          |
-| ------------------------------------------------------------- | ----------------------------------------------- | --------------------- |
-| Change **lobby** UI against real data                         | `cd frontend && BACKEND=game bun run dev:lobby` | live game lobby       |
-| Change **app** (game) UI against real data (public/pre-login) | `cd frontend && BACKEND=game bun run dev:app`   | live game instance    |
-| **Authenticated app** work against live data                  | `BACKEND=game bun run dev`                      | live lobby + instance |
-| Work on the **landing** site                                  | `cd frontend && bun run dev:landing`            | none (static)         |
-| Full **local app** dev (frontend + backend)                   | `bun run dev`                                   | local lobby + app     |
-| Just the **lobby**, locally                                   | `bun run dev:lobby`                             | local lobby           |
-| **Backend** iteration, driven from the CLI                    | `bun run serve:lobby` + `bun run serve:app`     | local lobby + app     |
-| Run a **Workshop Run** locally                                | see [below](#running-a-workshop-run-locally)    | local lobby + app     |
+| I want to…                                                    | Command                                            | Backend used          |
+| ------------------------------------------------------------- | -------------------------------------------------- | --------------------- |
+| Change **lobby** UI against real data                         | `cd frontend && BACKEND=game bun run dev:lobby`    | live game lobby       |
+| Change **app** (game) UI against real data (public/pre-login) | `cd frontend && BACKEND=game bun run dev:freeplay` | live game instance    |
+| **Authenticated app** work against live data                  | `BACKEND=game bun run dev`                         | live lobby + instance |
+| Work on the **landing** site                                  | `cd frontend && bun run dev:landing`               | none (static)         |
+| Full **local app** dev (frontend + backend)                   | `bun run dev`                                      | local lobby + app     |
+| Just the **lobby**, locally                                   | `bun run dev:lobby`                                | local lobby           |
+| **Backend** iteration, driven from the CLI                    | `bun run serve:lobby` + `bun run serve:app`        | local lobby + app     |
+| Run a **Workshop Run** locally                                | see [below](#running-a-workshop-run-locally)       | local lobby + app     |
 
 `BACKEND=game` selects the live game deployment; `edu` and `ethz` select the other two (each maps to
 `frontend/.env.{deployment}`). Omit `BACKEND` for a local backend. To pin one specific instance or
@@ -47,8 +47,8 @@ No local backend — the dev server proxies to a deployment that already has rea
 
 ```bash
 cd frontend
-BACKEND=game bun run dev:lobby   # lobby SPA  → http://localhost:5174
-BACKEND=game bun run dev:app     # app SPA    → http://localhost:5173
+BACKEND=game bun run dev:lobby     # lobby SPA  → http://localhost:5174
+BACKEND=game bun run dev:freeplay  # app SPA    → http://localhost:5173
 ```
 
 The app config discovers the deployment's current instance subdomain from its public
@@ -61,7 +61,7 @@ in for real: its login POST is proxied, and the response's `Set-Cookie` is rewri
 
 The **app** dev server run _alone_ against a live backend can't authenticate: its "log in" bounce
 points at the local lobby dev server (:5174), and if nothing is running there the link dead-ends. So
-`BACKEND=game bun run dev:app` on its own is for the **public / pre-login** surface. For authenticated
+`BACKEND=game bun run dev:freeplay` on its own is for the **public / pre-login** surface. For authenticated
 app work against live data, run both frontends as one stack (next).
 
 ## Authenticated app work against a live backend
@@ -115,10 +115,10 @@ seeded **`demo` / `demo1234`**, and return to the app — the entry gate provisi
 Prefer separate terminals (independent logs, hot-reload per server)? Run the pieces yourself:
 
 ```bash
-bun run serve:lobby                 # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
-bun run serve:app                   # app backend    :8000  + its own lobby service
-cd frontend && bun run dev:lobby    # lobby frontend :5174
-cd frontend && bun run dev:app      # app frontend   :5173
+bun run serve:lobby                  # lobby backend  :8001  + lobby service (seeds the demo account + sample runs)
+bun run serve:app                    # app backend    :8000  + its own lobby service
+cd frontend && bun run dev:lobby     # lobby frontend :5174
+cd frontend && bun run dev:freeplay  # app frontend   :5173
 ```
 
 **Driving the backend from the CLI (no browser):** with the lobby running, mint a real session into
@@ -366,9 +366,9 @@ Run's `instance.json`, so you would repeat steps 1 and 2.
 **Frontend** (`cd frontend && bun run …`):
 
 ```bash
-dev:app       dev:lobby       dev:landing        # dev servers (prefix BACKEND=game|edu|ethz for a live backend)
-build:app     build:lobby     build:landing      build:all
-typecheck     lint            generate-types
+dev:freeplay     dev:lobby       dev:landing        # dev servers (prefix BACKEND=game|edu|ethz for a live backend)
+build:freeplay   build:lobby     build:landing      build:all
+typecheck        lint            generate-types
 ```
 
 **Backend & ops** (repo root, `bun run …`):

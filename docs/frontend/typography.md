@@ -136,5 +136,5 @@ Single change point—all data components update automatically.
 **See also:**
 
 - `CLAUDE.md` - Usage patterns and examples
-- `frontend/src/components/ui/typography-examples.tsx` - Visual reference
+- `frontend/apps/freeplay/src/routes/app/internal/typography.tsx` - Visual reference, at `/app/internal/typography`
 - `frontend/packages/ui/src/components/money.tsx` - Example of DataValue composition

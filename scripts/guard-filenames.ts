@@ -1,6 +1,6 @@
 /**
- * CI guard: every source file under `frontend/src`, `frontend/apps` and
- * `frontend/packages` is named in kebab-case (#971, decided in #942).
+ * CI guard: every source file under `frontend/apps` and `frontend/packages` is
+ * named in kebab-case (#971, decided in #942).
  *
  * This guard pins reality rather than imposing a preference. All 321 tracked
  * `.ts` / `.tsx` files under `frontend/src` already follow the grammar below;
@@ -35,17 +35,15 @@ import { frontendWorkspaces } from "./lib/frontend-workspaces";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const APPS = frontendWorkspaces("apps");
-// The sources of the combined app, of each app under apps/, and of every shared
+// The sources of each app under apps/ and of every shared
 // package. An app's top-level files are build configs, named by their tools.
 const SCAN_PREFIXES = [
-    "frontend/src/",
     ...APPS.map((name) => `frontend/apps/${name}/src/`),
     "frontend/packages/",
 ];
 
 /** Route trees where TanStack's file-based route syntax applies. */
 const ROUTE_TREES = [
-    "frontend/src/routes/",
     // Each app under apps/ keeps its route tree in src/routes.
     ...APPS.map((name) => `frontend/apps/${name}/src/routes/`),
 ];
