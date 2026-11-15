@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
+from energetica.freeplay.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.player import Player

@@ -6,6 +6,12 @@ writes and replays (:mod:`~energetica.freeplay.action_log`, :mod:`~energetica.fr
 live here (see #1055). They look generic, but each is justified by the persistent world's needs:
 a large player count, a per-tick scan of the whole game graph, and years of pickled state. Workshop Mode shares none of that, so it must not import this package.
 
+The persistent world's simulation and configuration live here too (see #1056): the per-tick
+production update (:mod:`~energetica.freeplay.production_update`), technology effects
+(:mod:`~energetica.freeplay.technology_effects`), the asset, achievement and climate-event
+configuration (:mod:`~energetica.freeplay.config`), and the tech-tree, construction and fuel
+enumerations (:mod:`~energetica.freeplay.enums`).
+
 Importing this package constructs the engine and binds it to :data:`energetica.freeplay.globals.engine`.
 That happens before any submodule loads, and it is load-bearing: the model base class registers every
 subclass into the engine at class-definition time, and many modules copy ``globals.engine`` into their

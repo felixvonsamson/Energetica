@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from energetica.config.assets import warehouse_capacity_for_level
-from energetica.enums import (
+from energetica.freeplay.config.assets import warehouse_capacity_for_level
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
@@ -26,7 +27,6 @@ from energetica.enums import (
     power_facility_types,
     str_to_project_type,
 )
-from energetica.freeplay.database.ongoing_project import OngoingProject
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError

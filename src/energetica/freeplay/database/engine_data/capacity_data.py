@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.freeplay.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:

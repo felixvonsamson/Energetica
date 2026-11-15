@@ -4,6 +4,8 @@ Pickle records each object's class by its module path, and reimports that path t
 object. ``instance/engine_data.pck`` holds the whole model store, so every copy of it written before
 #1055, including the ones inside checkpoints, names the entity models ``energetica.database.*``.
 Those modules now live under ``energetica.freeplay.database``, and nothing is left at the old path.
+Likewise, every copy written before #1056 names the enumerations the models hold
+``energetica.enums``, which now lives at ``energetica.freeplay.enums``.
 
 :func:`load` reads such a file by translating each old module path to its new one as the pickle
 names it. The next save writes the new paths, so a live instance only needs this once. Old
@@ -18,6 +20,7 @@ from typing import IO, Any
 # Old module path -> new module path. A key also covers every module beneath it.
 MOVED_MODULES = {
     "energetica.database": "energetica.freeplay.database",
+    "energetica.enums": "energetica.freeplay.enums",
 }
 
 

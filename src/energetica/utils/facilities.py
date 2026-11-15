@@ -3,8 +3,10 @@
 import math
 from typing import cast
 
-from energetica import technology_effects
-from energetica.enums import (
+from energetica.freeplay import technology_effects
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
     ClimateEventType,
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -12,8 +14,6 @@ from energetica.enums import (
     StorageFacilityType,
     power_facility_types,
 )
-from energetica.freeplay.database.active_facility import ActiveFacility
-from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError

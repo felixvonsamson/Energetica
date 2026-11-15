@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     HydroFacilityType,

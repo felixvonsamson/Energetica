@@ -1,12 +1,12 @@
 """Test upgrading active facilities."""
 
-from energetica.enums import (
-    Fuel,
-    FunctionalFacilityType,
-)
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.enums import (
+    Fuel,
+    FunctionalFacilityType,
+)
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
 from energetica.utils.map_helpers import confirm_location

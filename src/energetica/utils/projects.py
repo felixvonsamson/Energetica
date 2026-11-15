@@ -5,8 +5,11 @@ from collections.abc import Iterator
 
 import numpy as np
 
-from energetica import technology_effects
-from energetica.enums import (
+from energetica.freeplay import technology_effects
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     Fuel,
@@ -18,9 +21,6 @@ from energetica.enums import (
     TechnologyType,
     WorkerType,
 )
-from energetica.freeplay.database.active_facility import ActiveFacility
-from energetica.freeplay.database.ongoing_project import OngoingProject
-from energetica.freeplay.database.player import Player
 from energetica.freeplay.game_error import FreeplayErrorCode
 from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError

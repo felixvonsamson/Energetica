@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from energetica.freeplay.database import DBModel
 
 if TYPE_CHECKING:
-    from energetica.enums import Fuel
     from energetica.freeplay.database.player import Player
+    from energetica.freeplay.enums import Fuel
 
 
 @dataclass

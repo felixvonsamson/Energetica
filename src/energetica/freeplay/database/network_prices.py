@@ -9,7 +9,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.player import Player
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,

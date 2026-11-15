@@ -1,8 +1,8 @@
-"""Tests for the energetica.enums module."""
+"""Tests for the energetica.freeplay.enums module."""
 
 import pickle
 
-from energetica.enums import ExtractionFacilityType, Fuel, ProjectStatus, WorkerType, project_types
+from energetica.freeplay.enums import ExtractionFacilityType, Fuel, ProjectStatus, WorkerType, project_types
 
 
 def test_associated_fuel_and_mine() -> None:

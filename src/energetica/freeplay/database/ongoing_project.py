@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica.enums import FunctionalFacilityType, ProjectStatus, ProjectType, TechnologyType, WorkerType
 from energetica.freeplay.database import DBModel
+from energetica.freeplay.enums import FunctionalFacilityType, ProjectStatus, ProjectType, TechnologyType, WorkerType
 from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ class OngoingProject(DBModel):
         # technology_effects imports OngoingProject at module top, so a top-level import here
         # deadlocks whichever module is loaded first (surfaces as a collection-order-dependent
         # ImportError in the test suite). Both sides only need the other at call time.
-        from energetica import technology_effects
+        from energetica.freeplay import technology_effects
 
         self.multipliers = technology_effects.current_multipliers(
             self.player,
@@ -123,7 +123,7 @@ class OngoingProject(DBModel):
 
     def cancellation_refund(self) -> float:
         """Calculate the refund amount if this project were cancelled now."""
-        from energetica.enums import HydroFacilityType
+        from energetica.freeplay.enums import HydroFacilityType
 
         refund = (
             0.8

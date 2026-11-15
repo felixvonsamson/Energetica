@@ -6,8 +6,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from energetica.enums import Fuel
 from energetica.freeplay.database import DBModel
+from energetica.freeplay.enums import Fuel
 
 if TYPE_CHECKING:
     from energetica.freeplay.database.player import Player

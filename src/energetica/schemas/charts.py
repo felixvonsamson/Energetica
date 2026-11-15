@@ -4,7 +4,7 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field
 
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,

@@ -4,11 +4,17 @@ from typing import Iterable
 
 import pytest
 
-from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
 from energetica.freeplay.app import create_app
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.ongoing_project import OngoingProject
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
+    ControllableFacilityType,
+    FunctionalFacilityType,
+    ProjectStatus,
+    TechnologyType,
+    WorkerType,
+)
 from energetica.freeplay.globals import engine
 from energetica.identity.account import Account
 from energetica.kernel.game_error import GameError

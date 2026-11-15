@@ -6,7 +6,7 @@ how much it ran. The caller chooses the period: the persistent world passes the 
 that states its costs per round passes the cost per round.
 
 The fixed share is a property of each facility, so it lives in each mode's facility configuration, not
-here. The persistent world keeps it as ``O&M_fixed_share`` in :mod:`energetica.config.assets`.
+here. The persistent world keeps it as ``O&M_fixed_share`` in :mod:`energetica.freeplay.config.assets`.
 """
 
 from __future__ import annotations

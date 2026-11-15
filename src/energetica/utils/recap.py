@@ -17,9 +17,9 @@ from __future__ import annotations
 
 import logging
 
-from energetica.enums import Fuel, Renewable
 from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import Fuel, Renewable
 from energetica.identity import instance_config
 from energetica.identity.schemas.recap import Recap, RecapTile
 

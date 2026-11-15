@@ -78,7 +78,7 @@ class PlayerDetailStats(BaseModel):
 
     @classmethod
     def from_player(cls, player: Player) -> PlayerDetailStats:
-        from energetica.enums import FunctionalFacilityType, TechnologyType
+        from energetica.freeplay.enums import FunctionalFacilityType, TechnologyType
 
         metrics = player.progression_metrics
 

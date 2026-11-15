@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
-from energetica.enums import (
+from energetica.freeplay.enums import (
     ClimateEventType,
     FacilityType,
     Fuel,

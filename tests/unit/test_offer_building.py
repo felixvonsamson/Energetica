@@ -10,20 +10,20 @@ from __future__ import annotations
 
 import pytest
 
-import energetica.production_update as production_update
-from energetica.enums import (
+import energetica.freeplay.production_update as production_update
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.enums import (
     ControllableFacilityType,
     Fuel,
     FunctionalFacilityType,
     NonFacilityBidType,
     StorageFacilityType,
 )
-from energetica.freeplay.app import create_app
-from energetica.freeplay.database.map.hex_tile import HexTile
-from energetica.freeplay.database.player import Player
+from energetica.freeplay.production_update import calculate_generation_with_market, calculate_generation_without_market
 from energetica.identity.account import Account
 from energetica.init_test_players import add_asset
-from energetica.production_update import calculate_generation_with_market, calculate_generation_without_market
 from energetica.sim.market import init_market
 from energetica.utils.map_helpers import confirm_location
 
