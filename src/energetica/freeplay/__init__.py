@@ -9,8 +9,8 @@ a large player count, a per-tick scan of the whole game graph, and years of pick
 The persistent world's simulation and configuration live here too (see #1056): the per-tick
 production update (:mod:`~energetica.freeplay.production_update`), technology effects
 (:mod:`~energetica.freeplay.technology_effects`), the asset, achievement and climate-event
-configuration (:mod:`~energetica.freeplay.config`), and the tech-tree, construction and fuel
-enumerations (:mod:`~energetica.freeplay.enums`).
+configuration (:mod:`~energetica.freeplay.config`), and the game's enumerations
+(:mod:`~energetica.freeplay.enums`).
 
 Importing this package constructs the engine and binds it to :data:`energetica.freeplay.globals.engine`.
 That happens before any submodule loads, and it is load-bearing: the model base class registers every

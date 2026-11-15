@@ -52,6 +52,10 @@ src/energetica/       # Python/FastAPI backend
     ├── app.py        # Application factory (create_app)
     ├── game_engine.py  # Core game logic
     ├── database/     # Model base class, id-keyed store, and game state models
+    ├── production_update.py   # Per-tick production, demand and market update
+    ├── technology_effects.py  # How technology levels change facilities and prices
+    ├── config/       # Asset, achievement and climate-event configuration
+    ├── enums.py      # The game's enumerations (facility types, fuels, technologies, ...)
     ├── action_log.py # Reader for the action log the engine writes and replays
     └── data/         # The game's data tables (map, quiz, demand curves)
 ```

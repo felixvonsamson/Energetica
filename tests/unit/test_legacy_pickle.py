@@ -3,8 +3,9 @@
 Pickle records each object's class by its module path. Every ``instance/engine_data.pck`` and
 checkpoint written before #1055 names the entity models ``energetica.database.*``, which now live
 under ``energetica.freeplay.database``. Every one written before #1056 names the enumerations
-``energetica.enums``, which now live at ``energetica.freeplay.enums``. The pickles here are written at protocol 0, whose opcodes are
-plain text, so an old-layout pickle can be made by rewriting the module path in the bytes.
+``energetica.enums``, which now live at ``energetica.freeplay.enums``. The pickles here are written
+at protocol 0, whose opcodes are plain text, so an old-layout pickle can be made by rewriting the
+module path in the bytes.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ def _account() -> Account:
 
 
 def _to_old_layout(current: bytes) -> bytes:
-    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055."""
+    """Rewrite a protocol-0 pickle to name its classes as they were pickled before #1055 and #1056."""
     old_layout = current.replace(b"energetica.freeplay.database", b"energetica.database")
     old_layout = old_layout.replace(b"energetica.freeplay.enums", b"energetica.enums")
     assert b"energetica.freeplay" not in old_layout
