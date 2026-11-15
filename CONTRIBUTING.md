@@ -4,8 +4,7 @@ Thanks for your interest in improving Energetica!
 
 You can contribute to the codebase, but there are plenty of other ways to contribute that we really value. Your ideas and suggestions are most welcome.
 
-If you want to experiment with making changes to the yourself, see [./docs/getting-started/installation.md](/docs/getting-started/installation.md) to get started.
-n your machine to run and develop the code.
+If you want to make changes to the code yourself, see [./docs/getting-started/installation.md](/docs/getting-started/installation.md) to set it up on your machine. [The project structure overview](/docs/architecture/overview.md) explains where everything lives.
 
 This guide explains how to propose changes, report issues, and submit code in a way that keeps the project healthy and maintainable.
 
@@ -90,14 +89,16 @@ A VS Code task "run server" is configured in `.vscode/tasks.json`—use Command 
 
 ## Frontend Development
 
+The frontend is a React and TypeScript app built with Vite, in `frontend/`. From the repo root:
+
 ```
-cd frontend
-bun install
-bun dev  # Vite dev server
-bun build
+bun run dev            # the persistent world and the lobby, frontends and backends
+bun run dev:workshop   # the same, with the Workshop's frontend, for a local Workshop Run
+bun run dev:lobby      # the lobby alone
 ```
 
-The React frontend is in active development; some legacy vanilla JS / p5.js + Jinja pieces may remain during migration.
+See [Local development](/docs/getting-started/local-development.md) for the other ways to run
+it, and [the project structure overview](/docs/architecture/overview.md) § Frontend for its layout.
 
 ## Testing
 
@@ -152,7 +153,7 @@ of its suite. Add a new helper when the same setup keeps repeating across test f
 Configured via `pyproject.toml`.
 
 - Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
-  `tests/`, `scripts/`, `tools/`, `main.py`, `main_lobby.py` — and both run as
+  `tests/`, `scripts/`, `tools/` and the three `main*.py` launchers — and both run as
   the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
@@ -194,8 +195,8 @@ the main checkout.
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120
 - Docstring style: If docstring fits on one line, open & close quotes on that line; otherwise use multi-line form with triple quotes on their own lines.
-- JS: use VS Code default formatter / Prettier (see `.prettierrc.json`)
-- Jinja: use `djLint` for template formatting.
+- TypeScript, Markdown and the other non-Python files: Prettier (see `prettier.config.mjs`), run
+  with `bun run format`.
 
 ### Pre-Commit Hooks
 
