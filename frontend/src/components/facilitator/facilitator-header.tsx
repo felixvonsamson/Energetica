@@ -21,7 +21,7 @@ import { ThemeToggle } from "@energetica/ui/components/theme-toggle";
 
 const NAV_LINKS = [
     { to: "/app/facilitator", label: "Join link" },
-    { to: "/app/facilitator/roster", label: "Roster" },
+    { to: "/app/facilitator/players", label: "Players" },
 ] as const;
 
 export function FacilitatorHeader() {

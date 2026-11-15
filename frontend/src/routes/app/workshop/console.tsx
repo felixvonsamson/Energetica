@@ -85,7 +85,7 @@ function AccessCard() {
                 <CardTitle>Access</CardTitle>
                 <TypographyMuted>
                     Who can enter this Run: share the join link or its QR code,
-                    open or close it, and add or remove players on the roster.
+                    open or close it, and add or remove players.
                 </TypographyMuted>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
@@ -93,7 +93,7 @@ function AccessCard() {
                     <Link to="/app/facilitator">Join link & QR code</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                    <Link to="/app/facilitator/roster">Roster</Link>
+                    <Link to="/app/facilitator/players">Players</Link>
                 </Button>
             </CardContent>
         </Card>

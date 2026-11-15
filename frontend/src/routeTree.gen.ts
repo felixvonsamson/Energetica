@@ -44,7 +44,7 @@ import { Route as AppFacilitiesManageRouteImport } from './routes/app/facilities
 import { Route as AppFacilitiesFunctionalRouteImport } from './routes/app/facilities/functional'
 import { Route as AppFacilitiesExtractionRouteImport } from './routes/app/facilities/extraction'
 import { Route as AppFacilitatorSlipsRouteImport } from './routes/app/facilitator/slips'
-import { Route as AppFacilitatorRosterRouteImport } from './routes/app/facilitator/roster'
+import { Route as AppFacilitatorPlayersRouteImport } from './routes/app/facilitator/players'
 import { Route as AppDashboardQuizRouteImport } from './routes/app/dashboard/quiz'
 import { Route as AppCommunityResourceMarketRouteImport } from './routes/app/community/resource-market'
 import { Route as AppCommunityMessagesRouteImport } from './routes/app/community/messages'
@@ -232,9 +232,9 @@ const AppFacilitatorSlipsRoute = AppFacilitatorSlipsRouteImport.update({
   path: '/app/facilitator/slips',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppFacilitatorRosterRoute = AppFacilitatorRosterRouteImport.update({
-  id: '/app/facilitator/roster',
-  path: '/app/facilitator/roster',
+const AppFacilitatorPlayersRoute = AppFacilitatorPlayersRouteImport.update({
+  id: '/app/facilitator/players',
+  path: '/app/facilitator/players',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppDashboardQuizRoute = AppDashboardQuizRouteImport.update({
@@ -301,7 +301,7 @@ export interface FileRoutesByFullPath {
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
-  '/app/facilitator/roster': typeof AppFacilitatorRosterRoute
+  '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
   '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
@@ -347,7 +347,7 @@ export interface FileRoutesByTo {
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
-  '/app/facilitator/roster': typeof AppFacilitatorRosterRoute
+  '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
   '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
@@ -395,7 +395,7 @@ export interface FileRoutesById {
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
   '/app/dashboard/quiz': typeof AppDashboardQuizRoute
-  '/app/facilitator/roster': typeof AppFacilitatorRosterRoute
+  '/app/facilitator/players': typeof AppFacilitatorPlayersRoute
   '/app/facilitator/slips': typeof AppFacilitatorSlipsRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
@@ -444,7 +444,7 @@ export interface FileRouteTypes {
     | '/app/community/messages'
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
-    | '/app/facilitator/roster'
+    | '/app/facilitator/players'
     | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
@@ -490,7 +490,7 @@ export interface FileRouteTypes {
     | '/app/community/messages'
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
-    | '/app/facilitator/roster'
+    | '/app/facilitator/players'
     | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
@@ -537,7 +537,7 @@ export interface FileRouteTypes {
     | '/app/community/messages'
     | '/app/community/resource-market'
     | '/app/dashboard/quiz'
-    | '/app/facilitator/roster'
+    | '/app/facilitator/players'
     | '/app/facilitator/slips'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
@@ -584,7 +584,7 @@ export interface RootRouteChildren {
   AppCommunityMapRoute: typeof AppCommunityMapRoute
   AppCommunityMessagesRoute: typeof AppCommunityMessagesRoute
   AppCommunityResourceMarketRoute: typeof AppCommunityResourceMarketRoute
-  AppFacilitatorRosterRoute: typeof AppFacilitatorRosterRoute
+  AppFacilitatorPlayersRoute: typeof AppFacilitatorPlayersRoute
   AppFacilitatorSlipsRoute: typeof AppFacilitatorSlipsRoute
   AppFacilitiesExtractionRoute: typeof AppFacilitiesExtractionRoute
   AppFacilitiesFunctionalRoute: typeof AppFacilitiesFunctionalRoute
@@ -858,11 +858,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFacilitatorSlipsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/facilitator/roster': {
-      id: '/app/facilitator/roster'
-      path: '/app/facilitator/roster'
-      fullPath: '/app/facilitator/roster'
-      preLoaderRoute: typeof AppFacilitatorRosterRouteImport
+    '/app/facilitator/players': {
+      id: '/app/facilitator/players'
+      path: '/app/facilitator/players'
+      fullPath: '/app/facilitator/players'
+      preLoaderRoute: typeof AppFacilitatorPlayersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/dashboard/quiz': {
@@ -980,7 +980,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppCommunityMapRoute: AppCommunityMapRoute,
   AppCommunityMessagesRoute: AppCommunityMessagesRoute,
   AppCommunityResourceMarketRoute: AppCommunityResourceMarketRoute,
-  AppFacilitatorRosterRoute: AppFacilitatorRosterRoute,
+  AppFacilitatorPlayersRoute: AppFacilitatorPlayersRoute,
   AppFacilitatorSlipsRoute: AppFacilitatorSlipsRoute,
   AppFacilitiesExtractionRoute: AppFacilitiesExtractionRoute,
   AppFacilitiesFunctionalRoute: AppFacilitiesFunctionalRoute,
