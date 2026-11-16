@@ -24,8 +24,8 @@ import {
 import { useState } from "react";
 
 import megawattTimesExample from "@/assets/megawatt_times_example.webp";
-import facilityCards from "@/assets/workshop_facility_cards.webp";
 import roundLoop from "@/assets/workshop_round_loop.webp";
+import { FacilityCardShowcase } from "@/components/facility-card-showcase";
 import { HomeLayout } from "@/components/home-layout";
 import { workshopEnquiryHref } from "@/lib/contact";
 
@@ -169,14 +169,7 @@ export function WorkshopPage() {
     return (
         <HomeLayout>
             <div className="flex flex-col gap-20 px-6 lg:px-8">
-                {/* Banner image */}
-                <section className="max-w-6xl mx-auto w-full">
-                    <img
-                        src={facilityCards}
-                        alt="Five facility cards from the game's catalog, each with its price tag: PV solar, offshore wind turbine, lithium-ion batteries, nuclear reactor and coal burner"
-                        className="w-full"
-                    />
-                </section>
+                <FacilityCardShowcase />
 
                 {/* Header */}
                 <section className="flex flex-col items-center gap-6 max-w-3xl mx-auto text-center">
