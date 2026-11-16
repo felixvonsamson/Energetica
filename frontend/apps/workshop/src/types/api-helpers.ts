@@ -29,7 +29,7 @@ export type ApiResponse<
  * Extract the request body type for a specific API endpoint and method.
  *
  * @example
- *     type LoginBody = ApiRequestBody<"/auth/login", "post">;
+ *     type PickBody = ApiRequestBody<"/api/v1/workshop/selection", "post">;
  */
 export type ApiRequestBody<
     Path extends keyof paths,

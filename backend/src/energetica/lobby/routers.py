@@ -73,7 +73,7 @@ def signup(request: Request, request_data: SignupRequest, service: LobbyService)
 
 
 @auth_router.post(":change-password", include_in_schema=False)
-def change_password_form(
+def change_password(
     account: CurrentAccount,
     old_password: Annotated[str, Form()],
     new_password: Annotated[str, Form()],

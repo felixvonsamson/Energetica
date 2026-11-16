@@ -6,7 +6,7 @@ Note that there is an intention for players to be able to use the API themselves
 
 ## Design: AIP-136
 
-Action routes are AIP-136 custom methods with kebab-case verbs (`/asks/{ask_id}:purchase`); `test_action_routes_are_custom_methods` in `backend/tests/integration/test_route_surface.py` enforces the rule and explains it.
+Action routes are [AIP-136](https://google.aip.dev/136) custom methods with kebab-case verbs (`/asks/{ask_id}:purchase`); `test_action_routes_are_custom_methods` in `backend/tests/integration/test_route_surface.py` enforces the rule and explains it.
 
 ## Backend patterns
 

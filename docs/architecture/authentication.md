@@ -38,12 +38,16 @@ To authenticate via API:
 
 ## Backend Implementation
 
-**Entry point:** `energetica/freeplay/routers/auth.py`
+**Lobby:** `energetica/lobby/routers.py`
 
 - `POST /auth:login` - Validates credentials, sets session cookie
-- `GET /auth/me` - Returns current user
 - `POST /auth:signup` - Creates new account
 - `POST /auth:change-password` - Changes password
+- `POST /auth:logout` - Clears the session cookie
+
+**Instance:** `energetica/freeplay/routers/auth.py`
+
+- `GET /auth/me` - Returns current user
 
 **Entry gate:** `resolve_entry_account` in `energetica/identity/web.py` checks the session cookie
 and this instance's access policy. The persistent world's `GET /auth/me` and Workshop's

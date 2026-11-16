@@ -321,7 +321,8 @@ def _route_shape_violations(app: FastAPI) -> list[str]:
 
 @pytest.mark.parametrize("app_name", APPS)
 def test_action_routes_are_custom_methods(apps: dict[str, FastAPI], app_name: str) -> None:
-    """An action route, meaning a ``POST`` that is not a plain create, is an AIP-136 custom method:
+    """An action route, meaning a ``POST`` that is not a plain create, is a custom method as
+    defined by AIP-136 (Google's API design rule for custom methods, https://google.aip.dev/136):
     ``…/{id}:verb`` on one resource, or ``…:verb`` on a collection.
 
     A plain create posts to a path that ends in a literal segment and that also answers ``GET``,
