@@ -44,7 +44,16 @@ class AutoIDDict(Generic[T], dict[int, T]):
 
 @dataclass
 class DBModel:
-    """Base class for all managed objects in the database."""
+    """
+    Base class for all managed objects in the database.
+
+    Every subclass is pickled into the save, so its fields are part of the save's format.
+    Unpickling restores the attributes an object was saved with and does not run ``__init__``, so
+    an object from an older save lacks every field added since. A field with a plain default
+    (``= None``) falls back to the class attribute, but a field with no default or a
+    ``default_factory`` is missing, and the first read of it raises ``AttributeError``. Give such a
+    field a default in the subclass's ``__setstate__``, as ``Player`` and ``Network`` do.
+    """
 
     id: int = field(init=False)
 

@@ -124,7 +124,7 @@ Subdomain pattern: `{instance}.{server-domain}` — e.g. `autumn-2025.energetica
 
 The **apex domain always serves the landing page**, never an instance directly.
 
-**Run vs instance.** These were long used as synonyms, with "instance" the internal term and "run" the player-facing one. Since #1313 they are two related things: the **run** is the game (its name, mode, access, members and schedule), which the lobby service keeps in `lobby.db`, and the **instance** is the deployment it is played on (its process, subdomain, certificate and files), which the server keeps. Code and data about the game say "run"; configs, scripts, paths and systemd units about the deployment say "instance". See `CONTEXT.md` § Accounts & users.
+**Run vs instance.** These were long used as synonyms, with "instance" the internal term and "run" the player-facing one. Since #1313 they are two related things: the **run** is the game (its name, mode, access, members and schedule), which the lobby service keeps in `lobby.db`, and the **instance** is the deployment it is played on (its process, subdomain, certificate and files), which the server keeps. Code and data about the game say "run"; configs, scripts, paths and systemd units about the deployment say "instance". See the [Accounts & users glossary](../../backend/src/energetica/identity/GLOSSARY.md).
 
 **Note on path collisions.** Today the engine working directory is named `instance/` per Flask convention (`/var/www/energetica-{slug}/instance/engine_data.pck`). This is unrelated to the deployment-unit term `instance` and is left in place — the duplicate word in `energetica-{instance}/instance/engine_data.pck` is awkward but not ambiguous in context.
 

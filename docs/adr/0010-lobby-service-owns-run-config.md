@@ -45,7 +45,7 @@ lobby service. The file, the fragments and `instances.json` are retired.
   before it can reach the service. At start-up the run checks that the two agree.
 
 A **run** is the game, which the lobby keeps and which outlives its **instance**, the deployment
-it is played on (`CONTEXT.md` § Accounts & users).
+it is played on (`backend/src/energetica/identity/GLOSSARY.md`).
 
 ## Considered options
 

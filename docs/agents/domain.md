@@ -4,10 +4,10 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root — the project-wide context glossary. It's
-  organized into named contexts (Persistence & Replay, Electricity-market
-  simulation, Accounts & users, Real-time sync, Frontend); read the sections
-  relevant to your topic.
+- **`GLOSSARY-MAP.md`** at the repo root — the index of the project's contexts
+  (Run modes, Persistence & Replay, Accounts & users, Workshop Mode) and how they
+  relate. Each context has its own `GLOSSARY.md` next to the package that owns it,
+  under `backend/src/energetica/`; read the ones relevant to your topic.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in.
 - **`docs/` topic tree** — deeper reference for the area you're working in:
   - `docs/architecture/` — api, authentication, error-handling, lobby, overview,
@@ -26,13 +26,27 @@ when terms or decisions actually get resolved.
 
 ## File structure
 
-Single-context: one root `CONTEXT.md` (with per-context sections), `docs/adr/` for
-decisions, and a topic-organized `docs/` reference tree.
+Multi-context: a root `GLOSSARY-MAP.md`, one `GLOSSARY.md` per context beside its
+package, `docs/adr/` for decisions, and a topic-organized `docs/` reference tree.
+
+```
+/
+├── GLOSSARY-MAP.md
+├── docs/adr/
+└── backend/src/energetica/
+    ├── GLOSSARY.md              ← Run modes
+    ├── freeplay/GLOSSARY.md     ← Persistence & Replay
+    ├── identity/GLOSSARY.md     ← Accounts & users
+    └── workshop/GLOSSARY.md     ← Workshop Mode
+```
+
+Glossaries hold vocabulary only. An invariant belongs in the code it constrains, as a
+docstring or comment, where someone about to break it will see it.
 
 ## Use the glossary's vocabulary
 
 When your output names a domain concept (in an issue title, a refactor proposal, a
-hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to
+hypothesis, a test name), use the term as defined in its context's `GLOSSARY.md`. Don't drift to
 synonyms the glossary explicitly avoids.
 
 If the concept you need isn't in the glossary yet, that's a signal — either you're

@@ -8,7 +8,7 @@ Name_?". A public run had no equivalent — clicking it in the picker (or follow
 link) landed straight on the settle page (tile picking) via the entry gate's silent
 auto-provision, with no confirmation in between.
 
-That silence is also why `instance_membership` (ADR-0002/CONTEXT.md, "membership = settled")
+That silence is also why `instance_membership` (ADR-0002 and `backend/src/energetica/identity/GLOSSARY.md`, "membership = settled")
 originally excluded a merely-provisioned account from "your runs": a public run's entry gate
 auto-provisions on every authenticated visit, including an idle click that goes nowhere, so
 counting provisioning as membership would have cluttered "your runs" with runs never actually
@@ -88,4 +88,4 @@ run, so "joined" means one consistent thing everywhere: the explicit click, neve
   decision — moving it onto `instance_membership` alongside the public-run join model it now
   shares a schema with is a follow-up, not part of this change. **Done in ADR-0007.**
 - `docs/architecture/lobby.md`'s `instance_membership` schema and flows, and
-  `CONTEXT.md`'s "Joined a run" / membership-ambiguity entries, are updated alongside this ADR.
+  `backend/src/energetica/identity/GLOSSARY.md`'s "Joined a run" / membership-ambiguity entries, are updated alongside this ADR.

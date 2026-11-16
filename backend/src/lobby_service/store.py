@@ -97,6 +97,10 @@ def create_account(*, username: str, pwhash: str, expires_at: datetime | None = 
     """
     Insert a new account and return its ``account_id``. With ``expires_at``, it is a temporary
     account, which :func:`delete_expired_accounts` deletes once that time has passed.
+
+    A username is unique on this server: the table's ``UNIQUE`` constraint enforces it, and a clash
+    raises :class:`UsernameTakenError`. Each server has its own ``lobby.db``, so the same username
+    on two servers names two unrelated accounts.
     """
     stored_expiry = format_timestamp(expires_at) if expires_at is not None else None
     with _connect() as conn:
@@ -343,8 +347,10 @@ EDITABLE_RUN_FIELDS = frozenset(
 _CLEARABLE_RUN_FIELDS = frozenset({"join_token", "freeze_at", "ended_at"})
 """The editable fields a write may set to ``None``. Every other one always has a value."""
 
-# The rule ``setup-instance.sh`` applies. "landing" and "lobby" name the apex site and the lobby,
-# which share the namespace of run subdomains and directories.
+# The slug pattern ``setup-instance.sh`` applies: lowercase kebab-case, at most 63 characters,
+# because the slug is the run's subdomain and so must be a DNS label. "landing" and "lobby" name the
+# apex site and the lobby, which share the namespace of run subdomains and directories.
+# ``setup-instance.sh`` also reserves "lobby-service" and "reaper", which this set does not.
 _SLUG_PATTERN = re.compile(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?")
 _RESERVED_SLUGS = frozenset({"landing", "lobby"})
 
