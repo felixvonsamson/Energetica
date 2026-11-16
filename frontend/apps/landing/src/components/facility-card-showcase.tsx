@@ -36,27 +36,33 @@ const tooltipInputs: TooltipInputs = {
 const ALT =
     "Five facility cards from the game's catalog, each with its price tag: PV solar, offshore wind turbine, lithium-ion batteries, nuclear reactor and coal burner";
 
-/** A card's width (`w-60`) and the gap between cards (`gap-6`), in px. */
-const CARD_WIDTH = 240;
-const GAP = 24;
-/** The row's width at full size, gaps included. */
+/**
+ * A card's width (`w-60`) and the gap between cards (`gap-6`), in rem. They are
+ * in rem, not px, so they grow with the browser's default font size.
+ */
+const CARD_WIDTH = 15;
+const GAP = 1.5;
+/** The row's width at full size, gaps included, in rem. */
 const ROW_WIDTH =
     facilities.length * CARD_WIDTH + (facilities.length - 1) * GAP;
 /** Below this zoom the cards are too small to read, so the row scrolls. */
 const MIN_ZOOM = 0.6;
 
-/** The element's content width, kept up to date as it resizes. */
-function useWidth<T extends HTMLElement>() {
+/** The element's content width in rem, kept up to date as it resizes. */
+function useWidthInRem<T extends HTMLElement>() {
     const ref = useRef<T>(null);
     const [width, setWidth] = useState<number | null>(null);
     useLayoutEffect(() => {
         const element = ref.current;
         if (!element) return;
+        const toRem = (px: number) =>
+            px /
+            parseFloat(getComputedStyle(document.documentElement).fontSize);
         // Measure now, before the first paint, so the row never shows at the
         // wrong size. The observer's first report comes a frame later.
-        setWidth(element.clientWidth);
+        setWidth(toRem(element.clientWidth));
         const observer = new ResizeObserver(([entry]) => {
-            if (entry) setWidth(entry.contentRect.width);
+            if (entry) setWidth(toRem(entry.contentRect.width));
         });
         observer.observe(element);
         return () => observer.disconnect();
@@ -65,7 +71,7 @@ function useWidth<T extends HTMLElement>() {
 }
 
 export function FacilityCardShowcase() {
-    const [ref, width] = useWidth<HTMLElement>();
+    const [ref, width] = useWidthInRem<HTMLElement>();
     const zoom = width === null ? 1 : Math.min(1, width / ROW_WIDTH);
     const scrolls = zoom < MIN_ZOOM;
     return (
@@ -83,7 +89,7 @@ export function FacilityCardShowcase() {
             <div
                 className={
                     scrolls
-                        ? "flex snap-x snap-mandatory gap-6 overflow-x-auto px-[calc(50%-120px)] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden *:snap-center"
+                        ? "flex snap-x snap-mandatory gap-6 overflow-x-auto px-[calc(50%-7.5rem)] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden *:snap-center"
                         : "flex gap-6"
                 }
                 style={scrolls ? undefined : { zoom }}
