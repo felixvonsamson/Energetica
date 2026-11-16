@@ -82,7 +82,7 @@ def delete_notification(
     player.delete_notification(notification)
 
 
-@router.post(":markAllRead", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(":mark-all-read", status_code=status.HTTP_204_NO_CONTENT)
 def marked_all_read(player: Annotated[Player, Depends(get_settled_player)]) -> None:
     """Mark all notification as read."""
     player.notifications_read()

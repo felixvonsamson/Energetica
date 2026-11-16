@@ -264,7 +264,7 @@ done
 ```bash
 for user in prof alice bob; do
     COOKIE_JAR=.energetica-dev/$user.txt bash scripts/dev-login.sh "$user" "${user}1234"
-    curl -s -b .energetica-dev/$user.txt -X POST localhost:8000/api/v1/workshop/enter; echo
+    curl -s -b .energetica-dev/$user.txt -X POST localhost:8000/api/v1/workshop:enter; echo
 done
 ```
 
@@ -296,7 +296,7 @@ demand averages about 80 MW per player and peaks near 130 MW in winter, so give 
 160 MW or more. Five gas burners (38 MW each) do, within the 50M starting budget:
 
 ```bash
-curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # opens the Investment phase
+curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session:advance   # opens the Investment phase
 for user in alice bob; do
     for facility in gas_burner gas_burner gas_burner gas_burner gas_burner; do
         curl -s -o /dev/null -w '%{http_code} ' -b .energetica-dev/$user.txt -X POST \
@@ -316,9 +316,9 @@ bids panel, set it to manual before the second advance here, with
 `-d '{"fuel_procurement": "manual"}'`.
 
 ```bash
-curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # closes the Investment phase
+curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session:advance   # closes the Investment phase
 sleep 2                                                                                                   # the purchase happens just after
-curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance   # spring's window opens
+curl -s -o /dev/null -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session:advance   # spring's window opens
 curl -s -b .energetica-dev/alice.txt localhost:8000/api/v1/workshop/fleet; echo                           # Alice's plants
 ```
 
@@ -334,7 +334,7 @@ where it is or is refused with `WORKSHOP_SETTLEMENT_RUNNING`, so it cannot skip 
 checkpoint() {  # the checkpoint in an answer, or "busy" for a refused advance
     .venv/bin/python -c 'import json, sys; print(json.load(sys.stdin).get("checkpoint", "busy"))'
 }
-advance() { curl -s -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session/advance; }
+advance() { curl -s -b .energetica-dev/prof.txt -X POST localhost:8000/api/v1/workshop/session:advance; }
 
 period=$(curl -s -b .energetica-dev/prof.txt localhost:8000/api/v1/workshop/session | checkpoint)
 advance >/dev/null                          # closes the window

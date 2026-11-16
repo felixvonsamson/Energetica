@@ -20,8 +20,8 @@ export const workshopApi = {
      * player after that. Returns the role either way.
      */
     enter: () =>
-        apiClient.post<ApiResponse<"/api/v1/workshop/enter", "post">>(
-            "/workshop/enter",
+        apiClient.post<ApiResponse<"/api/v1/workshop:enter", "post">>(
+            "/workshop:enter",
         ),
 
     /**
@@ -29,8 +29,8 @@ export const workshopApi = {
      * session after the move.
      */
     advanceSession: () =>
-        apiClient.post<ApiResponse<"/api/v1/workshop/session/advance", "post">>(
-            "/workshop/session/advance",
+        apiClient.post<ApiResponse<"/api/v1/workshop/session:advance", "post">>(
+            "/workshop/session:advance",
         ),
 
     /**
@@ -39,8 +39,8 @@ export const workshopApi = {
      */
     extendPhase: (minutes: number) =>
         apiClient.post<
-            ApiResponse<"/api/v1/workshop/session/phase/extend", "post">
-        >("/workshop/session/phase/extend", { minutes }),
+            ApiResponse<"/api/v1/workshop/session:extend-phase", "post">
+        >("/workshop/session:extend-phase", { minutes }),
 
     /**
      * How long each timed phase is open when it starts (#996). Facilitator

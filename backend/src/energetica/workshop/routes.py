@@ -154,7 +154,7 @@ def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
     )
 
 
-@router.post("/enter")
+@router.post(":enter")
 def enter(standing: Annotated[Standing, Depends(resolve_entry)], session: Session) -> WorkshopEntryOut:
     """Enter the Run. A player is placed into its shared Network the first time and gets the same
     player every time after. A facilitator runs the session rather than plays, so is placed nowhere. In a Run with
@@ -179,7 +179,7 @@ def get_session_state(_: Annotated[Account, Depends(resolve_entry_account)], ses
 
 # Async so it can send through Socket.IO directly. The advance itself waits on a lock and writes the
 # session file, so it runs on a worker thread to keep the event loop free.
-@router.post("/session/advance")
+@router.post("/session:advance")
 async def advance_session(
     _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request
 ) -> WorkshopSessionOut:
@@ -198,7 +198,7 @@ async def advance_session(
     return _session_out(session)
 
 
-@router.post("/session/phase/extend")
+@router.post("/session:extend-phase")
 async def extend_phase(
     _: Annotated[Account, Depends(get_facilitator)],
     session: Session,

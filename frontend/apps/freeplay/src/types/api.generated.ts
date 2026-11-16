@@ -1080,6 +1080,22 @@ export interface paths {
          */
         get: operations["get_join_link_api_v1_join__token__get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/join/{token}:confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * Confirm Join
          * @description Confirm joining: join the signed-in visitor to this run through the lobby service.
@@ -1093,7 +1109,7 @@ export interface paths {
          *     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
          *     client.
          */
-        post: operations["confirm_join_api_v1_join__token__post"];
+        post: operations["confirm_join_api_v1_join__token__confirm_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1142,7 +1158,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/map/settle": {
+    "/api/v1/map:settle": {
         parameters: {
             query?: never;
             header?: never;
@@ -1227,7 +1243,7 @@ export interface paths {
         patch: operations["patch_notification_api_v1_notifications__notification_id__patch"];
         trace?: never;
     };
-    "/api/v1/notifications:markAllRead": {
+    "/api/v1/notifications:mark-all-read": {
         parameters: {
             query?: never;
             header?: never;
@@ -1240,7 +1256,7 @@ export interface paths {
          * Marked All Read
          * @description Mark all notification as read.
          */
-        post: operations["marked_all_read_api_v1_notifications_markAllRead_post"];
+        post: operations["marked_all_read_api_v1_notifications_mark_all_read_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6008,7 +6024,7 @@ export interface operations {
             };
         };
     };
-    confirm_join_api_v1_join__token__post: {
+    confirm_join_api_v1_join__token__confirm_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -6243,7 +6259,7 @@ export interface operations {
             };
         };
     };
-    marked_all_read_api_v1_notifications_markAllRead_post: {
+    marked_all_read_api_v1_notifications_mark_all_read_post: {
         parameters: {
             query?: never;
             header?: never;

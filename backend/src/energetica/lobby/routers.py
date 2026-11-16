@@ -35,7 +35,7 @@ lobby_router = APIRouter(prefix="/lobby", tags=["Lobby"])
 CurrentAccount = Annotated[SessionOut, Depends(require_current_account)]
 
 
-@auth_router.post("/login", status_code=status.HTTP_200_OK)
+@auth_router.post(":login", status_code=status.HTTP_200_OK)
 def login(request: Request, request_data: LoginRequest, service: LobbyService) -> Response:
     """Have the lobby service check the credentials and mint a session, then set it as the
     parent-domain session cookie.
@@ -53,7 +53,7 @@ def login(request: Request, request_data: LoginRequest, service: LobbyService) -
     return set_lobby_session_cookie(response, token, request)
 
 
-@auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
+@auth_router.post(":signup", status_code=status.HTTP_201_CREATED)
 def signup(request: Request, request_data: SignupRequest, service: LobbyService) -> Response:
     """Create a server-wide account (only) and auto-log-in. Gated by the server-wide signup toggle;
     joining a run is a later, separate act gated at the instance's entry gate (ADR-0003).
@@ -72,7 +72,7 @@ def signup(request: Request, request_data: SignupRequest, service: LobbyService)
     return set_lobby_session_cookie(response, created.token, request)
 
 
-@auth_router.post("/change-password-form", include_in_schema=False)
+@auth_router.post(":change-password", include_in_schema=False)
 def change_password_form(
     account: CurrentAccount,
     old_password: Annotated[str, Form()],
@@ -105,7 +105,7 @@ def change_password_form(
     return RedirectResponse("/account?pw=changed", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@auth_router.post(":logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(account: CurrentAccount) -> Response:
     """Global logout: clear the single parent-domain cookie → logged out of every run."""
     return clear_lobby_session_cookie(Response(status_code=status.HTTP_204_NO_CONTENT))
@@ -117,7 +117,7 @@ def get_my_runs(account: CurrentAccount, service: LobbyService) -> MyRunsRespons
     return build_my_runs(account.username, service.get_memberships(account.account_id), expires_at=account.expires_at)
 
 
-@lobby_router.post("/runs/{slug}/join", status_code=status.HTTP_204_NO_CONTENT)
+@lobby_router.post("/runs/{slug}:join", status_code=status.HTTP_204_NO_CONTENT)
 def join_run(slug: str, account: CurrentAccount, service: LobbyService) -> Response:
     """The picker's explicit two-click join (#1030): record that ``account`` has joined the
     public run ``slug``, straight from the lobby, before it ever visits that run's own origin.

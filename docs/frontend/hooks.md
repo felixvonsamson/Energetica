@@ -406,7 +406,7 @@ import { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 type User = ApiResponse<"/auth/me", "get">;
 
 // Request body type
-type LoginRequest = ApiRequestBody<"/auth/login", "post">;
+type LoginRequest = ApiRequestBody<"/auth:login", "post">;
 
 // Use in your code
 const user: User = await apiClient.get("/auth/me");
@@ -425,7 +425,7 @@ Each app that compiles the package points `@api` at its own `api-helpers.ts`, so
 | Helper                         | Use Case       | Example                                 |
 | ------------------------------ | -------------- | --------------------------------------- |
 | `ApiResponse<Path, Method>`    | Response type  | `ApiResponse<"/auth/me", "get">`        |
-| `ApiRequestBody<Path, Method>` | Request body   | `ApiRequestBody<"/auth/login", "post">` |
+| `ApiRequestBody<Path, Method>` | Request body   | `ApiRequestBody<"/auth:login", "post">` |
 | `ApiPathParams<Path>`          | URL parameters | `ApiPathParams<"/facilities/{id}">`     |
 | `ApiQueryParams<Path, Method>` | Query string   | `ApiQueryParams<"/players", "get">`     |
 | `ApiSchema<Name>`              | Schema types   | `ApiSchema<"User">`                     |

@@ -271,7 +271,7 @@ def test_settling_refuses_a_temporary_account(configured: Path) -> None:
     client = _client()
     account_id = _enter_temporary(client, "table1-a")
 
-    response = client.post(f"http://localhost:{PORT}/api/v1/map/settle", json={"region_id": 1})
+    response = client.post(f"http://localhost:{PORT}/api/v1/map:settle", json={"region_id": 1})
 
     assert response.status_code == 403
     assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"

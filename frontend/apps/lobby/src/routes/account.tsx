@@ -27,7 +27,7 @@ import { useMyRuns } from "@/hooks/use-lobby";
  * Absolute `/api` path: Apache proxies `/api` on the lobby vhost to the lobby
  * uvicorn.
  */
-const CHANGE_PASSWORD_ACTION = "/api/v1/auth/change-password-form";
+const CHANGE_PASSWORD_ACTION = "/api/v1/auth:change-password";
 
 const MIN_PASSWORD_LENGTH = 7;
 

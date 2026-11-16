@@ -22,5 +22,5 @@ export const joinApi = {
      * allowlist.
      */
     confirm: (token: string) =>
-        apiClient.post<void>(`/join/${encodeURIComponent(token)}`),
+        apiClient.post<void>(`/join/${encodeURIComponent(token)}:confirm`),
 };

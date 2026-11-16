@@ -29,24 +29,24 @@ export const lobbyApi = {
      * roster/join-link flow) and for this run's own facilitator.
      */
     joinRun: (slug: string) =>
-        apiClient.post<ApiResponse<"/api/v1/lobby/runs/{slug}/join", "post">>(
-            `/lobby/runs/${encodeURIComponent(slug)}/join`,
+        apiClient.post<ApiResponse<"/api/v1/lobby/runs/{slug}:join", "post">>(
+            `/lobby/runs/${encodeURIComponent(slug)}:join`,
         ),
 };
 
 /** Credential calls against the lobby backend. Lobby bundle only. */
 export const lobbyAuthApi = {
     /** Log in with username + password; mints the parent-domain SSO cookie. */
-    login: (credentials: ApiRequestBody<"/api/v1/auth/login", "post">) =>
-        apiClient.post<ApiResponse<"/api/v1/auth/login", "post">>(
-            "/auth/login",
+    login: (credentials: ApiRequestBody<"/api/v1/auth:login", "post">) =>
+        apiClient.post<ApiResponse<"/api/v1/auth:login", "post">>(
+            "/auth:login",
             credentials,
         ),
 
     /** Create a server-wide account (account-only, ADR-0003) and auto-log-in. */
-    signup: (data: ApiRequestBody<"/api/v1/auth/signup", "post">) =>
-        apiClient.post<ApiResponse<"/api/v1/auth/signup", "post">>(
-            "/auth/signup",
+    signup: (data: ApiRequestBody<"/api/v1/auth:signup", "post">) =>
+        apiClient.post<ApiResponse<"/api/v1/auth:signup", "post">>(
+            "/auth:signup",
             data,
         ),
 
@@ -57,7 +57,7 @@ export const lobbyAuthApi = {
 
     /** Global logout — clears the single parent-domain session cookie. */
     logout: () =>
-        apiClient.post<ApiResponse<"/api/v1/auth/logout", "post">>(
-            "/auth/logout",
+        apiClient.post<ApiResponse<"/api/v1/auth:logout", "post">>(
+            "/auth:logout",
         ),
 };

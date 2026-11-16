@@ -275,7 +275,7 @@ this authenticated-entry path.
 prevent an open-redirect.
 
 **Join a public run (#1030).** The picker's explicit two-click action — select a run, then
-"Join run" — calls the lobby's own `POST /api/v1/lobby/runs/{slug}/join`, which writes an
+"Join run" — calls the lobby's own `POST /api/v1/lobby/runs/{slug}:join`, which writes an
 unsettled `instance_membership` row straight from the lobby (no instance round-trip). This is
 what makes a run appear under "your runs," _before_ the account has settled. Once the join
 succeeds, the picker navigates straight to the run's app (#1034), where the player settles.

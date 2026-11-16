@@ -52,7 +52,7 @@ def client(lobby_service: LobbyServiceClient) -> TestClient:
 
 
 def _signup(client: TestClient, username: str = "alice", password: str = "correct-password") -> None:
-    resp = client.post(f"{BASE}/auth/signup", json=SignupRequest(username=username, password=password).model_dump())
+    resp = client.post(f"{BASE}/auth:signup", json=SignupRequest(username=username, password=password).model_dump())
     assert resp.status_code == 201, resp.text
 
 
@@ -63,7 +63,7 @@ def test_signup_creates_account_only_and_logs_in(
     signups_enabled: None, client: TestClient, lobby_service: LobbyServiceClient
 ) -> None:
     resp = client.post(
-        f"{BASE}/auth/signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
+        f"{BASE}/auth:signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
     )
 
     assert resp.status_code == 201
@@ -78,7 +78,7 @@ def test_signup_blocked_when_signups_disabled(
 ) -> None:
     monkeypatch.setenv("ENERGETICA_SERVER_CONFIG_PATH", str(tmp_path / "absent.json"))  # missing → fail closed
     resp = client.post(
-        f"{BASE}/auth/signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
+        f"{BASE}/auth:signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
     )
     assert resp.status_code == 400
     assert resp.json()["game_exception_type"] == "SIGNUP_DISABLED"
@@ -87,13 +87,13 @@ def test_signup_blocked_when_signups_disabled(
 def test_signup_duplicate_username_conflicts(signups_enabled: None, client: TestClient) -> None:
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/signup", json=SignupRequest(username="alice", password="another-password").model_dump()
+        f"{BASE}/auth:signup", json=SignupRequest(username="alice", password="another-password").model_dump()
     )
     assert resp.status_code == 409
 
 
 def test_signup_short_password_rejected(signups_enabled: None, client: TestClient) -> None:
-    resp = client.post(f"{BASE}/auth/signup", json={"username": "alice", "password": "short"})
+    resp = client.post(f"{BASE}/auth:signup", json={"username": "alice", "password": "short"})
     assert resp.status_code == 422
 
 
@@ -101,14 +101,14 @@ def test_signup_short_password_rejected(signups_enabled: None, client: TestClien
 
 
 def test_login_unknown_user_401(signups_enabled: None, client: TestClient) -> None:
-    resp = client.post(f"{BASE}/auth/login", json=LoginRequest(username="ghost", password="x").model_dump())
+    resp = client.post(f"{BASE}/auth:login", json=LoginRequest(username="ghost", password="x").model_dump())
     assert resp.status_code == 401
     assert resp.json()["detail"] == "USER_NOT_FOUND"
 
 
 def test_login_wrong_password_401(signups_enabled: None, client: TestClient) -> None:
     _signup(client)
-    resp = client.post(f"{BASE}/auth/login", json=LoginRequest(username="alice", password="wrong").model_dump())
+    resp = client.post(f"{BASE}/auth:login", json=LoginRequest(username="alice", password="wrong").model_dump())
     assert resp.status_code == 401
     assert resp.json()["detail"] == "INVALID_PASSWORD"
 
@@ -120,7 +120,7 @@ def test_login_valid_sets_account_id_cookie(
     client.cookies.clear()  # drop the signup auto-login cookie so we test login on its own
 
     resp = client.post(
-        f"{BASE}/auth/login", json=LoginRequest(username="alice", password="correct-password").model_dump()
+        f"{BASE}/auth:login", json=LoginRequest(username="alice", password="correct-password").model_dump()
     )
 
     assert resp.status_code == 200
@@ -180,13 +180,13 @@ def _write_fragment(
 
 
 def test_join_requires_auth(landing_dir: Path, client: TestClient) -> None:
-    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026:join")
     assert resp.status_code == 401
 
 
 def test_join_unknown_run_404(signups_enabled: None, landing_dir: Path, client: TestClient) -> None:
     _signup(client)
-    resp = client.post(f"{BASE}/lobby/runs/does-not-exist/join")
+    resp = client.post(f"{BASE}/lobby/runs/does-not-exist:join")
     assert resp.status_code == 404
     assert resp.json()["detail"] == "RUN_NOT_FOUND"
 
@@ -195,7 +195,7 @@ def test_join_private_run_403(signups_enabled: None, landing_dir: Path, client: 
     _signup(client)
     _write_fragment(landing_dir, slug="invite-only", private=True)
 
-    resp = client.post(f"{BASE}/lobby/runs/invite-only/join")
+    resp = client.post(f"{BASE}/lobby/runs/invite-only:join")
 
     assert resp.status_code == 403
     assert resp.json()["detail"] == "INSTANCE_ACCESS_DENIED"
@@ -205,7 +205,7 @@ def test_join_public_run_then_appears_in_my_runs(signups_enabled: None, landing_
     _signup(client)
     _write_fragment(landing_dir, slug="spring-2026", name="Spring 2026")
 
-    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026:join")
     assert resp.status_code == 204
 
     runs = client.get(f"{BASE}/lobby/my-runs").json()["runs"]
@@ -216,8 +216,8 @@ def test_join_is_idempotent(signups_enabled: None, landing_dir: Path, client: Te
     _signup(client)
     _write_fragment(landing_dir, slug="spring-2026")
 
-    assert client.post(f"{BASE}/lobby/runs/spring-2026/join").status_code == 204
-    assert client.post(f"{BASE}/lobby/runs/spring-2026/join").status_code == 204  # must not raise/duplicate
+    assert client.post(f"{BASE}/lobby/runs/spring-2026:join").status_code == 204
+    assert client.post(f"{BASE}/lobby/runs/spring-2026:join").status_code == 204  # must not raise/duplicate
 
     runs = client.get(f"{BASE}/lobby/my-runs").json()["runs"]
     assert len(runs) == 1
@@ -232,7 +232,7 @@ def test_join_rejects_the_runs_facilitator(
     lobby_service.grant_facilitator(account.account_id, slug="spring-2026")
     _write_fragment(landing_dir, slug="spring-2026")
 
-    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026:join")
 
     assert resp.status_code == 403
     assert resp.json()["detail"] == "INSTANCE_ACCESS_DENIED"
@@ -250,7 +250,7 @@ def test_join_rejects_the_runs_facilitator(
 def test_change_password_wrong_old_redirects_with_error(signups_enabled: None, client: TestClient) -> None:
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/change-password-form",
+        f"{BASE}/auth:change-password",
         data={"old_password": "wrong", "new_password": "brand-new-password"},
         follow_redirects=False,
     )
@@ -261,7 +261,7 @@ def test_change_password_wrong_old_redirects_with_error(signups_enabled: None, c
 def test_change_password_too_short_redirects_with_error(signups_enabled: None, client: TestClient) -> None:
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/change-password-form",
+        f"{BASE}/auth:change-password",
         data={"old_password": "correct-password", "new_password": "short"},
         follow_redirects=False,
     )
@@ -272,7 +272,7 @@ def test_change_password_too_short_redirects_with_error(signups_enabled: None, c
 def test_change_password_then_login_with_new(signups_enabled: None, client: TestClient) -> None:
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/change-password-form",
+        f"{BASE}/auth:change-password",
         data={"old_password": "correct-password", "new_password": "brand-new-password"},
         follow_redirects=False,
     )
@@ -281,11 +281,11 @@ def test_change_password_then_login_with_new(signups_enabled: None, client: Test
 
     client.cookies.clear()
     old = client.post(
-        f"{BASE}/auth/login", json=LoginRequest(username="alice", password="correct-password").model_dump()
+        f"{BASE}/auth:login", json=LoginRequest(username="alice", password="correct-password").model_dump()
     )
     assert old.status_code == 401
     new = client.post(
-        f"{BASE}/auth/login", json=LoginRequest(username="alice", password="brand-new-password").model_dump()
+        f"{BASE}/auth:login", json=LoginRequest(username="alice", password="brand-new-password").model_dump()
     )
     assert new.status_code == 200
 
@@ -294,14 +294,14 @@ def test_logout_clears_session(signups_enabled: None, landing_dir: Path, client:
     _signup(client)
     assert client.get(f"{BASE}/lobby/my-runs").status_code == 200
 
-    resp = client.post(f"{BASE}/auth/logout")
+    resp = client.post(f"{BASE}/auth:logout")
     assert resp.status_code == 204
 
     assert client.get(f"{BASE}/lobby/my-runs").status_code == 401
 
 
 def test_logout_requires_auth(signups_enabled: None, client: TestClient) -> None:
-    assert client.post(f"{BASE}/auth/logout").status_code == 401
+    assert client.post(f"{BASE}/auth:logout").status_code == 401
 
 
 # --- cookie scope ---------------------------------------------------------------------------
@@ -313,7 +313,7 @@ def test_session_cookie_scoped_to_parent_domain_when_apex_set(
     """With the apex configured, the cookie is scoped to .{apex} so it spans every run subdomain."""
     monkeypatch.setenv("ENERGETICA_APEX_DOMAIN", "energetica-game.org")
     resp = client.post(
-        f"{BASE}/auth/signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
+        f"{BASE}/auth:signup", json=SignupRequest(username="alice", password="correct-password").model_dump()
     )
 
     assert resp.status_code == 201
@@ -329,7 +329,7 @@ def test_login_is_a_503_while_the_lobby_service_is_down() -> None:
         "test", socket_path=Path("/nonexistent/lobby-service.sock")
     )
 
-    resp = TestClient(app).post(f"{BASE}/auth/login", json={"username": "alice", "password": "correct-password"})
+    resp = TestClient(app).post(f"{BASE}/auth:login", json={"username": "alice", "password": "correct-password"})
 
     assert resp.status_code == 503
     assert resp.json()["detail"] == "LOBBY_SERVICE_UNAVAILABLE"
@@ -352,7 +352,7 @@ def test_a_refusal_the_route_does_not_expect_is_a_503() -> None:
     client.cookies.set(SESSION_COOKIE_NAME, "a-token")
 
     resp = client.post(
-        f"{BASE}/auth/change-password-form",
+        f"{BASE}/auth:change-password",
         data={"old_password": "correct-password", "new_password": "brand-new-password"},
         follow_redirects=False,
     )
@@ -367,7 +367,7 @@ def test_a_refusal_the_route_does_not_expect_is_a_503() -> None:
 def _log_in_temporary(client: TestClient, lobby_service: LobbyServiceClient, expires_at: datetime) -> None:
     lobby_service.create_account(username="table1-a", password="correct-password", expires_at=expires_at)
     resp = client.post(
-        f"{BASE}/auth/login", json=LoginRequest(username="table1-a", password="correct-password").model_dump()
+        f"{BASE}/auth:login", json=LoginRequest(username="table1-a", password="correct-password").model_dump()
     )
     assert resp.status_code == 200, resp.text
 
@@ -378,7 +378,7 @@ def test_a_temporary_account_cannot_join_a_freeplay_run(
     _log_in_temporary(client, lobby_service, datetime(2099, 1, 1, tzinfo=timezone.utc))
     _write_fragment(landing_dir, slug="spring-2026")
 
-    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026:join")
 
     assert resp.status_code == 403
     assert resp.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"
@@ -391,7 +391,7 @@ def test_a_temporary_account_can_join_a_workshop_run(
     _log_in_temporary(client, lobby_service, datetime(2099, 1, 1, tzinfo=timezone.utc))
     _write_fragment(landing_dir, slug="workshop", mode="workshop")
 
-    assert client.post(f"{BASE}/lobby/runs/workshop/join").status_code == 204
+    assert client.post(f"{BASE}/lobby/runs/workshop:join").status_code == 204
 
 
 def test_my_runs_says_when_a_temporary_account_expires(

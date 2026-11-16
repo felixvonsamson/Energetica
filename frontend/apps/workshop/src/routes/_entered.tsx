@@ -1,6 +1,6 @@
 /**
  * The gate in front of the Run's pages (#995): the visitor enters the Run
- * through `POST /workshop/enter`, and one who may not is sent to the lobby to
+ * through `POST /workshop:enter`, and one who may not is sent to the lobby to
  * log in. The join page and the facilitator pages sit outside it: a visitor on
  * the join page has not been admitted yet, and the backend refuses the
  * facilitator pages' calls to anyone but the facilitator.

@@ -6,14 +6,7 @@ Note that there is an intention for players to be able to use the API themselves
 
 ## Design: AIP-136
 
-APIs use AIP-136 style syntax, .i.e. POST requests with a verb, e.g. in energetica/freeplay/routers/resource_market.py:
-
-Use POST with verb suffixes for actions:
-
-```py
-@router.post("/asks/{ask_id}:purchase")
-@router.post("/facilities/{facility_id}:start")
-```
+Action routes are AIP-136 custom methods with kebab-case verbs (`/asks/{ask_id}:purchase`); `test_action_routes_are_custom_methods` in `backend/tests/integration/test_route_surface.py` enforces the rule and explains it.
 
 ## Backend patterns
 
