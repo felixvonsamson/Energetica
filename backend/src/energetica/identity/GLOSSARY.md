@@ -48,10 +48,10 @@ The single authenticated session a player gets from the lobby, carried to every 
 An account that has explicitly, deliberately joined a run: the lobby's two-click join for a public run (#1030), or, for a private run, a facilitator's add or a join-link confirm. Its membership is recorded the moment that happens, before the account has necessarily settled. The lobby's "your runs" view is keyed on this, not on settling.
 
 **Settled**:
-An account that has picked a tile, so it has a **Player** in that run. A later, separate step from joining, and one only the run's engine records: the **lobby service** does not (ADR-0009).
+In the persistent world, an account that has picked a tile, so it has a **Player** in that run. A later, separate step from joining, and one only the run's engine records: the **lobby service** does not (ADR-0009). A Workshop Run has no settling.
 
 **Player**:
-An account's game state in one run. It exists only once the account has **settled**, so an account can have joined a run without having a Player there. A **facilitator** never settles, so never has one.
+An account's game state in one run. In the persistent world it exists once the account has **settled**, so an account can have joined a run without having a Player there. In a Workshop Run it is created when the account first enters the run. A **facilitator** never has one.
 
 **Facilitator**:
 The one elevated role an account can hold, granted for one run or for every run on the server (ADR-0004). A facilitator acts on a run but never plays in it.
