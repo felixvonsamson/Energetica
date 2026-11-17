@@ -338,6 +338,6 @@ def test_action_routes_are_custom_methods(apps: dict[str, FastAPI], app_name: st
     The lobby service (``lobby_service``) is not checked. It is an internal API that only the
     instances and the lobby call, it publishes no OpenAPI schema, and instances on different
     releases call it at once, so renaming one of its routes would break every instance not
-    redeployed in the same step.
+    redeployed in the same step. Bringing it under this test is #1524.
     """
     assert _route_shape_violations(apps[app_name]) == []
