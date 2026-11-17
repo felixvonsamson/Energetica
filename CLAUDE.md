@@ -56,7 +56,7 @@ Default vocabulary — label strings match the canonical role names. See `docs/a
 
 ### Domain docs
 
-Single-context: root `CONTEXT.md` (context-indexed glossary), `docs/adr/`, and a topic-organized `docs/` tree. See `docs/agents/domain.md`.
+Multi-context: root `GLOSSARY-MAP.md` pointing at one `GLOSSARY.md` per context under `backend/src/energetica/`, `docs/adr/`, and a topic-organized `docs/` tree. See `docs/agents/domain.md`.
 
 ### Code review
 

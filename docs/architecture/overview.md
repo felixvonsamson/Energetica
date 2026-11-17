@@ -22,7 +22,7 @@ Energetica/
 ├── scripts/                  # Developer, deploy, provisioning and operator scripts (see Scripts below)
 ├── package.json              # The `bun run` commands, which call into scripts/, frontend/ and .venv/
 ├── ruff.toml, pyrightconfig.json, pytest.ini  # Python checks and tests, configured for the whole tree
-├── CONTEXT.md                # Glossary of the project's domain terms
+├── GLOSSARY-MAP.md           # Index of the domain glossaries, one GLOSSARY.md per context in backend/src/energetica/
 ├── .venv/                    # The Python virtual environment (not committed)
 ├── instance/                 # Local game state (not committed)
 └── checkpoints/              # Local game backups (not committed)
@@ -112,7 +112,7 @@ import one another. `entry` sits on top. `lobby_service` sits outside `energetic
 Formatting.
 
 `freeplay` is the persistent world's name in code. Prose calls it "the persistent world"
-(`CONTEXT.md` § Run modes).
+([Run modes glossary](../../backend/src/energetica/GLOSSARY.md)).
 
 The game engine and the model store look like shared infrastructure, but they belong to
 `freeplay`, so the Workshop cannot inherit them by accident.

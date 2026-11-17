@@ -59,7 +59,7 @@ and settle, exactly where it was — not at signup.
   auto-provision/settle), not at signup. This is the same enforcement point and code path
   (`_enforce_instance_access`) as before; only the signup-time check is dropped.
 - `misc.signup_playing_user` splits: lobby-side account creation vs. instance-side
-  join/settle. Settling is what writes `instance_membership` (see ADR-0002 / CONTEXT.md).
+  join/settle. Settling is what writes `instance_membership` (see ADR-0002 / `backend/src/energetica/identity/GLOSSARY.md`).
 - A new server-wide config surface (`/etc/energetica/server.json`) is introduced for the
   signup toggle; `players.txt`'s closed-enrollment role becomes a direct-to-`accounts.db`
   admin bootstrap. Designing and landing these belongs to the lobby's Phase B (#816).

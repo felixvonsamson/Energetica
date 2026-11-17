@@ -48,9 +48,9 @@ quick switcher to hop laterally without returning to the lobby.
 
 ## Terminology
 
-Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Account**,
-**User**, **Player** — are defined in `static-serving-and-deployment.md` § Terminology and
-`CONTEXT.md` § Accounts & users. This design adds:
+The core identity terms (**Server**, **Run**, **Instance**, **Account**, **Player**) are pinned in
+the [Accounts & users glossary](../../backend/src/energetica/identity/GLOSSARY.md). This design
+adds:
 
 | Term                    | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

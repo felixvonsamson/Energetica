@@ -133,7 +133,7 @@ curl -b .energetica-dev/cookies.txt localhost:8000/api/v1/auth/me
 ## Running a Workshop Run locally
 
 An instance backend runs one of two kinds of Run: the persistent world, or a Workshop Run (a
-moderated classroom session, see [Workshop Mode in CONTEXT.md](../../CONTEXT.md#workshop-mode)). It
+moderated classroom session, see the [Workshop Mode glossary](../../backend/src/energetica/workshop/GLOSSARY.md)). It
 reads which one from its `instance.json`. With no `instance.json`, as in the full local stack above,
 it runs the persistent world. To run Workshop Mode, give the local app backend an `instance.json`
 that says so.

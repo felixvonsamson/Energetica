@@ -199,6 +199,10 @@ def create_app(
                     "simulating": False,
                     "profiling": False,
                     "stop_on_mismatch": simulate_stop_on_mismatch,
+                    # Every restart replays the actions since the loaded tick through the current
+                    # code. A logged action that now fails with a server error halts the replay, and
+                    # the tick clock never starts, so a game-logic change can stop a deployed
+                    # instance from resuming.
                     "stop_on_server_error": True,
                     "stop_on_assertion_error": True,
                     "checkpoint_every_k_ticks": None,
