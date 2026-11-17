@@ -1,4 +1,5 @@
-"""Integration tests for the public join-link routes (#1021): ``GET/POST /api/v1/join/{token}``.
+"""Integration tests for the public join-link routes (#1021): ``GET /api/v1/join/{token}`` and
+``POST /api/v1/join/{token}:confirm``.
 
 The visitor-facing counterpart to #1020's facilitator page — reachable by anyone holding the
 token, not just the instance's admin. Confirming joins the visitor to the run through the lobby
@@ -48,6 +49,10 @@ PUBLIC_JSON = {
 
 def _join_url(token: str) -> str:
     return f"http://localhost:{PORT}/api/v1/join/{token}"
+
+
+def _confirm_url(token: str) -> str:
+    return f"{_join_url(token)}:confirm"
 
 
 @pytest.fixture
@@ -188,7 +193,7 @@ def test_post_rejects_an_unauthenticated_visitor(instance_json: Path) -> None:
     _write(instance_json, PRIVATE_JSON)
     client = _client()
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_confirm_url(TOKEN))
 
     assert response.status_code == 401
 
@@ -199,7 +204,7 @@ def test_post_rejects_an_unknown_token(instance_json: Path) -> None:
     account_id = make_account("carol")
     authenticate(client, account_id)
 
-    response = client.post(_join_url("wrong-token"))
+    response = client.post(_confirm_url("wrong-token"))
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_INVALID"
@@ -213,7 +218,7 @@ def test_post_rejects_when_join_is_closed_and_does_not_modify_the_allowlist(inst
     account_id = make_account("carol")
     authenticate(client, account_id)
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_confirm_url(TOKEN))
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_CLOSED"
@@ -232,7 +237,7 @@ def test_post_adds_the_visitor_to_the_roster_and_the_entry_gate_then_admits_them
     # Blocked before confirming, exactly like any other not-yet-joined account.
     assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_confirm_url(TOKEN))
     assert response.status_code == 204
     assert "carol" in _joined_usernames()
 
@@ -248,9 +253,9 @@ def test_post_is_idempotent_for_an_already_joined_username(instance_json: Path) 
     client = _client()
     account_id = make_account("alice")
     authenticate(client, account_id)
-    client.post(_join_url(TOKEN))  # already joined once
+    client.post(_confirm_url(TOKEN))  # already joined once
 
-    response = client.post(_join_url(TOKEN))  # confirm again
+    response = client.post(_confirm_url(TOKEN))  # confirm again
 
     assert response.status_code == 204
     assert _joined_usernames().count("alice") == 1
@@ -262,7 +267,7 @@ def test_post_rejects_a_token_on_a_public_instance(instance_json: Path) -> None:
     account_id = make_account("carol")
     authenticate(client, account_id)
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_confirm_url(TOKEN))
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_INVALID"
@@ -274,7 +279,7 @@ def test_confirm_refuses_a_temporary_account_on_a_freeplay_run(instance_json: Pa
     client = _client()
     authenticate(client, make_account("table1-a", temporary=True))
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_confirm_url(TOKEN))
 
     assert response.status_code == 403
     assert response.json()["detail"] == "TEMPORARY_ACCOUNT_IN_FREEPLAY"

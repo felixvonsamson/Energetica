@@ -23,6 +23,7 @@ from energetica.freeplay.app import create_app
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action, ApiAction, ApiActionRequest, ApiActionResponse
 from energetica.freeplay.simulate import simulate
+from energetica.freeplay.utils.auth import get_settled_player
 from energetica.identity.account import Account
 from energetica.identity.web import resolve_entry_account
 from lobby_service import session
@@ -183,3 +184,22 @@ def test_replay_sends_the_query_string_of_a_logged_request(app: FastAPI, monkeyp
     ]
     assert _replay(app, list(logged))  # replay logs too, so iterate over a copy
     assert received == ["steam_engine", "steam_engine"]
+
+
+def test_replay_sends_a_request_logged_at_a_renamed_path_to_its_current_route(app: FastAPI) -> None:
+    """A log written before #1517 holds ``notifications:markAllRead``, which is now
+    ``notifications:mark-all-read``. Replay must still reach the route rather than get a 404.
+    """
+    marked: list[bool] = []
+
+    class _Player:
+        def notifications_read(self) -> None:
+            marked.append(True)
+
+    app.dependency_overrides[get_settled_player] = _Player
+    logged = _logged_request(make_account("alice"))
+    logged.request.endpoint = "/api/v1/notifications:markAllRead"
+    logged.response.status_code = 204
+
+    assert _replay(app, [logged])
+    assert marked == [True]

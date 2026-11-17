@@ -40,7 +40,7 @@ def get_map() -> list[HexTileOut]:
     return hex_list
 
 
-@router.post("/settle", dependencies=[Depends(reject_when_frozen), Depends(reject_temporary_account)])
+@router.post(":settle", dependencies=[Depends(reject_when_frozen), Depends(reject_temporary_account)])
 def settle_region(
     account: Annotated[Account, Depends(get_playing_account)],
     request_data: SettleRequest,

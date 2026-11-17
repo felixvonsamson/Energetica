@@ -64,7 +64,7 @@ def get_join_link(token: str, standing: Annotated[Standing | None, Depends(get_s
     return JoinLinkOut(instance_name=instance_name, join_open=access.join_open, viewer=viewer)
 
 
-@router.post("/{token}", status_code=204)
+@router.post("/{token}:confirm", status_code=204)
 def confirm_join(token: str, standing: Annotated[Standing | None, Depends(get_standing)]) -> None:
     """Confirm joining: join the signed-in visitor to this run through the lobby service.
 

@@ -8,15 +8,15 @@
 import type { ApiRequestBody } from "@/types/api-helpers";
 
 /**
- * Request body for POST /api/v1/auth/login
+ * Request body for POST /api/v1/auth:login
  *
  * Authenticates a user with username and password.
  */
-export type LoginRequest = ApiRequestBody<"/api/v1/auth/login", "post">;
+export type LoginRequest = ApiRequestBody<"/api/v1/auth:login", "post">;
 
 /**
- * Request body for POST /api/v1/auth/signup
+ * Request body for POST /api/v1/auth:signup
  *
  * Creates a new user account with registration information.
  */
-export type SignupRequest = ApiRequestBody<"/api/v1/auth/signup", "post">;
+export type SignupRequest = ApiRequestBody<"/api/v1/auth:signup", "post">;

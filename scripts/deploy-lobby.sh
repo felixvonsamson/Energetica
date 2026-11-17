@@ -231,7 +231,7 @@ while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
     MANIFEST_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/instances.json" || true)
     LOGIN_BODY=$(curl -s --max-time 5 -H 'Content-Type: application/json' \
         -d '{"username":"__deploy_healthcheck__","password":"deploy-probe"}' \
-        "https://$FQDN/api/v1/auth/login" || true)
+        "https://$FQDN/api/v1/auth:login" || true)
     if [ "$SPA_CODE" = "200" ] && [ "$API_CODE" = "401" ] && [ "$MANIFEST_CODE" = "200" ] \
         && echo "$LOGIN_BODY" | grep -q "USER_NOT_FOUND"; then
         HEALTH_OK=true; break

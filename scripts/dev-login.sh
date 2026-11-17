@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Mint a real lobby session for a seeded account and save it to a cookie jar, so you can drive a
 # local app backend from the CLI (or curl) without a browser. Uses the lobby's production
-# /api/v1/auth/login — no dev-only auth path — so it exercises the same session the browser gets.
+# /api/v1/auth:login — no dev-only auth path — so it exercises the same session the browser gets.
 # Requires the lobby backend running (bun run serve:lobby). See
 # docs/getting-started/local-development.md.
 #
@@ -21,7 +21,7 @@ mkdir -p "$(dirname "$COOKIE_JAR")"
 # is escaped correctly rather than producing malformed JSON.
 json_body="$(USERNAME="$USERNAME" PASSWORD="$PASSWORD" "$REPO_ROOT/.venv/bin/python" -c \
     'import json, os; print(json.dumps({"username": os.environ["USERNAME"], "password": os.environ["PASSWORD"]}))')"
-curl -fsS -c "$COOKIE_JAR" -X POST "$LOBBY_URL/api/v1/auth/login" \
+curl -fsS -c "$COOKIE_JAR" -X POST "$LOBBY_URL/api/v1/auth:login" \
     -H 'Content-Type: application/json' \
     -d "$json_body" >/dev/null
 

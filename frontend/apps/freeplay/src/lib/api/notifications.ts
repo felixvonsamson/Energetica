@@ -24,8 +24,8 @@ export const notificationsApi = {
     /** Mark all notifications as read. */
     markAllRead: () =>
         apiClient.post<
-            ApiResponse<"/api/v1/notifications:markAllRead", "post">
-        >("/notifications:markAllRead"),
+            ApiResponse<"/api/v1/notifications:mark-all-read", "post">
+        >("/notifications:mark-all-read"),
 
     /** Patch a notification's read/flagged/archived state. */
     patchNotification: (

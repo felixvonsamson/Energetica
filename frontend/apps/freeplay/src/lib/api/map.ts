@@ -10,8 +10,8 @@ export const mapApi = {
 
     /** Settle on a region by its ID. */
     settleRegion: (regionId: number) =>
-        apiClient.post<ApiResponse<"/api/v1/map/settle", "post">>(
-            "/map/settle",
+        apiClient.post<ApiResponse<"/api/v1/map:settle", "post">>(
+            "/map:settle",
             { region_id: regionId },
         ),
 };

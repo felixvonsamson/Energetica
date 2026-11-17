@@ -138,10 +138,10 @@ class Api:
         credentials = LoginRequest(
             username=username, password=password if password is not None else password_for(username)
         )
-        login = self.request("POST", f"{LOBBY_URL}/auth/login", json=credentials.model_dump(mode="json"))
+        login = self.request("POST", f"{LOBBY_URL}/auth:login", json=credentials.model_dump(mode="json"))
         if login.status_code >= 400:
             raise LoginError(f"the lobby refused the login of {username}: {login.status_code} {login.text[:200]}")
-        entry = self.request("POST", "/workshop/enter")
+        entry = self.request("POST", "/workshop:enter")
         if entry.status_code >= 400:
             raise LoginError(f"{username} cannot enter the Run: {entry.status_code} {entry.text[:200]}")
         self.entry = WorkshopEntryOut.model_validate_json(entry.content)
@@ -248,7 +248,7 @@ class Facilitator(Api):
     def advance(self) -> WorkshopSessionOut | None:
         """Advance once. None if the session refused, which it does while a period is being simulated."""
         try:
-            return WorkshopSessionOut.model_validate_json(self._send("POST", "/session/advance"))
+            return WorkshopSessionOut.model_validate_json(self._send("POST", "/session:advance"))
         except ApiError:
             return None
 

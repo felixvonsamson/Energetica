@@ -7,7 +7,8 @@ paths return 404. This file checks the inverse: that nothing else is registered.
 
 Each app's API routes are pinned below, so adding or removing a route means editing this file.
 Each app's OpenAPI schema, which `bun run generate-types` turns into that app's types file, must
-list exactly the same routes.
+list exactly the same routes. Every action route must have the shape of an AIP-136 custom method
+(see `test_action_routes_are_custom_methods`).
 
 These tests build the real apps, not the `schema_only=True` apps the other route tests build.
 `create_app` registers part of its surface after the `schema_only` early return, so a
@@ -19,6 +20,7 @@ so `bun run generate-types` never showed it either.
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 from types import ModuleType
 
@@ -50,7 +52,7 @@ NON_API_PATHS = {
 IDENTITY_ROUTES = frozenset(
     {
         "GET /api/v1/join/{token}",
-        "POST /api/v1/join/{token}",
+        "POST /api/v1/join/{token}:confirm",
         "GET /api/v1/facilitator/access",
         "PATCH /api/v1/facilitator/access",
         "GET /api/v1/facilitator/roster",
@@ -108,13 +110,13 @@ FREEPLAY_API_ROUTES = IDENTITY_ROUTES | {
     "GET /api/v1/game/engine",
     "GET /api/v1/lobby/my-runs",
     "GET /api/v1/map",
-    "POST /api/v1/map/settle",
+    "POST /api/v1/map:settle",
     "GET /api/v1/notifications",
     "GET /api/v1/notifications/feed-subscriptions",
     "PATCH /api/v1/notifications/feed-subscriptions",
     "PATCH /api/v1/notifications/{notification_id}",
     "DELETE /api/v1/notifications/{notification_id}",
-    "POST /api/v1/notifications:markAllRead",
+    "POST /api/v1/notifications:mark-all-read",
     "GET /api/v1/players",
     "GET /api/v1/players/game-state",
     "GET /api/v1/players/me",
@@ -153,10 +155,10 @@ FREEPLAY_API_ROUTES = IDENTITY_ROUTES | {
 }
 
 WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
-    "POST /api/v1/workshop/enter",
+    "POST /api/v1/workshop:enter",
     "GET /api/v1/workshop/session",
-    "POST /api/v1/workshop/session/advance",
-    "POST /api/v1/workshop/session/phase/extend",
+    "POST /api/v1/workshop/session:advance",
+    "POST /api/v1/workshop/session:extend-phase",
     "GET /api/v1/workshop/timers",
     "PUT /api/v1/workshop/timers",
     "GET /api/v1/workshop/credentials",
@@ -197,12 +199,12 @@ WORKSHOP_API_ROUTES = IDENTITY_ROUTES | {
 
 LOBBY_API_ROUTES = frozenset(
     {
-        "POST /api/v1/auth/login",
-        "POST /api/v1/auth/signup",
-        "POST /api/v1/auth/change-password-form",
-        "POST /api/v1/auth/logout",
+        "POST /api/v1/auth:login",
+        "POST /api/v1/auth:signup",
+        "POST /api/v1/auth:change-password",
+        "POST /api/v1/auth:logout",
         "GET /api/v1/lobby/my-runs",
-        "POST /api/v1/lobby/runs/{slug}/join",
+        "POST /api/v1/lobby/runs/{slug}:join",
     }
 )
 
@@ -213,7 +215,7 @@ API_ROUTES = {"freeplay": FREEPLAY_API_ROUTES, "workshop": WORKSHOP_API_ROUTES, 
 NOT_IN_SCHEMA = {
     "freeplay": frozenset(),
     "workshop": frozenset(),
-    "lobby": frozenset({"POST /api/v1/auth/change-password-form"}),
+    "lobby": frozenset({"POST /api/v1/auth:change-password"}),
 }
 
 HTTP_METHODS = frozenset({"get", "put", "post", "delete", "options", "head", "patch", "trace"})
@@ -288,3 +290,101 @@ def test_app_schema_lists_exactly_the_routes_the_app_serves(
     }
 
     assert schema_routes == _api_routes(apps[app_name]) - NOT_IN_SCHEMA[app_name]
+
+
+# A path parameter, such as `{chat_id}` or `{username:path}`. Its name can hold a colon, so it is
+# blanked out before the path is checked for a custom method's colon.
+_PATH_PARAMETER = re.compile(r"\{[^}]*\}")
+
+# A custom method: a resource path, a colon, and a verb of lowercase words joined by hyphens.
+_CUSTOM_METHOD = re.compile(r"[^:]+:[a-z]+(-[a-z]+)*")
+
+
+def _route_shape_violations(app: FastAPI) -> list[str]:
+    """Every ``POST`` route of ``app`` that is neither a custom method nor a plain create."""
+    routes = _api_routes(app)
+    readable = {route.removeprefix("GET ") for route in routes if route.startswith("GET ")}
+    violations = []
+    for route in sorted(routes):
+        method, path = route.split(" ", 1)
+        if method != "POST":
+            continue
+        shape = _PATH_PARAMETER.sub("{}", path)
+        if ":" in shape:
+            is_valid = _CUSTOM_METHOD.fullmatch(shape) is not None
+        else:
+            is_valid = not shape.endswith("{}") and path in readable
+        if not is_valid:
+            violations.append(route)
+    return violations
+
+
+@pytest.mark.parametrize("app_name", APPS)
+def test_action_routes_are_custom_methods(apps: dict[str, FastAPI], app_name: str) -> None:
+    """An action route, meaning a ``POST`` that is not a plain create, is a custom method as
+    defined by AIP-136 (Google's API design rule for custom methods, https://google.aip.dev/136):
+    ``…/{id}:verb`` on one resource, or ``…:verb`` on a collection.
+
+    A plain create posts to a path that ends in a literal segment and that also answers ``GET``,
+    so whatever it creates can be read back at the same path: ``POST /chats`` beside ``GET /chats``,
+    or ``POST /workshop/loan`` beside ``GET /workshop/loan``. Any other ``POST``, such as
+    ``POST /map/settle`` or ``POST /join/{token}``, is an action and must be a custom method.
+
+    The verb is kebab-case (``:increase-priority``), though AIP-136 says camelCase. Google's verbs
+    are camelCase because Google's paths are camelCase too (``/v1/projects/*/serviceAccounts``).
+    Every multi-word path segment in this API is kebab-case (``/resource-market``,
+    ``/power-priorities``, ``/my-runs``), so kebab-case verbs match their paths.
+
+    The lobby service (``lobby_service``) is not checked. It is an internal API that only the
+    instances and the lobby call, it publishes no OpenAPI schema, and instances on different
+    releases call it at once, so renaming one of its routes would break every instance not
+    redeployed in the same step. Bringing it under this test is #1524.
+    """
+    assert _route_shape_violations(apps[app_name]) == []
+
+
+def _app_with(*routes: str) -> FastAPI:
+    """An app serving each ``"METHOD /path"`` in ``routes``."""
+    app = FastAPI()
+    for route in routes:
+        method, path = route.split(" ", 1)
+        app.add_api_route(path, lambda: None, methods=[method])
+    return app
+
+
+@pytest.mark.parametrize(
+    "routes",
+    [
+        ["POST /api/v1/chats/{chat_id}:open"],
+        ["POST /api/v1/facilities:upgrade-all"],
+        ["POST /api/v1/accounts/{username:path}:rename"],
+        ["GET /api/v1/chats", "POST /api/v1/chats"],
+        ["GET /api/v1/workshop/loan", "POST /api/v1/workshop/loan"],
+    ],
+)
+def test_route_shape_accepts(routes: list[str]) -> None:
+    assert _route_shape_violations(_app_with(*routes)) == []
+
+
+@pytest.mark.parametrize(
+    "rejected",
+    [
+        "POST /api/v1/notifications:markAllRead",  # camelCase verb
+        "POST /api/v1/notifications:Mark",  # capitalised verb
+        "POST /api/v1/chats:open/messages",  # colon before the last segment
+        "POST /api/v1/chats/{chat_id}:open:now",  # two verbs
+        "POST /api/v1/join/{token}",  # posts to one resource, not a collection
+        "POST /api/v1/accounts/{username:path}",  # a colon inside a path parameter is not a verb
+    ],
+)
+def test_route_shape_rejects_whatever_answers_get(rejected: str) -> None:
+    """Each route is served beside a ``GET`` on its own path, so its shape alone rejects it."""
+    path = rejected.split(" ", 1)[1]
+    assert _route_shape_violations(_app_with(f"GET {path}", rejected)) == [rejected]
+
+
+def test_route_shape_rejects_a_slash_verb() -> None:
+    """``/map/settle`` is shaped like a create, but nothing answers ``GET`` there to read it back."""
+    assert _route_shape_violations(_app_with("GET /api/v1/map", "POST /api/v1/map/settle")) == [
+        "POST /api/v1/map/settle"
+    ]

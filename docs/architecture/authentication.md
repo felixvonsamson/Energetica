@@ -11,7 +11,7 @@ sequenceDiagram
     participant Backend
 
     User->>Client: Login (username/password)
-    Client->>Backend: POST /api/v1/auth/login
+    Client->>Backend: POST /api/v1/auth:login
     Backend-->>Client: 200 OK + Set-Cookie: session=...
     Client->>Client: Browser stores cookie
     User->>Client: Use the app
@@ -24,7 +24,7 @@ sequenceDiagram
 
 To authenticate via API:
 
-1. **Login** - `POST /api/v1/auth/login`
+1. **Login** - `POST /api/v1/auth:login`
    - Send: `{"username": "...", "password": "..."}`
    - Get back: `Set-Cookie: session=<token>`
 
@@ -38,16 +38,20 @@ To authenticate via API:
 
 ## Backend Implementation
 
-**Entry point:** `energetica/freeplay/routers/auth.py`
+**Lobby:** `energetica/lobby/routers.py`
 
-- `POST /auth/login` - Validates credentials, sets session cookie
+- `POST /auth:login` - Validates credentials, sets session cookie
+- `POST /auth:signup` - Creates new account
+- `POST /auth:change-password` - Changes password
+- `POST /auth:logout` - Clears the session cookie
+
+**Instance:** `energetica/freeplay/routers/auth.py`
+
 - `GET /auth/me` - Returns current user
-- `POST /auth/signup` - Creates new account
-- `POST /auth/change-password` - Changes password
 
 **Entry gate:** `resolve_entry_account` in `energetica/identity/web.py` checks the session cookie
 and this instance's access policy. The persistent world's `GET /auth/me` and Workshop's
-`POST /workshop/enter` both depend on it, so the two kinds of Run admit the same accounts.
+`POST /workshop:enter` both depend on it, so the two kinds of Run admit the same accounts.
 
 **Session management:** `energetica/kernel/session.py`
 
@@ -79,7 +83,7 @@ get_settled_player()    - Requires a player who has chosen a location  (freeplay
 - Handles 401 errors gracefully (user not authenticated)
 
 **In a Workshop Run** the Workshop's own app (`frontend/apps/workshop`) enters through
-`POST /api/v1/workshop/enter` instead of `/auth/me`, which the Workshop backend does not serve. The
+`POST /api/v1/workshop:enter` instead of `/auth/me`, which the Workshop backend does not serve. The
 gate is the pathless `_entered` route (`frontend/apps/workshop/src/routes/_entered.tsx`), in front
 of every page of the Run. As with `/auth/me`, a 401 or a denied account sends the visitor to the
 lobby. The join page and the facilitator pages sit outside the gate: a visitor on the join page has

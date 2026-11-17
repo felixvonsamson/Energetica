@@ -17,6 +17,22 @@ export interface paths {
          */
         get: operations["get_join_link_api_v1_join__token__get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/join/{token}:confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * Confirm Join
          * @description Confirm joining: join the signed-in visitor to this run through the lobby service.
@@ -30,7 +46,7 @@ export interface paths {
          *     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
          *     client.
          */
-        post: operations["confirm_join_api_v1_join__token__post"];
+        post: operations["confirm_join_api_v1_join__token__confirm_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -140,7 +156,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/enter": {
+    "/api/v1/workshop:enter": {
         parameters: {
             query?: never;
             header?: never;
@@ -182,7 +198,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/session/advance": {
+    "/api/v1/workshop/session:advance": {
         parameters: {
             query?: never;
             header?: never;
@@ -208,7 +224,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workshop/session/phase/extend": {
+    "/api/v1/workshop/session:extend-phase": {
         parameters: {
             query?: never;
             header?: never;
@@ -222,7 +238,7 @@ export interface paths {
          * @description Give the running phase more time, and tell every open page. A phase whose time is up cannot be
          *     reopened. To end a phase early, the facilitator advances the session instead.
          */
-        post: operations["extend_phase_api_v1_workshop_session_phase_extend_post"];
+        post: operations["extend_phase_api_v1_workshop_session_extend_phase_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3507,7 +3523,7 @@ export interface operations {
             };
         };
     };
-    confirm_join_api_v1_join__token__post: {
+    confirm_join_api_v1_join__token__confirm_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3758,7 +3774,7 @@ export interface operations {
             };
         };
     };
-    extend_phase_api_v1_workshop_session_phase_extend_post: {
+    extend_phase_api_v1_workshop_session_extend_phase_post: {
         parameters: {
             query?: never;
             header?: never;

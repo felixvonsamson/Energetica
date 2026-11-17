@@ -54,10 +54,10 @@ WORKSHOP_JSON = {
     "run": {"mode": "workshop"},
 }
 
-ENTER_URL = "/api/v1/workshop/enter"
+ENTER_URL = "/api/v1/workshop:enter"
 SESSION_URL = "/api/v1/workshop/session"
-ADVANCE_URL = "/api/v1/workshop/session/advance"
-EXTEND_URL = "/api/v1/workshop/session/phase/extend"
+ADVANCE_URL = "/api/v1/workshop/session:advance"
+EXTEND_URL = "/api/v1/workshop/session:extend-phase"
 FACILITIES_URL = "/api/v1/workshop/facilities"
 FLEET_URL = "/api/v1/workshop/fleet"
 SELECTION_URL = "/api/v1/workshop/selection"
@@ -214,7 +214,7 @@ def test_a_player_admitted_through_the_join_link_can_enter(session_path: Path) -
     authenticate(client, account_id)
     assert client.post(ENTER_URL).status_code == 403
 
-    assert client.post(f"/api/v1/join/{token}").status_code == 204
+    assert client.post(f"/api/v1/join/{token}:confirm").status_code == 204
     response = client.post(ENTER_URL)
 
     assert response.status_code == 200
