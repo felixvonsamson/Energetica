@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.freeplay.action_log import read_init_action, stream_actions_after_tick
+from energetica.freeplay.action_log import current_endpoint, read_init_action, stream_actions_after_tick
 from energetica.freeplay.schemas.simulate import (
     ApiAction,
     ApiActionRequest,
@@ -215,3 +215,34 @@ def test_a_create_user_line_predating_the_pw_hash_removal_still_replays(tmp_path
     assert isinstance(create_user, CreateUserAction)
     assert create_user.username == "alice"
     assert "pw_hash" not in create_user.model_dump()
+
+
+@pytest.mark.parametrize(
+    ("logged", "current"),
+    [
+        ("/api/v1/map/settle", "/api/v1/map:settle"),
+        ("/api/v1/notifications:markAllRead", "/api/v1/notifications:mark-all-read"),
+        ("/api/v1/join/the-token", "/api/v1/join/the-token:confirm"),
+        ("/api/v1/map/settle?region=3", "/api/v1/map:settle?region=3"),
+    ],
+)
+def test_a_request_logged_before_the_custom_method_renames_replays_at_the_new_path(logged: str, current: str) -> None:
+    """A log written before #1517 still replays its renamed routes.
+
+    The app no longer serves the old paths, so a settlement replayed at ``/api/v1/map/settle`` would
+    get a 404 and the player it created would be missing from the restored world.
+    """
+    assert current_endpoint("POST", logged) == current
+
+
+@pytest.mark.parametrize(
+    ("method", "endpoint"),
+    [
+        ("POST", "/api/v1/map:settle"),
+        ("POST", "/api/v1/join/the-token:confirm"),
+        ("POST", "/api/v1/projects"),
+        ("PATCH", "/api/v1/join/the-token"),
+    ],
+)
+def test_any_other_logged_request_replays_unchanged(method: str, endpoint: str) -> None:
+    assert current_endpoint(method, endpoint) == endpoint

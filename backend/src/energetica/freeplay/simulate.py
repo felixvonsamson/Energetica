@@ -13,6 +13,7 @@ import httpx
 from fastapi import FastAPI
 from starlette.types import Receive, Scope, Send
 
+from energetica.freeplay.action_log import current_endpoint
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import Action
 from energetica.freeplay.utils import misc
@@ -119,12 +120,13 @@ def _simulate(
                     if user_id not in clients:
                         clients[user_id] = client_as(app, find_account(user_id))
                     client, request = clients[user_id], action.request
+                    endpoint = current_endpoint(request.method, request.endpoint)
                     if request.content_type == "application/json":
-                        sent = client.request(request.method, request.endpoint, json=request.payload)
+                        sent = client.request(request.method, endpoint, json=request.payload)
                     elif isinstance(request.payload, dict):
-                        sent = client.request(request.method, request.endpoint, data=request.payload)
+                        sent = client.request(request.method, endpoint, data=request.payload)
                     else:
-                        sent = client.request(request.method, request.endpoint, content=request.payload)
+                        sent = client.request(request.method, endpoint, content=request.payload)
                     response = runner.run(sent)
                     if response.status_code != action.response.status_code:
                         print(

@@ -11,6 +11,7 @@ full validation.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from pydantic import TypeAdapter
@@ -18,6 +19,27 @@ from pydantic import TypeAdapter
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 
 _action_adapter: TypeAdapter[Action] = TypeAdapter(Action)
+
+# POST routes renamed to AIP-136 custom methods in #1517, from their old path to their current one.
+# A log written before then holds the old paths, which the app no longer serves.
+_RENAMED_POST_ROUTES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"/api/v1/map/settle"), "/api/v1/map:settle"),
+    (re.compile(r"/api/v1/notifications:markAllRead"), "/api/v1/notifications:mark-all-read"),
+    (re.compile(r"/api/v1/join/(?P<token>[^/:]+)"), r"/api/v1/join/\g<token>:confirm"),
+)
+
+
+def current_endpoint(method: str, endpoint: str) -> str:
+    """The endpoint a logged request should be replayed at: ``endpoint``, a path with an optional
+    query string, moved to its route's current path if that route was renamed since it was logged.
+    """
+    if method != "POST":
+        return endpoint
+    path, separator, query = endpoint.partition("?")
+    for old_path, new_path in _RENAMED_POST_ROUTES:
+        if match := old_path.fullmatch(path):
+            return match.expand(new_path) + separator + query
+    return endpoint
 
 
 def read_init_action(log_path: str | Path) -> InitEngineAction | None:

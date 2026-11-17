@@ -341,3 +341,50 @@ def test_action_routes_are_custom_methods(apps: dict[str, FastAPI], app_name: st
     redeployed in the same step. Bringing it under this test is #1524.
     """
     assert _route_shape_violations(apps[app_name]) == []
+
+
+def _app_with(*routes: str) -> FastAPI:
+    """An app serving each ``"METHOD /path"`` in ``routes``."""
+    app = FastAPI()
+    for route in routes:
+        method, path = route.split(" ", 1)
+        app.add_api_route(path, lambda: None, methods=[method])
+    return app
+
+
+@pytest.mark.parametrize(
+    "routes",
+    [
+        ["POST /api/v1/chats/{chat_id}:open"],
+        ["POST /api/v1/facilities:upgrade-all"],
+        ["POST /api/v1/accounts/{username:path}:rename"],
+        ["GET /api/v1/chats", "POST /api/v1/chats"],
+        ["GET /api/v1/workshop/loan", "POST /api/v1/workshop/loan"],
+    ],
+)
+def test_route_shape_accepts(routes: list[str]) -> None:
+    assert _route_shape_violations(_app_with(*routes)) == []
+
+
+@pytest.mark.parametrize(
+    "rejected",
+    [
+        "POST /api/v1/notifications:markAllRead",  # camelCase verb
+        "POST /api/v1/notifications:Mark",  # capitalised verb
+        "POST /api/v1/chats:open/messages",  # colon before the last segment
+        "POST /api/v1/chats/{chat_id}:open:now",  # two verbs
+        "POST /api/v1/join/{token}",  # posts to one resource, not a collection
+        "POST /api/v1/accounts/{username:path}",  # a colon inside a path parameter is not a verb
+    ],
+)
+def test_route_shape_rejects_whatever_answers_get(rejected: str) -> None:
+    """Each route is served beside a ``GET`` on its own path, so its shape alone rejects it."""
+    path = rejected.split(" ", 1)[1]
+    assert _route_shape_violations(_app_with(f"GET {path}", rejected)) == [rejected]
+
+
+def test_route_shape_rejects_a_slash_verb() -> None:
+    """``/map/settle`` is shaped like a create, but nothing answers ``GET`` there to read it back."""
+    assert _route_shape_violations(_app_with("GET /api/v1/map", "POST /api/v1/map/settle")) == [
+        "POST /api/v1/map/settle"
+    ]
