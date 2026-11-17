@@ -1,5 +1,6 @@
 @import "@energetica/ui/global.css";
 @import "@energetica/content/styles/sources.css";
+@import "@energetica/facility-cards/styles/sources.css";
 
 /*
  * The shared stylesheet fixes html, body and #root at one screen tall, which
