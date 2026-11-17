@@ -83,13 +83,16 @@ export function FacilityCardShowcase() {
         >
             {/* Wide enough: the whole row, gaps included, is zoomed to fit the
             width, so it never overflows. Too narrow (phones): a sideways strip
-            of full-size cards that snaps one at a time. The side padding, half
-            the width less half a card, centres the first and last. Each card is inert, not the row, so a
-            swipe on a card still scrolls the row. */}
+            of full-size cards that snaps one at a time. The strip's negative
+            margin cancels the page's side padding (`px-6 lg:px-8` in
+            WorkshopPage), so cards scroll in from the screen's edges rather
+            than being cut off short of them. The side padding, half the width
+            less half a card, centres the first and last. Each card is inert,
+            not the row, so a swipe on a card still scrolls the row. */}
             <div
                 className={
                     scrolls
-                        ? "flex snap-x snap-mandatory gap-6 overflow-x-auto px-[calc(50%-7.5rem)] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden *:snap-center"
+                        ? "-mx-6 lg:-mx-8 flex snap-x snap-mandatory gap-6 overflow-x-auto px-[calc(50%-7.5rem)] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden *:snap-center"
                         : "flex gap-6"
                 }
                 style={scrolls ? undefined : { zoom }}
