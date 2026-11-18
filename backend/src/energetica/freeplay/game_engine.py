@@ -113,8 +113,12 @@ class GameEngine(object):
         game_version: str,
         start_date: datetime.datetime | None = None,
         instance_uuid: str | None = None,
-    ) -> None:
-        """Initialize the instance data / the GameEngine members."""
+    ) -> InitEngineAction:
+        """Initialize the instance data / the GameEngine members.
+
+        Return the ``init_engine`` action that recreates this instance. This method does not log it:
+        the caller knows whether the action log already starts with it.
+        """
         from energetica.freeplay.database.engine_data.emission_data import EmissionData
         from energetica.freeplay.database.map.hex_tile import HexTile
         from energetica.freeplay.database.messages import Chat
@@ -130,7 +134,7 @@ class GameEngine(object):
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.datetime.now(datetime.timezone.utc)  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
-        log_entry = InitEngineAction(
+        init_action = InitEngineAction(
             instance_uuid=self.uuid.hex,
             env=self.env,
             game_version=game_version,
@@ -140,7 +144,6 @@ class GameEngine(object):
             random_seed=self.random_seed,
             start_date=self.start_date,
         )
-        self.log_action(log_entry)
         # Random time shift in number of ticks to start the game at a random season of the year
         rng = np.random.default_rng(self.random_seed)
         self.delta_t = int(rng.integers(0, self.days_per_year * 3600 * 24 // self.in_game_seconds_per_tick))
@@ -204,6 +207,7 @@ class GameEngine(object):
         )
         with open("instance/data/servers/climate_data.pck", "wb") as file:
             pickle.dump(climate_data, file)
+        return init_action
 
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""

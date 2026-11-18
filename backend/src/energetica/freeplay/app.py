@@ -134,9 +134,14 @@ def create_app(
             )
             kwargs: dict = init_action.model_dump()
             kwargs.pop("action_type")
-            engine.init_instance(**kwargs)
+            restored_action = engine.init_instance(**kwargs)
+            # A simulation deleted instance/ above, so its action log is new and needs this line 0.
+            # A normal run read init_action from line 0 of its own log; writing it again would
+            # append a copy each time the Run restarts before its first save (#471).
+            if simulate_file:
+                engine.log_action(restored_action)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__)
+            engine.log_action(engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__))
 
     loaded_tick = engine.total_t
     if simulate_file:
